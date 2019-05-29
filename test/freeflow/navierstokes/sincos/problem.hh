@@ -19,11 +19,11 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the instationary staggered grid Navier-Stokes model
+ * \brief Test for the staggered grid Navier-Stokes model
  *        with analytical solution.
  */
-#ifndef DUMUX_SINCOS_UNSTEADY_TEST_PROBLEM_HH
-#define DUMUX_SINCOS_UNSTEADY_TEST_PROBLEM_HH
+#ifndef DUMUX_SINCOS_STEADY_TEST_PROBLEM_HH
+#define DUMUX_SINCOS_STEADY_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 
@@ -33,21 +33,21 @@
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include "../../l2error.hh"
+#include "../l2error.hh"
 
 namespace Dumux {
 template <class TypeTag>
-class SincosUnsteadyTestProblem;
+class SincosTestProblem;
 
 namespace Properties {
 // Create new type tags
 namespace TTag {
-struct SincosUnsteadyTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct SincosTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
 } // end namespace TTag
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::SincosUnsteadyTest>
+struct FluidSystem<TypeTag, TTag::SincosTest>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -57,37 +57,36 @@ public:
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::SincosUnsteadyTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::SincosTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::SincosUnsteadyTest> { using type = Dumux::SincosUnsteadyTestProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::SincosTest> { using type = Dumux::SincosTestProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::SincosUnsteadyTest> { static constexpr bool value = true; };
+struct EnableFVGridGeometryCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::SincosUnsteadyTest> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::SincosUnsteadyTest> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!
  * \ingroup NavierStokesTests
  * \brief  Test problem for the staggered grid.
  *
- * The unsteady, 2D, incompressible Navier-Stokes equations for zero gravity and a Newtonian
+ * The 2D, incompressible Navier-Stokes equations for zero gravity and a Newtonian
  * flow is solved and compared to an analytical solution (sums/products of trigonometric functions).
- * The velocities and pressures are periodical in time. The Dirichlet boundary conditions are
- * time-dependent and consistent with the analytical solution.
+ * For the unsteady case, the velocities and pressures are periodical in time. The Dirichlet boundary conditions are
+ * consistent with the analytical solution and in the unsteady case time-dependent.
  */
 template <class TypeTag>
-class SincosUnsteadyTestProblem : public NavierStokesProblem<TypeTag>
+class SincosTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -102,11 +101,14 @@ class SincosUnsteadyTestProblem : public NavierStokesProblem<TypeTag>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    SincosUnsteadyTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    SincosTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), time_(0.0), timeStepSize_(0.0)
     {
+        isStationary_ = getParam<bool>("Problem.IsStationary");
+        enableInertiaTerms_ = getParam<bool>("Problem.EnableInertiaTerms");
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
         using CellArray = std::array<unsigned int, dimWorld>;
@@ -146,8 +148,22 @@ public:
         using std::cos;
         using std::sin;
 
-        source[Indices::momentumXBalanceIdx] = -2.0 * cos(x) * sin(y) * (cos(2.0 * t) + sin(2.0 * t) * kinematicViscosity_);
-        source[Indices::momentumYBalanceIdx] =  2.0 * sin(x) * cos(y) * (cos(2.0 * t) + sin(2.0 * t) * kinematicViscosity_);
+        if (isStationary_)
+        {
+            source[Indices::momentumXBalanceIdx] = -2.0 * kinematicViscosity_ * cos(x) * sin(y);
+            source[Indices::momentumYBalanceIdx] =  2.0 * kinematicViscosity_ * cos(y) * sin(x);
+
+            if (!enableInertiaTerms_)
+            {
+                source[Indices::momentumXBalanceIdx] += 0.5 * sin(2.0 * x);
+                source[Indices::momentumYBalanceIdx] += 0.5 * sin(2.0 * y);
+            }
+        }
+        else
+        {
+            source[Indices::momentumXBalanceIdx] = -2.0 * cos(x) * sin(y) * (cos(2.0 * t) + sin(2.0 * t) * kinematicViscosity_);
+            source[Indices::momentumYBalanceIdx] =  2.0 * sin(x) * cos(y) * (cos(2.0 * t) + sin(2.0 * t) * kinematicViscosity_);
+        }
 
         return source;
     }
@@ -221,9 +237,16 @@ public:
         using std::sin;
         using std::cos;
 
-        values[Indices::pressureIdx] = -0.25 * (cos(2.0 * x) + cos(2.0 * y)) * sin(2.0 * t) * sin(2.0 * t);
-        values[Indices::velocityXIdx] = -1.0 * cos(x) * sin(y) * sin(2.0 * t);
-        values[Indices::velocityYIdx] = sin(x) * cos(y) * sin(2.0 * t);
+        values[Indices::pressureIdx] = -0.25 * (cos(2.0 * x) + cos(2.0 * y));
+        values[Indices::velocityXIdx] = -1.0 * cos(x) * sin(y);
+        values[Indices::velocityYIdx] = sin(x) * cos(y);
+
+        if (!isStationary_)
+        {
+            values[Indices::pressureIdx] *= sin(2.0 * t) * sin(2.0 * t);
+            values[Indices::velocityXIdx] *= sin(2.0 * t);
+            values[Indices::velocityYIdx] *= sin(2.0 * t);
+        }
 
         return values;
     }
@@ -242,7 +265,19 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return analyticalSolution(globalPos, 0.0);
+        if (isStationary_)
+        {
+            PrimaryVariables values;
+            values[Indices::pressureIdx] = 0.0;
+            values[Indices::velocityXIdx] = 0.0;
+            values[Indices::velocityYIdx] = 0.0;
+
+            return values;
+        }
+        else
+        {
+            return analyticalSolution(globalPos, 0.0);
+        }
     }
 
     /*!
@@ -268,10 +303,13 @@ private:
     Scalar cellSizeY_;
 
     Scalar kinematicViscosity_;
+    bool enableInertiaTerms_;
     Scalar time_;
     Scalar timeStepSize_;
+
+    bool isStationary_;
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_SINCOS_UNSTEADY_TEST_PROBLEM_HH
+#endif // DUMUX_SINCOS_TEST_PROBLEM_HH

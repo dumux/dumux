@@ -1,3 +1,7 @@
+[TimeLoop]
+DtInitial = 0.01 # [s]
+TEnd = 1.0 # [s]
+
 [Grid]
 UpperRight = 6.28 6.28
 Cells = 50 50
@@ -7,6 +11,7 @@ Name = test_sincos_steady # name passed to the output routines
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true
+IsStationary = true
 
 [Component]
 LiquidDensity = 1.0
