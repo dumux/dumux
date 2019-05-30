@@ -672,7 +672,7 @@ public:
      *       Compute the convex hull polygon
      *       Return a triangulation of that polygon as intersection
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection A triangulation of the intersection polygon
+     * \param intersection Container to store the corner points of the polygon (as convex hull)
      * \note This overload is used when polygon like intersections are seeked
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 2, int> = 0>
@@ -796,7 +796,7 @@ public:
      *       Compute the convex hull polygon
      *       Return a triangulation of that polygon as intersection
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection A triangulation of the intersection polygon
+     * \param intersection Container to store the intersection result
      * \todo implement overloads for segment or point-like intersections
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection != 2, int> = 0>
