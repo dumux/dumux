@@ -58,19 +58,19 @@ using Triangulation = std::vector< std::array<Dune::FieldVector<ctype, dimWorld>
  * \tparam dimWorld The dimension of the coordinate space
  * \tparam Policy Specifies the algorithm to be used for triangulation
  *
- * \note this specialization is for 2d triangulations in 3d space using mid point policy
+ * \note this specialization is for 2d triangulations using mid point policy
  * \note Assumes all points of the convex hull are coplanar
  * \note This inserts a mid point and connects all corners with that point to triangles
  */
 template< int dim, int dimWorld, class Policy = TriangulationPolicy::DefaultPolicy<dim, dimWorld>,
           class RandomAccessContainer,
           std::enable_if_t< std::is_same<Policy, TriangulationPolicy::MidPointPolicy>::value
-                            && dim == 2 && dimWorld == 3, int> = 0 >
+                            && dim == 2, int> = 0 >
 inline Triangulation<dim, dimWorld, typename RandomAccessContainer::value_type::value_type>
 triangulate(const RandomAccessContainer& convexHull)
 {
     using ctype = typename RandomAccessContainer::value_type::value_type;
-    using Point = Dune::FieldVector<ctype, 3>;
+    using Point = Dune::FieldVector<ctype, dimWorld>;
     using Triangle = std::array<Point, 3>;
 
     static_assert(std::is_same<typename RandomAccessContainer::value_type, Point>::value,
