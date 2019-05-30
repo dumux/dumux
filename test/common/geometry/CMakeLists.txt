@@ -1,4 +1,5 @@
 dune_add_test(SOURCES test_0d1d_intersection.cc LABELS unit)
+dune_add_test(SOURCES test_1d1d_intersection.cc LABELS unit)
 dune_add_test(SOURCES test_1d3d_intersection.cc LABELS unit)
 dune_add_test(SOURCES test_1d2d_intersection.cc LABELS unit)
 dune_add_test(SOURCES test_2d3d_intersection.cc LABELS unit)
