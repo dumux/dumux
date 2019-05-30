@@ -32,6 +32,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/geometry/intersectspointgeometry.hh>
 #include <dumux/common/geometry/grahamconvexhull.hh>
+#include <dumux/common/geometry/boundingboxtree.hh>
 
 namespace Dumux {
 namespace IntersectionPolicy {
@@ -211,6 +212,126 @@ public:
         static_assert(dimworld == Geometry2::coorddimension, "Can only intersect geometries of same coordinate dimension");
         DUNE_THROW(Dune::NotImplemented, "Geometry intersection detection with intersection computation not implemented for dimworld = "
                                           << dimworld << ", dim1 = " << dim1 << ", dim2 = " << dim2);
+    }
+};
+
+/*!
+ * \ingroup Geometry
+ * \brief A class for segment--segment intersection in 2d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 2, 1, 1>
+{
+    enum { dimworld = 2 };
+    enum { dim1 = 1 };
+    enum { dim2 = 1 };
+
+    // base epsilon for floating point comparisons
+    static constexpr typename Policy::ctype eps_ = 1.5e-7;
+
+public:
+    using ctype = typename Policy::ctype;
+    using Point = typename Policy::Point;
+    using Intersection = typename Policy::Intersection;
+
+    //! Deprecated alias, will be removed after 3.1
+    using IntersectionType DUNE_DEPRECATED_MSG("Please use Intersection instead") = Intersection;
+
+    /*!
+     * \brief Colliding two segments
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection The intersection point
+     * \note This overload is used when point-like intersections are seeked
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+
+        const auto v1 = geo1.corner(1) - geo1.corner(0);
+        const auto v2 = geo2.corner(1) - geo2.corner(0);
+        const auto ac = geo2.corner(0) - geo1.corner(0);
+
+        auto n2 = Point({-1.0*v2[1], v2[0]});
+        n2 /= n2.two_norm();
+
+        // compute distance of first corner on geo2 to line1
+        const auto dist12 = n2*ac;
+
+        // first check parallel segments
+        using std::abs;
+        using std::sqrt;
+
+        const auto v1Norm2 = v1.two_norm2();
+        const auto eps = eps_*sqrt(v1Norm2);
+        const auto eps2 = eps_*v1Norm2;
+
+        const auto sp = n2*v1;
+        if (abs(sp) < eps)
+        {
+            if (abs(dist12) > eps)
+                return false;
+
+            // point intersection can only be one of the corners
+            if ( (v1*v2) < 0.0 )
+            {
+                if ( ac.two_norm2() < eps2 )
+                { intersection = geo2.corner(0); return true; }
+
+                if ( (geo2.corner(1) - geo1.corner(1)).two_norm2() < eps2 )
+                { intersection = geo2.corner(1); return true; }
+            }
+            else
+            {
+                if ( (geo2.corner(1) - geo1.corner(0)).two_norm2() < eps2 )
+                { intersection = geo2.corner(1); return true; }
+
+                if ( (geo2.corner(0) - geo1.corner(1)).two_norm2() < eps2 )
+                { intersection = geo2.corner(0); return true; }
+            }
+
+            // no intersection
+            return false;
+        }
+
+        // intersection point on v1 in local coords
+        const auto t1 = dist12 / sp;
+
+        // check if the local coords are valid
+        if (t1 < -1.0*eps_ || t1 > 1.0 + eps_)
+            return false;
+
+        // compute global coordinates
+        auto isPoint = geo1.global(t1);
+
+        // check if point is in bounding box of v2
+        const auto c = geo2.corner(0);
+        const auto d = geo2.corner(1);
+
+        using std::min; using std::max;
+        std::array<ctype, 4> bBox({ min(c[0], d[0]), min(c[1], d[1]), max(c[0], d[0]), max(c[1], d[1]) });
+
+        if ( intersectsPointBoundingBox(isPoint, bBox.data()) )
+        {
+            intersection = std::move(isPoint);
+            return true;
+        }
+
+        return false;
+    }
+
+    /*!
+     * \brief Colliding two segments
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection Container to store corners of intersection segment
+     * \note this overload is used when segment-like intersections are seeked
+     * \todo implement this query
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+        DUNE_THROW(Dune::NotImplemented, "segment-segment intersection detection for segment-like intersections");
     }
 };
 
