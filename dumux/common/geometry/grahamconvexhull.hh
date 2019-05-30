@@ -177,6 +177,31 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
 
 /*!
  * \ingroup Geometry
+ * \brief Compute the points making up the convex hull around the given set of unordered points
+ * \note This is the specialization for 2d space. Here, we make use of the generic implementation
+ *       for the case of coplanar points in 3d space (a more efficient implementation could be provided).
+ */
+template<class ctype>
+std::vector<Dune::FieldVector<ctype, 2>>
+grahamConvexHull(const std::vector<Dune::FieldVector<ctype, 2>>& points)
+{
+    std::vector<Dune::FieldVector<ctype, 3>> tmp;
+    tmp.reserve(points.size());
+    for (const auto& p : points)
+        tmp.emplace_back( Dune::FieldVector<ctype, 3>({p[0], p[1], 0.0}) );
+
+    auto result3d = grahamConvexHull2d3d(tmp);
+
+    std::vector<Dune::FieldVector<ctype, 2>> result;
+    result.reserve(result3d.size());
+    for (const auto& p : result3d)
+        result.emplace_back( Dune::FieldVector<ctype, 2>({p[0], p[1]}) );
+
+    return result;
+}
+
+/*!
+ * \ingroup Geometry
  * \brief Triangulate area given points of the convex hull
  * \note Assumes all points of the convex hull are coplanar
  * \note This inserts a mid point and connects all corners with that point to triangles
