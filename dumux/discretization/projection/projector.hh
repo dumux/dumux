@@ -245,7 +245,8 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
                 {
                     const auto dofIdxDomain = domainLocalView.index(i);
                     const auto domainShapeVal = domainShapeVals[i];
-                    backwardM[dofIdxDomain][dofIdxDomain] += ie*weight*domainShapeVal;
+                    if (doBidirectional)
+                        backwardM[dofIdxDomain][dofIdxDomain] += ie*weight*domainShapeVal;
 
                     for (unsigned int j = 0; j < targetLocalBasis.size(); ++j)
                     {
