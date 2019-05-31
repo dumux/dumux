@@ -294,30 +294,6 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * This is the method for the case where the Neumann condition is
-     * potentially solution dependent
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param scvf The sub control volume face
-     *
-     * Negative values mean influx.
-     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
-     */
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolumeFace& scvf) const
-    {
-        // forward it to the interface with only the global position
-        return asImp_().neumannAtPos(scvf.ipGlobal());
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
      * \param globalPos The position of the boundary face's integration point in global coordinates
      *
      * Negative values mean influx.
