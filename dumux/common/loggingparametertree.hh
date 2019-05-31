@@ -60,7 +60,7 @@ public:
      * \return true if key exists in structure, otherwise false
      */
     bool hasKey(const std::string& key) const
-    { return params_.hasKey(key); }
+    { return params_.hasKey(key) || defaultParams_.hasKey(key); }
 
 
     /** \brief print the hierarchical parameter tree to stream
