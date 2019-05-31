@@ -31,6 +31,7 @@
 #endif
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/math.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
@@ -126,19 +127,24 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+
     // copy some indices for convenience
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     enum
     {
         // indices of the primary variables
@@ -232,7 +238,7 @@ public:
 
     /*!
      * \brief Evaluates the boundary conditions for a neumann
-     *        boundary segment.
+     *        boundary segment (implementation for the box scheme).
      *
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent and requires some quantities that
@@ -241,84 +247,102 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
-     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
+    template<bool useBox = isBox, std::enable_if_t<useBox, int> = 0>
     NumEqVector neumann(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolVars,
-                           const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
     {
-        // set a fixed pressure on the right side of the domain
-        const Scalar dirichletPressure = 1e5;
-
-        NumEqVector flux(0.0);
-        const auto& ipGlobal = scvf.ipGlobal();
-        const auto& volVars = elemVolVars[scvf.insideScvIdx()];
-
         // no-flow everywhere except at the right boundary
-        if(ipGlobal[0] < this->fvGridGeometry().bBoxMax()[0] - eps_)
-            return flux;
+        NumEqVector values(0.0);
+        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto& ipGlobal = scvf.ipGlobal();
+        if (ipGlobal[0] < xMax - eps_)
+            return values;
 
-        // if specified in the input file, use a Nitsche type boundary condition for the box model,
-        // otherwise compute the acutal fluxes explicitly
-        if(isBox && useNitscheTypeBc_)
+        // set a fixed pressure on the right side of the domain
+        static const Scalar dirichletPressure = 1e5;
+        const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+
+        // if specified in the input file, use a Nitsche type boundary condition for the box model.
+        if (useNitscheTypeBc_)
         {
-            flux[contiH2OEqIdx] = (volVars.pressure() - dirichletPressure) * 1e7;
-            flux[contiN2EqIdx] = flux[contiH2OEqIdx]  * (useMoles ? volVars.moleFraction(0, N2Idx) :
-                                                                    volVars.massFraction(0, N2Idx));
-            return flux;
+            values[contiH2OEqIdx] = (volVars.pressure() - dirichletPressure)*1e7;
+            values[contiN2EqIdx] = values[contiH2OEqIdx] * (useMoles ? volVars.moleFraction(0, N2Idx)
+                                                                     : volVars.massFraction(0, N2Idx));
+            return values;
         }
 
-        // construct the element solution
-        const auto elemSol = [&]()
+        // evaluate the pressure gradient
+        GlobalPosition gradP(0.0);
+        for (const auto& scv : scvs(fvGeometry))
         {
-            auto sol = elementSolution(element, elemVolVars, fvGeometry);
+            const auto xIp = scv.dofPosition()[0];
+            auto tmp = fluxVarsCache.gradN(scv.localDofIndex());
+            tmp *= xIp > xMax - eps_ ? dirichletPressure
+                                     : elemVolVars[scv].pressure();
+            gradP += tmp;
+        }
 
-            if(isBox)
-                for(auto&& scvf : scvfs(fvGeometry))
-                    if(scvf.center()[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
-                        sol[fvGeometry.scv(scvf.insideScvIdx()).localDofIndex()][pressureIdx] = dirichletPressure;
+        // compute flux
+        auto phaseFlux = vtmv(scvf.unitOuterNormal(), volVars.permeability(), gradP);
+        phaseFlux *= useMoles ? volVars.molarDensity() : volVars.density();
+        phaseFlux *= volVars.mobility();
 
-            return sol;
-        }();
-
-        // evaluate the gradient
-        const auto gradient = [&]()->GlobalPosition
-        {
-            if(isBox)
-            {
-                const auto grads = evalGradients(element, element.geometry(), fvGeometry.fvGridGeometry(), elemSol, ipGlobal);
-                return grads[pressureIdx];
-            }
-
-            else
-            {
-                const auto& scvCenter = fvGeometry.scv(scvf.insideScvIdx()).center();
-                const Scalar scvCenterPresureSol = elemSol[0][pressureIdx];
-                auto grad = ipGlobal - scvCenter;
-                grad /= grad.two_norm2();
-                grad *= (dirichletPressure - scvCenterPresureSol);
-                return grad;
-            }
-        }();
-
-        const Scalar K = volVars.permeability();
-        const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
-
-        // calculate the flux
-        Scalar tpfaFlux = gradient * scvf.unitOuterNormal();
-        tpfaFlux *= -1.0  * K;
-        tpfaFlux *=  density * volVars.mobility();
-        flux[contiH2OEqIdx] = tpfaFlux;
-
+        // set Neumann bc values
+        values[contiH2OEqIdx] = phaseFlux;
         // emulate an outflow condition for the component transport on the right side
-        flux[contiN2EqIdx] = tpfaFlux  * (useMoles ? volVars.moleFraction(0, N2Idx) : volVars.massFraction(0, N2Idx));
+        values[contiN2EqIdx] = phaseFlux * ( useMoles ? volVars.moleFraction(0, N2Idx) : volVars.massFraction(0, N2Idx) );
 
-        return flux;
+        return values;
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a neumann
+     *        boundary segment (implementation for the tpfa scheme).
+     */
+     template<bool useBox = isBox, std::enable_if_t<!useBox, int> = 0>
+     NumEqVector neumann(const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                         const SubControlVolumeFace& scvf) const
+     {
+        // no-flow everywhere except at the right boundary
+        NumEqVector values(0.0);
+        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto& ipGlobal = scvf.ipGlobal();
+        if (ipGlobal[0] < xMax - eps_)
+            return values;
+
+        // set a fixed pressure on the right side of the domain
+        static const Scalar dirichletPressure = 1e5;
+        const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+
+        auto d = ipGlobal - element.geometry().center();
+        d /= d.two_norm2();
+
+        auto upwindTerm = useMoles ? volVars.molarDensity() : volVars.density();
+        upwindTerm *= volVars.mobility();
+
+        const auto tij = vtmv(scvf.unitOuterNormal(), volVars.permeability(), d);
+        const auto phaseFlux = -1.0*upwindTerm*tij*(dirichletPressure - volVars.pressure());
+
+        // set Neumann bc values
+        values[contiH2OEqIdx] = phaseFlux;
+        // emulate an outflow condition for the component transport on the right side
+        values[contiN2EqIdx] = phaseFlux * (useMoles ? volVars.moleFraction(0, N2Idx) : volVars.massFraction(0, N2Idx));
+
+        return values;
     }
 
     // \}
