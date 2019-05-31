@@ -389,11 +389,7 @@ bool hasParam(const std::string& param)
 template<typename... Args>
 bool hasParamInGroup(const std::string& paramGroup, const std::string& param)
 {
-    const auto& p = Parameters::getTree();
-    if (paramGroup == "")
-        return p.hasKey(param);
-    else
-        return p.hasKey(paramGroup + "." + param);
+    return Parameters::getTree().hasKeyInGroup(param, paramGroup);
 }
 
 DUNE_DEPRECATED_MSG("haveParam is deprecated, please use hasParam instead.")
