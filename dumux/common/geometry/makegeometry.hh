@@ -29,7 +29,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dumux/common/math.hh>
-#include <dumux/common/geometry/grahamconvexhull.hh>
 
 namespace Dumux {
 
