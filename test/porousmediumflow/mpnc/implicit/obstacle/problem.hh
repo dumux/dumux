@@ -240,18 +240,8 @@ public:
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann boundary segment.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param elemVolVars The volume variables of the element
-     * \param scvf The sub-control volume face
-     *
-     * Negative values mean influx.
      */
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     {
         return NumEqVector(0.0);
     }

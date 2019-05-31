@@ -108,9 +108,10 @@ class RichardsNIEvaporationProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-    using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
-    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
-    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using IapwsH2O = Components::H2O<Scalar>;
 
@@ -200,12 +201,14 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param elemVolVars The element volume variables
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The subcontrolvolume face
      *  Negative values mean influx.
      */
     NumEqVector neumann(const Element &element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
