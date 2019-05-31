@@ -69,7 +69,7 @@ public:
     //! Initialize the parameter tree singletons
     static void init(int argc, char **argv,
                      const DefaultParams& defaultParams,
-                     const Usage& usage = [](const char *, const std::string &){})
+                     const Usage& usage)
     {
         init(argc, argv, defaultParams, "", usage);
     }
