@@ -28,8 +28,32 @@
 #include <type_traits>
 
 #include <dune/geometry/quadraturerules.hh>
+#include <dune/common/concept.hh>
+
+#if HAVE_DUNE_FUNCTIONS
+#include <dune/functions/gridfunctions/gridfunction.hh>
+#endif
+
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
+namespace Impl {
+
+struct HasLocalFunction
+{
+    template<class F>
+    auto require(F&& f) -> decltype(
+      localFunction(f),
+      localFunction(f).unbind()
+    );
+};
+
+template<class F>
+static constexpr bool hasLocalFunction()
+{ return Dune::models<HasLocalFunction, F>(); }
+
+} // end namespace Impl
 
 /*!
  * \brief Integrate a grid function over a grid view
@@ -37,8 +61,84 @@ namespace Dumux {
  * \param f the grid function
  * \param order the order of the quadrature rule
  */
-template<class GridView, class F>
-auto integrateGridFunction(const GridView& gv, F&& f, std::size_t order)
+template<class GridGeometry, class SolutionVector,
+         typename std::enable_if_t<!Impl::hasLocalFunction<SolutionVector>(), int> = 0>
+auto integrateGridFunction(const GridGeometry& gg,
+                           SolutionVector&& sol,
+                           std::size_t order)
+{
+    using Scalar = std::decay_t<decltype(sol[0][0])>;
+    using GridView = typename GridGeometry::GridView;
+
+    Scalar integral = 0.0;
+    for (const auto& element : elements(gg.gridView()))
+    {
+        const auto elemSol = elementSolution(element, sol, gg);
+        const auto geometry = element.geometry();
+        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
+        for (auto&& qp : quad)
+        {
+            auto value = evalSolution(element, geometry, gg, elemSol, geometry.global(qp.position()));
+            value *= qp.weight()*geometry.integrationElement(qp.position());
+            integral += value;
+        }
+    }
+    return integral;
+}
+
+/*!
+ * \brief Integrate a function over a grid view
+ * \param gv the grid view
+ * \param f the first function
+ * \param g the second function
+ * \param order the order of the quadrature rule
+ * \note dune functions currently doesn't support composing two functions
+ */
+template<class GridGeometry, class Sol1, class Sol2,
+         typename std::enable_if_t<!Impl::hasLocalFunction<Sol1>(), int> = 0>
+auto integrateL2Error(const GridGeometry& gg,
+                      const Sol1& sol1,
+                      const Sol2& sol2,
+                      std::size_t order)
+{
+    using Scalar = std::decay_t<decltype(sol1[0][0])>;
+    using GridView = typename GridGeometry::GridView;
+
+    Scalar l2norm = 0.0;
+    for (const auto& element : elements(gg.gridView()))
+    {
+        const auto elemSol1 = elementSolution(element, sol1, gg);
+        const auto elemSol2 = elementSolution(element, sol2, gg);
+
+        const auto geometry = element.geometry();
+        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
+        for (auto&& qp : quad)
+        {
+            const auto& globalPos = geometry.global(qp.position());
+            const auto value1 = evalSolution(element, geometry, gg, elemSol1, globalPos);
+            const auto value2 = evalSolution(element, geometry, gg, elemSol2, globalPos);
+            const auto error = (value1 - value2);
+            l2norm += error*error*qp.weight()*geometry.integrationElement(qp.position());
+        }
+    }
+    using std::sqrt;
+    return sqrt(l2norm);
+}
+
+#if HAVE_DUNE_FUNCTIONS
+
+/*!
+ * \brief Integrate a grid function over a grid view
+ * \param gv the grid view
+ * \param f the grid function
+ * \param order the order of the quadrature rule
+ * \note overload for a Dune::Funtions::GridFunction
+ */
+template<class GridView, class F,
+         typename std::enable_if_t<Impl::hasLocalFunction<F>(), int> = 0>
+auto integrateGridFunction(const GridView& gv,
+                           F&& f,
+                           std::size_t order)
 {
     auto fLocal = localFunction(f);
 
@@ -54,7 +154,11 @@ auto integrateGridFunction(const GridView& gv, F&& f, std::size_t order)
         const auto geometry = element.geometry();
         const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
         for (auto&& qp : quad)
-            integral += fLocal(qp.position())*qp.weight()*geometry.integrationElement(qp.position());
+        {
+            auto value = fLocal(qp.position());
+            value *= qp.weight()*geometry.integrationElement(qp.position());
+            integral += value;
+        }
 
         fLocal.unbind();
     }
@@ -67,10 +171,15 @@ auto integrateGridFunction(const GridView& gv, F&& f, std::size_t order)
  * \param f the first function
  * \param g the second function
  * \param order the order of the quadrature rule
+ * \note overload for a Dune::Funtions::GridFunction
  * \note dune functions currently doesn't support composing two functions
  */
-template<class GridView, class F, class G>
-auto integrateL2Error(const GridView& gv, F&& f, G&& g, std::size_t order)
+template<class GridView, class F, class G,
+         typename std::enable_if_t<Impl::hasLocalFunction<F>(), int> = 0>
+auto integrateL2Error(const GridView& gv,
+                      F&& f,
+                      G&& g,
+                      std::size_t order)
 {
     auto fLocal = localFunction(f);
     auto gLocal = localFunction(g);
@@ -102,6 +211,7 @@ auto integrateL2Error(const GridView& gv, F&& f, G&& g, std::size_t order)
     using std::sqrt;
     return sqrt(l2norm);
 }
+#endif
 
 } // end namespace Dumux
 
