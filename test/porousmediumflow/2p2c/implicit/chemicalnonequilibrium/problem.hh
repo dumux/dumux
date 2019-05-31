@@ -128,7 +128,9 @@ class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<Typ
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -141,7 +143,6 @@ class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<Typ
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
@@ -226,6 +227,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
      * \param elemVolVars The element volume variables
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The sub-control volume face
      *
      * Negative values mean influx.
@@ -233,6 +235,7 @@ public:
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
+                          const ElementFluxVariablesCache& elemFluxVarsCache,
                           const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);

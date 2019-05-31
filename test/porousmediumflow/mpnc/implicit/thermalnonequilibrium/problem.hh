@@ -176,7 +176,11 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -186,7 +190,6 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
@@ -331,6 +334,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param elemVolVars The volume variables of the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the mass flux
@@ -339,6 +343,7 @@ public:
     NumEqVector neumann(const Element &element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);

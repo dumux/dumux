@@ -72,7 +72,10 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
@@ -127,6 +130,7 @@ public:
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolvars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         GradU gradU = exactGradient(scvf.ipGlobal());

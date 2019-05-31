@@ -166,8 +166,10 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
@@ -398,6 +400,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
@@ -405,9 +408,10 @@ public:
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     NumEqVector neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
     {
         const auto boundaryId = scvf.boundaryFlag();
 

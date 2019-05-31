@@ -117,14 +117,16 @@ class OnePTwoCThermalNonequilibriumProblem : public PorousMediumFlowProblem<Type
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using IapwsH2O = Components::H2O<Scalar>;
-
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     // copy some indices for convenience
     enum
@@ -223,6 +225,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
@@ -232,6 +235,7 @@ public:
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector flux(0.0);

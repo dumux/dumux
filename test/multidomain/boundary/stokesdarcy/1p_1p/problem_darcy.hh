@@ -174,14 +174,16 @@ public:
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The boundary sub control volume face
      *
      * For this method, the \a values variable stores primary variables.
      */
-    template<class ElementVolumeVariables>
+    template<class ElementVolumeVariables, class ElementFluxVarsCache>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVarsCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);

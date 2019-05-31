@@ -99,7 +99,9 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
@@ -246,12 +248,13 @@ public:
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The boundary sub control volume face
-     *
      */
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);

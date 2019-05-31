@@ -117,8 +117,11 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using IapwsH2O = Components::H2O<Scalar>;
 
@@ -267,6 +270,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
      * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The sub-control volume face
      *
      * This method is used for cases, when the Neumann condition depends on the
@@ -277,6 +281,7 @@ public:
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);

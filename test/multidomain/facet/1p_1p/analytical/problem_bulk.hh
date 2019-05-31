@@ -182,10 +182,11 @@ public:
     { return PrimaryVariables(exact(globalPos)); }
 
     //! Evaluates the Neumann boundary condition for a boundary segment.
-    template<class ElementVolumeVariables>
+    template<class ElementVolumeVariables, class ElementFluxVarsCache>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVarsCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         auto pos = scvf.ipGlobal();

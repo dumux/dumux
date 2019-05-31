@@ -115,7 +115,10 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -220,19 +223,20 @@ public:
      * \param element
      * \param fvGeometry
      * \param elemVolVars
+     * \param elemFluxVarsCache
      * \param scvf
      */
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
+                          const ElementFluxVariablesCache& elemFluxVarsCache,
                           const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);
 
-        //we need the Riemann invariants to compute the values depending of the boundary type
-        //since we use a weak imposition we do not have a dirichlet value. We impose fluxes
-        //based on q,h, etc. computed with the Riemann invariants
-
+        // we need the Riemann invariants to compute the values depending of the boundary type
+        // since we use a weak imposition we do not have a dirichlet value. We impose fluxes
+        // based on q,h, etc. computed with the Riemann invariants
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& nxy = scvf.unitOuterNormal();

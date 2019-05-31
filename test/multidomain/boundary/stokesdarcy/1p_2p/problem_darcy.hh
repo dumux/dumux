@@ -83,12 +83,15 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
+
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
@@ -203,6 +206,7 @@ public:
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The fvGeometry
      * \param elemVolVars The element volume variables
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The boundary sub control volume face
      *
      * For this method, the \a values variable stores primary variables.
@@ -210,6 +214,7 @@ public:
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
