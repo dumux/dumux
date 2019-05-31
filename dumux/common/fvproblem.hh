@@ -57,17 +57,17 @@ class FVProblem
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    enum {
-        dim = GridView::dimension
-    };
+
+    enum { dim = GridView::dimension };
 
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using PointSourceHelper = GetPropType<TypeTag, Properties::PointSourceHelper>;
-    using PointSourceMap = std::map<std::pair<std::size_t, std::size_t>,
-    std::vector<PointSource> >;
+    using PointSourceMap = std::map< std::pair<std::size_t, std::size_t>,
+                                     std::vector<PointSource> >;
 
-    using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
-    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
 
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -88,7 +88,6 @@ public:
         using PrimaryVariables = FVProblem::PrimaryVariables;
         using NumEqVector = FVProblem::NumEqVector;
         using BoundaryTypes = FVProblem::BoundaryTypes;
-
     };
 
     /*!
@@ -275,10 +274,36 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The sub control volume face
      *
      * Negative values mean influx.
-     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     */
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        // forward it to the interface with only the global position
+        return asImp_().neumannAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scvf The sub control volume face
+     *
+     * Negative values mean influx.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
