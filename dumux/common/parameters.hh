@@ -392,15 +392,6 @@ bool hasParamInGroup(const std::string& paramGroup, const std::string& param)
     return Parameters::getTree().hasKeyInGroup(param, paramGroup);
 }
 
-DUNE_DEPRECATED_MSG("haveParam is deprecated, please use hasParam instead.")
-bool haveParam(const std::string& param)
-{ return hasParam(param); }
-
-template<typename... Args>
-DUNE_DEPRECATED_MSG("haveParamInGroup is deprecated, please use hasParamInGroup instead.")
-bool haveParamInGroup(const std::string& paramGroup, const std::string& param)
-{ return hasParamInGroup(paramGroup, param); }
-
 } // namespace Dumux
 
 #endif
