@@ -30,6 +30,7 @@
 #include <unordered_map>
 #include <fstream>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/parametertree.hh>
 #include <dune/common/parametertreeparser.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -82,7 +83,7 @@ public:
      * \param parameterFileName the file name of the input file
      * \param usage the usage function to print if the help option was passed on the command line
      * \note the default parameter tree is initialized in the following way
-     *         1) global defaults (see member function globalDefaultParameters)
+     *         1) global defaults (see member function globalDefaultParameters_)
      *         2) user provided defaults (overwrite global defaults)
      *       the parameter tree is initialized in the following way
      *         1) parameters from the input file
@@ -111,11 +112,17 @@ public:
         }
 
         // apply the default parameters
-        globalDefaultParameters(defaultParamTree());
-        defaultParams(defaultParamTree());
+        globalDefaultParameters_(defaultParamTree_());
+        defaultParams(defaultParamTree_());
 
         // parse paramters from the command line
-        parameterFileName = parseCommandLineArguments(argc, argv, parameterFileName);
+        const auto commandLineArgs = parseCommandLine(argc, argv);
+        for (const auto& key : commandLineArgs.getValueKeys())
+            if (key != "ParameterFile")
+                paramTree_()[key] = commandLineArgs[key];
+
+        // overwrite parameter file if one was specified on the command line
+        parameterFileName = commandLineArgs.get<std::string>("ParameterFile", parameterFileName);
 
         // otherwise use the default name (executable name + .input)
         if (parameterFileName == "")
@@ -162,7 +169,7 @@ public:
         // because the command line arguments have precedence
         // let Dune do the error checking if the file exists
         Dune::ParameterTreeParser::readINITree(parameterFileName,
-                                               paramTree(),
+                                               paramTree_(),
                                                /*overwrite=*/false);
     }
 
@@ -177,10 +184,10 @@ public:
                      const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {})
     {
         // apply the parameters
-        params(paramTree());
+        params(paramTree_());
         // apply the default parameters
-        globalDefaultParameters(defaultParamTree());
-        defaultParams(defaultParamTree());
+        globalDefaultParameters_(defaultParamTree_());
+        defaultParams(defaultParamTree_());
     }
 
     /*!
@@ -200,18 +207,64 @@ public:
                      const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {})
     {
         // apply the parameters
-        params(paramTree());
+        params(paramTree_());
 
         // read parameters from the input file
-        Dune::ParameterTreeParser::readINITree(parameterFileName, paramTree(), inputFileOverwritesParams);
+        Dune::ParameterTreeParser::readINITree(parameterFileName, paramTree_(), inputFileOverwritesParams);
 
         // apply the default parameters
-        globalDefaultParameters(defaultParamTree());
-        defaultParams(defaultParamTree());
+        globalDefaultParameters_(defaultParamTree_());
+        defaultParams(defaultParamTree_());
     }
 
-    //! \brief parse the arguments given on the command line
-    //! \returns the parameterFileName if one was given otherwise returns empty string
+    //! prints all used and unused parameters
+    static void print()
+    {
+        getTree_().reportAll();
+    }
+
+    //! Parse command line arguments into a parameter tree
+    static Dune::ParameterTree parseCommandLine(int argc, char **argv)
+    {
+        Dune::ParameterTree commandLineTree;
+        for (int i = 1; i < argc; ++i)
+        {
+            if (argv[i][0] != '-' && i == 1)
+            {
+                // try to pass first argument as parameter file
+                commandLineTree["ParameterFile"] = argv[1];
+                continue;
+            }
+
+            if (argv[i][0] != '-')
+                DUNE_THROW(ParameterException, "-> Command line argument " << i << " (='" << argv[i] << "') is invalid. <-");
+
+            if (i+1 == argc)
+                DUNE_THROW(ParameterException, "-> No argument given for parameter '" << argv[i] << "'! <-");
+
+            // check for the ParameterFile argument
+            if (argv[i]+1 == std::string("ParameterFile")) // +1 removes the '-'
+            {
+                commandLineTree["ParameterFile"] = argv[i+1];
+                ++i;
+            }
+
+            // add all other options as key value pairs
+            else
+            {
+                // read a -MyOpt VALUE option
+                std::string paramName = argv[i]+1; // +1 removes the '-'
+                std::string paramValue = argv[i+1];
+                ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
+
+                // Put the key=value pair into the parameter tree
+                commandLineTree[paramName] = paramValue;
+            }
+        }
+        return commandLineTree;
+    }
+
+    DUNE_DEPRECATED_MSG("parseCommandLineArguments is deprecated and will be removed after 3.1")
     static std::string parseCommandLineArguments(int argc, char **argv,
                                                  std::string parameterFileName = "")
     {
@@ -246,36 +299,40 @@ public:
                 ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
 
                 // Put the key=value pair into the parameter tree
-                paramTree()[paramName] = paramValue;
+                paramTree_()[paramName] = paramValue;
             }
         }
         return parameterFileName;
     }
 
-    //! prints all used and unused parameters
-    static void print()
-    {
-        getTree().reportAll();
-    }
-
-    //! returns the logging parameter tree recording which parameters are used during the simulation
+    DUNE_DEPRECATED_MSG("getTree is deprecated and will be removed after 3.1")
     static const LoggingParameterTree& getTree()
     {
-        static LoggingParameterTree tree(paramTree(), defaultParamTree());
-        return tree;
+        return getTree_();
     }
 
 private:
+    /*!
+     * \brief Get the parameter tree
+     *
+     * The logging parameter tree recording which parameters are used during the simulation
+     * \note Once this has been called the first time, you cannot modify the parameter tree anymore
+     */
+    static const LoggingParameterTree& getTree_()
+    {
+        static LoggingParameterTree tree(paramTree_(), defaultParamTree_());
+        return tree;
+    }
 
     //! the actual internal parameter tree storing all user-specfied runtime parameters
-    static Dune::ParameterTree& paramTree()
+    static Dune::ParameterTree& paramTree_()
     {
         static Dune::ParameterTree tree;
         return tree;
     }
 
     //! the parameter tree storing the Dumux global defaults for some parameters
-    static Dune::ParameterTree& defaultParamTree()
+    static Dune::ParameterTree& defaultParamTree_()
     {
         static Dune::ParameterTree tree;
         return tree;
@@ -283,7 +340,7 @@ private:
 
     //! This method puts all default arguments into the parameter tree
     //! we do this once per simulation on call to Parameters::init();
-    static void globalDefaultParameters(Dune::ParameterTree& params)
+    static void globalDefaultParameters_(Dune::ParameterTree& params)
     {
         // parameters in the implicit group
         params["Flux.UpwindWeight"] = "1.0";
@@ -331,12 +388,19 @@ private:
         // parameters in the mpfa group
         params["Mpfa.Q"] = "0.0";
     }
+
+    // be friends with the accesors
+    template<typename T, typename... Args> friend T getParam(Args&&... args);
+    template<typename T, typename... Args> friend T getParamFromGroup(Args&&... args);
+    friend bool hasParam(const std::string& param);
+    friend bool hasParamInGroup(const std::string& paramGroup, const std::string& param);
 };
 
 /*!
  * \ingroup Common
  * \brief a free function to set model- or problem-specific default parameters
  */
+DUNE_DEPRECATED_MSG("Setting parameters is deprecated and will be removed after 3.1")
 void setParam(Dune::ParameterTree& params,
               const std::string& group,
               const std::string& key,
@@ -352,45 +416,37 @@ void setParam(Dune::ParameterTree& params,
  * \ingroup Common
  * \brief A free function to get a parameter from the parameter tree singleton
  * \note \code auto endTime = getParam<double>("TimeManager.TEnd"); \endcode
+ * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
 template<typename T, typename... Args>
 T getParam(Args&&... args)
-{
-    const auto& p = Parameters::getTree();
-    return p.template get<T>(std::forward<Args>(args)... );
-}
+{ return Parameters::getTree_().template get<T>(std::forward<Args>(args)... ); }
 
 /*!
  * \ingroup Common
  * \brief A free function to get a parameter from the parameter tree singleton with a model group
  * \note \code  auto endTime = getParamFromGroup<double>("FreeFlow", "TimeManager.TEnd"); \endcode
+ * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
 template<typename T, typename... Args>
 T getParamFromGroup(Args&&... args)
-{
-    const auto& p = Parameters::getTree();
-    return p.template getFromGroup<T>(std::forward<Args>(args)... );
-}
+{ return Parameters::getTree_().template getFromGroup<T>(std::forward<Args>(args)... ); }
 
 /*!
  * \ingroup Common
  * \brief Check whether a key exists in the parameter tree
+ * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
 bool hasParam(const std::string& param)
-{
-    const auto& p = Parameters::getTree();
-    return p.hasKey(param);
-}
+{ return Parameters::getTree_().hasKey(param); }
 
 /*!
  * \ingroup Common
  * \brief Check whether a key exists in the parameter tree with a model group prefix
+ * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
-template<typename... Args>
 bool hasParamInGroup(const std::string& paramGroup, const std::string& param)
-{
-    return Parameters::getTree().hasKeyInGroup(param, paramGroup);
-}
+{ return Parameters::getTree_().hasKeyInGroup(param, paramGroup); }
 
 } // namespace Dumux
 
