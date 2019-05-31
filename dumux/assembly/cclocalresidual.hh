@@ -25,6 +25,7 @@
 #ifndef DUMUX_CC_LOCAL_RESIDUAL_HH
 #define DUMUX_CC_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
@@ -96,7 +97,7 @@ public:
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, scvf);
+                auto neumannFluxes = Deprecated::neumann(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
