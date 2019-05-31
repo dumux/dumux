@@ -215,7 +215,7 @@ public:
         }
         else
         {
-            pc_ = 0; // equilibrium TODO
+            pc_ = 0.11; // equilibrium (pc=pn-pw=p_water-p_air=0.366-0.256) TODO
             fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
             fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
                                                                        : priVars[pressureIdx] + pc_);
