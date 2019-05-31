@@ -97,6 +97,8 @@ void writeVTKPolyData(const std::vector<Dune::FieldVector<double, 3>>& p,
 
 int main(int argc, char* argv[]) try
 {
+    using namespace Dumux;
+
     using Point = Dune::FieldVector<double, 3>;
     // create 100 random points
     std::vector<Point> points(100);
@@ -109,30 +111,30 @@ int main(int argc, char* argv[]) try
     writeCSV(points, "points");
 
     Dune::Timer timer;
-    auto convexHullPoints = Dumux::grahamConvexHull2d3d(points);
+    auto convexHullPoints = grahamConvexHull<2>(points);
     std::cout << "Computed convex hull of " << points.size() << " points in "
               << timer.elapsed() << " seconds." << std::endl;
 
     writeVTKPolyData(convexHullPoints, "convexhull");
 
     Dune::Timer timer2;
-    auto triangles = Dumux::triangulate<2, 3>(convexHullPoints);
+    auto triangles = triangulate<2, 3>(convexHullPoints);
     std::cout << "Computed triangulation of convex hull with " << convexHullPoints.size()
               << " points in " << timer2.elapsed() << " seconds." << std::endl;
 
-    Dumux::writeVTKPolyDataTriangle(triangles, "triangulation");
+    writeVTKPolyDataTriangle(triangles, "triangulation");
 
     // some specific tests for corner cases with colinear points
     points = {{0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,0.0,2.0}, {0.0,0.0,3.0}};
-    auto hull = Dumux::grahamConvexHull2d3d(points);
+    auto hull = grahamConvexHull<2>(points);
     if (!(hull.empty())) DUNE_THROW(Dune::InvalidStateException, "False positive for finding a convex hull!");
 
     points = {{0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,0.0,2.0}, {0.0,0.0,3.0}, {0.0,0.0,4.0}, {2.0,3.0,3.0}};
-    hull = Dumux::grahamConvexHull2d3d(points);
+    hull = grahamConvexHull<2>(points);
     if (hull.empty()) DUNE_THROW(Dune::InvalidStateException, "Didn't find convex hull!");
 
     points = {{2.0,3.0,3.0}, {0.0,0.0,4.0}, {0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,0.0,2.0}, {0.0,0.0,3.0}};
-    hull = Dumux::grahamConvexHull2d3d(points);
+    hull = grahamConvexHull<2>(points);
     if (hull.empty()) DUNE_THROW(Dune::InvalidStateException, "Didn't find convex hull!");
 
     return 0;
