@@ -28,6 +28,7 @@
 #include <dune/geometry/type.hh>
 #include <dune/istl/matrix.hh>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 
@@ -111,7 +112,7 @@ public:
             // are enforced strongly by replacing the residual entry afterwards.
             if (bcTypes.hasNeumann())
             {
-                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, scvf);
+                auto neumannFluxes = Deprecated::neumann(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
