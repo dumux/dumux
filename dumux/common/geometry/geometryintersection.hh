@@ -592,7 +592,7 @@ public:
             return false;
 
         // intersection polygon is convex hull of above points
-        intersection = grahamConvexHull(points);
+        intersection = grahamConvexHull<2>(points);
         assert(!intersection.empty());
         return true;
     }
@@ -921,7 +921,7 @@ public:
         if (points.size() < 3) return false;
 
         // intersection polygon is convex hull of above points
-        intersection = grahamConvexHull2d3d(points);
+        intersection = grahamConvexHull<2>(points);
         assert(!intersection.empty());
 
         return true;
