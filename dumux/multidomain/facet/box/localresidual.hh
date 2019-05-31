@@ -27,6 +27,7 @@
 
 #include <dune/geometry/type.hh>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 
@@ -109,7 +110,7 @@ public:
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, scvf);
+                auto neumannFluxes = Deprecated::neumann(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
