@@ -14,6 +14,7 @@ plotmateriallaw.hh
 plotmateriallaw3p.hh
 plotthermalconductivitymodel.hh
 pointcloudvtkwriter.hh
+rasterimagereader.hh
 restart.hh
 staggeredvtkoutputmodule.hh
 velocityoutput.hh

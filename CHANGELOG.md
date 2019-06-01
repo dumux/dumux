@@ -33,6 +33,8 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 - __Solver__ There is a new abstract base class PDESolver that is a class that does linearize & assemble, solve, update.
   The NewtonSolver now derives from this class (interface is unchanged). A new class LinearPDESolver simplifies solving linear problems
   by reducing the code in the main file and streamlining the terminal output to look like the Newton output.
+ - Added a `NetPBMReader` which allows to read simple raster images files (`*.pbm` and `*.pgm`). Can be used, e.g., with `dune-subgrid` in order to create a grid
+   from an image file.
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
