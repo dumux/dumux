@@ -1,10 +1,19 @@
-SubGridOne.Problem.Name = one
-SubGridTwo.Problem.Name = two
-SubGridThree.Problem.Name = three
-
-[Grid]
+[External.Grid]
 Positions0 = 0 1
 Positions1 = 0 1
 Cells0 = 1
 Cells1 = 1
 Refinement = 4
+
+[Internal.Grid]
+Positions0 = 0 1
+Positions1 = 0 1
+Cells0 = 1
+Cells1 = 1
+Refinement = 4
+
+[Image.Grid]
+LowerLeft = 1 1
+UpperRight = 5 2
+Cells = 100 25
+Image = grids/dumux_binary.pbm
