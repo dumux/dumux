@@ -114,18 +114,21 @@ public:
      */
     static Format getFormat(const std::string& magicNumber)
     {
-        std::map<std::string, Format> format;
-        format["P1"] = Format{"P1", "Portable BitMap", "ASCII"};
-        format["P2"] = Format{"P2", "Portable GrayMap", "ASCII"};
-        format["P3"] = Format{"P3", "Portable PixMap", "ASCII"};
-        format["P4"] = Format{"P4", "Portable BitMap", "binary"};
-        format["P5"] = Format{"P5", "Portable GrayMap", "binary"};
-        format["P5"] = Format{"P5", "Portable PixMap", "binary"};
+        static const auto format = []{
+            std::map<std::string, Format> format;
+            format["P1"] = Format{"P1", "Portable BitMap", "ASCII"};
+            format["P2"] = Format{"P2", "Portable GrayMap", "ASCII"};
+            format["P3"] = Format{"P3", "Portable PixMap", "ASCII"};
+            format["P4"] = Format{"P4", "Portable BitMap", "binary"};
+            format["P5"] = Format{"P5", "Portable GrayMap", "binary"};
+            format["P5"] = Format{"P5", "Portable PixMap", "binary"};
+            return format;
+        }();
 
         if (!format.count(magicNumber))
             DUNE_THROW(Dune::IOError, magicNumber << " is not a valid magic number for the Netpbm format");
 
-        return format[magicNumber];
+        return format.at(magicNumber);
     }
 
     /*!
