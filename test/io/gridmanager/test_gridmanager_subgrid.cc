@@ -26,12 +26,9 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
-#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/grid/subgridmanager.hh>
-#include <dumux/discretization/method.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
 
 /*!
  * \brief A method providing an () operator in order to select elements for a subgrid.
@@ -70,6 +67,7 @@ int main(int argc, char** argv) try
 
     Dune::Timer timer;
     using HostGrid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<double, dim> >;
+    using SubGridTensor = Dune::SubGrid<dim, HostGrid>;
 
     using HostGridManager = Dumux::GridManager<HostGrid>;
     HostGridManager externalHostGridManager;
@@ -109,9 +107,9 @@ int main(int argc, char** argv) try
             return element.geometry().center()[0] > center[0];
         };
 
-        SubgridManager<HostGrid> subgridManager;
+        Dumux::GridManager<SubGridTensor> subgridManager;
         subgridManager.init(hostGrid, elementSelector);
-        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("subgrid_one");
     }
     {
@@ -122,9 +120,9 @@ int main(int argc, char** argv) try
         // Of course, a lambda would be possible here, too.
         CircleSelector<GlobalPosition> elementSelector(center);
 
-        SubgridManager<HostGrid> subgridManager;
+        Dumux::GridManager<Dune::SubGrid<2, HostGrid>> subgridManager;
         subgridManager.init(hostGrid, elementSelector);
-        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("subgrid_three");
     }
 
@@ -138,16 +136,17 @@ int main(int argc, char** argv) try
             return element.geometry().center()[0] < center[0];
         };
 
-        SubgridManager<HostGrid, HostGridManager> subgridManager;
+        Dumux::GridManager<Dune::SubGrid<2, HostGrid>> subgridManager;
         subgridManager.init(elementSelector, "Internal");
-        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("subgrid_two");
     }
 
     // create subgrid from image file
     {
         std::cout << "Constructing SubGrid from binary image" << std::endl;
-        using GridManager = SubgridManager<Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>>;
+        using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
+        using GridManager = Dumux::GridManager<Dune::SubGrid<2, HostGrid>>;
         GridManager subgridManager; subgridManager.init("Image");
         Dune::VTKWriter<GridManager::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("subgrid_binary_image");
