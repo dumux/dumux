@@ -20,17 +20,15 @@
  */
 #include <config.h>
 #include <iostream>
+#include <cmath>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
-#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/grid/subgridmanager.hh>
-#include <dumux/discretization/method.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
 
 /*!
  * \brief A method providing an () operator in order to select elements for a subgrid.
@@ -48,7 +46,7 @@ public:
         const auto x = element.geometry().center()[0];
         const auto y = element.geometry().center()[1];
         const double radius = 0.3;
-        return std::sqrt((x - center_[0])*(x - center_[0]) + (y - center_[1])*(y - center_[1])) < radius;
+        return std::hypot(x-center_[0], y-center_[1]) < radius;
     }
 private:
     const GlobalPosition center_;
@@ -69,11 +67,12 @@ int main(int argc, char** argv) try
 
     Dune::Timer timer;
     using HostGrid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<double, dim> >;
+    using SubGridTensor = Dune::SubGrid<dim, HostGrid>;
 
     using HostGridManager = Dumux::GridManager<HostGrid>;
-    HostGridManager hostGridManager;
-    hostGridManager.init();
-    auto& hostGrid = hostGridManager.grid();
+    HostGridManager externalHostGridManager;
+    externalHostGridManager.init("External");
+    auto& hostGrid = externalHostGridManager.grid();
 
     // Calculate the bounding box of the host grid view.
     GlobalPosition bBoxMin(std::numeric_limits<double>::max());
@@ -92,58 +91,79 @@ int main(int argc, char** argv) try
     // Get the center of the hostgrid's domain.
     const GlobalPosition center{bBoxMin[0]+0.5*bBoxMax[0], bBoxMin[1]+0.5*bBoxMax[1]};
 
-    // Select all elements right of the center.
-    auto elementSelectorOne = [&center](const auto& element)
-    {
-        return element.geometry().center()[0] > center[0];
-    };
-
-    // Select all elements left of the center.
-    auto elementSelectorTwo = [&center](const auto& element)
-    {
-        return element.geometry().center()[0] < center[0];
-    };
-
-    // Select all elements within a circle around the center.
-    // Instead of a lambda, we use a class providing an () operator.
-    // Of course, a lambda would be possible here, too.
-    CircleSelector<GlobalPosition> elementSelectorThree(center);
-
-    // Create three different subgrids from the same hostgrid.
-    auto subgridPtrOne = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorOne);
-    auto subgridPtrTwo = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorTwo);
-    auto subgridPtrThree = SubgridManager<HostGrid>::makeGrid(hostGrid, elementSelectorThree);
-
-    std::cout << "Constructing a host grid and three subgrids took "  << timer.elapsed() << " seconds.\n";
-
     // Write out the host grid and the subgrids.
     {
         Dune::VTKWriter<HostGrid::LeafGridView> vtkWriter(hostGrid.leafGridView());
         vtkWriter.write("hostgrid");
     }
+
+    // Create different subgrids from the same hostgrid
     {
-        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridPtrOne->leafGridView());
+        std::cout << "Constructing SubGrid with tensor host grid and lambda element selector" << std::endl;
+
+        // Select all elements right of the center.
+        auto elementSelector = [&center](const auto& element)
+        {
+            return element.geometry().center()[0] > center[0];
+        };
+
+        Dumux::GridManager<SubGridTensor> subgridManager;
+        subgridManager.init(hostGrid, elementSelector);
+        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("subgrid_one");
     }
     {
-        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridPtrTwo->leafGridView());
-        vtkWriter.write("subgrid_two");
-    }
-    {
-        Dune::VTKWriter<SubgridManager<HostGrid>::Grid::LeafGridView> vtkWriter(subgridPtrThree->leafGridView());
+        std::cout << "Constructing SubGrid with tensor host grid and functor selector" << std::endl;
+
+        // Select all elements within a circle around the center.
+        // Instead of a lambda, we use a class providing an () operator.
+        // Of course, a lambda would be possible here, too.
+        CircleSelector<GlobalPosition> elementSelector(center);
+
+        Dumux::GridManager<Dune::SubGrid<2, HostGrid>> subgridManager;
+        subgridManager.init(hostGrid, elementSelector);
+        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("subgrid_three");
     }
+
+    // create without contructing host grid first
+    {
+        std::cout << "Constructing SubGrid from lambda without specifying host grid" << std::endl;
+
+        // Select all elements left of the center.
+        auto elementSelector = [&center](const auto& element)
+        {
+            return element.geometry().center()[0] < center[0];
+        };
+
+        Dumux::GridManager<Dune::SubGrid<2, HostGrid>> subgridManager;
+        subgridManager.init(elementSelector, "Internal");
+        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        vtkWriter.write("subgrid_two");
+    }
+
+    // create subgrid from image file
+    {
+        std::cout << "Constructing SubGrid from binary image" << std::endl;
+        using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
+        using GridManager = Dumux::GridManager<Dune::SubGrid<2, HostGrid>>;
+        GridManager subgridManager; subgridManager.init("Image");
+        Dune::VTKWriter<GridManager::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        vtkWriter.write("subgrid_binary_image");
+    }
+
+    std::cout << "Constructing a host grid and four subgrids took "  << timer.elapsed() << " seconds.\n";
 
     return 0;
 }
 ///////////////////////////////////////
 //////// Error handler ////////////////
 ///////////////////////////////////////
-catch (Dumux::ParameterException &e) {
+catch (const Dumux::ParameterException& e) {
     std::cerr << e << ". Abort!\n";
     return 1;
 }
-catch (Dune::Exception &e) {
+catch (const Dune::Exception& e) {
     std::cerr << "Dune reported error: " << e << std::endl;
     return 3;
 }

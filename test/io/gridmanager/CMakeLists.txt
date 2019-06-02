@@ -35,7 +35,9 @@ dune_add_test(NAME test_gridmanager_subgrid
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_subgrid"
                        --files ${CMAKE_SOURCE_DIR}/test/references/subgrid-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/subgrid_three.vtu)
+                               ${CMAKE_CURRENT_BINARY_DIR}/subgrid_three.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_subgrid_binary_image.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/subgrid_binary_image.vtu)
 
 dune_symlink_to_source_files(FILES "test_gridmanager_gmsh_3d.input"
                                    "test_gridmanager_gmsh_e_markers.input"
