@@ -11,5 +11,6 @@ gridmanager_ug.hh
 gridmanager_alu.hh
 gridmanager_foam.hh
 gridmanager_sp.hh
+gridmanager_sub.hh
 subgridmanager.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io/grid)
