@@ -5,6 +5,7 @@
 
 #include <dune/functions/functionspacebases/interpolate.hh>
 #include <dune/functions/functionspacebases/lagrangebasis.hh>
+#include <dune/functions/functionspacebases/powerbasis.hh>
 #include <dune/functions/gridfunctions/analyticgridviewfunction.hh>
 #include <dune/functions/gridfunctions/discreteglobalbasisfunction.hh>
 
@@ -37,10 +38,11 @@ int main (int argc, char *argv[]) try
     const auto gvCoarse = gridManagerCoarse.grid().leafGridView();
 
     // get some types
-    using R = Dune::FieldVector<double, 1>;
+    using R = Dune::FieldVector<double, 2>;
     using SolutionVector = Dune::BlockVector<R>;
     using GridView = Grid::LeafGridView;
     using namespace Dune::Functions;
+    using namespace Dune::Functions::BasisFactory;
     using P2 = LagrangeBasis<GridView, 2>;
 
     // construct glue, any grid geometry should be fine here
@@ -48,21 +50,24 @@ int main (int argc, char *argv[]) try
     auto glue = makeGlue(ggFine, ggCoarse);
 
     // a quadratic function on the grid
-    auto f = [](const auto& pos){ return pos.two_norm2(); };
+    auto f = [&] (const auto& pos) -> R { return {pos.two_norm2(), pos[0]*pos[0]*pos[1]}; };
 
     // make bases
-    P2 basisCoarse(gvCoarse), basisFine(gvFine);
     SolutionVector solCoarse, solFine;
-    interpolate(basisCoarse, solCoarse, f);
-    interpolate(basisFine, solFine, f);
+    interpolate(makeBasis(gvCoarse, power<2>(lagrange<2>())), solCoarse, f);
+    interpolate(makeBasis(gvFine, power<2>(lagrange<2>())), solFine, f);
+
+    P2 basisCoarse(gvCoarse), basisFine(gvFine);
     auto gfCoarse = makeDiscreteGlobalBasisFunction<R>(basisCoarse, solCoarse);
     auto gfFine = makeDiscreteGlobalBasisFunction<R>(basisFine, solFine);
 
     // project fine discrete function onto coarse grid and convert back to grid function
     const auto projector = Dumux::makeProjector(basisFine, basisCoarse, glue);
-    SolutionVector solCoarse2;
-    projector.project(solFine, solCoarse2);
-    auto gfCoarse2 = makeDiscreteGlobalBasisFunction<R>(basisCoarse, solCoarse);
+    auto params = projector.defaultParams();
+    params.residualReduction = 1e-16;
+
+    auto solCoarse2 = projector.project(solFine, params);
+    auto gfCoarse2 = makeDiscreteGlobalBasisFunction<R>(basisCoarse, solCoarse2);
 
     // check that these functions are identical and that they exactly represent the analytical function
     auto l2norm = Dumux::integrateL2Error(gvCoarse, gfCoarse, gfCoarse2, 3);
@@ -75,15 +80,16 @@ int main (int argc, char *argv[]) try
 
     // check the FV-style interface of integrateL2Error
     Dumux::BoxFVGridGeometry<double, GridView> ggBoxCoarse(gvCoarse), ggBoxFine(gvFine);
-    auto p1BasisCoarse = Dumux::getFunctionSpaceBasis(ggBoxCoarse);
-    auto p1BasisFine = Dumux::getFunctionSpaceBasis(ggBoxFine);
-    auto f2 = [](const auto& pos){ return pos[0]; };
-    interpolate(p1BasisFine, solFine, f2);
-    interpolate(p1BasisCoarse, solCoarse, f2);
+    auto f2 = [&] (const auto& pos) -> R { return {pos[0] + pos[1], pos[0]*pos[1]}; };
+
+    interpolate(makeBasis(gvFine, power<2>(lagrange<1>())), solFine, f2);
+    interpolate(makeBasis(gvCoarse, power<2>(lagrange<1>())), solCoarse, f2);
 
     // project fine discrete function onto coarse grid
+    auto p1BasisCoarse = Dumux::getFunctionSpaceBasis(ggBoxCoarse);
+    auto p1BasisFine = Dumux::getFunctionSpaceBasis(ggBoxFine);
     const auto projector2 = Dumux::makeProjector(p1BasisFine, p1BasisCoarse, glue);
-    projector2.project(solFine, solCoarse2);
+    solCoarse2 = projector2.project(solFine, params);
 
     l2norm = Dumux::integrateL2Error(ggBoxCoarse, solCoarse, solCoarse2, 3);
     if (l2norm > 1e-14)
