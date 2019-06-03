@@ -59,23 +59,6 @@ static constexpr bool hasLocalFunction()
 
 template<class Error,
          typename std::enable_if_t<IsIndexable<Error>::value, int> = 0>
-auto localErrorSqrImpl(const Error& error)
-{
-    Error sqr = error; sqr = 0.0;
-    for (int i = 0; i < sqr.size(); ++i)
-        sqr[i] += error[i]*error[i];
-    return sqr;
-}
-
-template<class Error,
-         typename std::enable_if_t<!IsIndexable<Error>::value, int> = 0>
-auto localErrorSqrImpl(const Error& error)
-{
-    return error*error;
-}
-
-template<class Error,
-         typename std::enable_if_t<IsIndexable<Error>::value, int> = 0>
 Error sqrtNorm(const Error& error)
 {
     using std::sqrt;
@@ -123,11 +106,10 @@ auto integrateGridFunction(const GridGeometry& gg,
                            SolutionVector&& sol,
                            std::size_t order)
 {
-    using PrimaryVariables = std::decay_t<decltype(sol[0])>;
     using GridView = typename GridGeometry::GridView;
-    using Scalar = typename Impl::FieldType<PrimaryVariables>;
+    using Scalar = typename Impl::FieldType< std::decay_t<decltype(sol[0])> >;
 
-    PrimaryVariables integral = 0.0;
+    Scalar integral(0.0);
     for (const auto& element : elements(gg.gridView()))
     {
         const auto elemSol = elementSolution(element, sol, gg);
@@ -158,11 +140,10 @@ auto integrateL2Error(const GridGeometry& gg,
                       const Sol2& sol2,
                       std::size_t order)
 {
-    using PrimaryVariables = std::decay_t<decltype(sol1[0])>;
     using GridView = typename GridGeometry::GridView;
-    using Scalar = typename Impl::FieldType<PrimaryVariables>;
+    using Scalar = typename Impl::FieldType< std::decay_t<decltype(sol1[0])> >;
 
-    PrimaryVariables l2norm = 0.0;
+    Scalar l2norm(0.0);
     for (const auto& element : elements(gg.gridView()))
     {
         const auto elemSol1 = elementSolution(element, sol1, gg);
@@ -176,13 +157,12 @@ auto integrateL2Error(const GridGeometry& gg,
             const auto value1 = evalSolution(element, geometry, gg, elemSol1, globalPos);
             const auto value2 = evalSolution(element, geometry, gg, elemSol2, globalPos);
             const auto error = (value1 - value2);
-            auto value = Impl::localErrorSqrImpl(error);
-            value *= qp.weight()*geometry.integrationElement(qp.position());
-            l2norm += value;
+            l2norm += (error*error)*qp.weight()*geometry.integrationElement(qp.position());
         }
     }
 
-    return Impl::sqrtNorm(l2norm);
+    using std::sqrt;
+    return sqrt(l2norm);
 }
 
 #if HAVE_DUNE_FUNCTIONS
@@ -204,10 +184,9 @@ auto integrateGridFunction(const GridView& gv,
 
     using Element = typename GridView::template Codim<0>::Entity;
     using LocalPosition = typename Element::Geometry::LocalCoordinate;
-    using PrimaryVariables = std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))>;
-    using Scalar = typename Impl::FieldType<PrimaryVariables>;
+    using Scalar = typename Impl::FieldType< std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))> >;
 
-    PrimaryVariables integral = 0.0;
+    Scalar integral(0.0);
     for (const auto& element : elements(gv))
     {
         fLocal.bind(element);
@@ -247,10 +226,9 @@ auto integrateL2Error(const GridView& gv,
 
     using Element = typename GridView::template Codim<0>::Entity;
     using LocalPosition = typename Element::Geometry::LocalCoordinate;
-    using PrimaryVariables = std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))>;
-    using Scalar = typename Impl::FieldType<PrimaryVariables>;
+    using Scalar = typename Impl::FieldType< std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))> >;
 
-    PrimaryVariables l2norm = 0.0;
+    Scalar l2norm(0.0);
     for (const auto& element : elements(gv))
     {
         fLocal.bind(element);
@@ -261,16 +239,15 @@ auto integrateL2Error(const GridView& gv,
         for (auto&& qp : quad)
         {
             const auto error = fLocal(qp.position()) - gLocal(qp.position());
-            auto value = Impl::localErrorSqrImpl(error);
-            value *= qp.weight()*geometry.integrationElement(qp.position());
-            l2norm += value;
+            l2norm += (error*error)*qp.weight()*geometry.integrationElement(qp.position());
         }
 
         gLocal.unbind();
         fLocal.unbind();
     }
 
-    return Impl::sqrtNorm(l2norm);
+    using std::sqrt;
+    return sqrt(l2norm);
 }
 #endif
 
