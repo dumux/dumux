@@ -287,7 +287,7 @@ public:
         {
             const auto eIdx = scvf.insideScvIdx();
             // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
-            const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+            const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
             // create a boundaryTypes object (will be empty if not at a boundary)
             Dune::Std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
@@ -298,7 +298,7 @@ public:
             {
                 // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                 // the sub faces's center.
-                auto lateralBoundaryFaceCenter = scvf.pairData(localSubFaceIdx).virtualBoundaryFaceDofPos + lateralFace.center();
+                auto lateralBoundaryFaceCenter = scvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter + lateralScvf.center();
                 lateralBoundaryFaceCenter *= 0.5;
 
                 //    ________________
@@ -310,7 +310,7 @@ public:
                 //    |      ||      |                 o  position at which the boundary conditions will be evaluated
                 //    ----------------                    (lateralBoundaryFaceCenter)
 
-                const auto lateralBoundaryFace = lateralFace.makeBoundaryFace(lateralBoundaryFaceCenter);
+                const auto lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralBoundaryFaceCenter);
 
                 // Retrieve the boundary types that correspond to the sub face.
                 lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, lateralBoundaryFace));
@@ -324,7 +324,7 @@ public:
                 if (lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                                                  * elemVolVars[lateralFace.insideScvIdx()].extrusionFactor() * lateralFace.area() * 0.5;
+                                                  * elemVolVars[lateralScvf.insideScvIdx()].extrusionFactor() * lateralScvf.area() * 0.5;
                     continue;
                 }
 
@@ -457,7 +457,7 @@ private:
         {
             // Create a boundaryTypes object (will be empty if not at a boundary).
             Dune::Std::optional<BoundaryTypes> bcTypes;
-            const auto& boundaryFace = scvf.makeBoundaryFace(scvf.pairData(localSubFaceIdx).virtualBoundaryFaceDofPos);
+            const auto& boundaryFace = scvf.makeBoundaryFace(scvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter);
 
             // Get the boundary conditions if we are at a boundary.
             if (scvf.boundary())
@@ -612,7 +612,7 @@ private:
         //    |      ||      |                 o  position at which the boundary conditions will be evaluated
         //    ----------------
 
-        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualBoundaryFaceDofPos);
+        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter);
     };
 
     //! helper function to get the averaged extrusion factor for a face
