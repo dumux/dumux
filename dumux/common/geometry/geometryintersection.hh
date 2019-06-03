@@ -534,38 +534,45 @@ public:
             if (intersectsPointGeometry(geo1.corner(i), geo2))
                 points.emplace_back(geo1.corner(i));
 
-        // add polygon2 corners that are inside polygon1
-        for (int i = 0; i < geo2.corners(); ++i)
-            if (intersectsPointGeometry(geo2.corner(i), geo1))
-                points.emplace_back(geo2.corner(i));
-
-        if (points.empty())
-            return false;
-
-        const auto referenceElement1 = ReferenceElementsGeo1::general(geo1.type());
-        const auto referenceElement2 = ReferenceElementsGeo2::general(geo2.type());
-
-        // add intersections of edges
-        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
-        using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
-        for (int i = 0; i < referenceElement1.size(dim1-1); ++i)
+        const auto numPoints1 = points.size();
+        if (numPoints1 != geo1.corners())
         {
-            const auto localEdgeGeom1 = referenceElement1.template geometry<dim1-1>(i);
-            const auto edge1 = SegGeometry( Dune::GeometryTypes::line,
-                                            std::vector<Point>( {geo1.global(localEdgeGeom1.corner(0)),
-                                                                 geo1.global(localEdgeGeom1.corner(1))} ));
+            // add polygon2 corners that are inside polygon1
+            for (int i = 0; i < geo2.corners(); ++i)
+                if (intersectsPointGeometry(geo2.corner(i), geo1))
+                    points.emplace_back(geo2.corner(i));
 
-            for (int j = 0; j < referenceElement2.size(dim2-1); ++j)
+            if (points.empty())
+                return false;
+
+            if (points.size() - numPoints1 != geo2.corners())
             {
-                const auto localEdgeGeom2 = referenceElement2.template geometry<dim2-1>(j);
-                const auto edge2 = SegGeometry( Dune::GeometryTypes::line,
-                                                std::vector<Point>( {geo2.global(localEdgeGeom2.corner(0)),
-                                                                     geo2.global(localEdgeGeom2.corner(1))} ));
+                const auto referenceElement1 = ReferenceElementsGeo1::general(geo1.type());
+                const auto referenceElement2 = ReferenceElementsGeo2::general(geo2.type());
 
-                using EdgeTest = GeometryIntersection<SegGeometry, SegGeometry, PointPolicy>;
-                typename EdgeTest::Intersection edgeIntersection;
-                if (EdgeTest::intersection(edge1, edge2, edgeIntersection))
-                    points.emplace_back(edgeIntersection);
+                // add intersections of edges
+                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+                using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
+                for (int i = 0; i < referenceElement1.size(dim1-1); ++i)
+                {
+                    const auto localEdgeGeom1 = referenceElement1.template geometry<dim1-1>(i);
+                    const auto edge1 = SegGeometry( Dune::GeometryTypes::line,
+                                                    std::vector<Point>( {geo1.global(localEdgeGeom1.corner(0)),
+                                                                         geo1.global(localEdgeGeom1.corner(1))} ));
+
+                    for (int j = 0; j < referenceElement2.size(dim2-1); ++j)
+                    {
+                        const auto localEdgeGeom2 = referenceElement2.template geometry<dim2-1>(j);
+                        const auto edge2 = SegGeometry( Dune::GeometryTypes::line,
+                                                        std::vector<Point>( {geo2.global(localEdgeGeom2.corner(0)),
+                                                                             geo2.global(localEdgeGeom2.corner(1))} ));
+
+                        using EdgeTest = GeometryIntersection<SegGeometry, SegGeometry, PointPolicy>;
+                        typename EdgeTest::Intersection edgeIntersection;
+                        if (EdgeTest::intersection(edge1, edge2, edgeIntersection))
+                            points.emplace_back(edgeIntersection);
+                    }
+                }
             }
         }
 
