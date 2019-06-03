@@ -45,7 +45,7 @@ class ShallowWaterFluxVariables
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
-    //using DiffusionType = GetPropType<TypeTag, Properties::DiffusionType>;
+    using DiffusionType = GetPropType<TypeTag, Properties::DiffusionType>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
@@ -88,9 +88,9 @@ public:
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolumeFace& scvf) const
     {
-        // TODO: add diffusive flux (e.g. tracer and viscosity)
+        // Add diffusive flux (e.g. tracer and viscosity)
         if (enableDiffusion)
-            return NumEqVector(0.0);
+            return DiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
 
         return NumEqVector(0.0);
     }

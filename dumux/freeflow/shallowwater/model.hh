@@ -66,6 +66,7 @@
 #include <dumux/common/properties/model.hh>
 
 #include <dumux/flux/shallowwaterflux.hh>
+#include <dumux/flux/shallowwaterdiffusiveflux.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include "localresidual.hh"
@@ -91,7 +92,7 @@ struct ShallowWaterModelTraits
     static constexpr bool enableAdvection() { return true; }
 
     //! Enable diffusion
-    static constexpr bool enableDiffusion() { return false; }
+    static constexpr bool enableDiffusion() { return true; }
 };
 
 /*!
@@ -160,7 +161,9 @@ template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::ShallowWater>
 { using type = ShallowWaterFlux< GetPropType<TypeTag, Properties::NumEqVector> >; };
 
-//template<class TypeTag> struct DiffusionType<TypeTag, TTag::ShallowWater> {using type = ShallowWaterExactRiemannSolver<TypeTag>;};
+template<class TypeTag>
+struct DiffusionType<TypeTag, TTag::ShallowWater>
+{ using type = ShallowWaterDiffusiveFlux< GetPropType<TypeTag, Properties::NumEqVector> >; };
 
 } // end properties
 } // end namespace Dumux
