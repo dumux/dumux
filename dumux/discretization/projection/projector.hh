@@ -55,14 +55,23 @@ namespace Dumux {
  *        into another. The convenience functions makeProjectorPair
  *        or makeProjector can be used to create such a projection.
  */
-template<class Scalar>
+template<class ScalarType>
 class Projector
 {
-    using BlockType = Dune::FieldMatrix<Scalar, 1, 1>;
+    using BlockType = Dune::FieldMatrix<ScalarType, 1, 1>;
 
 public:
+    //! Export the scalar type
+    using Scalar = ScalarType;
     //! Export the type of the projection matrices
     using Matrix = Dune::BCRSMatrix< BlockType >;
+
+    //! Parameters that can be passed to project()
+    struct Params
+    {
+        std::size_t maxIterations{100};
+        Scalar residualReduction{1e-13};
+    };
 
     //! delete default constructor
     Projector() = delete;
@@ -83,7 +92,7 @@ public:
      * \param up The projection of u into the target space
      */
     template< class DomainSolution, class TargetSolution>
-    void project(const DomainSolution& u, TargetSolution& up) const
+    void project(const DomainSolution& u, TargetSolution& up, const Params& params = Params{}) const
     {
         // be picky about size of u
         if ( u.size() != projMat_.M())
@@ -95,8 +104,16 @@ public:
         projMat_.mv(u, rhs);
 
         SSORCGBackend solver;
+        solver.setResidualReduction(params.residualReduction);
+        solver.setMaxIter(params.maxIterations);
         solver.solve(massMat_, up, rhs);
     }
+
+    /*!
+     * \brief Returns the default parameters.
+     */
+    static Params defaultParams()
+    { return {}; }
 
 private:
     Matrix massMat_;
