@@ -222,8 +222,16 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
             // mass matrix entries target domain
             for (unsigned int i = 0; i < targetLocalBasis.size(); ++i)
             {
-                const auto dofIdx = targetLocalView.index(i);
-                forwardM[dofIdx][dofIdx] += ie*weight*targetShapeVals[i];
+                const auto dofIdxI = targetLocalView.index(i);
+                forwardM[dofIdxI][dofIdxI] += ie*weight*targetShapeVals[i]*targetShapeVals[i];
+
+                for (unsigned int j = i+1; j < targetLocalBasis.size(); ++j)
+                {
+                    const auto dofIdxJ = targetLocalView.index(j);
+                    const auto value = ie*weight*targetShapeVals[i]*targetShapeVals[j];
+                    forwardM[dofIdxI][dofIdxJ] += value;
+                    forwardM[dofIdxJ][dofIdxI] += value;
+                }
             }
 
             // If targetDim < domainDim, there can be several "neighbors" if
@@ -246,7 +254,17 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
                     const auto dofIdxDomain = domainLocalView.index(i);
                     const auto domainShapeVal = domainShapeVals[i];
                     if (doBidirectional)
-                        backwardM[dofIdxDomain][dofIdxDomain] += ie*weight*domainShapeVal;
+                    {
+                        backwardM[dofIdxDomain][dofIdxDomain] += ie*weight*domainShapeVal*domainShapeVal;
+
+                        for (unsigned int j = i+1; j < domainLocalBasis.size(); ++j)
+                        {
+                            const auto dofIdxDomainJ = domainLocalView.index(j);
+                            const auto value = ie*weight*domainShapeVal*domainShapeVals[j];
+                            backwardM[dofIdxDomain][dofIdxDomainJ] += value;
+                            backwardM[dofIdxDomainJ][dofIdxDomain] += value;
+                        }
+                    }
 
                     for (unsigned int j = 0; j < targetLocalBasis.size(); ++j)
                     {
