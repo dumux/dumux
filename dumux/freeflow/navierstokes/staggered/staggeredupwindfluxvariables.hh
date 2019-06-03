@@ -426,7 +426,7 @@ private:
                 momenta[2] = faceVars.velocityParallel(localSubFaceIdx, 1) * outsideVolVars.density();
             else
             {
-                const Element& elementParallel = fvGeometry.fvGridGeometry().element(fvGeometry.scv(lateralFace.outsideScvIdx()));
+                const Element& elementParallel = fvGeometry.fvGridGeometry().element(lateralFace.outsideScvIdx());
                 const SubControlVolumeFace& firstParallelScvf = fvGeometry.scvf(lateralFace.outsideScvIdx(), ownScvf.localFaceIdx());
                 momenta[2] = getParallelVelocityFromOtherBoundary_(problem, fvGeometry, firstParallelScvf,
                                                                    localSubFaceIdx, elementParallel,
@@ -626,8 +626,8 @@ private:
                                                         const Scalar parallelVelocity)
     {
         // A ghost subface at the boundary is created, featuring the location of the sub face's center
-        const SubControlVolumeFace& lateralFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localLateralFaceIdx);
-        GlobalPosition lateralBoundaryFaceCenter = scvf.pairData(localIdx).virtualBoundaryFaceDofPos + lateralFace.center();
+        const SubControlVolumeFace& lateralScvf = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localLateralFaceIdx);
+        GlobalPosition lateralBoundaryFaceCenter = scvf.pairData(localIdx).lateralStaggeredFaceCenter + lateralScvf.center();
         lateralBoundaryFaceCenter *= 0.5;
 
         //    ________________
@@ -639,7 +639,7 @@ private:
         //    |      ||      |                 o  position at which the boundary conditions will be evaluated
         //    ----------------                    (lateralBoundaryFaceCenter)
 
-        const SubControlVolumeFace lateralBoundaryFace = lateralFace.makeBoundaryFace(lateralBoundaryFaceCenter);
+        const SubControlVolumeFace lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralBoundaryFaceCenter);
 
         // The boundary condition is checked, in case of symmetry or Dirichlet for the pressure
         // a gradient of zero is assumed in the direction normal to the bounadry, while if there is
@@ -665,7 +665,7 @@ private:
         else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
         {
             const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-            return problem.bjsVelocity(boundaryElement, scv, lateralFace, parallelVelocity);
+            return problem.bjsVelocity(boundaryElement, scv, lateralScvf, parallelVelocity);
         }
         else
         {
@@ -677,7 +677,7 @@ private:
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
     static SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx)
     {
-        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).virtualBoundaryFaceDofPos);
+        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter);
     };
 };
 
