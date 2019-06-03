@@ -60,7 +60,7 @@ public:
      * \return true if key exists in structure, otherwise false
      */
     bool hasKey(const std::string& key) const
-    { return params_.hasKey(key) || defaultParams_.hasKey(key); }
+    { return params_.hasKey(key); }
 
     /** \brief test for key in group
      *
@@ -87,10 +87,6 @@ public:
             return true;
 
         compoundKey = findKeyInGroup(params_, key, groupPrefix);
-        if (compoundKey != "")
-            return true;
-
-        compoundKey = findKeyInGroup(defaultParams_, key, groupPrefix);
         if (compoundKey != "")
             return true;
 
