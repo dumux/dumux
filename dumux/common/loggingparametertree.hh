@@ -60,8 +60,42 @@ public:
      * \return true if key exists in structure, otherwise false
      */
     bool hasKey(const std::string& key) const
-    { return params_.hasKey(key); }
+    { return params_.hasKey(key) || defaultParams_.hasKey(key); }
 
+    /** \brief test for key in group
+     *
+     * Tests whether given key exists in a group.
+     * Given a group this function starts to look from the back
+     *       for dots. In G1.G2.G3 the function first looks if the key
+     *       "G3.Key" exists, then "G2.Key", ...
+     *
+     * \param key key name
+     * \param groupPrefix the group prefix name
+     * \return true if key exists in structure, otherwise false
+     */
+    bool hasKeyInGroup(const std::string& key,
+                       const std::string& groupPrefix) const
+    {
+        if (groupPrefix == "")
+            return hasKey(key);
+
+        if (hasKey(key))
+            return true;
+
+        auto compoundKey = groupPrefix + "." + key;
+        if (params_.hasKey(compoundKey) || defaultParams_.hasKey(compoundKey))
+            return true;
+
+        compoundKey = findKeyInGroup(params_, key, groupPrefix);
+        if (compoundKey != "")
+            return true;
+
+        compoundKey = findKeyInGroup(defaultParams_, key, groupPrefix);
+        if (compoundKey != "")
+            return true;
+
+        return false;
+    }
 
     /** \brief print the hierarchical parameter tree to stream
      *
