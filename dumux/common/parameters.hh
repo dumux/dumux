@@ -117,9 +117,7 @@ public:
 
         // parse paramters from the command line
         const auto commandLineArgs = parseCommandLine(argc, argv);
-        for (const auto& key : commandLineArgs.getValueKeys())
-            if (key != "ParameterFile")
-                paramTree_()[key] = commandLineArgs[key];
+        mergeTree_(paramTree_(), commandLineArgs);
 
         // overwrite parameter file if one was specified on the command line
         parameterFileName = commandLineArgs.get<std::string>("ParameterFile", parameterFileName);
@@ -226,13 +224,13 @@ public:
     //! Parse command line arguments into a parameter tree
     static Dune::ParameterTree parseCommandLine(int argc, char **argv)
     {
-        Dune::ParameterTree commandLineTree;
+        Dune::ParameterTree commandLineArgs;
         for (int i = 1; i < argc; ++i)
         {
             if (argv[i][0] != '-' && i == 1)
             {
                 // try to pass first argument as parameter file
-                commandLineTree["ParameterFile"] = argv[1];
+                commandLineArgs["ParameterFile"] = argv[1];
                 continue;
             }
 
@@ -245,7 +243,7 @@ public:
             // check for the ParameterFile argument
             if (argv[i]+1 == std::string("ParameterFile")) // +1 removes the '-'
             {
-                commandLineTree["ParameterFile"] = argv[i+1];
+                commandLineArgs["ParameterFile"] = argv[i+1];
                 ++i;
             }
 
@@ -258,10 +256,10 @@ public:
                 ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
 
                 // Put the key=value pair into the parameter tree
-                commandLineTree[paramName] = paramValue;
+                commandLineArgs[paramName] = paramValue;
             }
         }
-        return commandLineTree;
+        return commandLineArgs;
     }
 
     DUNE_DEPRECATED_MSG("parseCommandLineArguments is deprecated and will be removed after 3.1")
@@ -387,6 +385,22 @@ private:
 
         // parameters in the mpfa group
         params["Mpfa.Q"] = "0.0";
+    }
+
+    //! merge source into target tree
+    static void mergeTree_(Dune::ParameterTree& target, const Dune::ParameterTree& source, bool overwrite = true)
+    { mergeTreeImpl_(target, source, overwrite, ""); }
+
+    //! recursively merge all elements
+    static void mergeTreeImpl_(Dune::ParameterTree& target, const Dune::ParameterTree& source, bool overwrite, const std::string& prefix)
+    {
+        for (const auto& key : source.getValueKeys())
+            if (overwrite || !target.hasKey(key))
+                target[prefix + "." + key] = source[key];
+
+        const auto nextPrefix = prefix == "" ? "" : prefix + ".";
+        for (const auto& subKey : source.getSubKeys())
+            mergeTreeImpl_(target, source.sub(subKey), overwrite, nextPrefix + subKey);
     }
 
     // be friends with the accesors
