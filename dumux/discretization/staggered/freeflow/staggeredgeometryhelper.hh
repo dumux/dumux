@@ -57,7 +57,7 @@ struct PairData
     std::pair<GridIndexType, GridIndexType> lateralPair;
     SmallLocalIndexType localLateralFaceIdx;
     Scalar lateralDistance;
-    GlobalPosition virtualBoundaryFaceDofPos;
+    GlobalPosition lateralStaggeredFaceCenter;
 };
 
 
@@ -370,6 +370,10 @@ private:
             {
                 const auto innerElementIntersectionIdx = innerElementIntersection.indexInInside();
                 setLateralPairFirstInfo_(innerElementIntersectionIdx, element_, numPairInnerLateralIdx);
+
+                const auto distance = innerElementIntersection.geometry().center() - selfElementCenter;
+                pairData_[numPairInnerLateralIdx].lateralStaggeredFaceCenter = std::move(selfFacetCenter + distance);
+
                 numPairInnerLateralIdx++;
             }
         }
@@ -399,8 +403,6 @@ private:
                 if (facetIsNormal_(intersection.indexInInside(), intersection_.indexInInside()))
                 {
                     assert(!pairData_[numPairOuterLateralIdx].hasOuterLateral);
-                    const auto boundaryDistanceOffset = intersection.geometry().center() - selfElementCenter;
-                    pairData_[numPairOuterLateralIdx].virtualBoundaryFaceDofPos = std::move(boundaryDistanceOffset + selfElementCenter);
 
                     const auto normalDistanceoffset = selfFacetCenter - selfElementCenter;
                     pairData_[numPairOuterLateralIdx].lateralDistance = std::move(normalDistanceoffset.two_norm());
@@ -419,8 +421,6 @@ private:
     void fillParallelPairData_(std::false_type)
     {
         // set basic global positions and stencil size definitions
-        const auto& elementCenter = element_.geometry().center();
-
         // get the parallel Dofs
         const auto parallelLocalIdx = intersection_.indexInInside();
         SmallLocalIndexType numPairParallelIdx = 0;
@@ -438,15 +438,7 @@ private:
                     pairData_[numPairParallelIdx].parallelDofs[0] = gridView_.indexSet().subIndex(outerElement, parallelLocalIdx, codimIntersection);
                     pairData_[numPairParallelIdx].parallelCellWidths[0] = setParallelPairCellWidths_(outerElement, parallelAxisIdx);
                 }
-                else  // No parallel neighbor available
-                {
-                    // If the intersection has no neighbor we have to deal with the virtual outer parallel dof
-                    const auto& boundaryFacetCenter = intersection.geometry().center();
-                    const auto distance = boundaryFacetCenter - elementCenter;
-                    const auto virtualBoundaryFaceDofPos = intersection_.geometry().center() + distance;
 
-                    pairData_[numPairParallelIdx].virtualBoundaryFaceDofPos = std::move(virtualBoundaryFaceDofPos);
-                }
                 numPairParallelIdx++;
             }
         }
@@ -460,7 +452,6 @@ private:
     {
         // set basic global positions and stencil size definitions
         const auto numParallelFaces = pairData_[0].parallelCellWidths.size();
-        const auto& elementCenter = element_.geometry().center();
 
         // get the parallel Dofs
         const auto parallelLocalIdx = intersection_.indexInInside();
@@ -506,16 +497,7 @@ private:
                     }
 
                 }
-                else
-                {
-                    // If the intersection has no neighbor we have to deal with the virtual outer parallel dof
-                    const auto& boundaryFacetCenter = intersection.geometry().center();
 
-                    const auto distance = boundaryFacetCenter - elementCenter;
-                    const auto virtualBoundaryFaceDofPos = intersection_.geometry().center() + distance;
-
-                    pairData_[numPairParallelIdx].virtualBoundaryFaceDofPos = std::move(virtualBoundaryFaceDofPos);
-                }
                 numPairParallelIdx++;
             }
         }
