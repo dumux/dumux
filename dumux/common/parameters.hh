@@ -392,15 +392,15 @@ private:
     { mergeTreeImpl_(target, source, overwrite, ""); }
 
     //! recursively merge all elements
-    static void mergeTreeImpl_(Dune::ParameterTree& target, const Dune::ParameterTree& source, bool overwrite, const std::string& prefix)
+    static void mergeTreeImpl_(Dune::ParameterTree& target, const Dune::ParameterTree& source, bool overwrite, const std::string& group)
     {
+        const auto prefix = group == "" ? "" : group + ".";
         for (const auto& key : source.getValueKeys())
             if (overwrite || !target.hasKey(key))
-                target[prefix + "." + key] = source[key];
+                target[prefix + key] = source[key];
 
-        const auto nextPrefix = prefix == "" ? "" : prefix + ".";
         for (const auto& subKey : source.getSubKeys())
-            mergeTreeImpl_(target, source.sub(subKey), overwrite, nextPrefix + subKey);
+            mergeTreeImpl_(target, source.sub(subKey), overwrite, prefix + subKey);
     }
 
     // be friends with the accesors
