@@ -83,7 +83,7 @@ public:
      * \param parameterFileName the file name of the input file
      * \param usage the usage function to print if the help option was passed on the command line
      * \note the default parameter tree is initialized in the following way
-     *         1) global defaults (see member function globalDefaultParameters_)
+     *         1) global defaults (see member function applyGlobalDefaults_)
      *         2) user provided defaults (overwrite global defaults)
      *       the parameter tree is initialized in the following way
      *         1) parameters from the input file
@@ -112,8 +112,8 @@ public:
         }
 
         // apply the default parameters
-        globalDefaultParameters_(defaultParamTree_());
         defaultParams(defaultParamTree_());
+        applyGlobalDefaults_(defaultParamTree_());
 
         // parse paramters from the command line
         const auto commandLineArgs = parseCommandLine(argc, argv);
@@ -184,8 +184,8 @@ public:
         // apply the parameters
         params(paramTree_());
         // apply the default parameters
-        globalDefaultParameters_(defaultParamTree_());
         defaultParams(defaultParamTree_());
+        applyGlobalDefaults_(defaultParamTree_());
     }
 
     /*!
@@ -211,8 +211,8 @@ public:
         Dune::ParameterTreeParser::readINITree(parameterFileName, paramTree_(), inputFileOverwritesParams);
 
         // apply the default parameters
-        globalDefaultParameters_(defaultParamTree_());
         defaultParams(defaultParamTree_());
+        applyGlobalDefaults_(defaultParamTree_());
     }
 
     //! prints all used and unused parameters
@@ -338,53 +338,59 @@ private:
 
     //! This method puts all default arguments into the parameter tree
     //! we do this once per simulation on call to Parameters::init();
-    static void globalDefaultParameters_(Dune::ParameterTree& params)
+    static void applyGlobalDefaults_(Dune::ParameterTree& params)
     {
+        // global defaults
+        Dune::ParameterTree defaultParams;
+
         // parameters in the implicit group
-        params["Flux.UpwindWeight"] = "1.0";
-        params["Implicit.EnableJacobianRecycling"] = "false";
+        defaultParams["Flux.UpwindWeight"] = "1.0";
+        defaultParams["Implicit.EnableJacobianRecycling"] = "false";
 
         // parameters in the assembly group
-        params["Assembly.NumericDifferenceMethod"] = "1";
+        defaultParams["Assembly.NumericDifferenceMethod"] = "1";
 
         // parameters in the linear solver group
-        params["LinearSolver.GMResRestart"] = "10";
-        params["LinearSolver.MaxIterations"] = "250";
-        params["LinearSolver.PreconditionerIterations"] = "1";
-        params["LinearSolver.PreconditionerRelaxation"] = "1.0";
-        params["LinearSolver.ResidualReduction"] = "1e-13";
-        params["LinearSolver.Verbosity"] = "0";
+        defaultParams["LinearSolver.GMResRestart"] = "10";
+        defaultParams["LinearSolver.MaxIterations"] = "250";
+        defaultParams["LinearSolver.PreconditionerIterations"] = "1";
+        defaultParams["LinearSolver.PreconditionerRelaxation"] = "1.0";
+        defaultParams["LinearSolver.ResidualReduction"] = "1e-13";
+        defaultParams["LinearSolver.Verbosity"] = "0";
 
         // parameters in the problem group
-        params["Problem.EnableGravity"] = "true";
-        params["Problem.EnableInertiaTerms"] = "true";
+        defaultParams["Problem.EnableGravity"] = "true";
+        defaultParams["Problem.EnableInertiaTerms"] = "true";
 
         // parameters in the Newton group
         // MinSteps = 2 makes Newton more robust if converge criterion is not perfect
-        params["Newton.MinSteps"] = "2";
-        params["Newton.MaxSteps"] = "18";
-        params["Newton.TargetSteps"] = "10";
-        params["Newton.UseLineSearch"] = "false";
-        params["Newton.EnableChop"] = "false";
-        params["Newton.EnableShiftCriterion"] = "true";
-        params["Newton.MaxRelativeShift"] = "1e-8";
-        params["Newton.EnableResidualCriterion"] = "false";
-        params["Newton.ResidualReduction"] = "1e-5";
-        params["Newton.EnableAbsoluteResidualCriterion"] = "false";
-        params["Newton.MaxAbsoluteResidual"] = "1e-5";
-        params["Newton.SatisfyResidualAndShiftCriterion"] = "false";
-        params["Newton.EnablePartialReassembly"] = "false";
+        defaultParams["Newton.MinSteps"] = "2";
+        defaultParams["Newton.MaxSteps"] = "18";
+        defaultParams["Newton.TargetSteps"] = "10";
+        defaultParams["Newton.UseLineSearch"] = "false";
+        defaultParams["Newton.EnableChop"] = "false";
+        defaultParams["Newton.EnableShiftCriterion"] = "true";
+        defaultParams["Newton.MaxRelativeShift"] = "1e-8";
+        defaultParams["Newton.EnableResidualCriterion"] = "false";
+        defaultParams["Newton.ResidualReduction"] = "1e-5";
+        defaultParams["Newton.EnableAbsoluteResidualCriterion"] = "false";
+        defaultParams["Newton.MaxAbsoluteResidual"] = "1e-5";
+        defaultParams["Newton.SatisfyResidualAndShiftCriterion"] = "false";
+        defaultParams["Newton.EnablePartialReassembly"] = "false";
 
         // parameters in the time loop group
-        params["TimeLoop.MaxTimeStepSize"] = "1e300";
-        params["TimeLoop.MaxTimeStepDivisions"] = "10";
+        defaultParams["TimeLoop.MaxTimeStepSize"] = "1e300";
+        defaultParams["TimeLoop.MaxTimeStepDivisions"] = "10";
 
         // parameters in the vtk group
-        params["Vtk.AddVelocity"] = "false";
-        params["Vtk.AddProcessRank"] = "true";
+        defaultParams["Vtk.AddVelocity"] = "false";
+        defaultParams["Vtk.AddProcessRank"] = "true";
 
         // parameters in the mpfa group
-        params["Mpfa.Q"] = "0.0";
+        defaultParams["Mpfa.Q"] = "0.0";
+
+        // merge the global default tree but do not overwrite if the parameter already exists
+        mergeTree_(params, defaultParams, false);
     }
 
     //! merge source into target tree
