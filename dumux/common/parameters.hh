@@ -218,7 +218,7 @@ public:
     //! prints all used and unused parameters
     static void print()
     {
-        getTree_().reportAll();
+        getTree().reportAll();
     }
 
     //! Parse command line arguments into a parameter tree
@@ -303,25 +303,18 @@ public:
         return parameterFileName;
     }
 
-    DUNE_DEPRECATED_MSG("getTree is deprecated and will be removed after 3.1")
-    static const LoggingParameterTree& getTree()
-    {
-        return getTree_();
-    }
-
-private:
     /*!
      * \brief Get the parameter tree
      *
      * The logging parameter tree recording which parameters are used during the simulation
-     * \note Once this has been called the first time, you cannot modify the parameter tree anymore
      */
-    static const LoggingParameterTree& getTree_()
+    static const LoggingParameterTree& getTree()
     {
         static LoggingParameterTree tree(paramTree_(), defaultParamTree_());
         return tree;
     }
 
+private:
     //! the actual internal parameter tree storing all user-specfied runtime parameters
     static Dune::ParameterTree& paramTree_()
     {
@@ -408,12 +401,6 @@ private:
         for (const auto& subKey : source.getSubKeys())
             mergeTreeImpl_(target, source.sub(subKey), overwrite, prefix + subKey);
     }
-
-    // be friends with the accesors
-    template<typename T, typename... Args> friend T getParam(Args&&... args);
-    template<typename T, typename... Args> friend T getParamFromGroup(Args&&... args);
-    friend bool hasParam(const std::string& param);
-    friend bool hasParamInGroup(const std::string& paramGroup, const std::string& param);
 };
 
 /*!
@@ -440,7 +427,7 @@ void setParam(Dune::ParameterTree& params,
  */
 template<typename T, typename... Args>
 T getParam(Args&&... args)
-{ return Parameters::getTree_().template get<T>(std::forward<Args>(args)... ); }
+{ return Parameters::getTree().template get<T>(std::forward<Args>(args)... ); }
 
 /*!
  * \ingroup Common
@@ -450,23 +437,23 @@ T getParam(Args&&... args)
  */
 template<typename T, typename... Args>
 T getParamFromGroup(Args&&... args)
-{ return Parameters::getTree_().template getFromGroup<T>(std::forward<Args>(args)... ); }
+{ return Parameters::getTree().template getFromGroup<T>(std::forward<Args>(args)... ); }
 
 /*!
  * \ingroup Common
  * \brief Check whether a key exists in the parameter tree
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
-bool hasParam(const std::string& param)
-{ return Parameters::getTree_().hasKey(param); }
+inline bool hasParam(const std::string& param)
+{ return Parameters::getTree().hasKey(param); }
 
 /*!
  * \ingroup Common
  * \brief Check whether a key exists in the parameter tree with a model group prefix
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
-bool hasParamInGroup(const std::string& paramGroup, const std::string& param)
-{ return Parameters::getTree_().hasKeyInGroup(param, paramGroup); }
+inline bool hasParamInGroup(const std::string& paramGroup, const std::string& param)
+{ return Parameters::getTree().hasKeyInGroup(param, paramGroup); }
 
 } // namespace Dumux
 
