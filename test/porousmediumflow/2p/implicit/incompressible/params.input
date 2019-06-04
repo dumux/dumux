@@ -3,9 +3,9 @@ DtInitial = 250 # [s]
 TEnd = 3000 # [s]
 
 [Grid]
-LowerLeft = 0 0
 UpperRight = 6 4
 Cells = 48 32
+Overlap = 0
 
 [SpatialParams]
 LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner

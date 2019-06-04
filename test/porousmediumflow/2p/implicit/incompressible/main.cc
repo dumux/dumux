@@ -33,13 +33,8 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "problem.hh"
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
-#include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
@@ -48,59 +43,77 @@
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/loadsolution.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
+#include <dumux/material/components/trichloroethene.hh>
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/porousmediumflow/2p/model.hh>
+
+#include "problem.hh"
+
+namespace Dumux {
+namespace Properties {
+// Create new type tags
+namespace TTag {
+struct TwoPIncompressibleBox { using InheritsFrom = std::tuple<TwoP, BoxModel>; };
+} // end namespace TTag
+
+// Set the grid type
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleBox> { using type = Dune::YaspGrid<2>; };
+
+// Set the problem type
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleBox> { using type = TwoPTestProblem<TypeTag>; };
+
+// Set the fluid system
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TwoPIncompressibleBox>
 {
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
-                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
-                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
-                                        "\t                                definition in DGF format\n"
-                                        "\t-SpatialParams.LensLowerLeft   coordinates of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRight  coordinates of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
-                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+};
 
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+// Set the spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TwoPIncompressibleBox>
+{
+private:
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
+};
+
+// Enable caching
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressibleBox> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressibleBox> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPIncompressibleBox> { static constexpr bool value = true; };
+} // end namespace Properties
+} // end namespace Dumux
 
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::TYPETAG;
+    using TypeTag = Properties::TTag::TwoPIncompressibleBox;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
-    // print dumux start message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
-
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -128,28 +141,11 @@ int main(int argc, char** argv) try
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
-
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
-    if (restartTime > 0)
-    {
-        using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-        using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-        using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-        const auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(x, fileName, createPVNameFunction<IOFields, PrimaryVariables, ModelTraits, FluidSystem>(), *fvGridGeometry);
-    }
-    else
-        problem->applyInitialSolution(x);
+    SolutionVector x;
+    problem->applyInitialSolution(x);
     auto xOld = x;
-
-    // maybe update the interface parameters
-    if (ENABLEINTERFACESOLVER)
-        problem->spatialParams().updateMaterialInterfaceParams(x);
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -160,16 +156,14 @@ int main(int argc, char** argv) try
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
 
     // use non-conforming output for the test with interface solver
-    const auto ncOutput = getParam<bool>("Problem.UseNonConformingOutput", false);
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name(), "",
-                                                             ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming);
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    vtkWriter.write(restartTime);
+    vtkWriter.write(0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
@@ -222,19 +216,16 @@ int main(int argc, char** argv) try
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
-    {
         Parameters::print();
-        DumuxMessage::print(/*firstCall=*/false);
-    }
 
     return 0;
 } // end main
-catch (Dumux::ParameterException &e)
+catch (const Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
-catch (Dune::DGFException & e)
+catch (const Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
                  "). Most likely, the DGF file name is wrong "
@@ -243,7 +234,7 @@ catch (Dune::DGFException & e)
                  << " ---> Abort!" << std::endl;
     return 2;
 }
-catch (Dune::Exception &e)
+catch (const Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;
