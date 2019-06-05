@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \copydoc Dumux::FrictionLawNikuradse
  */
-#ifndef DUMUX_FRICTIONLAW_NIKURADSE_HH
-#define DUMUX_FRICTIONLAW_NIKURADSE_HH
+#ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_NIKURADSE_HH
+#define DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_NIKURADSE_HH
 
 #include <algorithm>
 #include <cmath>
@@ -37,33 +37,30 @@ namespace Dumux {
  */
 
 template <typename Scalar>
-class FrictionLawNikuradse : FrictionLaw<Scalar>
+class FrictionLawNikuradse : public FrictionLaw<Scalar>
 {
 public:
-    FrictionLawNikuradse(const Scalar ks)
-        : ks_(ks) {}
     /*!
      * \brief Compute the friction ustar_h.
      *
      * \param waterDepth water depth.
+     * \param frictionValue The equivalent sand roughness.
      *
      * \return ustar_h friction used for the source term in shallow water models.
      */
 
-    Scalar computeUstarH(const Scalar waterDepth)
+    const Scalar computeUstarH(const Scalar waterDepth, const Scalar frictionValue) final
     {
         using std::pow;
         using std::log;
 
         Scalar ustar_h = 0.0;
-        Scalar rough_h = ks_;
+        Scalar rough_h = frictionValue;
 
         rough_h = this->limitRoughH(rough_h, waterDepth);
-        ustar_h = pow(0.41,2.0)/pow(log((12*(waterDepth + rough_h))/ks_),2.0);
+        ustar_h = pow(0.41,2.0)/pow(log((12*(waterDepth + rough_h))/frictionValue),2.0);
         return ustar_h;
     }
-private:
-    Scalar ks_;
 };
 
 } // end namespace Dumux

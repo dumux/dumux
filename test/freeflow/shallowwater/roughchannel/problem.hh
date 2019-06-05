@@ -27,11 +27,14 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include "spatialparams.hh"
+#include <dumux/common/parameters.hh>
 
 #include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
 
 namespace Dumux {
 
@@ -106,7 +109,7 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::RoughChannel>
  * h = \left(\frac{n*q}{\sqrt{I_s}} \right)^{3/5}
  * \f]
  *
- * The formular of Gaukler Manning and Strickler is also used to calculate the analytic solution.
+ * The formula of Gaukler Manning and Strickler is also used to calculate the analytic solution.
  *
  * This problem uses the \ref ShallowWaterModel
  */
@@ -137,7 +140,20 @@ public:
         exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
         exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
         constManningN_ = this->spatialParams().frictionValue();
+        bedSlope_ = getParam<Scalar>("Problem.BedSlope");
+        discharge_ = getParam<Scalar>("Problem.Discharge");
         hBoundary_ = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
+
+        if (getParam<std::string>("Problem.FrictionLaw") == ("Manning"))
+        {
+            const auto gravity = this->spatialParams().gravity();
+            auto ptrManning = std::make_shared<FrictionLawManning<Scalar>>(gravity);
+            frictionLaw_ = std::static_pointer_cast<FrictionLaw<Scalar>>(ptrManning);
+        }
+        else
+        {
+            std::cout<<"Change the FrictionLaw in params.input. This test is only valid for Manning!";
+        }
     }
 
     //! Get the analytical water depth
@@ -159,7 +175,7 @@ public:
         using std::abs;
         using std::sqrt;
 
-         return std::pow(std::abs(discharge)*manningN/sqrt(bedSlope), 0.6);
+        return std::pow(std::abs(discharge)*manningN/sqrt(bedSlope), 0.6);
     }
 
     //! Udpate the analytical solution
@@ -167,7 +183,6 @@ public:
     void updateAnalyticalSolution(const SolutionVector& curSol,
                                   const GridVariables& gridVariables)
     {
-        using std::pow;
         using std::abs;
         //compute solution for all elements
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -219,22 +234,23 @@ public:
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
      NumEqVector source(const Element &element,
-               const FVElementGeometry& fvGeometry,
-               const ElementVolumeVariables& elemVolVars,
-               const SubControlVolume &scv) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolume &scv) const
     {
+        using std::hypot;
+
         NumEqVector source(0.0);
 
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
+        const Scalar manningN = this->spatialParams().frictionValue(globalPos);
 
-        const auto gravity = this->spatialParams().gravity(globalPos);
-        const auto manningN = this->spatialParams().frictionValue(globalPos);
-        auto h = volVars.waterDepth();
-        auto u = volVars.velocity(0);
-        auto v = volVars.velocity(1);
-        auto ustarH = FrictionLawManning<Scalar>(manningN,gravity).computeUstarH(h);
-        auto uv = sqrt(pow(u,2.0) + pow(v,2.0));
+        const Scalar h = volVars.waterDepth();
+        const Scalar u = volVars.velocity(0);
+        const Scalar v = volVars.velocity(1);
+        const Scalar ustarH = frictionLaw_->computeUstarH(h, manningN);
+        const Scalar uv = hypot(u,v);
 
         source[0] = 0.0;
         source[1] = -ustarH * u * uv;
@@ -307,7 +323,6 @@ public:
                                                                             insideVolVars.velocity(1),
                                                                             nxy);
         }
-
         // no flow boundary
         else
         {
@@ -352,13 +367,11 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-
         PrimaryVariables values(0.0);
 
         values[0] = hBoundary_;
-        values[1] = 0.0;
+        values[1] = abs(discharge_)/hBoundary_;
         values[2] = 0.0;
-
 
         return values;
     };
@@ -366,18 +379,13 @@ public:
     // \}
 
 private:
-
     std::vector<Scalar> exactWaterDepth_;
     std::vector<Scalar> exactVelocityX_;
     Scalar hBoundary_;
     Scalar constManningN_; // analytic solution is only available for const friction.
-
-    static constexpr Scalar bedSlope_ = 0.001;
-    static constexpr Scalar discharge_ = -1.0; // discharge at the inflow boundary
-    static constexpr Scalar channelLenght_ = 100.0;
-    static constexpr Scalar bedSurfaceLeft = 10.0;
-
-
+    Scalar bedSlope_;
+    Scalar discharge_; // discharge at the inflow boundary
+    std::shared_ptr<FrictionLaw<Scalar>> frictionLaw_;
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
 };
