@@ -39,7 +39,7 @@ logfile.write("-"*50 + "\n")
 for i in range(len(error)-1):
     if isnan(error[i]) or isinf(error[i]):
         continue
-    if not (error[i] < 1e-12 or error[i] < 1e-12):
+    if not (error[i] < 1e-12 or error[i+1] < 1e-12):
         rate = (log(error[i])-log(error[i+1]))/(log(hmax[i])-log(hmax[i+1]))
         message = "{}\t{:0.4e}\t{:0.4e}\t{:0.4e}\n".format(i, hmax[i], error[i], rate)
         logfile.write(message)
