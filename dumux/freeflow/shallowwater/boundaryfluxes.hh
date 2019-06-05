@@ -36,10 +36,10 @@ namespace ShallowWater {
  */
 template<class Scalar, class GlobalPosition>
 std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
-                                            const Scalar waterDepthLeft,
-                                            const Scalar velocityXLeft,
-                                            const Scalar velocityYLeft,
-                                            const GlobalPosition& nxy)
+                                              const Scalar waterDepthLeft,
+                                              const Scalar velocityXLeft,
+                                              const Scalar velocityYLeft,
+                                              const GlobalPosition& nxy)
 
 {
     std::array<Scalar, 3> cellStateRight;
@@ -60,10 +60,10 @@ std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
  */
 template<class Scalar, class GlobalPosition>
 std::array<Scalar, 3> fixedDischargeBoundary(const Scalar qlocal,
-                                           const Scalar waterDepthLeft,
-                                           const Scalar velocityXLeft,
-                                           const Scalar velocityYLeft,
-                                           const GlobalPosition& nxy)
+                                             const Scalar waterDepthLeft,
+                                             const Scalar velocityXLeft,
+                                             const Scalar velocityYLeft,
+                                             const GlobalPosition& nxy)
 {
     std::array<Scalar, 3> cellStateRight;
     using std::abs;

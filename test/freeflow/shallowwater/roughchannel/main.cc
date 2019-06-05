@@ -23,7 +23,6 @@
  */
 #include <config.h>
 
-
 #include <ctime>
 #include <iostream>
 
@@ -32,7 +31,6 @@
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>

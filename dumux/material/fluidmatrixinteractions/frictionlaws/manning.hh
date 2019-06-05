@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \copydoc Dumux::FrictionLawManning
  */
-#ifndef DUMUX_FRICTIONLAW_MANNING_HH
-#define DUMUX_FRICTIONLAW_MANNING_HH
+#ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_MANNING_HH
+#define DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_MANNING_HH
 
 #include <algorithm>
 #include <cmath>
@@ -37,33 +37,33 @@ namespace Dumux {
  */
 
 template <typename Scalar>
-class FrictionLawManning : FrictionLaw<Scalar>
+class FrictionLawManning : public FrictionLaw<Scalar>
 {
 public:
-    FrictionLawManning(const Scalar manningN, const Scalar gravity)
-        : manningN_(manningN), gravity_(gravity) {}
+    FrictionLawManning(const Scalar gravity)
+        : gravity_(gravity) {}
     /*!
      * \brief Compute the friction ustar_h.
      *
      * \param waterDepth water depth.
+     * \param frictionValue The Manning friction value.
      *
      * \return ustar_h friction used for the source term in shallow water models.
      */
-    Scalar computeUstarH(const Scalar waterDepth)
+    const Scalar computeUstarH(const Scalar waterDepth, const Scalar frictionValue) final
     {
         using std::pow;
 
         Scalar ustar_h = 0.0;
-        Scalar rough_h = pow(25.68/(1.0/manningN_),6.0);
+        Scalar rough_h = pow(25.68/(1.0/frictionValue),6.0);
 
         rough_h = this->limitRoughH(rough_h, waterDepth);
 
-        auto cfric = pow((waterDepth + rough_h),1.0/6.0) * 1.0/(manningN_);
+        auto cfric = pow((waterDepth + rough_h),1.0/6.0) * 1.0/(frictionValue);
         ustar_h = gravity_ / pow(cfric,2.0);
         return ustar_h;
     }
 private:
-    Scalar manningN_;
     Scalar gravity_;
 };
 
