@@ -87,7 +87,7 @@ for permIndex in range(0, len(k)):
         if isnan(l2_matrix[i]) or isinf(l2_matrix[i]):
             sys.stderr.write("l2 error norm is not a number!\n")
             sys.exit(1)
-        if not (l2_matrix[i] < 1e-12 or l2_matrix[i] < 1e-12):
+        if not (l2_matrix[i] < 1e-12 or l2_matrix[i+1] < 1e-12):
             rateP = (log(l2_matrix[i])-log(l2_matrix[i+1]))/(log(eps[i])-log(eps[i+1]))
             message = "{}\t{:0.4e}\t{:0.4e}\t{:0.4e}\n".format(i, eps[i], l2_matrix[i], rateP)
             logfile.write(message)
