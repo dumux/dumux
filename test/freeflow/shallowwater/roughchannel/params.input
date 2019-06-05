@@ -1,17 +1,21 @@
 [Problem]
-Name = roughChannel
+Name = roughchannel
+FrictionValue = 0.025 # [-]
+BedSlope = 0.001 # [-]
+Gravity = 9.81 # [m/s^2]
+Discharge = -1.0 # [m/s] discharge at the inflow boundary
+FrictionLaw = Manning
 
 [TimeLoop]
-TEnd = 3600.0 # [s]
+TEnd = 900.0 # [s]
 MaxTimeStepSize = 60.0 # [s]
 DtInitial = 1.0 # [s]
 
 [Grid]
-Positions0 = 0.0 1000.0
-Positions1 = 0.0 10.0
-Cells0 = 1000
-Cells1 = 10 
+Positions0 = 0.0 500.0
+Positions1 = 0.0 5.0
+Cells0 = 500
+Cells1 = 5
 
 [Newton]
 EnablePartialReassembly = true
-

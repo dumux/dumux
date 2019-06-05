@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \copydoc Dumux::FrictionLaw
  */
-#ifndef DUMUX_FRICTIONLAW_HH
-#define DUMUX_FRICTIONLAW_HH
+#ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_HH
+#define DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_HH
 
 #include <algorithm>
 #include <cmath>
@@ -45,7 +45,7 @@ public:
      * \return ustar_h friction used for the source term in shallow water models.
      */
 
-    virtual Scalar computeUstarH(const Scalar waterDepth) =0;
+    const virtual Scalar computeUstarH(const Scalar waterDept, const Scalar frictionValue) = 0;
 
     /*!
      * \brief Limit the friction for small water depth.
@@ -55,38 +55,39 @@ public:
      * So the friciton term get's not extreme large for small water
      * depths.
      *
-     * ------------------------- minUpperh -----------
+     * ------------------------- minUpperH -----------
      *
      *
      *
-     * ------------------------rough_h ---------------
+     * ------------------------roughnessHeight ---------------
      *    /\  /\   roughness                  /grain\
      * -------------------------------bottom ------------------
      * /////////////////////////////////////////////////
      *
      * For the limiting the LET model is used, which is usually applied in the
      * porous media flow to limit the permeability due to the saturation. It employs
-     * the three empirical paramaters L, E and T, which describe the limiting curve.
+     * the three empirical paramaters L, E and T, which describe the limiting curve (mobility).
      *
-     * \param rough_h roughness height of the representive structure (e.g. largest grain size).
+     * auto mobility = (mobility_max * pow(sw,L))/(pow(sw,L) + E * pow(1.0-sw,T));
+     *
+     * For the limitation of the roughness height L = 0.0, T = 2.0 and E = 1.0 are choosen.
+     * Therefore the calculation of the mobility is simplified significantly.
+     *
+     * \param roughnessHeight roughness height of the representive structure (e.g. largest grain size).
      * \param waterDepth water depth.
      */
-    Scalar limitRoughH(Scalar rough_h, const Scalar waterDepth)
+    Scalar limitRoughH(const Scalar roughnessHeight, const Scalar waterDepth)
     {
-        using std::pow;
         using std::min;
         using std::max;
 
-        const Scalar letL = 0.0; //!< empirical parameter of the LET model
-        const Scalar letT = 2.0; //!< empirical parameter of the LET model
-        const Scalar letE = 1.0; //!< empirical parameter of the LET model
         Scalar mobility_max = 1.0; //!< maximal mobility
 
-        auto minUpperH = rough_h * 2.0;
-        auto sw = min(waterDepth * (1.0/minUpperH),1.0);
+        Scalar minUpperH = roughnessHeight * 2.0;
+        Scalar sw = min(waterDepth * (1.0/minUpperH),1.0);
         sw = max(0.0,sw);
-        auto mobility = (mobility_max * pow(sw,letL))/(pow(sw,letL) + letE * pow(1.0-sw,letT));
-        return rough_h * (1.0 - mobility);
+        auto mobility = mobility_max /(1 + (1.0-sw)*(1.0-sw));
+        return roughnessHeight * (1.0 - mobility);
     }
 };
 

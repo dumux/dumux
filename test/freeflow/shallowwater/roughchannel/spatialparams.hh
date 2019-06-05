@@ -25,6 +25,7 @@
 #define DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux {
 
@@ -49,21 +50,26 @@ class RoughChannelSpatialParams
 public:
     RoughChannelSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
-    {}
-
-    /*! \brief Define the porosity in [-].
-   *
-   * \param globalPos The global position where we evaluate
-   */
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 1.0; }
-
+    {
+        gravity_ = getParam<Scalar>("Problem.Gravity");
+        bedSlope_ = getParam<Scalar>("Problem.BedSlope");
+        frictionValue_ = getParam<Scalar>("Problem.FrictionValue");
+    }
 
     /*! \brief Define the gravitation.
     *
     * \return gravity constant
     */
     Scalar gravity(const GlobalPosition& globalPos) const
+    {
+        return gravity_;
+    }
+
+    /*! \brief Define the gravitation.
+    *
+    * \return gravity constant
+    */
+    Scalar gravity() const
     {
         return gravity_;
     }
@@ -100,9 +106,9 @@ public:
     }
 
 private:
-    static constexpr Scalar gravity_ = 9.81;
-    static constexpr Scalar bedSlope_ = 0.001;
-    static constexpr Scalar frictionValue_ = 0.025;
+    Scalar gravity_;
+    Scalar bedSlope_;
+    Scalar frictionValue_;
 };
 
 } // end namespace Dumux
