@@ -179,20 +179,14 @@ public:
     }
 
     //! Udpate the analytical solution
-    template<class SolutionVector, class GridVariables>
-    void updateAnalyticalSolution(const SolutionVector& curSol,
-                                  const GridVariables& gridVariables)
+    void updateAnalyticalSolution()
     {
         using std::abs;
-        //compute solution for all elements
+
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-            auto elemVolVars = localView(gridVariables.curGridVolVars());
-            elemVolVars.bindElement(element, fvGeometry, curSol);
-            Scalar h = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
-            Scalar u = abs(discharge_)/h;
+            const Scalar h = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
+            const Scalar u = abs(discharge_)/h;
 
             const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
             exactWaterDepth_[eIdx] = h;
