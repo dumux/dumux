@@ -294,7 +294,7 @@ public:
 
             // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
             // we are on a boundary where we have to check for boundary conditions.
-            if (!scvf.hasParallelNeighbor(localSubFaceIdx, 0))
+            if (lateralScvf.boundary())
             {
                 // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                 // the sub faces's center.
@@ -526,7 +526,7 @@ private:
 
             const auto getParallelVelocity = [&]()
             {
-                if (scvf.hasParallelNeighbor(localSubFaceIdx, 0))
+                if (!lateralFace.boundary())
                     return faceVars.velocityParallel(localSubFaceIdx, 0);
                 else if (lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())))
                     return problem.dirichlet(element, makeParallelGhostFace_(scvf, localSubFaceIdx))[Indices::velocity(scvf.directionIndex())];
@@ -540,7 +540,8 @@ private:
             const Scalar outerParallelVelocity = getParallelVelocity();
 
             // The velocity gradient already accounts for the orientation
-            // of the staggered face's outer normal vector.
+            // of the staggered face's outer normal vector. This already correctly accounts for the reduced
+            // distance used in the gradient of the later scvf lies on a boundary.
             const Scalar velocityGrad_ij = (outerParallelVelocity - innerParallelVelocity)
                                           / scvf.parallelDofsDistance(localSubFaceIdx, 0);
 

@@ -334,6 +334,7 @@ public:
     {
         if (parallelDegreeIdx == 0)
             return (faceLength(localSubFaceIdx) + pairData(localSubFaceIdx).parallelCellWidths[0]) * 0.5;
+            // pairData(localSubFaceIdx).parallelCellWidths[0]) will return 0.0 if the subface perpendicular the scvf lies on a boundary
         else
         {
             assert((parallelDegreeIdx == 1) && "Only the width of the first two parallel cells (indicies 0 and 1) is stored for each scvf.");
