@@ -540,8 +540,8 @@ private:
             const Scalar outerParallelVelocity = getParallelVelocity();
 
             // The velocity gradient already accounts for the orientation
-            // of the staggered face's outer normal vector. This already correctly accounts for the reduced
-            // distance used in the gradient of the later scvf lies on a boundary.
+            // of the staggered face's outer normal vector. This also correctly accounts for the reduced
+            // distance used in the gradient if the lateral scvf lies on a boundary.
             const Scalar velocityGrad_ij = (outerParallelVelocity - innerParallelVelocity)
                                           / scvf.parallelDofsDistance(localSubFaceIdx, 0);
 
