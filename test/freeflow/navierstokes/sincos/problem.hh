@@ -22,8 +22,8 @@
  * \brief Test for the staggered grid Navier-Stokes model
  *        with analytical solution.
  */
-#ifndef DUMUX_SINCOS_STEADY_TEST_PROBLEM_HH
-#define DUMUX_SINCOS_STEADY_TEST_PROBLEM_HH
+#ifndef DUMUX_SINCOS_TEST_PROBLEM_HH
+#define DUMUX_SINCOS_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 
@@ -77,8 +77,8 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::SincosTest> { static conste
  *
  * The 2D, incompressible Navier-Stokes equations for zero gravity and a Newtonian
  * flow is solved and compared to an analytical solution (sums/products of trigonometric functions).
- * For the unsteady case, the velocities and pressures are periodical in time. The Dirichlet boundary conditions are
- * consistent with the analytical solution and in the unsteady case time-dependent.
+ * For the instationary case, the velocities and pressures are periodical in time. The Dirichlet boundary conditions are
+ * consistent with the analytical solution and in the instationary case time-dependent.
  */
 template <class TypeTag>
 class SincosTestProblem : public NavierStokesProblem<TypeTag>
