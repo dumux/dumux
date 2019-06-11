@@ -8,7 +8,7 @@ UpperRight = 1 1
 Cells = 50 50
 
 [Problem]
-Name = test_sincos_unsteady # name passed to the output routines
+Name = test_sincos_instationary # name passed to the output routines
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true

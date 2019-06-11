@@ -7,7 +7,7 @@ UpperRight = 6.28 6.28
 Cells = 50 50
 
 [Problem]
-Name = test_sincos_steady # name passed to the output routines
+Name = test_sincos_stationary # name passed to the output routines
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true
