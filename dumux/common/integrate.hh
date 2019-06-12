@@ -96,7 +96,7 @@ using FieldType = typename FieldTypeImpl<T>::type;
 
 /*!
  * \brief Integrate a grid function over a grid view
- * \param gv the grid view
+ * \param gg the grid geometry
  * \param f the grid function
  * \param order the order of the quadrature rule
  */
