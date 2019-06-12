@@ -83,7 +83,7 @@ public:
      * \param parameterFileName the file name of the input file
      * \param usage the usage function to print if the help option was passed on the command line
      * \note the default parameter tree is initialized in the following way
-     *         1) global defaults (see member function globalDefaultParameters_)
+     *         1) global defaults (see member function applyGlobalDefaults_)
      *         2) user provided defaults (overwrite global defaults)
      *       the parameter tree is initialized in the following way
      *         1) parameters from the input file
@@ -112,8 +112,8 @@ public:
         }
 
         // apply the default parameters
-        globalDefaultParameters_(defaultParamTree_());
         defaultParams(defaultParamTree_());
+        applyGlobalDefaults_(defaultParamTree_());
 
         // parse paramters from the command line
         const auto commandLineArgs = parseCommandLine(argc, argv);
@@ -184,8 +184,8 @@ public:
         // apply the parameters
         params(paramTree_());
         // apply the default parameters
-        globalDefaultParameters_(defaultParamTree_());
         defaultParams(defaultParamTree_());
+        applyGlobalDefaults_(defaultParamTree_());
     }
 
     /*!
@@ -211,14 +211,14 @@ public:
         Dune::ParameterTreeParser::readINITree(parameterFileName, paramTree_(), inputFileOverwritesParams);
 
         // apply the default parameters
-        globalDefaultParameters_(defaultParamTree_());
         defaultParams(defaultParamTree_());
+        applyGlobalDefaults_(defaultParamTree_());
     }
 
     //! prints all used and unused parameters
     static void print()
     {
-        getTree_().reportAll();
+        getTree().reportAll();
     }
 
     //! Parse command line arguments into a parameter tree
@@ -303,25 +303,18 @@ public:
         return parameterFileName;
     }
 
-    DUNE_DEPRECATED_MSG("getTree is deprecated and will be removed after 3.1")
-    static const LoggingParameterTree& getTree()
-    {
-        return getTree_();
-    }
-
-private:
     /*!
      * \brief Get the parameter tree
      *
      * The logging parameter tree recording which parameters are used during the simulation
-     * \note Once this has been called the first time, you cannot modify the parameter tree anymore
      */
-    static const LoggingParameterTree& getTree_()
+    static const LoggingParameterTree& getTree()
     {
         static LoggingParameterTree tree(paramTree_(), defaultParamTree_());
         return tree;
     }
 
+private:
     //! the actual internal parameter tree storing all user-specfied runtime parameters
     static Dune::ParameterTree& paramTree_()
     {
@@ -338,53 +331,59 @@ private:
 
     //! This method puts all default arguments into the parameter tree
     //! we do this once per simulation on call to Parameters::init();
-    static void globalDefaultParameters_(Dune::ParameterTree& params)
+    static void applyGlobalDefaults_(Dune::ParameterTree& params)
     {
+        // global defaults
+        Dune::ParameterTree defaultParams;
+
         // parameters in the implicit group
-        params["Flux.UpwindWeight"] = "1.0";
-        params["Implicit.EnableJacobianRecycling"] = "false";
+        defaultParams["Flux.UpwindWeight"] = "1.0";
+        defaultParams["Implicit.EnableJacobianRecycling"] = "false";
 
         // parameters in the assembly group
-        params["Assembly.NumericDifferenceMethod"] = "1";
+        defaultParams["Assembly.NumericDifferenceMethod"] = "1";
 
         // parameters in the linear solver group
-        params["LinearSolver.GMResRestart"] = "10";
-        params["LinearSolver.MaxIterations"] = "250";
-        params["LinearSolver.PreconditionerIterations"] = "1";
-        params["LinearSolver.PreconditionerRelaxation"] = "1.0";
-        params["LinearSolver.ResidualReduction"] = "1e-13";
-        params["LinearSolver.Verbosity"] = "0";
+        defaultParams["LinearSolver.GMResRestart"] = "10";
+        defaultParams["LinearSolver.MaxIterations"] = "250";
+        defaultParams["LinearSolver.PreconditionerIterations"] = "1";
+        defaultParams["LinearSolver.PreconditionerRelaxation"] = "1.0";
+        defaultParams["LinearSolver.ResidualReduction"] = "1e-13";
+        defaultParams["LinearSolver.Verbosity"] = "0";
 
         // parameters in the problem group
-        params["Problem.EnableGravity"] = "true";
-        params["Problem.EnableInertiaTerms"] = "true";
+        defaultParams["Problem.EnableGravity"] = "true";
+        defaultParams["Problem.EnableInertiaTerms"] = "true";
 
         // parameters in the Newton group
         // MinSteps = 2 makes Newton more robust if converge criterion is not perfect
-        params["Newton.MinSteps"] = "2";
-        params["Newton.MaxSteps"] = "18";
-        params["Newton.TargetSteps"] = "10";
-        params["Newton.UseLineSearch"] = "false";
-        params["Newton.EnableChop"] = "false";
-        params["Newton.EnableShiftCriterion"] = "true";
-        params["Newton.MaxRelativeShift"] = "1e-8";
-        params["Newton.EnableResidualCriterion"] = "false";
-        params["Newton.ResidualReduction"] = "1e-5";
-        params["Newton.EnableAbsoluteResidualCriterion"] = "false";
-        params["Newton.MaxAbsoluteResidual"] = "1e-5";
-        params["Newton.SatisfyResidualAndShiftCriterion"] = "false";
-        params["Newton.EnablePartialReassembly"] = "false";
+        defaultParams["Newton.MinSteps"] = "2";
+        defaultParams["Newton.MaxSteps"] = "18";
+        defaultParams["Newton.TargetSteps"] = "10";
+        defaultParams["Newton.UseLineSearch"] = "false";
+        defaultParams["Newton.EnableChop"] = "false";
+        defaultParams["Newton.EnableShiftCriterion"] = "true";
+        defaultParams["Newton.MaxRelativeShift"] = "1e-8";
+        defaultParams["Newton.EnableResidualCriterion"] = "false";
+        defaultParams["Newton.ResidualReduction"] = "1e-5";
+        defaultParams["Newton.EnableAbsoluteResidualCriterion"] = "false";
+        defaultParams["Newton.MaxAbsoluteResidual"] = "1e-5";
+        defaultParams["Newton.SatisfyResidualAndShiftCriterion"] = "false";
+        defaultParams["Newton.EnablePartialReassembly"] = "false";
 
         // parameters in the time loop group
-        params["TimeLoop.MaxTimeStepSize"] = "1e300";
-        params["TimeLoop.MaxTimeStepDivisions"] = "10";
+        defaultParams["TimeLoop.MaxTimeStepSize"] = "1e300";
+        defaultParams["TimeLoop.MaxTimeStepDivisions"] = "10";
 
         // parameters in the vtk group
-        params["Vtk.AddVelocity"] = "false";
-        params["Vtk.AddProcessRank"] = "true";
+        defaultParams["Vtk.AddVelocity"] = "false";
+        defaultParams["Vtk.AddProcessRank"] = "true";
 
         // parameters in the mpfa group
-        params["Mpfa.Q"] = "0.0";
+        defaultParams["Mpfa.Q"] = "0.0";
+
+        // merge the global default tree but do not overwrite if the parameter already exists
+        mergeTree_(params, defaultParams, false);
     }
 
     //! merge source into target tree
@@ -392,22 +391,16 @@ private:
     { mergeTreeImpl_(target, source, overwrite, ""); }
 
     //! recursively merge all elements
-    static void mergeTreeImpl_(Dune::ParameterTree& target, const Dune::ParameterTree& source, bool overwrite, const std::string& prefix)
+    static void mergeTreeImpl_(Dune::ParameterTree& target, const Dune::ParameterTree& source, bool overwrite, const std::string& group)
     {
+        const auto prefix = group == "" ? "" : group + ".";
         for (const auto& key : source.getValueKeys())
             if (overwrite || !target.hasKey(key))
-                target[prefix + "." + key] = source[key];
+                target[prefix + key] = source[key];
 
-        const auto nextPrefix = prefix == "" ? "" : prefix + ".";
         for (const auto& subKey : source.getSubKeys())
-            mergeTreeImpl_(target, source.sub(subKey), overwrite, nextPrefix + subKey);
+            mergeTreeImpl_(target, source.sub(subKey), overwrite, prefix + subKey);
     }
-
-    // be friends with the accesors
-    template<typename T, typename... Args> friend T getParam(Args&&... args);
-    template<typename T, typename... Args> friend T getParamFromGroup(Args&&... args);
-    friend bool hasParam(const std::string& param);
-    friend bool hasParamInGroup(const std::string& paramGroup, const std::string& param);
 };
 
 /*!
@@ -434,7 +427,7 @@ void setParam(Dune::ParameterTree& params,
  */
 template<typename T, typename... Args>
 T getParam(Args&&... args)
-{ return Parameters::getTree_().template get<T>(std::forward<Args>(args)... ); }
+{ return Parameters::getTree().template get<T>(std::forward<Args>(args)... ); }
 
 /*!
  * \ingroup Common
@@ -444,23 +437,23 @@ T getParam(Args&&... args)
  */
 template<typename T, typename... Args>
 T getParamFromGroup(Args&&... args)
-{ return Parameters::getTree_().template getFromGroup<T>(std::forward<Args>(args)... ); }
+{ return Parameters::getTree().template getFromGroup<T>(std::forward<Args>(args)... ); }
 
 /*!
  * \ingroup Common
  * \brief Check whether a key exists in the parameter tree
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
-bool hasParam(const std::string& param)
-{ return Parameters::getTree_().hasKey(param); }
+inline bool hasParam(const std::string& param)
+{ return Parameters::getTree().hasKey(param); }
 
 /*!
  * \ingroup Common
  * \brief Check whether a key exists in the parameter tree with a model group prefix
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
-bool hasParamInGroup(const std::string& paramGroup, const std::string& param)
-{ return Parameters::getTree_().hasKeyInGroup(param, paramGroup); }
+inline bool hasParamInGroup(const std::string& paramGroup, const std::string& param)
+{ return Parameters::getTree().hasKeyInGroup(param, paramGroup); }
 
 } // namespace Dumux
 
