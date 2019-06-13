@@ -36,32 +36,43 @@ namespace Dumux {
  * The LET mobility model is used to limit the friction for small water depths.
  */
 
-template <typename Scalar>
-class FrictionLawManning : public FrictionLaw<Scalar>
+template <typename Scalar, typename NumEqVector>
+class FrictionLawManning : public FrictionLaw<Scalar, NumEqVector>
 {
 public:
     FrictionLawManning(const Scalar gravity)
         : gravity_(gravity) {}
+
     /*!
-     * \brief Compute the friction ustar_h.
+     * \brief Compute the friction source term.
      *
      * \param waterDepth water depth.
-     * \param frictionValue The Manning friction value.
+     * \param frictionValue Manning friction value.
+     * \param u velocity in x-direction.
+     * \param v velocity in y-direction.
      *
-     * \return ustar_h friction used for the source term in shallow water models.
+     * \return Friction source term.
      */
-    Scalar computeUstarH(const Scalar waterDepth, const Scalar frictionValue) const final
+    NumEqVector computeSource(const Scalar waterDepth,
+                        const Scalar frictionValue,
+                        const Scalar u,
+                        const Scalar v) const final
     {
         using std::pow;
+        using std::hypot;
 
-        Scalar ustar_h = 0.0;
-        Scalar rough_h = pow(25.68/(1.0/frictionValue),6.0);
+        NumEqVector source(0.0);
 
-        rough_h = this->limitRoughH(rough_h, waterDepth);
+        Scalar roughnessHeight = pow(25.68/(1.0/frictionValue),6.0);
+        roughnessHeight = this->limitRoughH(roughnessHeight, waterDepth);
+        const Scalar c = pow((waterDepth + roughnessHeight),1.0/6.0) * 1.0/(frictionValue);
+        const Scalar uv = hypot(u,v);
 
-        auto cfric = pow((waterDepth + rough_h),1.0/6.0) * 1.0/(frictionValue);
-        ustar_h = gravity_ / pow(cfric,2.0);
-        return ustar_h;
+        source[0] = 0.0;
+        source[1] = -gravity_/(c*c) * u * uv;
+        source[2] = -gravity_/(c*c) * v * uv;
+
+        return source;
     }
 private:
     Scalar gravity_;

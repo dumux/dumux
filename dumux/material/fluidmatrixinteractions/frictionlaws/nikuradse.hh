@@ -36,35 +36,43 @@ namespace Dumux {
  * The LET mobility model is used to limit the friction for small water depths.
  */
 
-template <typename Scalar>
-class FrictionLawNikuradse : public FrictionLaw<Scalar>
+template <typename Scalar, typename NumEqVector>
+class FrictionLawNikuradse : public FrictionLaw<Scalar, NumEqVector>
 {
 public:
-    FrictionLawNikuradse(const Scalar gravity)
-        : gravity_(gravity) {}
     /*!
-     * \brief Compute the friction ustar_h.
+     * \brief Compute the friction source term.
      *
      * \param waterDepth water depth.
      * \param frictionValue The equivalent sand roughness.
+     * \param u velocity in x-direction.
+     * \param v velocity in y-direction.
      *
-     * \return ustar_h friction used for the source term in shallow water models.
+     * \return Friction source term.
      */
 
-    Scalar computeUstarH(const Scalar waterDepth, const Scalar frictionValue) const final
+    NumEqVector computeSource(const Scalar waterDepth,
+                         const Scalar frictionValue,
+                         const Scalar u,
+                         const Scalar v) const final
     {
         using std::pow;
         using std::log;
+        using std::hypot;
 
-        Scalar ustar_h = 0.0;
-        Scalar rough_h = frictionValue;
+        NumEqVector source(0.0);
 
-        rough_h = this->limitRoughH(rough_h, waterDepth);
-        ustar_h = pow(0.41,2.0)/pow(log((12*(waterDepth + rough_h))/frictionValue),2.0);
-        return ustar_h;
+        Scalar roughnessHeight = frictionValue;
+        roughnessHeight = this->limitRoughH(roughnessHeight, waterDepth);
+        const Scalar ustarH = pow(0.41,2.0)/pow(log((12*(waterDepth + roughnessHeight))/frictionValue),2.0);
+        const Scalar uv = hypot(u,v);
+
+        source[0] = 0.0;
+        source[1] = -ustarH * u * uv;
+        source[2] = -ustarH * v * uv;
+
+        return source;
     }
-private:
-    Scalar gravity_;
 };
 
 } // end namespace Dumux
