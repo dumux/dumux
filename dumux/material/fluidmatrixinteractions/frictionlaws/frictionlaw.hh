@@ -35,17 +35,22 @@ namespace Dumux {
  * The LET mobility model is used to limit the friction for small water depths.
  */
 
-template <typename Scalar>
+template <typename Scalar, typename NumEqVector>
 class FrictionLaw
 {
 public:
     /*!
-     * \brief Compute the friction ustar_h.
+     * \brief Compute the friction source term.
      *
-     * \return ustar_h friction used for the source term in shallow water models.
+     * The friction source term contains the losses due to friction.
+     *
+     * \return Friction source term.
      */
 
-    virtual Scalar computeUstarH(const Scalar waterDept, const Scalar frictionValue) const = 0;
+    virtual NumEqVector computeSource(const Scalar waterDept,
+                                 const Scalar frictionValue,
+                                 const Scalar u,
+                                 const Scalar v) const = 0;
 
     /*!
      * \brief Limit the friction for small water depth.
@@ -81,12 +86,12 @@ public:
         using std::min;
         using std::max;
 
-        Scalar mobility_max = 1.0; //!< maximal mobility
+        Scalar mobilityMax = 1.0; //!< maximal mobility
 
         Scalar minUpperH = roughnessHeight * 2.0;
         Scalar sw = min(waterDepth * (1.0/minUpperH),1.0);
         sw = max(0.0,sw);
-        auto mobility = mobility_max /(1 + (1.0-sw)*(1.0-sw));
+        auto mobility = mobilityMax /(1 + (1.0-sw)*(1.0-sw));
         return roughnessHeight * (1.0 - mobility);
     }
 };

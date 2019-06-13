@@ -76,6 +76,11 @@ public:
 
     /*! \brief Define the friction value.
     *
+    * The unit of the friction value depends on the used friction law.
+    * The Mannng friction value is just a coefficient and has no unit $[-]$
+    * In the Nikuradse law the friction value is the equivalent sand roughness
+    * with the unit $[m]$.
+    *
     * \return friction value
     */
     Scalar frictionValue(const GlobalPosition& globalPos) const

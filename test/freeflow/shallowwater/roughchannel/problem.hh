@@ -147,11 +147,11 @@ public:
         const auto gravity = this->spatialParams().gravity();
         if (getParam<std::string>("Problem.FrictionLaw") == ("Manning"))
         {
-            frictionLaw_ = std::make_shared<FrictionLawManning<Scalar>>(gravity);
+            frictionLaw_ = std::make_shared<FrictionLawManning<Scalar,NumEqVector>>(gravity);
         }
         else if (getParam<std::string>("Problem.FrictionLaw") == ("Nikuradse"))
         {
-            frictionLaw_ = std::make_shared<FrictionLawNikuradse<Scalar>>(gravity);
+            frictionLaw_ = std::make_shared<FrictionLawNikuradse<Scalar,NumEqVector>>();
             std::cout<<"\nWARNING: This test is meant to be run for the friction law after Manning.\n";
             std::cout<<"         You are running it with Nikuradse, although the friction values in\n";
             std::cout<<"         the input file and the analytic solution don't fit to Nikuradse!\n\n.";
@@ -240,8 +240,6 @@ public:
     {
         using std::hypot;
 
-        NumEqVector source(0.0);
-
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
         const Scalar manningN = this->spatialParams().frictionValue(globalPos);
@@ -249,12 +247,7 @@ public:
         const Scalar h = volVars.waterDepth();
         const Scalar u = volVars.velocity(0);
         const Scalar v = volVars.velocity(1);
-        const Scalar ustarH = frictionLaw_->computeUstarH(h, manningN);
-        const Scalar uv = hypot(u,v);
-
-        source[0] = 0.0;
-        source[1] = -ustarH * u * uv;
-        source[2] = -ustarH * v * uv;
+        NumEqVector source = frictionLaw_->computeSource(h, manningN, u, v);
 
         return source;
     }
@@ -387,7 +380,7 @@ private:
     Scalar constManningN_; // analytic solution is only available for const friction.
     Scalar bedSlope_;
     Scalar discharge_; // discharge at the inflow boundary
-    std::shared_ptr<FrictionLaw<Scalar>> frictionLaw_;
+    std::shared_ptr<FrictionLaw<Scalar,NumEqVector>> frictionLaw_;
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
 };
