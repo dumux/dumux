@@ -50,7 +50,7 @@ public:
      *
      * \return ustar_h friction used for the source term in shallow water models.
      */
-    const Scalar computeUstarH(const Scalar waterDepth, const Scalar frictionValue) final
+    Scalar computeUstarH(const Scalar waterDepth, const Scalar frictionValue) const final
     {
         using std::pow;
 

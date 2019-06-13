@@ -19,8 +19,13 @@
 /*!
  * \file
  * \ingroup ShallowWaterModel
- * \brief Compute boundary conditions (cell state) via Riemann invariants
+ * \brief Compute boundary conditions for the Riemann Solver
  *
+ * The boundary conditions are given at the the outer face of the
+ * the boundary cells. In this form the boundary condition can't be
+ * processed by the riemann Solver, because it needs two cell states, one at
+ * each side of a face. Therefore they Riemann invariants are used to
+ * calculate a virtual outer state.
  */
 #ifndef DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
 #define DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
@@ -32,49 +37,69 @@ namespace Dumux {
 namespace ShallowWater {
 
 /*!
- * \brief compute the cell state for fixed water depth boundary.
+ * \brief Compute the outer cell state for fixed water depth boundary.
+ *
+ * \param waterDepthBoundary Discharge per meter at the boundary face [m^2/s]
+ * \param waterDepthInside Water depth in the inner cell [m]
+ * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
+ * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
+ * \param gravity Gravity constant [m^3/s]
+ * \param nxy Normal vector of the boundary face
+ *
+ * \return cellStateOutside The outer cell state
  */
 template<class Scalar, class GlobalPosition>
 std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
-                                              const Scalar waterDepthLeft,
-                                              const Scalar velocityXLeft,
-                                              const Scalar velocityYLeft,
+                                              const Scalar waterDepthInside,
+                                              const Scalar velocityXInside,
+                                              const Scalar velocityYInside,
+                                              const Scalar gravity,
                                               const GlobalPosition& nxy)
 
 {
-    std::array<Scalar, 3> cellStateRight;
-    cellStateRight[0] = waterDepthBoundary;
+    std::array<Scalar, 3> cellStateOutside;
+    cellStateOutside[0] = waterDepthBoundary;
 
     using std::sqrt;
-    const auto uboundIn = nxy[0] * velocityXLeft  + nxy[1] * velocityYLeft;
-    const auto uboundQut =  uboundIn + 2.0 * sqrt(9.81 * waterDepthLeft) - 2.0 * sqrt(9.81 * cellStateRight[0]);
+    const auto uboundIn = nxy[0] * velocityXInside  + nxy[1] * velocityYInside;
+    const auto uboundQut =  uboundIn + 2.0 * sqrt(gravity * waterDepthInside) - 2.0 * sqrt(gravity * cellStateOutside[0]);
 
-    cellStateRight[1] = (nxy[0] * uboundQut); // we only use the normal part
-    cellStateRight[2] = (nxy[1] * uboundQut); // we only use the normal part
+    cellStateOutside[1] = (nxy[0] * uboundQut); // we only use the normal part
+    cellStateOutside[2] = (nxy[1] * uboundQut); // we only use the normal part
 
-    return cellStateRight;
+    return cellStateOutside;
 }
 
 /*!
- * \brief compute the cell state for a fixed discharge boundary.
+ * \brief Compute the outer cell state for a fixed discharge boundary.
+ *
+ * \param dischargeBoundary Discharge per meter at the boundary face [m^2/s]
+ * \param waterDepthInside Water depth in the inner cell [m]
+ * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
+ * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
+ * \param gravity Gravity constant [m^3/s]
+ * \param nxy Normal vector of the boundary face
+ *
+ * \return cellStateOutside The outer cell state
  */
 template<class Scalar, class GlobalPosition>
-std::array<Scalar, 3> fixedDischargeBoundary(const Scalar qlocal,
-                                             const Scalar waterDepthLeft,
-                                             const Scalar velocityXLeft,
-                                             const Scalar velocityYLeft,
+std::array<Scalar, 3> fixedDischargeBoundary(const Scalar dischargeBoundary,
+                                             const Scalar waterDepthInside,
+                                             const Scalar velocityXInside,
+                                             const Scalar velocityYInside,
+                                             const Scalar gravity,
                                              const GlobalPosition& nxy)
 {
-    std::array<Scalar, 3> cellStateRight;
+    std::array<Scalar, 3> cellStateOutside;
     using std::abs;
     using std::sqrt;
     using std::max;
 
     // only impose if abs(q) > 0
-    if (abs(qlocal) > 1.0e-9)
+    if (abs(dischargeBoundary) > 1.0e-9)
     {
-        const auto uboundIn = nxy[0]*velocityXLeft + nxy[1]*velocityYLeft;
-        const auto alphal = uboundIn + 2.0*sqrt(9.81 * waterDepthLeft);
+        const auto uboundIn = nxy[0]*velocityXInside + nxy[1]*velocityYInside;
+        const auto alphal = uboundIn + 2.0*sqrt(gravity * waterDepthInside);
 
         //initial guess for hstar solved with newton
         constexpr Scalar tol_hstar = 1.0E-12;
@@ -84,8 +109,8 @@ std::array<Scalar, 3> fixedDischargeBoundary(const Scalar qlocal,
         Scalar hstar = 0.1;
         for (int i = 0; i < maxstep_hstar; ++i)
         {
-            Scalar f_hstar = alphal - qlocal/hstar - 2 * sqrt(9.81 * hstar);
-            Scalar df_hstar = (f_hstar -(alphal - qlocal/(hstar + ink_hstar) - 2 * sqrt(9.81 * (hstar+ink_hstar))))/ink_hstar;
+            Scalar f_hstar = alphal - dischargeBoundary/hstar - 2 * sqrt(gravity * hstar);
+            Scalar df_hstar = (f_hstar -(alphal - dischargeBoundary/(hstar + ink_hstar) - 2 * sqrt(gravity * (hstar+ink_hstar))))/ink_hstar;
             Scalar dx_hstar = -f_hstar/df_hstar;
             hstar = max(hstar - dx_hstar,0.001);
 
@@ -93,13 +118,13 @@ std::array<Scalar, 3> fixedDischargeBoundary(const Scalar qlocal,
                 break;
         }
 
-        const auto qinner = (nxy[0] * waterDepthLeft * velocityYLeft) - (nxy[1] * waterDepthLeft * velocityXLeft);
-        cellStateRight[0] = hstar;
-        cellStateRight[1] = (nxy[0] * qlocal - nxy[1] * qinner)/hstar;
-        cellStateRight[2] = (nxy[1] * qlocal + nxy[0] * qinner)/hstar;
+        const auto qinner = (nxy[0] * waterDepthInside * velocityYInside) - (nxy[1] * waterDepthInside * velocityXInside);
+        cellStateOutside[0] = hstar;
+        cellStateOutside[1] = (nxy[0] * dischargeBoundary - nxy[1] * qinner)/hstar;
+        cellStateOutside[2] = (nxy[1] * dischargeBoundary + nxy[0] * qinner)/hstar;
     }
 
-    return cellStateRight;
+    return cellStateOutside;
 }
 
 } // end namespace ShallowWater

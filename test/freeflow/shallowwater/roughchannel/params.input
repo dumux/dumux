@@ -3,7 +3,7 @@ Name = roughchannel
 FrictionValue = 0.025 # [-]
 BedSlope = 0.001 # [-]
 Gravity = 9.81 # [m/s^2]
-Discharge = -1.0 # [m/s] discharge at the inflow boundary
+Discharge = -1.0 # [m^2/s] discharge per meter at the inflow boundary
 FrictionLaw = Manning
 
 [TimeLoop]

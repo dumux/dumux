@@ -45,7 +45,7 @@ public:
      * \return ustar_h friction used for the source term in shallow water models.
      */
 
-    const virtual Scalar computeUstarH(const Scalar waterDept, const Scalar frictionValue) = 0;
+    virtual Scalar computeUstarH(const Scalar waterDept, const Scalar frictionValue) const = 0;
 
     /*!
      * \brief Limit the friction for small water depth.
@@ -76,7 +76,7 @@ public:
      * \param roughnessHeight roughness height of the representive structure (e.g. largest grain size).
      * \param waterDepth water depth.
      */
-    Scalar limitRoughH(const Scalar roughnessHeight, const Scalar waterDepth)
+    Scalar limitRoughH(const Scalar roughnessHeight, const Scalar waterDepth) const
     {
         using std::min;
         using std::max;
