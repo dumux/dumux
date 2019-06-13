@@ -40,6 +40,8 @@ template <typename Scalar>
 class FrictionLawNikuradse : public FrictionLaw<Scalar>
 {
 public:
+    FrictionLawNikuradse(const Scalar gravity)
+        : gravity_(gravity) {}
     /*!
      * \brief Compute the friction ustar_h.
      *
@@ -49,7 +51,7 @@ public:
      * \return ustar_h friction used for the source term in shallow water models.
      */
 
-    const Scalar computeUstarH(const Scalar waterDepth, const Scalar frictionValue) final
+    Scalar computeUstarH(const Scalar waterDepth, const Scalar frictionValue) const final
     {
         using std::pow;
         using std::log;
@@ -61,6 +63,8 @@ public:
         ustar_h = pow(0.41,2.0)/pow(log((12*(waterDepth + rough_h))/frictionValue),2.0);
         return ustar_h;
     }
+private:
+    Scalar gravity_;
 };
 
 } // end namespace Dumux

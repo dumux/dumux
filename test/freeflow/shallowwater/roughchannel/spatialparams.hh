@@ -96,7 +96,8 @@ public:
     *
     * \param element The current element
     * \param scv The sub-control volume inside the element.
-    * \return the bed surface
+    *
+    * \return The bed surface
     */
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
