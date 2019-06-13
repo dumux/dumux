@@ -144,15 +144,21 @@ public:
         discharge_ = getParam<Scalar>("Problem.Discharge");
         hBoundary_ = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
 
+        const auto gravity = this->spatialParams().gravity();
         if (getParam<std::string>("Problem.FrictionLaw") == ("Manning"))
         {
-            const auto gravity = this->spatialParams().gravity();
-            auto ptrManning = std::make_shared<FrictionLawManning<Scalar>>(gravity);
-            frictionLaw_ = std::static_pointer_cast<FrictionLaw<Scalar>>(ptrManning);
+            frictionLaw_ = std::make_shared<FrictionLawManning<Scalar>>(gravity);
+        }
+        else if (getParam<std::string>("Problem.FrictionLaw") == ("Nikuradse"))
+        {
+            frictionLaw_ = std::make_shared<FrictionLawNikuradse<Scalar>>(gravity);
+            std::cout<<"\nWARNING: This test is meant to be run for the friction law after Manning.\n";
+            std::cout<<"         You are running it with Nikuradse, although the friction values in\n";
+            std::cout<<"         the input file and the analytic solution don't fit to Nikuradse!\n\n.";
         }
         else
         {
-            std::cout<<"Change the FrictionLaw in params.input. This test is only valid for Manning!";
+            std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are 'Manning' and 'Nikuradse'!";
         }
     }
 
@@ -175,7 +181,7 @@ public:
         using std::abs;
         using std::sqrt;
 
-        return std::pow(std::abs(discharge)*manningN/sqrt(bedSlope), 0.6);
+        return pow(abs(discharge)*manningN/sqrt(bedSlope), 0.6);
     }
 
     //! Udpate the analytical solution
@@ -306,6 +312,7 @@ public:
                                                                           insideVolVars.waterDepth(),
                                                                           insideVolVars.velocity(0),
                                                                           insideVolVars.velocity(1),
+                                                                          gravity,
                                                                           nxy);
         }
         // impose water depth at the right side
@@ -315,6 +322,7 @@ public:
                                                                             insideVolVars.waterDepth(),
                                                                             insideVolVars.velocity(0),
                                                                             insideVolVars.velocity(1),
+                                                                            gravity,
                                                                             nxy);
         }
         // no flow boundary
