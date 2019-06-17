@@ -26,6 +26,7 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <iterator>
 
 #include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
@@ -60,13 +61,13 @@ int getOrientation(const Dune::FieldVector<ctype, 3>& a,
  * \ingroup Geometry
  * \brief Compute the points making up the convex hull around the given set of unordered points
  * \note We assume that all points are coplanar and there are no indentical points in the list
+ * \note This is the overload if we are not allowed to write into the given points vector
  */
-template<class ctype>
-std::vector<Dune::FieldVector<ctype, 3>>
-grahamConvexHull2d3d(const std::vector<Dune::FieldVector<ctype, 3>>& points)
+template<int dim, class Points>
+Points grahamConvexHull(const Points& points)
 {
     auto copyPoints = points;
-    return grahamConvexHull2d3d(copyPoints);
+    return grahamConvexHull<dim>(copyPoints);
 }
 
 /*!
@@ -76,9 +77,10 @@ grahamConvexHull2d3d(const std::vector<Dune::FieldVector<ctype, 3>>& points)
  * \note This algorithm changes the order of the given points a bit
  *       as they are unordered anyway this shouldn't matter too much
  */
-template<class ctype>
+template<int dim, class ctype,
+         std::enable_if_t<(dim==2), int> = 0>
 std::vector<Dune::FieldVector<ctype, 3>>
-grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
+grahamConvexHull(std::vector<Dune::FieldVector<ctype, 3>>& points)
 {
     using Point = Dune::FieldVector<ctype, 3>;
     std::vector<Point> convexHull;
@@ -177,15 +179,59 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
 
 /*!
  * \ingroup Geometry
+ * \brief Compute the points making up the convex hull around the given set of unordered points
+ * \note This is the specialization for 2d space. Here, we make use of the generic implementation
+ *       for the case of coplanar points in 3d space (a more efficient implementation could be provided).
+ */
+template<int dim, class ctype,
+         std::enable_if_t<(dim==2), int> = 0>
+std::vector<Dune::FieldVector<ctype, 2>>
+grahamConvexHull(const std::vector<Dune::FieldVector<ctype, 2>>& points)
+{
+    std::vector<Dune::FieldVector<ctype, 3>> points3D;
+    points3D.reserve(points.size());
+    std::transform(points.begin(), points.end(), std::back_inserter(points3D),
+                   [](const auto& p) { return Dune::FieldVector<ctype, 3>({p[0], p[1], 0.0}); });
+
+    const auto result3D = grahamConvexHull<2>(points3D);
+
+    std::vector<Dune::FieldVector<ctype, 2>> result2D;
+    result2D.reserve(result3D.size());
+    std::transform(result3D.begin(), result3D.end(), std::back_inserter(result2D),
+                   [](const auto& p) { return Dune::FieldVector<ctype, 2>({p[0], p[1]}); });
+
+    return result2D;
+}
+
+// deprecated interfaces
+#ifndef DOXYGEN
+template<class ctype>
+std::vector<Dune::FieldVector<ctype, 3>>
+DUNE_DEPRECATED_MSG("Use grahamConvexHull<dim> with dim as template argument. Will be removed after 3.1")
+grahamConvexHull2d3d(const std::vector<Dune::FieldVector<ctype, 3>>& points)
+{
+    auto copyPoints = points;
+    return grahamConvexHull<2>(copyPoints);
+}
+
+template<class ctype>
+std::vector<Dune::FieldVector<ctype, 3>>
+DUNE_DEPRECATED_MSG("Use grahamConvexHull<dim> with dim as template argument. Will be removed after 3.1")
+grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
+{ return grahamConvexHull<2>(points); }
+
+/*!
+ * \ingroup Geometry
  * \brief Triangulate area given points of the convex hull
  * \note Assumes all points of the convex hull are coplanar
  * \note This inserts a mid point and connects all corners with that point to triangles
  */
 template<class ctype>
 std::vector<std::array<Dune::FieldVector<ctype, 3>, 3> >
-DUNE_DEPRECATED_MSG("Please use triangulate")
+DUNE_DEPRECATED_MSG("Please use triangulate. Will be removed after 3.1")
 triangulateConvexHull(const std::vector<Dune::FieldVector<ctype, 3>>& convexHull)
 { return triangulate<2, 3>(convexHull); }
+#endif
 
 } // end namespace Dumux
 

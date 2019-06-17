@@ -42,8 +42,17 @@ void writeVTKPolyDataTriangle(const TriangleVector& triangles,
          << "        <DataArray type=\"Float32\" Name=\"Coordinates\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
     for (const auto& t : triangles)
+    {
         for (const auto& p : t)
+        {
             fout << p << " ";
+            if (p.size() == 1)
+                fout << "0.0 0.0 ";
+            else if (p.size() == 2)
+                fout << "0.0 ";
+        }
+
+    }
     fout << '\n';
 
     fout << "        </DataArray>\n"
