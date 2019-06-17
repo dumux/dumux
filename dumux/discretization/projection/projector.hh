@@ -30,6 +30,7 @@
 #ifndef DUMUX_DISCRETIZATION_PROJECTOR_HH
 #define DUMUX_DISCRETIZATION_PROJECTOR_HH
 
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <type_traits>
@@ -41,6 +42,8 @@
 
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/istl/matrixindexset.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/bvector.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/linear/seqsolverbackend.hh>
@@ -55,14 +58,23 @@ namespace Dumux {
  *        into another. The convenience functions makeProjectorPair
  *        or makeProjector can be used to create such a projection.
  */
-template<class Scalar>
+template<class ScalarType>
 class Projector
 {
-    using BlockType = Dune::FieldMatrix<Scalar, 1, 1>;
+    using MatrixBlockType = Dune::FieldMatrix<ScalarType, 1, 1>;
 
 public:
+    //! Export the scalar type
+    using Scalar = ScalarType;
     //! Export the type of the projection matrices
-    using Matrix = Dune::BCRSMatrix< BlockType >;
+    using Matrix = Dune::BCRSMatrix< MatrixBlockType >;
+
+    //! Parameters that can be passed to project()
+    struct Params
+    {
+        std::size_t maxIterations{100};
+        Scalar residualReduction{1e-13};
+    };
 
     //! delete default constructor
     Projector() = delete;
@@ -80,23 +92,56 @@ public:
     /*!
      * \brief Project a solution u into up
      * \param u The solution living on the domain space
-     * \param up The projection of u into the target space
+     * \return The projection of u into the target space
      */
-    template< class DomainSolution, class TargetSolution>
-    void project(const DomainSolution& u, TargetSolution& up) const
+    template< class BlockType, std::enable_if_t<std::is_convertible<BlockType, ScalarType>::value, int> = 0 >
+    Dune::BlockVector<BlockType> project(const Dune::BlockVector<BlockType>& u, const Params& params = Params{}) const
     {
         // be picky about size of u
         if ( u.size() != projMat_.M())
             DUNE_THROW(Dune::InvalidStateException, "Vector size mismatch" );
 
-        up.resize(massMat_.N());
+        Dune::BlockVector<BlockType> up(massMat_.N());
 
         auto rhs = up;
         projMat_.mv(u, rhs);
 
         SSORCGBackend solver;
+        solver.setResidualReduction(params.residualReduction);
+        solver.setMaxIter(params.maxIterations);
         solver.solve(massMat_, up, rhs);
+
+        return up;
     }
+
+    /*!
+     * \brief Project a solution u into up
+     * \param u The solution living on the domain space
+     * \return The projection of u into the target space
+     */
+    template< class BlockType, std::enable_if_t<!std::is_convertible<BlockType, ScalarType>::value, int> = 0 >
+    Dune::BlockVector<BlockType> project(const Dune::BlockVector<BlockType>& u, const Params& params = Params{}) const
+    {
+        Dune::BlockVector<BlockType> result(massMat_.N());
+
+        for (int pvIdx = 0; pvIdx < BlockType::size(); ++pvIdx)
+        {
+            Dune::BlockVector<Dune::FieldVector<Scalar, 1>> tmp(u.size());
+            std::transform(u.begin(), u.end(), tmp.begin(), [pvIdx] (const auto& v) { return v[pvIdx]; });
+
+            const auto p = project(tmp, params);
+            for (std::size_t i = 0; i < p.size(); ++i)
+                result[i][pvIdx] = p[i];
+        }
+
+        return result;
+    }
+
+    /*!
+     * \brief Returns the default parameters.
+     */
+    static Params defaultParams()
+    { return {}; }
 
 private:
     Matrix massMat_;
@@ -222,8 +267,16 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
             // mass matrix entries target domain
             for (unsigned int i = 0; i < targetLocalBasis.size(); ++i)
             {
-                const auto dofIdx = targetLocalView.index(i);
-                forwardM[dofIdx][dofIdx] += ie*weight*targetShapeVals[i];
+                const auto dofIdxI = targetLocalView.index(i);
+                forwardM[dofIdxI][dofIdxI] += ie*weight*targetShapeVals[i]*targetShapeVals[i];
+
+                for (unsigned int j = i+1; j < targetLocalBasis.size(); ++j)
+                {
+                    const auto dofIdxJ = targetLocalView.index(j);
+                    const auto value = ie*weight*targetShapeVals[i]*targetShapeVals[j];
+                    forwardM[dofIdxI][dofIdxJ] += value;
+                    forwardM[dofIdxJ][dofIdxI] += value;
+                }
             }
 
             // If targetDim < domainDim, there can be several "neighbors" if
@@ -246,7 +299,17 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
                     const auto dofIdxDomain = domainLocalView.index(i);
                     const auto domainShapeVal = domainShapeVals[i];
                     if (doBidirectional)
-                        backwardM[dofIdxDomain][dofIdxDomain] += ie*weight*domainShapeVal;
+                    {
+                        backwardM[dofIdxDomain][dofIdxDomain] += ie*weight*domainShapeVal*domainShapeVal;
+
+                        for (unsigned int j = i+1; j < domainLocalBasis.size(); ++j)
+                        {
+                            const auto dofIdxDomainJ = domainLocalView.index(j);
+                            const auto value = ie*weight*domainShapeVal*domainShapeVals[j];
+                            backwardM[dofIdxDomain][dofIdxDomainJ] += value;
+                            backwardM[dofIdxDomainJ][dofIdxDomain] += value;
+                        }
+                    }
 
                     for (unsigned int j = 0; j < targetLocalBasis.size(); ++j)
                     {

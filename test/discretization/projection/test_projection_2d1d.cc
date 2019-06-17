@@ -41,78 +41,13 @@
 
 #include <dumux/io/container.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/integrate.hh>
 
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/fem/fegridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/projection/projector.hh>
 #include <dumux/multidomain/glue.hh>
-
-template< class Scalar, class SolutionVector, class GridGeometry1, class GridGeometry2 >
-void writeProjection(const GridGeometry1& gg1, const GridGeometry2& gg2,
-                     const SolutionVector& sol1, const SolutionVector& sol2,
-                     const std::string& acro1, const std::string& acro2)
-{
-    const auto projectors = Dumux::makeProjectorPair( getFunctionSpaceBasis(gg1),
-                                                      getFunctionSpaceBasis(gg2),
-                                                      makeGlue(gg1, gg2) );
-    const auto& forwardProjector = projectors.first;
-    const auto& backwardProjector = projectors.second;
-
-    SolutionVector p2_1, p1_2;
-    forwardProjector.project(sol1, p2_1);
-    backwardProjector.project(sol2, p1_2);
-
-    const std::string filename1 = "2d_" + acro1 + "_" + acro2;
-    const std::string filename2 = "1d_" + acro1 + "_" + acro2;
-
-    Dumux::writeContainerToFile(p1_2, filename1 + ".csv");
-    Dumux::writeContainerToFile(p2_1, filename2 + ".csv");
-
-    static const bool writeVtk = Dumux::getParam<bool>("Vtk.EnableOutput", false);
-    if (writeVtk)
-    {
-        using namespace Dune;
-        VTKWriter<typename GridGeometry1::GridView> writer1(gg1.gridView());
-        VTKWriter<typename GridGeometry2::GridView> writer2(gg2.gridView());
-
-        const auto& basis1 = Dumux::getFunctionSpaceBasis(gg1);
-        const auto& basis2 = Dumux::getFunctionSpaceBasis(gg2);
-
-        const auto uInfo = VTK::FieldInfo("u", VTK::FieldInfo::Type::scalar, 1);
-        const auto upInfo = VTK::FieldInfo("u_p", VTK::FieldInfo::Type::scalar, 1);
-
-        const auto uFunction1 = Functions::makeDiscreteGlobalBasisFunction<Scalar>(basis1, sol1);
-        const auto uFunction2 = Functions::makeDiscreteGlobalBasisFunction<Scalar>(basis2, sol2);
-        const auto upFunction1 = Functions::makeDiscreteGlobalBasisFunction<Scalar>(basis1, p1_2);
-        const auto upFunction2 = Functions::makeDiscreteGlobalBasisFunction<Scalar>(basis2, p2_1);
-
-        if (GridGeometry1::discMethod == Dumux::DiscretizationMethod::cctpfa)
-        {
-            writer1.addCellData(uFunction1, uInfo);
-            writer1.addCellData(upFunction1, upInfo);
-        }
-        else
-        {
-            writer1.addVertexData(uFunction1, uInfo);
-            writer1.addVertexData(upFunction1, upInfo);
-        }
-
-        if (GridGeometry2::discMethod == Dumux::DiscretizationMethod::cctpfa)
-        {
-            writer2.addCellData(uFunction2, uInfo);
-            writer2.addCellData(upFunction2, upInfo);
-        }
-        else
-        {
-            writer2.addVertexData(uFunction2, uInfo);
-            writer2.addVertexData(upFunction2, upInfo);
-        }
-
-        writer1.write(filename1);
-        writer2.write(filename2);
-    }
-}
 
 int main (int argc, char *argv[]) try
 {
@@ -127,16 +62,11 @@ int main (int argc, char *argv[]) try
 
     using GridView1 = typename Grid1::LeafGridView;
     using GridView2 = typename Grid2::LeafGridView;
-    using FEBasis1 = Dune::Functions::LagrangeBasis<GridView1, 1>;
-    using FEBasis2 = Dune::Functions::LagrangeBasis<GridView2, 1>;
+    using FEBasis1 = Dune::Functions::LagrangeBasis<GridView1, 2>;
+    using FEBasis2 = Dune::Functions::LagrangeBasis<GridView2, 2>;
 
     using Scalar = double;
-    using TpfaGridGeometry1 = Dumux::CCTpfaFVGridGeometry<GridView1>;
-    using BoxGridGeometry1 = Dumux::BoxFVGridGeometry<Scalar, GridView1>;
     using FEGridGeometry1 = Dumux::FEGridGeometry<FEBasis1>;
-
-    using TpfaGridGeometry2 = Dumux::CCTpfaFVGridGeometry<GridView2>;
-    using BoxGridGeometry2 = Dumux::BoxFVGridGeometry<Scalar, GridView2>;
     using FEGridGeometry2 = Dumux::FEGridGeometry<FEBasis2>;
 
     // make the 2d grid
@@ -148,60 +78,91 @@ int main (int argc, char *argv[]) try
 
     // make the 1d grid
     GlobalPosition lower2({0., 0.5});
-    GlobalPosition upper2({1. ,0.5});
+    GlobalPosition upper2({1., 0.5});
     std::array<unsigned int, 1> els2{{13}};
     std::shared_ptr<Grid2> grid2 = Dune::StructuredGridFactory<Grid2>::createSimplexGrid(lower2, upper2, els2);
 
-    Dune::Functions::LagrangeBasis<GridView1, 0> q0Basis1(grid1->leafGridView());
-    Dune::Functions::LagrangeBasis<GridView2, 0> q0Basis2(grid2->leafGridView());
-    Dune::Functions::LagrangeBasis<GridView1, 1> q1Basis1(grid1->leafGridView());
-    Dune::Functions::LagrangeBasis<GridView2, 1> q1Basis2(grid2->leafGridView());
-
-    // create all grid geometries
-    TpfaGridGeometry1 tpfaGridGeometry1(grid1->leafGridView());
-    BoxGridGeometry1 boxGridGeometry1(grid1->leafGridView());
+    // create grid geometries
     FEGridGeometry1 feGridGeometry1(std::make_shared<FEBasis1>(grid1->leafGridView()));
-
-    TpfaGridGeometry2 tpfaGridGeometry2(grid2->leafGridView());
-    BoxGridGeometry2 boxGridGeometry2(grid2->leafGridView());
     FEGridGeometry2 feGridGeometry2(std::make_shared<FEBasis2>(grid2->leafGridView()));
 
-    // function to distribute on grids
-    auto evalFunction1 = [] (const auto& pos)
-    { return std::sin(2*M_PI*pos[0])*std::cos(4*M_PI*pos[1]); };
-    auto evalFunction2 = [] (const auto& pos)
-    { return std::cos(4*M_PI*(pos[0] - M_PI))*std::sin(2*M_PI*(pos[1]-M_PI/2.0)); };
-
     // create solution vectors
-    using SolutionVector = Dune::BlockVector< Dune::FieldVector<Scalar, 1> >;
-    SolutionVector sol2d_tpfa, sol2d_box, sol2d_fem;
-    SolutionVector sol1d_tpfa, sol1d_box, sol1d_fem;
+    using BlockType = Dune::FieldVector<Scalar, 1>;
+    using SolutionVector = Dune::BlockVector< BlockType >;
+    SolutionVector sol1;
+    SolutionVector sol2;
 
-    Dune::Functions::interpolate(q0Basis1, sol2d_tpfa, evalFunction1);
-    Dune::Functions::interpolate(q0Basis2, sol1d_tpfa, evalFunction2);
+    // function to distribute on grids
+    auto f = [] (const auto& pos) -> BlockType { return {pos.two_norm2()}; };
 
-    Dune::Functions::interpolate(q1Basis1, sol2d_box, evalFunction1);
-    Dune::Functions::interpolate(q1Basis2, sol1d_box, evalFunction2);
+    Dune::Functions::interpolate(feGridGeometry1.feBasis(), sol1, f);
+    Dune::Functions::interpolate(feGridGeometry2.feBasis(), sol2, f);
 
-    Dune::Functions::interpolate(feGridGeometry1.feBasis(), sol2d_fem, evalFunction1);
-    Dune::Functions::interpolate(feGridGeometry2.feBasis(), sol1d_fem, evalFunction2);
+    // make projections and check them
+    const auto projectors = Dumux::makeProjectorPair( feGridGeometry1.feBasis(),
+                                                      feGridGeometry2.feBasis(),
+                                                      makeGlue(feGridGeometry1, feGridGeometry2) );
+    const auto& forwardProjector = projectors.first;
+    const auto& backwardProjector = projectors.second;
 
-    // tpfa - tpfa
-    writeProjection<Scalar>(tpfaGridGeometry1, tpfaGridGeometry2, sol2d_tpfa, sol1d_tpfa, "tpfa", "tpfa");
-    // box - box
-    writeProjection<Scalar>(boxGridGeometry1, boxGridGeometry2, sol2d_box, sol1d_box, "box", "box");
-    // fem - fem
-    writeProjection<Scalar>(feGridGeometry1, feGridGeometry2, sol2d_fem, sol1d_fem, "fem", "fem");
-    // box - tpfa
-    writeProjection<Scalar>(boxGridGeometry1, tpfaGridGeometry2, sol2d_box, sol1d_tpfa, "box", "tpfa");
-    // tpfa - box
-    writeProjection<Scalar>(tpfaGridGeometry1, boxGridGeometry2, sol2d_tpfa, sol1d_box, "tpfa", "box");
-    // fem - tpfa
-    writeProjection<Scalar>(feGridGeometry1, tpfaGridGeometry2, sol2d_fem, sol1d_tpfa, "fem", "tpfa");
-    // fem - box
-    writeProjection<Scalar>(feGridGeometry1, boxGridGeometry2, sol2d_fem, sol1d_box, "fem", "box");
-    // tpfa - fem
-    writeProjection<Scalar>(tpfaGridGeometry1, feGridGeometry2, sol2d_tpfa, sol1d_fem, "tpfa", "fem");
+    auto params = forwardProjector.defaultParams();
+    params.residualReduction = 1e-16;
+
+    const auto p12 = forwardProjector.project(sol1, params);
+    const auto p21 = backwardProjector.project(sol2, params);
+
+    using namespace Dune::Functions;
+
+    auto af1 = makeAnalyticGridViewFunction(f, feGridGeometry1.gridView());
+    auto af2 = makeAnalyticGridViewFunction(f, feGridGeometry2.gridView());
+
+    auto gf1 = makeDiscreteGlobalBasisFunction<BlockType>(feGridGeometry1.feBasis(), p21);
+    auto gf2 = makeDiscreteGlobalBasisFunction<BlockType>(feGridGeometry2.feBasis(), p12);
+
+    if (Dumux::getParam<bool>("Vtk.EnableOutput", false))
+    {
+        Dune::VTKWriter<typename FEGridGeometry1::GridView> writer1(feGridGeometry1.gridView());
+        Dune::VTKWriter<typename FEGridGeometry2::GridView> writer2(feGridGeometry2.gridView());
+
+        const auto fieldInfoAnalytic = Dune::VTK::FieldInfo({"u", Dune::VTK::FieldInfo::Type::scalar, 1});
+        const auto fieldInfoProjected = Dune::VTK::FieldInfo({"u_p", Dune::VTK::FieldInfo::Type::scalar, 1});
+
+        writer1.addVertexData(af1, fieldInfoAnalytic);
+        writer1.addVertexData(gf1, fieldInfoProjected);
+
+        writer2.addVertexData(af2, fieldInfoAnalytic);
+        writer2.addVertexData(gf2, fieldInfoProjected);
+
+        writer1.write("sol_2d");
+        writer2.write("sol_1d");
+    }
+
+    // make sure that solution projected on 2d grid is "exact" on the intersecting edges
+    for (const auto& element : elements(feGridGeometry1.gridView()))
+    {
+        auto lf1 = localFunction(gf1);
+        lf1.bind(element);
+
+        for (const auto& is : intersections(feGridGeometry1.gridView(), element))
+        {
+            const auto isGeom = is.geometry();
+            const auto p = isGeom.center();
+
+            if (p[1] > 0.5 - 1e-6 && p[1] < 0.5 + 1e-6)
+            {
+                const auto error = lf1(element.geometry().local(p)) - f(p);
+
+                using std::sqrt;
+                if ( sqrt(error*error) > 1e-14 )
+                    DUNE_THROW(Dune::MathError, "Error norm on 2d grid too high (" << sqrt(error*error) << ")!");
+            }
+        }
+    }
+
+    // one-dimensional solution should still be "exact"
+    const auto l2Norm = Dumux::integrateL2Error( feGridGeometry2.gridView(), af2, gf2, 3);
+    if ( l2Norm > 1e-14 )
+        DUNE_THROW(Dune::MathError, "Error norm on 1d grid too high!");
 
     return 0;
 }
