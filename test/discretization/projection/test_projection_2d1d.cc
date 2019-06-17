@@ -49,21 +49,6 @@
 #include <dumux/discretization/projection/projector.hh>
 #include <dumux/multidomain/glue.hh>
 
-template< class Scalar, class SolutionVector, class GridGeometry1, class GridGeometry2 >
-void writeProjection(const GridGeometry1& gg1, const GridGeometry2& gg2,
-                     const SolutionVector& sol1, const SolutionVector& sol2,
-                     const std::string& acro1, const std::string& acro2)
-{
-    const auto projectors = Dumux::makeProjectorPair( getFunctionSpaceBasis(gg1),
-                                                      getFunctionSpaceBasis(gg2),
-                                                      makeGlue(gg1, gg2) );
-    const auto& forwardProjector = projectors.first;
-    const auto& backwardProjector = projectors.second;
-
-    const auto p2_1 = forwardProjector.project(sol1, p2_1);
-    const auto p1_2 = backwardProjector.project(sol2, p1_2);
-}
-
 int main (int argc, char *argv[]) try
 {
     // maybe initialize mpi
