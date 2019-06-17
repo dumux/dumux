@@ -52,7 +52,21 @@ int main (int argc, char *argv[]) try
     // a quadratic function on the grid
     auto f = [&] (const auto& pos) -> R { return {pos.two_norm2(), pos[0]*pos[0]*pos[1]}; };
 
-    // make bases
+    // test Dumux::integrateGridFunction with unit function
+    auto basisUnit = makeBasis(gvFine, lagrange<1>());
+
+    using RUnit = Dune::FieldVector<double, 1>;
+    Dune::BlockVector< RUnit > solUnit;
+    interpolate(basisUnit, solUnit, [&] (const auto& pos) { return 1.0; });
+
+    auto gfUnit = makeDiscreteGlobalBasisFunction<RUnit>(basisUnit, solUnit);
+    auto integral = Dumux::integrateGridFunction(gvFine, gfUnit, 1);
+
+    using std::abs;
+    if ( abs(integral - 1.0) > 1e-13)
+        DUNE_THROW(Dune::MathError, "Integral of grid function is not 1 (error = " << abs(integral - 1.0) << ")");
+
+    // test Dumux::integrateL2Error
     SolutionVector solCoarse, solFine;
     interpolate(makeBasis(gvCoarse, power<2>(lagrange<2>())), solCoarse, f);
     interpolate(makeBasis(gvFine, power<2>(lagrange<2>())), solFine, f);
