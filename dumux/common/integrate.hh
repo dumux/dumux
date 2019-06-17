@@ -103,7 +103,7 @@ using FieldType = typename FieldTypeImpl<T>::type;
 template<class GridGeometry, class SolutionVector,
          typename std::enable_if_t<!Impl::hasLocalFunction<SolutionVector>(), int> = 0>
 auto integrateGridFunction(const GridGeometry& gg,
-                           SolutionVector&& sol,
+                           const SolutionVector& sol,
                            std::size_t order)
 {
     using GridView = typename GridGeometry::GridView;
@@ -177,7 +177,7 @@ auto integrateL2Error(const GridGeometry& gg,
 template<class GridView, class F,
          typename std::enable_if_t<Impl::hasLocalFunction<F>(), int> = 0>
 auto integrateGridFunction(const GridView& gv,
-                           F&& f,
+                           const F& f,
                            std::size_t order)
 {
     auto fLocal = localFunction(f);
@@ -217,8 +217,8 @@ auto integrateGridFunction(const GridView& gv,
 template<class GridView, class F, class G,
          typename std::enable_if_t<Impl::hasLocalFunction<F>(), int> = 0>
 auto integrateL2Error(const GridView& gv,
-                      F&& f,
-                      G&& g,
+                      const F& f,
+                      const G& g,
                       std::size_t order)
 {
     auto fLocal = localFunction(f);
