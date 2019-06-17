@@ -35,9 +35,11 @@ namespace Dumux {
  * The LET mobility model is used to limit the friction for small water depths.
  */
 
-template <typename Scalar, typename NumEqVector>
+template <typename NumEqVector>
 class FrictionLaw
 {
+    using Scalar = typename NumEqVector::value_type;
+
 public:
     /*!
      * \brief Compute the friction source term.
@@ -47,10 +49,10 @@ public:
      * \return Friction source term.
      */
 
-    virtual NumEqVector computeSource(const Scalar waterDept,
-                                 const Scalar frictionValue,
-                                 const Scalar u,
-                                 const Scalar v) const = 0;
+    virtual NumEqVector computeSource(const Scalar waterDepth,
+                                      const Scalar frictionValue,
+                                      const Scalar u,
+                                      const Scalar v) const = 0;
 
     /*!
      * \brief Limit the friction for small water depth.
