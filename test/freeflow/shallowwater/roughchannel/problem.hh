@@ -147,11 +147,11 @@ public:
         const auto gravity = this->spatialParams().gravity();
         if (getParam<std::string>("Problem.FrictionLaw") == ("Manning"))
         {
-            frictionLaw_ = std::make_shared<FrictionLawManning<Scalar,NumEqVector>>(gravity);
+            frictionLaw_ = std::make_shared<FrictionLawManning<NumEqVector>>(gravity);
         }
         else if (getParam<std::string>("Problem.FrictionLaw") == ("Nikuradse"))
         {
-            frictionLaw_ = std::make_shared<FrictionLawNikuradse<Scalar,NumEqVector>>();
+            frictionLaw_ = std::make_shared<FrictionLawNikuradse<NumEqVector>>();
             std::cout<<"\nWARNING: This test is meant to be run for the friction law after Manning.\n";
             std::cout<<"         You are running it with Nikuradse, although the friction values in\n";
             std::cout<<"         the input file and the analytic solution don't fit to Nikuradse!\n\n.";
@@ -380,7 +380,7 @@ private:
     Scalar constManningN_; // analytic solution is only available for const friction.
     Scalar bedSlope_;
     Scalar discharge_; // discharge at the inflow boundary
-    std::shared_ptr<FrictionLaw<Scalar,NumEqVector>> frictionLaw_;
+    std::shared_ptr<FrictionLaw<NumEqVector>> frictionLaw_;
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
 };

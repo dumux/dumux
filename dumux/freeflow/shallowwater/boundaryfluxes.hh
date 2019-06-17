@@ -43,7 +43,7 @@ namespace ShallowWater {
  * \param waterDepthInside Water depth in the inner cell [m]
  * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
  * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
- * \param gravity Gravity constant [m^3/s]
+ * \param gravity Gravity constant [m/s^2]
  * \param nxy Normal vector of the boundary face
  *
  * \return cellStateOutside The outer cell state
@@ -77,7 +77,7 @@ std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
  * \param waterDepthInside Water depth in the inner cell [m]
  * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
  * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
- * \param gravity Gravity constant [m^3/s]
+ * \param gravity Gravity constant [m/s^2]
  * \param nxy Normal vector of the boundary face
  *
  * \return cellStateOutside The outer cell state
