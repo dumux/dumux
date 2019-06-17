@@ -279,6 +279,8 @@ public:
 
         if (scvf.boundary())
         {
+            FluxVariables fluxVars;
+
             // handle the actual boundary conditions:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
             if (bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
@@ -290,13 +292,16 @@ public:
                                          * extrusionFactor * scvf.area();
 
                 // ... and treat the fluxes of the remaining (frontal and lateral) faces of the staggered control volume
-                result += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+                result += fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
             }
             else if(bcTypes.isDirichlet(Indices::pressureIdx))
             {
-                // if none of the above conditions apply, we are at an "fixed pressure" boundary for which the resdiual of the momentum balance needs to be assembled
+                // we are at an "fixed pressure" boundary for which the resdiual of the momentum balance needs to be assembled
                 // as if it where inside the domain and not on the boundary (source term has already been acounted for)
-                result = computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+                result = fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
+
+                // incorporate the inflow or outflow contribution
+                result += fluxVars.inflowOutflowBoundaryFlux(problem, element, scvf, elemVolVars, elemFaceVars);
             }
         }
         return result;

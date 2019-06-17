@@ -242,12 +242,6 @@ public:
         // (pointing in opposite direction of the scvf's one).
         frontalFlux += pressure * -1.0 * scvf.directionSign();
 
-        // Handle inflow or outflow conditions.
-        // Treat the staggered half-volume adjacent to the boundary as if it was on the opposite side of the boundary.
-        // The respective face's outer normal vector will point in the same direction as the scvf's one.
-        if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::pressureIdx))
-            frontalFlux += inflowOutflowBoundaryFlux_(problem, element, scvf, elemVolVars, elemFaceVars);
-
         // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf
         // our velocity dof of interest lives on.
         return frontalFlux * scvf.area() * insideVolVars.extrusionFactor();
@@ -373,6 +367,53 @@ public:
                                                                      lateralFaceBoundaryTypes, localSubFaceIdx);
         }
         return lateralFlux;
+    }
+
+    /*!
+     * \brief Returns the momentum flux over an inflow or outflow boundary face.
+     *
+     * \verbatim
+     *                    scvf      //
+     *              ---------=======//               == and # staggered half-control-volume
+     *              |      ||      #// current scvf
+     *              |      ||      #//               # staggered boundary face over which fluxes are calculated
+     *              |      ||      x~~~~> vel.Self
+     *              |      ||      #//               x dof position
+     *        scvf  |      ||      #//
+     *              --------========//               -- element
+     *                   scvf       //
+     *                                              // boundary
+     * \endverbatim
+     */
+    FacePrimaryVariables inflowOutflowBoundaryFlux(const Problem& problem,
+                                                   const Element& element,
+                                                   const SubControlVolumeFace& scvf,
+                                                   const ElementVolumeVariables& elemVolVars,
+                                                   const ElementFaceVariables& elemFaceVars) const
+    {
+        FacePrimaryVariables inOrOutflow(0.0);
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+
+        // Advective momentum flux.
+        if (problem.enableInertiaTerms())
+        {
+            const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
+            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+            const auto& upVolVars = (scvf.directionSign() == sign(velocitySelf)) ?
+                                    insideVolVars : outsideVolVars;
+
+            inOrOutflow += velocitySelf * velocitySelf * upVolVars.density();
+        }
+
+        // Apply a pressure at the boundary.
+        const Scalar boundaryPressure = normalizePressure
+                                        ? (problem.dirichlet(element, scvf)[Indices::pressureIdx] -
+                                           problem.initial(scvf)[Indices::pressureIdx])
+                                        : problem.dirichlet(element, scvf)[Indices::pressureIdx];
+        inOrOutflow += boundaryPressure;
+
+        // Account for the orientation of the face at the boundary,
+        return inOrOutflow * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor();
     }
 
 private:
@@ -577,54 +618,6 @@ private:
         return lateralDiffusiveFlux * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
     }
 
-    /*!
-     * \brief Returns the momentum flux over an inflow or outflow boundary face.
-     *
-     * \verbatim
-     *                    scvf      //
-     *              ---------=======//               == and # staggered half-control-volume
-     *              |      ||      #// current scvf
-     *              |      ||      #//               # staggered boundary face over which fluxes are calculated
-     *              |      ||      x~~~~> vel.Self
-     *              |      ||      #//               x dof position
-     *        scvf  |      ||      #//
-     *              --------========//               -- element
-     *                   scvf       //
-     *                                              // boundary
-     * \endverbatim
-     */
-    FacePrimaryVariables inflowOutflowBoundaryFlux_(const Problem& problem,
-                                                    const Element& element,
-                                                    const SubControlVolumeFace& scvf,
-                                                    const ElementVolumeVariables& elemVolVars,
-                                                    const ElementFaceVariables& elemFaceVars)
-    {
-        FacePrimaryVariables inOrOutflow(0.0);
-
-        // Advective momentum flux.
-        if (problem.enableInertiaTerms())
-        {
-            const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
-            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-            const auto& upVolVars = (scvf.directionSign() == sign(velocitySelf)) ?
-                                    insideVolVars : outsideVolVars;
-
-            inOrOutflow += velocitySelf * velocitySelf * upVolVars.density();
-        }
-
-        // Apply a pressure at the boundary.
-        const Scalar boundaryPressure = normalizePressure
-                                        ? (problem.dirichlet(element, scvf)[Indices::pressureIdx] -
-                                           problem.initial(scvf)[Indices::pressureIdx])
-                                        : problem.dirichlet(element, scvf)[Indices::pressureIdx];
-        inOrOutflow += boundaryPressure;
-
-        // Account for the orientation of the face at the boundary,
-        return inOrOutflow * scvf.directionSign();
-    }
-
-private:
 
     /*!
      * \brief Get the location of the lateral staggered face's center.
