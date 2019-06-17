@@ -11,6 +11,7 @@ Name = test_channel_stokes # name passed to the output routines
 InletVelocity = 1
 EnableGravity = false
 EnableInertiaTerms = false
+OutletCondition = Outflow
 
 [Component]
 LiquidDensity = 1.0
