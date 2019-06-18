@@ -24,6 +24,8 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
@@ -69,6 +71,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
+    using FaceVariables = typename GridFaceVariables::FaceVariables;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -204,20 +207,46 @@ public:
         DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the alpha value must be returned in the acutal problem");
     }
 
+    /*!
+     * \brief Returns the alpha value required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     *
+     * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
+     */
+    Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        using std::sqrt;
+        return asImp_().alphaBJ(scvf) / sqrt(asImp_().permeability(element, scvf));
+    }
+
+    /*!
+     * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
+     */
+    Scalar velocityPorousMedium(const Element& element, const SubControlVolumeFace& scvf) const
+    { return 0.0; }
+
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph-Saffman condition is used
+    DUNE_DEPRECATED_MSG("Use beaversJosephVelocity(element, scv, faceOnPorousBoundary, velocitySelf, tangentialVelocityGradient) instead")
     const Scalar bjsVelocity(const Element& element,
                              const SubControlVolume& scv,
                              const SubControlVolumeFace& faceOnPorousBoundary,
                              const Scalar velocitySelf) const
     {
-        // du/dy = alpha/sqrt(K) * u_boundary
-        // du/dy = (u_center - u_boundary) / deltaY
-        // u_boundary = u_center / (alpha/sqrt(K)*deltaY + 1)
-        using std::sqrt;
-        const Scalar K = asImp_().permeability(element, faceOnPorousBoundary);
-        const Scalar alpha = asImp_().alphaBJ(faceOnPorousBoundary);
+        // assume tangential velocity gradient of zero and
+        return beaversJosephVelocity(element, scv, faceOnPorousBoundary, velocitySelf, 0.0);
+    }
+
+    //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used
+    const Scalar beaversJosephVelocity(const Element& element,
+                                       const SubControlVolume& scv,
+                                       const SubControlVolumeFace& faceOnPorousBoundary,
+                                       const Scalar velocitySelf,
+                                       const Scalar tangentialVelocityGradient) const
+    {
+        // du/dy + dv/dx = alpha/sqrt(K) * (u_boundary-uPM)
+        // beta = alpha/sqrt(K)
+        const Scalar betaBJ = asImp_().betaBJ(element, faceOnPorousBoundary);
         const Scalar distance = (faceOnPorousBoundary.center() - scv.center()).two_norm();
-        return velocitySelf / (alpha / sqrt(K) * distance + 1.0);
+        return (tangentialVelocityGradient*distance + asImp_().velocityPorousMedium(element,faceOnPorousBoundary)*betaBJ*distance + velocitySelf) / (betaBJ*distance + 1.0);
     }
 
 private:
