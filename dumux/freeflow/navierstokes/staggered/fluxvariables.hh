@@ -37,6 +37,7 @@
 
 
 #include "staggeredupwindfluxvariables.hh"
+#include "velocitygradients.hh"
 
 namespace Dumux {
 
@@ -80,6 +81,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using VelocityGradients = StaggeredVelocityGradients<Scalar, FVGridGeometry, BoundaryTypes, Indices>;
 
     static constexpr bool normalizePressure = getPropValue<TypeTag, Properties::NormalizePressure>();
 
@@ -221,9 +223,7 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         // Diffusive flux.
-        // The velocity gradient already accounts for the orientation
-        // of the staggered face's outer normal vector.
-        const Scalar velocityGrad_ii = (velocityOpposite - velocitySelf) / scvf.selfToOppositeDistance();
+        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(scvf, elemFaceVars[scvf]) * scvf.directionSign();
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -274,7 +274,7 @@ public:
     {
         FacePrimaryVariables lateralFlux(0.0);
         const auto& faceVars = elemFaceVars[scvf];
-        const int numSubFaces = scvf.pairData().size();
+        const std::size_t numSubFaces = scvf.pairData().size();
 
         // If the current scvf is on a boundary, check if there is a Neumann BC for the stress in tangential direction.
         // Create a boundaryTypes object (will be empty if not at a boundary).
@@ -288,20 +288,6 @@ public:
             const auto eIdx = scvf.insideScvIdx();
             // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
             const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-
-            // If the current scvf is on a bounary and if there is a Neumann BC for the stress in tangential direction,
-            // assign this value for the lateral momentum flux. No further calculations are required. We assume that all lateral faces
-            // have the same type of BC (Neumann), but we sample the value at their actual positions.
-            if (currentScvfBoundaryTypes && currentScvfBoundaryTypes->isNeumann(Indices::velocity(lateralScvf.directionIndex())))
-            {
-                // Get the location of the lateral staggered face's center.
-                const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
-                                               scvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(lateralScvf.directionIndex())]
-                                              * elemVolVars[scvf.insideScvIdx()].extrusionFactor() * lateralScvf.area() * 0.5
-                                              * lateralScvf.directionSign();
-                continue;
-            }
 
             // Create a boundaryTypes object (will be empty if not at a boundary).
             Dune::Std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
@@ -322,7 +308,45 @@ public:
                 //     ----------------                 V  position at which the value of the boundary conditions will be evaluated
                 //                                         (center of the staggered lateral face)
                 lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, lateralScvf));
+            }
 
+            // If the current scvf is on a bounary and if there is a Neumann or Beavers-Joseph-(Saffmann) BC for the stress in tangential direction,
+            // assign this value for the lateral momentum flux. No further calculations are required. We assume that all lateral faces
+            // have the same type of BC (Neumann or Beavers-Joseph-(Saffmann)), but we sample the value at their actual positions.
+            if (currentScvfBoundaryTypes)
+            {
+                // Handle Neumann BCs.
+                if (currentScvfBoundaryTypes->isNeumann(Indices::velocity(lateralScvf.directionIndex())))
+                {
+                    // Get the location of the lateral staggered face's center.
+                    const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
+                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
+                        scvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(lateralScvf.directionIndex())]
+                        * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5
+                        * lateralScvf.directionSign();
+                        continue;
+                }
+
+                // Treat the edge case when our current scvf has a BJ condition while the lateral face has a Neumann BC.
+                // It is not clear how to evaluate the BJ condition here.
+                // For symmetry reasons, our own scvf should then have the same Neumann flux as the lateral face.
+                // TODO: We should clarify if this is the correct approach.
+                if (currentScvfBoundaryTypes->isBJS(Indices::velocity(lateralScvf.directionIndex())) && lateralFaceBoundaryTypes &&
+                    lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
+                {
+                    const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
+                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
+                        lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(scvf.directionIndex())]
+                        * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5
+                        * lateralScvf.directionSign();
+                        continue;
+                }
+            }
+
+            // Check if the lateral face (perpendicular to our current scvf) lies on a boundary. If yes, boundary conditions might need to be treated
+            // and further calculations can be skipped.
+            if (lateralScvf.boundary())
+            {
                 // Check if we have a symmetry boundary condition. If yes, the tangential part of the momentum flux can be neglected
                 // and we may skip any further calculations for the given sub face.
                 if (lateralFaceBoundaryTypes->isSymmetry())
@@ -343,28 +367,33 @@ public:
                 // Handle wall-function fluxes (only required for RANS models)
                 if (incorporateWallFunction_(lateralFlux, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, localSubFaceIdx))
                     continue;
+            }
 
-                // Check the consistency of the boundary conditions, only one of the following must be set
+            // Check the consistency of the boundary conditions, exactly one of the following must be set
+            if (lateralFaceBoundaryTypes)
+            {
                 std::bitset<3> admittableBcTypes;
                 admittableBcTypes.set(0, lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
-                admittableBcTypes.set(1, lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())));
-                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())));
+                admittableBcTypes.set(1, lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())));
+                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())));
                 if (admittableBcTypes.count() != 1)
                 {
-                    DUNE_THROW(Dune::InvalidStateException,  "Something went wrong with the boundary conditions "
-                    "for the momentum equations at global position " << lateralStaggeredFaceCenter_(scvf, localSubFaceIdx));
+                    DUNE_THROW(Dune::InvalidStateException, "Invalid boundary conditions for lateral scvf "
+                    "for the momentum equations at global position " << lateralStaggeredFaceCenter_(scvf, localSubFaceIdx)
+                    << ", current scvf global position " << scvf.center());
                 }
             }
 
-            // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
+            // If none of the above boundary conditions apply for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
                 lateralFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
                                                                          scvf, elemVolVars, faceVars,
                                                                          gridFluxVarsCache, lateralFaceBoundaryTypes, localSubFaceIdx);
 
             lateralFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                     scvf, elemVolVars, faceVars,
-                                                                     lateralFaceBoundaryTypes, localSubFaceIdx);
+                                                                      scvf, elemVolVars, faceVars,
+                                                                      currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
+                                                                      localSubFaceIdx);
         }
         return lateralFlux;
     }
@@ -446,6 +475,7 @@ private:
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
                                                                     const GridFluxVariablesCache& gridFluxVarsCache,
+                                                                    const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                                     const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                                     const int localSubFaceIdx)
     {
@@ -489,6 +519,7 @@ private:
                                                                     const SubControlVolumeFace& scvf,
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
+                                                                    const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                                     const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                                     const int localSubFaceIdx)
     {
@@ -514,64 +545,11 @@ private:
         // Consider the shear stress caused by the gradient of the velocities normal to our face of interest.
         if (!enableUnsymmetrizedVelocityGradient)
         {
-            // Create a boundaryTypes object (will be empty if not at a boundary).
-            Dune::Std::optional<BoundaryTypes> bcTypes;
-
-            // Get the boundary conditions if we are at a boundary. We sample the type of BC at the center of the current scvf.
-            if (scvf.boundary())
-                bcTypes.emplace(problem.boundaryTypes(element, scvf));
-
-            // Check if we have to do the computation
-            const bool enable = [&]()
+            if (!scvf.boundary() ||
+                currentScvfBoundaryTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
+                currentScvfBoundaryTypes->isBJS(Indices::velocity(lateralFace.directionIndex())))
             {
-                // Always consider this term in the interior domain.
-                if (!scvf.boundary())
-                    return true;
-
-                // If we are at a boundary and a Dirichlet BC for pressure is set, a gradient of zero is implictly assumed for all velocities,
-                // thus no further calculations are required.
-                if (bcTypes && bcTypes->isDirichlet(Indices::pressureIdx))
-                    return false;
-
-                // If we are at a boundary and neither a Dirichlet BC or a Beavers-Joseph slip condition for the tangential velocity is set,
-                // we cannot calculate a velocity gradient and thus skip this part. TODO: is this the right approach?
-                return (bcTypes && (bcTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
-                                    bcTypes->isBJS(Indices::velocity(lateralFace.directionIndex()))));
-            }();
-
-            if (enable)
-            {
-                // For the velocityGrad_ji gradient, get the velocities perpendicular to the velocity at the current scvf.
-                // The inner one is located at staggered face within the own element,
-                // the outer one at the respective staggered face of the element on the other side of the
-                // current scvf.
-                const Scalar innerLateralVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
-                const Scalar outerLateralVelocity = [&]()
-                {
-                    if (!scvf.boundary())
-                        return faceVars.velocityLateralOutside(localSubFaceIdx);
-                    else if (bcTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())))
-                    {
-                        // Sample the value of the Dirichlet BC at the center of the lateral face intersecting with the boundary.
-                        const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                        return problem.dirichlet(element, scvf.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(lateralFace.directionIndex())];
-                    }
-                    else
-                    {
-                        // Compute the BJS slip velocity at the boundary. Note that the relevant velocity gradient is now
-                        // perpendicular to the own scvf.
-                        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                        return problem.bjsVelocity(element, scv, scvf, innerLateralVelocity);
-                    }
-                }();
-
-                // Calculate the velocity gradient in positive coordinate direction.
-                const Scalar lateralDeltaV = scvf.normalInPosCoordDir()
-                                            ? (outerLateralVelocity - innerLateralVelocity)
-                                            : (innerLateralVelocity - outerLateralVelocity);
-
-                const Scalar velocityGrad_ji = lateralDeltaV / scvf.pairData(localSubFaceIdx).lateralDistance;
-
+                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
                 // Account for the orientation of the staggered normal face's outer normal vector.
                 lateralDiffusiveFlux -= muAvg * velocityGrad_ji * lateralFace.directionSign();
             }
@@ -580,44 +558,15 @@ private:
         // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
         // If we have a Dirichlet condition for the pressure at the lateral face we assume to have a zero velocityGrad_ij velocity gradient
         // so we can skip the computation.
-        if (!lateralFaceBoundaryTypes || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
+        if (!lateralFace.boundary() || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
         {
-            // For the velocityGrad_ij derivative, get the velocities at the current (own) scvf
-            // and at the parallel one at the neighboring scvf.
-            const Scalar innerParallelVelocity = faceVars.velocitySelf();
-
-            const auto getParallelVelocity = [&]()
-            {
-                if (!lateralFace.boundary())
-                    return faceVars.velocityParallel(localSubFaceIdx, 0);
-                else if (lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())))
-                {
-                    // Sample the value of the Dirichlet BC at the center of the staggered lateral face.
-                    const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    return problem.dirichlet(element, lateralFace.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(scvf.directionIndex())];
-                }
-                else
-                {
-                    const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    return problem.bjsVelocity(element, scv, lateralFace, innerParallelVelocity);
-                }
-            };
-
-            const Scalar outerParallelVelocity = getParallelVelocity();
-
-            // The velocity gradient already accounts for the orientation
-            // of the staggered face's outer normal vector. This also correctly accounts for the reduced
-            // distance used in the gradient if the lateral scvf lies on a boundary.
-            const Scalar velocityGrad_ij = (outerParallelVelocity - innerParallelVelocity)
-                                          / scvf.parallelDofsDistance(localSubFaceIdx, 0);
-
-            lateralDiffusiveFlux -= muAvg * velocityGrad_ij;
+            const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            lateralDiffusiveFlux -= muAvg * velocityGrad_ij * lateralFace.directionSign();
         }
 
         // Account for the area of the staggered lateral face (0.5 of the coinciding scfv).
         return lateralDiffusiveFlux * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
     }
-
 
     /*!
      * \brief Get the location of the lateral staggered face's center.
@@ -645,6 +594,7 @@ private:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
     }
+
     //! do nothing if no turbulence model is used
     template<class ...Args, bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<!turbulenceModel, int> = 0>
     bool incorporateWallFunction_(Args&&... args) const
