@@ -96,35 +96,49 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-
-    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
+    // the types of outlet boundary conditions
+    enum class OutletCondition
+    {
+        outflow, doNothing, neumannXdirichletY, neumannXneumannY
+    };
+
 public:
     ChannelTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
+        const auto tmp = getParam<std::string>("Problem.OutletCondition", "Outflow");
+        if (tmp == "Outflow")
+            outletCondition_ = OutletCondition::outflow;
+        else if (tmp == "DoNothing")
+            outletCondition_ = OutletCondition::doNothing;
+        else if (tmp == "NeumannX_DirichletY")
+            outletCondition_ = OutletCondition::neumannXdirichletY;
+        else if (tmp == "NeumannX_NeumannY")
+            outletCondition_ = OutletCondition::neumannXneumannY;
+        else
+            DUNE_THROW(Dune::InvalidStateException, tmp + " is not a valid outlet boundary condition");
+
+        useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", false);
+        outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
     }
 
    /*!
      * \name Problem parameters
      */
     // \{
-
-
-    bool shouldWriteRestartFile() const
-    {
-        return false;
-    }
 
    /*!
      * \brief Returns the temperature within the domain in [K].
@@ -169,7 +183,19 @@ public:
         }
         else if(isOutlet_(globalPos))
         {
-            values.setDirichlet(Indices::pressureIdx);
+            if (outletCondition_ == OutletCondition::outflow)
+                values.setDirichlet(Indices::pressureIdx);
+            else if (outletCondition_ == OutletCondition::doNothing ||
+                     outletCondition_ == OutletCondition::neumannXneumannY)
+            {
+                values.setNeumann(Indices::momentumXBalanceIdx);
+                values.setNeumann(Indices::momentumYBalanceIdx);
+            }
+            else // (outletCondition_ == OutletCondition::neumannXdirichletY)
+            {
+                values.setDirichlet(Indices::velocityYIdx);
+                values.setNeumann(Indices::momentumXBalanceIdx);
+            }
 #if NONISOTHERMAL
             values.setOutflow(Indices::energyEqIdx);
 #endif
@@ -197,7 +223,10 @@ public:
 
         if(isInlet_(globalPos))
         {
-            values[Indices::velocityXIdx] = inletVelocity_;
+            if (useVelocityProfile_)
+                values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+            else
+                values[Indices::velocityXIdx] = inletVelocity_;
 #if NONISOTHERMAL
         // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
         if(time() >= 200.0)
@@ -206,6 +235,63 @@ public:
         }
 
         return values;
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFaceVariables& elemFaceVars,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        values[scvf.directionIndex()] = initialAtPos(scvf.center())[Indices::pressureIdx];
+
+        // make sure to normalize the pressure if the property is set true
+        if (getPropValue<TypeTag, Properties::NormalizePressure>())
+            values[scvf.directionIndex()] -= initialAtPos(scvf.center())[Indices::pressureIdx];
+
+        if (outletCondition_ != OutletCondition::doNothing)
+            values[1] = -dudy(scvf.center()[1], inletVelocity_) * elemVolVars[scvf.insideScvIdx()].viscosity();
+
+        return values;
+    }
+
+    /*!
+     * \brief A parabolic velocity profile.
+     *
+     * \param y The position where the velocity is evaluated.
+     * \param vMax The profile's maxmium velocity.
+     */
+    Scalar parabolicProfile(const Scalar y, const Scalar vMax) const
+    {
+        const Scalar yMin = this->fvGridGeometry().bBoxMin()[1];
+        const Scalar yMax = this->fvGridGeometry().bBoxMax()[1];
+        return  vMax * (y - yMin)*(yMax - y) / (0.25*(yMax - yMin)*(yMax - yMin));
+    }
+
+    /*!
+     * \brief The partial dervivative of the horizontal velocity (following a parabolic profile for
+     *         Stokes flow) w.r.t. to the y-coordinate (du/dy).
+     *
+     * \param y The position where the derivative is evaluated.
+     * \param vMax The profile's maxmium velocity.
+     */
+    Scalar dudy(const Scalar y, const Scalar vMax) const
+    {
+        const Scalar yMin = this->fvGridGeometry().bBoxMin()[1];
+        const Scalar yMax = this->fvGridGeometry().bBoxMax()[1];
+        return vMax * (4.0*yMin + 4*yMax - 8.0*y) / ((yMin-yMax)*(yMin-yMax));
     }
 
     // \}
@@ -223,7 +309,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[Indices::pressureIdx] = 1.1e+5;
+        values[Indices::pressureIdx] = outletPressure_;
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
 
@@ -261,6 +347,9 @@ private:
 
     Scalar eps_;
     Scalar inletVelocity_;
+    Scalar outletPressure_;
+    OutletCondition outletCondition_;
+    bool useVelocityProfile_;
     TimeLoopPtr timeLoop_;
 };
 } // end namespace Dumux
