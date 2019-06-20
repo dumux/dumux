@@ -307,7 +307,7 @@ private:
     //! do nothing if no turbulence model is used
     template<class ...Args, bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<!turbulenceModel, int> = 0>
     void incorporateWallFunction_(Args&&... args) const
-    {};
+    {}
 
     //! if a turbulence model is used, ask the problem is a wall function shall be employed and get the flux accordingly
     template<bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<turbulenceModel, int> = 0>
@@ -332,7 +332,7 @@ private:
                                                            * extrusionFactor * scvf.area();
             }
         }
-    };
+    }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
