@@ -655,7 +655,7 @@ private:
     //! do nothing if no turbulence model is used
     template<class ...Args, bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<!turbulenceModel, int> = 0>
     bool incorporateWallFunction_(Args&&... args) const
-    { return false; };
+    { return false; }
 
     //! if a turbulence model is used, ask the problem is a wall function shall be employed and get the flux accordingly
     template<bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<turbulenceModel, int> = 0>
