@@ -110,19 +110,6 @@ public:
         isStationary_ = getParam<bool>("Problem.IsStationary");
         enableInertiaTerms_ = getParam<bool>("Problem.EnableInertiaTerms");
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
-
-        using CellArray = std::array<unsigned int, dimWorld>;
-        auto numCells = getParam<CellArray>("Grid.Cells");
-
-        const unsigned int refinement = getParam<unsigned int>("Grid.Refinement", 0);
-        for(unsigned int i = 0; i < refinement; i++)
-        {
-            numCells[0] *= 2;
-            numCells[1] *= 2;
-        }
-
-        cellSizeX_ = (this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0]) / numCells[0];
-        cellSizeY_ = (this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]) / numCells[1];
     }
 
    /*!
@@ -298,9 +285,6 @@ public:
 
 private:
     static constexpr Scalar eps_ = 1e-6;
-
-    Scalar cellSizeX_;
-    Scalar cellSizeY_;
 
     Scalar kinematicViscosity_;
     bool enableInertiaTerms_;
