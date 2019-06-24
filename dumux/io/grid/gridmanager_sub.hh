@@ -40,13 +40,12 @@
 #include <dune/grid/io/file/dgfparser/dgfwriter.hh>
 #endif
 
-#ifndef DUMUX_IO_GRID_MANAGER_BASE_HH
-#include <dumux/io/grid/gridmanager_base.hh>
+#ifndef DUMUX_IO_GRID_MANAGER_HH
+#include <dumux/io/grid/gridmanager.hh>
 #endif
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundaryflag.hh>
-#include <dumux/io/grid/gridmanager_yasp.hh>
 
 #if HAVE_DUNE_SUBGRID
 namespace Dumux {
@@ -214,15 +213,6 @@ protected:
     std::unique_ptr<HostGridManager> hostGridManager_;
 };
 
-// helper to distiguish between yasp grid and others
-namespace Impl {
-template<class Grid>
-struct IsYasp : public std::false_type {};
-
-template<int dim, class C>
-struct IsYasp<Dune::YaspGrid<dim, C>> : public std::true_type {};
-} // end namespace Impl
-
 /*!
  * \ingroup InputOutput
  * \brief Provides a grid manager for SubGrids
@@ -231,9 +221,8 @@ struct IsYasp<Dune::YaspGrid<dim, C>> : public std::true_type {};
  * The following keys are recognized:
  * - All parameters that the host grid knows
  */
-template<class HostGrid>
-class GridManager<Dune::SubGrid<HostGrid::dimension,
-                                typename std::enable_if_t<!Impl::IsYasp<HostGrid>{}, HostGrid>>>
+template<int dim, class HostGrid>
+class GridManager<Dune::SubGrid<dim, HostGrid>>
 : public SubGridManagerBase<HostGrid, GridManager<HostGrid>>
 {};
 
@@ -254,7 +243,7 @@ class GridManager<Dune::SubGrid<dim, Dune::YaspGrid<dim, Coordinates>>>
     using ParentType = SubGridManagerBase<Dune::YaspGrid<dim, Coordinates>,
                                           GridManager<Dune::YaspGrid<dim, Coordinates>>>;
 public:
-    using ParentType::Grid;
+    using typename ParentType::Grid;
     using ParentType::init;
 
     /*!
