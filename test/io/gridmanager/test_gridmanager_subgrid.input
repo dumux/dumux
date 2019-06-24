@@ -3,6 +3,8 @@ Positions0 = 0 1
 Positions1 = 0 1
 Cells0 = 1
 Cells1 = 1
+UpperRight = 1 1
+Cells = 1 1
 Refinement = 4
 
 [Internal.Grid]
@@ -10,6 +12,8 @@ Positions0 = 0 1
 Positions1 = 0 1
 Cells0 = 1
 Cells1 = 1
+UpperRight = 1 1
+Cells = 1 1
 Refinement = 4
 
 [Image.Grid]
