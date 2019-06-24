@@ -21,14 +21,20 @@
 #include <config.h>
 #include <iostream>
 #include <cmath>
+#include <string>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
+#include <dune/grid/yaspgrid.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
-#include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
+#include <dumux/common/parameters.hh>
+
 
 /*!
  * \brief A method providing an () operator in order to select elements for a subgrid.
@@ -52,22 +58,10 @@ private:
     const GlobalPosition center_;
 };
 
-int main(int argc, char** argv) try
+template<int dim, class HostGrid>
+void testSubGrid(const std::string& hostGridName)
 {
-    using namespace Dumux;
-
-    // Initialize MPI, finalize is done automatically on exit.
-    Dune::MPIHelper::instance(argc, argv);
-
-    // First read parameters from input file.
-    Dumux::Parameters::init(argc, argv);
-
-    constexpr int dim = 2;
-    using GlobalPosition = Dune::FieldVector<double, dim>;
-
-    Dune::Timer timer;
-    using HostGrid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<double, dim> >;
-    using SubGridTensor = Dune::SubGrid<dim, HostGrid>;
+    using SubGrid = Dune::SubGrid<dim, HostGrid>;
 
     using HostGridManager = Dumux::GridManager<HostGrid>;
     HostGridManager externalHostGridManager;
@@ -75,6 +69,7 @@ int main(int argc, char** argv) try
     auto& hostGrid = externalHostGridManager.grid();
 
     // Calculate the bounding box of the host grid view.
+    using GlobalPosition = Dune::FieldVector<double, dim>;
     GlobalPosition bBoxMin(std::numeric_limits<double>::max());
     GlobalPosition bBoxMax(std::numeric_limits<double>::min());
     for (const auto& vertex : vertices(hostGrid.leafGridView()))
@@ -93,13 +88,13 @@ int main(int argc, char** argv) try
 
     // Write out the host grid and the subgrids.
     {
-        Dune::VTKWriter<HostGrid::LeafGridView> vtkWriter(hostGrid.leafGridView());
+        Dune::VTKWriter<typename HostGrid::LeafGridView> vtkWriter(hostGrid.leafGridView());
         vtkWriter.write("hostgrid");
     }
 
     // Create different subgrids from the same hostgrid
     {
-        std::cout << "Constructing SubGrid with tensor host grid and lambda element selector" << std::endl;
+        std::cout << "Constructing SubGrid with host grid and lambda element selector" << std::endl;
 
         // Select all elements right of the center.
         auto elementSelector = [&center](const auto& element)
@@ -107,23 +102,10 @@ int main(int argc, char** argv) try
             return element.geometry().center()[0] > center[0];
         };
 
-        Dumux::GridManager<SubGridTensor> subgridManager;
+        Dumux::GridManager<SubGrid> subgridManager;
         subgridManager.init(hostGrid, elementSelector);
-        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
-        vtkWriter.write("subgrid_one");
-    }
-    {
-        std::cout << "Constructing SubGrid with tensor host grid and functor selector" << std::endl;
-
-        // Select all elements within a circle around the center.
-        // Instead of a lambda, we use a class providing an () operator.
-        // Of course, a lambda would be possible here, too.
-        CircleSelector<GlobalPosition> elementSelector(center);
-
-        Dumux::GridManager<Dune::SubGrid<2, HostGrid>> subgridManager;
-        subgridManager.init(hostGrid, elementSelector);
-        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
-        vtkWriter.write("subgrid_three");
+        Dune::VTKWriter<typename SubGrid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        vtkWriter.write("subgrid_right");
     }
 
     // create without contructing host grid first
@@ -138,11 +120,55 @@ int main(int argc, char** argv) try
 
         Dumux::GridManager<Dune::SubGrid<2, HostGrid>> subgridManager;
         subgridManager.init(elementSelector, "Internal");
-        Dune::VTKWriter<SubGridTensor::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
-        vtkWriter.write("subgrid_two");
+        Dune::VTKWriter<typename  SubGrid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        vtkWriter.write("subgrid_left");
     }
 
-    // create subgrid from image file
+    {
+        std::cout << "Constructing SubGrid with host grid and functor selector" << std::endl;
+
+        // Select all elements within a circle around the center.
+        // Instead of a lambda, we use a class providing an () operator.
+        // Of course, a lambda would be possible here, too.
+        CircleSelector<GlobalPosition> elementSelector(center);
+
+        Dumux::GridManager<SubGrid> subgridManager;
+        subgridManager.init(hostGrid, elementSelector);
+        Dune::VTKWriter<typename SubGrid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        vtkWriter.write("subgrid_circle_" + hostGridName);
+    }
+}
+
+int main(int argc, char** argv) try
+{
+    using namespace Dumux;
+
+    // Initialize MPI, finalize is done automatically on exit.
+    Dune::MPIHelper::instance(argc, argv);
+
+    // First read parameters from input file.
+    Dumux::Parameters::init(argc, argv);
+
+    constexpr int dim = 2;
+
+    {
+        Dune::Timer timer;
+        using HostGrid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<double, dim> >;
+        testSubGrid<dim, HostGrid>("yasp");
+        std::cout << "Constructing a yasp host grid and three subgrids took "  << timer.elapsed() << " seconds.\n";
+    }
+
+    {
+#if HAVE_DUNE_ALUGRID
+        Dune::Timer timer;
+        using HostGrid = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>;
+        testSubGrid<dim, HostGrid>("alu");
+        std::cout << "Constructing a alu host grid and three subgrids took "  << timer.elapsed() << " seconds.\n";
+#else
+        std::cout << "Skipped test with ALUGrid as host grid.\n";
+#endif
+    }
+
     {
         std::cout << "Constructing SubGrid from binary image" << std::endl;
         using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
@@ -151,8 +177,6 @@ int main(int argc, char** argv) try
         Dune::VTKWriter<GridManager::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("subgrid_binary_image");
     }
-
-    std::cout << "Constructing a host grid and four subgrids took "  << timer.elapsed() << " seconds.\n";
 
     return 0;
 }
