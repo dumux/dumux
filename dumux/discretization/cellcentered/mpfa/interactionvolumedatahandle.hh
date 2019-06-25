@@ -100,7 +100,7 @@ protected:
 
     std::array< std::array<TMatrix, size2>, size1 > T_;             //!< The transmissibility matrix
     std::array< std::array<AMatrix, size2>, size1 > A_;             //!< Inverse of the iv-local system matrix
-    std::array< std::array<CMatrix, size2>, size1 > AB_;            //!< A_ left multiplied to B
+    std::array< std::array<BMatrix, size2>, size1 > AB_;            //!< A_ left multiplied to B
     std::array< std::array<CMatrix, size2>, size1 > CA_;            //!< A_ right multiplied to C
     std::array< std::array<OutsideTij, size2>, size1 > tijOutside_; //!< The transmissibilities for "outside" faces (on surface grids)
 };
