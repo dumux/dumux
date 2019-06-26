@@ -31,7 +31,6 @@
 #include <iostream>
 #include <type_traits>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpicollectivecommunication.hh>
@@ -51,8 +50,6 @@
 #include <dumux/assembly/partialreassembler.hh>
 
 #include "newtonconvergencewriter.hh"
-
-#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 namespace Detail {
@@ -205,7 +202,7 @@ public:
      * \brief Run the Newton method to solve a non-linear system.
      *        Does time step control when the Newton fails to converge
      */
-    DUNE_DEPRECATED_MSG("Use attachConvergenceWriter(convWriter) and solve(x, *timeLoop) instead")
+    [[deprecated("Use attachConvergenceWriter(convWriter) and solve(x, *timeLoop) instead")]]
     void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop,
                std::shared_ptr<ConvergenceWriter> convWriter)
     {
@@ -674,14 +671,14 @@ public:
     /*!
      * \brief Specifies if the Newton method ought to be chatty.
      */
-    DUNE_DEPRECATED_MSG("Has been replaced by setVerbosity(int). Will be removed after 3.1 release!")
+    [[deprecated("Has been replaced by setVerbosity(int). Will be removed after 3.1 release!")]]
     void setVerbose(bool val)
     { verbosity_ = val; }
 
     /*!
      * \brief Returns true if the Newton method ought to be chatty.
      */
-    DUNE_DEPRECATED_MSG("Has been replaced by int verbosity(). Will be removed after 3.1 release!")
+    [[deprecated("Has been replaced by int verbosity(). Will be removed after 3.1 release!")]]
     bool verbose() const
     { return verbosity_ ; }
 

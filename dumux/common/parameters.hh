@@ -30,7 +30,6 @@
 #include <unordered_map>
 #include <fstream>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/parametertree.hh>
 #include <dune/common/parametertreeparser.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -262,7 +261,7 @@ public:
         return commandLineArgs;
     }
 
-    DUNE_DEPRECATED_MSG("parseCommandLineArguments is deprecated and will be removed after 3.1")
+    [[deprecated("parseCommandLineArguments is deprecated and will be removed after 3.1")]]
     static std::string parseCommandLineArguments(int argc, char **argv,
                                                  std::string parameterFileName = "")
     {
@@ -407,7 +406,7 @@ private:
  * \ingroup Common
  * \brief a free function to set model- or problem-specific default parameters
  */
-DUNE_DEPRECATED_MSG("Setting parameters is deprecated and will be removed after 3.1")
+[[deprecated("Setting parameters is deprecated and will be removed after 3.1")]]
 void setParam(Dune::ParameterTree& params,
               const std::string& group,
               const std::string& key,

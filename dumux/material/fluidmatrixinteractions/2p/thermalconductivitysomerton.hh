@@ -27,8 +27,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include <dune/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -65,7 +63,7 @@ public:
      * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      */
     template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
-    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
+    [[deprecated("Signature deprecated. Use signature with volume variables only!")]]
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,

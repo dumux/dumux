@@ -24,7 +24,6 @@
 #ifndef DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 #define DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/common/parameters.hh>
 
@@ -82,7 +81,7 @@ public:
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil
-    DUNE_DEPRECATED_MSG("Use the new interface signature with elemFluxVarsCache")
+    [[deprecated("Use the new interface signature with elemFluxVarsCache")]]
     void calculateVelocity(VelocityVector& velocity,
                            const ElementVolumeVariables& elemVolVars,
                            const FVElementGeometry& fvGeometry,
