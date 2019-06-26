@@ -132,14 +132,14 @@ public:
                                Scalar q,
                                bool boundary)
     : boundary_(boundary)
-    ,   vertexIndex_(vIdxGlobal)
-    ,   scvfIndex_(scvfIndex)
-    ,   insideScvIdx_(insideScvIdx)
-    ,   outsideScvIndices_(outsideScvIndices)
-    ,   vIdxInElement_(vIdxLocal)
-    ,   corners_(std::move(corners))
-    ,   center_(0.0)
-    ,   unitOuterNormal_(std::move(unitOuterNormal))
+    , vertexIndex_(vIdxGlobal)
+    , scvfIndex_(scvfIndex)
+    , insideScvIdx_(insideScvIdx)
+    , outsideScvIndices_(outsideScvIndices)
+    , vIdxInElement_(vIdxLocal)
+    , corners_(std::move(corners))
+    , center_(0.0)
+    , unitOuterNormal_(std::move(unitOuterNormal))
     {
           // compute the center of the scvf
           for (const auto& corner : corners_)
