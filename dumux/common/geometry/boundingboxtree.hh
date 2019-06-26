@@ -304,12 +304,15 @@ template<class ctype, int dimworld, typename std::enable_if_t<dimworld == 3, int
 inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>& point, const ctype* b)
 {
     static constexpr ctype eps_ = 1.0e-7;
-    const ctype eps0 = eps_*(b[3] - b[0]);
-    const ctype eps1 = eps_*(b[4] - b[1]);
-    const ctype eps2 = eps_*(b[5] - b[2]);
-    return (b[0] - eps0 <= point[0] && point[0] <= b[3] + eps0 &&
-            b[1] - eps1 <= point[1] && point[1] <= b[4] + eps1 &&
-            b[2] - eps2 <= point[2] && point[2] <= b[5] + eps2);
+
+    using std::max;
+    const auto dx = b[3] - b[0];
+    const auto dy = b[4] - b[1];
+    const auto dz = b[5] - b[2];
+    const ctype eps = max({dx, dy, dz})*eps_;
+    return (b[0] - eps <= point[0] && point[0] <= b[3] + eps &&
+            b[1] - eps <= point[1] && point[1] <= b[4] + eps &&
+            b[2] - eps <= point[2] && point[2] <= b[5] + eps);
 }
 
 /*!
@@ -321,10 +324,13 @@ template<class ctype, int dimworld, typename std::enable_if_t<dimworld == 2, int
 inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>& point, const ctype* b)
 {
     static constexpr ctype eps_ = 1.0e-7;
-    const ctype eps0 = eps_*(b[2] - b[0]);
-    const ctype eps1 = eps_*(b[3] - b[1]);
-    return (b[0] - eps0 <= point[0] && point[0] <= b[2] + eps0 &&
-            b[1] - eps1 <= point[1] && point[1] <= b[3] + eps1);
+
+    using std::max;
+    const auto dx = b[2] - b[0];
+    const auto dy = b[3] - b[1];
+    const ctype eps = max(dx, dy)*eps_;
+    return (b[0] - eps <= point[0] && point[0] <= b[2] + eps &&
+            b[1] - eps <= point[1] && point[1] <= b[3] + eps);
 }
 
 /*!
