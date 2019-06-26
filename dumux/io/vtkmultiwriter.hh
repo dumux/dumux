@@ -41,7 +41,6 @@
 
 #include <dumux/common/valgrind.hh>
 
-#include <dune/common/deprecated.hh>
 
 #if HAVE_MPI
 #include <mpi.h>
@@ -58,7 +57,7 @@ namespace Dumux {
  * \todo This class can most likely be replaced by Dune::VTKSequenceWriter
  */
 template<class GridView, Dune::VTK::OutputType OutputValue = Dune::VTK::ascii >
-class DUNE_DEPRECATED_MSG("Use VtkOutputModule instead!") VtkMultiWriter
+class [[deprecated("Use VtkOutputModule instead!")]] VtkMultiWriter
 {
     enum { dim = GridView::dimension };
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;

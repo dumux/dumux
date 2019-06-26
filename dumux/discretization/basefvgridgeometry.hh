@@ -38,7 +38,7 @@ namespace Dumux {
  *       agnostic implementation in Dumux::BaseGridGeometry.
  */
 template<class Impl, class GV, class Traits>
-class DUNE_DEPRECATED_MSG("Use BaseGridGeometry instead. Will be removed after 3.1!")
+class [[deprecated("Use BaseGridGeometry instead. Will be removed after 3.1!")]]
 BaseFVGridGeometry : public BaseGridGeometry<GV, Traits>
 {
     using ParentType = BaseGridGeometry<GV, Traits>;

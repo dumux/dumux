@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 
@@ -206,8 +205,8 @@ grahamConvexHull(const std::vector<Dune::FieldVector<ctype, 2>>& points)
 // deprecated interfaces
 #ifndef DOXYGEN
 template<class ctype>
+[[deprecated("Use grahamConvexHull<dim> with dim as template argument. Will be removed after 3.1")]]
 std::vector<Dune::FieldVector<ctype, 3>>
-DUNE_DEPRECATED_MSG("Use grahamConvexHull<dim> with dim as template argument. Will be removed after 3.1")
 grahamConvexHull2d3d(const std::vector<Dune::FieldVector<ctype, 3>>& points)
 {
     auto copyPoints = points;
@@ -215,8 +214,8 @@ grahamConvexHull2d3d(const std::vector<Dune::FieldVector<ctype, 3>>& points)
 }
 
 template<class ctype>
+[[deprecated("Use grahamConvexHull<dim> with dim as template argument. Will be removed after 3.1")]]
 std::vector<Dune::FieldVector<ctype, 3>>
-DUNE_DEPRECATED_MSG("Use grahamConvexHull<dim> with dim as template argument. Will be removed after 3.1")
 grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
 { return grahamConvexHull<2>(points); }
 
@@ -227,8 +226,8 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
  * \note This inserts a mid point and connects all corners with that point to triangles
  */
 template<class ctype>
+[[deprecated("Please use triangulate. Will be removed after 3.1")]]
 std::vector<std::array<Dune::FieldVector<ctype, 3>, 3> >
-DUNE_DEPRECATED_MSG("Please use triangulate. Will be removed after 3.1")
 triangulateConvexHull(const std::vector<Dune::FieldVector<ctype, 3>>& convexHull)
 { return triangulate<2, 3>(convexHull); }
 #endif

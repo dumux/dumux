@@ -28,8 +28,6 @@
 #include <memory>
 #include <cassert>
 
-#include <dune/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -89,7 +87,7 @@ public:
 
     //! initialize all variables (instationary case)
     template<class SolutionVector>
-    DUNE_DEPRECATED_MSG("Use init(sol) instead. The class now works without modification for stationary and instationary cases.")
+    [[deprecated("Use init(sol) instead. The class now works without modification for stationary and instationary cases.")]]
     void init(const SolutionVector& curSol, const SolutionVector& initSol)
     {
         // initialize current volvars and the flux var cache

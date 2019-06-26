@@ -24,7 +24,6 @@
 #ifndef DUMUX_POROUS_MEDIUM_FLOW_PROBLEM_HH
 #define DUMUX_POROUS_MEDIUM_FLOW_PROBLEM_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/common/fvproblem.hh>
 
 namespace Dumux {
@@ -124,7 +123,7 @@ public:
      * This is discretization independent interface. By default it
      * just calls gravity().
      */
-    DUNE_DEPRECATED_MSG("Use the gravity function of the spatialParams (i.e. problem.spatialParams().gravity(pos)). Will be removed after 3.1!")
+    [[deprecated("Use the gravity function of the spatialParams (i.e. problem.spatialParams().gravity(pos)). Will be removed after 3.1!")]]
     const GravityVector &gravityAtPos(const GlobalPosition &pos) const
     { return this->asImp_().gravity(); }
 
@@ -137,7 +136,7 @@ public:
      * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      */
-    DUNE_DEPRECATED_MSG("Use the gravity function of the spatialParams (i.e. problem.spatialParams().gravity(pos)). Will be removed after 3.1!")
+    [[deprecated("Use the gravity function of the spatialParams (i.e. problem.spatialParams().gravity(pos)). Will be removed after 3.1!")]]
     const GravityVector &gravity() const
     { return gravity_; }
 
