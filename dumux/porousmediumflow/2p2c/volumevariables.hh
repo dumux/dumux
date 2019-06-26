@@ -163,6 +163,8 @@ public:
 
         effectiveDiffCoeff_[phase0Idx][comp1Idx] = EffDiffModel::effectiveDiffusivity(*this, phase0Idx, comp1Idx);
         effectiveDiffCoeff_[phase0Idx][comp1Idx] = EffDiffModel::effectiveDiffusivity(*this, phase0Idx, comp1Idx);
+
+        EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!

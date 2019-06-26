@@ -160,6 +160,20 @@ struct TwoPNCVolumeVariablesTraits
     using EffectiveDiffusivityModel = EDM;
 };
 
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM, class ETCM>
+struct TwoPNCNIVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
+    using EffectiveThermalConductivityModel = ETCM;
+};
+
 namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags

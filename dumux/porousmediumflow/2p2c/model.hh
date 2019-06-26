@@ -175,6 +175,27 @@ public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    using Traits = TwoPNCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
+public:
+    using type = TwoPTwoCVolumeVariables<Traits>;
+};
+
+
 //! Set non-isothermal output fields
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::TwoPTwoCNI> { using type = EnergyIOFields<TwoPNCIOFields>; };

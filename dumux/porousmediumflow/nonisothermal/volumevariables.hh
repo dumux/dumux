@@ -137,23 +137,24 @@ public:
 };
 
 //! The non-isothermal implicit volume variables base class
-template<class IsothermalTraits, class Impl>
-class EnergyVolumeVariablesImplementation<IsothermalTraits, Impl, true>
+template<class Traits, class Impl>
+class EnergyVolumeVariablesImplementation<Traits, Impl, true>
 {
-    using Scalar = typename IsothermalTraits::PrimaryVariables::value_type;
-    using Idx = typename IsothermalTraits::ModelTraits::Indices;
-    using ParentType = PorousMediumFlowVolumeVariables<IsothermalTraits>;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using Idx = typename Traits::ModelTraits::Indices;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EffCondModel = typename Traits::EffectiveThermalConductivityModel;
 
     static const int temperatureIdx = Idx::temperatureIdx;
-    static const int numEnergyEq = IsothermalTraits::ModelTraits::numEnergyEq();
+    static const int numEnergyEq = Traits::ModelTraits::numEnergyEq();
 
 public:
     // export the fluidstate
-    using FluidState = typename IsothermalTraits::FluidState;
-    using SolidState = typename IsothermalTraits::SolidState;
+    using FluidState = typename Traits::FluidState;
+    using SolidState = typename Traits::SolidState;
     //! export the underlying fluid system
-    using FluidSystem = typename IsothermalTraits::FluidSystem;
-    using SolidSystem = typename IsothermalTraits::SolidSystem;
+    using FluidSystem = typename Traits::FluidSystem;
+    using SolidSystem = typename Traits::SolidSystem;
 
     //! The temperature is obtained from the problem as a constant for isothermal models
     template<class ElemSol, class Problem, class Element, class Scv>
@@ -218,6 +219,12 @@ public:
         solidState.setThermalConductivity(lambdas);
     }
 
+
+    void updateEffectiveThermalConductivity()
+    {
+        lambdaEff_ = EffCondModel::effectiveThermalConductivity(asImp_());
+    }
+
     /*!
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
@@ -278,6 +285,13 @@ public:
      */
     Scalar fluidThermalConductivity(const int phaseIdx) const
     { return FluidSystem::thermalConductivity(asImp_().fluidState(), phaseIdx); }
+
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ in
+     *        the sub-control volume.
+     */
+    Scalar effectiveThermalConductivity() const
+    { return lambdaEff_; }
 
     //! The phase enthalpy is zero for isothermal models
     //! This is needed for completing the fluid state
@@ -455,6 +469,7 @@ private:
         return problem.spatialParams().solidThermalConductivity(element, scv, elemSol, solidState);
     }
 
+    Scalar lambdaEff_;
     // \}
 
 };
