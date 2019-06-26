@@ -26,9 +26,6 @@
 #define DUMUX_RICHARDS_ANALYTICAL_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -46,28 +43,25 @@ class RichardsAnalyticalSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar,
                          RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename GridGeometry::GridView;
     using ParentType = FVSpatialParams<GridGeometry, Scalar,
                                        RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>;
 
-    enum { dimWorld=GridView::dimensionworld };
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    using EffectiveLaw = LinearMaterial<Scalar>;
 
 public:
 
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLaw = EffToAbsLaw<LinearMaterial<Scalar>>;
     using MaterialLawParams = typename MaterialLaw::Params;
+
     // export permeability type
     using PermeabilityType = Scalar;
 
     RichardsAnalyticalSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
         : ParentType(gridGeometry)
     {
-        K_ = 5e-12;
+        permeability_ = 5e-12;
         materialParams_.setSwr(0.0);
         materialParams_.setSnr(0.0);
         materialParams_.setEntryPc(0);
@@ -76,17 +70,15 @@ public:
 
     /*!
      * \brief Returns the intrinsic permeability tensor [m^2] at a given location
-     *
      * \param globalPos The global position where we evaluate
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        return K_;
+        return permeability_;
     }
 
     /*!
      * \brief Returns the porosity [] at a given location
-     *
      * \param globalPos The global position where we evaluate
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
@@ -94,10 +86,6 @@ public:
 
     /*!
      * \brief Returns the parameters for the material law at a given location
-     *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
-     *
      * \param globalPos A global coordinate vector
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
@@ -106,11 +94,10 @@ public:
     }
 
 private:
-    // intrinsic permeability
-    Scalar K_;
-
+    Scalar permeability_;
     MaterialLawParams materialParams_;
 };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif
