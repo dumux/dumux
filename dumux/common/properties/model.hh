@@ -25,7 +25,6 @@
 #define DUMUX_MODEL_PROPERTIES_HH
 
 #include <dune/common/fvector.hh>
-#include <dune/common/deprecated.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/balanceequationopts.hh>
@@ -64,7 +63,7 @@ struct ModelDefaultParameters<TypeTag, TTag::ModelProperties>
 //! \todo this property is deprecated use IOFields instead!
 template<class TypeTag>
 struct VtkOutputFields<TypeTag, TTag::ModelProperties> {
-    using type DUNE_DEPRECATED_MSG("This property is deprecated use property IOFields instead") = GetPropType<TypeTag, Properties::IOFields>;
+    using type [[deprecated("This property is deprecated use property IOFields instead")]] = GetPropType<TypeTag, Properties::IOFields>;
 };
 
 //! Set the default to an implementation throwing a NotImplemented error

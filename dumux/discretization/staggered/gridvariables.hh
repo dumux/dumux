@@ -24,7 +24,6 @@
 #ifndef DUMUX_STAGGERED_GRID_VARIABLES_HH
 #define DUMUX_STAGGERED_GRID_VARIABLES_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/discretization/fvgridvariables.hh>
 
 namespace Dumux {
@@ -131,7 +130,7 @@ public:
 
     //! initialize all variables (instationary case)
     template<class SolVector>
-    DUNE_DEPRECATED_MSG("Use init with one argument")
+    [[deprecated("Use init with one argument")]]
     void init(const SolVector& curSol, const SolVector& initSol)
     {
         init(initSol);
@@ -176,7 +175,7 @@ public:
 
     //! initialize all variables (instationary case)
     template<class SolVector>
-    DUNE_DEPRECATED_MSG("Use init with one argument")
+    [[deprecated("Use init with one argument")]]
     void init(const SolVector& curSol, const SolVector& initSol)
     {
         init(initSol);
@@ -258,7 +257,7 @@ public:
 
     //! initialize all variables (instationary case)
     template<class SolutionVector>
-    DUNE_DEPRECATED_MSG("Use init with one argument")
+    [[deprecated("Use init with one argument")]]
     void init(const SolutionVector& curSol, const SolutionVector& initSol)
     {
         init(initSol);

@@ -27,8 +27,6 @@
 #include <cmath>
 #include <algorithm>
 
-#include <dune/common/deprecated.hh>
-
 namespace Dumux {
 
 struct JohansenIndices
@@ -71,7 +69,7 @@ public:
      * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 <BR>
      */
     template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
-    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
+    [[deprecated("Signature deprecated. Use signature with volume variables only!")]]
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,

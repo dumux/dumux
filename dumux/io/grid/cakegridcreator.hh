@@ -26,7 +26,6 @@
 
 #warning "This header is deprecated. Use the new cakegridmanager."
 
-#include <dune/common/deprecated.hh>
 #include "cakegridmanager.hh"
 
 namespace Dumux {
@@ -38,7 +37,7 @@ namespace Dumux {
  *        these polar coordinates.
  */
 template<class Grid>
-using CakeGridCreator DUNE_DEPRECATED_MSG("Use CakeGridManager instead!") = CakeGridManager<Grid>;
+using CakeGridCreator [[deprecated("Use CakeGridManager instead!")]] = CakeGridManager<Grid>;
 } // end namespace Dumux
 
 #endif

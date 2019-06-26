@@ -28,7 +28,6 @@
 #warning "This header is deprecated and will be removed after release 3.1. Use gridmanager_sub.hh"
 
 #include <dumux/io/grid/gridmanager_sub.hh>
-#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -38,7 +37,7 @@ namespace Dumux {
  * \brief A grid manager for dune-subgrid
  */
 template<class HostGrid, class HostGridManager = GridManager<HostGrid>>
-using SubgridManager DUNE_DEPRECATED_MSG("Use GridManager<SubGrid> instead. Will be removed after release 3.1")
+using SubgridManager [[deprecated("Use GridManager<SubGrid> instead. Will be removed after release 3.1")]]
  = GridManager<Dune::SubGrid<HostGrid::dimension, HostGrid>>;
 
 } // end namespace Dumux

@@ -109,7 +109,7 @@ public:
      * \brief Make the subgrid.
      */
     template<class ElementSelector>
-    DUNE_DEPRECATED_MSG("Create an instance of this class and use subgridManager.init(hostGrid, selector, paramGroup)")
+    [[deprecated("Create an instance of this class and use subgridManager.init(hostGrid, selector, paramGroup)")]]
     static std::unique_ptr<Grid> makeGrid(HostGrid& hostGrid,
                                           const ElementSelector& selector,
                                           const std::string& paramGroup = "")

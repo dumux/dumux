@@ -162,7 +162,7 @@ public:
      * \note This interface is deprecated
      */
     template<class Scv, std::enable_if_t<!std::is_arithmetic<Scv>::value, int> = 0 >
-    Element DUNE_DEPRECATED_MSG("Use element(elementIndex) instead. Will be removed after 3.1!")
+    [[deprecated("Use element(elementIndex) instead. Will be removed after 3.1!")]] Element
     element(const Scv& scv) const
     { return elementMap()[scv.elementIndex()]; }
 

@@ -24,7 +24,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_FLUXVARSCACHE_FILLER_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_FLUXVARSCACHE_FILLER_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/porousmediumflow/fluxvariablescachefiller.hh>
 #warning "This header is deprecated and will be removed after 3.1, use dumux/porousmediumflow/fluxvariablescachefiller.hh"
 
@@ -36,7 +35,7 @@ namespace Dumux {
  *        the interaction volume around a given sub-control volume face.
  */
 template<class TypeTag>
-using CCMpfaFluxVariablesCacheFiller DUNE_DEPRECATED_MSG("This class has been renamed to PorousMediumFluxVariablesCacheFiller and will be removed after 3.1")
+using CCMpfaFluxVariablesCacheFiller [[deprecated("This class has been renamed to PorousMediumFluxVariablesCacheFiller and will be removed after 3.1")]]
 = PorousMediumFluxVariablesCacheFiller<TypeTag>;
 
 } // end namespace Dumux
