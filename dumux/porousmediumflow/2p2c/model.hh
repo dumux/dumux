@@ -145,13 +145,14 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
     static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
 
     static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
 
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
 public:
     using type = TwoPTwoCVolumeVariables<Traits, useConstraintSolver>;
 };
@@ -259,10 +260,11 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
     static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
 
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
     using EquilibriumVolVars = TwoPTwoCVolumeVariables<Traits, useConstraintSolver>;
 public:
     using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
@@ -303,6 +305,29 @@ private:
     using NonisothermalIOFields = EnergyIOFields<TwoPNCIOFields>;
 public:
     using type = NonisothermalIOFields;
+};
+
+//! Use the nonequilibrium volume variables together with the 2p2c vol vars
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCNINonEquil>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
+
+    using Traits = TwoPNCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
+    using EquilibriumVolVars = TwoPTwoCVolumeVariables<Traits, useConstraintSolver>;
+public:
+    using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity

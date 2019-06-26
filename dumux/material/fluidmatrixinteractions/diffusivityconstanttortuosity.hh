@@ -26,6 +26,8 @@
 
 #include <dumux/common/parameters.hh>
 
+#include <dune/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -55,6 +57,7 @@ public:
      * \param saturation The saturation of the wetting phase
      * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
      */
+    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                        const Scalar saturation,
                                        const Scalar diffCoeff)
@@ -62,6 +65,23 @@ public:
         static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
 
         return porosity * saturation * tau * diffCoeff;
+    }
+
+    /*!
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
+     *        on a constant tortuosity value
+     * \param volVars The Volume Variables
+     * \param phaseIdx the index of the phase
+     * \param compIdx the component index
+     */
+    template<class VolumeVariables>
+    static Scalar effectiveDiffusivity(const VolumeVariables& volVars,
+                                       const int phaseIdx,
+                                       const int compIdx)
+    {
+        static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
+
+        return volVars.porosity() * volVars.saturation(volVars.wettingPhaseIdx()) * tau * volVars.diffusionCoefficient(phaseIdx, compIdx);
     }
 };
 

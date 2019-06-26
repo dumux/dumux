@@ -147,7 +147,7 @@ struct TwoPNCModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM>
 struct TwoPNCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -157,6 +157,7 @@ struct TwoPNCVolumeVariablesTraits
     using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
 };
 
 namespace Properties {
@@ -195,8 +196,9 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
 public:
     using type = TwoPNCVolumeVariables<Traits>;
 };
