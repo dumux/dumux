@@ -85,8 +85,6 @@ class CCMpfaFVGridGeometry<GV, Traits, true>
 
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
-    // check if two types of interaction volumes are considered in this problem
-
 public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
