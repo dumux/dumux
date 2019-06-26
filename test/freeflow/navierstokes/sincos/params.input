@@ -5,10 +5,9 @@ TEnd = 1.0 # [s]
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 50 50
 
 [Problem]
-Name = test_sincos_instationary # name passed to the output routines
+Name = test_ff_sincos
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true
