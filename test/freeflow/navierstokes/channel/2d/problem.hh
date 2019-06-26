@@ -223,16 +223,14 @@ public:
 
         if(isInlet_(globalPos))
         {
-            if (useVelocityProfile_)
-                values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
-            else
-                values[Indices::velocityXIdx] = inletVelocity_;
 #if NONISOTHERMAL
-        // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
-        if(time() >= 200.0)
-            values[Indices::temperatureIdx] = 293.15;
+            // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
+            if(time() >= 200.0)
+                values[Indices::temperatureIdx] = 293.15;
 #endif
         }
+        else
+            values[Indices::velocityXIdx] = 0.0;
 
         return values;
     }
@@ -310,12 +308,16 @@ public:
     {
         PrimaryVariables values;
         values[Indices::pressureIdx] = outletPressure_;
-        values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
 
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = 283.15;
 #endif
+
+        if (useVelocityProfile_)
+            values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+        else
+            values[Indices::velocityXIdx] = inletVelocity_;
 
         return values;
     }
