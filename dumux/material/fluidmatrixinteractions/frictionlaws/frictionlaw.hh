@@ -35,24 +35,21 @@ namespace Dumux {
  * The LET mobility model is used to limit the friction for small water depths.
  */
 
-template <typename NumEqVector>
+template <typename Scalar, typename VolumeVariables >
 class FrictionLaw
 {
-    using Scalar = typename NumEqVector::value_type;
-
 public:
     /*!
-     * \brief Compute the friction source term.
+     * \brief Compute the shear stress.
      *
-     * The friction source term contains the losses due to friction.
+     * Compute the shear stress due to friction. The shear stress is not a tensor as know
+     * from contiuums mechanics, but a force projected on an area. Therefore it is a
+     * vector with two entries.
      *
-     * \return Friction source term.
+     * \return shear stress. First entry is the x-component, the second the y-component.
      */
 
-    virtual NumEqVector computeSource(const Scalar waterDepth,
-                                      const Scalar frictionValue,
-                                      const Scalar u,
-                                      const Scalar v) const = 0;
+    virtual Dune::FieldVector<Scalar, 2> computeShearStress(const VolumeVariables& VolVar) const = 0;
 
     /*!
      * \brief Limit the friction for small water depth.

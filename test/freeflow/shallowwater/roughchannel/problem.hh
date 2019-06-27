@@ -124,6 +124,7 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -147,11 +148,11 @@ public:
         const auto gravity = this->spatialParams().gravity();
         if (getParam<std::string>("Problem.FrictionLaw") == ("Manning"))
         {
-            frictionLaw_ = std::make_shared<FrictionLawManning<NumEqVector>>(gravity);
+            frictionLaw_ = std::make_shared<FrictionLawManning<Scalar, VolumeVariables>>(gravity, constManningN_);
         }
         else if (getParam<std::string>("Problem.FrictionLaw") == ("Nikuradse"))
         {
-            frictionLaw_ = std::make_shared<FrictionLawNikuradse<NumEqVector>>();
+            frictionLaw_ = std::make_shared<FrictionLawNikuradse<Scalar, VolumeVariables>>(0.003);
             std::cout<<"\nWARNING: This test is meant to be run for the friction law after Manning.\n";
             std::cout<<"         You are running it with Nikuradse, although the friction values in\n";
             std::cout<<"         the input file and the analytic solution don't fit to Nikuradse!\n\n.";
@@ -238,20 +239,34 @@ public:
                         const ElementVolumeVariables& elemVolVars,
                         const SubControlVolume &scv) const
     {
-        using std::hypot;
 
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
-        const Scalar manningN = this->spatialParams().frictionValue(globalPos);
+        NumEqVector source (0.0);
 
-        const Scalar h = volVars.waterDepth();
-        const Scalar u = volVars.velocity(0);
-        const Scalar v = volVars.velocity(1);
-        NumEqVector source = frictionLaw_->computeSource(h, manningN, u, v);
+        Dune::FieldVector<Scalar, 2> bottomShearStress = frictionLaw_->computeShearStress(volVars);
+        source += computeBottomFrictionSource(bottomShearStress);
 
         return source;
     }
 
+    /*!
+     * \brief Compute the source term due to bottom friction
+     *
+     * \param bottomShearStress Shear stress due to bottom friction.
+     *
+     * \return source
+     */
+     NumEqVector computeBottomFrictionSource(const Dune::FieldVector<Scalar, 2> bottomShearStress) const
+     {
+         NumEqVector bottomFrictionSource(0.0);
+
+         bottomFrictionSource[0] = 0.0;
+         bottomFrictionSource[1] =bottomShearStress[0];
+         bottomFrictionSource[2] =bottomShearStress[1];
+
+         return bottomFrictionSource;
+     }
 
     // \}
 
@@ -380,7 +395,7 @@ private:
     Scalar constManningN_; // analytic solution is only available for const friction.
     Scalar bedSlope_;
     Scalar discharge_; // discharge at the inflow boundary
-    std::shared_ptr<FrictionLaw<NumEqVector>> frictionLaw_;
+    std::shared_ptr<FrictionLaw<Scalar, VolumeVariables>> frictionLaw_;
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
 };
