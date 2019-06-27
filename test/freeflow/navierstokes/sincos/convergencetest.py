@@ -3,7 +3,6 @@
 from math import *
 import subprocess
 import sys
-import numpy
 
 if len(sys.argv) < 2:
     sys.stderr.write('Please provide a single argument <testname> to the script\n')
@@ -63,16 +62,19 @@ logfile.close()
 print("\nComputed the following convergence rates for {}:\n".format(testname))
 subprocess.call(['cat', testname + '.log'])
 
+def mean(numbers):
+    return float(sum(numbers)) / len(numbers)
+
 # check the rates, we expect rates around 2
-if int(numpy.mean(resultsP) < 2.05 and numpy.mean(resultsP) < 1.95):
+if mean(resultsP) < 2.05 and mean(resultsP) < 1.95:
     sys.stderr.write("*"*70 + "\n" + "The convergence rates for pressure were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
     sys.exit(1)
 
-if int(numpy.mean(resultsVx) < 2.05 and numpy.mean(resultsVx) < 1.95):
+if mean(resultsVx) < 2.05 and mean(resultsVx) < 1.95:
     sys.stderr.write("*"*70 + "\n" + "The convergence rates for x-velocity were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
     sys.exit(1)
 
-if int(numpy.mean(resultsVy) < 2.05 and numpy.mean(resultsVy) < 1.95):
+if mean(resultsVy) < 2.05 and mean(resultsVy) < 1.95:
     sys.stderr.write("*"*70 + "\n" + "The convergence rates for y-velocity were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
     sys.exit(1)
 
