@@ -134,6 +134,10 @@ public:
         return 0;
     }
 
+    //! The effective thermal conductivity is zero for isothermal models
+    void updateEffectiveThermalConductivity()
+    {}
+
 };
 
 //! The non-isothermal implicit volume variables base class
@@ -219,7 +223,7 @@ public:
         solidState.setThermalConductivity(lambdas);
     }
 
-
+    // updates the effective thermal conductivity
     void updateEffectiveThermalConductivity()
     {
         lambdaEff_ = EffCondModel::effectiveThermalConductivity(asImp_());
