@@ -151,6 +151,9 @@ public:
         mobility_[wPhaseIdx_] = MaterialLaw::krw(matParams, saturation(wPhaseIdx_))/fluidState_.viscosity(wPhaseIdx_);
         mobility_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx_))/fluidState_.viscosity(nPhaseIdx);
 
+        //update porosity before calculating the effective properties depending on it
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+
         // binary diffusion coefficients
         for (unsigned int compJIdx = 0; compJIdx <  ModelTraits::numFluidComponents(); ++compJIdx)
         {
@@ -162,12 +165,7 @@ public:
                                                                                   phase0Idx,
                                                                                   comp0Idx,
                                                                                   compJIdx) );
-                setEffectiveDiffusionCoefficient_(phase0Idx, compJIdx,
-                                                  FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                  paramCache,
-                                                  phase0Idx,
-                                                  comp0Idx,
-                                                  compJIdx) );
+                setEffectiveDiffusionCoefficient_(phase0Idx, compJIdx);
             }
             if(compJIdx != comp1Idx)
             {
@@ -177,20 +175,13 @@ public:
                                                                                   phase1Idx,
                                                                                   comp1Idx,
                                                                                   compJIdx) );
-                setEffectiveDiffusionCoefficient_(phase1Idx, compJIdx,
-                                                  FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                  paramCache,
-                                                  phase1Idx,
-                                                  comp1Idx,
-                                                  compJIdx));
+                setEffectiveDiffusionCoefficient_(phase1Idx, compJIdx);
             }
         }
 
         // calculate the remaining quantities
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
-
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
@@ -524,12 +515,12 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
-    void setEffectiveDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
+    void setEffectiveDiffusionCoefficient_(int phaseIdx, int compIdx)
     {
         if (compIdx < phaseIdx)
-            effectiveDiffCoeff_[phaseIdx][compIdx] = std::move(EffDiffModel::effectiveDiffusivity(*this, d, phaseIdx));
+            effectiveDiffCoeff_[phaseIdx][compIdx] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[phaseIdx][compIdx], phaseIdx);
         else if (compIdx > phaseIdx)
-            effectiveDiffCoeff_[phaseIdx][compIdx-1] = std::move(EffDiffModel::effectiveDiffusivity(*this, d, phaseIdx));
+            effectiveDiffCoeff_[phaseIdx][compIdx-1] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[phaseIdx][compIdx-1], phaseIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "Effective diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
