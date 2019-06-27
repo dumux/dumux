@@ -36,45 +36,49 @@ namespace Dumux {
  * The LET mobility model is used to limit the friction for small water depths.
  */
 
-template <typename NumEqVector>
-class FrictionLawNikuradse : public FrictionLaw<NumEqVector>
+template <typename Scalar, typename VolumeVariables>
+class FrictionLawNikuradse : public FrictionLaw<Scalar, VolumeVariables>
 {
-    using Scalar = typename NumEqVector::value_type;
-
 public:
     /*!
-     * \brief Compute the friction source term.
+     * \brief Constructor
      *
-     * \param waterDepth water depth.
-     * \param frictionValue The equivalent sand roughness.
-     * \param u velocity in x-direction.
-     * \param v velocity in y-direction.
-     *
-     * \return Friction source term.
+     * \param ks Equivalent sand roughness [m]
      */
+    FrictionLawNikuradse(const Scalar ks)
+        : ks_(ks) {}
 
-    NumEqVector computeSource(const Scalar waterDepth,
-                              const Scalar frictionValue,
-                              const Scalar u,
-                              const Scalar v) const final
+    /*!
+     * \brief Compute the shear stress.
+     *
+     * \param volVars Volume variables
+     *
+     * Compute the shear stress due to friction. The shear stress is not a tensor as know
+     * from contiuums mechanics, but a force projected on an area. Therefore it is a
+     * vector with two entries.
+     *
+     * \return shear stress. First entry is the x-component, the second the y-component.
+     */
+    Dune::FieldVector<Scalar, 2> computeShearStress(const VolumeVariables& volVars) const final
     {
         using std::pow;
         using std::log;
         using std::hypot;
 
-        NumEqVector source(0.0);
+        Dune::FieldVector<Scalar, 2> shearStress(0.0);
 
-        Scalar roughnessHeight = frictionValue;
-        roughnessHeight = this->limitRoughH(roughnessHeight, waterDepth);
-        const Scalar ustarH = pow(0.41,2.0)/pow(log((12*(waterDepth + roughnessHeight))/frictionValue),2.0);
-        const Scalar uv = hypot(u,v);
+        Scalar roughnessHeight = ks_;
+        roughnessHeight = this->limitRoughH(roughnessHeight, volVars.waterDepth());
+        const Scalar ustarH = pow(0.41,2.0)/pow(log((12*(volVars.waterDepth() + roughnessHeight))/ks_),2.0);
+        const Scalar uv = hypot(volVars.velocity(0),volVars.velocity(1));
 
-        source[0] = 0.0;
-        source[1] = -ustarH * u * uv;
-        source[2] = -ustarH * v * uv;
+        shearStress[0] = -ustarH * volVars.velocity(0) * uv;
+        shearStress[1] = -ustarH * volVars.velocity(1) * uv;
 
-        return source;
+        return shearStress;
     }
+private:
+    Scalar ks_;
 };
 
 } // end namespace Dumux
