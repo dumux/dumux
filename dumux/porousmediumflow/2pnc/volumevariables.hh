@@ -155,19 +155,35 @@ public:
         for (unsigned int compJIdx = 0; compJIdx <  ModelTraits::numFluidComponents(); ++compJIdx)
         {
             if(compJIdx != comp0Idx)
+            {
                 setDiffusionCoefficient_( phase0Idx, compJIdx,
                                           FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                                                   paramCache,
                                                                                   phase0Idx,
                                                                                   comp0Idx,
                                                                                   compJIdx) );
+                setEffectiveDiffusionCoefficient_(phase0Idx, compJIdx,
+                                                  FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                  paramCache,
+                                                  phase0Idx,
+                                                  comp0Idx,
+                                                  compJIdx) );
+            }
             if(compJIdx != comp1Idx)
+            {
                 setDiffusionCoefficient_( phase1Idx, compJIdx,
                                           FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                                                   paramCache,
                                                                                   phase1Idx,
                                                                                   comp1Idx,
                                                                                   compJIdx) );
+                setEffectiveDiffusionCoefficient_(phase1Idx, compJIdx,
+                                                  FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                  paramCache,
+                                                  phase1Idx,
+                                                  comp1Idx,
+                                                  compJIdx));
+            }
         }
 
         // calculate the remaining quantities
@@ -175,8 +191,6 @@ public:
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        effectiveDiffCoeff_[phase0Idx][comp1Idx] = EffDiffModel::effectiveDiffusivity(*this, phase0Idx, comp1Idx);
-        effectiveDiffCoeff_[phase1Idx][comp0Idx] = EffDiffModel::effectiveDiffusivity(*this, phase1Idx, comp0Idx);
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
@@ -463,10 +477,12 @@ public:
      */
     Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
     {
-        if(phaseIdx == compIdx)
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
-        else
+        if (compIdx < phaseIdx)
             return effectiveDiffCoeff_[phaseIdx][compIdx];
+        else if (compIdx > phaseIdx)
+            return effectiveDiffCoeff_[phaseIdx][compIdx-1];
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
 
      /*!
@@ -491,9 +507,7 @@ public:
      * \brief Returns the wetting phase index
      */
     const int wettingPhaseIdx() const
-    {
-        return wPhaseIdx_;
-    }
+    {  return wPhaseIdx_; }
 
 protected:
     FluidState fluidState_;
@@ -508,6 +522,16 @@ private:
             diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
+    }
+
+    void setEffectiveDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
+    {
+        if (compIdx < phaseIdx)
+            effectiveDiffCoeff_[phaseIdx][compIdx] = std::move(EffDiffModel::effectiveDiffusivity(*this, d, phaseIdx));
+        else if (compIdx > phaseIdx)
+            effectiveDiffCoeff_[phaseIdx][compIdx-1] = std::move(EffDiffModel::effectiveDiffusivity(*this, d, phaseIdx));
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Effective diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
     Scalar pc_;                     // The capillary pressure

@@ -82,16 +82,16 @@ public:
      */
     template<class VolumeVariables>
     static Scalar effectiveDiffusivity(const VolumeVariables& volVars,
-                                       const int phaseIdx,
-                                       const int compIdx)
+                                       const Scalar diffCoeff,
+                                       const int phaseIdx)
     {
         // instead of D_eff,pm = phi * Sw * 1/phi^2 * (phi * Sw)^(7/3) * D
         // we calculate the more efficient
         // D_eff,pm = phi * Sw^3 * cubicroot(phi * Sw) * D
 
         using std::cbrt;
-        return volVars.porosity() * (volVars.saturation(volVars.wettingPhaseIdx()) * volVars.saturation(volVars.wettingPhaseIdx()) * volVars.saturation(volVars.wettingPhaseIdx()))
-               * cbrt(volVars.porosity() * volVars.saturation(volVars.wettingPhaseIdx())) * volVars.diffusionCoefficient(phaseIdx, compIdx);
+        return volVars.porosity() * (volVars.saturation(phaseIdx) * volVars.saturation(phaseIdx) * volVars.saturation(phaseIdx))
+               * cbrt(volVars.porosity() * volVars.saturation(phaseIdx)) * diffCoeff;
     }
 };
 }

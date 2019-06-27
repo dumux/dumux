@@ -76,12 +76,12 @@ public:
      */
     template<class VolumeVariables>
     static Scalar effectiveDiffusivity(const VolumeVariables& volVars,
-                                       const int phaseIdx,
-                                       const int compIdx)
+                                       const Scalar diffCoeff,
+                                       const int phaseIdx)
     {
         static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
 
-        return volVars.porosity() * volVars.saturation(volVars.wettingPhaseIdx()) * tau * volVars.diffusionCoefficient(phaseIdx, compIdx);
+        return volVars.porosity() * volVars.saturation(phaseIdx) * tau * diffCoeff;
     }
 };
 

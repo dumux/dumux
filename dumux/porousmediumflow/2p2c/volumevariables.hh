@@ -161,8 +161,8 @@ public:
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        effectiveDiffCoeff_[phase0Idx][comp1Idx] = EffDiffModel::effectiveDiffusivity(*this, phase0Idx, comp1Idx);
-        effectiveDiffCoeff_[phase1Idx][comp0Idx] = EffDiffModel::effectiveDiffusivity(*this, phase1Idx, comp0Idx);
+        effectiveDiffCoeff_[phase0Idx][comp1Idx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[phase0Idx][comp1Idx], phase0Idx);
+        effectiveDiffCoeff_[phase1Idx][comp0Idx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[phase1Idx][comp0Idx], phase1Idx);
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
