@@ -29,6 +29,9 @@
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
+#include <dumux/material/fluidmatrixinteractions/2pnew/linear.hh>
+#include <dumux/material/fluidmatrixinteractions/2pnew/materiallaw.hh>
+
 #include <dumux/porousmediumflow/richards/model.hh>
 
 namespace Dumux {
@@ -46,14 +49,12 @@ class RichardsAnalyticalSpatialParams
     using ParentType = FVSpatialParams<GridGeometry, Scalar,
                                        RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-
-    using MaterialLaw = EffToAbsLaw<LinearMaterial<Scalar>>;
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using FluidMatrixInteraction = FluidMatrix::TwoPMaterialLaw<Scalar, FluidMatrix::Linear, FluidMatrix::NoTwoPRegularization<Scalar>>;
 
     // export permeability type
     using PermeabilityType = Scalar;
@@ -62,10 +63,12 @@ public:
         : ParentType(gridGeometry)
     {
         permeability_ = 5e-12;
-        materialParams_.setSwr(0.0);
-        materialParams_.setSnr(0.0);
-        materialParams_.setEntryPc(0);
-        materialParams_.setMaxPc(1e10);
+
+        typename FluidMatrixInteraction::BaseLawParams params;
+        params.entryPc = 0;
+        params.maxPc = 1e10;
+
+        fluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>(params);
     }
 
     /*!
@@ -88,14 +91,14 @@ public:
      * \brief Returns the parameters for the material law at a given location
      * \param globalPos A global coordinate vector
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
+    const FluidMatrixInteraction& fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        return materialParams_;
+        return *fluidMatrixInteraction_;
     }
 
 private:
     Scalar permeability_;
-    MaterialLawParams materialParams_;
+    std::unique_ptr<FluidMatrixInteraction> fluidMatrixInteraction_;
 };
 
 } // end namespace Dumux
