@@ -162,8 +162,7 @@ public:
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         effectiveDiffCoeff_[phase0Idx][comp1Idx] = EffDiffModel::effectiveDiffusivity(*this, phase0Idx, comp1Idx);
-        effectiveDiffCoeff_[phase0Idx][comp1Idx] = EffDiffModel::effectiveDiffusivity(*this, phase0Idx, comp1Idx);
-
+        effectiveDiffCoeff_[phase1Idx][comp0Idx] = EffDiffModel::effectiveDiffusivity(*this, phase1Idx, comp0Idx);
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
@@ -374,6 +373,17 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
         else
             return diffCoeff_[phaseIdx][compIdx];
+    }
+
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    {
+        if(phaseIdx == compIdx)
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
+        else
+            return effectiveDiffCoeff_[phaseIdx][compIdx];
     }
 
     /*!
