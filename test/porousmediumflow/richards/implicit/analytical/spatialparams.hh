@@ -27,7 +27,6 @@
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
@@ -50,22 +49,20 @@ class RichardsAnalyticalSpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-public:
+    using PcKrSwCurve = FluidMatrix::LinearMaterialDefault<Scalar>;
 
-    using MaterialLaw = EffToAbsLaw<LinearMaterial<Scalar>>;
-    using MaterialLawParams = typename MaterialLaw::Params;
+public:
 
     // export permeability type
     using PermeabilityType = Scalar;
 
     RichardsAnalyticalSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-        : ParentType(gridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = 5e-12;
-        materialParams_.setSwr(0.0);
-        materialParams_.setSnr(0.0);
-        materialParams_.setEntryPc(0);
-        materialParams_.setMaxPc(1e10);
+
+        typename PcKrSwCurve::BasicParams params(0/*pcEntry*/, 1e10/*pcMax*/);
+        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>(params);
     }
 
     /*!
@@ -88,14 +85,14 @@ public:
      * \brief Returns the parameters for the material law at a given location
      * \param globalPos A global coordinate vector
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        return materialParams_;
+        return makeFluidMatrixInteraction(*pcKrSwCurve_);
     }
 
 private:
     Scalar permeability_;
-    MaterialLawParams materialParams_;
+    std::unique_ptr<PcKrSwCurve> pcKrSwCurve_;
 };
 
 } // end namespace Dumux
