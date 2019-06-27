@@ -34,7 +34,7 @@ namespace Dumux {
 template<class BulkGridView, class LowDimGridView,
          class BulkMapper = Dune::MultipleCodimMultipleGeomTypeMapper<BulkGridView>,
          class LowDimMapper = Dune::MultipleCodimMultipleGeomTypeMapper<LowDimGridView>>
-class DUNE_DEPRECATED_MSG("Use MultiDomainGlue instead. Will be removed after 3.1!")
+class [[deprecated("Use MultiDomainGlue instead. Will be removed after 3.1!")]]
 MixedDimensionGlue
 : public MultiDomainGlue<LowDimGridView, BulkGridView, LowDimMapper, BulkMapper>
 {

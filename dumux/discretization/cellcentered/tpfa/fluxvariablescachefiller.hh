@@ -35,7 +35,7 @@ namespace Dumux {
 * \brief A helper class to fill the flux variable caches used in the flux constitutive laws
 */
 template<class TypeTag>
-using CCTpfaFluxVariablesCacheFiller DUNE_DEPRECATED_MSG("This class has been renamed to PorousMediumFluxVariablesCacheFiller and will be removed after 3.1")
+using CCTpfaFluxVariablesCacheFiller [[deprecated("This class has been renamed to PorousMediumFluxVariablesCacheFiller and will be removed after 3.1")]]
 = PorousMediumFluxVariablesCacheFiller<TypeTag>;
 
 } // end namespace Dumux

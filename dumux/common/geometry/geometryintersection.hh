@@ -23,7 +23,6 @@
 #ifndef DUMUX_GEOMETRY_INTERSECTION_HH
 #define DUMUX_GEOMETRY_INTERSECTION_HH
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -204,7 +203,7 @@ public:
     using Intersection = typename Policy::Intersection;
 
     //! Deprecated alias, will be removed after 3.1
-    using IntersectionType DUNE_DEPRECATED_MSG("Please use Intersection instead") = Intersection;
+    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
     //! Determine if the two geometries intersect and compute the intersection geometry
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
@@ -235,7 +234,7 @@ public:
     using Intersection = typename Policy::Intersection;
 
     //! Deprecated alias, will be removed after 3.1
-    using IntersectionType DUNE_DEPRECATED_MSG("Please use Intersection instead") = Intersection;
+    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
     /*!
      * \brief Colliding two segments
@@ -352,7 +351,7 @@ public:
     using Intersection = typename Policy::Intersection;
 
     //! Deprecated alias, will be removed after 3.1
-    using IntersectionType DUNE_DEPRECATED_MSG("Please use Intersection instead") = Intersection;
+    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
@@ -501,7 +500,7 @@ public:
     using Intersection = typename Policy::Intersection;
 
     //! Deprecated alias, will be removed after 3.1
-    using IntersectionType DUNE_DEPRECATED_MSG("Please use Intersection instead") = Intersection;
+    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
@@ -650,7 +649,7 @@ public:
     using Intersection = typename Policy::Intersection;
 
     //! Deprecated alias, will be removed after 3.1
-    using IntersectionType DUNE_DEPRECATED_MSG("Please use Intersection instead") = Intersection;
+    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
@@ -802,7 +801,7 @@ public:
     using Intersection = typename Policy::Intersection;
 
     //! Deprecated alias, will be removed after 3.1
-    using IntersectionType DUNE_DEPRECATED_MSG("Please use Intersection instead") = Intersection;
+    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
@@ -997,7 +996,7 @@ public:
     using Intersection = typename Policy::Intersection;
 
     //! Deprecated alias, will be removed after 3.1
-    using IntersectionType DUNE_DEPRECATED_MSG("Please use Intersection instead") = Intersection;
+    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
@@ -1087,7 +1086,7 @@ public:
      * \note This overload is used when point-like intersections are seeked
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
-    DUNE_DEPRECATED_MSG("Please use intersection(triangle, segment, ...) instead")
+    [[deprecated("Please use intersection(triangle, segment, ...) instead")]]
     static bool intersection(const Point& a, const Point& b, const Point& c,
                              const Point& p, const Point& q,
                              Intersection& is)
