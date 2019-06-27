@@ -26,6 +26,8 @@
 #define DUMUX_RICHARDS_NEWTON_SOLVER_HH
 
 #include <algorithm>
+#include <dumux/common/deprecated.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/elementsolution.hh>
 
@@ -44,8 +46,6 @@ class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
     using Scalar = typename Assembler::Scalar;
     using ParentType = NewtonSolver<Assembler, LinearSolver>;
     using SolutionVector = typename Assembler::ResidualType;
-
-    using MaterialLaw = typename Assembler::Problem::SpatialParams::MaterialLaw;
     using Indices = typename Assembler::GridVariables::VolumeVariables::Indices;
     enum { pressureIdx = Indices::pressureIdx };
 
@@ -86,17 +86,22 @@ private:
                     // calculate the old wetting phase saturation
                     const auto& spatialParams = this->assembler().problem().spatialParams();
                     const auto elemSol = elementSolution(element, uCurrentIter, gridGeometry);
-                    const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
-                    const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
+
+                    // old material law interface is deprecated: Replace this by
+                    // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+                    // after the release of 3.1, when the deprecated interface is no longer supported
+                    const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, spatialParams, element, scv, elemSol);
+
+                    const Scalar pcMin = fluidMatrixInteraction.pc(1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
                     using std::max;
                     const Scalar pn = max(this->assembler().problem().nonWettingReferencePressure(), pw + pcMin);
                     const Scalar pcOld = pn - pw;
-                    const Scalar SwOld = max(0.0, MaterialLaw::sw(materialLawParams, pcOld));
+                    const Scalar SwOld = max(0.0, fluidMatrixInteraction.sw(pcOld));
 
                     // convert into minimum and maximum wetting phase pressures
-                    const Scalar pwMin = pn - MaterialLaw::pc(materialLawParams, SwOld - 0.2);
-                    const Scalar pwMax = pn - MaterialLaw::pc(materialLawParams, SwOld + 0.2);
+                    const Scalar pwMin = pn - fluidMatrixInteraction.pc(SwOld - 0.2);
+                    const Scalar pwMax = pn - fluidMatrixInteraction.pc(SwOld + 0.2);
 
                     // clamp the result
                     using std::clamp;
