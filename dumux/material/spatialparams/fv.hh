@@ -77,6 +77,7 @@ public:
      * \return the material parameters object
      */
     template<class ElementSolution>
+    [[deprecated("Use the new style material laws. Old material laws will no longer be supported after release 3.1")]]
     decltype(auto) materialLawParams(const Element& element,
                                      const SubControlVolume& scv,
                                      const ElementSolution& elemSol) const
