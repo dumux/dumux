@@ -36,9 +36,10 @@ namespace Dumux {
  * The LET mobility model is used to limit the friction for small water depths.
  */
 
-template <typename Scalar, typename VolumeVariables>
-class FrictionLawManning : public FrictionLaw<Scalar, VolumeVariables>
+template <typename VolumeVariables>
+class FrictionLawManning : public FrictionLaw<VolumeVariables>
 {
+    using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
 public:
     /*!
      * \brief Constructor
