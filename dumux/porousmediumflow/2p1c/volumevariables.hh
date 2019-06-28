@@ -129,7 +129,6 @@ public:
         /////////////
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -140,11 +139,11 @@ public:
         {
             // relative permeabilities
             Scalar kr;
-            if (phaseIdx == wPhaseIdx)
-                kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
+            if (phaseIdx == wPhaseIdx_)
+                kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx_));
             else // ATTENTION: krn requires the wetting phase saturation
                 // as parameter!
-                kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
+                kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx_));
             relativePermeability_[phaseIdx] = kr;
             Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
         }
@@ -154,6 +153,7 @@ public:
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!
@@ -178,8 +178,8 @@ public:
 
         // capillary pressure parameters
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
-        fluidState.setWettingPhase(wPhaseIdx);
+        wPhaseIdx_ = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx_);
 
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
@@ -213,17 +213,17 @@ public:
 
         // set pressures of the fluid phases
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
         if (formulation == TwoPFormulation::p0s1)
         {
             fluidState.setPressure(liquidPhaseIdx, priVars[pressureIdx]);
-            fluidState.setPressure(gasPhaseIdx, (wPhaseIdx == liquidPhaseIdx) ? priVars[pressureIdx] + pc_
+            fluidState.setPressure(gasPhaseIdx, (wPhaseIdx_ == liquidPhaseIdx) ? priVars[pressureIdx] + pc_
                                                                               : priVars[pressureIdx] - pc_);
         }
         else
         {
             fluidState.setPressure(gasPhaseIdx, priVars[pressureIdx]);
-            fluidState.setPressure(liquidPhaseIdx, (wPhaseIdx == liquidPhaseIdx) ? priVars[pressureIdx] - pc_
+            fluidState.setPressure(liquidPhaseIdx, (wPhaseIdx_ == liquidPhaseIdx) ? priVars[pressureIdx] - pc_
                                                                                  : priVars[pressureIdx] + pc_);
         }
 
@@ -270,14 +270,13 @@ public:
     {
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
 
         // get temperature
         Scalar fluidTemperature;
         if (phasePresence == liquidPhaseOnly || phasePresence == gasPhaseOnly)
             fluidTemperature = priVars[switchIdx];
         else if (phasePresence == twoPhases)
-            fluidTemperature = FluidSystem::vaporTemperature(fluidState, wPhaseIdx);
+            fluidTemperature = FluidSystem::vaporTemperature(fluidState, wPhaseIdx_);
         else
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
 
@@ -392,11 +391,18 @@ public:
     Scalar vaporTemperature() const
     { return FluidSystem::vaporTemperature(fluidState_, liquidPhaseIdx);}
 
+    /*!
+     * \brief Returns the wetting phase index
+     */
+    const int wettingPhaseIdx() const
+    {  return wPhaseIdx_; }
+
 protected:
     FluidState fluidState_;
     SolidState solidState_;
 
 private:
+    int wPhaseIdx_;
     Scalar pc_;                     // The capillary pressure
     PermeabilityType permeability_; // Effective permeability within the control volume
 

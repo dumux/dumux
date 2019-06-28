@@ -113,7 +113,7 @@ struct TwoPOneCNIModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class ETCM>
 struct TwoPOneCNIVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -123,6 +123,7 @@ struct TwoPOneCNIVolumeVariablesTraits
     using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
+    using EffectiveThermalConductivityModel = ETCM;
 };
 
 namespace Properties {
@@ -181,11 +182,12 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
 
     static_assert(FSY::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
 
-    using Traits = TwoPOneCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = TwoPOneCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, ETCM>;
 public:
     using type = TwoPOneCVolumeVariables<Traits>;
 };
