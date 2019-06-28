@@ -26,8 +26,6 @@
 
 #include <cmath>
 
-#include <dune/common/deprecated.hh>
-
 namespace Dumux {
 
 /*!
@@ -59,7 +57,7 @@ public:
      * \param saturation The saturation of the phase
      * \param diffCoeff The diffusion coefficient of the phase \f$\mathrm{[m^2/s]}\f$
      */
-    DUNE_DEPRECATED_MSG("Signature deprecated. Use signature with volume variables only!")
+    [[deprecated("Signature deprecated. Use signature with volume variables!")]]
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                        const Scalar saturation,
                                        const Scalar diffCoeff)
