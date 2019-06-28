@@ -113,6 +113,30 @@ struct ThreePVolumeVariablesTraits
     using ModelTraits = MT;
 };
 
+/*!
+ * \ingroup ThreePModel
+ * \brief Traits class for the two-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam ETCM The effective thermal conductivity model
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class ETCM>
+struct ThreePNIVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using EffectiveThermalConductivityModel = ETCM;
+};
+
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -212,6 +236,25 @@ private:
    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p model!");
 public:
    using type = PorousMediumFlowNIModelTraits<ThreePModelTraits>;
+};
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ThreePNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    using Traits = ThreePNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, ETCM>;
+public:
+    using type = ThreePVolumeVariables<Traits>;
 };
 
 } // end namespace Properties
