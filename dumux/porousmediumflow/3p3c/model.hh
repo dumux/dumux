@@ -155,6 +155,8 @@ struct ThreePThreeCVolumeVariablesTraits
  * \tparam FST The fluid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
+ * \tparam ETCM The effective thermal conductivity model
  */
 template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM, class ETCM>
 struct ThreePThreeCNIVolumeVariablesTraits

@@ -113,7 +113,7 @@ struct OnePVolumeVariablesTraits
  * \tparam FST The fluid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
- *  \tparam ETCM The effective thermal conductivity model
+ * \tparam ETCM The effective thermal conductivity model
  */
 template<class PV,
          class FSY,
