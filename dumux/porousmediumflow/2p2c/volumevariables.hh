@@ -153,16 +153,16 @@ public:
         relativePermeability_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx_));
 
         // binary diffusion coefficients
-        diffCoeff_[phase0Idx][comp1Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase0Idx, comp0Idx, comp1Idx);
-        diffCoeff_[phase1Idx][comp0Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase1Idx, comp0Idx, comp1Idx);
+        diffCoeff_[phase0Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase0Idx, comp0Idx, comp1Idx);
+        diffCoeff_[phase1Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase1Idx, comp0Idx, comp1Idx);
 
         // porosity & permeabilty
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        effectiveDiffCoeff_[phase0Idx][comp1Idx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[phase0Idx][comp1Idx], phase0Idx);
-        effectiveDiffCoeff_[phase1Idx][comp0Idx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[phase1Idx][comp0Idx], phase1Idx);
+        effectiveDiffCoeff_[phase0Idx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[phase0Idx], phase0Idx);
+        effectiveDiffCoeff_[phase1Idx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[phase1Idx], phase1Idx);
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
@@ -372,7 +372,7 @@ public:
         if(phaseIdx == compIdx)
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
         else
-            return diffCoeff_[phaseIdx][compIdx];
+            return diffCoeff_[phaseIdx];
     }
 
     /*!
@@ -383,7 +383,7 @@ public:
         if(phaseIdx == compIdx)
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
         else
-            return effectiveDiffCoeff_[phaseIdx][compIdx];
+            return effectiveDiffCoeff_[phaseIdx];
     }
 
     /*!
@@ -407,10 +407,10 @@ private:
     std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_;
 
     //binary diffusion coefficient
-    std::array<std::array<Scalar,  ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> diffCoeff_;
+    std::array<Scalar, ModelTraits::numFluidPhases()> diffCoeff_;
 
     // Effective diffusion coefficients for the phases
-    std::array<std::array<Scalar,  ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> effectiveDiffCoeff_;
+    std::array<Scalar, ModelTraits::numFluidPhases()> effectiveDiffCoeff_;
 
 protected:
     const Impl &asImp_() const { return *static_cast<const Impl*>(this); }
