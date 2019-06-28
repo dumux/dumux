@@ -59,7 +59,7 @@ public:
      *
      * \return shear stress [N/m^2]. First entry is the x-component, the second the y-component.
      */
-    Dune::FieldVector<Scalar, 2> computeShearStress(const VolumeVariables& volVars) const final
+    Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& volVars) const final
     {
         using std::pow;
         using std::log;

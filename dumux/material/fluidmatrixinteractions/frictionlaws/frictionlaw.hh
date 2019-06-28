@@ -49,7 +49,7 @@ public:
      * \return shear stress [N/m^2]. First entry is the x-component, the second the y-component.
      */
 
-    virtual Dune::FieldVector<Scalar, 2> computeShearStress(const VolumeVariables& VolVar) const = 0;
+    virtual Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& VolVar) const = 0;
 
     /*!
      * \brief Limit the friction for small water depth.

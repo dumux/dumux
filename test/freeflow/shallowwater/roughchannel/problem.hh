@@ -222,8 +222,8 @@ public:
         const auto& volVars = elemVolVars[scv];
         NumEqVector source (0.0);
 
-        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element)->computeShearStress(volVars);
-        source += computeBottomFrictionSource(bottomShearStress);
+        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element)->shearStress(volVars);
+        source += bottomFrictionSource(bottomShearStress);
 
         return source;
     }
@@ -235,7 +235,7 @@ public:
      *
      * \return source
      */
-     NumEqVector computeBottomFrictionSource(const Dune::FieldVector<Scalar, 2> bottomShearStress) const
+     NumEqVector bottomFrictionSource(const Dune::FieldVector<Scalar, 2> bottomShearStress) const
      {
          NumEqVector bottomFrictionSource(0.0);
 
