@@ -65,8 +65,10 @@ struct SpatialParams<TypeTag, TTag::RoughChannel>
 private:
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
 public:
-    using type = RoughChannelSpatialParams<FVGridGeometry, Scalar, TypeTag>;
+    using type = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
 };
 
 template<class TypeTag>
@@ -219,11 +221,9 @@ public:
                         const SubControlVolume &scv) const
     {
 
-        const auto& volVars = elemVolVars[scv];
         NumEqVector source (0.0);
 
-        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element)->shearStress(volVars);
-        source += bottomFrictionSource(bottomShearStress);
+        source += bottomFrictionSource(element, fvGeometry, elemVolVars, scv);
 
         return source;
     }
@@ -231,19 +231,28 @@ public:
     /*!
      * \brief Compute the source term due to bottom friction
      *
-     * \param bottomShearStress Shear stress due to bottom friction.
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The sub control volume
      *
      * \return source
      */
-     NumEqVector bottomFrictionSource(const Dune::FieldVector<Scalar, 2> bottomShearStress) const
+     NumEqVector bottomFrictionSource(const Element& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& elemVolVars,
+                                      const SubControlVolume &scv) const
      {
-         NumEqVector bottomFrictionSource(0.0);
+        NumEqVector bottomFrictionSource(0.0);
 
-         bottomFrictionSource[0] = 0.0;
-         bottomFrictionSource[1] =bottomShearStress[0];
-         bottomFrictionSource[2] =bottomShearStress[1];
+        const auto& volVars = elemVolVars[scv];
+        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element).shearStress(volVars);
 
-         return bottomFrictionSource;
+        bottomFrictionSource[0] = 0.0;
+        bottomFrictionSource[1] =bottomShearStress[0];
+        bottomFrictionSource[2] =bottomShearStress[1];
+
+        return bottomFrictionSource;
      }
 
     // \}
