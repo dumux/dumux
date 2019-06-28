@@ -58,6 +58,7 @@ class ThreePThreeCVolumeVariables
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FS>;
 
     using ModelTraits = typename Traits::ModelTraits;
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using Idx = typename ModelTraits::Indices;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
     enum {
@@ -567,8 +568,18 @@ public:
 
         // porosity & permeabilty
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+
+        // compute the effective diffusion coefficients
+        setEffectiveDiffusionCoefficient_(gPhaseIdx, wCompIdx);
+        setEffectiveDiffusionCoefficient_(gPhaseIdx, nCompIdx);
+        setEffectiveDiffusionCoefficient_(wPhaseIdx, gCompIdx);
+        setEffectiveDiffusionCoefficient_(wPhaseIdx, nCompIdx);
+        setEffectiveDiffusionCoefficient_(nPhaseIdx, wCompIdx);
+        setEffectiveDiffusionCoefficient_(nPhaseIdx, gCompIdx);
+
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
 
         // compute and set the enthalpy
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
@@ -703,6 +714,19 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
 
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    {
+        if (compIdx < phaseIdx)
+            return effectiveDiffCoeff_[phaseIdx][compIdx];
+        else if (compIdx > phaseIdx)
+            return effectiveDiffCoeff_[phaseIdx][compIdx-1];
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
+    }
+
 protected:
     FluidState fluidState_;
     SolidState solidState_;
@@ -730,7 +754,18 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
+    void setEffectiveDiffusionCoefficient_(int phaseIdx, int compIdx)
+    {
+        if (compIdx < phaseIdx)
+            effectiveDiffCoeff_[phaseIdx][compIdx] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[phaseIdx][compIdx], phaseIdx);
+        else if (compIdx > phaseIdx)
+            effectiveDiffCoeff_[phaseIdx][compIdx-1] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[phaseIdx][compIdx-1], phaseIdx);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Effective diffusion coefficient for phaseIdx = compIdx doesn't exist");
+    }
+
     std::array<std::array<Scalar, ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> diffCoefficient_;
+    std::array<std::array<Scalar, ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> effectiveDiffCoeff_;
 };
 
 } // end namespace Dumux
