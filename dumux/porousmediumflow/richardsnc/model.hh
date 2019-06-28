@@ -116,6 +116,56 @@ struct RichardsNCModelTraits
     static constexpr bool useMoles() { return useMol; }
 };
 
+/*!
+ * \ingroup RichardsNCModel
+ * \brief Traits class for the Richards model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM>
+struct RichardsNCVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
+};
+
+/*!
+ * \ingroup RichardsNCModel
+ * \brief Traits class for the volume variables of the single-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
+ * \tparam ETCM The effective thermal conductivity model
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM, class ETCM>
+struct RichardsNCNIVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
+    using EffectiveThermalConductivityModel = ETCM;
+};
+
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -172,13 +222,14 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
     static_assert(FSY::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
 
-    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = RichardsNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
 public:
     using type = RichardsNCVolumeVariables<Traits>;
 };
@@ -239,6 +290,27 @@ private:
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::RichardsNCNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    using Traits = RichardsNCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
+public:
+    using type = RichardsNCVolumeVariables<Traits>;
+};
+
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -49,6 +49,7 @@ class RichardsNCVolumeVariables
     using EnergyVolVars = EnergyVolumeVariables<Traits, RichardsNCVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
 
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
 
@@ -100,6 +101,7 @@ public:
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numFluidComponents());
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -109,13 +111,18 @@ public:
 
         const int compIIdx = 0;
         for (unsigned int compJIdx = 0; compJIdx < ParentType::numFluidComponents(); ++compJIdx)
+        {
             if(compIIdx != compJIdx)
+            {
                 setDiffusionCoefficient_(compJIdx,
                                          FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                                                  paramCache,
                                                                                  0,
                                                                                  compIIdx,
                                                                                  compJIdx));
+                setEffectiveDiffusionCoefficient_(compJIdx);
+            }
+        }
     }
 
     /*!
@@ -387,6 +394,15 @@ public:
     Scalar diffusionCoefficient(const int phaseIdx, const int compIdx) const
     { return diffCoefficient_[compIdx-1]; }
 
+    /*!
+     * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
+     *
+     * \param phaseIdx The index of the phase.
+     * \param compIdx The index of the component
+     */
+    Scalar effectiveDiffusionCoefficient(const int phaseIdx, const int compIdx) const
+    { return effectiveDiffCoefficient_[compIdx-1]; }
+
 protected:
     FluidState fluidState_; //!< the fluid state
 
@@ -394,7 +410,13 @@ private:
     void setDiffusionCoefficient_(int compIdx, Scalar d)
     { diffCoefficient_[compIdx-1] = d; }
 
+    void setEffectiveDiffusionCoefficient_(int compIdx)
+    {
+        effectiveDiffCoefficient_[compIdx-1] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[compIdx-1], 0);
+    }
+
     std::array<Scalar, ParentType::numFluidComponents()-1> diffCoefficient_;
+    std::array<Scalar, ParentType::numFluidComponents()-1> effectiveDiffCoefficient_;
 
     Scalar relativePermeabilityWetting_; // the relative permeability of the wetting phase
     SolidState solidState_;
