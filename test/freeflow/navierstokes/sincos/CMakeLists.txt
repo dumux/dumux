@@ -4,6 +4,7 @@ dune_symlink_to_source_files(FILES "params.input")
 dune_add_test(NAME test_ff_navierstokes_sincos
               SOURCES main.cc
               LABELS freeflow
+              TIMEOUT 1000
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
               CMD_ARGS       test_ff_navierstokes_sincos params.input
