@@ -409,8 +409,8 @@ protected:
                                              domainJ,
                                              insideDistance,
                                              outsideDistance,
-                                             thermalConductivity_(volVarsI, fvGeometryI, scvI),
-                                             thermalConductivity_(volVarsJ, fvGeometryJ, scvJ),
+                                             volVarsI.effectiveThermalConductivity(),
+                                             volVarsJ.effectiveThermalConductivity(),
                                              diffCoeffAvgType);
 
         return -tij * deltaT;
@@ -918,25 +918,6 @@ protected:
     /*!
      * \brief Returns the molecular diffusion coefficient within the free flow domain.
      */
-    Scalar diffusionCoefficient_(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIdx) const
-    {
-         return volVars.effectiveDiffusivity(phaseIdx, compIdx);
-    }
-
-    /*!
-     * \brief Returns the effective diffusion coefficient within the porous medium.
-     */
-    Scalar diffusionCoefficient_(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compIdx) const
-    {
-        using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
-        return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
-                                                  volVars.saturation(phaseIdx),
-                                                  volVars.diffusionCoefficient(phaseIdx, compIdx));
-    }
-
-    /*!
-     * \brief Returns the molecular diffusion coefficient within the free flow domain.
-     */
     Scalar diffusionCoefficientMS_(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compKIdx, int compLIdx) const
     {
          return volVars.effectiveDiffusivity(compKIdx, compLIdx);
@@ -956,9 +937,9 @@ protected:
                                                                             phaseIdx,
                                                                             compKIdx,
                                                                             compLIdx);
-        return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
-                                                  volVars.saturation(phaseIdx),
-                                                  diffCoeff);
+        return EffDiffModel::effectiveDiffusivity(volVars,
+                                                  diffCoeff,
+                                                  phaseIdx);
     }
 
     Scalar getComponentEnthalpy(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIdx) const
@@ -1146,8 +1127,8 @@ protected:
                                                        domainJ,
                                                        insideDistance,
                                                        outsideDistance,
-                                                       diffusionCoefficient_(volVarsI, couplingPhaseIdx(domainI), domainICompIdx),
-                                                       diffusionCoefficient_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIdx),
+                                                       volVarsI.effectiveDiffusivity(couplingPhaseIdx(domainI), domainICompIdx),
+                                                       volVarsJ.effectiveDiffusivity(couplingPhaseIdx(domainJ), domainJCompIdx),
                                                        diffCoeffAvgType);
             diffusiveFlux[domainICompIdx] += -avgDensity * tij * deltaMassOrMoleFrac;
         }
