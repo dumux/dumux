@@ -290,8 +290,8 @@ void setupReducedMatrices(const Matrix& massMatrix, const Matrix& projMatrix, co
  * \param feBasisDomain The basis to the domain finite element space
  * \param feBasisTarget The basis to the target finite element space
  * \param glue The glue object containing the intersections between the two grids
- * \param treatZeroes If true, zero entries on the diagonal of the matrices that
- *        appear if the two domains occupy different geometric regions (and some
+ * \param treatDiagonalZeroes If true, zero entries on the diagonal of the matrices
+ *        that appear if the two domains occupy different geometric regions (and some
  *        dofs to not take part in the projection as a result) are substituted by ones.
  *        This substitution will lead to those dofs being mapped to zeroes in the target space.
  * \returns An std::pair of projection matrices, where the first entry stores the
@@ -304,7 +304,7 @@ template<bool doBidirectional, class FEBasisDomain, class FEBasisTarget, class G
 auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
                               const FEBasisTarget& feBasisTarget,
                               const GlueType& glue,
-                              bool treatZeroes = true)
+                              bool treatDiagonalZeroes = true)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
@@ -454,7 +454,7 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
     }
 
     // maybe treat zeroes on the diagonal
-    if (treatZeroes)
+    if (treatDiagonalZeroes)
     {
         for (std::size_t dofIdxTarget = 0; dofIdxTarget < forwardM.N(); ++dofIdxTarget)
             if (forwardM[dofIdxTarget][dofIdxTarget] == 0.0)
