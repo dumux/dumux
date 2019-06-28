@@ -59,8 +59,9 @@ namespace Dumux {
  * \tparam FST The fluid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
  */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM>
 struct TwoPTwoCCO2VolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -70,6 +71,33 @@ struct TwoPTwoCCO2VolumeVariablesTraits
     using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
+};
+
+/*!
+ * \ingroup CO2Model
+ * \brief Traits class for the two-phase two-component CO2 model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
+ * \tparam ETCM The effective thermal conductivity model
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM, class ETCM>
+struct TwoPTwoCCO2NIVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
+    using EffectiveThermalConductivityModel = ETCM;
 };
 
 namespace Properties {
@@ -92,8 +120,9 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
-    using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
 public:
     using type = TwoPTwoCCO2VolumeVariables< Traits >;
 };
@@ -109,8 +138,10 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
 
-    using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = TwoPTwoCCO2NIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
 public:
     using type = TwoPTwoCCO2VolumeVariables< Traits >;
 };

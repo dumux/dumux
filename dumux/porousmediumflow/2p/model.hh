@@ -126,6 +126,34 @@ struct TwoPVolumeVariablesTraits
     using SaturationReconstruction = SR;
 };
 
+/*!
+ * \ingroup TwoPModel
+ * \brief Traits class for the two-phase nonisothermal model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam SSY The solid system type
+ * \tparam SST The solid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam SR The class used for reconstruction of
+ *            non-wetting phase saturations in scvs
+ */
+template<class PV, class FSY, class FST,class SSY, class SST, class PT, class MT, class SR, class ETCM>
+struct TwoPNIVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using SaturationReconstruction = SR;
+    using EffectiveThermalConductivityModel = ETCM;
+};
+
 // necessary for models derived from 2p
 class TwoPIOFields;
 
@@ -209,6 +237,30 @@ public:
 //! The non-isothermal model traits class
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::TwoPNI> { using type = PorousMediumFlowNIModelTraits<GetPropType<TypeTag, Properties::BaseModelTraits>>; };
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    static constexpr auto DM = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+
+    using Traits = TwoPNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR, ETCM>;
+public:
+    using type = TwoPVolumeVariables<Traits>;
+};
 
 //! Set the vtk output fields specific to the non-isothermal twop model
 template<class TypeTag>
