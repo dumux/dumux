@@ -110,8 +110,9 @@ struct OnePNCModelTraits
  * \tparam FST The fluid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
  */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM>
 struct OnePNCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -121,7 +122,35 @@ struct OnePNCVolumeVariablesTraits
     using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
 };
+
+/*!
+ * \ingroup OnePNCModel
+ * \brief Traits class for the volume variables of the single-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
+ * \tparam ETCM The effective thermal conductivity model
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM, class ETCM>
+struct OnePNCNIVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
+    using EffectiveThermalConductivityModel = ETCM;
+};
+
 
 namespace Properties {
 
@@ -203,8 +232,8 @@ private:
     static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
-
-    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
 public:
     using type = OnePNCVolumeVariables<Traits>;
 };
@@ -234,6 +263,28 @@ private:
     using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+};
+
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OnePNCNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    static_assert(FSY::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid system");
+    static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+    using Traits = OnePNCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
+public:
+    using type = OnePNCVolumeVariables<Traits>;
 };
 
 } // end namespace Properties
@@ -318,8 +369,10 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
 
-    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = OnePNCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
     using EquilibriumVolVars = OnePNCVolumeVariables<Traits>;
 public:
     using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;

@@ -52,6 +52,7 @@ class OnePNCVolumeVariables
     using EnergyVolVars = EnergyVolumeVariables<Traits, OnePNCVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using Idx = typename Traits::ModelTraits::Indices;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
@@ -99,6 +100,7 @@ public:
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -118,6 +120,11 @@ public:
                                                                                 compIIdx,
                                                                                 compJIdx);
             }
+        }
+
+        for (unsigned int compIIdx = 1; compIIdx < numFluidComps; ++compIIdx)
+        {
+            effectiveDiffCoeff_[compIIdx-1] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[0][compIIdx], 0);
         }
     }
 
@@ -323,6 +330,15 @@ public:
     }
 
     /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    {
+        assert(compIdx > phaseIdx && compIdx < numFluidComps);
+        return effectiveDiffCoeff_[compIdx-1];
+    }
+
+    /*!
      * \brief Returns the molarity of a component in the phase.
      *
      * \param compIdx The index of the component
@@ -357,6 +373,7 @@ protected:
 private:
     PermeabilityType permeability_;
     std::array<std::array<Scalar, numFluidComps>, numFluidComps> diffCoeff_;
+    std::array<Scalar, numFluidComps-1> effectiveDiffCoeff_;
 };
 
 } // end namespace Dumux
