@@ -53,7 +53,7 @@ class CCTpfaFVElementGeometry;
  * \ingroup CCTpfaDiscretization
  * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        Specialization for grid caching enabled
- * \note The finite volume geometries are stored in the corresponding FVGridGeometry
+ * \note The finite volume geometries are stored in the corresponding GridGeometry
  */
 template<class GG>
 class CCTpfaFVElementGeometry<GG, true>
@@ -69,35 +69,37 @@ public:
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = GG;
+    using GridGeometry = GG;
+    using FVGridGeometry [[deprecated("Use more general GridGeometry instead. Will be removed after 3.1!")]]  = GridGeometry;
+
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
     //! the maximum number of scvfs per element (use cubes for maximum)
     static constexpr std::size_t maxNumElementScvfs = 2*GridView::dimension;
 
     //! Constructor
-    CCTpfaFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    CCTpfaFVElementGeometry(const GridGeometry& gridGeometry)
+    : gridGeometryPtr_(&gridGeometry) {}
 
     //! Get an elment sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
     const SubControlVolume& scv(GridIndexType scvIdx) const
     {
-        return fvGridGeometry().scv(scvIdx);
+        return gridGeometry().scv(scvIdx);
     }
 
     //! Get an element sub control volume face with a global scvf index
     //! We separate element and neighbor scvfs to speed up mapping
     const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     {
-        return fvGridGeometry().scvf(scvfIdx);
+        return gridGeometry().scvf(scvfIdx);
     }
 
     //! Get the scvf on the same face but from the other side
     //! Note that e.g. the normals might be different in the case of surface grids
     const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvIdx = 0) const
     {
-        return fvGridGeometry().flipScvf(scvfIdx, outsideScvIdx);
+        return gridGeometry().flipScvf(scvfIdx, outsideScvIdx);
     }
 
     //! iterator range for sub control volumes. Iterates over
@@ -121,7 +123,7 @@ public:
     friend inline Dune::IteratorRange< ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType> >
     scvfs(const CCTpfaFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.fvGridGeometry();
+        const auto& g = fvGeometry.gridGeometry();
         const auto scvIdx = fvGeometry.scvIndices_[0];
         using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType>;
         return Dune::IteratorRange<ScvfIterator>(ScvfIterator(g.scvfIndicesOfScv(scvIdx).begin(), fvGeometry),
@@ -137,7 +139,7 @@ public:
     //! number of sub control volumes in this fv element geometry
     std::size_t numScvf() const
     {
-        return fvGridGeometry().scvfIndicesOfScv(scvIndices_[0]).size();
+        return gridGeometry().scvfIndicesOfScv(scvIndices_[0]).size();
     }
 
     //! Binding of an element, called by the local jacobian to prepare element assembly
@@ -150,22 +152,25 @@ public:
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
-        scvIndices_[0] = fvGridGeometry().elementMapper().index(*elementPtr_);
+        scvIndices_[0] = gridGeometry().elementMapper().index(*elementPtr_);
     }
 
     //! The global finite volume geometry we are a restriction of
+    const GridGeometry& gridGeometry() const
+    { return *gridGeometryPtr_; }
+    [[deprecated( "Use more general GridGeometry instead. Will be removed after 3.1!" )]]
     const FVGridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
-    { return fvGridGeometry().hasBoundaryScvf(scvIndices_[0]); }
+    { return gridGeometry().hasBoundaryScvf(scvIndices_[0]); }
 
 private:
 
     const Element* elementPtr_;
     std::array<GridIndexType, 1> scvIndices_;
-    const FVGridGeometry* fvGridGeometryPtr_;
+    const GridGeometry* gridGeometryPtr_;
 };
 
 /*!
@@ -191,15 +196,16 @@ public:
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = GG;
+    using GridGeometry = GG;
+    using FVGridGeometry [[deprecated("Use more general GridGeometry instead. Will be removed after 3.1!")]]  = GridGeometry;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
     //! the maximum number of scvfs per element (use cubes for maximum)
     static constexpr std::size_t maxNumElementScvfs = 2*dim;
 
     //! Constructor
-    CCTpfaFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    CCTpfaFVElementGeometry(const GridGeometry& gridGeometry)
+    : gridGeometryPtr_(&gridGeometry) {}
 
     //! Get an elment sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
@@ -288,13 +294,13 @@ public:
         std::vector<GridIndexType> handledNeighbors;
         handledNeighbors.reserve(element.subEntities(1));
 
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             // for inner intersections and periodic (according to grid interface) intersections make neighbor geometry
             if (intersection.neighbor())
             {
                 const auto outside = intersection.outside();
-                const auto outsideIdx = fvGridGeometry().elementMapper().index(outside);
+                const auto outsideIdx = gridGeometry().elementMapper().index(outside);
 
                 // make outside geometries only if not done yet (could happen on non-conforming grids)
                 if ( std::find(handledNeighbors.begin(), handledNeighbors.end(), outsideIdx) == handledNeighbors.end() )
@@ -306,7 +312,7 @@ public:
         }
 
         // build flip index set for network, surface, and periodic grids
-        if (dim < dimWorld || fvGridGeometry().isPeriodic())
+        if (dim < dimWorld || gridGeometry().isPeriodic())
         {
             flippedScvfIndices_.resize(scvfs_.size());
             for (unsigned int localScvfIdx = 0; localScvfIdx < scvfs_.size(); ++localScvfIdx)
@@ -354,8 +360,11 @@ public:
     }
 
     //! The global finite volume geometry we are a restriction of
+    const GridGeometry& gridGeometry() const
+    { return *gridGeometryPtr_; }
+    [[deprecated( "Use more general GridGeometry instead. Will be removed after 3.1!" )]]
     const FVGridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
@@ -394,12 +403,12 @@ private:
     {
         using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
 
-        const auto eIdx = fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = gridGeometry().elementMapper().index(element);
         scvs_[0] = SubControlVolume(element.geometry(), eIdx);
         scvIndices_[0] = eIdx;
 
-        const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdx);
-        const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
+        const auto& scvFaceIndices = gridGeometry().scvfIndicesOfScv(eIdx);
+        const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdx);
 
         // for network grids there might be multiple intersection with the same geometryInInside
         // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
@@ -409,7 +418,7 @@ private:
             handledScvf.resize(element.subEntities(1), false);
 
         int scvfCounter = 0;
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             if (dim < dimWorld)
                 if (handledScvf[intersection.indexInInside()])
@@ -450,8 +459,8 @@ private:
         neighborScvs_.emplace_back(element.geometry(), eIdx);
         neighborScvIndices_.push_back(eIdx);
 
-        const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdx);
-        const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
+        const auto& scvFaceIndices = gridGeometry().scvfIndicesOfScv(eIdx);
+        const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdx);
 
         // for network grids there might be multiple intersection with the same geometryInInside
         // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
@@ -461,7 +470,7 @@ private:
             handledScvf.resize(element.subEntities(1), false);
 
         int scvfCounter = 0;
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             if (dim < dimWorld)
                 if (handledScvf[intersection.indexInInside()])
@@ -471,12 +480,12 @@ private:
             {
                 // this catches inner and periodic scvfs
                 const auto& scvfNeighborVolVarIndices = neighborVolVarIndices[scvfCounter];
-                if (scvfNeighborVolVarIndices[0] < fvGridGeometry().gridView().size(0))
+                if (scvfNeighborVolVarIndices[0] < gridGeometry().gridView().size(0))
                 {
                     // only create subcontrol faces where the outside element is the bound element
                     if (dim == dimWorld)
                     {
-                        if (scvfNeighborVolVarIndices[0] == fvGridGeometry().elementMapper().index(*elementPtr_))
+                        if (scvfNeighborVolVarIndices[0] == gridGeometry().elementMapper().index(*elementPtr_))
                         {
                             ScvfGridIndexStorage scvIndices({eIdx, scvfNeighborVolVarIndices[0]});
                             neighborScvfs_.emplace_back(intersection,
@@ -496,7 +505,7 @@ private:
                     {
                         for (unsigned outsideScvIdx = 0; outsideScvIdx < scvfNeighborVolVarIndices.size(); ++outsideScvIdx)
                         {
-                            if (scvfNeighborVolVarIndices[outsideScvIdx] == fvGridGeometry().elementMapper().index(*elementPtr_))
+                            if (scvfNeighborVolVarIndices[outsideScvIdx] == gridGeometry().elementMapper().index(*elementPtr_))
                             {
                                 ScvfGridIndexStorage scvIndices;
                                 scvIndices.resize(scvfNeighborVolVarIndices.size() + 1);
@@ -558,7 +567,7 @@ private:
     }
 
     const Element* elementPtr_; //!< the element to which this fvgeometry is bound
-    const FVGridGeometry* fvGridGeometryPtr_;  //!< the grid fvgeometry
+    const GridGeometry* gridGeometryPtr_;  //!< the grid fvgeometry
 
     // local storage after binding an element
     std::array<GridIndexType, 1> scvIndices_;
