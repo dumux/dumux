@@ -42,6 +42,8 @@ public:
     /*!
      * \brief Compute the shear stress.
      *
+     * \param volVar Volume Variables.
+     *
      * Compute the shear stress due to friction. The shear stress is not a tensor as know
      * from contiuums mechanics, but a force projected on an area. Therefore it is a
      * vector with two entries.
@@ -49,7 +51,7 @@ public:
      * \return shear stress [N/m^2]. First entry is the x-component, the second the y-component.
      */
 
-    virtual Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& VolVar) const = 0;
+    virtual Dune::FieldVector<Scalar, 2> shearStress(const VolumeVariables& volVar) const = 0;
 
     /*!
      * \brief Limit the friction for small water depth.
