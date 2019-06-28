@@ -69,6 +69,8 @@ class RichardsVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using ModelTraits = typename Traits::ModelTraits;
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
+
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 public:
     //! Export type of the fluid system
@@ -177,6 +179,7 @@ public:
                 typename FluidSystem::ParameterCache paramCache;
                 paramCache.updateAll(fluidState_);
                 diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, FluidSystem::gasPhaseIdx, FluidSystem::comp0Idx, FluidSystem::comp1Idx);
+                effectiveDiffCoeff_ = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_, FluidSystem::gasPhaseIdx);
             }
         }
         else if (phasePresence == Indices::liquidPhaseOnly)
@@ -206,6 +209,7 @@ public:
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!
@@ -472,6 +476,18 @@ public:
         return diffCoeff_;
     }
 
+    /*!
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar effectiveDiffusivity(int phaseIdx, int compIdx) const
+    {
+        assert(enableWaterDiffusionInAir() && phaseIdx == FluidSystem::gasPhaseIdx && compIdx == FluidSystem::comp0Idx);
+        return effectiveDiffCoeff_;
+    }
+
 protected:
     FluidState fluidState_; //!< the fluid state
     SolidState solidState_;
@@ -482,6 +498,7 @@ protected:
     Scalar massFraction_[ParentType::numFluidPhases()]; //!< The water mass fractions in water and air
     Scalar molarDensity_[ParentType::numFluidPhases()]; //!< The molar density of water and air
     Scalar diffCoeff_; //!< The binary diffusion coefficient of water in air
+    Scalar effectiveDiffCoeff_; //!< The effective diffusion coefficient of water in air
 };
 
 } // end namespace Dumux
