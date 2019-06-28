@@ -28,7 +28,17 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
+
+#if NONISOTHERMAL
+#if BOUSSINESQ
+#include <dumux/material/components/simpleh2o.hh>
+#else
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+#endif
+#else
 #include <dumux/material/components/constant.hh>
+#endif
 
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
@@ -41,7 +51,11 @@ class ClosedSystemTestProblem;
 namespace Properties {
 // Create new type tags
 namespace TTag {
+#if !NONISOTHERMAL
 struct ClosedSystemTest { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+#else
+struct ClosedSystemTest { using InheritsFrom = std::tuple<NavierStokesNI, StaggeredFreeFlowModel>; };
+#endif
 } // end namespace TTag
 
 // the fluid system
@@ -49,7 +63,17 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::ClosedSystemTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+#if !NONISOTHERMAL
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+#else
+#if BOUSSINESQ
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+#else
+    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
+    static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
+    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+#endif
+#endif
 };
 
 // Set the grid type
@@ -87,10 +111,12 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
@@ -101,6 +127,7 @@ public:
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
+        FluidSystem::init();
     }
 
    /*!
@@ -122,14 +149,33 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
 
-   /*!
-     * \brief Returns the sources within the domain.
-     *
-     * \param globalPos The global position
+    /*!
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume face.
      */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    using ParentType::source;
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const ElementFaceVariables& elemFaceVars,
+                       const SubControlVolumeFace& scvf) const
     {
-        return NumEqVector(0.0);
+        auto source = NumEqVector(0.0);
+
+#if BOUSSINESQ
+
+        const Scalar rho0 = 1000;
+        const Scalar T0 = initialAtPos(scvf.center())[Indices::temperatureIdx];
+        const Scalar T = elemVolVars[scvf.insideScvIdx()].temperature();
+        const Scalar g = this->gravity()[scvf.directionIndex()];
+
+
+        // source[scvf.directionIndex()] = .... ;
+
+#endif
+
+        return source;
     }
     // \}
    /*!
@@ -150,6 +196,10 @@ public:
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(Indices::velocityXIdx);
         values.setDirichlet(Indices::velocityYIdx);
+
+#if NONISOTHERMAL
+        values.setDirichlet(Indices::temperatureIdx);
+#endif
 
         return values;
     }
@@ -186,6 +236,13 @@ public:
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
 
+#if NONISOTHERMAL
+        if (globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_ && globalPos[0] > 0.4 && globalPos[0] < 0.6)
+            values[Indices::temperatureIdx] = 293.15 + 30;
+        else
+            values[Indices::temperatureIdx] = 293.15;
+#endif
+
         if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
             values[Indices::velocityXIdx] = lidVelocity_;
 
@@ -203,6 +260,10 @@ public:
         values[Indices::pressureIdx] = 1.0e+5;
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
+
+#if NONISOTHERMAL
+        values[Indices::temperatureIdx] = 293.15;
+#endif
 
         return values;
     }

@@ -34,4 +34,10 @@ dune_add_test(NAME test_ff_navierstokes_closedsystem_hydrostaticpressure
                              -Problem.Name test_ff_navierstokes_closedsystem_hydrostaticpressure"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-16})
 
-dune_symlink_to_source_files(FILES "params_re1.input" "params_re1000.input" "params_hydrostaticpressure.input")
+add_executable(test_ff_navierstokes_densitydrivenflow_boussinesq EXCLUDE_FROM_ALL main.cc)
+add_executable(test_ff_navierstokes_densitydrivenflow EXCLUDE_FROM_ALL main.cc)
+
+target_compile_definitions(test_ff_navierstokes_densitydrivenflow PUBLIC "NONISOTHERMAL=1")
+target_compile_definitions(test_ff_navierstokes_densitydrivenflow_boussinesq PUBLIC "NONISOTHERMAL=1" "BOUSSINESQ=1")
+
+dune_symlink_to_source_files(FILES "params_re1.input" "params_re1000.input" "params_hydrostaticpressure.input" "params_densitydrivenflow.input")
