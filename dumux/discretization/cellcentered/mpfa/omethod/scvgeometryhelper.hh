@@ -91,7 +91,7 @@ public:
             typename LocalScvType::LocalBasis basis;
             basis[0] = corners[1] - corners[0];
             basis[1] = corners[2] - corners[0];
-            if ( !fvGeometry.fvGridGeometry().mpfaHelper().isRightHandSystem(basis) )
+            if ( !fvGeometry.gridGeometry().mpfaHelper().isRightHandSystem(basis) )
                 swap(corners[1], corners[2]);
 
             return ScvGeometry(Dune::GeometryTypes::cube(ScvGeometry::mydimension), corners);
