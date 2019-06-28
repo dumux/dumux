@@ -76,10 +76,6 @@ struct EnableFVGridGeometryCache<TypeTag, TTag::RoughChannel>
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = false; };
-
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::RoughChannel>
-{ static constexpr bool value = false; };
 } // end namespace Properties
 
 /*!
@@ -318,7 +314,6 @@ public:
         // no flow boundary
         else
         {
-            boundaryStateVariables = {0,0,0};
             boundaryStateVariables[0] = insideVolVars.waterDepth();
             boundaryStateVariables[1] = -insideVolVars.velocity(0);
             boundaryStateVariables[2] = -insideVolVars.velocity(1);

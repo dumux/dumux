@@ -58,7 +58,7 @@ public:
      * from contiuums mechanics, but a force projected on an area. Therefore it is a
      * vector with two entries.
      *
-     * \return shear stress. First entry is the x-component, the second the y-component.
+     * \return shear stress [N/m^2]. First entry is the x-component, the second the y-component.
      */
     Dune::FieldVector<Scalar, 2> computeShearStress(const VolumeVariables& volVars) const final
     {

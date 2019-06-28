@@ -24,7 +24,7 @@
  * The boundary conditions are given at the the outer face of the
  * the boundary cells. In this form the boundary condition can't be
  * processed by the riemann Solver, because it needs two cell states, one at
- * each side of a face. Therefore they Riemann invariants are used to
+ * each side of a face. Therefore the Riemann invariants are used to
  * calculate a virtual outer state.
  */
 #ifndef DUMUX_SHALLOWWATER_BOUNDARYFLUXES_HH
