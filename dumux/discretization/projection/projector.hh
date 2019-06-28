@@ -284,10 +284,6 @@ void setupReducedMatrices(const Matrix& massMatrix, const Matrix& projMatrix, co
         }
 }
 
-//! Alias for a matrix pair containing the mass and projection matrix
-template<class Matrix>
-using ProjectionMatrixPair = std::pair<Matrix, Matrix>;
-
 /*!
  * \brief Creates the matrices underlying l2-projections
  * \tparam doBidirectional If false, the backward projection matrix is not assembled
@@ -298,18 +294,17 @@ using ProjectionMatrixPair = std::pair<Matrix, Matrix>;
  *        appear if the two domains occupy different geometric regions (and some
  *        dofs to not take part in the projection as a result) are substituted by ones.
  *        This substitution will lead to those dofs being mapped to zeroes in the target space.
- * \returns A pair of ProjectionMatrixPair, i.e. the entries of the returned pair
- *          are itself pairs which store the mass matrix in the first and the projection
- *          matrix in the second entry. If doBidirectional=false, then the matrices in
- *          the second pair are empty.
+ * \returns An std::pair of projection matrices, where the first entry stores the
+ *          matrices of the forward projection and the second entry stores those
+ *          of the backward projection. The entries of the returned pair are itself
+ *          std::pairs which store the mass matrix in the first and the projection
+ *          matrix in the second entry.
  */
 template<bool doBidirectional, class FEBasisDomain, class FEBasisTarget, class GlueType>
-std::pair< ProjectionMatrixPair<typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector::Matrix>,
-           ProjectionMatrixPair<typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector::Matrix> >
-createProjectionMatrices(const FEBasisDomain& feBasisDomain,
-                         const FEBasisTarget& feBasisTarget,
-                         const GlueType& glue,
-                         bool treatZeroes = true)
+auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
+                              const FEBasisTarget& feBasisTarget,
+                              const GlueType& glue,
+                              bool treatZeroes = true)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
@@ -473,20 +468,19 @@ createProjectionMatrices(const FEBasisDomain& feBasisDomain,
         }
     }
 
-    return { {std::move(forwardM), std::move(forwardP)},
-             {std::move(backwardM), std::move(backwardP)} };
+    return std::make_pair( std::make_pair(std::move(forwardM), std::move(forwardP)),
+                           std::make_pair(std::move(backwardM), std::move(backwardP)) );
 }
 
 /*!
  * \brief Creates a projector class between two function space bases
  * \tparam doBidirectional If false, the backward projection matrix is not assembled
+ * \returns an std::pair with the forward and backward projector
  */
 template<bool doBidirectional, class FEBasisDomain, class FEBasisTarget, class GlueType>
-std::pair< typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector,
-           typename ProjectorTraits<FEBasisTarget, FEBasisDomain>::Projector >
-makeProjectorPair(const FEBasisDomain& feBasisDomain,
-                  const FEBasisTarget& feBasisTarget,
-                  const GlueType& glue)
+auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
+                       const FEBasisTarget& feBasisTarget,
+                       const GlueType& glue)
 {
     using ForwardProjector = typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector;
     using BackwardProjector = typename ProjectorTraits<FEBasisTarget, FEBasisDomain>::Projector;
@@ -600,17 +594,15 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
  * \param feBasisDomain The domain finite element space basis
  * \param feBasisTarget The target finite element space basis
  * \param glue The glue object containing the intersections between the grids.
- * \return A pair of projectors where the first is the forward
+ * \return An std::pair of projectors where the first is the forward
  *         projector from the space with basis feBasisDomain to
  *         the space with basis feBasisTarget and the second
  *         does the backward projection.
  */
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
-std::pair< typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector,
-           typename ProjectorTraits<FEBasisTarget, FEBasisDomain>::Projector >
-makeProjectorPair(const FEBasisDomain& feBasisDomain,
-                  const FEBasisTarget& feBasisTarget,
-                  GlueType glue)
+auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
+                       const FEBasisTarget& feBasisTarget,
+                       GlueType glue)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
@@ -631,10 +623,9 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
  *         to the space with basis feBasisTarget.
  */
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
-typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector
-makeProjector(const FEBasisDomain& feBasisDomain,
-              const FEBasisTarget& feBasisTarget,
-              GlueType glue)
+auto makeProjector(const FEBasisDomain& feBasisDomain,
+                   const FEBasisTarget& feBasisTarget,
+                   GlueType glue)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
@@ -649,16 +640,16 @@ makeProjector(const FEBasisDomain& feBasisDomain,
  * \param feBasisDomain The basis to the domain finite element space
  * \param feBasisTarget The basis to the target finite element space
  * \param glue The glue object containing the intersections between the two grids
- * \returns A pair of ProjectionMatrixPair, i.e. the entries of the returned pair
- *          are itself pairs which store the mass matrix in the first and the projection
+ * \returns An std::pair of projection matrices, where the first entry stores the
+ *          matrices of the forward projection and the second entry stores those
+ *          of the backward projection. The entries of the returned pair are itself
+ *          std::pairs which store the mass matrix in the first and the projection
  *          matrix in the second entry.
  */
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
-std::pair< Impl::ProjectionMatrixPair<typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector::Matrix>,
-           Impl::ProjectionMatrixPair<typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector::Matrix> >
-makeProjectionMatricesPair(const FEBasisDomain& feBasisDomain,
-                           const FEBasisTarget& feBasisTarget,
-                           GlueType glue)
+auto makeProjectionMatricesPair(const FEBasisDomain& feBasisDomain,
+                                const FEBasisTarget& feBasisTarget,
+                                GlueType glue)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
@@ -673,14 +664,13 @@ makeProjectionMatricesPair(const FEBasisDomain& feBasisDomain,
  * \param feBasisDomain The basis to the domain finite element space
  * \param feBasisTarget The basis to the target finite element space
  * \param glue The glue object containing the intersections between the two grids
- * \returns A pair of matrices, which store the mass matrix in the first and the
+ * \returns An std::pair of matrices, which store the mass matrix in the first and the
  *          projection matrix in the second entry.
  */
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
-Impl::ProjectionMatrixPair<typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector::Matrix>
-makeProjectionMatrices(const FEBasisDomain& feBasisDomain,
-                       const FEBasisTarget& feBasisTarget,
-                       GlueType glue)
+auto makeProjectionMatrices(const FEBasisDomain& feBasisDomain,
+                            const FEBasisTarget& feBasisTarget,
+                            GlueType glue)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
