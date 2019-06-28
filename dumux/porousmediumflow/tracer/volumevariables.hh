@@ -57,6 +57,7 @@ class TracerVolumeVariables
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
 
 public:
     //! Export fluid system type
@@ -89,10 +90,13 @@ public:
         fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
         fluidSaturation_ = saturation_(problem, element, scv);
 
+        EnergyVolVars::updateEffectiveThermalConductivity();
+
         for (int compIdx = 0; compIdx < ParentType::numFluidComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
             diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
+            effectiveDiffCoeff_[compIdx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[compIdx] ,0 /*phaseIdx*/);
         }
     }
 
@@ -180,6 +184,14 @@ public:
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     { return diffCoeff_[compIdx]; }
 
+    /*!
+     * \brief Returns the effective diffusion coefficients
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    {
+        return effectiveDiffCoeff_[compIdx];
+    }
+
     // /*!
     //  * \brief Returns the dispersivity of the fluid's streamlines.
     //  * \todo implement me
@@ -229,6 +241,7 @@ protected:
 
     // DispersivityType dispersivity_;
     std::array<Scalar, ParentType::numFluidComponents()> diffCoeff_;
+    std::array<Scalar, ParentType::numFluidComponents()> effectiveDiffCoeff_;
     std::array<Scalar, ParentType::numFluidComponents()> moleOrMassFraction_;
 };
 
