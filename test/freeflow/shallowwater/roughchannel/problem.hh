@@ -66,7 +66,7 @@ private:
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = RoughChannelSpatialParams<FVGridGeometry, Scalar>;
+    using type = RoughChannelSpatialParams<FVGridGeometry, Scalar, TypeTag>;
 };
 
 template<class TypeTag>
@@ -144,23 +144,6 @@ public:
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         discharge_ = getParam<Scalar>("Problem.Discharge");
         hBoundary_ = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
-
-        const auto gravity = this->spatialParams().gravity();
-        if (getParam<std::string>("Problem.FrictionLaw") == ("Manning"))
-        {
-            frictionLaw_ = std::make_shared<FrictionLawManning<Scalar, VolumeVariables>>(gravity, constManningN_);
-        }
-        else if (getParam<std::string>("Problem.FrictionLaw") == ("Nikuradse"))
-        {
-            frictionLaw_ = std::make_shared<FrictionLawNikuradse<Scalar, VolumeVariables>>(0.003);
-            std::cout<<"\nWARNING: This test is meant to be run for the friction law after Manning.\n";
-            std::cout<<"         You are running it with Nikuradse, although the friction values in\n";
-            std::cout<<"         the input file and the analytic solution don't fit to Nikuradse!\n\n.";
-        }
-        else
-        {
-            std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are 'Manning' and 'Nikuradse'!";
-        }
     }
 
     //! Get the analytical water depth
@@ -234,17 +217,16 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-     NumEqVector source(const Element &element,
+     NumEqVector source(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
                         const SubControlVolume &scv) const
     {
 
-        const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
         NumEqVector source (0.0);
 
-        Dune::FieldVector<Scalar, 2> bottomShearStress = frictionLaw_->computeShearStress(volVars);
+        Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element)->computeShearStress(volVars);
         source += computeBottomFrictionSource(bottomShearStress);
 
         return source;
@@ -395,7 +377,6 @@ private:
     Scalar constManningN_; // analytic solution is only available for const friction.
     Scalar bedSlope_;
     Scalar discharge_; // discharge at the inflow boundary
-    std::shared_ptr<FrictionLaw<Scalar, VolumeVariables>> frictionLaw_;
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
 };

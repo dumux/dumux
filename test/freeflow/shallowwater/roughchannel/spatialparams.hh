@@ -26,6 +26,9 @@
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
 
 namespace Dumux {
 
@@ -34,18 +37,20 @@ namespace Dumux {
  * \brief The spatial parameters class for the rough channel test.
  *
  */
-template<class FVGridGeometry, class Scalar>
+template<class FVGridGeometry, class Scalar, class TypeTag>
 class RoughChannelSpatialParams
 : public FVSpatialParams<FVGridGeometry, Scalar,
-                         RoughChannelSpatialParams<FVGridGeometry, Scalar>>
+                         RoughChannelSpatialParams<FVGridGeometry, Scalar, TypeTag>>
 {
-    using ThisType = RoughChannelSpatialParams<FVGridGeometry, Scalar>;
+    using ThisType = RoughChannelSpatialParams<FVGridGeometry, Scalar, TypeTag>;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
 
 public:
     RoughChannelSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -54,6 +59,34 @@ public:
         gravity_ = getParam<Scalar>("Problem.Gravity");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         frictionValue_ = getParam<Scalar>("Problem.FrictionValue");
+        frictionLawType_ = getParam<std::string>("Problem.FrictionLaw");
+        initFrictionLaw(fvGridGeometry);
+    }
+
+    /*!
+     * \brief Initialize FrictionLaws
+     */
+    void initFrictionLaw(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    {
+      if (frictionLawType_ == "Manning")
+      {
+          for (const auto& element : elements(fvGridGeometry->gridView()))
+          {
+              frictionLaw_.push_back(std::make_shared<FrictionLawManning<Scalar, VolumeVariables>>(gravity_, frictionValue_));
+          }
+      }
+      if (frictionLawType_ == "Nikuradse")
+      {
+          for (const auto& element : elements(fvGridGeometry->gridView()))
+          {
+              frictionLaw_.push_back(std::make_shared<FrictionLawNikuradse<Scalar, VolumeVariables>>(frictionValue_));
+          }
+      }
+      else
+      {
+          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are 'Manning' and 'Nikuradse'!";
+      }
+
     }
 
     /*! \brief Define the gravitation.
@@ -90,11 +123,28 @@ public:
 
     /*! \brief Define the friction value.
     *
+    * The unit of the friction value depends on the used friction law.
+    * The Mannng friction value is just a coefficient and has no unit $[-]$
+    * In the Nikuradse law the friction value is the equivalent sand roughness
+    * with the unit $[m]$.
+    *
     * \return friction value
     */
     Scalar frictionValue() const
     {
         return frictionValue_;
+    }
+
+    /*! \brief Get the frictionLaw.
+    *
+    * Get the frictionLaw, which already includes the friction value.
+    *
+    * \return frictionLaw
+    */
+    std::shared_ptr<FrictionLaw<Scalar, VolumeVariables>> frictionLaw(const Element element) const
+    {
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        return frictionLaw_[eIdx];
     }
 
     /*! \brief Define the bed surface
@@ -115,6 +165,8 @@ private:
     Scalar gravity_;
     Scalar bedSlope_;
     Scalar frictionValue_;
+    std::string frictionLawType_;
+    std::vector<std::shared_ptr<FrictionLaw<Scalar, VolumeVariables>>> frictionLaw_;
 };
 
 } // end namespace Dumux
