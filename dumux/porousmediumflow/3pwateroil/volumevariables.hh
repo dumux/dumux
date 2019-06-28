@@ -58,6 +58,7 @@ class ThreePWaterOilVolumeVariables
     using EnergyVolVars = EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using FS = typename Traits::FluidSystem;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
@@ -750,19 +751,20 @@ public:
         bulkDensTimesAdsorpCoeff_ =
             MaterialLaw::bulkDensTimesAdsorpCoeff(materialParams);
 
-        /* ATTENTION: The conversion to effective diffusion parameters
-         *            for the porous media happens at another place!
-         */
+        // porosity
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
 
+        // binary diffusion coefficients
         diffusionCoefficient_[gPhaseIdx] = FluidSystem::diffusionCoefficient(fluidState_, gPhaseIdx);
         diffusionCoefficient_[wPhaseIdx] = FluidSystem::diffusionCoefficient(fluidState_, wPhaseIdx);
         /* no diffusion in NAPL phase considered  at the moment, dummy values */
         diffusionCoefficient_[nPhaseIdx] = 1.e-10;
 
-
-        // porosity
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
-        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
+        // effective diffusion coefficients
+        effectiveDiffCoeff_[gPhaseIdx] = EffDiffModel::effectiveDiffusivity(*this, diffusionCoefficient_[gPhaseIdx], gPhaseIdx);
+        effectiveDiffCoeff_[wPhaseIdx] = EffDiffModel::effectiveDiffusivity(*this, diffusionCoefficient_[wPhaseIdx], wPhaseIdx);
+        effectiveDiffCoeff_[nPhaseIdx] = EffDiffModel::effectiveDiffusivity(*this, diffusionCoefficient_[nPhaseIdx], nPhaseIdx);
 
         // permeability
         permeability_ =  problem.spatialParams().permeability(element, scv, elemSol);
@@ -775,6 +777,8 @@ public:
             fluidState_.setEnthalpy(phaseIdx, h);
 
         }
+
+        EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!
@@ -894,6 +898,14 @@ public:
     }
 
     /*!
+     * \brief Returns the diffusion coefficient
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    {
+        return effectiveDiffCoeff_[phaseIdx];
+    }
+
+    /*!
      * \brief Returns the adsorption information
      */
     Scalar bulkDensTimesAdsorpCoeff() const
@@ -933,7 +945,7 @@ private:
     /* We need a tensor here !! */
     //!< Binary diffusion coefficients of the 3 components in the phases
     Dune::FieldVector<Scalar, numPs> diffusionCoefficient_;
-    std::array<std::array<Scalar, numFluidComps-1>, numPs> diffCoefficient_;
+    Dune::FieldVector<Scalar, numPs> effectiveDiffCoeff_;
 
 };
 } // end namespace Dumux
