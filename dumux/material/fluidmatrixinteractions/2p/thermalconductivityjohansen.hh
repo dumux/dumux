@@ -29,12 +29,6 @@
 
 namespace Dumux {
 
-struct JohansenIndices
-{
-    static const int wPhaseIdx = 0;
-    static const int nPhaseIdx = 1;
-};
-
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Relation for the saturation-dependent effective thermal conductivity
@@ -61,7 +55,7 @@ struct JohansenIndices
  *
  * Source: Phdthesis (Johansen1975) Johansen, O. Thermal conductivity of soils Norw. Univ. of Sci. Technol., Trondheim, Norway, 1975 \cite johansen1977
  */
-template<class Scalar, class Indices = JohansenIndices>
+template<class Scalar>
 class ThermalConductivityJohansen
 {
 public:
@@ -101,9 +95,9 @@ public:
         static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomerton only works for two-phase fluid systems!");
         // TODO: there should be an assertion that the indices are correct and 0 is actually the wetting phase!
 
-        const Scalar sw = volVars.saturation(Indices::wPhaseIdx);
-        const Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
-        const Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
+        const Scalar sw = volVars.saturation(volVars.wettingPhaseIdx());
+        const Scalar lambdaW = volVars.fluidThermalConductivity(volVars.wettingPhaseIdx());
+        const Scalar lambdaN = volVars.fluidThermalConductivity(1-volVars.wettingPhaseIdx());
         const Scalar lambdaSolid = volVars.solidThermalConductivity();
         const Scalar porosity = volVars.porosity();
         const Scalar rhoSolid = volVars.solidDensity();
