@@ -84,7 +84,7 @@ public:
       }
       else
       {
-          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are 'Manning' and 'Nikuradse'!";
+          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are 'Manning' and 'Nikuradse'!"<<std::endl;
       }
 
     }
