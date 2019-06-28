@@ -900,7 +900,7 @@ public:
     /*!
      * \brief Returns the diffusion coefficient
      */
-    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    Scalar effectiveDiffusivity(int phaseIdx, int compIdx) const
     {
         return effectiveDiffCoeff_[phaseIdx];
     }

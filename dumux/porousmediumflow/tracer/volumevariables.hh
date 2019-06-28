@@ -90,8 +90,6 @@ public:
         fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
         fluidSaturation_ = saturation_(problem, element, scv);
 
-        EnergyVolVars::updateEffectiveThermalConductivity();
-
         for (int compIdx = 0; compIdx < ParentType::numFluidComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
@@ -187,7 +185,7 @@ public:
     /*!
      * \brief Returns the effective diffusion coefficients
      */
-    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    Scalar effectiveDiffusivity(int phaseIdx, int compIdx) const
     {
         return effectiveDiffCoeff_[compIdx];
     }

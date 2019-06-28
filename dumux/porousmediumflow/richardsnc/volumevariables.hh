@@ -400,7 +400,7 @@ public:
      * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component
      */
-    Scalar effectiveDiffusionCoefficient(const int phaseIdx, const int compIdx) const
+    Scalar effectiveDiffusivity(const int phaseIdx, const int compIdx) const
     { return effectiveDiffCoefficient_[compIdx-1]; }
 
 protected:

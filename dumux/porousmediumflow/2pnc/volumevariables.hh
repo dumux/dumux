@@ -466,7 +466,7 @@ public:
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    Scalar effectiveDiffusivity(int phaseIdx, int compIdx) const
     {
         if (compIdx < phaseIdx)
             return effectiveDiffCoeff_[phaseIdx][compIdx];

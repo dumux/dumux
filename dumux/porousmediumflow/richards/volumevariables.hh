@@ -450,7 +450,7 @@ public:
      * \param phaseIdx The phase index
      * \param compIdx The component index
      */
-    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    Scalar effectiveDiffusivity(int phaseIdx, int compIdx) const
     {
         assert(enableWaterDiffusionInAir() && phaseIdx == FluidSystem::gasPhaseIdx && compIdx == FluidSystem::comp0Idx);
         return effectiveDiffCoeff_;
