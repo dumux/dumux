@@ -174,10 +174,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-        const auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
-                                                                insideVolVars.saturation(phaseIdx),
-                                                                insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+        const auto insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideD, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
@@ -192,9 +189,7 @@ public:
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
-            const auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
-                                                                     outsideVolVars.saturation(phaseIdx),
-                                                                     outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+            const auto outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
 
             Scalar tj;
             if (dim == dimWorld)

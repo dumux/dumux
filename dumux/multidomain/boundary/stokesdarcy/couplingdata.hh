@@ -422,10 +422,7 @@ protected:
                                 const FVElementGeometry<darcyIdx>& fvGeometry,
                                 const SubControlVolume<darcyIdx>& scv) const
     {
-        using ThermalConductivityModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ThermalConductivityModel>;
-        const auto& problem = this->couplingManager().problem(darcyIdx);
-        return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                 volVars, problem.spatialParams(), fvGeometry.fvGridGeometry().element(scv), fvGeometry, scv);
+        return volVars.effectiveThermalConductivity();
     }
 
     /*!
@@ -889,10 +886,7 @@ protected:
      */
     Scalar diffusionCoefficient_(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compIdx) const
     {
-        using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
-        return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
-                                                  volVars.saturation(phaseIdx),
-                                                  volVars.diffusionCoefficient(phaseIdx, compIdx));
+        return volVars.effectiveDiffusivity(phaseIdx, compIdx);
     }
 
     /*!
@@ -917,9 +911,9 @@ protected:
                                                                             phaseIdx,
                                                                             compIIdx,
                                                                             compJIdx);
-        return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
-                                                  volVars.saturation(phaseIdx),
-                                                  diffCoeff);
+        return EffDiffModel::effectiveDiffusivity(volVars,
+                                                  diffCoeff,
+                                                  phaseIdx);
     }
 
     Scalar getComponentEnthalpy(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIdx) const

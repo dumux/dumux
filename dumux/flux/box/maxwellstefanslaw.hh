@@ -157,9 +157,9 @@ private:
 
             //calculate diffusivity for i,numComponents
             auto tinInside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
-            tinInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tinInside);
+            tinInside = EffDiffModel::effectiveDiffusivity(insideVolVars, tinInside, phaseIdx);
             auto tinOutside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
-            tinOutside = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), tinOutside);
+            tinOutside = EffDiffModel::effectiveDiffusivity(outsideVolVars, tinOutside, phaseIdx);
 
                             // scale by extrusion factor
             tinInside *= insideVolVars.extrusionFactor();
@@ -181,9 +181,9 @@ private:
                 //calculate diffusivity for compIIdx, compJIdx
                 const auto xj = moleFrac[compJIdx];
                 auto tijInside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
-                tijInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tijInside);
+                tijInside = EffDiffModel::effectiveDiffusivity(insideVolVars, tijInside, phaseIdx);
                 auto tijOutside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
-                tijOutside = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), tijOutside);
+                tijOutside = EffDiffModel::effectiveDiffusivity(outsideVolVars, tijOutside, phaseIdx);
 
                 // scale by extrusion factor
                 tijInside *= insideVolVars.extrusionFactor();

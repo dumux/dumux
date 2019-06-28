@@ -83,10 +83,8 @@ public:
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
             if (numEnergyEqFluid < ModelTraits::numFluidPhases())
             {
-                insideLambda += Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                                  insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-                outsideLambda += Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                                   outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
+                insideLambda += insideVolVars.effectiveThermalConductivity();
+                outsideLambda += outsideVolVars.effectiveThermalConductivity();
             }
             else
             {

@@ -100,13 +100,8 @@ public:
                 continue;
 
             // effective diffusion tensors
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-            auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
-                                                              insideVolVars.saturation(phaseIdx),
-                                                              insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
-            auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
-                                                               outsideVolVars.saturation(phaseIdx),
-                                                               outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+            auto insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
+            auto outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();
@@ -153,13 +148,8 @@ public:
                 continue;
 
             // effective diffusion tensors
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-            auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
-                                                              insideVolVars.saturation(phaseIdx),
-                                                              insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
-            auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
-                                                               outsideVolVars.saturation(phaseIdx),
-                                                               outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+            auto insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
+            auto outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();

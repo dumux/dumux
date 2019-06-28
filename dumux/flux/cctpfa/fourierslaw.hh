@@ -144,8 +144,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const auto insideLambda = Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                                    insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
+        const auto insideLambda = insideVolVars.effectiveThermalConductivity();
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
@@ -159,10 +158,8 @@ public:
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
 
-            const auto outsideLambda = Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                                        outsideVolVars, problem.spatialParams(), outsideElement, fvGeometry, outsideScv);
+            const auto outsideLambda = outsideVolVars.effectiveThermalConductivity();
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
