@@ -68,11 +68,11 @@ public:
     {
       if (frictionLawType_ == "Manning")
       {
-          frictionLaw_ = std::make_unique<FrictionLawManning<Scalar, VolumeVariables>>(gravity_, frictionValue_);
+          frictionLaw_ = std::make_unique<FrictionLawManning<VolumeVariables>>(gravity_, frictionValue_);
       }
       if (frictionLawType_ == "Nikuradse")
       {
-          frictionLaw_ = std::make_unique<FrictionLawNikuradse<Scalar, VolumeVariables>>(frictionValue_);
+          frictionLaw_ = std::make_unique<FrictionLawNikuradse<VolumeVariables>>(frictionValue_);
       }
       else
       {
@@ -134,7 +134,7 @@ public:
     * \return frictionLaw
     */
 
-    const FrictionLaw<Scalar, VolumeVariables>& frictionLaw(const Element element) const
+    const FrictionLaw<VolumeVariables>& frictionLaw(const Element element) const
     {
         return *frictionLaw_;
     }
@@ -158,7 +158,7 @@ private:
     Scalar bedSlope_;
     Scalar frictionValue_;
     std::string frictionLawType_;
-    std::unique_ptr<FrictionLaw<Scalar, VolumeVariables>> frictionLaw_;
+    std::unique_ptr<FrictionLaw<VolumeVariables>> frictionLaw_;
 };
 
 } // end namespace Dumux

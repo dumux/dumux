@@ -32,9 +32,6 @@
 #include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
-#include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
-#include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
-#include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
 
 namespace Dumux {
 
