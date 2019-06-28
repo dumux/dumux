@@ -103,6 +103,7 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
@@ -188,14 +189,9 @@ public:
  * \tparam FST The fluid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
  */
-template<class PV,
-         class FSY,
-         class FST,
-         class SSY,
-         class SST,
-         class PT,
-         class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM>
 struct MPNCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -205,6 +201,33 @@ struct MPNCVolumeVariablesTraits
     using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
+};
+
+/*!
+ * \ingroup MPNCModel
+ * \brief Traits class for the mpnc volume variables.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam EDM The effective diffusivity model
+ * \tparam ETCM The effective thermal conductivity model
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM, class ETCM>
+struct MPNCNIVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using EffectiveDiffusivityModel = EDM;
+    using EffectiveThermalConductivityModel = ETCM;
 };
 
 namespace Properties
@@ -266,8 +289,9 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
-    using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
 public:
     using type = MPNCVolumeVariables<Traits>;
 };
@@ -310,6 +334,36 @@ private:
                                              getPropValue<TypeTag, Properties::ReplaceCompEqIdx>()>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+};
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::MPNCNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    using Traits = MPNCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
+public:
+    using type = MPNCVolumeVariables<Traits>;
+};
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::MPNCNI>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
 /////////////////////////////////////////////////
@@ -378,8 +432,10 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
 
-    using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = MPNCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
     using EquilibriumVolVars = MPNCVolumeVariables<Traits>;
 public:
     using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
