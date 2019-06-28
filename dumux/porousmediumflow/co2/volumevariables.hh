@@ -54,6 +54,7 @@ class TwoPTwoCCO2VolumeVariables
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
     // component indices
@@ -131,21 +132,24 @@ public:
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
-        const int nPhaseIdx = 1 - wPhaseIdx;
+        const int nPhaseIdx = 1 - wPhaseIdx_;
 
         // relative permeabilities -> require wetting phase saturation as parameter!
-        relativePermeability_[wPhaseIdx] = MaterialLaw::krw(matParams, saturation(wPhaseIdx));
-        relativePermeability_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx));
-
-        // binary diffusion coefficients
-        diffCoeff_[phase0Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase0Idx, comp0Idx, comp1Idx);
-        diffCoeff_[phase1Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase1Idx, comp0Idx, comp1Idx);
+        relativePermeability_[wPhaseIdx_] = MaterialLaw::krw(matParams, saturation(wPhaseIdx_));
+        relativePermeability_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx_));
 
         // porosity & permeabilty
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
+
+        // binary diffusion coefficients and effective coefficients
+        diffCoeff_[phase0Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase0Idx, comp0Idx, comp1Idx);
+        diffCoeff_[phase1Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase1Idx, comp0Idx, comp1Idx);
+
+        effectiveDiffCoeff_[phase0Idx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[phase0Idx], phase0Idx);
+        effectiveDiffCoeff_[phase1Idx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[phase1Idx], phase1Idx);
     }
 
     /*!
@@ -177,8 +181,8 @@ public:
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
-        fluidState.setWettingPhase(wPhaseIdx);
+        wPhaseIdx_ = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx_);
 
         // set the saturations
         if (phasePresence == secondPhaseOnly)
@@ -208,17 +212,17 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase presence.");
 
         // set pressures of the fluid phases
-        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
         if (formulation == TwoPFormulation::p0s1)
         {
             fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase1Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] + pc_
+            fluidState.setPressure(phase1Idx, (wPhaseIdx_ == phase0Idx) ? priVars[pressureIdx] + pc_
                                                                        : priVars[pressureIdx] - pc_);
         }
         else
         {
             fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
+            fluidState.setPressure(phase0Idx, (wPhaseIdx_ == phase0Idx) ? priVars[pressureIdx] - pc_
                                                                        : priVars[pressureIdx] + pc_);
         }
 
@@ -447,7 +451,26 @@ public:
             return diffCoeff_[phaseIdx];
     }
 
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIdx) const
+    {
+        if(phaseIdx == compIdx)
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
+        else
+            return effectiveDiffCoeff_[phaseIdx];
+    }
+
+    /*!
+     * \brief Returns the wetting phase index
+     */
+    const int wettingPhaseIdx() const
+    { return wPhaseIdx_; }
+
+
 private:
+    int wPhaseIdx_;
     FluidState fluidState_;
     SolidState solidState_;
     Scalar pc_;                     // The capillary pressure
@@ -458,6 +481,8 @@ private:
 
     // Binary diffusion coefficients for the phases
     std::array<Scalar, ModelTraits::numFluidPhases()> diffCoeff_;
+    // Effective diffusion coefficients for the phases
+    std::array<Scalar, ModelTraits::numFluidPhases()> effectiveDiffCoeff_;
 };
 
 } // end namespace Dumux
