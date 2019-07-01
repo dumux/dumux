@@ -67,8 +67,9 @@ public:
         // D_eff,pm = phi * Sw^3 * cubicroot(phi * Sw) * D
 
         using std::cbrt;
-        return porosity * (saturation * saturation * saturation)
-               * cbrt(porosity * saturation) * diffCoeff;
+        using std::max;
+        const Scalar sat = max(saturation, 0.0);
+        return porosity*(sat*sat*sat)*cbrt(porosity*sat)*diffCoeff;
     }
 
     /*!
@@ -88,8 +89,9 @@ public:
         // D_eff,pm = phi * Sw^3 * cubicroot(phi * Sw) * D
 
         using std::cbrt;
-        return volVars.porosity() * (volVars.saturation(phaseIdx) * volVars.saturation(phaseIdx) * volVars.saturation(phaseIdx))
-               * cbrt(volVars.porosity() * volVars.saturation(phaseIdx)) * diffCoeff;
+        using std::max;
+        const Scalar sat = max(volVars.saturation(phaseIdx), 0.0);
+        return volVars.porosity()*(sat*sat*sat)*cbrt(volVars.porosity()*sat)*diffCoeff;
     }
 };
 }
