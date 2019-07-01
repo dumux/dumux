@@ -1,10 +1,11 @@
 [Problem]
 Name = roughchannel
-FrictionValue = 0.025 # [-]
 BedSlope = 0.001 # [-]
 Gravity = 9.81 # [m/s^2]
 Discharge = -1.0 # [m^2/s] discharge per meter at the inflow boundary
 FrictionLaw = Manning
+ManningN = 0.025 # [-]
+# Ks = 0.15 # [m] equivalent sand roughness
 
 [TimeLoop]
 TEnd = 900.0 # [s]

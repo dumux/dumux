@@ -56,29 +56,29 @@ public:
     {
         gravity_ = getParam<Scalar>("Problem.Gravity");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
-        frictionValue_ = getParam<Scalar>("Problem.FrictionValue");
         frictionLawType_ = getParam<std::string>("Problem.FrictionLaw");
         initFrictionLaw();
     }
 
     /*!
-     * \brief Initialize FrictionLaws
+     * \brief Initialize the FrictionLaw
      */
     void initFrictionLaw()
     {
       if (frictionLawType_ == "Manning")
       {
-          frictionLaw_ = std::make_unique<FrictionLawManning<VolumeVariables>>(gravity_, frictionValue_);
+          Scalar manningN = getParam<Scalar>("Problem.ManningN");
+          frictionLaw_ = std::make_unique<FrictionLawManning<VolumeVariables>>(gravity_, manningN);
       }
       if (frictionLawType_ == "Nikuradse")
       {
-          frictionLaw_ = std::make_unique<FrictionLawNikuradse<VolumeVariables>>(frictionValue_);
+          Scalar ks = getParam<Scalar>("Problem.Ks"); // equivalent sand roughness
+          frictionLaw_ = std::make_unique<FrictionLawNikuradse<VolumeVariables>>(ks);
       }
       else
       {
           std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are 'Manning' and 'Nikuradse'!"<<std::endl;
       }
-
     }
 
     /*! \brief Define the gravitation.
@@ -97,34 +97,6 @@ public:
     Scalar gravity() const
     {
         return gravity_;
-    }
-
-    /*! \brief Define the friction value.
-    *
-    * The unit of the friction value depends on the used friction law.
-    * The Mannng friction value is just a coefficient and has no unit $[-]$
-    * In the Nikuradse law the friction value is the equivalent sand roughness
-    * with the unit $[m]$.
-    *
-    * \return friction value
-    */
-    Scalar frictionValue(const GlobalPosition& globalPos) const
-    {
-        return frictionValue_;
-    }
-
-    /*! \brief Define the friction value.
-    *
-    * The unit of the friction value depends on the used friction law.
-    * The Mannng friction value is just a coefficient and has no unit $[-]$
-    * In the Nikuradse law the friction value is the equivalent sand roughness
-    * with the unit $[m]$.
-    *
-    * \return friction value
-    */
-    Scalar frictionValue() const
-    {
-        return frictionValue_;
     }
 
     /*! \brief Get the frictionLaw.
@@ -156,7 +128,6 @@ public:
 private:
     Scalar gravity_;
     Scalar bedSlope_;
-    Scalar frictionValue_;
     std::string frictionLawType_;
     std::unique_ptr<FrictionLaw<VolumeVariables>> frictionLaw_;
 };
