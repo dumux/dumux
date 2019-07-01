@@ -135,7 +135,7 @@ public:
         name_ = getParam<std::string>("Problem.Name");
         exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
         exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
-        constManningN_ = this->spatialParams().frictionValue();
+        constManningN_ = getParam<Scalar>("Problem.ManningN");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         discharge_ = getParam<Scalar>("Problem.Discharge");
         hBoundary_ = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
