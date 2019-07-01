@@ -27,6 +27,7 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
   No further preprocessor macros are required.
 - __ShallowWater__ Thanks to Leopold Stadler we now have a shallow water equations solver / model. Have a look at freeflow/shallowwater
   and give it a try with the dam break test at test/freeflow/shallowwater.
+- __ShallowWater__ The are now some friction laws computing shear stresses (Manning, Nikuradse) to account for friction in a channel/river bed thanks to Martin Utz
 - __GridManager__ Instead of always including all gridmanager specializations you can now only include the specialization that you need.
   For example, if you only use YaspGrid in your code, you only need to include `dumux/io/grid/gridmanager_yasp.hh`. The convenience header
   `dumux/io/grid/gridmanager.hh` still includes all specializations.
