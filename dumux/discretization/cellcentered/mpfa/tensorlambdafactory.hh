@@ -77,7 +77,7 @@ public:
                                     const auto& volVars,
                                     const auto& fvGeometry,
                                     const auto& scv)
-               { return volVars.diffusionCoefficient(phaseIdx, compIdx); };
+               { return volVars.effectiveDiffusivity(phaseIdx, compIdx); };
     }
 
     //! return void lambda here

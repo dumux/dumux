@@ -182,27 +182,20 @@ public:
             if(compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
-            // get the scaling factor for the effective diffusive fluxes
-            const auto effFactor = computeEffectivityFactor(elemVolVars, scvf, phaseIdx);
-
-            // if factor is zero, the flux will end up zero anyway
-            if (effFactor == 0.0)
-                continue;
-
             // calculate the density at the interface
             const auto rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
 
             // compute the flux
             if (fluxVarsCache.usesSecondaryIv())
-                componentFlux[compIdx] = rho*effFactor*computeVolumeFlux(problem,
-                                                                         fluxVarsCache,
-                                                                         fluxVarsCache.diffusionSecondaryDataHandle(),
-                                                                         phaseIdx, compIdx);
+                componentFlux[compIdx] = rho*computeVolumeFlux(problem,
+                                                               fluxVarsCache,
+                                                               fluxVarsCache.diffusionSecondaryDataHandle(),
+                                                               phaseIdx, compIdx);
             else
-                componentFlux[compIdx] = rho*effFactor*computeVolumeFlux(problem,
-                                                                         fluxVarsCache,
-                                                                         fluxVarsCache.diffusionPrimaryDataHandle(),
-                                                                         phaseIdx, compIdx);
+                componentFlux[compIdx] = rho*computeVolumeFlux(problem,
+                                                               fluxVarsCache,
+                                                               fluxVarsCache.diffusionPrimaryDataHandle(),
+                                                               phaseIdx, compIdx);
         }
 
         // accumulate the phase component flux
@@ -255,42 +248,6 @@ private:
         }
         else
             return elemVolVars[scvf.outsideScvIdx()].molarDensity(phaseIdx);
-    }
-
-    //! Here we want to calculate the factors with which the diffusion coefficient has to be
-    //! scaled to get the effective diffusivity. For this we use the effective diffusivity with
-    //! a diffusion coefficient of 1.0 as input. Then we scale the transmissibilites during flux
-    //! calculation (above) with the harmonic average of the two factors
-    static Scalar computeEffectivityFactor(const ElementVolumeVariables& elemVolVars,
-                                           const SubControlVolumeFace& scvf,
-                                           const unsigned int phaseIdx)
-    {
-        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-
-        // use the harmonic mean between inside and outside
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        const auto factor = EffDiffModel::effectiveDiffusivity(insideVolVars,
-                                                               /*Diffusion coefficient*/ 1.0,
-                                                               phaseIdx);
-
-        if (!scvf.boundary())
-        {
-            // interpret outside factor as arithmetic mean
-            Scalar outsideFactor = 0.0;
-            for (const auto outsideIdx : scvf.outsideScvIndices())
-            {
-                const auto& outsideVolVars = elemVolVars[outsideIdx];
-                outsideFactor += EffDiffModel::effectiveDiffusivity(outsideVolVars,
-                                                                    /*Diffusion coefficient*/ 1.0,
-                                                                    phaseIdx);
-            }
-            outsideFactor /= scvf.outsideScvIndices().size();
-
-            // use the harmonic mean of the two
-            return harmonicMean(factor, outsideFactor);
-        }
-
-        return factor;
     }
 };
 
