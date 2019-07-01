@@ -29,6 +29,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
+#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux {
 
@@ -661,9 +662,28 @@ private:
 
         // maybe (re-)assemble matrices
         if (forceUpdateAll || soldependentDiffusion)
-            localAssembler.assembleMatrices(handle.diffusionHandle(),
-                                            iv,
-                                            LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
+        {
+            // Effective diffusion coefficients might get zero if saturation = 0.
+            // Compute epsilon to detect obsolete rows in the iv-local matrices during assembly
+            if (ModelTraits::numFluidPhases() > 1)
+            {
+                const auto& scv = *scvs(fvGeometry()).begin();
+                const auto& scvf = *scvfs(fvGeometry()).begin();
+                const auto& vv = elemVolVars()[scv];
+                const auto& D = vv.diffusionCoefficient(phaseIdx, compIdx);
+                const auto tij = computeTpfaTransmissibility(scvf, scv, D, vv.extrusionFactor())*scvf.area();
+
+                // use transmissibility with molecular coefficient for epsilon estimate
+                localAssembler.assembleMatrices(handle.diffusionHandle(),
+                                                iv,
+                                                LambdaFactory::getDiffusionLambda(phaseIdx, compIdx),
+                                                tij*1e-7);
+            }
+            else
+                localAssembler.assembleMatrices(handle.diffusionHandle(),
+                                                iv,
+                                                LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
+        }
 
         // assemble vector of mole fractions
         auto getMoleFraction = [phaseIdx, compIdx] (const auto& volVars) { return volVars.moleFraction(phaseIdx, compIdx); };
