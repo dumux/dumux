@@ -106,7 +106,8 @@ public:
     * \return frictionLaw
     */
 
-    const FrictionLaw<VolumeVariables>& frictionLaw(const Element element) const
+    const FrictionLaw<VolumeVariables>& frictionLaw(const Element& element,
+                                                    const SubControlVolume& scv) const
     {
         return *frictionLaw_;
     }
