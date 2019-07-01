@@ -87,7 +87,40 @@ public:
     Projector(Matrix&& massMatrix, Matrix&& projectionMatrix)
     : massMat_(std::move(massMatrix))
     , projMat_(std::move(projectionMatrix))
-    {}
+    , numDofsTarget_(massMat_.N())
+    {
+        if (massMat_.N() != projMat_.N())
+            DUNE_THROW(Dune::InvalidStateException, "Matrix row size mismatch: " << massMat_.N() << " vs " << projMat_.N());
+    }
+
+    /*!
+     * \brief Constructor for projection into a target space that occupies
+     *        a larger geometric region than the domain space. In this case,
+     *        the mass matrix can be chosen such that is is solved for only
+     *        those dofs which will be populated with values from the projection.
+     *        This requires an additional index map that maps the entries of the
+     *        projected solution into the solution vector for the target space.
+     *        Furthermore, the number of degrees of freedom must be specified to
+     *        set up the coefficient vector with correct size for the target space.
+     */
+    Projector(Matrix&& massMatrix,
+              Matrix&& projectionMatrix,
+              std::vector<std::size_t>&& indexMap,
+              std::size_t numDofsTarget)
+    : massMat_(std::move(massMatrix))
+    , projMat_(std::move(projectionMatrix))
+    , indexMapTarget_(std::move(indexMap))
+    , numDofsTarget_(numDofsTarget)
+    {
+        if (indexMapTarget_.size() != massMat_.N())
+            DUNE_THROW(Dune::InvalidStateException, "Target index map size mismatch: " << indexMapTarget_.size() << " vs " << massMat_.N());
+
+        if (massMat_.N() != projMat_.N())
+            DUNE_THROW(Dune::InvalidStateException, "Matrix row size mismatch: " << massMat_.N() << " vs " << projMat_.N());
+
+        if (*std::max_element(indexMapTarget_.begin(), indexMapTarget_.end()) > numDofsTarget_)
+            DUNE_THROW(Dune::InvalidStateException, "Index map exceeds provided number of dofs in target domain!");
+    }
 
     /*!
      * \brief Project a solution u into up
@@ -99,7 +132,7 @@ public:
     {
         // be picky about size of u
         if ( u.size() != projMat_.M())
-            DUNE_THROW(Dune::InvalidStateException, "Vector size mismatch" );
+            DUNE_THROW(Dune::InvalidStateException, "Vector size mismatch");
 
         Dune::BlockVector<BlockType> up(massMat_.N());
 
@@ -110,6 +143,18 @@ public:
         solver.setResidualReduction(params.residualReduction);
         solver.setMaxIter(params.maxIterations);
         solver.solve(massMat_, up, rhs);
+
+        // if target space occupies a larger region, fill missing entries with zero
+        if (!indexMapTarget_.empty())
+        {
+            Dune::BlockVector<BlockType> result(numDofsTarget_);
+
+            result = 0.0;
+            for (std::size_t i = 0; i < indexMapTarget_.size(); ++i)
+                result[indexMapTarget_[i]] = up[i];
+
+            return result;
+        }
 
         return up;
     }
@@ -122,7 +167,7 @@ public:
     template< class BlockType, std::enable_if_t<!std::is_convertible<BlockType, ScalarType>::value, int> = 0 >
     Dune::BlockVector<BlockType> project(const Dune::BlockVector<BlockType>& u, const Params& params = Params{}) const
     {
-        Dune::BlockVector<BlockType> result(massMat_.N());
+        Dune::BlockVector<BlockType> result(numDofsTarget_);
 
         for (int pvIdx = 0; pvIdx < BlockType::size(); ++pvIdx)
         {
@@ -146,6 +191,9 @@ public:
 private:
     Matrix massMat_;
     Matrix projMat_;
+
+    std::vector<std::size_t> indexMapTarget_;
+    std::size_t numDofsTarget_;
 };
 
 /*!
@@ -168,15 +216,95 @@ public:
 namespace Impl {
 
 /*!
- * \brief Creates a projector class between two function space bases
+ * \brief Reduces a mass matrix and projection matrix such that they are composed
+ *        of only those dofs that actually take part in the projection. Simultaneously,
+ *        a container with the index map into the complete target space is filled so that
+ *        the entries after projection can be assigned to the corresponding dof in the
+ *        overall target space.
+ */
+template<class Matrix>
+void setupReducedMatrices(const Matrix& massMatrix, const Matrix& projMatrix, const std::vector<bool>& dofIsVoid,
+                          Matrix& reducedM, Matrix& reducedP, std::vector<std::size_t>& expansionMap)
+{
+    const std::size_t numNonVoidDofs = std::count_if(dofIsVoid.begin(), dofIsVoid.end(), [] (bool v) { return !v; });
+
+    // reduce matrices to only dofs that take part and create index map
+    std::vector<std::size_t> reductionMap(massMatrix.N());
+    expansionMap.resize(numNonVoidDofs);
+
+    std::size_t idxInReducedSpace = 0;
+    for (std::size_t dofIdx = 0; dofIdx < dofIsVoid.size(); ++dofIdx)
+        if (!dofIsVoid[dofIdx])
+        {
+            reductionMap[dofIdx] = idxInReducedSpace;
+            expansionMap[idxInReducedSpace] = dofIdx;
+            idxInReducedSpace++;
+        }
+
+    // create reduced M/P matrix
+    Dune::MatrixIndexSet patternMReduced, patternPReduced;
+    patternMReduced.resize(numNonVoidDofs, numNonVoidDofs);
+    patternPReduced.resize(numNonVoidDofs, projMatrix.M());
+    for (auto rowIt = massMatrix.begin(); rowIt != massMatrix.end(); ++rowIt)
+        if (!dofIsVoid[rowIt.index()])
+        {
+            const auto reducedRowIdx = reductionMap[rowIt.index()];
+            for (auto colIt = (*rowIt).begin(); colIt != (*rowIt).end(); ++colIt)
+                if (!dofIsVoid[colIt.index()])
+                    patternMReduced.add(reducedRowIdx, reductionMap[colIt.index()]);
+        }
+
+    for (auto rowIt = projMatrix.begin(); rowIt != projMatrix.end(); ++rowIt)
+        if (!dofIsVoid[rowIt.index()])
+        {
+            const auto reducedRowIdx = reductionMap[rowIt.index()];
+            for (auto colIt = (*rowIt).begin(); colIt != (*rowIt).end(); ++colIt)
+                patternPReduced.add(reducedRowIdx, colIt.index());
+        }
+
+    patternMReduced.exportIdx(reducedM);
+    patternPReduced.exportIdx(reducedP);
+
+    // fill matrix entries
+    for (auto rowIt = massMatrix.begin(); rowIt != massMatrix.end(); ++rowIt)
+        if (!dofIsVoid[rowIt.index()])
+        {
+            const auto reducedRowIdx = reductionMap[rowIt.index()];
+            for (auto colIt = (*rowIt).begin(); colIt != (*rowIt).end(); ++colIt)
+                if (!dofIsVoid[colIt.index()])
+                    reducedM[reducedRowIdx][reductionMap[colIt.index()]] = *colIt;
+        }
+
+    for (auto rowIt = projMatrix.begin(); rowIt != projMatrix.end(); ++rowIt)
+        if (!dofIsVoid[rowIt.index()])
+        {
+            const auto reducedRowIdx = reductionMap[rowIt.index()];
+            for (auto colIt = (*rowIt).begin(); colIt != (*rowIt).end(); ++colIt)
+                reducedP[reducedRowIdx][colIt.index()] = *colIt;
+        }
+}
+
+/*!
+ * \brief Creates the matrices underlying l2-projections
  * \tparam doBidirectional If false, the backward projection matrix is not assembled
+ * \param feBasisDomain The basis to the domain finite element space
+ * \param feBasisTarget The basis to the target finite element space
+ * \param glue The glue object containing the intersections between the two grids
+ * \param treatDiagonalZeroes If true, zero entries on the diagonal of the matrices
+ *        that appear if the two domains occupy different geometric regions (and some
+ *        dofs to not take part in the projection as a result) are substituted by ones.
+ *        This substitution will lead to those dofs being mapped to zeroes in the target space.
+ * \returns An std::pair of projection matrices, where the first entry stores the
+ *          matrices of the forward projection and the second entry stores those
+ *          of the backward projection. The entries of the returned pair are itself
+ *          std::pairs which store the mass matrix in the first and the projection
+ *          matrix in the second entry.
  */
 template<bool doBidirectional, class FEBasisDomain, class FEBasisTarget, class GlueType>
-std::pair< typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector,
-           typename ProjectorTraits<FEBasisTarget, FEBasisDomain>::Projector >
-makeProjectorPair(const FEBasisDomain& feBasisDomain,
-                  const FEBasisTarget& feBasisTarget,
-                  const GlueType& glue)
+auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
+                              const FEBasisTarget& feBasisTarget,
+                              const GlueType& glue,
+                              bool treatDiagonalZeroes = true)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
@@ -325,26 +453,135 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
         }
     }
 
-    // On those dofs that to not take part in any intersection we will have zeroes
-    // in the mass matrices. The right hand side will be zero because the projection
-    // matrix has no entries for those dofs as there was no intersection. Thus, we set
-    // 1.0 on the diagonal for those dofs, such that after projection, the projected
-    // solution is 0 on them.
-    for (std::size_t dofIdx = 0; dofIdx < forwardM.N(); ++dofIdx)
-        if (forwardM[dofIdx][dofIdx] == 0.0)
-            forwardM[dofIdx][dofIdx] = 1.0;
-
-    if (doBidirectional)
+    // maybe treat zeroes on the diagonal
+    if (treatDiagonalZeroes)
     {
-        for (std::size_t dofIdx = 0; dofIdx < backwardM.N(); ++dofIdx)
-            if (backwardM[dofIdx][dofIdx] == 0.0)
-                backwardM[dofIdx][dofIdx] = 1.0;
+        for (std::size_t dofIdxTarget = 0; dofIdxTarget < forwardM.N(); ++dofIdxTarget)
+            if (forwardM[dofIdxTarget][dofIdxTarget] == 0.0)
+                forwardM[dofIdxTarget][dofIdxTarget] = 1.0;
+
+        if (doBidirectional)
+        {
+            for (std::size_t dofIdxDomain = 0; dofIdxDomain < backwardM.N(); ++dofIdxDomain)
+                if (backwardM[dofIdxDomain][dofIdxDomain] == 0.0)
+                    backwardM[dofIdxDomain][dofIdxDomain] = 1.0;
+        }
     }
 
-    ForwardProjector fw(std::move(forwardM), std::move(forwardP));
-    BackwardProjector bw(std::move(backwardM), std::move(backwardP));
+    return std::make_pair( std::make_pair(std::move(forwardM), std::move(forwardP)),
+                           std::make_pair(std::move(backwardM), std::move(backwardP)) );
+}
 
-    return std::make_pair(std::move(fw), std::move(bw));
+/*!
+ * \brief Creates a projector class between two function space bases
+ * \tparam doBidirectional If false, the backward projection matrix is not assembled
+ * \returns an std::pair with the forward and backward projector
+ */
+template<bool doBidirectional, class FEBasisDomain, class FEBasisTarget, class GlueType>
+auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
+                       const FEBasisTarget& feBasisTarget,
+                       const GlueType& glue)
+{
+    using ForwardProjector = typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector;
+    using BackwardProjector = typename ProjectorTraits<FEBasisTarget, FEBasisDomain>::Projector;
+
+    using ForwardProjectionMatrix = typename ForwardProjector::Matrix;
+    using BackwardProjectionMatrix = typename BackwardProjector::Matrix;
+
+    auto projectionMatrices = createProjectionMatrices<doBidirectional>(feBasisDomain, feBasisTarget, glue, false);
+    auto& forwardMatrices = projectionMatrices.first;
+    auto& backwardMatrices = projectionMatrices.second;
+
+    auto& forwardM = forwardMatrices.first;
+    auto& forwardP = forwardMatrices.second;
+
+    auto& backwardM = backwardMatrices.first;
+    auto& backwardP = backwardMatrices.second;
+
+    // determine the dofs that do not take part in intersections
+    std::vector<bool> isVoidTarget(forwardM.N(), false);
+    for (std::size_t dofIdxTarget = 0; dofIdxTarget < forwardM.N(); ++dofIdxTarget)
+        if (forwardM[dofIdxTarget][dofIdxTarget] == 0.0)
+            isVoidTarget[dofIdxTarget] = true;
+
+    std::vector<bool> isVoidDomain;
+    if (doBidirectional)
+    {
+        isVoidDomain.resize(backwardM.N(), false);
+        for (std::size_t dofIdxDomain = 0; dofIdxDomain < backwardM.N(); ++dofIdxDomain)
+            if (backwardM[dofIdxDomain][dofIdxDomain] == 0.0)
+                isVoidDomain[dofIdxDomain] = true;
+    }
+
+    const bool hasVoidTarget = std::any_of(isVoidTarget.begin(), isVoidTarget.end(), [] (bool v) { return v; });
+    const bool hasVoidDomain = std::any_of(isVoidDomain.begin(), isVoidDomain.end(), [] (bool v) { return v; });
+    if (!hasVoidDomain && !hasVoidTarget)
+    {
+        return std::make_pair(ForwardProjector(std::move(forwardM), std::move(forwardP)),
+                              BackwardProjector(std::move(backwardM), std::move(backwardP)));
+    }
+    else if (!hasVoidDomain && hasVoidTarget)
+    {
+        std::vector<std::size_t> expansionMapTarget;
+        ForwardProjectionMatrix forwardMReduced, forwardPReduced;
+        setupReducedMatrices(forwardM, forwardP, isVoidTarget,
+                             forwardMReduced, forwardPReduced, expansionMapTarget);
+
+        return std::make_pair( ForwardProjector(std::move(forwardMReduced),
+                                                std::move(forwardPReduced),
+                                                std::move(expansionMapTarget),
+                                                forwardM.N()),
+                               BackwardProjector(std::move(backwardM), std::move(backwardP)) );
+    }
+    else if (hasVoidDomain && !hasVoidTarget)
+    {
+        if (doBidirectional)
+        {
+            std::vector<std::size_t> expansionMapDomain;
+            BackwardProjectionMatrix backwardMReduced, backwardPReduced;
+            setupReducedMatrices(backwardM, backwardP, isVoidDomain,
+                                 backwardMReduced, backwardPReduced, expansionMapDomain);
+
+            return std::make_pair( ForwardProjector(std::move(forwardM), std::move(forwardP)),
+                                   BackwardProjector(std::move(backwardMReduced),
+                                                     std::move(backwardPReduced),
+                                                     std::move(expansionMapDomain),
+                                                     backwardM.N()) );
+        }
+        else
+            return std::make_pair( ForwardProjector(std::move(forwardM), std::move(forwardP)),
+                                   BackwardProjector(std::move(backwardM), std::move(backwardP)) );
+    }
+    else
+    {
+        std::vector<std::size_t> expansionMapTarget;
+        ForwardProjectionMatrix forwardMReduced, forwardPReduced;
+        setupReducedMatrices(forwardM, forwardP, isVoidTarget,
+                             forwardMReduced, forwardPReduced, expansionMapTarget);
+
+        if (doBidirectional)
+        {
+            std::vector<std::size_t> expansionMapDomain;
+            BackwardProjectionMatrix backwardMReduced, backwardPReduced;
+            setupReducedMatrices(backwardM, backwardP, isVoidDomain,
+                                 backwardMReduced, backwardPReduced, expansionMapDomain);
+
+            return std::make_pair( ForwardProjector(std::move(forwardMReduced),
+                                                    std::move(forwardPReduced),
+                                                    std::move(expansionMapTarget),
+                                                    forwardM.N()),
+                                   BackwardProjector(std::move(backwardMReduced),
+                                                     std::move(backwardPReduced),
+                                                     std::move(expansionMapDomain),
+                                                     backwardM.N()) );
+        }
+        else
+            return std::make_pair( ForwardProjector(std::move(forwardMReduced),
+                                                    std::move(forwardPReduced),
+                                                    std::move(expansionMapTarget),
+                                                    forwardM.N()),
+                                   BackwardProjector(std::move(backwardM), std::move(backwardP)) );
+    }
 }
 
 } // end namespace Implementation
@@ -357,17 +594,15 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
  * \param feBasisDomain The domain finite element space basis
  * \param feBasisTarget The target finite element space basis
  * \param glue The glue object containing the intersections between the grids.
- * \return A pair of projectors where the first is the forward
+ * \return An std::pair of projectors where the first is the forward
  *         projector from the space with basis feBasisDomain to
  *         the space with basis feBasisTarget and the second
  *         does the backward projection.
  */
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
-std::pair< typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector,
-           typename ProjectorTraits<FEBasisTarget, FEBasisDomain>::Projector >
-makeProjectorPair(const FEBasisDomain& feBasisDomain,
-                  const FEBasisTarget& feBasisTarget,
-                  GlueType glue)
+auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
+                       const FEBasisTarget& feBasisTarget,
+                       GlueType glue)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
@@ -388,10 +623,9 @@ makeProjectorPair(const FEBasisDomain& feBasisDomain,
  *         to the space with basis feBasisTarget.
  */
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
-typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector
-makeProjector(const FEBasisDomain& feBasisDomain,
-              const FEBasisTarget& feBasisTarget,
-              GlueType glue)
+auto makeProjector(const FEBasisDomain& feBasisDomain,
+                   const FEBasisTarget& feBasisTarget,
+                   GlueType glue)
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = FEBasisDomain::GridView::dimension;
@@ -399,6 +633,51 @@ makeProjector(const FEBasisDomain& feBasisDomain,
     static_assert(targetDim <= domainDim, "makeProjectorPair() expects targetDim < domainDim, please swap arguments");
 
     return Impl::makeProjectorPair<false>(feBasisDomain, feBasisTarget, glue).first;
+}
+
+/*!
+ * \brief Creates the matrices underlying l2-projections
+ * \param feBasisDomain The basis to the domain finite element space
+ * \param feBasisTarget The basis to the target finite element space
+ * \param glue The glue object containing the intersections between the two grids
+ * \returns An std::pair of projection matrices, where the first entry stores the
+ *          matrices of the forward projection and the second entry stores those
+ *          of the backward projection. The entries of the returned pair are itself
+ *          std::pairs which store the mass matrix in the first and the projection
+ *          matrix in the second entry.
+ */
+template< class FEBasisDomain, class FEBasisTarget, class GlueType >
+auto makeProjectionMatricesPair(const FEBasisDomain& feBasisDomain,
+                                const FEBasisTarget& feBasisTarget,
+                                GlueType glue)
+{
+    // we assume that target dim <= domain dimension
+    static constexpr int domainDim = FEBasisDomain::GridView::dimension;
+    static constexpr int targetDim = FEBasisTarget::GridView::dimension;
+    static_assert(targetDim <= domainDim, "makeProjectionMatrixPair() expects targetDim < domainDim, please swap arguments");
+
+    return Impl::createProjectionMatrices<true>(feBasisDomain, feBasisTarget, glue);
+}
+
+/*!
+ * \brief Creates the matrices underlying l2-projections
+ * \param feBasisDomain The basis to the domain finite element space
+ * \param feBasisTarget The basis to the target finite element space
+ * \param glue The glue object containing the intersections between the two grids
+ * \returns An std::pair of matrices, which store the mass matrix in the first and the
+ *          projection matrix in the second entry.
+ */
+template< class FEBasisDomain, class FEBasisTarget, class GlueType >
+auto makeProjectionMatrices(const FEBasisDomain& feBasisDomain,
+                            const FEBasisTarget& feBasisTarget,
+                            GlueType glue)
+{
+    // we assume that target dim <= domain dimension
+    static constexpr int domainDim = FEBasisDomain::GridView::dimension;
+    static constexpr int targetDim = FEBasisTarget::GridView::dimension;
+    static_assert(targetDim <= domainDim, "makeProjectionMatrixPair() expects targetDim < domainDim, please swap arguments");
+
+    return Impl::createProjectionMatrices<false>(feBasisDomain, feBasisTarget, glue).first;
 }
 
 } // end namespace Dumux
