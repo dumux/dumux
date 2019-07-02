@@ -387,8 +387,10 @@ public:
             // If none of the above boundary conditions apply for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
                 lateralFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                         scvf, elemVolVars, faceVars,
-                                                                         gridFluxVarsCache, lateralFaceBoundaryTypes, localSubFaceIdx);
+                                                                          scvf, elemVolVars, faceVars,
+                                                                          gridFluxVarsCache,
+                                                                          currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
+                                                                          localSubFaceIdx);
 
             lateralFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
                                                                       scvf, elemVolVars, faceVars,
@@ -487,7 +489,7 @@ private:
         const Scalar transportingVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
 
         return StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
-                                                                     gridFluxVarsCache, localSubFaceIdx, lateralFaceBoundaryTypes)
+                                                                     gridFluxVarsCache, localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
                * transportingVelocity * lateralFace.directionSign() * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
     }
 
