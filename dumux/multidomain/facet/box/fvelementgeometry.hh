@@ -26,6 +26,7 @@
 
 #include <algorithm>
 
+#include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/indextraits.hh>
@@ -110,7 +111,7 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return fvGridGeometry().feCache().get(elementPtr_->geometry().type()).localBasis(); }
+    { return fvGridGeometry().feCache().get(elemGeometryType_).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -133,7 +134,7 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
-        elementPtr_ = &element;
+        elemGeometryType_ = element.geometry().type();
         eIdx_ = fvGridGeometry().elementMapper().index(element);
     }
 
@@ -142,7 +143,7 @@ public:
     { return *fvGridGeometryPtr_; }
 
 private:
-    const Element* elementPtr_;
+    Dune::GeometryType elemGeometryType_;
     const FVGridGeometry* fvGridGeometryPtr_;
 
     GridIndexType eIdx_;
@@ -216,7 +217,7 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return fvGridGeometry().feCache().get(elementPtr_->geometry().type()).localBasis(); }
+    { return fvGridGeometry().feCache().get(elemGeometryType_).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -239,7 +240,6 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
-        elementPtr_ = &element;
         eIdx_ = fvGridGeometry().elementMapper().index(element);
         makeElementGeometries(element);
     }
@@ -256,7 +256,8 @@ private:
 
         // get the element geometry
         auto elementGeometry = element.geometry();
-        const auto referenceElement = ReferenceElements::general(elementGeometry.type());
+        elemGeometryType_ = elementGeometry.type();
+        const auto referenceElement = ReferenceElements::general(elemGeometryType_);
 
         // get the sub control volume geometries of this element
         GeometryHelper geometryHelper(elementGeometry);
@@ -339,7 +340,7 @@ private:
     }
 
     //! The bound element
-    const Element* elementPtr_;
+    Dune::GeometryType elemGeometryType_;
     GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
