@@ -30,10 +30,14 @@
 #include <fstream>
 #include <string>
 #include <utility>
+#include <type_traits>
+#include <tuple>
 
+#include <dune/common/indices.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/iteratorrange.hh>
 #include <dune/common/promotiontraits.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/type.hh>
 #include <dune/grid/common/mcmgmapper.hh>
@@ -91,6 +95,13 @@ class Intersection
     using Geometry = Dune::AffineGeometry<ctype, dimIs, dimWorld>;
     using GlobalPosition = Dune::FieldVector<ctype, dimWorld>;
 
+    // we can only have multiple neighbors in the mixeddimensional case and then only for the side with the largest dimension
+    using IndexStorage = std::pair<std::conditional_t<dimDomain <= dimTarget, Dune::ReservedVector<std::size_t, 1>, std::vector<std::size_t>>,
+                                   std::conditional_t<dimTarget <= dimDomain, Dune::ReservedVector<std::size_t, 1>, std::vector<std::size_t>>>;
+
+    static constexpr auto domainIdx = Dune::index_constant<0>{};
+    static constexpr auto targetIdx = Dune::index_constant<1>{};
+
 public:
     Intersection(const DomainTree& domainTree, const TargetTree& targetTree)
     : domainTree_(domainTree)
@@ -107,28 +118,58 @@ public:
     //! add a pair of neighbor elements
     void addNeighbors(std::size_t domain, std::size_t target)
     {
-        neighbors_[0].push_back(domain);
-        neighbors_[1].push_back(target);
+        if (numDomainNeighbors() == 0 && numTargetNeighbors() == 0)
+        {
+            std::get<domainIdx>(neighbors_).push_back(domain);
+            std::get<targetIdx>(neighbors_).push_back(target);
+        }
+        else if (dimDomain > dimTarget)
+            std::get<domainIdx>(neighbors_).push_back(domain);
+
+        else if (dimTarget > dimDomain)
+            std::get<targetIdx>(neighbors_).push_back(target);
+
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot add more than one neighbor per side for equidimensional intersection!");
     }
 
     //! get the intersection geometry
     Geometry geometry() const
     { return Geometry(Dune::GeometryTypes::simplex(dimIs), corners_); }
 
+    //! get the number of domain neighbors of this intersection
+    std::size_t numDomainNeighbors() const
+    { return std::get<domainIdx>(neighbors_).size(); }
+
+    //! get the number of target neighbors of this intersection
+    std::size_t numTargetNeighbors() const
+    { return std::get<targetIdx>(neighbors_).size(); }
+
+    //! get the nth domain neighbor entity
+    DomainElement domainEntity(unsigned int n = 0) const
+    { return domainTree_.entitySet().entity(std::get<domainIdx>(neighbors_)[n]); }
+
+    //! get the nth target neighbor entity
+    TargetElement targetEntity(unsigned int n = 0) const
+    { return targetTree_.entitySet().entity(std::get<targetIdx>(neighbors_)[n]); }
+
     //! get the number of neigbors
+    [[deprecated("neighbor is deprecated and will be removed after release 3.1. Use numDomainNeighbors() / numTargetNeighbors()")]]
     std::size_t neighbor(unsigned int side) const
-    { return neighbors_[side].size(); }
+    { return std::max(std::get<domainIdx>(neighbors_).size(), std::get<targetIdx>(neighbors_).size()); }
 
     //! get the inside (domain) neighbor
-    DomainElement inside(unsigned int n) const
-    { return domainTree_.entitySet().entity(neighbors_[0][n]); }
+    [[deprecated("outside is deprecated and will be removed after release 3.1. Use domainIdx(uint)")]]
+    DomainElement outside(unsigned int n) const
+    { return domainTree_.entitySet().entity(std::get<domainIdx>(neighbors_)[n]); }
 
     //! get the outside (target) neighbor
-    TargetElement outside(unsigned int n) const
-    { return targetTree_.entitySet().entity(neighbors_[1][n]); }
+    [[deprecated("inside is deprecated and will be removed after release 3.1. Use targetIdx(uint)")]]
+    TargetElement inside(unsigned int n) const
+    { return targetTree_.entitySet().entity(std::get<targetIdx>(neighbors_)[n]); }
 
 private:
-    std::array<std::vector<std::size_t>, 2> neighbors_;
+    IndexStorage neighbors_;
     std::vector<GlobalPosition> corners_;
 
     const DomainTree& domainTree_;
