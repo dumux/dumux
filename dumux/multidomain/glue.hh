@@ -226,31 +226,51 @@ public:
         auto rawIntersections = intersectingEntities(domainTree, targetTree);
 
         // create a map to check whether intersection geometries were already inserted
+        // Note that this can only occur if the grids have different dimensionality.
         std::vector<std::vector<std::vector<GlobalPosition>>> intersectionMap;
         std::vector<std::vector<std::size_t>> intersectionIndex;
-        intersectionMap.resize(targetTree.entitySet().size());
-        intersectionIndex.resize(targetTree.entitySet().size());
+        if ( int(DomainGridView::dimension) != int(TargetGridView::dimension) )
+        {
+            intersectionMap.resize(targetTree.entitySet().size());
+            intersectionIndex.resize(targetTree.entitySet().size());
+        }
+
+        // reserve memory for storing the intersections. In case of grids of
+        // different dimensionality this might be an overestimate. We get rid
+        // of the overhead memory at the end of this function though.
         intersections_.clear();
+        intersections_.reserve(rawIntersections.size());
 
         for (const auto& rawIntersection : rawIntersections)
         {
             bool add = true;
-            for (int i = 0; i < intersectionMap[rawIntersection.second()].size(); ++i)
+
+            // Check if intersection was already inserted.
+            // In this case we only add new neighbor information as the geometry is identical.
+            if ( int(DomainGridView::dimension) != int(TargetGridView::dimension) )
             {
-                if (rawIntersection.cornersMatch(intersectionMap[rawIntersection.second()][i]))
+                for (int i = 0; i < intersectionMap[rawIntersection.second()].size(); ++i)
                 {
-                    add = false;
-                    // only add the pair of neighbors using the insertionIndex
-                    auto idx = intersectionIndex[rawIntersection.second()][i];
-                    intersections_[idx].addNeighbors(rawIntersection.first(), rawIntersection.second());
-                    break;
+                    if (rawIntersection.cornersMatch(intersectionMap[rawIntersection.second()][i]))
+                    {
+                        add = false;
+                        // only add the pair of neighbors using the insertionIndex
+                        auto idx = intersectionIndex[rawIntersection.second()][i];
+                        intersections_[idx].addNeighbors(rawIntersection.first(), rawIntersection.second());
+                        break;
+                    }
                 }
             }
+
             if(add)
             {
-                // add to the map
-                intersectionMap[rawIntersection.second()].push_back(rawIntersection.corners());
-                intersectionIndex[rawIntersection.second()].push_back(intersections_.size());
+                // maybe add to the map
+                if ( int(DomainGridView::dimension) != int(TargetGridView::dimension) )
+                {
+                    intersectionMap[rawIntersection.second()].push_back(rawIntersection.corners());
+                    intersectionIndex[rawIntersection.second()].push_back(intersections_.size());
+                }
+
                 // add new intersection and add the neighbors
                 intersections_.emplace_back(domainTree, targetTree);
                 intersections_.back().setCorners(rawIntersection.corners());
@@ -258,6 +278,7 @@ public:
             }
         }
 
+        intersections_.shrink_to_fit();
         std::cout << "Computed tree intersections in " << timer.elapsed() << std::endl;
     }
 
