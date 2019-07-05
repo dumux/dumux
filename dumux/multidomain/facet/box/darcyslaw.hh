@@ -27,10 +27,13 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/geometry/geometryintersection.hh>
+#include <dumux/common/geometry/diameter.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/box/darcyslaw.hh>
@@ -54,6 +57,7 @@ class BoxFacetCouplingDarcysLaw
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -83,8 +87,39 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
-        // evaluate the flux in a tpfa manner
-        const auto& supportPointShapeValues = fluxVarCache.shapeValuesAtTpfaSupportPoint();
+        // Evaluate the flux in a tpfa manner using a support point inside the element.
+        // Therefore, we create a segment between the integration point and another point
+        // in -(K*normal) direction of the face. This segment must be long enough
+        // to intersect the opposite face of the element. Then, we compute the
+        // part of the segment intersecting with the element and compute the
+        // point inside the element by moving half its length into the interior.
+        const auto& geometry = element.geometry();
+        auto distVec = mv(insideVolVars.permeability(), scvf.unitOuterNormal());
+        distVec *= -1.0;
+        distVec *= diameter(geometry)*5.0; // make sure segment will be long enough
+
+        const auto p1 = scvf.ipGlobal();
+        auto p2 = scvf.ipGlobal();
+        p2 += distVec;
+
+        static constexpr int dimWorld = GridView::dimensionworld;
+        using Segment = Dune::MultiLinearGeometry<Scalar, 1, dimWorld>;
+
+        using Policy = IntersectionPolicy::SegmentPolicy<typename GridView::ctype, dimWorld>;
+        using IntersectionAlgorithm = GeometryIntersection<typename Element::Geometry, Segment, Policy>;
+        typename IntersectionAlgorithm::Intersection intersection;
+
+        Segment segment(Dune::GeometryTypes::line, std::vector<GlobalPosition>({p1, p2}));
+        if (!IntersectionAlgorithm::intersection(geometry, segment, intersection))
+            DUNE_THROW(Dune::InvalidStateException, "Could not compute support point for flux computation");
+
+        // use center of intersection as integration point
+        auto supportPoint = intersection[0];
+        supportPoint += intersection[1];
+        supportPoint /= 2.0;
+
+        std::vector< Dune::FieldVector<Scalar, 1> > supportPointShapeValues;
+        fvGeometry.feLocalBasis().evaluateFunction(geometry.local(supportPoint), supportPointShapeValues);
 
         Scalar rho = 0.0;
         Scalar supportPressure = 0.0;
@@ -96,7 +131,7 @@ public:
         }
 
         // the transmissibility on the matrix side
-        const auto dm = (scvf.ipGlobal() - fluxVarCache.tpfaSupportPoint()).two_norm();
+        const auto dm = (scvf.ipGlobal() - supportPoint).two_norm();
         const auto tm = 1.0/dm*vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), scvf.unitOuterNormal());
 
         // compute flux depending on the user's choice of boundary types
