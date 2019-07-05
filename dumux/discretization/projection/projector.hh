@@ -334,14 +334,13 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
     unsigned int maxBasisOrder = 0;
     for (const auto& is : intersections(glue))
     {
-        // "outside" element is of target domain
         // since target dim <= domain dim there is maximum one!
-        targetLocalView.bind( is.outside(0) );
+        targetLocalView.bind( is.targetEntity(0) );
         const auto& targetLocalBasis = targetLocalView.tree().finiteElement().localBasis();
 
-        for (unsigned int nIdx = 0; nIdx < is.neighbor(/*targetSide*/1); ++nIdx)
+        for (unsigned int nIdx = 0; nIdx < is.numDomainNeighbors(); ++nIdx)
         {
-            domainLocalView.bind( is.inside(nIdx) );
+            domainLocalView.bind( is.domainEntity(nIdx) );
             const auto& domainLocalBasis = domainLocalView.tree().finiteElement().localBasis();
 
             // keep track of maximum basis order (used in integration)
@@ -370,7 +369,7 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
 
     for (const auto& is : intersections(glue))
     {
-        const auto& targetElement = is.outside(0);
+        const auto& targetElement = is.targetEntity(0);
         const auto& targetElementGeometry = targetElement.geometry();
 
         targetLocalView.bind( targetElement );
@@ -411,10 +410,10 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
             // targetElement is aligned with a facet of domainElement. In
             // this case make sure the basis functions are not added
             // multiple times! (division by numNeighbors)
-            const auto numNeighbors = is.neighbor(/*targetSide*/1);
+            const auto numNeighbors = is.numDomainNeighbors();
             for (unsigned int nIdx = 0; nIdx < numNeighbors; ++nIdx)
             {
-                const auto& domainElement = is.inside(nIdx);
+                const auto& domainElement = is.domainEntity(nIdx);
                 domainLocalView.bind( domainElement );
                 const auto& domainLocalBasis = domainLocalView.tree().finiteElement().localBasis();
 

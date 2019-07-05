@@ -25,6 +25,8 @@
 #ifndef DUMUX_MULTIDOMAIN_MIXEDDIMENSION_GLUE_HH
 #define DUMUX_MULTIDOMAIN_MIXEDDIMENSION_GLUE_HH
 
+#warning "This header is deprecated and will be removed after release 3.1. Use multidomain/glue.hh"
+
 #include <dumux/multidomain/glue.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
@@ -34,44 +36,8 @@ namespace Dumux {
 template<class BulkGridView, class LowDimGridView,
          class BulkMapper = Dune::MultipleCodimMultipleGeomTypeMapper<BulkGridView>,
          class LowDimMapper = Dune::MultipleCodimMultipleGeomTypeMapper<LowDimGridView>>
-class [[deprecated("Use MultiDomainGlue instead. Will be removed after 3.1!")]]
-MixedDimensionGlue
-: public MultiDomainGlue<LowDimGridView, BulkGridView, LowDimMapper, BulkMapper>
-{
-    using ParentType = MultiDomainGlue<LowDimGridView, BulkGridView, LowDimMapper, BulkMapper>;
-public:
-    //! Default constructor
-    MixedDimensionGlue() = default;
-
-    /*!
-     * \brief constructor from bounding box trees
-     * \note The definition of Glue::Intersection::inside() has changed!
-     *       inside() used to return the lower-dimensional entities
-     *       (i.e. from LowDimGridView). Now, inside() returns the entities
-     *       of the template argument DomainGridView, i.e. the Dune::GridView
-     *       given as the first template argument. In order to be backwards
-     *       compatible, we flip the order here (and in the definition of ParentType).
-     */
-    template<class BulkTree, class LowDimTree>
-    MixedDimensionGlue(const BulkTree& bulkTree, const LowDimTree& lowDimTree)
-    : ParentType(lowDimTree, bulkTree)
-    {}
-
-    /*!
-     * \brief construction from bounding box trees
-     * \note The definition of Glue::Intersection::inside() has changed!
-     *       inside() used to return the lower-dimensional entities
-     *       (i.e. from LowDimGridView). Now, inside() returns the entities
-     *       of the template argument DomainGridView, i.e. the Dune::GridView
-     *       given as the first template argument. In order to be backwards
-     *       compatible, we flip the order here (and in the definition of ParentType).
-     */
-    template<class BulkTree, class LowDimTree>
-    void build(const BulkTree& bulkTree, const LowDimTree& lowDimTree)
-    {
-        ParentType::build(lowDimTree, bulkTree);
-    }
-};
+using MixedDimensionGlue [[deprecated("Use MultiDomainGlue instead. Will be removed after 3.1!")]]
+    = MultiDomainGlue<BulkGridView, LowDimGridView, BulkMapper, LowDimMapper>;
 
 } // end namespace Dumux
 

@@ -39,7 +39,7 @@
 #include <dumux/common/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/multidomain/couplingmanager.hh>
-#include <dumux/multidomain/embedded/mixeddimensionglue.hh>
+#include <dumux/multidomain/glue.hh>
 #include <dumux/multidomain/embedded/pointsourcedata.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
 
@@ -104,7 +104,7 @@ class EmbeddedCouplingManagerBase
 
     using CouplingStencil = std::vector<std::size_t>;
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
-    using GlueType = MultiDomainGlue<GridView<lowDimIdx>, GridView<bulkIdx>, ElementMapper<lowDimIdx>, ElementMapper<bulkIdx>>;
+    using GlueType = MultiDomainGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
 
 public:
     //! export traits
@@ -482,7 +482,7 @@ protected:
         const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
 
         // intersect the bounding box trees
-        glue_->build(lowDimFvGridGeometry.boundingBoxTree(), bulkFvGridGeometry.boundingBoxTree());
+        glue_->build(bulkFvGridGeometry.boundingBoxTree(), lowDimFvGridGeometry.boundingBoxTree());
     }
 
     template<class Geometry, class GlobalPosition>
