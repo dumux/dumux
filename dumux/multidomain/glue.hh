@@ -202,6 +202,10 @@ class MultiDomainGlue
     enum { dimWorld = DomainGridView::dimensionworld };
     using GlobalPosition = Dune::FieldVector<ctype, dimWorld>;
 
+    static constexpr int dimDomain = DomainGridView::dimension;
+    static constexpr int dimTarget = TargetGridView::dimension;
+    static constexpr bool isMixedDimensional = dimDomain != dimTarget;
+
 public:
     // export intersection container type
     using Intersections = std::vector<Glue::Intersection<DomainGridView, TargetGridView, DomainMapper, TargetMapper>>;
@@ -226,31 +230,60 @@ public:
         auto rawIntersections = intersectingEntities(domainTree, targetTree);
 
         // create a map to check whether intersection geometries were already inserted
+        // Note that this can only occur if the grids have different dimensionality.
+        // If this is the case, we keep track of the intersections using the indices of the lower-
+        // dimensional entities which is identical for all geometrically identical intersections.
         std::vector<std::vector<std::vector<GlobalPosition>>> intersectionMap;
         std::vector<std::vector<std::size_t>> intersectionIndex;
-        intersectionMap.resize(targetTree.entitySet().size());
-        intersectionIndex.resize(targetTree.entitySet().size());
+        if ( isMixedDimensional )
+        {
+            const auto numLowDimEntities = dimTarget < dimDomain ? targetTree.entitySet().size()
+                                                                 : domainTree.entitySet().size();
+            intersectionMap.resize(numLowDimEntities);
+            intersectionIndex.resize(numLowDimEntities);
+        }
+
+        // lambda to obtain the index of the lower-dimensional neighbor of a raw intersection
+        auto getLowDimNeighborIdx = [] (const auto& rawIS)
+        { return dimTarget < dimDomain ? rawIS.second() : rawIS.first(); };
+
+        // reserve memory for storing the intersections. In case of grids of
+        // different dimensionality this might be an overestimate. We get rid
+        // of the overhead memory at the end of this function though.
         intersections_.clear();
+        intersections_.reserve(rawIntersections.size());
 
         for (const auto& rawIntersection : rawIntersections)
         {
             bool add = true;
-            for (int i = 0; i < intersectionMap[rawIntersection.second()].size(); ++i)
+
+            // Check if intersection was already inserted.
+            // In this case we only add new neighbor information as the geometry is identical.
+            if ( isMixedDimensional )
             {
-                if (rawIntersection.cornersMatch(intersectionMap[rawIntersection.second()][i]))
+                const auto lowDimNeighborIdx = getLowDimNeighborIdx(rawIntersection);
+                for (int i = 0; i < intersectionMap[lowDimNeighborIdx].size(); ++i)
                 {
-                    add = false;
-                    // only add the pair of neighbors using the insertionIndex
-                    auto idx = intersectionIndex[rawIntersection.second()][i];
-                    intersections_[idx].addNeighbors(rawIntersection.first(), rawIntersection.second());
-                    break;
+                    if (rawIntersection.cornersMatch(intersectionMap[lowDimNeighborIdx][i]))
+                    {
+                        add = false;
+                        // only add the pair of neighbors using the insertionIndex
+                        auto idx = intersectionIndex[lowDimNeighborIdx][i];
+                        intersections_[idx].addNeighbors(rawIntersection.first(), rawIntersection.second());
+                        break;
+                    }
                 }
             }
+
             if(add)
             {
-                // add to the map
-                intersectionMap[rawIntersection.second()].push_back(rawIntersection.corners());
-                intersectionIndex[rawIntersection.second()].push_back(intersections_.size());
+                // maybe add to the map
+                if ( isMixedDimensional )
+                {
+                    intersectionMap[getLowDimNeighborIdx(rawIntersection)].push_back(rawIntersection.corners());
+                    intersectionIndex[getLowDimNeighborIdx(rawIntersection)].push_back(intersections_.size());
+                }
+
                 // add new intersection and add the neighbors
                 intersections_.emplace_back(domainTree, targetTree);
                 intersections_.back().setCorners(rawIntersection.corners());
@@ -258,6 +291,7 @@ public:
             }
         }
 
+        intersections_.shrink_to_fit();
         std::cout << "Computed tree intersections in " << timer.elapsed() << std::endl;
     }
 
