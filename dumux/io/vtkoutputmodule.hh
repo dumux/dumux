@@ -111,7 +111,7 @@ public:
     , verbose_(gridVariables.fvGridGeometry().gridView().comm().rank() == 0 && verbose)
     , dm_(dm)
     , writer_(std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.fvGridGeometry().gridView(), dm))
-    , sequenceWriter_(writer_, name)
+    , sequenceWriter_(writer_, getParamFromGroup<std::string>(paramGroup, "Vtk.OutputPathPrefix", "") + name)
     , velocityOutput_(std::make_shared<VelocityOutputType>())
     {}
 
