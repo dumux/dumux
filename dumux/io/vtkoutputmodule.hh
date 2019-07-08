@@ -21,8 +21,8 @@
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  */
-#ifndef VTK_OUTPUT_MODULE_HH
-#define VTK_OUTPUT_MODULE_HH
+#ifndef DUMUX_IO_VTK_OUTPUT_MODULE_HH
+#define DUMUX_IO_VTK_OUTPUT_MODULE_HH
 
 #include <functional>
 
