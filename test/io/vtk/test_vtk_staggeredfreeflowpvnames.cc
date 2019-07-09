@@ -281,7 +281,11 @@ void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
      // clean up the folder
      if(deleteFiles)
      {
-         if(system("exec rm -r *pvd *vtu *vtp"))
+         const std::string deleteCommand = "exec rm "
+                                           + fileName + "*pvd "
+                                           + fileName + "*vtu "
+                                           + fileName + "*vtp";
+         if (system(deleteCommand.c_str()))
              DUNE_THROW(Dune::IOError, "Deleting files failed");
      }
 }
