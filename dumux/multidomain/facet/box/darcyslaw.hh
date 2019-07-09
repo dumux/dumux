@@ -95,7 +95,7 @@ public:
         // point inside the element by moving half its length into the interior.
         const auto& geometry = element.geometry();
         auto distVec = mv(insideVolVars.permeability(), scvf.unitOuterNormal());
-        distVec *= -1.0;
+        distVec /= -1.0*distVec.two_norm();
         distVec *= diameter(geometry)*5.0; // make sure segment will be long enough
 
         const auto p1 = scvf.ipGlobal();
@@ -131,8 +131,8 @@ public:
         }
 
         // the transmissibility on the matrix side
-        const auto dm = (scvf.ipGlobal() - supportPoint).two_norm();
-        const auto tm = 1.0/dm*vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), scvf.unitOuterNormal());
+        const auto d = scvf.ipGlobal() - supportPoint;
+        const auto tm = 1.0/d.two_norm2()*vtmv(d, insideVolVars.permeability(), scvf.unitOuterNormal());
 
         // compute flux depending on the user's choice of boundary types
         const auto bcTypes = problem.interiorBoundaryTypes(element, scvf);
