@@ -95,7 +95,7 @@ public:
         // point inside the element by moving half its length into the interior.
         const auto& geometry = element.geometry();
         auto distVec = mv(insideVolVars.permeability(), scvf.unitOuterNormal());
-        distVec *= -1.0;
+        distVec /= -1.0*distVec.two_norm();
         distVec *= diameter(geometry)*5.0; // make sure segment will be long enough
 
         const auto p1 = scvf.ipGlobal();
