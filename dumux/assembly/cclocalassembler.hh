@@ -57,11 +57,13 @@ class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Imp
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Problem = typename Assembler::Problem;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
 
@@ -86,6 +88,20 @@ public:
         {
             res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
         }
+
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+            auto& row = jac[scvI.dofIndex()];
+            for (auto col = row.begin(); col != row.end(); ++col)
+                row[col.index()][eqIdx] = 0.0;
+            row[scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+        };
+
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -96,6 +112,19 @@ public:
     {
         this->asImp_().bindLocalViews();
         this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            auto& row = jac[scvI.dofIndex()];
+            for (auto col = row.begin(); col != row.end(); ++col)
+                row[col.index()][eqIdx] = 0.0;
+            row[scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+        };
+
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -106,7 +135,50 @@ public:
         this->asImp_().bindLocalViews();
         const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
         res[globalI] = this->asImp_().evalLocalResidual()[0]; // forward to the internal implementation
+
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+        };
+
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
+
+    //! Enforce Dirichlet constraints
+    template<typename ApplyFunction>
+    void enforceDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // currently Dirichlet boundary conditions are weakly enforced for cc-schemes
+        // so here, we only take care of internal Dirichlet constraints (if enabled)
+        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
+    }
+
+    /*!
+     * \brief Enforces Dirichlet constraints if enabled in the problem
+     */
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // enforce Dirichlet constraints strongly by overwriting partial derivatives with 1 or 0
+        // and set the residual to (privar - dirichletvalue)
+        for (const auto& scvI : scvs(this->fvGeometry()))
+        {
+            if (this->problem().hasInternalDirichletConstraint(this->element(), scvI))
+            {
+                const auto dirichletValues = this->problem().internalDirichlet(this->element(), scvI);
+                // set the Dirichlet conditions in residual and jacobian
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    applyDirichlet(scvI, dirichletValues, eqIdx, eqIdx);
+            }
+        }
+    }
+
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {}
 };
 
 /*!
