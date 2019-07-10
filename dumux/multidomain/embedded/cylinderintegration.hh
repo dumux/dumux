@@ -43,7 +43,6 @@ template<class Scalar,
          CylinderIntegrationMethod m = CylinderIntegrationMethod::random>
 class CylinderIntegration;
 
-
 template<class Scalar>
 class CylinderIntegration<Scalar, CylinderIntegrationMethod::random>
 {
@@ -204,6 +203,202 @@ private:
     std::vector<std::size_t> ks_;
     std::vector<std::vector<Scalar>> sincos_;
 
+};
+
+template<class Scalar,
+         CylinderIntegrationMethod m = CylinderIntegrationMethod::spaced>
+class EllipticCylinderIntegration;
+
+template<class Scalar>
+class EllipticCylinderIntegration<Scalar, CylinderIntegrationMethod::spaced>
+{
+    using GlobalPosition = Dune::FieldVector<Scalar, 3>;
+
+public:
+    //! samples: number of samples along z axis
+    EllipticCylinderIntegration(std::size_t rSamples)
+    : rSamples_(rSamples)
+    {}
+
+    // elliptic cylinder with centerline points p, q and ellipse axis a, b
+    void setGeometry(const GlobalPosition& p, const GlobalPosition& q, GlobalPosition aVec, GlobalPosition bVec)
+    {
+        auto zAxis = (q-p);
+        const auto length = zAxis.two_norm();
+        zAxis /= length;
+        const auto a = aVec.two_norm();
+        const auto b = bVec.two_norm();
+        aVec /= a;
+        bVec /= b;
+        const auto normal = crossProduct(aVec, bVec);
+        const auto height = (zAxis*normal)*length;
+
+        std::size_t aSamples = rSamples_;
+        const auto aStep = 2*a / Scalar(aSamples);
+        std::size_t bSamples = std::max(int(std::floor(2*b/aStep)), 1);
+        const auto bStep = 2*b / Scalar(bSamples);
+        std::size_t zSamples = std::max(int(std::floor(height/aStep)), 1);
+        const auto zStep = length / Scalar(zSamples);
+        auto zStepFactor = length/height;
+
+        integrationElement_ = aStep*bStep*zStep/zStepFactor;
+        points_.clear();
+        points_.reserve(aSamples*bSamples*zSamples);
+
+        // walk over lattice grid an reject point outside the ellipse
+        auto startZ = p; startZ.axpy(0.5*zStep, zAxis);
+        auto startAB = startZ;
+        startAB.axpy(-a + 0.5*aStep, aVec);
+        startAB.axpy(-b + 0.5*bStep, bVec);
+        for (std::size_t as = 0; as < aSamples; ++as)
+        {
+            for (std::size_t bs = 0; bs < bSamples; ++bs)
+            {
+                auto pos = startAB;
+                pos.axpy(as*aStep, aVec);
+                pos.axpy(bs*bStep, bVec);
+                if (pointInEllipse(pos, startZ, aVec, bVec, normal, a, b))
+                    points_.emplace_back(std::move(pos));
+            }
+        }
+
+        const auto abPoints = points_.size();
+        samples_ = abPoints*zSamples;
+        points_.resize(samples_);
+
+        for (std::size_t zs = 1; zs < zSamples; ++zs)
+        {
+            auto add = zAxis; add *= zs*zStep;
+            std::transform(points_.begin(), points_.begin() + abPoints, points_.begin() + zs*abPoints,
+                           [&add](const auto& p){ return p + add; });
+        }
+
+        const auto meanLocalError = (height*a*b*M_PI - integrationElement_*samples_)/Scalar(samples_);
+        integrationElement_ += meanLocalError;
+
+        // std::cout << "Elliptic cylinder integration:\n";
+        // std::cout << "  -- samples: " << samples_ << ", a: " << a << ", b: " << b << ", h: " << height
+        //           << ", volume: " << integrationElement_*samples_ << " (expected " << height*a*b*M_PI << ")\n";
+        // std::cout << "  -- volume error was: " << meanLocalError/integrationElement_*100 << "%\n";
+    }
+
+    Scalar integrationElement(unsigned int i) const
+    { return integrationElement_; }
+
+    const GlobalPosition& getIntegrationPoint(unsigned int i) const
+    { return points_[i]; }
+
+    std::size_t size() const
+    { return samples_; }
+
+private:
+    bool pointInEllipse(const GlobalPosition& p, const GlobalPosition& center,
+                        const GlobalPosition& aVec, const GlobalPosition& bVec,
+                        const GlobalPosition& normal,
+                        const Scalar a, const Scalar b)
+    {
+        const auto d = p-center;
+        // check if point is in ellipse plane
+        if (d*normal > 1e-7*a)
+            return false;
+
+        const auto da = (d*aVec);
+        const auto db = (d*bVec);
+
+        return (da*da/(a*a) + db*db/(b*b) < 1.0);
+    }
+
+    std::size_t rSamples_, samples_;
+    Scalar integrationElement_;
+    std::vector<GlobalPosition> points_;
+};
+
+
+template<class Scalar>
+class EllipseIntegration
+{
+    using GlobalPosition = Dune::FieldVector<Scalar, 3>;
+
+public:
+    EllipseIntegration(std::size_t rSamples)
+    : rSamples_(rSamples)
+    {}
+
+    // ellipse cylinder with center point p and ellipse axes a, b
+    void setGeometry(const GlobalPosition& p, GlobalPosition aVec, GlobalPosition bVec)
+    {
+        const auto a = aVec.two_norm();
+        const auto b = bVec.two_norm();
+        aVec /= a;
+        bVec /= b;
+        const auto normal = crossProduct(aVec, bVec);
+
+        std::size_t aSamples = rSamples_;
+        const auto aStep = 2*a / Scalar(aSamples);
+        std::size_t bSamples = std::max(int(std::floor(2*b/aStep)), 1);
+        const auto bStep = 2*b / Scalar(bSamples);
+
+        integrationElement_ = aStep*bStep;
+        points_.reserve(aSamples*bSamples);
+
+        // walk over lattice grid an reject point outside the ellipse
+        auto startZ = p;
+        auto startAB = startZ;
+        startAB.axpy(-a + 0.5*aStep, aVec);
+        startAB.axpy(-b + 0.5*bStep, bVec);
+        for (std::size_t as = 0; as < aSamples; ++as)
+        {
+            for (std::size_t bs = 0; bs < bSamples; ++bs)
+            {
+                auto pos = startAB;
+                pos.axpy(as*aStep, aVec);
+                pos.axpy(bs*bStep, bVec);
+                if (pointInEllipse(pos, startZ, aVec, bVec, normal, a, b))
+                    points_.emplace_back(std::move(pos));
+            }
+        }
+
+        const auto abPoints = points_.size();
+        samples_ = abPoints;
+
+        const auto meanLocalError = (a*b*M_PI - integrationElement_*samples_)/Scalar(samples_);
+        integrationElement_ += meanLocalError;
+
+        std::cout << "Ellipse integration:\n";
+        std::cout << "  -- samples: " << samples_ << ", a: " << a << ", b: " << b
+                  << ", area: " << integrationElement_*samples_ << " (expected " << a*b*M_PI << ")\n";
+        std::cout << "  -- area error was: " << meanLocalError/integrationElement_*100 << "%\n";
+    }
+
+    Scalar integrationElement(unsigned int i) const
+    { return integrationElement_; }
+
+    const GlobalPosition& getIntegrationPoint(unsigned int i) const
+    { return points_[i]; }
+
+    std::size_t size() const
+    { return samples_; }
+
+private:
+    bool pointInEllipse(const GlobalPosition& p, const GlobalPosition& center,
+                        const GlobalPosition& aVec, const GlobalPosition& bVec,
+                        const GlobalPosition& normal,
+                        const Scalar a, const Scalar b)
+    {
+        const auto d = p-center;
+        // check if point is in ellipse plane
+        if (d*normal > 1e-7*a)
+            return false;
+
+        const auto da = (d*aVec);
+        const auto db = (d*bVec);
+
+        return (da*da/(a*a) + db*db/(b*b) < 1.0);
+    }
+
+    std::size_t rSamples_, samples_;
+    Scalar integrationElement_;
+    std::vector<GlobalPosition> points_;
 };
 
 } // end namespace Dumux
