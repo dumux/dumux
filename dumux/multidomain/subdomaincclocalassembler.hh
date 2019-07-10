@@ -82,6 +82,8 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using CouplingManager = typename Assembler::CouplingManager;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+
 public:
     //! export the domain id of this sub-domain
     static constexpr auto domainId = typename Dune::index_constant<id>();
@@ -127,6 +129,20 @@ public:
             if (i != id)
                 this->assembleJacobianCoupling(i, jacRow, res[globalI], gridVariables);
         });
+
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+            auto& row = jacRow[domainId][scvI.dofIndex()];
+            for (auto col = row.begin(); col != row.end(); ++col)
+                row[col.index()][eqIdx] = 0.0;
+            row[scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+        };
+
+        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -158,6 +174,16 @@ public:
         this->asImp_().bindLocalViews();
         const auto globalI = this->fvGeometry().fvGridGeometry().elementMapper().index(this->element());
         res[globalI] = this->evalLocalResidual()[0]; // forward to the internal implementation
+
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+        };
+
+        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -242,6 +268,30 @@ public:
     //! return reference to the underlying problem
     const Problem& problem() const
     { return this->assembler().problem(domainId); }
+
+    /*!
+     * \brief Enforces Dirichlet constraints if enabled in the problem
+     */
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // enforce Dirichlet constraints strongly by overwriting partial derivatives with 1 or 0
+        // and set the residual to (privar - dirichletvalue)
+        for (const auto& scvI : scvs(this->fvGeometry()))
+        {
+            if (this->problem().hasInternalDirichletConstraint(this->element(), scvI))
+            {
+                const auto dirichletValues = this->problem().internalDirichlet(this->element(), scvI);
+                // set the Dirichlet conditions in residual and jacobian
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    applyDirichlet(scvI, dirichletValues, eqIdx, eqIdx);
+            }
+        }
+    }
+
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {}
 
     //! return reference to the coupling manager
     CouplingManager& couplingManager()
