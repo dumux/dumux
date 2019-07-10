@@ -120,6 +120,93 @@ std::vector<GlobalPosition> circlePoints(const GlobalPosition& center,
     return points;
 }
 
+/*!
+ * \ingroup EmbeddedCoupling
+ * \brief returns a vector of points on a circle
+ * \param points a vector of points to be filled
+ * \param center the circle center
+ * \param normal the normal to the circle plane
+ * \param radius the circle radius
+ * \param numPoints the number of points
+ */
+template<class GlobalPosition, class Scalar>
+void ellipsePoints(std::vector<GlobalPosition>& points,
+                   const std::vector<Scalar>& sincos,
+                   const GlobalPosition& center,
+                   const GlobalPosition& normal,
+                   const Scalar a, const Scalar b,
+                   const std::size_t numPoints = 20)
+{
+    using std::abs;
+    using ctype = typename GlobalPosition::value_type;
+
+    constexpr ctype eps = 1.5e-7;
+    static_assert(GlobalPosition::dimension == 3, "Only implemented for world dimension 3");
+
+    // resize the points vector
+    points.resize(numPoints);
+
+    // make sure n is a unit vector
+    auto n = normal;
+    n /= n.two_norm();
+
+    // caculate a vector u perpendicular to n
+    GlobalPosition u;
+    if (abs(n[0]) < eps && abs(n[1]) < eps)
+        if (abs(n[2]) < eps)
+            DUNE_THROW(Dune::MathError, "The normal vector has to be non-zero!");
+        else
+            u = {0, 1, 0};
+    else
+        u = {-n[1], n[0], 0};
+
+    u /= u.two_norm();
+
+    // the ellipse parameterization is p(t) = b*cos(t)*u + a*sin(t)*(n x u) + c
+    auto tangent = crossProduct(u, n);
+    tangent /= tangent.two_norm();
+
+    // insert the vertices
+    for (std::size_t i = 0; i < numPoints; ++i)
+    {
+        points[i] = GlobalPosition({b*u[0]*sincos[2*i+1] + a*tangent[0]*sincos[2*i] + center[0],
+                                    b*u[1]*sincos[2*i+1] + a*tangent[1]*sincos[2*i] + center[1],
+                                    b*u[2]*sincos[2*i+1] + a*tangent[2]*sincos[2*i] + center[2]});
+    }
+}
+
+/*!
+ * \ingroup EmbeddedCoupling
+ * \brief returns a vector of points on a circle
+ * \param center the circle center
+ * \param normal the normal to the circle plane
+ * \param radius the circle radius
+ * \param numPoints the number of points
+ */
+template<class GlobalPosition, class Scalar>
+std::vector<GlobalPosition> ellipsePoints(const GlobalPosition& center,
+                                          const GlobalPosition& normal,
+                                          const Scalar a, const Scalar b,
+                                          const std::size_t numPoints = 20)
+{
+    std::vector<GlobalPosition> points;
+
+    // precompute the sin/cos
+    using std::sin; using std::cos;
+    std::vector<Scalar> sincos(2*numPoints);
+    Scalar t = 0 + 0.1; // start with an offset
+    for (std::size_t i = 0; i < numPoints; ++i)
+    {
+        sincos[2*i] = sin(t);
+        sincos[2*i + 1] = cos(t);
+        t += 2*M_PI/numPoints;
+        if(t > 2*M_PI) t -= 2*M_PI;
+    }
+
+    ellipsePoints(points, sincos, center, normal, a, b, numPoints);
+    return points;
+}
+
 } // end namespace EmbeddedCoupling
 } // end namespace Dumux
 
