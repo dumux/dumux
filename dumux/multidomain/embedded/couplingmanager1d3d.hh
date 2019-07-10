@@ -1138,40 +1138,11 @@ public:
         Dune::Timer watch;
         std::cout << "Initializing the point sources..." << std::endl;
 
-        // clear all internal members like pointsource vectors and stencils
-        // initializes the point source id counter
-        this->clear();
-        bulkSourceIds_.clear();
-        bulkSourceWeights_.clear();
-        extendedSourceStencil_.stencil().clear();
-
-        // precompute the vertex indices for efficiency for the box method
-        this->preComputeVertexIndices(bulkIdx);
-        this->preComputeVertexIndices(lowDimIdx);
+        // prepare the internal data structures
+        prepareDataStructures_();
 
         const auto& bulkFvGridGeometry = this->problem(bulkIdx).fvGridGeometry();
         const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
-
-        bulkSourceIds_.resize(this->gridView(bulkIdx).size(0));
-        bulkSourceWeights_.resize(this->gridView(bulkIdx).size(0));
-
-        // intersect the bounding box trees
-        this->glueGrids();
-
-        // reserve memory for data
-        this->pointSourceData().reserve(this->glue().size());
-        this->averageDistanceToBulkCell().reserve(this->glue().size());
-        fluxScalingFactor_.reserve(this->glue().size());
-
-        // reserve memory for stencils
-        const auto numBulkElements = this->gridView(bulkIdx).size(0);
-        for (GridIndex<bulkIdx> bulkElementIdx = 0; bulkElementIdx < numBulkElements; ++bulkElementIdx)
-        {
-            this->couplingStencils(bulkIdx)[bulkElementIdx].reserve(50);
-            extendedSourceStencil_.stencil()[bulkElementIdx].reserve(50);
-            bulkSourceIds_[bulkElementIdx][0].reserve(20);
-            bulkSourceWeights_[bulkElementIdx][0].reserve(20);
-        }
 
         // generate a bunch of random vectors and values for
         // Monte-carlo integration on the cylinder defined by line and radius
@@ -1292,39 +1263,8 @@ public:
             }
         }
 
-        // make extra stencils unique
-        for (auto&& stencil : extendedSourceStencil_.stencil())
-        {
-            std::sort(stencil.second.begin(), stencil.second.end());
-            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
-
-            // remove the vertices element (box)
-            if (isBox<bulkIdx>())
-            {
-                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
-                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
-                                                   [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
-                                     stencil.second.end());
-            }
-            // remove the own element (cell-centered)
-            else
-            {
-                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
-                                                   [&](auto i){ return i == stencil.first; }),
-                                     stencil.second.end());
-            }
-        }
-
-        // make stencils unique
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::index_constant<2>{}), [&](const auto domainIdx)
-        {
-            for (auto&& stencil : this->couplingStencils(domainIdx))
-            {
-                std::sort(stencil.second.begin(), stencil.second.end());
-                stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
-            }
-        });
+        // make the stencils unique
+        makeUniqueStencil_();
 
         if (!this->pointSources(bulkIdx).empty())
             DUNE_THROW(Dune::InvalidStateException, "Kernel method shouldn't have point sources in the bulk domain but only volume sources!");
@@ -1457,6 +1397,79 @@ private:
         // the surface factor (which fraction of the source is inside the domain and needs to be considered)
         const auto length = (a-b).two_norm()/Scalar(embeddings);
         return integral/length;
+    }
+
+    void prepareDataStructures_()
+    {
+        // clear all internal members like pointsource vectors and stencils
+        // initializes the point source id counter
+        this->clear();
+        bulkSourceIds_.clear();
+        bulkSourceWeights_.clear();
+        extendedSourceStencil_.stencil().clear();
+
+        // precompute the vertex indices for efficiency for the box method
+        this->preComputeVertexIndices(bulkIdx);
+        this->preComputeVertexIndices(lowDimIdx);
+
+        bulkSourceIds_.resize(this->gridView(bulkIdx).size(0));
+        bulkSourceWeights_.resize(this->gridView(bulkIdx).size(0));
+
+        // intersect the bounding box trees
+        this->glueGrids();
+
+        // reserve memory for data
+        this->pointSourceData().reserve(this->glue().size());
+        this->averageDistanceToBulkCell().reserve(this->glue().size());
+        fluxScalingFactor_.reserve(this->glue().size());
+
+        // reserve memory for stencils
+        const auto numBulkElements = this->gridView(bulkIdx).size(0);
+        for (GridIndex<bulkIdx> bulkElementIdx = 0; bulkElementIdx < numBulkElements; ++bulkElementIdx)
+        {
+            this->couplingStencils(bulkIdx)[bulkElementIdx].reserve(50);
+            extendedSourceStencil_.stencil()[bulkElementIdx].reserve(50);
+            bulkSourceIds_[bulkElementIdx][0].reserve(20);
+            bulkSourceWeights_[bulkElementIdx][0].reserve(20);
+        }
+    }
+
+    //! Make the stencils unique
+    void makeUniqueStencil_()
+    {
+        // make extra stencils unique
+        for (auto&& stencil : extendedSourceStencil_.stencil())
+        {
+            std::sort(stencil.second.begin(), stencil.second.end());
+            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+
+            // remove the vertices element (box)
+            if (isBox<bulkIdx>())
+            {
+                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
+                                     stencil.second.end());
+            }
+            // remove the own element (cell-centered)
+            else
+            {
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return i == stencil.first; }),
+                                     stencil.second.end());
+            }
+        }
+
+        // make stencils unique
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::index_constant<2>{}), [&](const auto domainIdx)
+        {
+            for (auto&& stencil : this->couplingStencils(domainIdx))
+            {
+                std::sort(stencil.second.begin(), stencil.second.end());
+                stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+            }
+        });
     }
 
     //! add additional stencil entries for the bulk element
