@@ -1,5 +1,6 @@
 add_subdirectory(pointsources)
 add_subdirectory(incompressible)
+add_subdirectory(internaldirichlet)
 add_subdirectory(compressible)
 add_subdirectory(periodicbc)
 add_subdirectory(fracture2d3d)

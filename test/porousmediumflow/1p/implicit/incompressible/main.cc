@@ -55,6 +55,7 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include "problem.hh"
+#include "../internaldirichlet/problem.hh"
 
 //! Function to write out the scv-wise velocities (overload for mpfa)
 template<class FVGridGeometry, class GridVariables, class Sol,
