@@ -152,7 +152,7 @@ public:
         };
 
         // incorporate Dirichlet BCs
-        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -196,7 +196,7 @@ public:
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
         };
 
-        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -225,6 +225,16 @@ public:
      */
     ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
     { return this->evalLocalSourceResidual(neighbor, implicit ? this->curElemVolVars() : this->prevElemVolVars()); }
+
+    //! Enforce Dirichlet constraints
+    template<typename ApplyFunction>
+    void enforceDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // enforce Dirichlet boundary conditions
+        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        // take care of internal Dirichlet constraints (if enabled)
+        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
+    }
 
     /*!
      * \brief Incorporate Dirichlet boundary conditions
@@ -258,6 +268,30 @@ public:
             }
         }
     }
+
+    /*!
+     * \brief Enforces Dirichlet constraints if enabled in the problem
+     */
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // enforce Dirichlet constraints strongly by overwriting partial derivatives with 1 or 0
+        // and set the residual to (privar - dirichletvalue)
+        for (const auto& scvI : scvs(this->fvGeometry()))
+        {
+            if (this->problem().hasInternalDirichletConstraint(this->element(), scvI))
+            {
+                const auto dirichletValues = this->problem().internalDirichlet(this->element(), scvI);
+                // set the Dirichlet conditions in residual and jacobian
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    applyDirichlet(scvI, dirichletValues, eqIdx, eqIdx);
+            }
+        }
+    }
+
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {}
 
     /*!
      * \brief Prepares all local views necessary for local assembly.
