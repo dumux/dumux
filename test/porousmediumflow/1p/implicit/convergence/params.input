@@ -1,0 +1,23 @@
+[Problem]
+Name = 1p_convergence
+SourceIntegrationOrder = 3
+ExactSolPeriodLength = 6.283 # ~ 2*pi
+EnableGravity = false
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+CellsSequence = 10 20 40 80
+
+[IO]
+WriteVTK = true
+
+[L2Norm]
+IntegrationOrder = 3
+WriteLogFiles = false
+AnalyticErrorsFile = conforming_analytic.log
+DiscreteErrorsFile = conforming_discrete.log
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
