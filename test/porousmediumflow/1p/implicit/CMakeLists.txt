@@ -1,3 +1,4 @@
+add_subdirectory(convergence)
 add_subdirectory(pointsources)
 add_subdirectory(incompressible)
 add_subdirectory(compressible)
