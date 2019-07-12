@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief The properties for the incompressible test
+ * \brief A test for internal Dirichlet constraints
  */
 
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_INTERNAL_DIRICHLET_HH
@@ -32,7 +32,6 @@ namespace Dumux {
 template<class TypeTag> class OnePTestProblemInternalDirichlet;
 
 namespace Properties {
-// create the type tag nodes
 // Create new type tags
 namespace TTag {
 struct OnePInternalDirichlet {};
@@ -49,10 +48,7 @@ struct Problem<TypeTag, TTag::OnePInternalDirichlet>
 
 /*!
  * \ingroup OnePTests
- * \brief  Test problem for the incompressible one-phase model:
- *
- * Can be run as <tt>./test_box1pfv</tt> or
- * <tt>./test_cc1pfv</tt>
+ * \brief A test for internal Dirichlet constraints
  */
 template<class TypeTag>
 class OnePTestProblemInternalDirichlet : public OnePTestProblem<TypeTag>
