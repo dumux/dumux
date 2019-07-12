@@ -57,13 +57,11 @@ class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Imp
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using Problem = typename Assembler::Problem;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
 
@@ -155,30 +153,6 @@ public:
         // so here, we only take care of internal Dirichlet constraints (if enabled)
         this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
-
-    /*!
-     * \brief Enforces Dirichlet constraints if enabled in the problem
-     */
-    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
-    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
-    {
-        // enforce Dirichlet constraints strongly by overwriting partial derivatives with 1 or 0
-        // and set the residual to (privar - dirichletvalue)
-        for (const auto& scvI : scvs(this->fvGeometry()))
-        {
-            if (this->problem().hasInternalDirichletConstraint(this->element(), scvI))
-            {
-                const auto dirichletValues = this->problem().internalDirichlet(this->element(), scvI);
-                // set the Dirichlet conditions in residual and jacobian
-                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    applyDirichlet(scvI, dirichletValues, eqIdx, eqIdx);
-            }
-        }
-    }
-
-    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
-    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
-    {}
 };
 
 /*!
