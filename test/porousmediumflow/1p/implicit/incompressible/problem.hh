@@ -53,7 +53,6 @@ namespace Dumux {
 template<class TypeTag> class OnePTestProblem;
 
 namespace Properties {
-// create the type tag nodes
 // Create new type tags
 namespace TTag {
 struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
@@ -111,10 +110,7 @@ struct Scalar<TypeTag, TTag::OnePIncompressibleTpfaQuad> { using type = Quad; };
 
 /*!
  * \ingroup OnePTests
- * \brief  Test problem for the incompressible one-phase model:
- *
- * Can be run as <tt>./test_box1pfv</tt> or
- * <tt>./test_cc1pfv</tt>
+ * \brief  Test problem for the incompressible one-phase model
  */
 template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
