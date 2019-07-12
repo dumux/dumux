@@ -82,8 +82,6 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using CouplingManager = typename Assembler::CouplingManager;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-
 public:
     //! export the domain id of this sub-domain
     static constexpr auto domainId = typename Dune::index_constant<id>();
@@ -277,30 +275,6 @@ public:
         // so here, we only take care of internal Dirichlet constraints (if enabled)
         this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
-
-    /*!
-     * \brief Enforces Dirichlet constraints if enabled in the problem
-     */
-    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
-    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
-    {
-        // enforce Dirichlet constraints strongly by overwriting partial derivatives with 1 or 0
-        // and set the residual to (privar - dirichletvalue)
-        for (const auto& scvI : scvs(this->fvGeometry()))
-        {
-            if (this->problem().hasInternalDirichletConstraint(this->element(), scvI))
-            {
-                const auto dirichletValues = this->problem().internalDirichlet(this->element(), scvI);
-                // set the Dirichlet conditions in residual and jacobian
-                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    applyDirichlet(scvI, dirichletValues, eqIdx, eqIdx);
-            }
-        }
-    }
-
-    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
-    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
-    {}
 
     //! return reference to the coupling manager
     CouplingManager& couplingManager()
