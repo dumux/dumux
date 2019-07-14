@@ -8,6 +8,7 @@ container.hh
 defaultiofields.hh
 gnuplotinterface.hh
 loadsolution.hh
+log.hh
 name.hh
 ploteffectivediffusivitymodel.hh
 plotmateriallaw.hh
