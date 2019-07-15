@@ -152,7 +152,7 @@ public:
         };
 
         // incorporate Dirichlet BCs
-        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -196,7 +196,7 @@ public:
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
         };
 
-        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -225,6 +225,16 @@ public:
      */
     ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
     { return this->evalLocalSourceResidual(neighbor, implicit ? this->curElemVolVars() : this->prevElemVolVars()); }
+
+    //! Enforce Dirichlet constraints
+    template<typename ApplyFunction>
+    void enforceDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // enforce Dirichlet boundary conditions
+        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        // take care of internal Dirichlet constraints (if enabled)
+        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
+    }
 
     /*!
      * \brief Incorporate Dirichlet boundary conditions

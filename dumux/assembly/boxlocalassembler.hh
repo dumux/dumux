@@ -149,7 +149,7 @@ public:
             }
         };
 
-        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -173,7 +173,7 @@ public:
             jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
         };
 
-        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -195,7 +195,17 @@ public:
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
         };
 
+        this->asImp_().enforceDirichletConstraints(applyDirichlet);
+    }
+
+    //! Enforce Dirichlet constraints
+    template<typename ApplyFunction>
+    void enforceDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // enforce Dirichlet boundary conditions
         this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        // take care of internal Dirichlet constraints (if enabled)
+        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
 
     /*!

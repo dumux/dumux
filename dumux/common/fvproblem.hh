@@ -247,6 +247,25 @@ public:
     }
 
     /*!
+     * \brief If internal Dirichlet contraints are enabled
+     * Enables / disables internal (non-boundary) Dirichlet constraints. If this is overloaded
+     * to return true, the assembler calls problem.hasInternalDirichletConstraint(element, scv).
+     * This means you have to implement the following member function
+     *
+     *    bool hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const;
+     *
+     * which returns a bool signifying whether the dof associated with the element/scv pair is contraint.
+     * If true is returned for a dof, the assembler calls problem.internalDiririchlet(element, scv).
+     * This means you have to additionally implement the following member function
+     *
+     *    PrimaryVariables internalDiririchlet(const Element& element, const SubControlVolume& scv) const;
+     *
+     * which returns the enforced Dirichlet values the dof associated with the element/scv pair.
+     */
+    static constexpr bool enableInternalDirichletConstraints()
+    { return false; }
+
+    /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
