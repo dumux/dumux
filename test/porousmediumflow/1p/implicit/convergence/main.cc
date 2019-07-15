@@ -175,9 +175,6 @@ int main(int argc, char** argv) try
             analyticFile << dxVector[i] << "," << analyticErrors[i] << "\n";
         for (unsigned int i = 0; i < discreteErrors.size(); ++i)
             discreteFile << dxVector[i] << "," << discreteErrors[i] << "\n";
-
-        analyticFile.close();
-        discreteFile.close();
     }
 
     // show parameters used
