@@ -72,8 +72,12 @@ public:
      * \param timeManager The time manager
      * \param grid The grid
      */
-    IMPETProblem2P2C(TimeManager &timeManager, Grid& grid)
-        : ParentType(timeManager, grid)
+    IMPETProblem2P2C(TimeManager& timeManager, Grid& grid)
+    : IMPETProblem2P2C(timeManager, grid, grid.leafGridView())
+    {}
+
+    IMPETProblem2P2C(TimeManager &timeManager, Grid& grid, const GridView& gridView)
+        : ParentType(timeManager, grid, gridView)
     { }
     /*!
      * \brief The constructor for given spatialParams
