@@ -176,16 +176,16 @@ int main(int argc, char** argv) try
         for (unsigned int i = 0; i < discreteErrors.size(); ++i)
             discreteFile << dxVector[i] << "," << discreteErrors[i] << "\n";
 
-        // show parameters used
-        Parameters::print();
-
-        // print dumux good bye message
-        if (mpiHelper.rank() == 0)
-            DumuxMessage::print(/*firstCall=*/false);
-
         analyticFile.close();
         discreteFile.close();
     }
+
+    // show parameters used
+    Parameters::print();
+
+    // print dumux good bye message
+    if (mpiHelper.rank() == 0)
+        DumuxMessage::print(/*firstCall=*/false);
 
     return 0;
 }
