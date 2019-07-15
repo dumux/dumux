@@ -106,6 +106,16 @@ public:
     static constexpr bool enableInternalDirichletConstraints()
     { return true; }
 
+    /*!
+     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
+     *        If true is returned for a dof, the equation for this dof is replaced
+     *        by the constraint that its primary variable values must match the
+     *        user-defined values obtained from the function internalDirichlet(),
+     *        which must be defined in the problem.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
     bool hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
         // the pure Neumann problem is only defined up to a constant
@@ -113,6 +123,11 @@ public:
         return (scv.dofIndex() == static_cast<std::size_t>(this->fvGridGeometry().numDofs()/2));
     }
 
+    /*!
+     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
     { return PrimaryVariables(1e5); }
 
