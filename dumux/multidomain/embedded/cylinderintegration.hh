@@ -216,8 +216,8 @@ class EllipticCylinderIntegration<Scalar, CylinderIntegrationMethod::spaced>
 
 public:
     //! samples: number of samples along z axis
-    EllipticCylinderIntegration(std::size_t rSamples)
-    : rSamples_(rSamples)
+    explicit EllipticCylinderIntegration(Scalar deltaA)
+    : deltaA_(deltaA)
     {}
 
     // elliptic cylinder with centerline points p, q and ellipse axis a, b
@@ -233,8 +233,8 @@ public:
         const auto normal = crossProduct(aVec, bVec);
         const auto height = (zAxis*normal)*length;
 
-        std::size_t aSamples = rSamples_;
-        const auto aStep = 2*a / Scalar(aSamples);
+        const auto aStep = deltaA_;
+        std::size_t aSamples = std::max(int(std::floor(2*a/aStep)), 1);
         std::size_t bSamples = std::max(int(std::floor(2*b/aStep)), 1);
         const auto bStep = 2*b / Scalar(bSamples);
         std::size_t zSamples = std::max(int(std::floor(height/aStep)), 1);
@@ -276,8 +276,9 @@ public:
         const auto meanLocalError = (height*a*b*M_PI - integrationElement_*samples_)/Scalar(samples_);
         integrationElement_ += meanLocalError;
 
-        // std::cout << "Elliptic cylinder integration:\n";
+        std::cout << "Elliptic cylinder integration -- samples: " << samples_ <<"\n";
         // std::cout << "  -- samples: " << samples_ << ", a: " << a << ", b: " << b << ", h: " << height
+        //           << "  -- a-samples: " << aSamples << ", b-samples: " << bSamples << ", z-samples: " << zSamples
         //           << ", volume: " << integrationElement_*samples_ << " (expected " << height*a*b*M_PI << ")\n";
         // std::cout << "  -- volume error was: " << meanLocalError/integrationElement_*100 << "%\n";
     }
@@ -308,7 +309,8 @@ private:
         return (da*da/(a*a) + db*db/(b*b) < 1.0);
     }
 
-    std::size_t rSamples_, samples_;
+    Scalar deltaA_;
+    std::size_t samples_;
     Scalar integrationElement_;
     std::vector<GlobalPosition> points_;
 };
@@ -320,8 +322,8 @@ class EllipseIntegration
     using GlobalPosition = Dune::FieldVector<Scalar, 3>;
 
 public:
-    EllipseIntegration(std::size_t rSamples)
-    : rSamples_(rSamples)
+    EllipseIntegration(Scalar deltaA)
+    : deltaA_(deltaA)
     {}
 
     // ellipse cylinder with center point p and ellipse axes a, b
@@ -333,8 +335,8 @@ public:
         bVec /= b;
         const auto normal = crossProduct(aVec, bVec);
 
-        std::size_t aSamples = rSamples_;
-        const auto aStep = 2*a / Scalar(aSamples);
+        const auto aStep = deltaA_;
+        std::size_t aSamples = std::max(int(std::floor(2*a/aStep)), 1);
         std::size_t bSamples = std::max(int(std::floor(2*b/aStep)), 1);
         const auto bStep = 2*b / Scalar(bSamples);
 
@@ -396,7 +398,8 @@ private:
         return (da*da/(a*a) + db*db/(b*b) < 1.0);
     }
 
-    std::size_t rSamples_, samples_;
+    Scalar deltaA_;
+    std::size_t samples_;
     Scalar integrationElement_;
     std::vector<GlobalPosition> points_;
 };
