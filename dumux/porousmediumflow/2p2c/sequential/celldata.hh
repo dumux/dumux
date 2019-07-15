@@ -133,6 +133,7 @@ public:
      * \param phaseIdx index of the Phase
      * \param value Value to be stored
      */
+    [[deprecated("cellData.setPressure is deprecated and will be removed after release 3.1. Use cellData.manipulateFluidState() and set pressure in fluid state directly")]]
     void setPressure(int phaseIdx, Scalar value)
     {
         manipulateFluidState().setPressure(phaseIdx, value);
@@ -294,6 +295,7 @@ public:
     /*** b) from fluidstate ***/
 
     //! DOC ME!
+    [[deprecated("cellData.setSaturation is deprecated and will be removed after release 3.1. Use cellData.manipulateFluidState() and set saturation in fluid state directly")]]
     void setSaturation(int phaseIdx, Scalar value)
     {
         fluidState_->setSaturation(phaseIdx, value);
@@ -307,6 +309,7 @@ public:
     }
 
     //! DOC ME!
+    [[deprecated("cellData.setViscosity is deprecated and will be removed after release 3.1. Use cellData.manipulateFluidState() and set viscosity in fluid state directly")]]
     void setViscosity(int phaseIdx, Scalar value)
     {
         fluidState_->setViscosity(phaseIdx, value);
