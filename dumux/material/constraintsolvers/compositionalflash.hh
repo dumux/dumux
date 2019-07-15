@@ -188,13 +188,10 @@ public:
 
         fluidState.setPresentPhaseIdx(presentPhaseIdx);
         fluidState.setMassFraction(presentPhaseIdx,comp0Idx, Z0);
-        fluidState.setMassFraction(presentPhaseIdx,comp1Idx, 1. - Z0);
 
         // transform mass to mole fractions
         fluidState.setMoleFraction(presentPhaseIdx, comp0Idx, Z0 / FluidSystem::molarMass(comp0Idx)
                 / (Z0 / FluidSystem::molarMass(comp0Idx) + (1. - Z0) / FluidSystem::molarMass(comp1Idx)));
-        fluidState.setMoleFraction(presentPhaseIdx, comp1Idx, (1. - Z0) / FluidSystem::molarMass(comp1Idx)
-        / (Z0 / FluidSystem::molarMass(comp0Idx) + (1. - Z0) / FluidSystem::molarMass(comp1Idx)));
 
         fluidState.setAverageMolarMass(presentPhaseIdx,
                 fluidState.massFraction(presentPhaseIdx, comp0Idx) * FluidSystem::molarMass(comp0Idx)
