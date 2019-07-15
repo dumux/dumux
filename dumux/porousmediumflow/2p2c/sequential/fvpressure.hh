@@ -901,13 +901,13 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
  * \param postTimeStep Flag indicating if we have just completed a time step
  */
 template<class TypeTag>
-void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& elementI, bool postTimeStep)
+void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element, bool postTimeStep)
 {
     // get global coordinate of cell center
-    GlobalPosition globalPos = elementI.geometry().center();
+    GlobalPosition globalPos = element.geometry().center();
 
     // cell Index and cell data
-    int eIdxGlobal = problem().variables().index(elementI);
+    int eIdxGlobal = problem().variables().index(element);
     CellData& cellData = problem().variables().cellData(eIdxGlobal);
 
     // acess the fluid state and prepare for manipulation
@@ -924,7 +924,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             / (cellData.massConcentration(wCompIdx)
                     + cellData.massConcentration(nCompIdx));
 
-    // make shure only physical quantities enter flash calculation
+    // make sure only physical quantities enter flash calculation
     if(Z0 < 0. || Z0 > 1.)
     {
         Dune::dgrave << "Feed mass fraction unphysical: Z0 = " << Z0
@@ -951,84 +951,60 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             }
     }
 
-    //determine phase pressures from primary pressure variable and pc of last TS
-    PhaseVector pressure(0.);
-    switch (pressureType)
-    {
-    case pw:
-    {
-        pressure[wPhaseIdx] = asImp_().pressure(eIdxGlobal);
-        pressure[nPhaseIdx] = asImp_().pressure(eIdxGlobal)
-                  + cellData.capillaryPressure();
-        break;
-    }
-    case pn:
-    {
-        pressure[wPhaseIdx] = asImp_().pressure(eIdxGlobal)
-                 - cellData.capillaryPressure();
-        pressure[nPhaseIdx] = asImp_().pressure(eIdxGlobal);
-        break;
-    }
-    }
-
-    //complete fluid state
+    PhaseVector pressure;
     CompositionalFlash<Scalar, FluidSystem> flashSolver;
-    flashSolver.concentrationFlash2p2c(fluidState,  Z0, pressure, problem().spatialParams().porosity(elementI), temperature_);
-
-    // iterations part in case of enabled capillary pressure
-    Scalar pc(0.), oldPc(0.);
-    if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+    if(GET_PROP_VALUE(TypeTag, EnableCapillarity)) // iterate capillary pressure and saturation
     {
-        pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
-                fluidState.saturation(wPhaseIdx));
-        unsigned int maxiter = 5;
-        int iterout = -1;
-        //start iteration loop
+        unsigned int maxiter = 6;
+        Scalar pc = cellData.capillaryPressure(); // initial guess for pc from last TS
+        // start iteration loop
         for (unsigned int iter = 0; iter < maxiter; iter++)
         {
-            //prepare pressures to enter flash calculation
             switch (pressureType)
             {
-            case pw:
-            {
-                // pressure[w] does not change, since it is primary variable
-                pressure[nPhaseIdx] = pressure[wPhaseIdx] + pc;
-                break;
-            }
-            case pn:
-            {
-                // pressure[n] does not change, since it is primary variable
-                pressure[wPhaseIdx] = pressure[nPhaseIdx] - pc;
-                break;
-            }
+                case pw:
+                {
+                    pressure[wPhaseIdx] = asImp_().pressure(eIdxGlobal);
+                    pressure[nPhaseIdx] = asImp_().pressure(eIdxGlobal) + pc;
+                    break;
+                }
+                case pn:
+                {
+                    pressure[wPhaseIdx] = asImp_().pressure(eIdxGlobal) - pc;
+                    pressure[nPhaseIdx] = asImp_().pressure(eIdxGlobal);
+                    break;
+                }
             }
 
-            //store old pc
-            oldPc = pc;
-            //update with better pressures
+            // complete fluid state
             flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
-                    problem().spatialParams().porosity(elementI), problem().temperatureAtPos(globalPos));
-            pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
-                                fluidState.saturation(wPhaseIdx));
-            // TODO: get right criterion, do output for evaluation
-            //converge criterion
-            if (fabs(oldPc-pc)<10)
-                maxiter = 1;
-            iterout = iter;
+                                               problem().spatialParams().porosity(element), temperature_);
+
+            // calculate new pc
+            Scalar oldPc = pc;
+            pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
+                                 fluidState.saturation(wPhaseIdx));
+
+            if (fabs(oldPc-pc)<10 && iter != 0)
+                break;
+
+            if (iter++ == maxiter)
+                Dune::dinfo << iter << "times iteration of pc was applied at Idx " << eIdxGlobal
+                << ", pc delta still " << fabs(oldPc-pc) << std::endl;
         }
-        if (iterout != 0)
-          Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << eIdxGlobal
-                      << ", pc delta still " << fabs(oldPc-pc) << std::endl;
     }
-    // initialize phase properties not stored in fluidstate
-    cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
-    cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
+    else  // capillary pressure neglected
+    {
+        pressure[wPhaseIdx] = pressure[nPhaseIdx] = asImp_().pressure()[eIdxGlobal];
+        flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
+                                           problem().spatialParams().porosity(element), temperature_);
+    }
 
     // initialize mobilities
-    cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI),
+    cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParams().materialLawParams(element),
                                                      fluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(wPhaseIdx));
-    cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI),
+    cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParams().materialLawParams(element),
                                                      fluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(nPhaseIdx));
 
@@ -1043,7 +1019,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     Scalar vol = massw / cellData.density(wPhaseIdx) + massn / cellData.density(nPhaseIdx);
     if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(problem().timeManager().timeStepSize(), 0.0, 1.0e-30))
     {
-        cellData.volumeError()=(vol - problem().spatialParams().porosity(elementI));
+        cellData.volumeError()=(vol - problem().spatialParams().porosity(element));
 
         using std::isnan;
         if (isnan(cellData.volumeError()))
@@ -1052,7 +1028,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
                     << "volErr[" << eIdxGlobal << "] isnan: vol = " << vol
                     << ", massw = " << massw << ", rho_l = " << cellData.density(wPhaseIdx)
                     << ", massn = " << massn << ", rho_g = " << cellData.density(nPhaseIdx)
-                    << ", poro = " << problem().spatialParams().porosity(elementI)
+                    << ", poro = " << problem().spatialParams().porosity(element)
                     << ", dt = " << problem().timeManager().timeStepSize());
         }
     }
