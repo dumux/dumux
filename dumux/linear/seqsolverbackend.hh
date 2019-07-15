@@ -946,6 +946,46 @@ private:
 
 /*!
  * \ingroup Linear
+ * \brief A simple ilu0 block diagonal preconditioned RestartedGMResSolver
+ * \note expects a system as a multi-type block-matrix
+ * | A  B |
+ * | C  D |
+ */
+class BlockDiagILU0RestartedGMResSolver : public LinearSolver
+{
+
+public:
+    using LinearSolver::LinearSolver;
+
+    // Solve saddle-point problem using a Schur complement based preconditioner
+    template<int precondBlockLevel = 2, class Matrix, class Vector>
+    bool solve(const Matrix& M, Vector& x, const Vector& b)
+    {
+        BlockDiagILU0Preconditioner<Matrix, Vector, Vector> preconditioner(M);
+        Dune::MatrixAdapter<Matrix, Vector, Vector> op(M);
+        static const int restartGMRes = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.GMResRestart");
+        Dune::RestartedGMResSolver<Vector> solver(op, preconditioner, this->residReduction(), restartGMRes,
+                                                  this->maxIter(), this->verbosity());
+        auto bTmp(b);
+        solver.apply(x, bTmp, result_);
+
+        return result_.converged;
+    }
+
+    const Dune::InverseOperatorResult& result() const
+    {
+      return result_;
+    }
+
+    std::string name() const
+    { return "block-diagonal ILU0 preconditioned restarted GMRes solver"; }
+
+private:
+    Dune::InverseOperatorResult result_;
+};
+
+/*!
+ * \ingroup Linear
  * \brief A simple ilu0 block diagonal preconditioner
  */
 template<class M, class X, class Y, int blockLevel = 2>
