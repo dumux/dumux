@@ -25,9 +25,14 @@
 #define DUMUX_DISCRETIZATION_EVAL_GRADIENTS_HH
 
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
+#include <dune/common/exceptions.hh>
 
+#include <dumux/common/typetraits/state.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
+
+#include "evalsolution.hh"
 
 namespace Dumux {
 
@@ -50,40 +55,52 @@ auto evalGradients(const Element& element,
                    const typename Element::Geometry& geometry,
                    const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
                    const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                   const typename Element::Geometry::GlobalCoordinate& globalPos)
+                   const typename Element::Geometry::GlobalCoordinate& globalPos,
+                   bool ignoreState = false)
 {
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    // determine if all states are the same at all vertices
+    using HasState = decltype(isValid(Detail::hasState())(elemSol[0]));
+    bool allStatesEqual = ignoreState || Detail::allStatesEqual(elemSol, HasState{});
 
-    // evaluate gradients using the local finite element basis
-    const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
-
-    // evaluate the shape function gradients at the scv center
-    using ShapeJacobian = typename std::decay_t< decltype(localBasis) >::Traits::JacobianType;
-    const auto localPos = geometry.local(globalPos);
-    std::vector< ShapeJacobian > shapeJacobian;
-    localBasis.evaluateJacobian(localPos, shapeJacobian);
-
-    // the inverse transposed of the jacobian matrix
-    const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
-
-    // interpolate the gradients
-    Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( GlobalPosition(0.0) );
-    for (int i = 0; i < element.subEntities(Element::Geometry::mydimension); ++i)
+    if (allStatesEqual)
     {
-        // the global shape function gradient
-        GlobalPosition gradN;
-        jacInvT.mv(shapeJacobian[i][0], gradN);
+        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-        // add gradient to global privar gradients
-        for (unsigned int pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+        // evaluate gradients using the local finite element basis
+        const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
+
+        // evaluate the shape function gradients at the scv center
+        using ShapeJacobian = typename std::decay_t< decltype(localBasis) >::Traits::JacobianType;
+        const auto localPos = geometry.local(globalPos);
+        std::vector< ShapeJacobian > shapeJacobian;
+        localBasis.evaluateJacobian(localPos, shapeJacobian);
+
+        // the inverse transposed of the jacobian matrix
+        const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
+
+        // interpolate the gradients
+        Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( GlobalPosition(0.0) );
+        for (int i = 0; i < element.subEntities(Element::Geometry::mydimension); ++i)
         {
-            GlobalPosition tmp(gradN);
-            tmp *= elemSol[i][pvIdx];
-            result[pvIdx] += tmp;
-        }
-    }
+            // the global shape function gradient
+            GlobalPosition gradN;
+            jacInvT.mv(shapeJacobian[i][0], gradN);
 
-    return result;
+            // add gradient to global privar gradients
+            for (unsigned int pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+            {
+                GlobalPosition tmp(gradN);
+                tmp *= elemSol[i][pvIdx];
+                result[pvIdx] += tmp;
+            }
+        }
+
+        return result;
+    }
+    else
+    {
+        DUNE_THROW(Dune::NotImplemented, "Element vertices have different phase states. Enforce calculation by setting ignoreState to true.");
+    }
 }
 
 /*!
