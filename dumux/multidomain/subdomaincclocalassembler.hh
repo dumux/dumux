@@ -129,20 +129,6 @@ public:
             if (i != id)
                 this->assembleJacobianCoupling(i, jacRow, res[globalI], gridVariables);
         });
-
-        auto applyDirichlet = [&] (const auto& scvI,
-                                   const auto& dirichletValues,
-                                   const auto eqIdx,
-                                   const auto pvIdx)
-        {
-            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
-            auto& row = jacRow[domainId][scvI.dofIndex()];
-            for (auto col = row.begin(); col != row.end(); ++col)
-                row[col.index()][eqIdx] = 0.0;
-            row[scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
-        };
-
-        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -174,16 +160,6 @@ public:
         this->asImp_().bindLocalViews();
         const auto globalI = this->fvGeometry().fvGridGeometry().elementMapper().index(this->element());
         res[globalI] = this->evalLocalResidual()[0]; // forward to the internal implementation
-
-        auto applyDirichlet = [&] (const auto& scvI,
-                                   const auto& dirichletValues,
-                                   const auto eqIdx,
-                                   const auto pvIdx)
-        {
-            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
-        };
-
-        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -275,6 +251,8 @@ public:
     template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
     void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
     {
+        this->asImp_().bindLocalViews();
+
         // enforce Dirichlet constraints strongly by overwriting partial derivatives with 1 or 0
         // and set the residual to (privar - dirichletvalue)
         for (const auto& scvI : scvs(this->fvGeometry()))

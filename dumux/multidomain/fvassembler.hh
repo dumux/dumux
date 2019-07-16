@@ -31,6 +31,7 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/istl/matrixindexset.hh>
+#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
@@ -189,6 +190,22 @@ public:
             auto& subRes = (*residual_)[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
         });
+
+        forEach(integralRange(Dune::Hybrid::size(*jacobian_)), [&](const auto domainId)
+        {
+            auto& jacRow = (*jacobian_)[domainId];
+            auto& subRes = (*residual_)[domainId];
+            this->enforceDirichletConstraints_(domainId, jacRow, subRes, curSol);
+        });
+
+        // using namespace Dune::Hybrid;
+        // forEach(integralRange(Dune::Hybrid::size(*jacobian_)), [&](auto&& DID)
+        // {
+        //     forEach(integralRange(Dune::Hybrid::size(*jacobian_)), [&](auto&& DID2)
+        //     {
+        //         Dune::printmatrix(std::cout, (*jacobian_)[DID][DID2], "", "");
+        //     });
+        // });
     }
 
     //! compute the residuals using the internal residual
@@ -448,6 +465,40 @@ private:
         });
     }
 
+    template<std::size_t i, class JacRow, class SubRes>
+    void enforceDirichletConstraints_(Dune::index_constant<i> domainId, JacRow& jacRow, SubRes& subRes,
+                                      const SolutionVector& curSol)
+    {
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            using namespace Dune::Hybrid;
+            forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& domainIdJ)
+            {
+                if (domainId != domainIdJ)
+                {
+                    auto& row = jacRow[domainIdJ][scvI.dofIndex()];
+                    for (auto col = row.begin(); col != row.end(); ++col)
+                        row[col.index()][eqIdx] = 0.0;
+                }
+            });
+
+            subRes[scvI.dofIndex()][eqIdx] = curSol[domainId][scvI.dofIndex()][pvIdx] - dirichletValues[pvIdx];
+            auto& row = jacRow[domainId][scvI.dofIndex()];
+            for (auto col = row.begin(); col != row.end(); ++col)
+                row[col.index()][eqIdx] = 0.0;
+            row[scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+        };
+
+        enforceDirichletConstraints_(domainId, [&](const auto& element)
+        {
+            SubDomainAssembler<i> subDomainAssembler(*this, element, curSol, *couplingManager_);
+            subDomainAssembler.enforceInternalDirichletConstraints(applyDirichlet);
+        });
+    }
+
     template<std::size_t i, class SubRes>
     void assembleResidual_(Dune::index_constant<i> domainId, SubRes& subRes,
                            const SolutionVector& curSol)
@@ -471,6 +522,17 @@ private:
         // let the local assembler add the element contributions
         for (const auto& element : elements(gridView(domainId)))
             assembleElement(element);
+    }
+
+    /*!
+     * \brief A method enforcing Dirichlet constraints per element
+     */
+    template<std::size_t i, class EnforceDirichletFunc>
+    void enforceDirichletConstraints_(Dune::index_constant<i> domainId, EnforceDirichletFunc&& enforceDirichletConstraints) const
+    {
+        // let the local assembler add the element contributions
+        for (const auto& element : elements(gridView(domainId)))
+            enforceDirichletConstraints(element);
     }
 
     // get diagonal block pattern
