@@ -154,6 +154,9 @@ public:
         fluidState.setMolarDensity(phase0Idx, FluidSystem::molarDensity(fluidState, phase0Idx));
         fluidState.setMolarDensity(phase1Idx, FluidSystem::molarDensity(fluidState, phase1Idx));
 
+        fluidState.setViscosity(phase0Idx, FluidSystem::viscosity(fluidState, phase0Idx));
+        fluidState.setViscosity(phase1Idx, FluidSystem::viscosity(fluidState, phase1Idx));
+
         Scalar sw = phaseMassFraction[phase0Idx] / fluidState.density(phase0Idx);
         sw /= (phaseMassFraction[phase0Idx] / fluidState.density(phase0Idx)
                     + phaseMassFraction[phase1Idx] / fluidState.density(phase1Idx));
@@ -196,6 +199,8 @@ public:
 
         fluidState.setDensity(presentPhaseIdx, FluidSystem::density(fluidState, presentPhaseIdx));
         fluidState.setMolarDensity(presentPhaseIdx, FluidSystem::molarDensity(fluidState, presentPhaseIdx));
+
+        fluidState.setViscosity(presentPhaseIdx, FluidSystem::viscosity(fluidState, presentPhaseIdx));
     }
 //@}
 
@@ -253,6 +258,9 @@ public:
         fluidState.setDensity(phase1Idx, FluidSystem::density(fluidState, phase1Idx));
         fluidState.setMolarDensity(phase0Idx, FluidSystem::molarDensity(fluidState, phase0Idx));
         fluidState.setMolarDensity(phase1Idx, FluidSystem::molarDensity(fluidState, phase1Idx));
+
+        fluidState.setViscosity(phase0Idx, FluidSystem::viscosity(fluidState, phase0Idx));
+        fluidState.setViscosity(phase1Idx, FluidSystem::viscosity(fluidState, phase1Idx));
 
         // set saturation
         fluidState.setSaturation(phase0Idx, saturation);

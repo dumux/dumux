@@ -134,7 +134,7 @@ public:
         Scalar dt_estimate = 0.;
         Dune::dinfo << "secant guess"<< std::endl;
         problem_.transportModel().update(problem_.timeManager().time(), dt_estimate, updateEstimate_, false);
-        //last argument false in update() makes shure that this is estimate and no "real" transport step
+        //last argument false in update() makes sure that this is estimate and no "real" transport step
 
         // if we just started a new episode, the TS size of the update Estimate is a better
         // estimate then the size of the last time step
@@ -669,10 +669,6 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
 
         problem_.transportModel().totalConcentration(wCompIdx,eIdxGlobal) = cellData.massConcentration(wCompIdx);
         problem_.transportModel().totalConcentration(nCompIdx,eIdxGlobal) = cellData.massConcentration(nCompIdx);
-
-        // initialize phase properties not stored in fluidstate
-        cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
-        cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem_.spatialParams().materialLawParams(element),
