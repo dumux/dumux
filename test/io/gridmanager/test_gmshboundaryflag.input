@@ -1,0 +1,5 @@
+[Grid]
+File = ./grids/unitcube.msh
+Verbosity = 1 # verbose grid file parsing
+DomainMarkers = true # read domain markers (gmsh physical entities)
+BoundarySegments = true # read boundary markers (gmsh physical entities)
