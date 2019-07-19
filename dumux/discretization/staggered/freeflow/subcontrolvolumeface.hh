@@ -368,7 +368,6 @@ private:
     std::vector<GridIndexType> scvIndices_;
     bool boundary_;
 
-    int dofIdx_;
     Scalar selfToOppositeDistance_;
     AxisData axisData_;
     std::array<PairData, numPairs> pairData_;
