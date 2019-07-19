@@ -208,6 +208,8 @@ int main(int argc, char** argv) try
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
+        twoPGridVariables->advanceTimeStep();
+        poroMechGridVariables->advanceTimeStep();
 
         // write vtk output
         twoPVtkWriter.write(timeLoop->time());
