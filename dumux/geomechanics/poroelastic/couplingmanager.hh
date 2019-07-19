@@ -392,18 +392,15 @@ private:
 
             // firstly, the element couples to the nodal dofs in itself
             for (int i = 0; i < element.geometry().corners(); ++i)
-                pmFlowCouplingMap_[eIdx].push_back( pmFlowGridGeom.vertexMapper().subIndex(element, i , dim) );
+                pmFlowCouplingMap_[eIdx].push_back( poroMechGridGeom.vertexMapper().subIndex(element, i , dim) );
 
             // the pm flow problem couples to the same elements as in its own stencil
             // due to the dependency of the residual on all permeabilities in its stencil,
             // which in turn depend on the mechanical deformations.
             const auto& inverseConnectivity = pmFlowGridGeom.connectivityMap()[eIdx];
             for (const auto& dataJ : inverseConnectivity)
-            {
-                const auto elemJ = pmFlowGridGeom.element(dataJ.globalJ);
-                for (int i = 0; i < elemJ.geometry().corners(); ++i)
-                    pmFlowCouplingMap_[dataJ.globalJ].push_back( pmFlowGridGeom.vertexMapper().subIndex(elemJ, i , dim) );
-            }
+                for (int i = 0; i < element.geometry().corners(); ++i)
+                    pmFlowCouplingMap_[dataJ.globalJ].push_back( poroMechGridGeom.vertexMapper().subIndex(element, i , dim) );
         }
 
         // make stencils unique
