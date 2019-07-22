@@ -223,6 +223,8 @@ public:
     // elliptic cylinder with centerline points p, q and ellipse axis a, b
     void setGeometry(const GlobalPosition& p, const GlobalPosition& q, GlobalPosition aVec, GlobalPosition bVec)
     {
+        origin_ = p;
+
         auto zAxis = (q-p);
         const auto length = zAxis.two_norm();
         zAxis /= length;
@@ -292,6 +294,9 @@ public:
     std::size_t size() const
     { return samples_; }
 
+    const GlobalPosition& origin() const
+    { return origin_; }
+
 private:
     bool pointInEllipse(const GlobalPosition& p, const GlobalPosition& center,
                         const GlobalPosition& aVec, const GlobalPosition& bVec,
@@ -313,6 +318,7 @@ private:
     std::size_t samples_;
     Scalar integrationElement_;
     std::vector<GlobalPosition> points_;
+    GlobalPosition origin_;
 };
 
 
