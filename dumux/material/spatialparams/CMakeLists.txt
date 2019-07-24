@@ -1,4 +1,5 @@
 install(FILES
+elastic.hh
 fv.hh
 fv1p.hh
 fvelastic.hh
