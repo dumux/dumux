@@ -29,6 +29,7 @@
 #include <dumux/common/defaultmappertraits.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/localview.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/fem/feelementgeometry.hh>
