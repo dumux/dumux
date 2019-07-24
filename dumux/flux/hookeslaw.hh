@@ -41,5 +41,6 @@ class HookesLaw;
 } // end namespace Dumux
 
 #include <dumux/flux/box/hookeslaw.hh>
+#include <dumux/flux/fem/hookeslaw.hh>
 
 #endif

@@ -1,6 +1,7 @@
 add_subdirectory(box)
 add_subdirectory(ccmpfa)
 add_subdirectory(cctpfa)
+add_subdirectory(fem)
 add_subdirectory(shallowwater)
 add_subdirectory(staggered)
 
