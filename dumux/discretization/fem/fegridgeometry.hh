@@ -88,6 +88,12 @@ public:
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
 
+    //! update the mappers etc
+    void update()
+    {
+        ParentType::update();
+    }
+
     //! The total number of degrees of freedom
     auto numDofs() const
     { return feBasis_->size(); }
