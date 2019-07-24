@@ -147,6 +147,12 @@ struct SecondaryInteractionVolume { using type = UndefinedProperty; };          
 template<class TypeTag, class MyTypeTag>
 struct DualGridNodalIndexSet { using type = UndefinedProperty; };               //!< The type used for the nodal index sets of the dual grid
 
+/////////////////////////////////////////////////////////////////
+// Additional properties used by the finite element  schemes:
+/////////////////////////////////////////////////////////////////
+template<class TypeTag, class MyTypeTag>
+struct SecondaryVariables { using type = UndefinedProperty; };                  //!< Object to store secondary variables evaluated at integration points
+
 /////////////////////////////////////////////////////////////
 // Properties used by models involving flow in porous media:
 /////////////////////////////////////////////////////////////
