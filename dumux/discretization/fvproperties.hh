@@ -55,6 +55,11 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
+//! The grid geometry
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::FiniteVolumeModel>
+{ using type = GetPropType<TypeTag, Properties::FVGridGeometry>; };
+
 //! We do not store the FVGeometry by default
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
