@@ -31,19 +31,21 @@ namespace Dumux {
  * \ingroup FEMDiscretization
  * \brief Grid geometry local view, which is a wrapper around a
  *        finite element basis local view.
- * \tparam The grid geometry type
- * \tparam The FEBasis local view
+ * \tparam GG The grid geometry type
  */
-template<class GridGeometry>
+template<class GG>
 class FEElementGeometry
 {
-    using GridView = typename GridGeometry::GridView;
+    using GridView = typename GG::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FEBasis = typename GridGeometry::FEBasis;
+    using FEBasis = typename GG::FEBasis;
     using FEBasisLocalView = typename FEBasis::LocalView;
 
 public:
+    //! export type of grid geometry
+    using GridGeometry = GG;
+
     //! constructor taking grid geometry
     FEElementGeometry(const GridGeometry& gg)
     : gridGeometry_(gg)
