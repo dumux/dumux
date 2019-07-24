@@ -84,6 +84,8 @@ template<class TypeTag, class MyTypeTag>
 struct SolutionVector { using type = UndefinedProperty; };         //!< Vector containing all primary variable vector of the grid
 template<class TypeTag, class MyTypeTag>
 struct BoundaryTypes { using type = UndefinedProperty; };          //!< Stores the boundary types of a single degree of freedom
+template<class TypeTag, class MyTypeTag>
+struct GridGeometry { using type = UndefinedProperty; };           //!< The type of the grid geometry, a wrapper around a Dune::GridView
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.
