@@ -25,24 +25,24 @@
 #define DUMUX_BOUNDARY_FLAG_HH
 
 #include <cstddef>
+#include <limits>
 
 namespace Dumux {
 
 /*!
- * \file
- * \ingroup Common
- * \brief Boundary flag to store e.g. in sub control volume faces
- * \note Can be specialized for each grid manager (in the gridmanager headers)
- * \tparam Grid the type of the grid
+ * \ingroup InputOutput
+ * \brief Class for accessing boundary flags
+ * \note this works for all grid managers with gmsh meshes.
  */
-template<class Grid>
-class BoundaryFlag
+class BoundarySegmentIndexFlag
 {
 public:
-    BoundaryFlag() : flag_(-1) {}
+    BoundarySegmentIndexFlag()
+    : flag_(std::numeric_limits<std::size_t>::max()) {}
 
     template<class Intersection>
-    BoundaryFlag(const Intersection& i) : flag_(-1)
+    BoundarySegmentIndexFlag(const Intersection& i)
+    : flag_(std::numeric_limits<std::size_t>::max())
     {
         if (i.boundary())
             flag_ = i.boundarySegmentIndex();
@@ -55,6 +55,17 @@ public:
 private:
     value_type flag_;
 };
+
+/*!
+ * \file
+ * \ingroup Common
+ * \brief Boundary flag to store e.g. in sub control volume faces
+ * \note Can be specialized for each grid manager (in the gridmanager headers)
+ * \tparam Grid the type of the grid
+ */
+template<class Grid>
+class BoundaryFlag : public BoundarySegmentIndexFlag
+{ using BoundarySegmentIndexFlag::BoundarySegmentIndexFlag; };
 
 }  // end namespace Dumux
 
