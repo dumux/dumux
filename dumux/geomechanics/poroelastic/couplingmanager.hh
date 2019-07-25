@@ -138,8 +138,10 @@ public:
               std::shared_ptr< Problem<PoroMechId> > poroMechanicalProblem,
               const SolutionVector& curSol)
     {
-        // set up tuple containing the sub-problems
-        problemTuple_ = std::make_tuple(pmFlowProblem, poroMechanicalProblem);
+        // set the sub problems
+        this->setSubProblem(pmFlowProblem, pmFlowId);
+        this->setSubProblem(poroMechanicalProblem, poroMechId);
+
         // copy the solution vector
         ParentType::updateSolution(curSol);
         // set up the coupling map pmfow -> poromechanics
@@ -153,7 +155,7 @@ public:
                                                          const Element<PMFlowId>& element,
                                                          Dune::index_constant<PoroMechId> poroMechDomainId) const
     {
-        return pmFlowCouplingMap_[ problem<PMFlowId>().fvGridGeometry().elementMapper().index(element) ];
+        return pmFlowCouplingMap_[ this->problem(pmFlowId).fvGridGeometry().elementMapper().index(element) ];
     }
 
     /*!
@@ -163,7 +165,7 @@ public:
                                                           const Element<PoroMechId>& element,
                                                           Dune::index_constant<PMFlowId> pmFlowDomainId) const
     {
-        const auto eIdx = problem<PMFlowId>().fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(pmFlowId).fvGridGeometry().elementMapper().index(element);
         return CouplingStencilType<PoroMechId>{ {eIdx} };
     }
 
@@ -185,11 +187,12 @@ public:
 
         // prepare the fvGeometry and the element volume variables
         // these quantities will be used later to obtain the effective pressure
-        auto fvGeometry = localView( problem<PMFlowId>().fvGridGeometry() );
+        auto fvGeometry = localView( this->problem(pmFlowId).fvGridGeometry() );
         auto elemVolVars = localView( assembler.gridVariables(Dune::index_constant<PMFlowId>()).curGridVolVars() );
 
         fvGeometry.bindElement(element);
         elemVolVars.bindElement(element, fvGeometry, this->curSol()[Dune::index_constant<PMFlowId>()]);
+
         poroMechCouplingContext_.pmFlowElement = element;
         poroMechCouplingContext_.pmFlowFvGeometry = std::make_unique< FVElementGeometry<PMFlowId> >(fvGeometry);
         poroMechCouplingContext_.pmFlowElemVolVars = std::make_unique< ElementVolumeVariables<PMFlowId> >(elemVolVars);
@@ -346,16 +349,6 @@ public:
                                                                         poroMechLocalAssembler.elemBcTypes());
     }
 
-    //! Return a const reference to one of the problems
-    template<std::size_t id, std::enable_if_t<(id == PMFlowId || id == PoroMechId), int> = 0>
-    const Problem<id>& problem() const
-    { return *std::get<(id == PMFlowId ? 0 : 1)>(problemTuple_); }
-
-    //! Return reference to one of the problems
-    template<std::size_t id, std::enable_if_t<(id == PMFlowId || id == PoroMechId), int> = 0>
-    Problem<id>& problem()
-    { return *std::get<(id == PMFlowId ? 0 : 1)>(problemTuple_); }
-
     //! Return the coupling context (used in mechanical sub-problem to compute effective pressure)
     const PoroMechanicsCouplingContext& poroMechanicsCouplingContext() const
     { return poroMechCouplingContext_; }
@@ -376,8 +369,8 @@ private:
     void initializeCouplingMap_()
     {
         // some references for convenience
-        const auto& pmFlowGridGeom = problem<PMFlowId>().fvGridGeometry();
-        const auto& poroMechGridGeom = problem<PoroMechId>().fvGridGeometry();
+        const auto& pmFlowGridGeom = this->problem(pmFlowId).fvGridGeometry();
+        const auto& poroMechGridGeom = this->problem(poroMechId).fvGridGeometry();
 
         // make sure the two grids are really the same. Note that if the two grids
         // happen to have equal number of elements by chance, we don't detect this source of error.
@@ -410,11 +403,6 @@ private:
             stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
         }
     }
-
-    // tuple for storing pointers to the sub-problems
-    using PMFlowProblemPtr = std::shared_ptr< Problem<PMFlowId> >;
-    using PoroMechanicalProblemPtr = std::shared_ptr< Problem<PoroMechId> >;
-    std::tuple<PMFlowProblemPtr, PoroMechanicalProblemPtr> problemTuple_;
 
     // Container for storing the coupling element stencils for the pm flow domain
     std::vector< CouplingStencilType<PMFlowId> > pmFlowCouplingMap_;
