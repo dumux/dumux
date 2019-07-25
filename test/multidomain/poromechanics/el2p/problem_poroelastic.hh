@@ -139,16 +139,13 @@ public:
      */
     Scalar effectiveFluidDensity(const Element& element, const SubControlVolume& scv) const
     {
-        // get context from coupling manager
-        const auto& context = couplingManager().poroMechanicsCouplingContext();
+        // get porous medium flow volume variables from coupling manager
+        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
 
-        // here, we know that the flow problem uses cell-centered finite volumes, thus,
-        // we simply take the volume variables of the scv (i.e. element) to obtain fluid properties
-        const auto& facetVolVars = (*context.pmFlowElemVolVars)[scv.elementIndex()];
-        Scalar wPhaseDensity = facetVolVars.density(FluidSystem::phase0Idx);
-        Scalar nPhaseDensity = facetVolVars.density(FluidSystem::phase1Idx);
-        Scalar Sw = facetVolVars.saturation(FluidSystem::phase0Idx);
-        Scalar Sn = facetVolVars.saturation(FluidSystem::phase1Idx);
+        Scalar wPhaseDensity = pmFlowVolVars.density(FluidSystem::phase0Idx);
+        Scalar nPhaseDensity = pmFlowVolVars.density(FluidSystem::phase1Idx);
+        Scalar Sw = pmFlowVolVars.saturation(FluidSystem::phase0Idx);
+        Scalar Sn = pmFlowVolVars.saturation(FluidSystem::phase1Idx);
         return (wPhaseDensity * Sw + nPhaseDensity * Sn);
     }
 
@@ -161,17 +158,13 @@ public:
                                  const ElementVolumeVariables& elemVolVars,
                                  const FluxVarsCache& fluxVarsCache) const
     {
-        // get context from coupling manager
-        const auto& context = couplingManager().poroMechanicsCouplingContext();
+        // get porous medium flow volume variables from coupling manager
+        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
 
-        // here, we know that the flow problem uses cell-centered finite volumes, thus,
-        // we simply take the volume variables of the element to obtain fluid properties
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-        const auto& facetVolVars = (*context.pmFlowElemVolVars)[eIdx];
-        Scalar pw = facetVolVars.pressure(FluidSystem::phase0Idx);
-        Scalar pn = facetVolVars.pressure(FluidSystem::phase1Idx);
-        Scalar Sw = facetVolVars.saturation(FluidSystem::phase0Idx);
-        Scalar Sn = facetVolVars.saturation(FluidSystem::phase1Idx);
+        Scalar pw = pmFlowVolVars.pressure(FluidSystem::phase0Idx);
+        Scalar pn = pmFlowVolVars.pressure(FluidSystem::phase1Idx);
+        Scalar Sw = pmFlowVolVars.saturation(FluidSystem::phase0Idx);
+        Scalar Sn = pmFlowVolVars.saturation(FluidSystem::phase1Idx);
         return (pw * Sw + pn * Sn);
     }
 
