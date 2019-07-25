@@ -28,6 +28,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gmshboundaryflag.hh>
 
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>

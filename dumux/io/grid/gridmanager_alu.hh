@@ -219,28 +219,6 @@ private:
     int flag_;
 };
 
-
-template<class Grid>
-class GmshBoundaryFlag
-{
-public:
-    GmshBoundaryFlag() : flag_(-1) {}
-
-    template<class Intersection>
-    GmshBoundaryFlag(const Intersection& i) : flag_(-1)
-    {
-        if (i.boundary())
-            flag_ = i.boundarySegmentIndex();
-    }
-
-    using value_type = std::size_t;
-
-    value_type get() const { return flag_; }
-
-private:
-    value_type flag_;
-};
-
 #endif // DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 #endif // HAVE_DUNE_ALUGRID
 
