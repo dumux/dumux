@@ -39,20 +39,20 @@ namespace Dumux {
 
 
 // In order to use an alternative BoundaryFlag class, we have to adapt the GridGeometryTraits
-template<class GridView, class MyBoundaryFlag>
+template<class GridView>
 struct MyBoxGridGeometryTraits : public BoxDefaultGridGeometryTraits<GridView>
 {
     struct MyScvfTraits : public BoxDefaultScvfGeometryTraits<GridView>
-    { using BoundaryFlag = MyBoundaryFlag; };
+    { using BoundaryFlag = GmshBoundaryFlag; };
 
     using SubControlVolumeFace = BoxSubControlVolumeFace<GridView, MyScvfTraits>;
 };
 
-template<class GridView, class MyBoundaryFlag>
+template<class GridView>
 struct MyCCTpfaGridGeometryTraits : public CCTpfaDefaultGridGeometryTraits<GridView>
 {
     struct MyScvfTraits : public CCTpfaDefaultScvfGeometryTraits<GridView>
-    { using BoundaryFlag = MyBoundaryFlag; };
+    { using BoundaryFlag = GmshBoundaryFlag; };
 
     using SubControlVolumeFace = CCTpfaSubControlVolumeFace<GridView, MyScvfTraits>;
 };
@@ -83,7 +83,7 @@ int main(int argc, char** argv) try
     using BoxFVGridGeometry = BoxFVGridGeometry<double, typename Grid::LeafGridView,
                                              ENABLE_CACHING,
                                              MyBoxGridGeometryTraits<
-                                                 typename Grid::LeafGridView, GmshBoundaryFlag<Grid>
+                                                 typename Grid::LeafGridView
                                                  >
                                              >;
     auto boxFvGridGeometry = std::make_shared<BoxFVGridGeometry>(leafGridView);
@@ -100,7 +100,7 @@ int main(int argc, char** argv) try
     using CCTpfaFVGridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView,
                                              ENABLE_CACHING,
                                              MyCCTpfaGridGeometryTraits<
-                                                 typename Grid::LeafGridView, GmshBoundaryFlag<Grid>
+                                                 typename Grid::LeafGridView
                                                  >
                                              >;
     auto ccTpfaFvGridGeometry = std::make_shared<CCTpfaFVGridGeometry>(leafGridView);
