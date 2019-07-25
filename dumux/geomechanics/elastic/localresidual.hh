@@ -29,15 +29,128 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
+#include <dumux/discretization/method.hh>
+#include <dumux/assembly/felocalresidual.hh>
+
 namespace Dumux {
+
+//! Forward declaration of the implementation
+template<class TypeTag, DiscretizationMethod dm>
+class ElasticLocalResidualImpl;
 
 /*!
  * \ingroup Geomechanics
  * \brief Element-wise calculation of the local residual for problems
- *        using the elastic model considering linear elasticity.
+ *        using the elastic model considering linear elasticity. This
+ *        is a convenience alias the selects the right implementation
+ *        depending on the chosen discretization scheme.
+ * \note Currently the elastic model works for box discretization
+ *       and finite element schemes
  */
 template<class TypeTag>
-class ElasticLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
+using ElasticLocalResidual
+= ElasticLocalResidualImpl<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+
+/*!
+ * \ingroup Geomechanics
+ * \brief Implementation of the local residual for finite element schemes.
+ */
+template<class TypeTag>
+class ElasticLocalResidualImpl<TypeTag, DiscretizationMethod::fem>
+: public FELocalResidual<TypeTag>
+{
+    using ParentType = FELocalResidual<TypeTag>;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SecondaryVariables = typename GridVariables::SecondaryVariables;
+
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+
+    // class assembling the stress tensor
+    using StressType = GetPropType<TypeTag, Properties::StressType>;
+
+public:
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Calculate the flux term of the equation
+     *
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param feGeometry The finite-element geometry
+     * \param elemSol The element solution vector
+     * \param ipData The trial and ansatz space shape function values/gradients
+     *               evaluated at the integration point
+     * \param secVars The secondary variables evaluated at the integration point
+     */
+    template<class IpData, class ElementSolution>
+    typename StressType::StressTensor computeFlux(const Problem& problem,
+                                                  const Element& element,
+                                                  const ElementGeometry& feGeometry,
+                                                  const ElementSolution& elemSol,
+                                                  const IpData& ipData,
+                                                  const SecondaryVariables& secVars) const
+    {
+        // obtain force on the face from stress type
+        return StressType::stressTensor(problem, element, feGeometry, elemSol, ipData, secVars);
+    }
+
+    /*!
+     * \brief Calculate the source term of the equation
+     *
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param feGeometry The finite-element geometry
+     * \param elemSol The element solution vector
+     * \param ipData The trial and ansatz space shape function values/gradients
+     *               evaluated at the integration point
+     * \param secVars The secondary variables evaluated at the integration point
+     */
+    template<class IpData, class ElementSolution>
+    NumEqVector computeSource(const Problem& problem,
+                              const Element& element,
+                              const ElementGeometry& feGeometry,
+                              const ElementSolution& elemSol,
+                              const IpData& ipData,
+                              const SecondaryVariables& secVars) const
+    {
+        NumEqVector source(0.0);
+
+        // add contributions from volume flux sources
+        source += problem.source(element, feGeometry, elemSol, ipData, secVars);
+
+        // TODO: add contribution from possible point sources
+
+        // maybe add gravitational acceleration
+        static const bool gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
+        if (gravity)
+        {
+            const auto& g = problem.spatialParams().gravity(ipData.ipGlobal());
+            for (int dir = 0; dir < GridView::dimensionworld; ++dir)
+                source[Indices::momentum(dir)] += secVars.solidDensity()*g[dir];
+        }
+
+        return source;
+    }
+};
+
+/*!
+ * \ingroup Geomechanics
+ * \brief Implementation of the local residual for the box scheme.
+
+ */
+template<class TypeTag>
+class ElasticLocalResidualImpl<TypeTag, DiscretizationMethod::box>
+: public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
 
