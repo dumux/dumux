@@ -57,6 +57,7 @@ class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Im
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using Problem = typename Assembler::Problem;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
@@ -231,6 +232,15 @@ public:
         }
     }
 
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        DUNE_THROW(Dune::NotImplemented, "Internal constraints for box method");
+    }
+
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {}
 };
 
 /*!

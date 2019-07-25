@@ -63,6 +63,7 @@ class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Imp
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
 public:
 

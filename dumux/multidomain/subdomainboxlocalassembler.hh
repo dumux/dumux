@@ -293,6 +293,16 @@ public:
         }
     }
 
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        DUNE_THROW(Dune::NotImplemented, "Internal constraints for box method");
+    }
+
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {}
+
     //! return reference to the underlying problem
     const Problem& problem() const
     { return this->assembler().problem(domainId); }
