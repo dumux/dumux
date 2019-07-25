@@ -32,7 +32,6 @@ namespace Dumux {
  * \ingroup InputOutput
  * \brief Class for accessing boundary flags for Gmsh meshes.
  */
-template<class Grid>
 class GmshBoundaryFlag
 {
 public:
