@@ -467,7 +467,7 @@ private:
         // store keys which were not accessed
         const auto& keys = tree.getValueKeys();
         for (const auto& key : keys)
-            if (!usedRuntimeParams_.hasKey(prefix + key))
+            if (key != "ParameterFile" && !usedRuntimeParams_.hasKey(prefix + key))
                 unusedParams.push_back(prefix + key);
 
         // recursively loop over all subtrees
