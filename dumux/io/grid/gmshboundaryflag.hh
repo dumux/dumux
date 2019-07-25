@@ -25,6 +25,7 @@
 #ifndef DUMUX_GMSH_BOUNDARY_FLAG_HH
 #define DUMUX_GMSH_BOUNDARY_FLAG_HH
 
+#include <limits>
 
 namespace Dumux {
 
@@ -35,10 +36,12 @@ namespace Dumux {
 class GmshBoundaryFlag
 {
 public:
-    GmshBoundaryFlag() : flag_(-1) {}
+    GmshBoundaryFlag()
+    : flag_(std::numeric_limits<std::size_t>::max()) {}
 
     template<class Intersection>
-    GmshBoundaryFlag(const Intersection& i) : flag_(-1)
+    GmshBoundaryFlag(const Intersection& i)
+    : flag_(std::numeric_limits<std::size_t>::max())
     {
         if (i.boundary())
             flag_ = i.boundarySegmentIndex();
