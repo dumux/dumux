@@ -351,6 +351,7 @@ public:
     }
 
     //! Return the coupling context (used in mechanical sub-problem to compute effective pressure)
+    [[deprecated("Obtain the volume variables directly calling getPMFlowVolVars(element). Will be removed after 3.1!")]]
     const PoroMechanicsCouplingContext& poroMechanicsCouplingContext() const
     { return poroMechCouplingContext_; }
 
