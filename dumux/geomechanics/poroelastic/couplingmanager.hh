@@ -66,6 +66,7 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     template<std::size_t id> using PrimaryVariables = typename GridVariables<id>::PrimaryVariables;
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
     template<std::size_t id> using ElementVolumeVariables = typename GridVolumeVariables<id>::LocalView;
+    template<std::size_t id> using VolumeVariables = typename GridVolumeVariables<id>::VolumeVariables;
     template<std::size_t id> using FVGridGeometry = typename GridVariables<id>::GridGeometry;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
@@ -352,6 +353,15 @@ public:
     //! Return the coupling context (used in mechanical sub-problem to compute effective pressure)
     const PoroMechanicsCouplingContext& poroMechanicsCouplingContext() const
     { return poroMechCouplingContext_; }
+
+
+    //! Return the porous medium flow variables an element/scv of the poromech domain couples to
+    const VolumeVariables<PMFlowId>& getPMFlowVolVars(const Element<PoroMechId>& element) const
+    {
+        //! If we do not yet have the queried object, build it first
+        const auto eIdx = this->problem(poroMechId).fvGridGeometry().elementMapper().index(element);
+        return (*poroMechCouplingContext_.pmFlowElemVolVars)[eIdx];
+    }
 
     /*!
      * \brief the solution vector of the coupled problem
