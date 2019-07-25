@@ -138,11 +138,9 @@ public:
     Scalar effectiveFluidDensity(const Element& element,
                                  const SubControlVolume& scv) const
     {
-        // get context from coupling manager
-        // here, we know that the flow problem uses cell-centered finite volumes,
-        // thus, we simply take the volume variables of the element and return the density
-        const auto& context = couplingManager().poroMechanicsCouplingContext();
-        return (*context.pmFlowElemVolVars)[scv.elementIndex()].density();
+        // get porous medium flow volume variables from coupling manager
+        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+        return pmFlowVolVars.density();
     }
 
     /*!
@@ -154,12 +152,9 @@ public:
                                  const ElementVolumeVariables& elemVolVars,
                                  const FluxVarsCache& fluxVarsCache) const
     {
-        // get context from coupling manager
-        // here, we know that the flow problem uses cell-centered finite volumes,
-        // thus, we simply take the volume variables of the element and return the pressure
-        const auto& context = couplingManager().poroMechanicsCouplingContext();
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-        return (*context.pmFlowElemVolVars)[eIdx].pressure();
+        // get porous medium flow volume variables from coupling manager
+        const auto pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+        return pmFlowVolVars.pressure();
     }
 
     /*!
