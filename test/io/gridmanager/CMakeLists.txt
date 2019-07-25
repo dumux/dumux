@@ -234,3 +234,18 @@ dune_add_test(NAME test_gridmanager_vtk_ug
                        --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_ug
                        --files ${CMAKE_CURRENT_BINARY_DIR}/grids/lens.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-uggrid-0.vtu)
+
+
+dune_add_test(NAME test_gmshboundaryflag
+              SOURCES test_gmshboundaryflag.cc
+              COMPILE_DEFINITIONS ENABLE_CACHING=false
+              LABELS unit io
+              CMAKE_GUARD "( dune-alugrid_FOUND )"
+              )
+
+dune_add_test(NAME test_gmshboundaryflag_caching
+              SOURCES test_gmshboundaryflag.cc
+              COMPILE_DEFINITIONS ENABLE_CACHING=true
+              LABELS unit io
+              CMAKE_GUARD "( dune-alugrid_FOUND )"
+              )
