@@ -85,15 +85,15 @@ public:
         solidState_.setDensity(SolidSystem::density(solidState_));
     }
 
-    //! Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
+    //! Return the solid density \f$\mathrm{[kg/m^3]}\f$ within the control volume.
     Scalar solidDensity() const
     { return solidState_.density(); }
 
-    //! Returns the permeability within the control volume in \f$[m]\f$.
+    //! Returns the displacement in a given direction in \f$[m]\f$.
     Scalar displacement(unsigned int dir) const
     { return priVars_[ Indices::momentum(dir) ]; }
 
-    //! Returns the displacement vector within the scv in \f$[m]\f$.
+    //! Returns the displacement vector in \f$[m]\f$.
     DisplacementVector displacement() const
     {
         DisplacementVector d;
