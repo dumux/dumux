@@ -486,7 +486,31 @@ private:
 
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
-        const Scalar transportingVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
+        const Scalar transportingVelocity = [&]()
+        {
+            if (!scvf.boundary())
+                return faceVars.velocityLateralInside(localSubFaceIdx);
+            else
+            {
+                // Create a boundaryTypes object. Get the boundary conditions. We sample the type of BC at the center of the current scvf.
+                const BoundaryTypes bcTypes = problem.boundaryTypes(element, scvf);
+
+                if (bcTypes.isDirichlet(Indices::velocity(lateralFace.directionIndex())))
+                {
+                    // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
+                    // the staggered faces's center.
+                    const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
+                    return problem.dirichlet(element, scvf.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(lateralFace.directionIndex())];
+                }
+                else if (bcTypes.isBJS(Indices::velocity(lateralFace.directionIndex())))
+                {
+                    return VelocityGradients::beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
+                                                                                 currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+                }
+                else
+                    return faceVars.velocityLateralInside(localSubFaceIdx);
+            }
+        }();
 
         return StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
                                                                      gridFluxVarsCache, localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
