@@ -286,7 +286,7 @@ public:
     { return field_->evaluate(mycomp, element, xi); }
 
     //! returns the underlying vtk function
-    const std::shared_ptr<Dune::VTKFunction<GridView>>& get() const
+    std::shared_ptr<const Dune::VTKFunction<GridView>> get() const
     { return field_; }
 
 private:
