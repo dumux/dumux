@@ -18,6 +18,18 @@ Installation
 Have a look at the [installation guide][3] or use the [DuMuX handbook][4],
 Chapter 2.
 
+Documentation
+==============
+
+The following resources are useful to get started with DuMux:
+
+* [Handbook](https://dumux.org/handbook), a detailed DuMux manual,
+* [DuMux course materials](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master),
+* [Class documentation](https://dumux.org/classdocumentation) generated from the source code,
+* [Mailing list](https://listserv.uni-stuttgart.de/mailman/listinfo/dumux),
+* [Changelog](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CHANGELOG.md), where all changes between different release versions are listed and explained.
+
+Some helpful code snippets are available in the [Wiki](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/wikis/home).
 
 License
 ========
