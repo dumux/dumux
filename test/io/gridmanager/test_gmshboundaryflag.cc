@@ -17,7 +17,8 @@
 /*!
  * \file
  *
- * \brief Test whether GmshBoundaryFlag works as expected with Box and CCTpfa
+ * \brief Test whether BoundarySegmentIndexFlag works as expected with Box and CCTpfa and ALUGrid
+ * \note Alu currently defaults to a boundary flag that works for DGF files only
  */
 #include <config.h>
 #include <iostream>
@@ -27,8 +28,8 @@
 #include <dune/alugrid/grid.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/boundaryflag.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/grid/gmshboundaryflag.hh>
 
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -37,13 +38,12 @@
 
 namespace Dumux {
 
-
 // In order to use an alternative BoundaryFlag class, we have to adapt the GridGeometryTraits
 template<class GridView>
 struct MyBoxGridGeometryTraits : public BoxDefaultGridGeometryTraits<GridView>
 {
     struct MyScvfTraits : public BoxDefaultScvfGeometryTraits<GridView>
-    { using BoundaryFlag = GmshBoundaryFlag; };
+    { using BoundaryFlag = BoundarySegmentIndexFlag; };
 
     using SubControlVolumeFace = BoxSubControlVolumeFace<GridView, MyScvfTraits>;
 };
@@ -52,7 +52,7 @@ template<class GridView>
 struct MyCCTpfaGridGeometryTraits : public CCTpfaDefaultGridGeometryTraits<GridView>
 {
     struct MyScvfTraits : public CCTpfaDefaultScvfGeometryTraits<GridView>
-    { using BoundaryFlag = GmshBoundaryFlag; };
+    { using BoundaryFlag = BoundarySegmentIndexFlag; };
 
     using SubControlVolumeFace = CCTpfaSubControlVolumeFace<GridView, MyScvfTraits>;
 };
@@ -108,7 +108,6 @@ int main(int argc, char** argv) try
 
     // run the test
     GmshBoundaryFlagTest<Grid>::testGmshBoundaryFlag<CCTpfaFVGridGeometry>(leafGridView, ccTpfaFvGridGeometry, gridData);
-
 
     return 0;
 }
