@@ -42,7 +42,6 @@ class ElasticSpatialParams : public FVSpatialParamsElastic< Scalar,
     using ThisType = ElasticSpatialParams<Scalar, FVGridGeometry>;
     using ParentType = FVSpatialParamsElastic<Scalar, FVGridGeometry, ThisType>;
 
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

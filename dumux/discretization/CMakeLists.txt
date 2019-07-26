@@ -13,6 +13,7 @@ checkoverlapsize.hh
 elementsolution.hh
 evalgradients.hh
 evalsolution.hh
+fem.hh
 fluxstencil.hh
 functionspacebasis.hh
 fvgridvariables.hh

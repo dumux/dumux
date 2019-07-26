@@ -27,6 +27,7 @@
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
+#include <dumux/discretization/fem/elementsolution.hh>
 
 namespace Dumux {
 

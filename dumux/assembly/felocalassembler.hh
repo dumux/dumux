@@ -56,26 +56,30 @@ template<class TypeTag,
          bool useImplicitAssembly>
 class FELocalAssemblerBase
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FEElementGeometry = typename GridGeometry::LocalView;
-    using AnsatzSpaceBasis = typename GridGeometry::FEBasis;
+    using AnsatzSpaceBasis = typename GridGeometry::AnsatzSpaceBasis;
     using AnsatzSpaceBasisLocalView = typename AnsatzSpaceBasis::LocalView;
 
-    using TrialSpaceBasis = typename Assembler::TrialSpaceBasis;
+    using TrialSpaceBasis = typename GridGeometry::TrialSpaceBasis;
     using TrialSpaceBasisLocalView = typename TrialSpaceBasis::LocalView;
 
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
     using ElementSolution = FEElementSolution<FEElementGeometry, PrimaryVariables>;
 
+    static constexpr int dim = GridGeometry::GridView::dimension;
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
 public:
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
@@ -114,7 +118,7 @@ public:
     , feGeometry_(feGeometry)
     , curElemSol_(curElemSol)
     , prevElemSol_(prevElemSol)
-    , trialSpaceLocalView_(assembler.trialSpaceBasis().localView())
+    , trialSpaceLocalView_(feGeometry.gridGeometry().trialSpaceBasis().localView())
     , localResidual_(localResidual)
     , elementIsGhost_(elementIsGhost)
     {}
@@ -144,7 +148,7 @@ public:
         // evaluate stationary local residua
         if (this->assembler().isStationaryProblem())
         {
-            if (this->assembler().isStandardGalerkin())
+            if (GridGeometry::isStandardGalerkin())
                 return localResidual_.eval(element_, feGeometry_, curElemSol_);
             else
                 return localResidual_.eval(element_, feGeometry_, curElemSol_, trialSpaceLocalView_);
@@ -171,7 +175,7 @@ public:
 
         // bind the local views
         feGeometry_.bind(element);
-        if (!Assembler::isStandardGalerkin())
+        if (!GridGeometry::isStandardGalerkin())
             trialSpaceLocalView_.bind(element);
 
         // element boundary types
@@ -189,146 +193,6 @@ public:
             prevElemSol_ = elementSolution(element, prevSol, gridGeometry);
         }
     }
-
-    //! The problem
-    const Problem& problem() const
-    { return assembler_.problem(); }
-
-    //! The assembler
-    const Assembler& assembler() const
-    { return assembler_; }
-
-    //! The current element
-    const Element& element() const
-    { return element_; }
-
-    //! Returns if element is a ghost entity
-    bool elementIsGhost() const
-    { return elementIsGhost_; }
-
-    //! The current solution
-    const SolutionVector& curSol() const
-    { return curSol_; }
-
-    //! The finite volume geometry
-    FEElementGeometry& feGeometry()
-    { return feGeometry_; }
-
-    //! The finite volume geometry
-    const FEElementGeometry& feGeometry() const
-    { return feGeometry_; }
-
-    //! The current element solution
-    ElementSolution& curElemSol()
-    { return curElemSol_; }
-
-    //! The current element solution
-    const ElementSolution& curElemSol() const
-    { return curElemSol_; }
-
-    //! The element solution of the previous time step
-    ElementSolution& prevElemSol()
-    { return prevElemSol_; }
-
-    //! The element solution of the provious time step
-    const ElementSolution& prevElemSol() const
-    { return prevElemSol_; }
-
-    //! The local residual for the current element
-    LocalResidual& localResidual()
-    { return localResidual_; }
-
-    //! The element's boundary types
-    ElementBoundaryTypes& elemBcTypes()
-    { return elemBcTypes_; }
-
-    //! The element's boundary types
-    const ElementBoundaryTypes& elemBcTypes() const
-    { return elemBcTypes_; }
-
-    //! The local residual for the current element
-    const LocalResidual& localResidual() const
-    { return localResidual_; }
-
-    //! Return the local view on the trial space (standard galerkin case)
-    template<bool sg = Assembler::isStandardGalerkin(), std::enable_if_t<sg, int> = 0>
-    const AnsatzSpaceBasisLocalView& trialSpaceBasisLocalView() const
-    { return feGeometry().feBasisLocalView(); }
-
-    //! Return the local view on the trial space
-    template<bool sg = Assembler::isStandardGalerkin(), std::enable_if_t<!sg, int> = 0>
-    const TrialSpaceBasisLocalView& trialSpaceBasisLocalView() const
-    { return trialSpaceLocalView_; }
-
-protected:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
-
-private:
-    const Assembler& assembler_;   //!< access pointer to assembler instance
-    const Element& element_;       //!< the element whose residual is assembled
-    const SolutionVector& curSol_; //!< the current solution
-
-    FEElementGeometry feGeometry_;
-    ElementSolution curElemSol_;
-    ElementSolution prevElemSol_;
-    ElementBoundaryTypes elemBcTypes_;
-    TrialSpaceBasisLocalView trialSpaceLocalView_;
-
-    LocalResidual localResidual_; //!< the local residual evaluating the equations per element
-    bool elementIsGhost_;         //!< whether the element's partitionType is ghost
-};
-
-/*!
- * \ingroup Assembly
- * \ingroup FEMDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (FEM methods)
- * \tparam TypeTag The TypeTag
- * \tparam Assembler The assembler type
- * \tparam diffMethod The differentiation method to residual compute derivatives
- * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
- */
-template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
-class FELocalAssembler;
-
-/*!
- * \ingroup Assembly
- * \ingroup FEMDiscretization
- * \brief Implementation of the FEM local assembler for implicit time discretization
- *        and numeric differentiation
- * \tparam TypeTag The TypeTag
- * \tparam Assembler The assembler type
- * \tparam Implementation The actual implementation
- * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
- */
-template<class TypeTag, class Assembler>
-class FELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>
-: public FELocalAssemblerBase<TypeTag, Assembler, FELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>, true>
-{
-    using ThisType = FELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
-    using ParentType = FELocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-
-    static constexpr int dim = GridGeometry::GridView::dimension;
-    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
-
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
-
-public:
-
-    //! Pull up the parent's constructor
-    using ParentType::ParentType;
-
-    //! Pull up parent's type definitions
-    using typename ParentType::ElementResidualVector;
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -367,7 +231,7 @@ public:
             {
                 const auto& localKey = tsFiniteElement.localCoefficients().localKey(i);
 
-                if (isGhostEntity_(this->element(), localKey.subEntity(), localKey.codim()))
+                if (this->isGhostEntity_(this->element(), localKey.subEntity(), localKey.codim()))
                     continue;
 
                 // set main diagonal entries for the entity
@@ -475,10 +339,10 @@ public:
             const auto& gridGeometry = this->feGeometry().gridGeometry();
             for (const auto& is : intersections(gridGeometry.gridView(), this->element()))
             {
-                const auto bcTypes = this->elemBcTypes()[is.indexInInside()];
-                if (bcTypes.hasOutflow())
-                    DUNE_THROW(Dune::NotImplemented, "Support for outflow BCs in FEM models");
+                if (!is.boundary())
+                    continue;
 
+                const auto bcTypes = this->problem().boundaryTypes(this->element(), is);
                 if (!bcTypes.hasDirichlet())
                     continue;
 
@@ -494,10 +358,9 @@ public:
                 for (unsigned int localDofIdx = 0; localDofIdx < tsLocalView.size(); localDofIdx++)
                 {
                     const auto dofIdx = tsLocalView.index(localDofIdx);
-
                     const auto& localKey = fe.localCoefficients().localKey(localDofIdx);
-                    auto subEntity = localKey.subEntity();
-                    auto codim = localKey.codim();
+                    const auto subEntity = localKey.subEntity();
+                    const auto codim = localKey.codim();
 
                     // skip interior dofs
                     if (codim == 0)
@@ -538,14 +401,202 @@ public:
         }
     }
 
+    //! The problem
+    const Problem& problem() const
+    { return assembler_.problem(); }
+
+    //! The assembler
+    const Assembler& assembler() const
+    { return assembler_; }
+
+    //! The current element
+    const Element& element() const
+    { return element_; }
+
+    //! Returns if element is a ghost entity
+    bool elementIsGhost() const
+    { return elementIsGhost_; }
+
+    //! The current solution
+    const SolutionVector& curSol() const
+    { return curSol_; }
+
+    //! The finite volume geometry
+    FEElementGeometry& feGeometry()
+    { return feGeometry_; }
+
+    //! The finite volume geometry
+    const FEElementGeometry& feGeometry() const
+    { return feGeometry_; }
+
+    //! The current element solution
+    ElementSolution& curElemSol()
+    { return curElemSol_; }
+
+    //! The current element solution
+    const ElementSolution& curElemSol() const
+    { return curElemSol_; }
+
+    //! The element solution of the previous time step
+    ElementSolution& prevElemSol()
+    { return prevElemSol_; }
+
+    //! The element solution of the provious time step
+    const ElementSolution& prevElemSol() const
+    { return prevElemSol_; }
+
+    //! The local residual for the current element
+    LocalResidual& localResidual()
+    { return localResidual_; }
+
+    //! The element's boundary types
+    ElementBoundaryTypes& elemBcTypes()
+    { return elemBcTypes_; }
+
+    //! The element's boundary types
+    const ElementBoundaryTypes& elemBcTypes() const
+    { return elemBcTypes_; }
+
+    //! The local residual for the current element
+    const LocalResidual& localResidual() const
+    { return localResidual_; }
+
+    //! Return the local view on the trial space (standard galerkin case)
+    template<bool sg = GridGeometry::isStandardGalerkin(), std::enable_if_t<sg, int> = 0>
+    const AnsatzSpaceBasisLocalView& trialSpaceBasisLocalView() const
+    { return feGeometry().feBasisLocalView(); }
+
+    //! Return the local view on the trial space
+    template<bool sg = GridGeometry::isStandardGalerkin(), std::enable_if_t<!sg, int> = 0>
+    const TrialSpaceBasisLocalView& trialSpaceBasisLocalView() const
+    { return trialSpaceLocalView_; }
+
 protected:
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
+
+    /*!
+     * \brief Returns true if a sub entity of an element is a ghost entity (specialization for dim == 1)
+     */
+    template<class Element, std::enable_if_t<int(Element::Geometry::mydimension) == 1, int> = 0>
+    bool isGhostEntity_(const Element& element, unsigned int subEntityIdx, unsigned int codim) const
+    {
+        if ( codim == 0 && isGhostEntity_(element.template subEntity<0>(subEntityIdx)) )
+            return true;
+        else if ( codim == 1 && isGhostEntity_(element.template subEntity<1>(subEntityIdx)) )
+            return true;
+        return false;
+    }
+
+    /*!
+     * \brief Returns true if a sub entity of an element is a ghost entity (specialization for dim == 2)
+     */
+    template<class Element, std::enable_if_t<int(Element::Geometry::mydimension) == 2, int> = 0>
+    bool isGhostEntity_(const Element& element, unsigned int subEntityIdx, unsigned int codim) const
+    {
+        if ( codim == 0 && isGhostEntity_(element.template subEntity<0>(subEntityIdx)) )
+            return true;
+        else if ( codim == 1 && isGhostEntity_(element.template subEntity<1>(subEntityIdx)) )
+            return true;
+        else if ( codim == 2 && isGhostEntity_(element.template subEntity<1>(subEntityIdx)) )
+            return true;
+        return false;
+    }
+
+    /*!
+     * \brief Returns true if a sub entity of an element is a ghost entity (specialization for dim == 3)
+     */
+    template<class Element, std::enable_if_t<int(Element::Geometry::mydimension) == 3, int> = 0>
+    bool isGhostEntity_(const Element& element, unsigned int subEntityIdx, unsigned int codim) const
+    {
+        if ( codim == 0 && isGhostEntity_(element.template subEntity<0>(subEntityIdx)) )
+            return true;
+        else if ( codim == 1 && isGhostEntity_(element.template subEntity<1>(subEntityIdx)) )
+            return true;
+        else if ( codim == 2 && isGhostEntity_(element.template subEntity<2>(subEntityIdx)) )
+            return true;
+        else if ( codim == 3 && isGhostEntity_(element.template subEntity<3>(subEntityIdx)) )
+            return true;
+        return false;
+    }
+
+    /*!
+     * \brief Returns true if an entity is ghost entity
+     */
+    template<class Entity>
+    bool isGhostEntity_(const Entity& e) const
+    { return e.partitionType() == Dune::InteriorEntity || e.partitionType() == Dune::BorderEntity; }
+
+private:
+    const Assembler& assembler_;   //!< access pointer to assembler instance
+    const Element& element_;       //!< the element whose residual is assembled
+    const SolutionVector& curSol_; //!< the current solution
+
+    FEElementGeometry feGeometry_;
+    ElementSolution curElemSol_;
+    ElementSolution prevElemSol_;
+    ElementBoundaryTypes elemBcTypes_;
+    TrialSpaceBasisLocalView trialSpaceLocalView_;
+
+    LocalResidual localResidual_; //!< the local residual evaluating the equations per element
+    bool elementIsGhost_;         //!< whether the element's partitionType is ghost
+};
+
+/*!
+ * \ingroup Assembly
+ * \ingroup FEMDiscretization
+ * \brief An assembler for Jacobian and residual contribution per element (FEM methods)
+ * \tparam TypeTag The TypeTag
+ * \tparam Assembler The assembler type
+ * \tparam diffMethod The differentiation method to residual compute derivatives
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ */
+template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
+class FELocalAssembler;
+
+/*!
+ * \ingroup Assembly
+ * \ingroup FEMDiscretization
+ * \brief Implementation of the FEM local assembler for implicit time discretization
+ *        and numeric differentiation
+ * \tparam TypeTag The TypeTag
+ * \tparam Assembler The assembler type
+ * \tparam Implementation The actual implementation
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ */
+template<class TypeTag, class Assembler>
+class FELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>
+: public FELocalAssemblerBase<TypeTag, Assembler, FELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>, true>
+{
+    using ThisType = FELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
+    using ParentType = FELocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+
+    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+
+public:
+
+    //! Pull up the parent's constructor
+    using ParentType::ParentType;
+
+    //! Pull up parent's type definitions
+    using typename ParentType::ElementResidualVector;
+
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
      *
      * \return The element residual at the current solution.
      */
-    template <class PartialReassembler = DefaultPartialReassembler>
+    template<class PartialReassembler = DefaultPartialReassembler>
     ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
                                                           const PartialReassembler* partialReassembler = nullptr)
     {
@@ -622,61 +673,6 @@ protected:
 
         return origResiduals;
     }
-
-private:
-
-    /*!
-     * \brief Returns true if a sub entity of an element is a ghost entity (specialization for dim == 1)
-     */
-    template<class Element, std::enable_if_t<int(Element::Geometry::mydimension) == 1, int> = 0>
-    bool isGhostEntity_(const Element& element, unsigned int subEntityIdx, unsigned int codim) const
-    {
-        if ( codim == 0 && isGhostEntity_(element.template subEntity<0>(subEntityIdx)) )
-            return true;
-        else if ( codim == 1 && isGhostEntity_(element.template subEntity<1>(subEntityIdx)) )
-            return true;
-        return false;
-    }
-
-    /*!
-     * \brief Returns true if a sub entity of an element is a ghost entity (specialization for dim == 2)
-     */
-    template<class Element, std::enable_if_t<int(Element::Geometry::mydimension) == 2, int> = 0>
-    bool isGhostEntity_(const Element& element, unsigned int subEntityIdx, unsigned int codim) const
-    {
-        if ( codim == 0 && isGhostEntity_(element.template subEntity<0>(subEntityIdx)) )
-            return true;
-        else if ( codim == 1 && isGhostEntity_(element.template subEntity<1>(subEntityIdx)) )
-            return true;
-        else if ( codim == 2 && isGhostEntity_(element.template subEntity<1>(subEntityIdx)) )
-            return true;
-        return false;
-    }
-
-    /*!
-     * \brief Returns true if a sub entity of an element is a ghost entity (specialization for dim == 3)
-     */
-    template<class Element, std::enable_if_t<int(Element::Geometry::mydimension) == 3, int> = 0>
-    bool isGhostEntity_(const Element& element, unsigned int subEntityIdx, unsigned int codim) const
-    {
-        if ( codim == 0 && isGhostEntity_(element.template subEntity<0>(subEntityIdx)) )
-            return true;
-        else if ( codim == 1 && isGhostEntity_(element.template subEntity<1>(subEntityIdx)) )
-            return true;
-        else if ( codim == 2 && isGhostEntity_(element.template subEntity<2>(subEntityIdx)) )
-            return true;
-        else if ( codim == 3 && isGhostEntity_(element.template subEntity<3>(subEntityIdx)) )
-            return true;
-        return false;
-    }
-
-    /*!
-     * \brief Returns true if an entity is ghost entity
-     */
-    template<class Entity>
-    bool isGhostEntity_(const Entity& e) const
-    { return e.partitionType() == Dune::InteriorEntity || e.partitionType() == Dune::BorderEntity; }
-
 }; // FELocalAssembler with numeric differentiation and implicit time discretization
 
 } // end namespace Dumux

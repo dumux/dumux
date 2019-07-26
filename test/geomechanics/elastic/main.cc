@@ -21,7 +21,6 @@
  * \ingroup GeomechanicsTests
  * \brief Test for the linear elastic model.
  */
-
 #include <config.h>
 
 #include <ctime>
@@ -29,8 +28,12 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
+
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
+
+#include <dune/functions/gridfunctions/analyticgridviewfunction.hh>
+#include <dune/functions/gridfunctions/discreteglobalbasisfunction.hh>
 
 #include "problem.hh"
 
@@ -40,15 +43,70 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/feassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/functionspacebasis.hh>
+
+#include <dumux/io/vtkfunction.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+
+// Traits class to extract the assembler type from the discretization method
+template<Dumux::DiscretizationMethod dm>
+struct TestAssemblerTraits;
+
+template<>
+struct TestAssemblerTraits<Dumux::DiscretizationMethod::box>
+{
+    template<class TypeTag>
+    using AssemblerType = Dumux::FVAssembler<TypeTag, Dumux::DiffMethod::numeric>;
+};
+
+template<>
+struct TestAssemblerTraits<Dumux::DiscretizationMethod::fem>
+{
+    template<class TypeTag>
+    using AssemblerType = Dumux::FEAssembler<TypeTag>;
+};
+
+template<class GG, Dumux::DiscretizationMethod dm = GG::discMethod>
+struct GGContainer;
+
+template<class GG>
+struct GGContainer<GG, Dumux::DiscretizationMethod::box>
+{
+    std::shared_ptr<GG> gridGeometry;
+};
+
+template<class GG>
+struct GGContainer<GG, Dumux::DiscretizationMethod::fem>
+{
+    std::shared_ptr<typename GG::FEBasis> feBasis;
+    std::shared_ptr<GG> gridGeometry;
+};
+
+template<class GG, class GV, std::enable_if_t<GG::discMethod == Dumux::DiscretizationMethod::box, int> = 0>
+GGContainer<GG> makeGridGeometry(const GV& leafGridView)
+{
+    GGContainer<GG> result;
+    result.gridGeometry = std::make_shared<GG>(leafGridView);
+    return result;
+}
+
+template<class GG, class GV, std::enable_if_t<GG::discMethod == Dumux::DiscretizationMethod::fem, int> = 0>
+GGContainer<GG> makeGridGeometry(const GV& leafGridView)
+{
+    GGContainer<GG> result;
+    result.feBasis = std::make_shared<typename GG::FEBasis>(leafGridView);
+    result.gridGeometry = std::make_shared<GG>(result.feBasis);
+    return result;
+}
 
 // main function
 int main(int argc, char** argv) try
@@ -56,7 +114,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::TestElastic;
+    using TypeTag = Properties::TTag::TestElasticFem;
 
     // stop time for the entire computation
     Dune::Timer timer;
@@ -83,44 +141,48 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometryContainer = makeGridGeometry<GridGeometry>(leafGridView);
+    auto gridGeometry = gridGeometryContainer.gridGeometry;
+    gridGeometry->update();
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
     // intialize the vtk output module and add displacement
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    vtkWriter.addField(x, "u");
+    Dune::VTKWriter<typename GridGeometry::GridView> vtkWriter(gridGeometry->gridView());
+    // VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using F = Vtk::Field<typename GridGeometry::GridView>;
+    F vtkFunction(gridGeometry->gridView(), gridGeometry->vertexMapper(), x, "u", 2, 2);
+    vtkWriter.addVertexData(vtkFunction.get());
+    // auto gf = Dune::Functions::makeDiscreteGlobalBasisFunction<typename SolutionVector::block_type>(gridGeometry->feBasis(), x);
+    // vtkWriter.addVertexData(gf, Dune::VTK::FieldInfo({"u", Dune::VTK::FieldInfo::Type::vector, 2}));
 
     // also, add exact solution to the output
-    SolutionVector xExact(fvGridGeometry->numDofs());
-    for (const auto& v : vertices(leafGridView))
-        xExact[ fvGridGeometry->vertexMapper().index(v) ] = problem->exactSolution(v.geometry().center());
-    vtkWriter.addField(xExact, "u_exact");
-
-    // write initial solution
-    vtkWriter.write(0.0);
+    SolutionVector xExact(gridGeometry->numDofs());
+    auto fExact = [&] (const auto& pos) { return problem->exactSolution(pos); };
+    auto gfExact = Dune::Functions::makeAnalyticGridViewFunction(fExact, gridGeometry->gridView());
+    const auto fieldInfoExact = Dune::VTK::FieldInfo({"u_exact", Dune::VTK::FieldInfo::Type::vector, 2});
+    vtkWriter.addVertexData(gfExact, fieldInfoExact);
 
     // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    using Assembler = TestAssemblerTraits<GridGeometry::discMethod>::template AssemblerType<TypeTag>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    using LinearSolver = UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
@@ -133,7 +195,7 @@ int main(int argc, char** argv) try
     gridVariables->update(x);
 
     // write vtk output
-    vtkWriter.write(1.0);
+    vtkWriter.write(problem->name());
 
     // print time and say goodbye
     const auto& comm = Dune::MPIHelper::getCollectiveCommunication();

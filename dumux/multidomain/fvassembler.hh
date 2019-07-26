@@ -41,6 +41,7 @@
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
 #include "subdomainboxlocalassembler.hh"
+#include "subdomainfelocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
 
 namespace Dumux {
@@ -124,6 +125,12 @@ private:
     struct SubDomainAssemblerType<DiscretizationMethod::staggered, id>
     {
         using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+    };
+
+    template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethod::fem, id>
+    {
+        using type = SubDomainFELocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>

@@ -423,7 +423,7 @@ template<class Assembler>
 class PartialReassembler
 {
     using Scalar = typename Assembler::Scalar;
-    using FVGridGeometry = typename Assembler::FVGridGeometry;
+    using FVGridGeometry = typename Assembler::GridGeometry;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using VertexMapper = typename FVGridGeometry::VertexMapper;
 
@@ -440,7 +440,7 @@ public:
     : engine_(assembler)
     , greenElems_(0)
     {
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
+        const auto& fvGridGeometry = assembler.gridGeometry();
         totalElems_ = fvGridGeometry.elementMapper().size();
         totalElems_ = fvGridGeometry.gridView().comm().sum(totalElems_);
     }

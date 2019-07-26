@@ -181,10 +181,10 @@ public:
         using Index = Dune::index_constant<id>;
         using TypeTag = SubDomainTypeTag<id>;
         using Grid = GetPropType<SubDomainTypeTag<id>, Properties::Grid>;
-        using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+        using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
         using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
         using GridVariables =GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
-        using IOFields = GetPropType<SubDomainTypeTag<id>, Properties::IOFields>;
+        // using IOFields = GetPropType<SubDomainTypeTag<id>, Properties::IOFields>;
         using SolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
     };
 

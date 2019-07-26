@@ -27,8 +27,11 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/grid/yaspgrid.hh>
+#include <dune/functions/functionspacebases/lagrangebasis.hh>
 
+#include <dumux/discretization/fem.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/discretization/fem/fegridgeometry.hh>
 #include <dumux/geomechanics/elastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
 
@@ -40,10 +43,14 @@ template <class TypeTag>
 class ElasticProblem;
 
 namespace Properties {
+
 // Create new type tags
 namespace TTag {
-struct TestElastic { using InheritsFrom = std::tuple<Elastic, BoxModel>; };
+struct TestElastic { using InheritsFrom = std::tuple<Elastic>; };
+struct TestElasticBox { using InheritsFrom = std::tuple<TestElastic, BoxModel>; };
+struct TestElasticFem { using InheritsFrom = std::tuple<TestElastic, FiniteElementModel>; };
 } // end namespace TTag
+
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::TestElastic> { using type = Dune::YaspGrid<2>; };
@@ -54,8 +61,27 @@ struct Problem<TypeTag, TTag::TestElastic> { using type = Dumux::ElasticProblem<
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TestElastic>
 { using type = ElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                     GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                                     GetPropType<TypeTag, Properties::GridGeometry> >; };
+
+// The grid geometry property for FEM (we use first order lagrangian basis here)
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::TestElasticFem>
+{
+private:
+    using Basis = Dune::Functions::LagrangeBasis<GetPropType<TypeTag, GridView>, 1>;
+public:
+    using type = FEGridGeometry< Basis >;
 };
+
+// // The grid geometry property for FEM (we use first order lagrangian basis here)
+// template<class TypeTag>
+// struct FVGridGeometry<TypeTag, TTag::TestElasticFem>
+// {
+// private:
+//     using Basis = Dune::Functions::LagrangeBasis<GetPropType<TypeTag, GridView>, 1>;
+// public:
+//     using type = FEGridGeometry< Basis >;
+// };
 } // end namespace Properties
 
 /*!
@@ -72,12 +98,9 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -123,7 +146,10 @@ public:
         return values;
     }
 
-    //! Evaluates the boundary conditions for a Neumann boundary segment.
+    //! Evaluates the boundary conditions for a Neumann boundary segment (box scheme).
+    template< class ElementVolumeVariables, class SubControlVolumeFace,
+              DiscretizationMethod dm = FVGridGeometry::discMethod,
+              std::enable_if_t<dm == DiscretizationMethod::box, int> = 0 >
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolvars,
@@ -151,10 +177,45 @@ public:
         return values;
     }
 
+    //! Evaluates the boundary conditions for a Neumann boundary segment (fem scheme).
+    template< class Intersection, class ElemSol, class IpData, class SecVars,
+              DiscretizationMethod dm = FVGridGeometry::discMethod,
+              std::enable_if_t<dm == DiscretizationMethod::fem, int> = 0 >
+    NumEqVector neumann(const Element& element,
+                        const Intersection& is,
+                        const ElemSol& elemSol,
+                        const IpData& ipData,
+                        const SecVars& secVars) const
+    {
+        GradU gradU = exactGradient(ipData.ipGlobal());
+
+        GradU epsilon;
+        for (int i = 0; i < dim; ++i)
+            for (int j = 0; j < dimWorld; ++j)
+                epsilon[i][j] = 0.5*(gradU[i][j] + gradU[j][i]);
+
+        const auto& lameParams = this->spatialParams().lameParamsAtPos(ipData.ipGlobal());
+        GradU sigma(0.0);
+        const auto traceEpsilon = trace(epsilon);
+        for (int i = 0; i < dim; ++i)
+        {
+            sigma[i][i] = lameParams.lambda()*traceEpsilon;
+            for (int j = 0; j < dimWorld; ++j)
+                sigma[i][j] += 2.0*lameParams.mu()*epsilon[i][j];
+        }
+
+        NumEqVector values;
+        sigma.mv(is.centerUnitOuterNormal(), values);
+        return values;
+    }
+
     /*!
      * \brief Evaluates the source term for all phases within a given
-     *        sub-control volume.
+     *        sub-control volume (box scheme).
      */
+     template< class ElementVolumeVariables, class SubControlVolume,
+               DiscretizationMethod dm = FVGridGeometry::discMethod,
+               std::enable_if_t<dm == DiscretizationMethod::box, int> = 0 >
     NumEqVector source(const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
@@ -169,6 +230,53 @@ public:
 
         // the lame parameters (we know they only depend on the position here)
         const auto& lameParams = this->spatialParams().lameParamsAtPos(scv.center());
+        const auto lambda = lameParams.lambda();
+        const auto mu = lameParams.mu();
+
+        // precalculated products
+        const Scalar pi_2 = 2.0*pi;
+        const Scalar pi_2_square = pi_2*pi_2;
+        const Scalar cos_2pix = cos(pi_2*x);
+        const Scalar sin_2pix = sin(pi_2*x);
+        const Scalar cos_2piy = cos(pi_2*y);
+        const Scalar sin_2piy = sin(pi_2*y);
+
+        const Scalar dE11_dx = -2.0*sin_2piy;
+        const Scalar dE22_dx = pi_2_square*cos_2pix*cos_2piy;
+        const Scalar dE11_dy = pi_2*(1.0-2.0*x)*cos_2piy;
+        const Scalar dE22_dy = -1.0*pi_2_square*sin_2pix*sin_2piy;
+        const Scalar dE12_dy = 0.5*pi_2_square*(cos_2pix*cos_2piy - (x-x*x)*sin_2piy);
+        const Scalar dE21_dx = 0.5*((1.0-2*x)*pi_2*cos_2piy - pi_2_square*sin_2pix*sin_2piy);
+
+        // compute exact divergence of sigma
+        PrimaryVariables divSigma(0.0);
+        divSigma[Indices::momentum(/*x-dir*/0)] = lambda*(dE11_dx + dE22_dx) + 2*mu*(dE11_dx + dE12_dy);
+        divSigma[Indices::momentum(/*y-dir*/1)] = lambda*(dE11_dy + dE22_dy) + 2*mu*(dE21_dx + dE22_dy);
+        return divSigma;
+    }
+
+    /*!
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume (fem scheme).
+     */
+     template< class ElemSol, class IpData, class SecVars,
+               DiscretizationMethod dm = FVGridGeometry::discMethod,
+               std::enable_if_t<dm == DiscretizationMethod::fem, int> = 0 >
+    NumEqVector source(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElemSol& elemSol,
+                       const IpData& ipData,
+                       const SecVars& secVars) const
+    {
+        using std::sin;
+        using std::cos;
+
+        const auto ipGlobal = ipData.ipGlobal();
+        const auto x = ipGlobal[0];
+        const auto y = ipGlobal[1];
+
+        // the lame parameters (we know they only depend on the position here)
+        const auto& lameParams = this->spatialParams().lameParamsAtPos(ipGlobal);
         const auto lambda = lameParams.lambda();
         const auto mu = lameParams.mu();
 

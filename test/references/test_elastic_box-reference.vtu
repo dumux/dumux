@@ -70,19 +70,6 @@
           -0 5.99904e-32 0
         </DataArray>
       </PointData>
-      <CellData Scalars="process rank">
-        <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
-          0 0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0
-        </DataArray>
-      </CellData>
       <Points>
         <DataArray type="Float32" Name="Coordinates" NumberOfComponents="3" format="ascii">
           0 0 0 0.1 0 0 0 0.1 0 0.1 0.1 0

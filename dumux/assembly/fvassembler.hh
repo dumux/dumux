@@ -67,6 +67,7 @@ public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -253,6 +254,10 @@ public:
 
     //! The global finite volume geometry
     const FVGridGeometry& fvGridGeometry() const
+    { return *fvGridGeometry_; }
+
+    //! The global finite volume geometry
+    const FVGridGeometry& gridGeometry() const
     { return *fvGridGeometry_; }
 
     //! The gridview
