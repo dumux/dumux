@@ -370,6 +370,10 @@ public:
     bool isStationary() const
     { return !timeLoop_; }
 
+    //! returns the underlying integration order
+    int integrationOrder() const
+    { return intOrder_; }
+
     // \}
 protected:
 
@@ -378,8 +382,6 @@ protected:
 
     const Implementation& asImp_() const
     { return *static_cast<const Implementation*>(this); }
-
-private:
 
     /*!
      * \brief Compute the contributions of Neumann boundary conditions on the
@@ -533,6 +535,7 @@ private:
         return residual;
     }
 
+private:
     const Problem* problem_; //!< the problem we are assembling this residual for
     const TimeLoop* timeLoop_; //!< the timeloop for instationary problems
     int intOrder_; //!< The order used for the quadrature rule to evaluate the residual

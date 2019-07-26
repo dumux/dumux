@@ -42,6 +42,7 @@
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
 #include "subdomainboxlocalassembler.hh"
+#include "subdomainfelocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
 
 #include <dumux/discretization/method.hh>
@@ -130,7 +131,13 @@ private:
     };
 
     template<std::size_t id>
-    using SubDomainAssembler = typename SubDomainAssemblerType<GridGeometry<id>::discMethod, id>::type;
+    struct SubDomainAssemblerType<DiscretizationMethod::fem, id>
+    {
+        using type = SubDomainFELocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+    };
+
+    template<std::size_t id>
+    using SubDomainAssembler = typename SubDomainAssemblerType<FVGridGeometry<id>::discMethod, id>::type;
 
 public:
 

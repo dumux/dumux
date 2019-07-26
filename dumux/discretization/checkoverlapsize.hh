@@ -57,9 +57,9 @@ struct CheckOverlapSize<DiscretizationMethod::box>
 template<>
 struct CheckOverlapSize<DiscretizationMethod::fem>
 {
-    template<class FEBasis>
-    static bool isValid(const FEBasis& feBasis) noexcept
-    { return feBasis.gridView().comm().size() <= 1 || feBasis.gridView().overlapSize(0) == 0; }
+    template<class GridView>
+    static bool isValid(const GridView& gridView) noexcept
+    { return gridView.comm().size() <= 1 || gridView.overlapSize(0) == 0; }
 };
 
 } // end namespace Dumux

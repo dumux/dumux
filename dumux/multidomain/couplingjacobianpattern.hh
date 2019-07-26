@@ -169,6 +169,51 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
     return pattern;
 }
 
+/*!
+ * \ingroup MultiDomain
+ * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
+ *        for the box scheme
+ */
+template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
+         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::fem), int> = 0>
+Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
+                                                Dune::index_constant<i> domainI,
+                                                const GridGeometryI& gridGeometryI,
+                                                Dune::index_constant<j> domainJ,
+                                                const GridGeometryJ& gridGeometryJ)
+{
+    const auto numDofsI = gridGeometryI.numDofs();
+    const auto numDofsJ = gridGeometryJ.numDofs();
+    Dune::MatrixIndexSet pattern;
+    pattern.resize(numDofsI, numDofsJ);
+
+    // matrix pattern for implicit Jacobians
+    if (isImplicit)
+    {
+        for (const auto& elementI : elements(gridGeometryI.gridView()))
+        {
+            const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
+
+            const auto feGeometry = localView(gridGeometryI);
+            feGeometry.bind(elementI);
+
+            const auto& basisLocalView = feGeometry.feBasisLocalView();
+            for (unsigned int localDofIdx = 0; localDofIdx < basisLocalView.size(); ++localDofIdx)
+            {
+                const auto globalI = basisLocalView.index(localDofIdx);
+                for (const auto globalJ : stencil)
+                    pattern.add(globalI, globalJ);
+            }
+        }
+    }
+
+    // matrix pattern for explicit Jacobians
+    // -> diagonal matrix, so coupling block is empty
+    // just return the empty pattern
+
+    return pattern;
+}
+
 } // end namespace Dumux
 
 #endif

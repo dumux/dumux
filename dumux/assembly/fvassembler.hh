@@ -257,6 +257,10 @@ public:
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 
+    //! The global finite volume geometry
+    const FVGridGeometry& gridGeometry() const
+    { return *fvGridGeometry_; }
+
     //! The gridview
     const GridView& gridView() const
     { return gridGeometry().gridView(); }

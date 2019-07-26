@@ -24,8 +24,11 @@
 #ifndef DUMUX_FE_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_FE_ELEMENT_BOUNDARY_TYPES_HH
 
+#include <algorithm>
 #include <cassert>
 #include <vector>
+
+#include <dune/common/exceptions.hh>
 
 namespace Dumux {
 
@@ -52,24 +55,63 @@ public:
                 const Element& element,
                 const FEElementGeometry& feGeometry)
     {
-        intersectionBCTypes_.resize( element.subEntities(1) );
+        const auto& feBasisLocalView = feGeometry.feBasisLocalView();
+        const auto numLocalDofs = feBasisLocalView.size();
+
+        localBCTypes_.resize( numLocalDofs );
         hasDirichlet_ = false;
         hasNeumann_ = false;
         hasOutflow_ = false;
 
+        using ctype = typename Element::Geometry::ctype;
+        using RefElements = typename Dune::ReferenceElements<ctype, Element::Geometry::mydimension>;
+
+        const auto& eg = element.geometry();
+        const auto refElement = RefElements::general(eg.type());
+        const auto& fe = feBasisLocalView.tree().finiteElement();
+
         for (const auto& is : intersections(feGeometry.gridGeometry().gridView(), element))
         {
-            auto& bcTypes = intersectionBCTypes_[is.indexInInside()];
-
-            bcTypes.reset();
             if (is.boundary())
             {
-                bcTypes = problem.boundaryTypes(element, is);
-                hasDirichlet_ = hasDirichlet_ || bcTypes.hasDirichlet();
-                hasNeumann_ = hasNeumann_ || bcTypes.hasNeumann();
-                hasOutflow_ = hasOutflow_ || bcTypes.hasOutflow();
+                const auto bcTypes = problem.boundaryTypes(element, is);
+                if (bcTypes.hasOutflow())
+                    DUNE_THROW(Dune::NotImplemented, "Outflow BCs for FEM");
+
+                // find local dofs lying on this intersection
+                std::vector<unsigned int> localDofs; localDofs.reserve(numLocalDofs);
+                for (unsigned int localDofIdx = 0; localDofIdx < numLocalDofs; localDofIdx++)
+                {
+                    const auto& localKey = fe.localCoefficients().localKey(localDofIdx);
+                    const auto subEntity = localKey.subEntity();
+                    const auto codim = localKey.codim();
+
+                    // skip interior dofs
+                    if (codim == 0)
+                        continue;
+
+                    bool found = false;
+                    // try to find this local dof (on entity with known codim) on the current intersection
+                    for (int j = 0; j < refElement.size(is.indexInInside(), 1, codim); j++)
+                    {
+                        // If j-th sub entity is the sub entity corresponding to local dof, continue and assign BC
+                        if (subEntity == refElement.subEntity(is.indexInInside(), 1, j, codim))
+                        { localDofs.push_back(localDofIdx); found = true; }
+
+                        if (found) break;
+                    }
+                }
+
+                // Write obtained boundary types into the ones for the local dofs
+                for (const auto localDof : localDofs)
+                    copyBTypes_(bcTypes, localBCTypes_[localDof]);
             }
         }
+
+        const auto beginIt = localBCTypes_.begin();
+        const auto endIt = localBCTypes_.end();
+        hasDirichlet_ = std::any_of(beginIt, endIt, [] (const auto& bt) { return bt.hasDirichlet(); });
+        hasNeumann_ = std::any_of(beginIt, endIt, [] (const auto& bt) { return bt.hasNeumann(); });
     }
 
     /*!
@@ -99,12 +141,35 @@ public:
      */
     const BoundaryTypes& operator[] (std::size_t i) const
     {
-        assert(i < intersectionBCTypes_.size());
-        return intersectionBCTypes_[i];
+        assert(i < localBCTypes_.size());
+        return localBCTypes_[i];
     }
 
 protected:
-    std::vector< BoundaryTypes > intersectionBCTypes_;
+    /*
+     * \brief Writes new boundary types into the ones stored
+     *        for a local dof. We do not overwrite previously
+     *        set Dirichlet BCS with Neumann BCS, which could
+     *        occur for vertex dofs.
+     */
+    void copyBTypes_(const auto& curBCTypes, auto& localBCTypes)
+    {
+        for (unsigned int i = 0; i < BTypes::size(); ++i)
+        {
+            const bool curIsNeumann = curBCTypes.isNeumann(i);
+
+            // do not overwrite Dirichlet with Neumann
+            // if (curIsNeumann && !localBCTypes.isDirichlet(i))
+            if (curIsNeumann)
+                localBCTypes.setNeumann(i);
+
+            // always set Dirichlet BCs
+            else
+                localBCTypes.setDirichlet(i);
+        }
+    }
+
+    std::vector< BoundaryTypes > localBCTypes_;
     bool hasDirichlet_ = false;
     bool hasNeumann_ = false;
     bool hasOutflow_ = false;

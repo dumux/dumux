@@ -757,11 +757,15 @@ public:
         }
     }
 
-    //! Empty stencil to be returned for elements that aren't coupled
-    template<std::size_t id, std::enable_if_t<(id == bulkId || id == lowDimId), int> = 0>
-    const typename CouplingMapper::template Stencil<id>&
-    getEmptyStencil(Dune::index_constant<id>) const
-    { return std::get<(id == bulkId ? 0 : 1)>(emptyStencilTuple_); }
+    //! Empty bulk element stencil to be returned for elements that aren't coupled
+    template<std::size_t id, std::enable_if_t<id == bulkId, int> = 0>
+    const auto& getEmptyStencil(Dune::index_constant<id>) const
+    { return std::get<0>(emptyStencilTuple_); }
+
+    //! Empty low dim element stencil to be returned for elements that aren't coupled
+    template<std::size_t id, std::enable_if_t<id == lowDimId, int> = 0>
+    const auto& getEmptyStencil(Dune::index_constant<id>) const
+    { return std::get<1>(emptyStencilTuple_); }
 
 protected:
     //! Return const references to the bulk coupling contexts

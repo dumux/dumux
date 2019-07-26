@@ -35,6 +35,7 @@
 #include "problem_bulk_onep.hh"
 #include "problem_facet_onep.hh"
 #include "problem_bulk_poroelastic.hh"
+#include "problem_lagrangemp.hh"
 
 #include <dumux/assembly/diffmethod.hh>
 
@@ -61,7 +62,8 @@ class TestTraits
 public:
     using MDTraits = Dumux::MultiDomainTraits< Dumux::Properties::TTag::OnePBulkTpfa,
                                                Dumux::Properties::TTag::OnePFacetTpfa,
-                                               Dumux::Properties::TTag::PoroElasticBulk >;
+                                               Dumux::Properties::TTag::PoroElasticBulk,
+                                               Dumux::Properties::TTag::LagrangeFacet>;
 
     using CouplingMapperFlow = Dumux::FacetCouplingMapper<BulkFlowFVG, FacetFlowFVG>;
     using CouplingMapperMech = Dumux::FacetCouplingMapper<BulkMechFVG, FacetFlowFVG>;
@@ -78,6 +80,8 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePFacetTpfa> { using type = typename TestTraits::CouplingManager; };
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::PoroElasticBulk> { using type = typename TestTraits::CouplingManager; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::LagrangeFacet> { using type = typename TestTraits::CouplingManager; };
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -104,6 +108,7 @@ int main(int argc, char** argv) try
     constexpr auto bulkFlowId = Traits::template SubDomain<0>::Index{};
     constexpr auto facetFlowId = Traits::template SubDomain<1>::Index{};
     constexpr auto bulkMechId = Traits::template SubDomain<2>::Index{};
+    constexpr auto lagrangeId = Traits::template SubDomain<3>::Index{};
 
     // try to create a grid (from the given grid file or the input file)
     using GridManager = FacetCouplingGridManager<Traits::template SubDomain<bulkFlowId>::Grid,
@@ -122,7 +127,19 @@ int main(int argc, char** argv) try
     const auto& facetGridView = gridManager.template grid<1>().leafGridView();
 
     // create the finite volume grid geometries
-    MultiDomainFVGridGeometry<Traits> fvGridGeometry(std::make_tuple(bulkGridView, facetGridView, bulkGridView));
+    using MDGridGeometry = MultiDomainFVGridGeometry<Traits>;
+
+    MDGridGeometry fvGridGeometry;
+    fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<bulkFlowId>>(bulkGridView), bulkFlowId);
+    fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<facetFlowId>>(facetGridView), facetFlowId);
+    fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<bulkMechId>>(bulkGridView), bulkMechId);
+
+    // create basis of the lagrange space
+    using LagrangeBasis = typename MDGridGeometry::template Type<lagrangeId>::AnsatzSpaceBasis;
+    auto lagrangeBasis = std::make_shared<LagrangeBasis>(facetGridView);
+    fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<lagrangeId>>(lagrangeBasis), lagrangeId);
+
+    // update the finite volume grid geometries
     fvGridGeometry[bulkFlowId].update();
     fvGridGeometry[facetFlowId].update();
     fvGridGeometry[bulkMechId].update(facetGridView, CodimOneGridAdapter<typename GridManager::Embeddings>(gridManager.getEmbeddings()));
@@ -137,6 +154,7 @@ int main(int argc, char** argv) try
     using BulkFlowProblem = MultiDomainFVProblem<Traits>::template Type<bulkFlowId>;
     using FacetFlowProblem = MultiDomainFVProblem<Traits>::template Type<facetFlowId>;
     using BulkElasticProblem = MultiDomainFVProblem<Traits>::template Type<bulkMechId>;
+    using LagrangeProblem = MultiDomainFVProblem<Traits>::template Type<lagrangeId>;
 
     auto bulkFlowSpatialParams = std::make_shared<typename BulkFlowProblem::SpatialParams>(fvGridGeometry.get(bulkFlowId), couplingManager, "OnePBulk");
     auto facetFlowSpatialParams = std::make_shared<typename FacetFlowProblem::SpatialParams>(fvGridGeometry.get(facetFlowId), couplingManager, "OnePFacet");
@@ -145,6 +163,7 @@ int main(int argc, char** argv) try
     problem.set(std::make_shared<BulkFlowProblem>(fvGridGeometry.get(bulkFlowId), bulkFlowSpatialParams, couplingManager, "OnePBulk"), bulkFlowId);
     problem.set(std::make_shared<FacetFlowProblem>(fvGridGeometry.get(facetFlowId), facetFlowSpatialParams, couplingManager, "OnePFacet"), facetFlowId);
     problem.set(std::make_shared<BulkElasticProblem>(fvGridGeometry.get(bulkMechId), bulkElasticSpatialParams, couplingManager, "ElasticBulk"), bulkMechId);
+    problem.set(std::make_shared<LagrangeProblem>(fvGridGeometry.get(lagrangeId), couplingManager, "Lagrange"), lagrangeId);
 
     // the solution vector
     typename Traits::SolutionVector x;
@@ -163,6 +182,7 @@ int main(int argc, char** argv) try
     couplingManager->init(problem.get(bulkFlowId),
                           problem.get(facetFlowId),
                           problem.get(bulkMechId),
+                          problem.get(lagrangeId),
                           couplingMapperFlow,
                           couplingMapperMech,
                           x);
@@ -172,24 +192,35 @@ int main(int argc, char** argv) try
     GridVariables gridVars(fvGridGeometry.getTuple(), problem.getTuple());
     gridVars.init(x);
 
-    // intialize the vtk output module
-    MultiDomainVtkOutputModule<Traits> vtkWriter;
+    // intialize the vtk output modules
+    using BulkFlowGridVariables = typename GridVariables::template Type<bulkFlowId>;
+    using FacetFlowGridVariables = typename GridVariables::template Type<facetFlowId>;
+    using BulkMechGridVariables = typename GridVariables::template Type<bulkMechId>;
 
-    using BulkFlowVtkOutputModule = typename MultiDomainVtkOutputModule<Traits>::template Type<bulkFlowId>;
-    using FacetFlowVtkOutputModule = typename MultiDomainVtkOutputModule<Traits>::template Type<facetFlowId>;
-    using BulkElasticVtkOutputModule = typename MultiDomainVtkOutputModule<Traits>::template Type<bulkMechId>;
-    vtkWriter.set(std::make_shared<BulkFlowVtkOutputModule>(gridVars[bulkFlowId], x[bulkFlowId], problem[bulkFlowId].name()), bulkFlowId);
-    vtkWriter.set(std::make_shared<FacetFlowVtkOutputModule>(gridVars[facetFlowId], x[facetFlowId], problem[facetFlowId].name()), facetFlowId);
-    vtkWriter.set(std::make_shared<BulkElasticVtkOutputModule>(gridVars[bulkMechId], x[bulkMechId], problem[bulkMechId].name(), "ElasticBulk", Dune::VTK::nonconforming), bulkMechId);
+    using BulkFlowVtkOutputModule = VtkOutputModule<BulkFlowGridVariables, typename Traits::template SubDomain<bulkFlowId>::SolutionVector>;
+    using FacetFlowVtkOutputModule = VtkOutputModule<FacetFlowGridVariables, typename Traits::template SubDomain<facetFlowId>::SolutionVector>;
+    using BulkElasticVtkOutputModule = VtkOutputModule<BulkMechGridVariables, typename Traits::template SubDomain<bulkMechId>::SolutionVector>;
+
+    BulkFlowVtkOutputModule bulkFlowVtkWriter(gridVars[bulkFlowId], x[bulkFlowId], problem[bulkFlowId].name());
+    FacetFlowVtkOutputModule facetFlowVtkWriter(gridVars[facetFlowId], x[facetFlowId], problem[facetFlowId].name());
+    BulkElasticVtkOutputModule bulkMechVtkWriter(gridVars[bulkMechId], x[bulkMechId], problem[bulkMechId].name(), "ElasticBulk", Dune::VTK::nonconforming);
 
     // add additional output
-    vtkWriter[bulkFlowId].addField(problem[bulkFlowId].porosities(), "porosity");
-    vtkWriter[bulkFlowId].addField(problem[bulkFlowId].permeabilities(), "permeability");
-    vtkWriter[facetFlowId].addField(problem[facetFlowId].apertures(), "aperture");
-    vtkWriter[facetFlowId].addField(problem[facetFlowId].permeabilities(), "permeability");
+    bulkFlowVtkWriter.addField(problem[bulkFlowId].porosities(), "porosity");
+    bulkFlowVtkWriter.addField(problem[bulkFlowId].permeabilities(), "permeability");
+    facetFlowVtkWriter.addField(problem[facetFlowId].apertures(), "aperture");
+    facetFlowVtkWriter.addField(problem[facetFlowId].permeabilities(), "permeability");
 
-    vtkWriter.initDefaultOutputFields();
-    vtkWriter.write(0.0);
+    using BulkFlowIOFields = GetPropType<typename Traits::template SubDomain<bulkFlowId>::TypeTag, Properties::IOFields>;
+    using FacetFlowIOFields = GetPropType<typename Traits::template SubDomain<facetFlowId>::TypeTag, Properties::IOFields>;
+    using BulkMechIOFields = GetPropType<typename Traits::template SubDomain<bulkMechId>::TypeTag, Properties::IOFields>;
+    BulkFlowIOFields::initOutputModule(bulkFlowVtkWriter);
+    FacetFlowIOFields::initOutputModule(facetFlowVtkWriter);
+    BulkMechIOFields::initOutputModule(bulkMechVtkWriter);
+
+    bulkFlowVtkWriter.write(0.0);
+    facetFlowVtkWriter.write(0.0);
+    bulkMechVtkWriter.write(0.0);
 
     // the assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
@@ -214,7 +245,9 @@ int main(int argc, char** argv) try
     problem[facetFlowId].updateOutputFields(x[facetFlowId]);
 
     // write vtk output
-    vtkWriter.write(1.0);
+    bulkFlowVtkWriter.write(0.0);
+    facetFlowVtkWriter.write(0.0);
+    bulkMechVtkWriter.write(0.0);
 
     // print parameter usage
     Parameters::print();

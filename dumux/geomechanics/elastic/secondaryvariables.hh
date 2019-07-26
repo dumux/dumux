@@ -24,6 +24,8 @@
 #ifndef DUMUX_ELASTIC_SECONDARY_VARIABLES_HH
 #define DUMUX_ELASTIC_SECONDARY_VARIABLES_HH
 
+#include <dumux/discretization/fem/secondaryvariablesbase.hh>
+
 namespace Dumux {
 
 /*!
@@ -32,21 +34,19 @@ namespace Dumux {
  * \brief Contains the quantities of the linear elasticity model evaluated at an integration point.
  */
 template<class Traits>
-class ElasticSecondaryVariables
+class ElasticSecondaryVariables : public SecondaryVariablesBase<Traits>
 {
+    using ParentType = SecondaryVariablesBase<Traits>;
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using ModelTraits = typename Traits::ModelTraits;
 
     //! The elastic model only makes sense with inert solid systems
     static_assert(Traits::SolidSystem::isInert(), "Elastic model can only be used with inert solid systems");
 
 public:
-    //! export the type used for the primary variables
-    using PrimaryVariables = typename Traits::PrimaryVariables;
     //! export the type used for displacement vectors
     using DisplacementVector = typename Traits::DisplacementVector;
     //! export the type encapsulating primary variable indices
-    using Indices = typename ModelTraits::Indices;
+    using Indices = typename Traits::ModelTraits::Indices;
     //! export type of solid state
     using SolidState = typename Traits::SolidState;
     //! export the solid system used
@@ -66,16 +66,7 @@ public:
                 const Element& element,
                 const IpData& ipData)
     {
-        // interpolate primary variables
-        priVars_ = 0.0;
-        for (unsigned int i = 0; i < elemSol.size(); ++i)
-        {
-            PrimaryVariables tmp(elemSol[i]);
-            tmp *= ipData.shapeValues()[i];
-            priVars_ += tmp;
-        }
-
-        extrusionFactor_ = problem.extrusionFactor(element, ipData, elemSol);
+        ParentType::update(elemSol, problem, element, ipData);
 
         //! set the volume fractions of the solid components
         for (int sCompIdx = solidState_.numComponents-solidState_.numInertComponents; sCompIdx < solidState_.numComponents; ++sCompIdx)
@@ -97,7 +88,7 @@ public:
 
     //! Returns the displacement in a given direction in \f$[m]\f$.
     Scalar displacement(unsigned int dir) const
-    { return priVars_[ Indices::momentum(dir) ]; }
+    { return this->priVar(Indices::momentum(dir)); }
 
     //! Returns the displacement vector in \f$[m]\f$.
     DisplacementVector displacement() const
@@ -108,21 +99,9 @@ public:
         return d;
     }
 
-    //! Return a component of primary variable vector for a given index
-    Scalar priVar(const int pvIdx) const
-    { return priVars_[pvIdx]; }
-
-    //! Return the vector of primary variables
-    const PrimaryVariables& priVars() const
-    { return priVars_; }
-
-    //! TODO We don't know yet how to interpret extrusion for mechanics
-    static constexpr Scalar extrusionFactor()
-    { return 1.0; }
-
 private:
     //! sets the temperature in the solid state for non-isothermal models
-    static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
+    static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
     template< class Problem,
               bool enableEB = enableEnergyBalance, typename std::enable_if_t<enableEB, bool> = 0 >
     void setSolidTemperature_(const Problem& problem)
@@ -134,9 +113,6 @@ private:
     void setSolidTemperature_(const Problem& problem)
     { solidState_.setTemperature(problem.temperature()); }
 
-    // data members
-    Scalar extrusionFactor_;
-    PrimaryVariables priVars_;
     SolidState solidState_;
 };
 

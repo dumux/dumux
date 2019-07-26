@@ -43,18 +43,15 @@ namespace Dumux {
  * \ingroup Assembly
  * \brief A linear system assembler (residual and Jacobian) for finite element schemes
  * \tparam TypeTag The TypeTag
- * \tparamm TSB The basis of the trial space
  * \tparam diffMethod The differentiation method to residual compute derivatives
  * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag,
-         class TSB = typename GetPropType<TypeTag, Properties::GridGeometry>::FEBasis,
          DiffMethod diffMethod = DiffMethod::numeric,
          bool isImplicit = true>
 class FEAssembler
 {
     using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using AnsatzSpaceBasis = typename GG::FEBasis;
     using GridView = typename GG::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -62,7 +59,7 @@ class FEAssembler
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
 
-    using ThisType = FEAssembler<TypeTag, TSB, diffMethod, isImplicit>;
+    using ThisType = FEAssembler<TypeTag, diffMethod, isImplicit>;
     using LocalAssembler = FELocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>;
 
 public:
@@ -71,7 +68,6 @@ public:
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridGeometry = GG;
-    using TrialSpaceBasis = TSB;
 
     using ResidualType = SolutionVector;
 
@@ -103,12 +99,6 @@ public:
     , timeLoop_(timeLoop)
     , isStationaryProblem_(!timeLoop)
     {}
-
-    /*!
-     * \brief Returns true if trial and ansatz space are identical.
-     */
-    static constexpr bool isStandardGalerkin()
-    { return std::is_same<AnsatzSpaceBasis, TrialSpaceBasis>::value; }
 
     /*!
      * \brief Assembles the global Jacobian of the residual
@@ -276,22 +266,6 @@ public:
     const SolutionVector& prevSol() const
     { return *prevSol_; }
 
-    //! The basis of the trial space (standard galerkin case)
-    template< bool isSG = isStandardGalerkin(),
-              std::enable_if_t<isSG, int> = 0 >
-    const TrialSpaceBasis& trialSpaceBasis() const
-    { return gridGeometry().feBasis(); }
-
-    //! The basis of the trial space
-    template< bool isSG = isStandardGalerkin(),
-              std::enable_if_t<!isSG, int> = 0 >
-    const TrialSpaceBasis& trialSpaceBasis() const
-    {
-        if (!trialSpaceBasis_)
-            DUNE_THROW(Dune::InvalidStateException, "No trial space basis set!");
-        return *trialSpaceBasis_;
-    }
-
     /*!
      * \brief Set time loop for instationary problems
      * \note calling this turns this into a stationary assembler
@@ -431,9 +405,6 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
-
-    //! shared pointer to the trial space basis
-    std::shared_ptr<TrialSpaceBasis> trialSpaceBasis_;
 };
 
 } // namespace Dumux

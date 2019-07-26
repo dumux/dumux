@@ -25,6 +25,8 @@
 #ifndef DUMUX_DISCRETIZATION_FE_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_FE_GRID_GEOMETRY_HH
 
+#include <type_traits>
+
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
 
@@ -53,40 +55,89 @@ struct DefaultFEGridGeometryTraits : public MapperTraits
  * \ingroup FEMDiscretization
  * \brief The grid geometry class for models using finite element schemes.
  *        This is basically a wrapper around a function space basis.
- * \tparam FEB The finite element function space basis
+ * \tparam ASB The finite element function space basis of the ansatz space
+ * \tparam TSB The finite element function space basis of the trial space
  * \tparam MapperTraits Traits class containing data types for mappers
  */
-template<class FEB, class Traits = DefaultFEGridGeometryTraits<FEB>>
+template<class ASB, class TSB = ASB, class Traits = DefaultFEGridGeometryTraits<ASB>>
 class FEGridGeometry
-: public BaseGridGeometry< typename FEB::GridView, Traits >
+: public BaseGridGeometry< typename ASB::GridView, Traits >
 {
-    using ThisType = FEGridGeometry<FEB, Traits>;
-    using ParentType = BaseGridGeometry<typename FEB::GridView, Traits>;
+    using ThisType = FEGridGeometry<ASB, TSB, Traits>;
+    using ParentType = BaseGridGeometry<typename ASB::GridView, Traits>;
 
-    using GridIndexType = typename IndexTraits<typename FEB::GridView>::GridIndex;
-    using LocalIndexType = typename IndexTraits<typename FEB::GridView>::LocalIndex;
+    using GridIndexType = typename IndexTraits<typename ASB::GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<typename ASB::GridView>::LocalIndex;
+
+    static constexpr bool standardGalerkin = std::is_same<ASB, TSB>::value;
+    static_assert(std::is_same<typename ASB::GridView, typename TSB::GridView>::value,
+                  "Trial and Ansatz space must operate on the same grid!");
 
 public:
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::fem;
 
     //! export the grid view type
-    using GridView = typename FEB::GridView;
-    //! export the type of finite element basis
-    using FEBasis = FEB;
+    using GridView = typename ASB::GridView;
+    //! export the type of finite element basis of the ansatz space
+    using FEBasis = ASB;
+    //! export the type of finite element basis of the ansatz space
+    using AnsatzSpaceBasis = FEBasis;
+    //! export the type of finite element basis of the trial space
+    using TrialSpaceBasis = TSB;
     //! export local view
     using LocalView = typename Traits::template LocalView<ThisType>;
 
-    //! Constructor
-    FEGridGeometry(std::shared_ptr<FEBasis> feBasis)
-    : ParentType(feBasis->gridView())
-    , feBasis_(feBasis)
+    //! Constructor for standard Galerkin type settings
+    template<bool isSG = standardGalerkin, std::enable_if_t<isSG, int> = 0>
+    FEGridGeometry(std::shared_ptr<AnsatzSpaceBasis> ansatzSpaceBasis)
+    : ParentType(ansatzSpaceBasis->gridView())
+    , ansatzSpaceBasis_(ansatzSpaceBasis)
+    , trialSpaceBasis_(ansatzSpaceBasis)
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::fem>::isValid(*feBasis))
+        if (!CheckOverlapSize<DiscretizationMethod::fem>::isValid(ansatzSpaceBasis->gridView()))
             DUNE_THROW(Dune::InvalidStateException, "The finite element discretization method only works with zero overlap for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
+
+    //! Constructor for standard Galerkin type settings
+    template<bool isSG = standardGalerkin, std::enable_if_t<isSG, int> = 0>
+    FEGridGeometry(std::shared_ptr<AnsatzSpaceBasis> ansatzSpaceBasis,
+                   std::shared_ptr<TrialSpaceBasis> trialSpaceBasis)
+    : ParentType(ansatzSpaceBasis->gridView())
+    , ansatzSpaceBasis_(ansatzSpaceBasis)
+    , trialSpaceBasis_(trialSpaceBasis)
+    {
+        if (ansatzSpaceBasis->gridView().size(0) != trialSpaceBasis->gridView().size(0))
+            DUNE_THROW(Dune::InvalidStateException, "Trial and Ansatz space must operate on the same grids!");
+
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::fem>::isValid(ansatzSpaceBasis->gridView()))
+            DUNE_THROW(Dune::InvalidStateException, "The finite element discretization method only works with zero overlap for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
+
+    //! Constructor for petrov Galerkin type settings
+    template<bool isSG = standardGalerkin, std::enable_if_t<!isSG, int> = 0>
+    FEGridGeometry(std::shared_ptr<AnsatzSpaceBasis> ansatzSpaceBasis,
+                   std::shared_ptr<TrialSpaceBasis> trialSpaceBasis)
+    : ParentType(ansatzSpaceBasis->gridView())
+    , ansatzSpaceBasis_(ansatzSpaceBasis)
+    , trialSpaceBasis_(trialSpaceBasis)
+    {
+        if (ansatzSpaceBasis->gridView().size(0) != trialSpaceBasis->gridView().size(0))
+            DUNE_THROW(Dune::InvalidStateException, "Trial and Ansatz space must operate on the same grids!");
+
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::fem>::isValid(ansatzSpaceBasis->gridView()))
+            DUNE_THROW(Dune::InvalidStateException, "The finite element discretization method only works with zero overlap for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
+
+    //! Returns true if the undelying approach is of standard Galerkin type.
+    static constexpr bool isStandardGalerkin()
+    { return standardGalerkin; }
 
     //! update the mappers etc
     void update()
@@ -96,11 +147,19 @@ public:
 
     //! The total number of degrees of freedom
     auto numDofs() const
-    { return feBasis_->size(); }
+    { return ansatzSpaceBasis_->size(); }
 
-    //! The total number of degrees of freedom
-    const FEBasis& feBasis() const
-    { return *feBasis_; }
+    //! Return the ansatz space basis
+    const AnsatzSpaceBasis& feBasis() const
+    { return *ansatzSpaceBasis_; }
+
+    //! Return the ansatz space basis
+    const AnsatzSpaceBasis& ansatzSpaceBasis() const
+    { return *ansatzSpaceBasis_; }
+
+    //! Return the ansatz space basis
+    const TrialSpaceBasis& trialSpaceBasis() const
+    { return *trialSpaceBasis_; }
 
     //! If a vertex / d.o.f. is on a periodic boundary
     bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
@@ -115,7 +174,8 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Periodic BC support for FEM schemes"); }
 
 private:
-    std::shared_ptr<FEBasis> feBasis_;
+    std::shared_ptr<AnsatzSpaceBasis> ansatzSpaceBasis_;
+    std::shared_ptr<TrialSpaceBasis> trialSpaceBasis_;
 };
 
 } // end namespace Dumux

@@ -62,7 +62,7 @@ class ElasticLocalResidualImpl<TypeTag, DiscretizationMethod::fem>
     using ParentType = FELocalResidual<TypeTag>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using ElementGeometry = typename GridGeometry::LocalView;
+    using FEElementGeometry = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -94,7 +94,7 @@ public:
     template<class IpData, class ElementSolution>
     typename StressType::StressTensor computeFlux(const Problem& problem,
                                                   const Element& element,
-                                                  const ElementGeometry& feGeometry,
+                                                  const FEElementGeometry& feGeometry,
                                                   const ElementSolution& elemSol,
                                                   const IpData& ipData,
                                                   const SecondaryVariables& secVars) const
@@ -118,7 +118,7 @@ public:
     template<class IpData, class ElementSolution>
     NumEqVector computeSource(const Problem& problem,
                               const Element& element,
-                              const ElementGeometry& feGeometry,
+                              const FEElementGeometry& feGeometry,
                               const ElementSolution& elemSol,
                               const IpData& ipData,
                               const SecondaryVariables& secVars) const
@@ -171,6 +171,7 @@ class ElasticLocalResidualImpl<TypeTag, DiscretizationMethod::box>
     using StressType = GetPropType<TypeTag, Properties::StressType>;
 
 public:
+    //! Pull up parents' constructor
     using ParentType::ParentType;
 
     /*!

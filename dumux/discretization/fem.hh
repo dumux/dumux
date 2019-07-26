@@ -33,14 +33,29 @@
 #include <dumux/common/boundarytypes.hh>
 
 #include <dumux/discretization/fem/fegridvariables.hh>
+#include <dumux/discretization/fem/secondaryvariablesbase.hh>
 #include <dumux/discretization/fem/elementboundarytypes.hh>
 
 namespace Dumux {
+
+/*!
+ * \ingroup FEMDiscretization
+ * \brief Traits class for the base class of secondary variables.
+ *
+ * \tparam PV The type used for primary variables
+ */
+template<class PV>
+struct SecondaryVariablesBaseTraits
+{
+    using PrimaryVariables = PV;
+};
+
 namespace Properties {
 
 //! Type tag for finite-volume schemes.
 // Create new type tags
 namespace TTag {
+//! \todo TODO Call FEModel to be more consistent with other type tags
 struct FiniteElementModel { using InheritsFrom = std::tuple<GridProperties>; };
 } // end namespace TTag
 
@@ -53,6 +68,18 @@ private:
     using SV = GetPropType<TypeTag, Properties::SecondaryVariables>;
 public:
     using type = FEGridVariables<GG, SV>;
+};
+
+//! Per default we use the base class of the secondary variables that
+//! solely store the primary variables at an integration point
+template<class TypeTag>
+struct SecondaryVariables<TypeTag, TTag::FiniteElementModel>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using T = SecondaryVariablesBaseTraits<PV>;
+public:
+    using type = SecondaryVariablesBase<T>;
 };
 
 //! \todo TODO eliminate those? Can this have any functionality in FEM?
