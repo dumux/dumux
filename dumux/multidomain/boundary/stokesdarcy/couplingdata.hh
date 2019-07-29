@@ -423,9 +423,7 @@ protected:
                                 const SubControlVolume<darcyIdx>& scv) const
     {
         using ThermalConductivityModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ThermalConductivityModel>;
-        const auto& problem = this->couplingManager().problem(darcyIdx);
-        return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                 volVars, problem.spatialParams(), fvGeometry.fvGridGeometry().element(scv), fvGeometry, scv);
+        return ThermalConductivityModel::effectiveThermalConductivity(volVars);
     }
 
     /*!
