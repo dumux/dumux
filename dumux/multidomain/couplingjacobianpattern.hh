@@ -194,7 +194,7 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
         {
             const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
 
-            const auto feGeometry = localView(gridGeometryI);
+            auto feGeometry = localView(gridGeometryI);
             feGeometry.bind(elementI);
 
             const auto& basisLocalView = feGeometry.feBasisLocalView();

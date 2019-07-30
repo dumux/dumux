@@ -27,6 +27,7 @@
 
 #include <dune/alugrid/grid.hh>
 
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
@@ -49,7 +50,7 @@ struct OnePBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, 
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePBulk> { using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>; };
+struct Grid<TypeTag, TTag::OnePBulk> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 // Set the problem type
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>; };
@@ -73,7 +74,7 @@ struct FluidSystem<TypeTag, TTag::OnePBulk>
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = FluidSystems::OnePLiquid< Scalar, Components::SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<0, Scalar> >;
 };
 
 } // end namespace Properties
@@ -115,6 +116,9 @@ public:
 
         porosities_.resize(fvGridGeometry->gridView().size(0), getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPorosity"));
         permeabilities_.resize(fvGridGeometry->gridView().size(0), getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPermeability"));
+
+        injectionPressure_ = getParam<Scalar>("Problem.InjectionPressure");
+        extractionPressure_ = getParam<Scalar>("Problem.ExtractionPressure");
     }
 
     /*!
@@ -144,17 +148,21 @@ public:
     BoundaryTypes interiorBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
-        values.setAllNeumann();
+        values.setAllDirichlet();
         return values;
     }
 
     //! Evaluates the Dirichlet boundary conditions at a given position.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    { return initialAtPos(globalPos); }
+    {
+        if (isOnInlet_(globalPos))
+            return PrimaryVariables(injectionPressure_);
+         return initialAtPos(globalPos);
+     }
 
     //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(1.0e5); }
+    { return PrimaryVariables(extractionPressure_); }
 
     //! Returns the temperature in \f$\mathrm{[K]}\f$ in the domain.
     Scalar temperature() const
@@ -191,12 +199,19 @@ public:
     }
 
 private:
+    //! The inlet is on the left side of the domain
+    bool isOnInlet_(const GlobalPosition& globalPos) const
+    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + 1e-6; }
+
     std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
 
     // fields to be added to output
     std::vector<Scalar> porosities_;
     std::vector<Scalar> permeabilities_;
+
+    Scalar injectionPressure_;
+    Scalar extractionPressure_;
 };
 
 } // end namespace Dumux

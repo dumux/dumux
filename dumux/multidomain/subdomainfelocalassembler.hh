@@ -29,6 +29,7 @@
 
 #include <dune/common/indices.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -63,10 +64,15 @@ class SubDomainFELocalAssemblerBase
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using Scalar = typename GridVariables::Scalar;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FEElementGeometry = typename GridGeometry::LocalView;
+    using ElementSolution = FEElementSolution<FEElementGeometry, PrimaryVariables>;
+
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -74,18 +80,13 @@ class SubDomainFELocalAssemblerBase
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SubSolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using ElementSolution = FEElementSolution<FEElementGeometry, PrimaryVariables>;
-
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
-    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
-    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
-    using Scalar = typename GridVariables::Scalar;
+    using ReferenceElements = typename Dune::ReferenceElements<Scalar, GridView::dimension>;
 
     using CouplingManager = typename Assembler::CouplingManager;
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
 public:
+    //! pull up public export of base class
     using typename ParentType::ElementResidualVector;
 
     //! Export the domain id of this sub-domain
@@ -229,6 +230,81 @@ public:
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
+    /*!
+     * \brief Evaluates Dirichlet boundaries
+     */
+    template< typename ApplyDirichletFunctionType >
+    void evalDirichletBoundaries(ApplyDirichletFunctionType applyDirichlet)
+    {
+        // enforce Dirichlet boundaries by overwriting partial derivatives with 1 or 0
+        // and set the residual to (privar - dirichletvalue)
+        if (this->elemBcTypes().hasDirichlet())
+        {
+            const auto& gridGeometry = this->feGeometry().gridGeometry();
+            for (const auto& is : intersections(gridGeometry.gridView(), this->element()))
+            {
+                if (!is.boundary())
+                    continue;
+
+                const auto bcTypes = problem().boundaryTypes(this->element(), is);
+                if (!bcTypes.hasDirichlet())
+                    continue;
+
+                // get reference elements and finite element
+                const auto& tsLocalView = this->trialSpaceBasisLocalView();
+                const auto& fe = tsLocalView.tree().finiteElement();
+
+                const auto& element = this->element();
+                const auto& eg = element.geometry();
+                const auto refElement = ReferenceElements::general(eg.type());
+
+                // handle Dirichlet boundaries
+                for (unsigned int localDofIdx = 0; localDofIdx < tsLocalView.size(); localDofIdx++)
+                {
+                    const auto dofIdx = tsLocalView.index(localDofIdx);
+                    const auto& localKey = fe.localCoefficients().localKey(localDofIdx);
+                    const auto subEntity = localKey.subEntity();
+                    const auto codim = localKey.codim();
+
+                    // skip interior dofs
+                    if (codim == 0)
+                        continue;
+
+                    bool found = false;
+                    // try to find this local dof (on entity with known codim) on the current intersection
+                    for (int j = 0; j < refElement.size(is.indexInInside(), 1, codim); j++)
+                    {
+                        // If j-th sub entity is the sub entity corresponding to local dof, continue and assign BC
+                        if (subEntity == refElement.subEntity(is.indexInInside(), 1, j, codim))
+                        {
+                            // get global coordinate of this degree of freedom
+                            const auto globalPos = eg.global(refElement.position(subEntity, codim));
+
+                            // value of dirichlet BC
+                            const auto dirichletValues = problem().dirichlet(element, is, globalPos);
+
+                            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                            {
+                                if (bcTypes.isDirichlet(eqIdx))
+                                {
+                                    const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                                    assert(0 <= pvIdx && pvIdx < numEq);
+                                    applyDirichlet(dirichletValues, localDofIdx, dofIdx, eqIdx, pvIdx);
+                                }
+                            }
+
+                            // we found the dof
+                            found = true; break;
+                        }
+
+                        // stop search after we found the dof
+                        if (found) break;
+                    }
+                }
+            }
+        }
+    }
+
     //! return reference to the underlying problem
     const Problem& problem() const
     { return this->assembler().problem(domainId); }
@@ -263,29 +339,27 @@ class SubDomainFELocalAssembler;
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
-: public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler,
-             SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, true >
+: public SubDomainFELocalAssemblerBase<id, TypeTag, Assembler,
+             SubDomainFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, true >
 {
-    using ThisType = SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
-    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
+    using ThisType = SubDomainFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
+    using ParentType = SubDomainFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
 
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using Scalar = typename GridVariables::Scalar;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
 
-    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
-    static constexpr bool enableGridVolVarsCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+    static constexpr int dim = GridView::dimension;
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:
+    //! pull up public export of base class
+    using typename ParentType::ElementResidualVector;
+
+    //! Pull up base class constructor
     using ParentType::ParentType;
 
     /*!
@@ -380,13 +454,8 @@ public:
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
                                   const ElementResidualVector& res, GridVariables& gridVariables)
     {
-        // get some aliases for convenience
+        // get some references for convenience
         const auto& element = this->element();
-        const auto& fvGeometry = this->fvGeometry();
-        auto&& curElemVolVars = this->curElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
-
-        // get element stencil informations
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
 
         const auto& curSolJ = this->curSol()[domainJ];

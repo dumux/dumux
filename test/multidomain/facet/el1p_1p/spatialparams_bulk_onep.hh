@@ -68,8 +68,13 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolution& elemSol) const
     {
-        PermeabilityKozenyCarman<PermeabilityType> permLaw;
-        return permLaw.evaluatePermeability(initialPermeability_, initialPorosity_, porosity(element, scv, elemSol));
+        static const bool useKK = getParam<bool>("Problem.UseKozenyKarman");
+        if (useKK)
+        {
+            PermeabilityKozenyCarman<PermeabilityType> permLaw;
+            return permLaw.evaluatePermeability(initialPermeability_, initialPorosity_, porosity(element, scv, elemSol));
+        }
+        return initialPermeability_;
     }
 
     //! Returns the porosity for a sub-control volume.

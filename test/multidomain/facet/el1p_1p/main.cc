@@ -26,6 +26,7 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/functions/gridfunctions/discreteglobalbasisfunction.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -209,7 +210,10 @@ int main(int argc, char** argv) try
     bulkFlowVtkWriter.addField(problem[bulkFlowId].porosities(), "porosity");
     bulkFlowVtkWriter.addField(problem[bulkFlowId].permeabilities(), "permeability");
     facetFlowVtkWriter.addField(problem[facetFlowId].apertures(), "aperture");
+    facetFlowVtkWriter.addField(problem[facetFlowId].deltaUT(), "deltaUT");
     facetFlowVtkWriter.addField(problem[facetFlowId].permeabilities(), "permeability");
+    bulkMechVtkWriter.addField(problem[bulkMechId].sigma_x(), "Sigma_x", BulkElasticVtkOutputModule::FieldType::element);
+    bulkMechVtkWriter.addField(problem[bulkMechId].sigma_y(), "Sigma_y", BulkElasticVtkOutputModule::FieldType::element);
 
     using BulkFlowIOFields = GetPropType<typename Traits::template SubDomain<bulkFlowId>::TypeTag, Properties::IOFields>;
     using FacetFlowIOFields = GetPropType<typename Traits::template SubDomain<facetFlowId>::TypeTag, Properties::IOFields>;
@@ -218,9 +222,9 @@ int main(int argc, char** argv) try
     FacetFlowIOFields::initOutputModule(facetFlowVtkWriter);
     BulkMechIOFields::initOutputModule(bulkMechVtkWriter);
 
-    bulkFlowVtkWriter.write(0.0);
-    facetFlowVtkWriter.write(0.0);
-    bulkMechVtkWriter.write(0.0);
+    // bulkFlowVtkWriter.write(0.0);
+    // facetFlowVtkWriter.write(0.0);
+    // bulkMechVtkWriter.write(0.0);
 
     // the assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
@@ -243,11 +247,19 @@ int main(int argc, char** argv) try
     // update additional output fields
     problem[bulkFlowId].updateOutputFields(x[bulkFlowId]);
     problem[facetFlowId].updateOutputFields(x[facetFlowId]);
+    problem[bulkMechId].updateOutputFields(gridVars[bulkMechId],
+                                           *assembler, x[bulkMechId], bulkMechId);
 
     // write vtk output
     bulkFlowVtkWriter.write(0.0);
     facetFlowVtkWriter.write(0.0);
     bulkMechVtkWriter.write(0.0);
+
+    // write out lagrange multiplier
+    Dune::VTKWriter<std::decay_t<decltype(facetGridView)>> lagrangeWriter(facetGridView);
+    auto gf = Dune::Functions::makeDiscreteGlobalBasisFunction<Dune::FieldVector<double, 1>>(*lagrangeBasis, x[lagrangeId]);
+    lagrangeWriter.addCellData(gf, Dune::VTK::FieldInfo("lagrange", Dune::VTK::FieldInfo::Type::scalar, 1));
+    lagrangeWriter.write("lagrange");
 
     // print parameter usage
     Parameters::print();

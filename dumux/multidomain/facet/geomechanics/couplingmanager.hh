@@ -31,6 +31,7 @@
 
 #include <dune/common/indices.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalsolution.hh>
@@ -84,6 +85,7 @@ class FacetCouplingPoroMechanicsCouplingManager
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Scalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
     template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
+    template<std::size_t id> using NumEqVector = GetPropType<SubDomainTypeTag<id>, Properties::NumEqVector>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
@@ -112,9 +114,11 @@ class FacetCouplingPoroMechanicsCouplingManager
 
     struct ContactSurface
     {
+        using BasisVector = GlobalPosition<mechDomainId>;
+        using ContactForce = Dune::FieldVector<Scalar<lagrangeDomainId>, dimWorld>;
+
         GridIndexType<mechDomainId> mechElemIdx; // Index of element this surface is embedded in
-        GlobalPosition<mechDomainId> normal;     // Normal vector of the contact surface
-        GlobalPosition<mechDomainId> tangent;    // Tangential vector of the contact surface
+        std::array<BasisVector, dimWorld> basis; // Basis vectors for the traction vector at contact
     };
 
 public:
@@ -185,6 +189,8 @@ public:
               const SolutionVector& curSol)
     {
         curSol_ = curSol;
+        lagrangeProblemPtr_ = lagrangeProblem;
+
         BulkFacetFlowManager::init(matrixFlowProblem, facetFlowProblem, bulkFacetFlowMapper, curSol);
         BulkFacetMechManager::init(mechProblem, facetFlowProblem, bulkFacetMechMapper, curSol);
         PoroMechManager::init(matrixFlowProblem, mechProblem, curSol);
@@ -278,21 +284,128 @@ public:
                                         const GlobalPosition<facetFlowId>& globalPos,
                                         Scalar<facetFlowId> initialAperture) const
     {
+        const auto deltaUN = computeNormalDisplacementJump(element, globalPos);
+        return initialAperture - deltaUN;
+    }
+
+    /*!
+     * \brief Computes the jump in displacement within a
+     *        lower-dimensional element at the given position as a
+     *        function of the actual mechanical deformation.
+     *
+     * \param element The (d-1)-dimensional facet grid element
+     * \param globalPos The global position on the facet element.
+     */
+    GlobalPosition<mechanicsId> computeDisplacementJump(const Element<facetFlowId>& element,
+                                                        const GlobalPosition<facetFlowId>& globalPos) const
+    {
         const auto facetElemIdx = problem(facetFlowId).fvGridGeometry().elementMapper().index(element);
         const auto& contactSurfaces = contactSurfaces_[facetElemIdx];
 
-        Scalar<facetFlowId> normalDispJump = 0.0;
-        for (const auto& contactSurface : contactSurfaces)
+        GlobalPosition<mechanicsId> deltaU(0.0);
+        for (unsigned int surfaceIdx = 0; surfaceIdx < contactSurfaces.size(); ++surfaceIdx)
         {
+            const auto& contactSurface = contactSurfaces[surfaceIdx];
             const auto mechIdx = contactSurface.mechElemIdx;
             const auto mechElement = problem(mechanicsId).fvGridGeometry().element(mechIdx);
             const auto mechElemSol = elementSolution(mechElement, curSol_[mechanicsId], problem(mechanicsId).fvGridGeometry());
 
-            const auto displacement = evalSolution(mechElement, mechElement.geometry(), mechElemSol, globalPos);
-            normalDispJump -= displacement*contactSurface.normal;
+            if (surfaceIdx == 0)
+                deltaU += evalSolution(mechElement, mechElement.geometry(), mechElemSol, globalPos);
+            else if (surfaceIdx == 1)
+                deltaU -= evalSolution(mechElement, mechElement.geometry(), mechElemSol, globalPos);
+            else
+                DUNE_THROW(Dune::NotImplemented, "Displacement jump computation for surface grids");
         }
 
-        return initialAperture + normalDispJump;
+        return deltaU;
+    }
+
+    /*!
+     * \brief Computes the jump in tangential displacement within a
+     *        lower-dimensional element at the given position as a
+     *        function of the actual mechanical deformation.
+     *
+     * \param element The (d-1)-dimensional facet grid element
+     * \param globalPos The global position on the facet element.
+     */
+    GlobalPosition<mechanicsId> computeTangentialDisplacementJump(const Element<facetFlowId>& element,
+                                                                  const GlobalPosition<facetFlowId>& globalPos) const
+    {
+        const auto deltaU = computeDisplacementJump(element, globalPos);
+
+        const auto facetElemIdx = problem(facetFlowId).fvGridGeometry().elementMapper().index(element);
+        const auto& contactSurfaces = contactSurfaces_[facetElemIdx];
+
+        const auto& normal = contactSurfaces[0].basis[dimWorld-1];
+        auto deltaUN = normal;
+        deltaUN *= deltaU*normal;
+
+        return deltaU - deltaUN;
+    }
+
+    /*!
+     * \brief Computes the jump in normal displacement within a
+     *        lower-dimensional element at the given position as a
+     *        function of the actual mechanical deformation.
+     *
+     * \param element The (d-1)-dimensional facet grid element
+     * \param globalPos The global position on the facet element.
+     */
+    Scalar<mechanicsId> computeNormalDisplacementJump(const Element<facetFlowId>& element,
+                                                      const GlobalPosition<facetFlowId>& globalPos) const
+    {
+        const auto deltaU = computeDisplacementJump(element, globalPos);
+
+        const auto facetElemIdx = problem(facetFlowId).fvGridGeometry().elementMapper().index(element);
+        const auto& contactSurfaces = contactSurfaces_[facetElemIdx];
+        const auto& normal = contactSurfaces[0].basis[dimWorld-1];
+
+        return deltaU*normal;
+    }
+
+    /*!
+     * \brief Returns the contact force action on a sub-control
+     *        volume face of the mechanical sub-domain.
+     *
+     * \param element The grid element of the mechanical domain
+     * \param scvf The sub-control volume face of the mechanical domain
+     */
+    typename ContactSurface::ContactForce getContactForce(const Element<mechanicsId>& element,
+                                                          const typename GridGeometry<mechanicsId>::SubControlVolumeFace& scvf) const
+    {
+        const auto facetElement = this->getLowDimElement(element, scvf);
+        auto force = getContactTraction(facetElement, scvf.center());
+        force *= scvf.area();
+        return force;
+    }
+
+    /*!
+     * \brief Returns the lagrange multiplier (traction -> force per area)
+     *        at a position on a lower-dimensional lagrange-domain element.
+     *
+     * \param element The grid element of the facet (lagrange) domain
+     * \param pos The global position on the element
+     */
+    typename ContactSurface::ContactForce getContactTraction(const Element<lagrangeId>& element,
+                                                             const GlobalPosition<lagrangeId>& pos) const
+    {
+        const auto eg = element.geometry();
+        const auto& gg = problem(lagrangeId).gridGeometry();
+        const auto elemSol = elementSolution(element, curSol_[lagrangeId], gg);
+        const auto coefficients = evalSolution(element, eg, gg, elemSol, pos, true);
+
+        const auto& contactSurface = getContactSurface(element);
+
+        typename ContactSurface::ContactForce force(0.0);
+        for (int dir = 0; dir < dimWorld; ++dir)
+        {
+            auto dirForce = contactSurface.basis[dir];
+            dirForce *= coefficients[dir];
+            force += dirForce;
+        }
+
+        return force;
     }
 
     /*!
@@ -376,7 +489,7 @@ public:
     {
         const auto& localResidual = lagrangeLocalAssembler.localResidual();
 
-        if (LagrangeDomainLocalAssembler::isStandardGalerkin())
+        if (GridGeometry<lagrangeId>::isStandardGalerkin())
             return localResidual.eval(lagrangeLocalAssembler.element(),
                                       lagrangeLocalAssembler.feGeometry(),
                                       lagrangeLocalAssembler.curElemSol());
@@ -470,33 +583,34 @@ public:
      *        of an element of the lagrange domain after the solution in a sub-domain has
      *        been deflected.
      */
-    template<class LocalAssemblerI, std::size_t id>
-    void updateCouplingContext(LagrangeIdType domainI,
+    template<std::size_t i, class LocalAssemblerI, std::size_t j,
+             std::enable_if_t<(i == lagrangeDomainId || j == lagrangeDomainId), int> = 0>
+    void updateCouplingContext(Dune::index_constant<i> domainI,
                                const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<id> domainJ,
+                               Dune::index_constant<j> domainJ,
                                std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<id>& priVarsJ,
+                               const PrimaryVariables<j>& priVarsJ,
                                int pvIdxJ)
     {
         curSol_[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
     }
 
-    /*!
-     * \brief updates all data and variables that are necessary to evaluate the residual
-     *        of an element of a sub-domain after the solution in the lagrange domain
-     *        has been deflected. Since coupling to the lagrange domain only occurs via
-     *        primary variables, we only deflect the solution here.
-     */
-    template< std::size_t id, class LocalAssemblerI >
-    void updateCouplingContext(Dune::index_constant<id> domainI,
-                               const LocalAssemblerI& localAssemblerI,
-                               LagrangeIdType domainJ,
-                               std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<lagrangeId>& priVarsJ,
-                               int pvIdxJ)
-    {
-        curSol_[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
-    }
+    // /*!
+    //  * \brief updates all data and variables that are necessary to evaluate the residual
+    //  *        of an element of a sub-domain after the solution in the lagrange domain
+    //  *        has been deflected. Since coupling to the lagrange domain only occurs via
+    //  *        primary variables, we only deflect the solution here.
+    //  */
+    // template< std::size_t id, class LocalAssemblerI >
+    // void updateCouplingContext(Dune::index_constant<id> domainI,
+    //                            const LocalAssemblerI& localAssemblerI,
+    //                            LagrangeIdType domainJ,
+    //                            std::size_t dofIdxGlobalJ,
+    //                            const PrimaryVariables<lagrangeId>& priVarsJ,
+    //                            int pvIdxJ)
+    // {
+    //     curSol_[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+    // }
 
     /*!
      * \brief updates all data and variables that are necessary to evaluate the residual
@@ -756,7 +870,7 @@ public:
      *        volume face of the mechanical domain on an interior boundary.
      */
     const ContactSurface& getContactSurface(const Element<mechanicsId>& element,
-                                            const typename GridGeometry<mechanicsId>::SubControlVolumeFace& scvf)
+                                            const typename GridGeometry<mechanicsId>::SubControlVolumeFace& scvf) const
     {
         if (!scvf.interiorBoundary())
             DUNE_THROW(Dune::InvalidStateException, "Contact surfaces only defined for interior boundary faces");
@@ -765,6 +879,16 @@ public:
         const auto& elemLocalMap = mechContactSurfaceMap_.at(eIdx);
         const auto& idxPair = elemLocalMap.at(scvf.index());
         return contactSurfaces_[idxPair.first][idxPair.second];
+    }
+
+    /*!
+     * \brief Returns the master contact surface data structure defined
+     *        on a lower-dimensional element of the lagrange domain.
+     */
+    const ContactSurface& getContactSurface(const Element<lagrangeId>& element) const
+    {
+        const auto eIdx = problem(lagrangeId).gridGeometry().elementMapper().index(element);
+        return contactSurfaces_[eIdx][0];
     }
 
     //! Return a const reference to one of the flow problems
@@ -855,24 +979,24 @@ private:
             // normal is the same for all scvfs on that element
             const auto& scvfList1 = embedments[0].second;
             assert(scvfList1.size() > 0);
-            surface1.normal = mechFvGeometry1.scvf(scvfList1[0]).unitOuterNormal();
+            surface1.basis[dimWorld-1] = mechFvGeometry1.scvf(scvfList1[0]).unitOuterNormal();
 
             // compute tangent
-            if (facetDim == 2)
+            if (facetDim == 1)
             {
                 const auto geometry = lagrangeElement.geometry();
-                surface1.tangent = geometry.corner(0) - geometry.center();
-                surface1.tangent /= surface1.tangent.two_norm();
+                surface1.basis[0] = geometry.corner(0) - geometry.center();
+                surface1.basis[0] /= surface1.basis[0].two_norm();
             }
             else
                 DUNE_THROW(Dune::NotImplemented, "Contact mechanics in 3d");
 
-            // simply take the negatives for second surface
+            // simply take the negatives for basis on second surface
             surface2.mechElemIdx = mechElementIdx2;
-            surface2.normal = surface1.normal;
-            surface2.tangent = surface1.tangent;
-            surface2.normal *= -1.0;
-            surface2.tangent *= -1.0;
+            for (unsigned int dir = 0; dir < dimWorld; ++dir)
+                surface2.basis[dir] = surface1.basis[dir];
+            for (unsigned int dir = 0; dir < dimWorld; ++dir)
+                surface2.basis[dir] *= -1.0;;
 
             const auto& scvfList2 = embedments[1].second;
 
