@@ -129,6 +129,7 @@ dune_add_test(NAME test_3d2pmimeticadaptive
 dune_add_test(NAME test_3d2pmpfal
               LABELS porousmediumflow 2p
               SOURCES test_3d2p.cc
+              TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_3d2pmpfal-reference.vtu

@@ -29,6 +29,7 @@ dune_add_test(NAME test_md_facet_tracertracer_mpfa
               COMPILE_DEFINITIONS TRACERBULKTYPETAG=TracerBulkMpfa
               COMPILE_DEFINITIONS TRACERLOWDIMTYPETAG=TracerLowDimMpfa
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
+              TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_mpfa_onep_bulk-reference.vtu
