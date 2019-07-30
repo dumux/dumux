@@ -73,8 +73,8 @@ template<class TypeTag>
 struct PrimaryInteractionVolume<TypeTag, TTag::CCMpfaModel>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
 
     // use the default traits
     using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar >;
