@@ -4,6 +4,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfatpfa
               COMPILE_DEFINITIONS SOILTYPETAG=SoilCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMAKE_GUARD dune-foamgrid_FOUND
+              TIMEOUT 1500
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p_richards_tpfatpfa_1d-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p_richards_tpfatpfa_1d-00004.vtp
@@ -18,6 +19,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfabox
               COMPILE_DEFINITIONS SOILTYPETAG=SoilBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMAKE_GUARD dune-foamgrid_FOUND
+              TIMEOUT 1500
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p_richards_tpfatpfa_1d-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p_richards_tpfabox_1d-00004.vtp

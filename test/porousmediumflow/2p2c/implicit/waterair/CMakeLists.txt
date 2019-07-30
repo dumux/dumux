@@ -4,6 +4,7 @@ add_input_file_links(FILES params.input)
 dune_add_test(NAME test_2p2cni_waterair_box
               LABELS porousmediumflow 2p2c  2p2cni
               SOURCES main.cc
+              TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=WaterAirBox ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -14,6 +15,7 @@ dune_add_test(NAME test_2p2cni_waterair_box
 dune_add_test(NAME test_2p2cni_waterair_buoyancy_box
               LABELS porousmediumflow 2p2c  2p2cni
               TARGET test_2p2cni_waterair_box
+              TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=WaterAirBox ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -24,6 +26,7 @@ dune_add_test(NAME test_2p2cni_waterair_buoyancy_box
 dune_add_test(NAME test_2p2cni_waterair_tpfa
               LABELS porousmediumflow 2p2c  2p2cni
               SOURCES main.cc
+              TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=WaterAirCCTpfa ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy

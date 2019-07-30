@@ -31,6 +31,7 @@ dune_add_test(NAME test_2p_boxdfm_quads_ug
 # triangles alu
 dune_add_test(NAME test_2p_boxdfm_trias_alu
               LABELS porousmediumflow 2p
+              TIMEOUT 1500
              SOURCES main.cc
              CMAKE_GUARD dune-foamgrid_FOUND
              CMAKE_GUARD dune-alugrid_FOUND
@@ -45,6 +46,7 @@ dune_add_test(NAME test_2p_boxdfm_trias_alu
 # triangles ug
 dune_add_test(NAME test_2p_boxdfm_trias_ug
               LABELS porousmediumflow 2p
+              TIMEOUT 1500
              SOURCES main.cc
              CMAKE_GUARD dune-uggrid_FOUND
              CMAKE_GUARD dune-foamgrid_FOUND

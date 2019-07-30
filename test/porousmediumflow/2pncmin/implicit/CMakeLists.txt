@@ -5,6 +5,7 @@ dune_add_test(NAME test_2pncmin_dissolution_box
               LABELS porousmediumflow 2pncmin
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=DissolutionBox
+              TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncmin_dissolution_box-reference.vtu
@@ -27,6 +28,7 @@ dune_add_test(NAME test_2pncmin_dissolution_tpfa
               LABELS porousmediumflow 2pncmin
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=DissolutionCCTpfa
+              TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncmin_dissolution_tpfa-reference.vtu
