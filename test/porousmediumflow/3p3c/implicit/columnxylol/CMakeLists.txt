@@ -4,6 +4,7 @@ add_input_file_links(FILES params.input)
 dune_add_test(NAME test_3p3cni_columnxylol_box
               LABELS porousmediumflow 3p3c 3p3cni
               SOURCES main.cc
+              TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=ColumnBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -14,6 +15,7 @@ dune_add_test(NAME test_3p3cni_columnxylol_box
 dune_add_test(NAME test_3p3cni_columnxylol_tpfa
               LABELS porousmediumflow 3p3c 3p3cni
               SOURCES main.cc
+              TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=ColumnCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy

@@ -8,6 +8,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_twolayers
               TARGET test_ff_rans_lauferpipe_kepsilon
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
+              TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_kepsilon_twolayers-reference.vtu
@@ -19,6 +20,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_wallfunction
               TARGET test_ff_rans_lauferpipe_kepsilon
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
+              TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_kepsilon_wallfunction-reference.vtu
@@ -85,6 +87,7 @@ dune_add_test(NAME test_ff_ransni_lauferpipe_kepsilon_twolayers
               TARGET test_ff_ransni_lauferpipe_kepsilon
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
+              TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_ransni_lauferpipe_kepsilon_twolayers-reference.vtu
@@ -95,6 +98,7 @@ dune_add_test(NAME test_ff_ransni_lauferpipe_kepsilon_twolayers
 dune_add_test(NAME test_ff_ransni_lauferpipe_kepsilon_wallfunction
               TARGET test_ff_ransni_lauferpipe_kepsilon
               LABELS freeflow rans
+              TIMEOUT 1500
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
