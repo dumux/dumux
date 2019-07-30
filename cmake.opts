@@ -42,14 +42,18 @@ OPM_FLAGS=""
 # set this to "ON" if you want to be able to have the headercheck target
 DUMUX_ENABLE_HEADERCHECK=OFF
 
+# to disable the property macros and the warning set this (set it if you don't use the macros anymore)
+DUMUX_DISABLE_PROP_MACROS=""
+#DUMUX_DISABLE_PROP_MACROS="-DDUMUX_ENABLE_OLD_PROPERTY_MACROS=0"
+
 # for debug opts you can set DCMAKE_BUILD_TYPE to "Debug" or "RelWithDebInfo"
 # you can also do this in any of the CMakeLists.txt in Dumux
 # just rerun cmake again afterwards (run cmake <path-to-build-dir>)
 
 CMAKE_FLAGS="$SPECIFIC_COMPILER $SPECIFIC_GENERATOR $OPM_FLAGS
--DCMAKE_CXX_FLAGS_RELEASE='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS'
--DCMAKE_CXX_FLAGS_DEBUG='-O0 -g -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare'
--DCMAKE_CXX_FLAGS_RELWITHDEBINFO='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS -g -ggdb -Wall'
+-DCMAKE_CXX_FLAGS_RELEASE='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS $DUMUX_DISABLE_PROP_MACROS'
+-DCMAKE_CXX_FLAGS_DEBUG='-O0 -g -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare $DUMUX_DISABLE_PROP_MACROS'
+-DCMAKE_CXX_FLAGS_RELWITHDEBINFO='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS -g -ggdb -Wall $DUMUX_DISABLE_PROP_MACROS'
 -DCMAKE_BUILD_TYPE=Release
 -DENABLE_HEADERCHECK=$DUMUX_ENABLE_HEADERCHECK
 -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS:BOOL=TRUE
