@@ -58,6 +58,13 @@ Click <a href="https://git.iws.uni-stuttgart.de/buildbot/#/builders" target="_bl
 to see the latest builds (clicking on a build
 number will show a detailed overview of the build).
 
+[![coverage report](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/badges/master/coverage.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/commits/master)
+
+A weekly coverage report of the test suite is created by gcovr/gcov. The report
+currently doesn't include non-instantiated code, so the real coverage is likely lower. However,
+only a few lines of code are never instatiated in the comprehensive test suite.
+
+
 Contributing
 =============
 
