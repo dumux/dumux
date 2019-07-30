@@ -42,7 +42,7 @@ class RANSProblemImpl;
 
 //! the turbulence-model-specfic RANS problem
 template<class TypeTag>
-using RANSProblem = RANSProblemImpl<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::turbulenceModel()>;
+using RANSProblem = RANSProblemImpl<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::turbulenceModel()>;
 
 /*!
  * \ingroup RANSModel

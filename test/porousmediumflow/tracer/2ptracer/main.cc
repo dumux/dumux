@@ -220,7 +220,7 @@ int main(int argc, char** argv) try
 
 
         // loop over elements to compute fluxes, saturations, densities for tracer
-        using FluxVariables =  typename GET_PROP_TYPE(TwoPTypeTag, FluxVariables);
+        using FluxVariables = GetPropType<TwoPTypeTag, Properties::FluxVariables>;
         auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
         for (const auto& element : elements(leafGridView))
         {
