@@ -1,5 +1,5 @@
 dune_symlink_to_source_files(FILES "grids" "params.input")
-
+set(CMAKE_BUILD_TYPE Release)
 dune_add_test(NAME test_md_facet_el1p1p_tpfa
               LABELS multidomain
               SOURCES main.cc

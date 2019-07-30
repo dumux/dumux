@@ -64,7 +64,14 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolution& elemSol) const
     {
-        const auto a = couplingManagerPtr_->computeAperture(element, scv, initialAperture_);
+        auto a = couplingManagerPtr_->computeAperture(element, scv, initialAperture_);
+
+        static const Scalar zeroA = getParam<Scalar>("Problem.ZeroApertureThreshold");
+        static const bool considerZeroA = getParam<bool>("Problem.UseZeroApertureThreshold");
+
+        if (considerZeroA && a < zeroA)
+            a = zeroA;
+
         return a*a/12.0;
     }
 

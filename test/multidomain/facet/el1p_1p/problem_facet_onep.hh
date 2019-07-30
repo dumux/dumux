@@ -73,7 +73,7 @@ struct FluidSystem<TypeTag, TTag::OnePFacet>
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = FluidSystems::OnePLiquid< Scalar, Components::SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<0, Scalar> >;
 };
 
 } // end namespace Properties
@@ -113,11 +113,12 @@ public:
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     , initialAperture_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialAperture"))
-    , injectionPressure_(getParamFromGroup<Scalar>(paramGroup, "Problem.InjectionPressure"))
+    , extractionPressure_(getParamFromGroup<Scalar>(paramGroup, "Problem.ExtractionPressure"))
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 
         apertures_.resize(fvGridGeometry->gridView().size(0), initialAperture_);
+        deltaUT_.resize(fvGridGeometry->gridView().size(0), 0.0);
         permeabilities_.resize(fvGridGeometry->gridView().size(0), initialAperture_*initialAperture_/12.0);
     }
 
@@ -132,8 +133,6 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + 1e-6)
-            values.setAllDirichlet();
         return values;
     }
 
@@ -172,20 +171,25 @@ public:
     Scalar extrusionFactor(const Element& element,
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol) const
-    { return couplingManager().computeAperture(element, scv, initialAperture_); }
+    {
+        static const Scalar zeroA = getParam<Scalar>("Problem.ZeroApertureThreshold");
+        static const bool considerZeroA = getParam<bool>("Problem.UseZeroApertureThreshold");
+
+        const auto a = couplingManager().computeAperture(element, scv, initialAperture_);
+
+        if (considerZeroA && a < zeroA)
+            return zeroA;
+
+        return a;
+    }
 
     //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(1.0e5); }
+    { return PrimaryVariables(extractionPressure_); }
 
     //! Evaluates the Dirichlet boundary conditions at a given position.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    {
-        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + 1e-6)
-            return PrimaryVariables(injectionPressure_);
-        else
-            return initialAtPos(globalPos);
-    }
+    { DUNE_THROW(Dune::InvalidStateException, "Problem should not have Dirichlet BCs"); }
 
     //! Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
     Scalar temperature() const
@@ -198,6 +202,10 @@ public:
     //! returns the vector of apertures
     const std::vector<Scalar>& apertures() const
     { return apertures_; }
+
+    //! returns the tangential displacement jumps
+    const std::vector<Scalar>& deltaUT() const
+    { return deltaUT_; }
 
     //! returns the vector of permeabilities
     const std::vector<Scalar>& permeabilities() const
@@ -217,6 +225,7 @@ public:
             {
                 apertures_[scv.elementIndex()] = extrusionFactor(element, scv, elemSol);
                 permeabilities_[scv.elementIndex()] = this->spatialParams().permeability(element, scv, elemSol);
+                deltaUT_[scv.elementIndex()] = couplingManager().computeTangentialDisplacementJump(element, scv.center()).two_norm();
             }
         }
     }
@@ -225,10 +234,11 @@ private:
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
     std::string problemName_;
     Scalar initialAperture_;
-    Scalar injectionPressure_;
+    Scalar extractionPressure_;
 
     // fields to be added to output
     std::vector<Scalar> apertures_;
+    std::vector<Scalar> deltaUT_;
     std::vector<Scalar> permeabilities_;
 };
 

@@ -27,6 +27,7 @@
 
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/functions/functionspacebases/lagrangebasis.hh>
+#include <dune/functions/functionspacebases/lagrangedgbasis.hh>
 
 #include <dumux/common/feproblem.hh>
 #include <dumux/common/properties/model.hh>
@@ -41,7 +42,7 @@ namespace Dumux {
 template<int dimWorld>
 struct ContactLagrangeModelTraits
 {
-    static constexpr int numEq() { return 1; }
+    static constexpr int numEq() { return dimWorld; }
 };
 
 // forward declarations
@@ -68,7 +69,7 @@ struct GridGeometry<TypeTag, TTag::LagrangeFacet>
 {
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FEBasis = Dune::Functions::LagrangeBasis<GridView, 0>;
+    using FEBasis = Dune::Functions::LagrangeDGBasis<GridView, 0>;
 public:
     using type = FEGridGeometry<FEBasis>;
 };
@@ -121,11 +122,12 @@ class LagrangeProblem : public FEProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     static constexpr int numEq = NumEqVector::size();
+    static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     LagrangeProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                     std::shared_ptr<CouplingManager> couplingManagerPtr,
-                     const std::string& paramGroup = "")
+                    std::shared_ptr<CouplingManager> couplingManagerPtr,
+                    const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     {
@@ -135,6 +137,8 @@ public:
 
         initialValues_ = getParamFromGroup<NumEqVector>(paramGroup, "InitialLagrangeMP");
         penaltyFactor_ = getParamFromGroup<Scalar>(paramGroup, "PenaltyFactor");
+        frictionCoefficient_ = getParamFromGroup<Scalar>(paramGroup, "FrictionCoefficient");
+        initialAperture_ = getParam<Scalar>("OnePFacet.SpatialParams.InitialAperture");
     }
 
     /*!
@@ -162,12 +166,30 @@ public:
                                const IpData& ipData,
                                const SecondaryVariables& secVars) const
     {
-        const auto& sigmaN = secVars.priVar(numEq-1);
-        const auto a = couplingManager().computeAperture(element, ipData.globalPos());
-
         using std::max;
         NumEqVector result;
-        result[numEq-1] = -1.0*sigmaN - max(0.0, -1.0*sigmaN - penaltyFactor_*a);
+
+        const auto& sigma = secVars.priVars();
+        const auto& contactSurface = couplingManager().getContactSurface(element);
+
+        const auto a = couplingManager().computeAperture(element, ipData.ipGlobal(), initialAperture_);
+        const auto deltaUT = couplingManager().computeTangentialDisplacementJump(element, ipData.ipGlobal());
+
+        const auto sigmaN = sigma*contactSurface.basis[dimWorld-1];
+        auto sigmaT = contactSurface.basis[dimWorld-1];
+        sigmaT *= -1.0;
+        sigmaT *= sigmaN;
+        sigmaT += sigma;
+
+        const auto normalMaxArg = -1.0*sigmaN - penaltyFactor_*a;
+        auto tangMaxArg = deltaUT;
+        tangMaxArg *= penaltyFactor_;
+        tangMaxArg -= sigmaT;
+        const auto tangMaxArgNorm = tangMaxArg.two_norm();
+
+        result[0] = -1.0*(sigmaT*contactSurface.basis[0])*max(frictionCoefficient_*normalMaxArg, tangMaxArgNorm)
+                    -frictionCoefficient_*max(0.0, normalMaxArg)*(tangMaxArg*contactSurface.basis[0]);
+        result[numEq-1] = -1.0*sigmaN - max(0.0, normalMaxArg);
         return result;
     }
 
@@ -192,6 +214,8 @@ private:
 
     PrimaryVariables initialValues_;
     Scalar penaltyFactor_;
+    Scalar frictionCoefficient_;
+    Scalar initialAperture_;
 };
 
 } // end namespace Dumux

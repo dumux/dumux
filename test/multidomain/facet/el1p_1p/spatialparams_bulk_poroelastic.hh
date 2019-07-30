@@ -58,9 +58,9 @@ public:
     , initPorosity_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPorosity"))
     {
         // Young's modulus [Pa]
-       Scalar E = 6.e9;
+       Scalar E = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.EModule");
        // Poisson's ratio [-]
-       Scalar nu = 0.2;
+       Scalar nu = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Nu");
        // Lame parameters [Pa]
        lameParams_.setLambda( (E * nu) / ((1 + nu)*(1 - 2 * nu)) );
        lameParams_.setMu( E / (2 * (1 + nu)) );

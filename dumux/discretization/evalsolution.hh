@@ -32,6 +32,8 @@
 
 #include <dumux/common/typetraits/state.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/discretization/fem/ipdata.hh>
+#include <dumux/discretization/fem/elementsolution.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
@@ -262,6 +264,69 @@ PrimaryVariables evalSolution(const Element& element,
                               bool ignoreState = false)
 {
     return elemSol[0];
+}
+
+/*!
+ * \brief Interpolates a given fem element solution at a given global position.
+ * \ingroup Discretization
+ *
+ * \return the interpolated primary variables
+ * \param element The element
+ * \param geometry The element geometry
+ * \param feGridGeometry The finite element grid geometry
+ * \param elemSol The primary variables at the dofs of the element
+ * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
+ */
+template<class Element, class FEElementGeometry, class PrimaryVariables>
+PrimaryVariables evalSolution(const Element& element,
+                              const typename Element::Geometry& geometry,
+                              const typename FEElementGeometry::GridGeometry& gridGeometry,
+                              const FEElementSolution<FEElementGeometry, PrimaryVariables>& elemSol,
+                              const typename Element::Geometry::GlobalCoordinate& globalPos,
+                              bool ignoreState = false)
+{
+    // determine if all states are the same at all dofs
+    using HasState = decltype(isValid(Detail::hasState())(elemSol[0]));
+    bool allStatesEqual = ignoreState || Detail::allStatesEqual(elemSol, HasState{});
+
+    if (allStatesEqual)
+    {
+        using GridGeometry = typename FEElementGeometry::GridGeometry;
+        using AnsatzSpaceBasis = typename GridGeometry::AnsatzSpaceBasis;
+        using FiniteElement = typename AnsatzSpaceBasis::LocalView::Tree::FiniteElement;
+        using AnsatzLocalBasis = typename FiniteElement::Traits::LocalBasisType;
+
+        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+        using IpDataAnsatz = FEIntegrationPointData<GlobalPosition, AnsatzLocalBasis>;
+
+        auto feGeometry = localView(gridGeometry);
+        feGeometry.bind(element);
+
+        const auto& ansatzLocalView = feGeometry.feBasisLocalView();
+        const auto& ansatzLocalBasis = ansatzLocalView.tree().finiteElement().localBasis();
+
+        IpDataAnsatz ipData(geometry, geometry.local(globalPos), ansatzLocalBasis);
+
+        // interpolate solution
+        PrimaryVariables result(0.0);
+        for (int i = 0; i < ansatzLocalView.size(); ++i)
+        {
+            auto value = elemSol[i];
+            value *= ipData.shapeValue(i);
+            result += value;
+        }
+
+        // set an arbitrary state if the model requires a state (models constexpr if)
+        Dune::Hybrid::ifElse(HasState{}, [&](auto&& evalLazy){
+            if (!ignoreState)
+                evalLazy(result).setState(evalLazy(elemSol)[0].state());
+        });
+
+        return result;
+    }
+    else
+        DUNE_THROW(Dune::NotImplemented, "FEM solution interpolation for discontinous privar states");
 }
 
 } // namespace Dumux
