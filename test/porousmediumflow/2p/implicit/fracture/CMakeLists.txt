@@ -26,6 +26,7 @@ dune_add_test(NAME test_2p_fracture_tpfa
 dune_add_test(NAME test_2p_fracture_mpfa
               LABELS porousmediumflow 2p
               SOURCES main.cc
+              TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=FractureCCMpfa
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -58,6 +59,7 @@ dune_add_test(NAME test_2p_fracture_gravity_tpfa
 dune_add_test(NAME test_2p_fracture_gravity_mpfa
               TARGET test_2p_fracture_mpfa
               LABELS porousmediumflow 2p
+              TIMEOUT 1500
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
