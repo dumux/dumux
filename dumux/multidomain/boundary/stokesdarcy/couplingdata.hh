@@ -706,8 +706,8 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
-    static constexpr bool isFicksLaw = IsFicksLaw<typename GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, MolecularDiffusionType)>();
-    static_assert(isFicksLaw == IsFicksLaw<typename GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, MolecularDiffusionType)>(),
+    static constexpr bool isFicksLaw = IsFicksLaw<GetPropType<SubDomainTypeTag<stokesIdx>, Properties::MolecularDiffusionType>>();
+    static_assert(isFicksLaw == IsFicksLaw<GetPropType<SubDomainTypeTag<darcyIdx>,Properties:: MolecularDiffusionType>>(),
                   "Both submodels must use the same diffusion law.");
 
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
@@ -906,7 +906,7 @@ protected:
      */
     Scalar diffusionCoefficientMS_(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compIIdx, int compJIdx) const
     {
-        using EffDiffModel = typename GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, EffectiveDiffusivityModel);
+        using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
         auto fluidState = volVars.fluidState();
         typename FluidSystem<darcyIdx>::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
