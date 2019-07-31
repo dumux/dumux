@@ -29,6 +29,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+#include <dumux/flux/fickslawdiffusioncoefficients.hh>
 
 #include <dumux/flux/referencesystemformulation.hh>
 
@@ -125,6 +126,9 @@ public:
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;
 
+    template<int numPhases, int numComponents>
+    using DiffusionCoefficientsContainer = FicksLawDiffusionCoefficients<Scalar, numPhases, numComponents>;
+
     //! return diffusive fluxes for all components in a phase
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
@@ -182,7 +186,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const auto insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
+        const auto insideD = insideVolVars.effectiveDiffusivity(phaseIdx, phaseIdx, compIdx);
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideD, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
@@ -197,7 +201,7 @@ public:
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
-            const auto outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
+            const auto outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, phaseIdx, compIdx);
 
             Scalar tj;
             if (dim == dimWorld)
