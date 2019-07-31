@@ -8,21 +8,23 @@ This example models a soil contamination problem where DNAPL infiltrates a porou
 
 The problem uses a two phase model of two immiscible fluids with the multiphase Darcy's law as the description of momentum, i.e.:
 
-$$
+\\\math
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
  \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
-$$
+\\\
 
 Inserting this into the conservation equations for each phase $$\alpha$$ leads to:
 
-$$\phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
+\\\math
+\phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
  -\textbf{div} \left\{ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
- \right\} - q_\alpha = 0$$
+ \right\} - q_\alpha = 0
+\\\
 
-As closure relations for this equations a $$pc - S_w $$ as well as a $$k_r - S_w$$ - relationship are used. This problem uses a Van-Genuchten parameterization for that. The parameters are specified in the `spatialparams.hh` file.
+As closure relations for this equations a $`pc - S_w`$ as well as a $`k_r - S_w`$ - relationship are used. This problem uses a Van-Genuchten parameterization for that. The parameters are specified in the `spatialparams.hh` file.
 
-With the constraint that $$S_w + S_n = 1$$ the number of primary variables reduces to two.
-This problem uses the wetting phase pressure $$p0$$ and the saturation of the non-wetting phase $$S_1$$ as primary variables. It is also possible to switch that formulation to the non-wetting pressure and the wetting saturation.
+With the constraint that $`S_w + S_n = 1`$ the number of primary variables reduces to two.
+This problem uses the wetting phase pressure $`p0`$ and the saturation of the non-wetting phase $`S_1`$ as primary variables. It is also possible to switch that formulation to the non-wetting pressure and the wetting saturation.
 
 The two-dimensional model domain is 6m x 4m and contains a lens with a lower permeability and porosity. The initial values for the DNAPL saturation and the water pressure are read from a file.
 The lens and the initial saturation can be seen in Figures 1 and 2.
