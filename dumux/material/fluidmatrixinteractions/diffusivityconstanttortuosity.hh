@@ -55,6 +55,7 @@ public:
      * \param saturation The saturation of the wetting phase
      * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
      */
+    [[deprecated("Signature deprecated. Use signature with volume variables!")]]
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                        const Scalar saturation,
                                        const Scalar diffCoeff)
@@ -62,6 +63,23 @@ public:
         static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
 
         return porosity * saturation * tau * diffCoeff;
+    }
+
+    /*!
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
+     *        on a constant tortuosity value
+     * \param volVars The Volume Variables
+     * \param phaseIdx the index of the phase
+     * \param compIdx the component index
+     */
+    template<class VolumeVariables>
+    static Scalar effectiveDiffusivity(const VolumeVariables& volVars,
+                                       const Scalar diffCoeff,
+                                       const int phaseIdx)
+    {
+        static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
+
+        return volVars.porosity() * volVars.saturation(phaseIdx) * tau * diffCoeff;
     }
 };
 
