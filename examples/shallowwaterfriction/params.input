@@ -1,0 +1,22 @@
+[Problem]
+Name = roughchannel
+BedSlope = 0.001 # [-]
+Gravity = 9.81 # [m/s^2]
+Discharge = -1.0 # [m^2/s] discharge per meter at the inflow boundary
+FrictionLaw = Manning
+ManningN = 0.025 # [-]
+# Ks = 0.15 # [m] equivalent sand roughness
+
+[TimeLoop]
+TEnd = 900.0 # [s]
+MaxTimeStepSize = 60.0 # [s]
+DtInitial = 1.0 # [s]
+
+[Grid]
+Positions0 = 0.0 500.0
+Positions1 = 0.0 5.0
+Cells0 = 500
+Cells1 = 5
+
+[Newton]
+EnablePartialReassembly = true
