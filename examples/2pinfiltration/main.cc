@@ -55,7 +55,6 @@
 #include <dumux/porousmediumflow/2p/griddatatransfer.hh>
 #include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 
-#include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
 #include "problem.hh"
 
 int main(int argc, char** argv) try
