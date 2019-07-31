@@ -57,6 +57,7 @@ public:
      * \param saturation The saturation of the phase
      * \param diffCoeff The diffusion coefficient of the phase \f$\mathrm{[m^2/s]}\f$
      */
+    [[deprecated("Signature deprecated. Use signature with volume variables!")]]
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                        const Scalar saturation,
                                        const Scalar diffCoeff)
@@ -68,6 +69,29 @@ public:
         using std::cbrt;
         return porosity * (saturation * saturation * saturation)
                * cbrt(porosity * saturation) * diffCoeff;
+    }
+
+    /*!
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ after Millington Quirk.
+     *
+     * \param volVars The Volume Variables
+     * \param phaseIdx the index of the phase
+     * \param compIdx the component index
+     */
+    template<class VolumeVariables>
+    static Scalar effectiveDiffusivity(const VolumeVariables& volVars,
+                                       const int phaseIdx,
+                                       const int compIdxI,
+                                       const int compIdxJ)
+    {
+        // instead of D_eff,pm = phi * Sw * 1/phi^2 * (phi * Sw)^(7/3) * D
+        // we calculate the more efficient
+        // D_eff,pm = phi * Sw^3 * cubicroot(phi * Sw) * D
+
+        using std::cbrt;
+        const Scalar diffCoeff = volVars.diffusionCoefficient(phaseIdx, compIdxI, compIdxJ);
+        return volVars.porosity() * (volVars.saturation(phaseIdx) * volVars.saturation(phaseIdx) * volVars.saturation(phaseIdx))
+               * cbrt(volVars.porosity() * volVars.saturation(phaseIdx)) * diffCoeff;
     }
 };
 }
