@@ -16,82 +16,101 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \ingroup TwoPTests
- * \brief Soil contamination problem where DNAPL infiltrates a fully
- *        water saturated medium.
- */
 
+// ## Header guard
+// The header guard (or include guard) prevents compilation errors due to duplicate definitions.
+// Here, a unique name needs to be defined for the header file:
 #ifndef DUMUX_LENSPROBLEM_POINTSOURCE_ADAPTIVE_HH
 #define DUMUX_LENSPROBLEM_POINTSOURCE_ADAPTIVE_HH
 
-#include <dune/grid/yaspgrid.hh>
-
+// ## Include files
+// The cell centered, two-point-flux discretization scheme is included:
 #include <dumux/discretization/cctpfa.hh>
 
+// The fluid properties are specified in the following headers:
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 
+// This is the porous medium problem class that this class is derived from:
 #include <dumux/porousmediumflow/problem.hh>
+// The two-phase flow model is included:
 #include <dumux/porousmediumflow/2p/model.hh>
+// The local residual for incompressible flow is included:
 #include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
 
+// We include the header that specifies all spatially variable parameters:
 #include "spatialparams.hh"
 
+// A container to read values for the initial condition is included:
 #include <dumux/io/container.hh>
 
+// ## Define basic properties for our simulation
+// We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux,
+// to make sure they don't clash with symbols from other libraries you may want to use in conjunction with Dumux.
+// One could use these functions and classes by prefixing every use of these names by ::,
+// but that would quickly become cumbersome and annoying.
+// Rather, we simply import the entire Dumux namespace for general use:
 namespace Dumux {
-  // forward declarations
-  template<class TypeTag> class PointSourceTestProblem;
+  // The problem class is forward declared:
+  template<class TypeTag>
+  class PointSourceProblem;
 
+  // We enter the namespace Properties, which is a sub-namespace of the namespace Dumux:
   namespace Properties {
-  // Create new type tags
+  // A TypeTag for our simulation is created which inherits from the two-phase flow model and the
+  // cell centered, two-point-flux discretization scheme.
   namespace TTag {
-  struct TwoPAdaptivePointSource { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
-  } // end namespace TTag
+  struct PointSourceExample { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
+  }
 
-  //! Use non-conforming refinement
+  // We use non-conforming refinement in our simulation:
   template<class TypeTag>
-  struct Grid<TypeTag, TTag::TwoPAdaptivePointSource> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+  struct Grid<TypeTag, TTag::PointSourceExample> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 
+  // The problem class specifies initial and boundary conditions:
   template<class TypeTag>
-  struct Problem<TypeTag, TTag::TwoPAdaptivePointSource> { using type = PointSourceTestProblem<TypeTag>; };
+  struct Problem<TypeTag, TTag::PointSourceExample> { using type = PointSourceProblem<TypeTag>; };
 
-  // the local residual containing the analytic derivative methods
+  // The local residual contains analytic derivative methods for incompressible flow:
   template<class TypeTag>
-  struct LocalResidual<TypeTag, TTag::TwoPAdaptivePointSource> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
+  struct LocalResidual<TypeTag, TTag::PointSourceExample> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
-  // Set the fluid system
+  // In the following we define our fluids.
   template<class TypeTag>
-  struct FluidSystem<TypeTag, TTag::TwoPAdaptivePointSource>
+  struct FluidSystem<TypeTag, TTag::PointSourceExample>
   {
+      // We define a convenient shortcut to the property Scalar:
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+      // First, we create a fluid system that consists of one liquid phase:
       using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+      // Second, we create another fluid system consisting of a liquid phase:
       using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
+      // Third, we combine both fluid systems in our final fluid system which consist of two immiscible phases:
       using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
   };
 
-  // Set the spatial parameters
+  // We define the spatial parameters for our simulation.
   template<class TypeTag>
-  struct SpatialParams<TypeTag, TTag::TwoPAdaptivePointSource>
+  struct SpatialParams<TypeTag, TTag::PointSourceExample>
   {
+      // We define convenient shortcuts to the properties FVGridGeometry and Scalar:
   private:
       using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+      // Finally we set the spatial parameters:
   public:
       using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
   };
 
   // Enable caching
   template<class TypeTag>
-  struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPAdaptivePointSource> { static constexpr bool value = false; };
+  struct EnableGridVolumeVariablesCache<TypeTag, TTag::PointSourceExample> { static constexpr bool value = false; };
   template<class TypeTag>
-  struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPAdaptivePointSource> { static constexpr bool value = false; };
+  struct EnableGridFluxVariablesCache<TypeTag, TTag::PointSourceExample> { static constexpr bool value = false; };
   template<class TypeTag>
-  struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPAdaptivePointSource> { static constexpr bool value = false; };
+  struct EnableFVGridGeometryCache<TypeTag, TTag::PointSourceExample> { static constexpr bool value = false; };
 
   } // end namespace Properties
 
@@ -101,7 +120,7 @@ namespace Dumux {
  *        water saturated medium.
  */
 template <class TypeTag >
-class PointSourceTestProblem : public PorousMediumFlowProblem<TypeTag>
+class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -125,7 +144,7 @@ class PointSourceTestProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
 public:
-  PointSourceTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    PointSourceProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
   : ParentType(fvGridGeometry)
   {
     initialValues_ = readFileToContainer<std::vector<PrimaryVariables>>("initialsolutioncc.txt");
@@ -189,10 +208,6 @@ public:
           if (onInlet_(globalPos))
               values[contiDNAPLEqIdx] = -0.04; // kg / (m * s)
 
-          // in the test with the oil wet lens, use higher injection rate
-          if (this->spatialParams().lensIsOilWet())
-              values[contiDNAPLEqIdx] *= 10;
-
           return values;
       }
 
@@ -208,29 +223,6 @@ public:
       // the input data corresponds to a uniform grid with discretization length deltaX_
       unsigned int dataIdx = std::trunc(globalPos[1]/delta) * cellsX + std::trunc(globalPos[0]/delta);
       return initialValues_[dataIdx];
-  }
-
-  /*!
-   * \brief Evaluates the initial values for a control volume.
-   *
-   * \param globalPos The global position
-   */
-  PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-  {
-      PrimaryVariables values;
-      GetPropType<TypeTag, Properties::FluidState> fluidState;
-      fluidState.setTemperature(temperature());
-      fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
-      fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
-
-      Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
-
-      Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
-
-      // hydrostatic pressure
-      values[pressureH2OIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-      values[saturationDNAPLIdx] = 0;
-      return values;
   }
 
   /*!
@@ -273,11 +265,6 @@ public:
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
         return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
-    }
-
-    bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
