@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPTests
- * \brief Test for the two-phase porous medium flow model
+ * \brief Example for the two-phase porous medium flow model
  */
 
 #include <config.h>

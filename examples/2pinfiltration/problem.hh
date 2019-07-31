@@ -114,14 +114,11 @@ namespace Dumux {
 
   } // end namespace Properties
 
-/*!
- * \ingroup TwoPTests
- * \brief Soil contamination problem where DNAPL infiltrates a fully
- *        water saturated medium.
- */
+// the problem class where all necessary boundary conditions and initial conditions are set for that specific set-up. As this is a porous medium problem we inherit from the basic PorousMediumFlowProblem.
 template <class TypeTag >
 class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
 {
+    //using declarations that we derive from the property system
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -135,6 +132,8 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
+    //get some indices for convenient use in the problem class
     enum {
         pressureH2OIdx = Indices::pressureIdx,
         saturationDNAPLIdx = Indices::saturationIdx,
@@ -144,6 +143,7 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
 public:
+    //the constructor. Here we read the initial values from the initialsolutioncc.txt file
     PointSourceProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
   : ParentType(fvGridGeometry)
   {

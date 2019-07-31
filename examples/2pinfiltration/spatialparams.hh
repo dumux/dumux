@@ -16,28 +16,27 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \ingroup TwoPTests
- * \brief The spatial params for the incompressible 2p point source example.
- */
 
+// the header guard
 #ifndef DUMUX_TWOP_INCOMPRESSIBLE_EXAMPLE_SPATIAL_PARAMS_HH
 #define DUMUX_TWOP_INCOMPRESSIBLE_EXAMPLE_SPATIAL_PARAMS_HH
 
+// include the basic spatial parameters for finite volumes file from which we will inherit
 #include <dumux/material/spatialparams/fv.hh>
+
+// include all laws which are needed to define the interaction between the solid matrix and the fluids, e.g. laws for capillary pressure saturation relationships.
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux {
 
-/*!
- * \ingroup TwoPTests
- * \brief The spatial params for the incompressible 2p point source example.
- */
+//the TwoPTestSpatialParams class defines all functions needed to describe the porous matrix, e.g. defines porosity and permeability
+
 template<class FVGridGeometry, class Scalar>
 class TwoPTestSpatialParams
 : public FVSpatialParams<FVGridGeometry, Scalar, TwoPTestSpatialParams<FVGridGeometry, Scalar>>
 {
+    // using declarations that are derived from the property system
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
@@ -58,35 +57,29 @@ public:
     TwoPTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
+        //get the position of the lens from the params.input file
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
-        // residual saturations
+        // the parameters for the material law are set. First residual saturations are set
         lensMaterialParams_.setSwr(0.18);
         lensMaterialParams_.setSnr(0.0);
         outerMaterialParams_.setSwr(0.05);
         outerMaterialParams_.setSnr(0.0);
 
-        // parameters for the Van Genuchten law
-        // alpha and n
+        // parameters for the Van Genuchten law alpha and n
         lensMaterialParams_.setVgAlpha(0.00045);
         lensMaterialParams_.setVgn(7.3);
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
 
+        //get the permeability from the params.input file. In case that no parameter is set, the default parameters (9.05e-12 and 4.6e-10) will be used
         lensK_ = getParam<Scalar>("SpatialParams.lensK", 9.05e-12);
         outerK_ = getParam<Scalar>("SpatialParams.outerK", 4.6e-10);
     }
 
-    /*!
-     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
-     *        In this test, we use element-wise distributed permeabilities.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return The permeability
-     */
+    // Function for defining the (intrinsic) permeability \f$[m^2]\f$. In this test, we use element-wise distributed permeabilities.
+
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
@@ -97,11 +90,7 @@ public:
         return outerK_;
     }
 
-    /*!
-     * \brief Returns the porosity \f$[-]\f$
-     *
-     * \param globalPos The global position
-     */
+    // Returns the porosity \f$[-]\f$ depending on the position
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
          if (isInLens_(globalPos))
@@ -109,16 +98,7 @@ public:
         return 0.4;
     }
 
-    /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law.
-     *
-     * In this test, we use element-wise distributed material parameters.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
-     */
+    // Returns the parameter object for the Van Genuchten material law.
     template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
@@ -130,17 +110,14 @@ public:
         return outerMaterialParams_;
     }
 
-    /*!
-     * \brief Function for defining which phase is to be considered as the wetting phase.
-     *
-     * \param globalPos The global position
-     * \return The wetting phase index
-     */
+
+     // Function for defining which phase is to be considered as the wetting phase. Here the wetting phase is the the first phase of the fluidsystem. In this case that is water.
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     {  return FluidSystem::phase0Idx; }
 
 private:
+    // convenience definition of the position of the lens
     bool isInLens_(const GlobalPosition &globalPos) const
     {
         for (int i = 0; i < dimWorld; ++i) {
