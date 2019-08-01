@@ -30,6 +30,7 @@ dune_require_cxx_standard(MODULE "DuMuX" VERSION 14)
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
 add_subdirectory(dumux)
+add_subdirectory(examples)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 
 # finalize the dune project, e.g. generating config.h etc.
