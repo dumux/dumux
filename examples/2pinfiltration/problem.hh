@@ -77,21 +77,22 @@ namespace Dumux {
   template<class TypeTag>
   struct LocalResidual<TypeTag, TTag::PointSourceExample> { using type = TwoPIncompressibleLocalResidual<TypeTag>; };
 
-  // In the following we define our fluids.
+  // In the following we define our fluid properties.
   template<class TypeTag>
   struct FluidSystem<TypeTag, TTag::PointSourceExample>
   {
       // We define a convenient shortcut to the property Scalar:
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-      // First, we create a fluid system that consists of one liquid phase:
+      // First, we create a fluid system that consists of one liquid water phase. We use the simple
+      // description of water, which means we do not use tabulated values but more general equations of state.
       using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-      // Second, we create another fluid system consisting of a liquid phase:
+      // Second, we create another fluid system consisting of a liquid phase as well, the Trichlorethene (DNAPL) phase:
       using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
-      // Third, we combine both fluid systems in our final fluid system which consist of two immiscible phases:
+      // Third, we combine both fluid systems in our final fluid system which consist of two immiscible liquid phases:
       using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
   };
 
-  // We define the spatial parameters for our simulation.
+  // We define the spatial parameters for our simulation:
   template<class TypeTag>
   struct SpatialParams<TypeTag, TTag::PointSourceExample>
   {
@@ -104,7 +105,8 @@ namespace Dumux {
       using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
   };
 
-  // Enable caching
+  // We enable caching for the grid volume variables, the grid flux variables and the FV grid geometry. The cache
+  // stores values that were already calculated for later usage. This makes the simulation faster.
   template<class TypeTag>
   struct EnableGridVolumeVariablesCache<TypeTag, TTag::PointSourceExample> { static constexpr bool value = false; };
   template<class TypeTag>
@@ -112,13 +114,16 @@ namespace Dumux {
   template<class TypeTag>
   struct EnableFVGridGeometryCache<TypeTag, TTag::PointSourceExample> { static constexpr bool value = false; };
 
-  } // end namespace Properties
+  //We leave the namespace Properties.
+  }
 
-// the problem class where all necessary boundary conditions and initial conditions are set for that specific set-up. As this is a porous medium problem we inherit from the basic PorousMediumFlowProblem.
+// ## The problem class
+// We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
+// As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
 template <class TypeTag >
 class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    //using declarations that we derive from the property system
+    // We use convenient declarations that we derive from the property system.
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -133,7 +138,7 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    //get some indices for convenient use in the problem class
+    // We define some indices for convenient use in the problem class:
     enum {
         pressureH2OIdx = Indices::pressureIdx,
         saturationDNAPLIdx = Indices::saturationIdx,
@@ -143,119 +148,107 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
 public:
-    //the constructor. Here we read the initial values from the initialsolutioncc.txt file
+    // This is the constructor of our problem class:
     PointSourceProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
   : ParentType(fvGridGeometry)
   {
+    // We read in the values for the initial condition of our simulation:
     initialValues_ = readFileToContainer<std::vector<PrimaryVariables>>("initialsolutioncc.txt");
   }
 
-  /*!
-   * \brief Specifies which kind of boundary condition should be
-   *        used for which equation on a given boundary segment
-   *
-   * \param globalPos The global position
-   */
+  // First, we define the type of boundary conditions depending on location. Two types of boundary conditions
+  // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
+  // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
+  // Mixed boundary conditions (different types for different equations on the same boundary) are not accepted.
   BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
   {
     BoundaryTypes values;
+    // We specify Dirichlet boundaries on the left and right hand side of our domain:
     if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
         values.setAllDirichlet();
     else
+        // The top and bottom of our domain are Neumann boundaries:
         values.setAllNeumann();
     return values;
   }
 
-      /*!
-       * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
-       *
-       * \param globalPos The global position
-       */
+      // Second, we specify the values for the Dirichlet boundaries, depending on location. As mentioned,
+      // we need to fix values of our two primary variables: the water pressure
+      // and the Trichlorethene saturation.
       PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
       {
+          // To determine the density of water for a given state, we build a fluid state with the given conditions:
           PrimaryVariables values;
           GetPropType<TypeTag, Properties::FluidState> fluidState;
           fluidState.setTemperature(temperature());
           fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
           fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 
+          // The density is then calculated by the fluid system:
           Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
+          // The water phase pressure is the hydrostatic pressure, scaled with a factor:
           Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
           Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
           Scalar alpha = 1 + 1.5/height;
           Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
           Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
-          // hydrostatic pressure scaled by alpha
           values[pressureH2OIdx] = 1e5 - factor*densityW*this->spatialParams().gravity(globalPos)[1]*depth;
+          // The saturatuib of the DNAPL Trichlorethene is zero on our Dirichlet boundary:
           values[saturationDNAPLIdx] = 0.0;
 
           return values;
       }
 
-      /*!
-       * \brief Evaluates the boundary conditions for a Neumann boundary segment.
-       *
-       * \param globalPos The position of the integration point of the boundary segment.
-       *
-       * For this method, the \a values parameter stores the mass flux
-       * in normal direction of each phase. Negative values mean influx.
-       */
+      // Third, we specify the values for the Neumann boundaries.
+      // In our case, we need to specify mass fluxes for our two liquid phases.
+      // Inflow is denoted by a negative sign, outflow by a positive sign.
       NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
       {
+          // We initialize the fluxes with zero:
           NumEqVector values(0.0);
+          // At the inlet, we specify an inflow for our DNAPL Trichlorethene.
+          // The units are kg/(m^2 s).
           if (onInlet_(globalPos))
-              values[contiDNAPLEqIdx] = -0.04; // kg / (m * s)
+              values[contiDNAPLEqIdx] = -0.04;
 
           return values;
       }
 
-  /*!
-   * \brief Evaluates the initial value for an element for cell-centered models.
-   */
+  // Last, we specify the initial conditions. The initial condition need to be set for all primary variables.
+  // Here, we take the data from the file that we read in previously.
   PrimaryVariables initial(const Element& element) const
   {
+      // The input data is written for a uniform grid with discretization length delta.
+      // Accordingly, we need to find the index of our cells, depending on the x and y coordinates,
+      // that corresponds to the indices of the input data set.
       const auto delta = 0.0625;
       unsigned int cellsX = this->fvGridGeometry().bBoxMax()[0]/delta;
       const auto globalPos = element.geometry().center();
 
-      // the input data corresponds to a uniform grid with discretization length deltaX_
       unsigned int dataIdx = std::trunc(globalPos[1]/delta) * cellsX + std::trunc(globalPos[0]/delta);
       return initialValues_[dataIdx];
   }
 
-  /*!
-   * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-   *
-   * This is not specific to the discretization. By default it just
-   * throws an exception so it must be overloaded by the problem if
-   * no energy equation is used.
-   */
+  // We need to specify a constant temperature for our isothermal problem.
+  // Fluid properties that depend on temperature will be calculated with this value.
   Scalar temperature() const
   {
       return 293.15; // 10°C
   }
 
+  // Additionally, we set a point source. The point source can be solution dependent.
+  // It is specified in form of a vector that contains source values for alle phases and positions in space.
+  // The first entry is a tupel containing the position in space, the second entry contains a tupel with the source (unit kg/s)
+  // for the phases (first phase is the water phase, the second phase is the DNAPL Trichlorethene phase).
+  void addPointSources(std::vector<PointSource>& pointSources) const
+  {
+      pointSources.push_back(PointSource({0.502, 3.02}, {0, 0.1}));
+  }
 
-    /*!
-     * \brief Applies a vector of point sources. The point sources
-     *        are possibly solution dependent.
-     *
-     * \param pointSources A vector of PointSources that contain
-              source values for all phases and space positions.
-     *
-     * For this method, the \a values method of the point source
-     * has to return the absolute mass rate in untis
-     * \f$ [ \textnormal{unit of conserved quantity} / s ] \f$.
-     * Positive values mean that mass is created, negative ones mean that it vanishes.
-     */
-    void addPointSources(std::vector<PointSource>& pointSources) const
-    {
-        // inject 0.1 kg/s of non-wetting phase at position (0.502, 3.02);
-        pointSources.push_back(PointSource({0.502, 3.02}, {0, 0.1}));
-    }
-
+  // We define private global functions that are used to determine if a point in space is on the left, right or upper boundary, or
+  // at the inlet.
   private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
@@ -279,10 +272,13 @@ public:
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
+    // Our private global variables are the epsilon value and the vector containing the initial values read from file.
     static constexpr Scalar eps_ = 1e-6;
     std::vector<PrimaryVariables> initialValues_;
-};
 
-} // end namespace Dumux
+    // This is everything the problem class contains.
+};
+// We leave the namespace Dumux here, too.
+}
 
 #endif
