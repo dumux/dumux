@@ -6,6 +6,7 @@ PrintMatrices = false
 ZeroApertureThreshold = 1e-18
 UseZeroApertureThreshold = true
 UseKozenyKarman = false
+FrictionCoefficientParam = 2.0
 
 [Component]
 SolidDensity = 2750.0 # granite
@@ -22,19 +23,26 @@ SpatialParams.InitialPermeability = 1
 
 [OnePFacet]
 Problem.Name = onep_facet
-SpatialParams.InitialAperture = 1e-14
+SpatialParams.InitialAperture = 2e-3
 
 [Lagrange]
+Grid.File = ./grids/singlefracture_cube_lagrange.msh
 Problem.Name = lagrange
 InitialLagrangeMP = 0.0 0.0
 PenaltyFactor = 1e7
-FrictionCoefficient = 0.5
-Assembly.FEIntegrationOrder = 0
+FrictionCoefficient = 0.0
+Assembly.FEIntegrationOrder = 2
 
 [ElasticBulk]
 Problem.Name = elastic_bulk
 SpatialParams.EModule = 5e7
 SpatialParams.Nu = 0.2
+
+[ContactProblem]
+ContactForceIntegrationOrder = 2
+
+[Newton]
+MaxSteps = 1000
 
 [Vtk]
 OutputName = test_md_facet_el1p1p_tpfa

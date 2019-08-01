@@ -69,7 +69,7 @@ struct GridGeometry<TypeTag, TTag::LagrangeFacet>
 {
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FEBasis = Dune::Functions::LagrangeDGBasis<GridView, 0>;
+    using FEBasis = Dune::Functions::LagrangeBasis<GridView, 0>;
 public:
     using type = FEGridGeometry<FEBasis>;
 };
@@ -152,6 +152,10 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
+
+        // the tangential traction must be zero at fracture tips
+        // values.setDirichlet(1);
+
         return values;
     }
 
@@ -169,27 +173,29 @@ public:
         using std::max;
         NumEqVector result;
 
-        const auto& sigma = secVars.priVars();
-        const auto& contactSurface = couplingManager().getContactSurface(element);
+        const auto& traction = secVars.priVars();
+        const auto& contactSurfaceSegment = couplingManager().getContactSurfaceSegment(element);
 
         const auto a = couplingManager().computeAperture(element, ipData.ipGlobal(), initialAperture_);
         const auto deltaUT = couplingManager().computeTangentialDisplacementJump(element, ipData.ipGlobal());
 
-        const auto sigmaN = sigma*contactSurface.basis[dimWorld-1];
-        auto sigmaT = contactSurface.basis[dimWorld-1];
-        sigmaT *= -1.0;
-        sigmaT *= sigmaN;
-        sigmaT += sigma;
+        const auto tN = traction*contactSurfaceSegment.getBasisVector(dimWorld-1);
+        auto tT = contactSurfaceSegment.getBasisVector(dimWorld-1);
+        tT *= -1.0;
+        tT *= tN;
+        tT += traction;
 
-        const auto normalMaxArg = -1.0*sigmaN - penaltyFactor_*a;
+        const auto normalMaxArg = -1.0*tN - penaltyFactor_*a;
         auto tangMaxArg = deltaUT;
         tangMaxArg *= penaltyFactor_;
-        tangMaxArg -= sigmaT;
-        const auto tangMaxArgNorm = tangMaxArg.two_norm();
+        tangMaxArg -= tT;
 
-        result[0] = -1.0*(sigmaT*contactSurface.basis[0])*max(frictionCoefficient_*normalMaxArg, tangMaxArgNorm)
-                    -frictionCoefficient_*max(0.0, normalMaxArg)*(tangMaxArg*contactSurface.basis[0]);
-        result[numEq-1] = -1.0*sigmaN - max(0.0, normalMaxArg);
+        const auto tangMaxArgNorm = tangMaxArg.two_norm();
+        const auto& tangent = contactSurfaceSegment.getBasisVector(0);
+        const auto fricCoeff = frictionCoefficient_;//frictionCoefficientAtPos(ipData.ipGlobal());
+        result[0] = -1.0*(tT*tangent)*max(fricCoeff*normalMaxArg, tangMaxArgNorm)
+                    -fricCoeff*max(0.0, normalMaxArg)*(tangMaxArg*tangent);
+        result[numEq-1] = -1.0*tN - max(0.0, normalMaxArg);
         return result;
     }
 
@@ -204,9 +210,24 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     { return initialValues_; }
 
+    //! Evaluates the Dirichlet boundary conditions.
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables({0.0, 0.0}); }
+
     //! Returns const reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
+
+    //! Returns the friction coefficient at a given position
+    const Scalar frictionCoefficientAtPos(const GlobalPosition& globalPos) const
+    {
+        auto f = frictionCoefficient_;
+        const GlobalPosition c({0.5, 0.5});
+        const auto d = (globalPos-c).two_norm();
+
+        static const auto factor = getParam<Scalar>("Problem.FrictionCoefficientParam");
+        return f + factor*d;
+    }
 
 private:
     std::shared_ptr<CouplingManager> couplingManagerPtr_;

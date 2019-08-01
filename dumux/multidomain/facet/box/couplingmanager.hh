@@ -757,6 +757,10 @@ public:
     getEmptyStencil(Dune::index_constant<id>) const
     { return std::get<(id == bulkId ? 0 : 1)>(emptyStencilTuple_); }
 
+    //! Return const ref to the coupling mapper
+    const CouplingMapper& couplingMapper() const
+    { return *couplingMapperPtr_; }
+
 private:
 
     /*!

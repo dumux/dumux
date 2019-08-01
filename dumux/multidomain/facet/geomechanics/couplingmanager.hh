@@ -26,6 +26,7 @@
 
 #include <array>
 #include <algorithm>
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -33,11 +34,19 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 
+#include <dune/geometry/type.hh>
+#include <dune/geometry/quadraturerules.hh>
+
+#include <dumux/common/indextraits.hh>
+#include <dumux/common/geometry/diameter.hh>
+#include <dumux/common/geometry/geometryintersection.hh>
+#include <dumux/common/geometry/intersectspointgeometry.hh>
+
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/method.hh>
 
-#include <dumux/common/indextraits.hh>
+#include <dumux/multidomain/glue.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>
 #include <dumux/geomechanics/poroelastic/couplingmanager.hh>
 
@@ -94,6 +103,10 @@ class FacetCouplingPoroMechanicsCouplingManager
     template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
     template<std::size_t id> using GridIndexType = typename IndexTraits<GridView<id>>::GridIndex;
 
+    // Glue object between the mechanical and the lagrange-multiplier subdomain
+    using MechLagrangeGlue = MultiDomainGlue<GridView<mechDomainId>, GridView<lagrangeDomainId>>;
+    using MechLagrangeIntersection = typename MechLagrangeGlue::Intersection;
+
     // extract grid dimensions
     static constexpr int bulkDim = GridView<matrixFlowDomainId>::dimension;
     static constexpr int facetDim = GridView<facetFlowDomainId>::dimension;
@@ -109,16 +122,87 @@ class FacetCouplingPoroMechanicsCouplingManager
                   "This coupling manager expects the box scheme to be used in the mechanical sub-domain");
     static_assert(GridGeometry<lagrangeDomainId>::discMethod == DiscretizationMethod::fem,
                   "This coupling manager expects the lagrange domain to be discretized using finite elements");
-    static_assert(std::is_same<GridView<lagrangeDomainId>, GridView<facetFlowDomainId>>::value,
-                  "Facet domain and lagrange domain are expected to operate on the same grid!");
 
-    struct ContactSurface
+    //! Class defining a sub-set of a contact surface segment.
+    class ContactSurfaceSubSegment
     {
-        using BasisVector = GlobalPosition<mechDomainId>;
-        using ContactForce = Dune::FieldVector<Scalar<lagrangeDomainId>, dimWorld>;
+    public:
+        using Geometry = typename MechLagrangeIntersection::Geometry;
 
-        GridIndexType<mechDomainId> mechElemIdx; // Index of element this surface is embedded in
-        std::array<BasisVector, dimWorld> basis; // Basis vectors for the traction vector at contact
+        //! Constructor. Defines the geometry and the
+        //! master/slave elements in the mechanical domain.
+        ContactSurfaceSubSegment(const Geometry& geometry,
+                                 GridIndexType<mechDomainId> masterIdx,
+                                 GridIndexType<mechDomainId> slaveIdx)
+        : masterSideMechElemIdx_(masterIdx)
+        , slaveSideMechElemIdx_(slaveIdx)
+        , geometry_(geometry)
+        {}
+
+        //! return the master side element index
+        GridIndexType<mechDomainId> getMasterSideElementIndex() const
+        { return masterSideMechElemIdx_; }
+
+        //! return the slave side element index
+        GridIndexType<mechDomainId> getSlaveSideElementIndex() const
+        { return slaveSideMechElemIdx_; }
+
+        //! returns true if provided element index corresponds to master side
+        bool isMasterSideElement(GridIndexType<mechDomainId> eIdx) const
+        { return masterSideMechElemIdx_ == eIdx; }
+
+        //! returns true if provided element index corresponds to master side
+        bool isSlaveSideElement(GridIndexType<mechDomainId> eIdx) const
+        { return slaveSideMechElemIdx_ == eIdx; }
+
+        //! return the sub-segment geometry
+        const Geometry& geometry() const
+        { return geometry_; }
+
+    private:
+        GridIndexType<mechDomainId> masterSideMechElemIdx_;
+        GridIndexType<mechDomainId> slaveSideMechElemIdx_;
+        Geometry geometry_;
+    };
+
+    //! Class defining a segment of the contact surface.
+    //! For each lagrange domain element we define one such surface,
+    //! which can be further sub-divided depending on the overlap with
+    //! the sub-control volume faces of the adjacend mechanical domain elements.
+    class ContactSurfaceSegment
+    {
+    public:
+        using BasisVector = GlobalPosition<mechDomainId>;
+        using Basis = std::array<BasisVector, dimWorld>;
+
+        using TractionVector = Dune::FieldVector<Scalar<lagrangeDomainId>, dimWorld>;
+        using SubSegment = ContactSurfaceSubSegment;
+
+        //! set the basis of this segment
+        void setBasis(Basis&& basis)
+        { basis_ = std::move(basis); }
+
+        //! returns a basis vector of the surface
+        const BasisVector& getBasisVector(unsigned int direction) const
+        { return basis_[direction]; }
+
+        //! return the number of sub-segments
+        std::size_t numSubSegments() const
+        { return subSegments_.size(); }
+
+        //! return the i-th sub-segment
+        const ContactSurfaceSubSegment& getSubSegment(std::size_t i) const
+        { assert(i < numSubSegments()); return subSegments_[i]; }
+
+        //! add a new sub-segment
+        void addSubSegment(ContactSurfaceSubSegment&& subSegment)
+        { subSegments_.emplace_back(std::move(subSegment)); }
+
+    private:
+        //! Basis vectors for the traction vector at contact
+        Basis basis_;
+        //! Partition of this segment into sub-segments
+        std::vector<ContactSurfaceSubSegment> subSegments_;
     };
 
 public:
@@ -190,18 +274,14 @@ public:
     {
         curSol_ = curSol;
         lagrangeProblemPtr_ = lagrangeProblem;
+        contactIntegrationOrder_ = getParam<Scalar<lagrangeId>>("ContactProblem.ContactForceIntegrationOrder");
 
         BulkFacetFlowManager::init(matrixFlowProblem, facetFlowProblem, bulkFacetFlowMapper, curSol);
         BulkFacetMechManager::init(mechProblem, facetFlowProblem, bulkFacetMechMapper, curSol);
         PoroMechManager::init(matrixFlowProblem, mechProblem, curSol);
 
-        // we expect the lagrange domain and facet flow domain to have identical discretizations
-        if ( facetFlowProblem->fvGridGeometry().gridView().size(0)
-             != lagrangeProblem->gridGeometry().gridView().size(0) )
-            DUNE_THROW(Dune::InvalidStateException, "Lagrange and facet flow domain must operate on the same grid!");
-
         // initialize contact surfaces/stencils
-        init_(bulkFacetMechMapper);
+        init_();
     }
 
     /*!
@@ -269,7 +349,30 @@ public:
     Scalar<facetFlowId> computeAperture(const Element<facetFlowId>& element,
                                         const typename GridGeometry<facetFlowId>::SubControlVolume& scv,
                                         Scalar<facetFlowId> initialAperture) const
-    { return computeAperture(element, scv.center(), initialAperture); }
+    {
+        static constexpr auto bulkGridId = BulkFacetMechMapper::template gridId<bulkDim>();
+        static constexpr auto lowDimGridId = BulkFacetMechMapper::template gridId<facetDim>();
+        const auto& couplingMap = BulkFacetMechManager::couplingMapper().couplingMap(lowDimGridId, bulkGridId);
+
+        // get element index of a neighbor in the mechanical domain
+        const auto mechElemIdx = couplingMap.at(scv.elementIndex()).embedments[0].first;
+
+        // search in all embedded contact segments if position is contained
+        const auto& map = mechContactSegmentsMap_.at(mechElemIdx);
+        for (const auto& scvfToSubSegments : map)
+            for (const auto& subSegmentIdxPairs : scvfToSubSegments.second)
+            {
+                const auto& segment = contactSurfaceSegments_[subSegmentIdxPairs.first];
+                const auto& subSegment = segment.getSubSegment(subSegmentIdxPairs.second);
+                if (intersectsPointGeometry(scv.center(), subSegment.geometry()))
+                {
+                    const auto lagrangeElem = problem(lagrangeId).gridGeometry().element(subSegmentIdxPairs.first);
+                    return computeAperture(lagrangeElem, scv.center(), initialAperture);
+                }
+            }
+
+        DUNE_THROW(Dune::InvalidStateException, "HUE");
+    }
 
     /*!
      * \brief Computes the aperture within a lower-dimensional
@@ -280,9 +383,9 @@ public:
      * \param globalPos The global position on the facet element.
      * \param initialAperture The initial aperture of the scv
      */
-    Scalar<facetFlowId> computeAperture(const Element<facetFlowId>& element,
-                                        const GlobalPosition<facetFlowId>& globalPos,
-                                        Scalar<facetFlowId> initialAperture) const
+    Scalar<facetFlowId> computeAperture(const Element<lagrangeId>& element,
+                                        const GlobalPosition<lagrangeId>& globalPos,
+                                        Scalar<lagrangeId> initialAperture) const
     {
         const auto deltaUN = computeNormalDisplacementJump(element, globalPos);
         return initialAperture - deltaUN;
@@ -296,29 +399,34 @@ public:
      * \param element The (d-1)-dimensional facet grid element
      * \param globalPos The global position on the facet element.
      */
-    GlobalPosition<mechanicsId> computeDisplacementJump(const Element<facetFlowId>& element,
-                                                        const GlobalPosition<facetFlowId>& globalPos) const
+    GlobalPosition<mechanicsId> computeDisplacementJump(const Element<lagrangeId>& element,
+                                                        const GlobalPosition<lagrangeId>& globalPos) const
     {
-        const auto facetElemIdx = problem(facetFlowId).fvGridGeometry().elementMapper().index(element);
-        const auto& contactSurfaces = contactSurfaces_[facetElemIdx];
-
         GlobalPosition<mechanicsId> deltaU(0.0);
-        for (unsigned int surfaceIdx = 0; surfaceIdx < contactSurfaces.size(); ++surfaceIdx)
-        {
-            const auto& contactSurface = contactSurfaces[surfaceIdx];
-            const auto mechIdx = contactSurface.mechElemIdx;
-            const auto mechElement = problem(mechanicsId).fvGridGeometry().element(mechIdx);
-            const auto mechElemSol = elementSolution(mechElement, curSol_[mechanicsId], problem(mechanicsId).fvGridGeometry());
+        const auto& segment = getContactSurfaceSegment(element);
 
-            if (surfaceIdx == 0)
-                deltaU += evalSolution(mechElement, mechElement.geometry(), mechElemSol, globalPos);
-            else if (surfaceIdx == 1)
-                deltaU -= evalSolution(mechElement, mechElement.geometry(), mechElemSol, globalPos);
-            else
-                DUNE_THROW(Dune::NotImplemented, "Displacement jump computation for surface grids");
+        // iterate over sub-segments and find the one that contains globalPos
+        for (unsigned int i = 0; i < segment.numSubSegments(); ++i)
+        {
+            const auto& subSegment = segment.getSubSegment(i);
+            const auto& subSegmentGeometry = subSegment.geometry();
+
+            if (intersectsPointGeometry(globalPos, subSegmentGeometry))
+            {
+                const auto masterMechIdx = subSegment.getMasterSideElementIndex();
+                const auto masterMechElement = problem(mechanicsId).fvGridGeometry().element(masterMechIdx);
+                const auto masterMechElemSol = elementSolution(masterMechElement, curSol_[mechanicsId], problem(mechanicsId).fvGridGeometry());
+                deltaU += evalSolution(masterMechElement, masterMechElement.geometry(), masterMechElemSol, globalPos);
+
+                const auto slaveMechIdx = subSegment.getSlaveSideElementIndex();
+                const auto slaveMechElement = problem(mechanicsId).fvGridGeometry().element(slaveMechIdx);
+                const auto slaveMechElemSol = elementSolution(slaveMechElement, curSol_[mechanicsId], problem(mechanicsId).fvGridGeometry());
+                deltaU -= evalSolution(slaveMechElement, slaveMechElement.geometry(), slaveMechElemSol, globalPos);
+                return deltaU;
+            }
         }
 
-        return deltaU;
+        DUNE_THROW(Dune::InvalidStateException, "Could not find segment which contains provided globalPos");
     }
 
     /*!
@@ -332,12 +440,11 @@ public:
     GlobalPosition<mechanicsId> computeTangentialDisplacementJump(const Element<facetFlowId>& element,
                                                                   const GlobalPosition<facetFlowId>& globalPos) const
     {
+        // compute displacement jump
         const auto deltaU = computeDisplacementJump(element, globalPos);
 
-        const auto facetElemIdx = problem(facetFlowId).fvGridGeometry().elementMapper().index(element);
-        const auto& contactSurfaces = contactSurfaces_[facetElemIdx];
-
-        const auto& normal = contactSurfaces[0].basis[dimWorld-1];
+        // subtract normal part of it
+        const auto& normal = getContactSurfaceSegment(element).getBasisVector(dimWorld-1);
         auto deltaUN = normal;
         deltaUN *= deltaU*normal;
 
@@ -355,12 +462,11 @@ public:
     Scalar<mechanicsId> computeNormalDisplacementJump(const Element<facetFlowId>& element,
                                                       const GlobalPosition<facetFlowId>& globalPos) const
     {
+        // compute displacement jump
         const auto deltaU = computeDisplacementJump(element, globalPos);
 
-        const auto facetElemIdx = problem(facetFlowId).fvGridGeometry().elementMapper().index(element);
-        const auto& contactSurfaces = contactSurfaces_[facetElemIdx];
-        const auto& normal = contactSurfaces[0].basis[dimWorld-1];
-
+        // evaluate the part normal to the master side
+        const auto& normal = getContactSurfaceSegment(element).getBasisVector(dimWorld-1);
         return deltaU*normal;
     }
 
@@ -371,12 +477,43 @@ public:
      * \param element The grid element of the mechanical domain
      * \param scvf The sub-control volume face of the mechanical domain
      */
-    typename ContactSurface::ContactForce getContactForce(const Element<mechanicsId>& element,
-                                                          const typename GridGeometry<mechanicsId>::SubControlVolumeFace& scvf) const
+    typename ContactSurfaceSegment::TractionVector
+    getContactForce(const Element<mechanicsId>& element,
+                    const typename GridGeometry<mechanicsId>::SubControlVolumeFace& scvf) const
     {
-        const auto facetElement = this->getLowDimElement(element, scvf);
-        auto force = getContactTraction(facetElement, scvf.center());
-        force *= scvf.area();
+        const auto eIdx = problem(mechanicsId).fvGridGeometry().elementMapper().index(element);
+        const auto& map = mechContactSegmentsMap_.at(eIdx);
+        const auto& mapEntry = map.at(scvf.index());
+
+        // integrate traction over all sub-segments this scvf overlaps with
+        typename ContactSurfaceSegment::TractionVector force(0.0);
+        for (const auto& contactIdxPair : mapEntry)
+        {
+            // note that segment idx = lagrange element idx
+            const auto segmentIdx = contactIdxPair.first;
+            const auto subSegmentIdx = contactIdxPair.second;
+            const auto lagrangeElement = problem(lagrangeId).gridGeometry().element(segmentIdx);
+
+            const auto& segment = contactSurfaceSegments_[segmentIdx];
+            const auto& subSegment = segment.getSubSegment(subSegmentIdx);
+            const auto& subSegmentGeometry = subSegment.geometry();
+
+            using QuadRules = Dune::QuadratureRules<Scalar<lagrangeId>, facetDim>;
+            auto rule = QuadRules::rule(subSegmentGeometry.type(), contactIntegrationOrder_);
+            for (const auto& qp : rule)
+            {
+                const auto& ipLocal = qp.position();
+                const auto& ipGlobal = subSegmentGeometry.global(ipLocal);
+
+                auto traction = getContactTraction(lagrangeElement, ipGlobal);
+                traction *= qp.weight();
+                traction *= subSegmentGeometry.integrationElement(ipLocal);
+                if (subSegment.isSlaveSideElement(eIdx))
+                    traction *= -1.0;
+                force += traction;
+            }
+        }
+
         return force;
     }
 
@@ -387,25 +524,18 @@ public:
      * \param element The grid element of the facet (lagrange) domain
      * \param pos The global position on the element
      */
-    typename ContactSurface::ContactForce getContactTraction(const Element<lagrangeId>& element,
-                                                             const GlobalPosition<lagrangeId>& pos) const
+    typename ContactSurfaceSegment::TractionVector
+    getContactTraction(const Element<lagrangeId>& element,
+                       const GlobalPosition<lagrangeId>& pos) const
     {
         const auto eg = element.geometry();
         const auto& gg = problem(lagrangeId).gridGeometry();
         const auto elemSol = elementSolution(element, curSol_[lagrangeId], gg);
-        const auto coefficients = evalSolution(element, eg, gg, elemSol, pos, true);
-
-        const auto& contactSurface = getContactSurface(element);
-
-        typename ContactSurface::ContactForce force(0.0);
-        for (int dir = 0; dir < dimWorld; ++dir)
-        {
-            auto dirForce = contactSurface.basis[dir];
-            dirForce *= coefficients[dir];
-            force += dirForce;
-        }
-
-        return force;
+        return evalSolution(element, eg, gg, elemSol, pos, true);
+        // auto sigma = evalSolution(element, eg, gg, elemSol, pos, true);
+        // auto f = getContactSurface(element).getBasisVector(dimWorld-1);
+        // f *= sigma;
+        // return f;
     }
 
     /*!
@@ -866,29 +996,13 @@ public:
     }
 
     /*!
-     * \brief Returns the contact surface data structure for a sub-control
-     *        volume face of the mechanical domain on an interior boundary.
-     */
-    const ContactSurface& getContactSurface(const Element<mechanicsId>& element,
-                                            const typename GridGeometry<mechanicsId>::SubControlVolumeFace& scvf) const
-    {
-        if (!scvf.interiorBoundary())
-            DUNE_THROW(Dune::InvalidStateException, "Contact surfaces only defined for interior boundary faces");
-
-        const auto eIdx = problem(mechanicsId).fvGridGeometry().elementMapper().index(element);
-        const auto& elemLocalMap = mechContactSurfaceMap_.at(eIdx);
-        const auto& idxPair = elemLocalMap.at(scvf.index());
-        return contactSurfaces_[idxPair.first][idxPair.second];
-    }
-
-    /*!
-     * \brief Returns the master contact surface data structure defined
+     * \brief Returns the contact surface segment data structure defined
      *        on a lower-dimensional element of the lagrange domain.
      */
-    const ContactSurface& getContactSurface(const Element<lagrangeId>& element) const
+    const ContactSurfaceSegment& getContactSurfaceSegment(const Element<lagrangeId>& element) const
     {
         const auto eIdx = problem(lagrangeId).gridGeometry().elementMapper().index(element);
-        return contactSurfaces_[eIdx][0];
+        return contactSurfaceSegments_[eIdx];
     }
 
     //! Return a const reference to one of the flow problems
@@ -913,43 +1027,47 @@ public:
 private:
 
     //! Sets up the coupling stencils and interfaces to the lagrange domain
-    void init_(std::shared_ptr<BulkFacetMechMapper> bulkFacetMechMapper)
+    void init_()
     {
         const auto& mechGG = problem(mechanicsId).fvGridGeometry();
         const auto& lagrangeGG = problem(lagrangeId).gridGeometry();
+        const auto glue = makeGlue(mechGG, lagrangeGG);
 
         mechLagrangeCouplingStencils_.resize(mechGG.gridView().size(0));
         lagrangeMechCouplingStencils_.resize(lagrangeGG.gridView().size(0));
 
-        static constexpr auto bulkGridId = BulkFacetMechMapper::template gridId<bulkDim>();
-        static constexpr auto lowDimGridId = BulkFacetMechMapper::template gridId<facetDim>();
+        // one contact surface segment per lagrange domain element
+        contactSurfaceSegments_.resize(lagrangeGG.gridView().size(0));
 
-        // one contact surface per coupled lagrange element
-        const auto& couplingMap = bulkFacetMechMapper->couplingMap(lowDimGridId, bulkGridId);
-        contactSurfaces_.resize(couplingMap.size());
+        // keep track of lagrange elements for which the basis was defined already
+        std::vector<bool> hasBasis(lagrangeGG.gridView().size(0), false);
 
-        // we don't support uncoupled lagrange elements (yet?)
-        if (couplingMap.size() != lagrangeGG.gridView().size(0))
-            DUNE_THROW(Dune::InvalidStateException, "All lagrange domain elements are expected to be coupled");
-
-        for (const auto& mapEntry : couplingMap)
+        for (const auto& is : intersections(glue))
         {
-            const auto lagrangeIdx = mapEntry.first;
-            const auto& embedments = mapEntry.second.embedments;
-            auto& surfaces = contactSurfaces_[lagrangeIdx];
-            auto& surface1 = surfaces[0];
-            auto& surface2 = surfaces[1];
+            if (is.numTargetNeighbors() != 1)
+                DUNE_THROW(Dune::InvalidStateException, "Only one lagrange neighbor element expected");
 
-            if (embedments.size() == 1)
+            const auto lagrangeElement = is.targetEntity(0);
+            const auto lagrangeElemIdx = lagrangeGG.elementMapper().index(lagrangeElement);
+            auto& segment = contactSurfaceSegments_[lagrangeElemIdx];
+
+            const auto numMechNeighbors = is.numDomainNeighbors();
+            if (numMechNeighbors == 1)
                 DUNE_THROW(Dune::InvalidStateException, "Contact mechanics for boundary segment");
-            if (embedments.size() != 2)
+            if (numMechNeighbors != 2)
                 DUNE_THROW(Dune::NotImplemented, "Contact mechanics on surface grids");
 
-            const auto mechElementIdx1 = embedments[0].first;
-            const auto mechElementIdx2 = embedments[1].first;
-            const auto mechElement1 = mechGG.element(mechElementIdx1);
-            const auto mechElement2 = mechGG.element(mechElementIdx2);
-            const auto lagrangeElement = lagrangeGG.element(lagrangeIdx);
+            const auto mechElement1 = is.domainEntity(0);
+            const auto mechElement2 = is.domainEntity(1);
+            const auto mechElementIdx1 = mechGG.elementMapper().index(mechElement1);
+            const auto mechElementIdx2 = mechGG.elementMapper().index(mechElement2);
+
+            // (maybe) define basis for this segment
+            if (!hasBasis[lagrangeElemIdx])
+            {
+                segment.setBasis(constructSegmentBasis(lagrangeElement, mechElement1));
+                hasBasis[lagrangeElemIdx] = true;
+            }
 
             auto mechFvGeometry1 = localView(mechGG);
             auto mechFvGeometry2 = localView(mechGG);
@@ -968,43 +1086,35 @@ private:
             }
 
             for (const auto& scv : scvs(mechFvGeometry1))
-                lagrangeMechCouplingStencils_[lagrangeIdx].push_back(scv.dofIndex());
+                lagrangeMechCouplingStencils_[lagrangeElemIdx].push_back(scv.dofIndex());
             for (const auto& scv : scvs(mechFvGeometry2))
-                lagrangeMechCouplingStencils_[lagrangeIdx].push_back(scv.dofIndex());
+                lagrangeMechCouplingStencils_[lagrangeElemIdx].push_back(scv.dofIndex());
 
-            // set up contact surfaces
-            surface1.mechElemIdx = mechElementIdx1;
-            surface2.mechElemIdx = mechElementIdx2;
+            // find scvfs in the two neighbors that coincide
+            const auto eps = 1e-7*diameter(lagrangeElement.geometry());
+            std::vector< std::pair<unsigned int, unsigned int> > scvfPairs;
+            for (const auto& scvf1 : scvfs(mechFvGeometry1))
+                for (const auto& scvf2 : scvfs(mechFvGeometry2))
+                    if ( (scvf1.center()-scvf2.center()).two_norm() < eps )
+                        scvfPairs.emplace_back(std::make_pair(scvf1.index(), scvf2.index()));
 
-            // normal is the same for all scvfs on that element
-            const auto& scvfList1 = embedments[0].second;
-            assert(scvfList1.size() > 0);
-            surface1.basis[dimWorld-1] = mechFvGeometry1.scvf(scvfList1[0]).unitOuterNormal();
-
-            // compute tangent
-            if (facetDim == 1)
+            // create sub-segments for overlaps with scvfs
+            for (const auto& pair : scvfPairs)
             {
-                const auto geometry = lagrangeElement.geometry();
-                surface1.basis[0] = geometry.corner(0) - geometry.center();
-                surface1.basis[0] /= surface1.basis[0].two_norm();
+                const auto& masterScvfGeom = mechFvGeometry1.scvf(pair.first).geometry();
+                auto subGeometries = getSubIntersections_(is.geometry(), masterScvfGeom);
+                for (auto& subGeometry : subGeometries)
+                {
+                    const auto curSubSegmentIdx = segment.numSubSegments();
+                    segment.addSubSegment( ContactSurfaceSubSegment(std::move(subGeometry),
+                                                                    mechElementIdx1,
+                                                                    mechElementIdx2) );
+
+                    // update maps
+                    mechContactSegmentsMap_[mechElementIdx1][pair.first].push_back(std::make_pair(lagrangeElemIdx, curSubSegmentIdx));
+                    mechContactSegmentsMap_[mechElementIdx2][pair.second].push_back(std::make_pair(lagrangeElemIdx, curSubSegmentIdx));
+                }
             }
-            else
-                DUNE_THROW(Dune::NotImplemented, "Contact mechanics in 3d");
-
-            // simply take the negatives for basis on second surface
-            surface2.mechElemIdx = mechElementIdx2;
-            for (unsigned int dir = 0; dir < dimWorld; ++dir)
-                surface2.basis[dir] = surface1.basis[dir];
-            for (unsigned int dir = 0; dir < dimWorld; ++dir)
-                surface2.basis[dir] *= -1.0;;
-
-            const auto& scvfList2 = embedments[1].second;
-
-            // fill map entries
-            for (auto scvfIdx : scvfList1)
-                mechContactSurfaceMap_[mechElementIdx1][scvfIdx] = std::make_pair(lagrangeIdx, 0);
-            for (auto scvfIdx : scvfList2)
-                mechContactSurfaceMap_[mechElementIdx2][scvfIdx] = std::make_pair(lagrangeIdx, 1);
         }
 
         // make stencils unique
@@ -1018,6 +1128,71 @@ private:
         std::for_each(lagrangeMechCouplingStencils_.begin(), lagrangeMechCouplingStencils_.end(), makeUnique);
     }
 
+    //! Constructs the basis for the traction vector defined on a lagrange element
+    typename ContactSurfaceSegment::Basis constructSegmentBasis(const Element<lagrangeId>& lgElement,
+                                                                const Element<mechanicsId>& masterElement)
+    {
+        typename ContactSurfaceSegment::Basis basis;
+        const auto& lgGeometry = lgElement.geometry();
+        const auto& center = lgGeometry.center();
+
+        if (facetDim == 1)
+        {
+            auto& tangent = basis[0];
+            auto& normal = basis[1];
+
+            tangent = lgGeometry.corner(0) - center;
+            tangent /= tangent.two_norm();
+
+            normal[0] = -tangent[1];
+            normal[1] = tangent[0];
+
+            // normal should point out of master side
+            const auto d = center-masterElement.geometry().center();
+            if (normal*d < 0.0)
+            {
+                tangent *= -1.0;
+                normal *= -1.0;
+            }
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented, "Contact mechanics in 3d");
+
+        return basis;
+    }
+
+    //! Computes the sub-intersections of a sub-control volume
+    //! face with an element intersection. Specialization for
+    //! intersectionDim == 1, where a unique result is expected.
+    template< class IsGeometry, class ScvfGeometry,
+              std::enable_if_t<(int(IsGeometry::mydimension) == 1), int> = 0 >
+    std::vector<IsGeometry> getSubIntersections_(const IsGeometry& intersectionGeometry,
+                                                 const ScvfGeometry& scvfGeometry) const
+    {
+        using IntersectionAlgorithm = GeometryIntersection<IsGeometry, ScvfGeometry>;
+
+        typename IntersectionAlgorithm::Intersection result;
+        if (IntersectionAlgorithm::intersection(intersectionGeometry, scvfGeometry, result))
+        {
+            std::vector<typename IsGeometry::GlobalCoordinate> corners;
+            corners.reserve(result.size());
+            for (auto& c : result) corners.push_back(c);
+
+            return {IsGeometry(Dune::GeometryTypes::simplex(1), corners)};
+        }
+
+        return {};
+    }
+
+    //! Computes the sub-intersections of a sub-control volume
+    //! face with an element intersection. Specialization for
+    //! intersectionDim > 1, where the result is a triangulation.
+    template< class IsGeometry, class ScvfGeometry,
+              std::enable_if_t<(int(IsGeometry::mydimension) > 1), int> = 0 >
+    std::vector<IsGeometry> getSubIntersections_(const IsGeometry& intersectionGeometry,
+                                                 const ScvfGeometry& scvfGeometry) const
+    { DUNE_THROW(Dune::NotImplemented, "Sub-Intersections in 3d world"); }
+
     // Pointer to the lagrange problem
     std::shared_ptr<Problem<lagrangeId>> lagrangeProblemPtr_;
 
@@ -1026,14 +1201,22 @@ private:
     std::vector<std::vector< GridIndexType<mechanicsId> >> lagrangeMechCouplingStencils_;
 
     // The contact surfaces
-    std::vector< std::array<ContactSurface, 2> > contactSurfaces_;
+    std::vector< ContactSurfaceSegment > contactSurfaceSegments_;
 
-    // Allows mapping of mechanical sub-control volume faces to contact surface data
-    using MechIdxType = GridIndexType<mechanicsId>;
-    using ContactSurfaceIdxPair = std::pair< std::size_t, unsigned int >;
-    std::unordered_map< MechIdxType, std::unordered_map<MechIdxType, ContactSurfaceIdxPair> > mechContactSurfaceMap_;
+    // A pair of contact surface segment idx + corresponding sub-segment idx
+    using SegmentSubSegmentPair = std::pair<std::size_t, std::size_t>;
+    // Maps an scvf to a vector of such data pairs (one entry per overlap)
+    using ScvfToContactSegmentMap = std::unordered_map< GridIndexType<mechanicsId>,
+                                                        std::vector<SegmentSubSegmentPair> >;
 
+    // Maps an element of the mechanical domain to such a map
+    std::unordered_map<GridIndexType<mechanicsId>, ScvfToContactSegmentMap> mechContactSegmentsMap_;
+
+    // Copy of solution vector
     SolutionVector curSol_;
+
+    // Integration order for contact forces
+    Scalar<lagrangeId> contactIntegrationOrder_;
 };
 
 } // end namespace Dumux

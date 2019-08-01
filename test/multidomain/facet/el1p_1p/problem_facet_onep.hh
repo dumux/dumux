@@ -118,7 +118,6 @@ public:
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 
         apertures_.resize(fvGridGeometry->gridView().size(0), initialAperture_);
-        deltaUT_.resize(fvGridGeometry->gridView().size(0), 0.0);
         permeabilities_.resize(fvGridGeometry->gridView().size(0), initialAperture_*initialAperture_/12.0);
     }
 
@@ -203,10 +202,6 @@ public:
     const std::vector<Scalar>& apertures() const
     { return apertures_; }
 
-    //! returns the tangential displacement jumps
-    const std::vector<Scalar>& deltaUT() const
-    { return deltaUT_; }
-
     //! returns the vector of permeabilities
     const std::vector<Scalar>& permeabilities() const
     { return permeabilities_; }
@@ -225,7 +220,6 @@ public:
             {
                 apertures_[scv.elementIndex()] = extrusionFactor(element, scv, elemSol);
                 permeabilities_[scv.elementIndex()] = this->spatialParams().permeability(element, scv, elemSol);
-                deltaUT_[scv.elementIndex()] = couplingManager().computeTangentialDisplacementJump(element, scv.center()).two_norm();
             }
         }
     }
@@ -238,7 +232,6 @@ private:
 
     // fields to be added to output
     std::vector<Scalar> apertures_;
-    std::vector<Scalar> deltaUT_;
     std::vector<Scalar> permeabilities_;
 };
 
