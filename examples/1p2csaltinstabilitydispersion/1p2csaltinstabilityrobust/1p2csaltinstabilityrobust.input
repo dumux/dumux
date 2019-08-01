@@ -1,13 +1,13 @@
 [TimeLoop]
-DtInitial = 1e-1# [s]
-MaxTimeStepSize=50
+DtInitial = 1e+1# [s]
+MaxTimeStepSize=100000000
 TEnd = 1e12# [s]
 
 [Grid]
 File = ../grids/henry.dgf
 
 [Problem]
-diffusionCoefficient = 6.6e-6 # 1.2e-9 #[m2/s] Diffusion coefficient
+diffusionCoefficient = 2e-9 #[m2/s] Diffusion coefficient
 Name = SaltInstabilityRobust1p2c
-AlphaL = 0.1 # longitual dispersivity
-AlphaT = 0.01 # transversal dispersivity
+AlphaL = 1 #0.1 # longitudinal dispersivity
+AlphaT = 0.1 #0.01 # transversal dispersivity

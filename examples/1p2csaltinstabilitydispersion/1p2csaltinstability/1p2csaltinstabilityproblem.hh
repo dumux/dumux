@@ -143,20 +143,20 @@ public:
 
         values.setAllNeumann();
 
-         if (globalPos[0]>xMax-eps_)
-         {
-         values.setAllDirichlet();
-         }
+         //if (globalPos[0]>xMax-eps_)
+         //{
+         //values.setAllDirichlet();
+         //}
 
-         if (globalPos[1]>yMax-eps_ && globalPos[0]>0.5*yMax && globalPos[0]<1.5*yMax)
+         if (globalPos[1]>yMax-eps_) // && globalPos[0]>0.5*yMax && globalPos[0]<1.5*yMax)
          {
            values.setAllDirichlet();
          }
 
-         if (globalPos[0]<eps_)
-         {
-         values.setAllDirichlet();
-         }
+         //if (globalPos[0]<eps_)
+         //{
+         //values.setAllDirichlet();
+         //}
 
         return values;
     }
@@ -173,9 +173,9 @@ public:
         const auto yMax = this->fvGridGeometry().bBoxMax()[1];
 
         initial_(values, globalPos);
-        if (globalPos[1]>yMax-eps_ && globalPos[0]>0.5*yMax && globalPos[0]<1.5*yMax)
+        if (globalPos[1]>yMax-eps_) // && globalPos[0]>0.5*yMax && globalPos[0]<1.5*yMax)
         {
-            values[FluidSystem::SaltIdx] =  0.5;
+            values[FluidSystem::SaltIdx] =  0.01;
         }
 
         return values;
@@ -241,9 +241,12 @@ private:
     // the internal method for the initial condition
     void initial_(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        Scalar densityW = 1025;
+        const auto yMax = this->fvGridGeometry().bBoxMax()[1];
+        Scalar densityW = 1000;
         values[Indices::pressureIdx] = 1.0133e5+(depthBOR_-globalPos[1])*densityW*9.81; //initial condition for the pressure
         values[FluidSystem::SaltIdx] = 0.0; //initial condition for the salt molefraction
+          if(globalPos[1]>(yMax-0.05))
+            values[FluidSystem::SaltIdx] = 0.01;
     }
 
     static constexpr Scalar eps_ = 1e-6;

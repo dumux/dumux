@@ -3,3 +3,6 @@ This tutorial addresses a problem of robustness with dispersion effects in insta
 We provide here two exemplary approaches to include dispersion within the Box context. We have observed that the updated calculation of the dispersion tensor within a Newton iteration can lead to severe problems with numerical robustness when dispersivity values are sufficiently large.
 In such a case, it helps to update dispersion tensors only after each time step. 
 This is documented in the two examples here.
+
+ <img src="Plots/plot-lowDisp.png" width="500">
+ <img src="Plots/plot-highDisp.png" width="500">

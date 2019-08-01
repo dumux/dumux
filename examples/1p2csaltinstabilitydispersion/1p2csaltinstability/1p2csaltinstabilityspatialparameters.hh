@@ -58,7 +58,7 @@ public:
     : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
-        perm_ = 1.019368e-9;
+        perm_ = 1.019368e-8;
         porosity_ = 0.35;
     }
 
