@@ -330,7 +330,42 @@ public:
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
-        DUNE_THROW(Dune::NotImplemented, "segment-segment intersection detection for segment-like intersections");
+
+        std::vector<Point> candidates;
+        if (intersectsPointGeometry(geo2.corner(0), geo1)) candidates.push_back(geo2.corner(0));
+        if (intersectsPointGeometry(geo2.corner(1), geo1)) candidates.push_back(geo2.corner(1));
+
+        // Both corners inside geo1 (we assume geo2 to have non-zero length)
+        if (candidates.size() == 2)
+        {
+            intersection = Intersection({candidates[0], candidates[1]});
+            return true;
+        }
+
+        if (intersectsPointGeometry(geo1.corner(0), geo2)) candidates.push_back(geo1.corner(0));
+        if (intersectsPointGeometry(geo1.corner(1), geo2)) candidates.push_back(geo1.corner(1));
+
+        // make candidates unique
+        const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
+        std::sort(candidates.begin(), candidates.end(), [&eps](const auto& a, const auto& b) -> bool
+        {
+            using std::abs;
+            return (abs(a[0]-b[0]) > eps ? a[0] < b[0] : a[1] < b[1]);
+        });
+
+        auto removeIt = std::unique( candidates.begin(),
+                                     candidates.end(),
+                                     [&eps] (const auto& a, const auto&b)
+                                     { return (b-a).two_norm() < eps; } );
+        candidates.erase(removeIt, candidates.end());
+
+        if (candidates.size() == 2)
+        {
+            intersection = Intersection({candidates[0], candidates[1]});
+            return true;
+        }
+
+        return false;
     }
 };
 

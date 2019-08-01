@@ -38,9 +38,10 @@
 #include "problem_bulk_poroelastic.hh"
 #include "problem_lagrangemp.hh"
 
+#include <dumux/io/grid/gridmanager.hh>
 #include <dumux/assembly/diffmethod.hh>
-
 #include <dumux/linear/seqsolverbackend.hh>
+
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -119,6 +120,11 @@ int main(int argc, char** argv) try
     gridManager.init();
     gridManager.loadBalance();
 
+    // read in grid from lagrange domain
+    Dumux::GridManager<Traits::template SubDomain<lagrangeId>::Grid> lagrangeGridManager;
+    lagrangeGridManager.init("Lagrange");
+    lagrangeGridManager.loadBalance();
+
     ////////////////////////////////////////////////////////////
     // run stationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
@@ -126,6 +132,10 @@ int main(int argc, char** argv) try
     // we compute on the leaf grid views
     const auto& bulkGridView = gridManager.template grid<0>().leafGridView();
     const auto& facetGridView = gridManager.template grid<1>().leafGridView();
+    const auto& lagrangeGridView = lagrangeGridManager.grid().leafGridView();
+
+    Dune::VTKWriter<std::decay_t<decltype(lagrangeGridView)>> lagrangeWriterGrid(lagrangeGridView);
+    lagrangeWriterGrid.write("lagrange_grid");
 
     // create the finite volume grid geometries
     using MDGridGeometry = MultiDomainFVGridGeometry<Traits>;
@@ -137,7 +147,7 @@ int main(int argc, char** argv) try
 
     // create basis of the lagrange space
     using LagrangeBasis = typename MDGridGeometry::template Type<lagrangeId>::AnsatzSpaceBasis;
-    auto lagrangeBasis = std::make_shared<LagrangeBasis>(facetGridView);
+    auto lagrangeBasis = std::make_shared<LagrangeBasis>(lagrangeGridView);
     fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<lagrangeId>>(lagrangeBasis), lagrangeId);
 
     // update the finite volume grid geometries
@@ -210,7 +220,6 @@ int main(int argc, char** argv) try
     bulkFlowVtkWriter.addField(problem[bulkFlowId].porosities(), "porosity");
     bulkFlowVtkWriter.addField(problem[bulkFlowId].permeabilities(), "permeability");
     facetFlowVtkWriter.addField(problem[facetFlowId].apertures(), "aperture");
-    facetFlowVtkWriter.addField(problem[facetFlowId].deltaUT(), "deltaUT");
     facetFlowVtkWriter.addField(problem[facetFlowId].permeabilities(), "permeability");
     bulkMechVtkWriter.addField(problem[bulkMechId].sigma_x(), "Sigma_x", BulkElasticVtkOutputModule::FieldType::element);
     bulkMechVtkWriter.addField(problem[bulkMechId].sigma_y(), "Sigma_y", BulkElasticVtkOutputModule::FieldType::element);
@@ -256,9 +265,9 @@ int main(int argc, char** argv) try
     bulkMechVtkWriter.write(0.0);
 
     // write out lagrange multiplier
-    Dune::VTKWriter<std::decay_t<decltype(facetGridView)>> lagrangeWriter(facetGridView);
-    auto gf = Dune::Functions::makeDiscreteGlobalBasisFunction<Dune::FieldVector<double, 1>>(*lagrangeBasis, x[lagrangeId]);
-    lagrangeWriter.addCellData(gf, Dune::VTK::FieldInfo("lagrange", Dune::VTK::FieldInfo::Type::scalar, 1));
+    Dune::VTKWriter<std::decay_t<decltype(lagrangeGridView)>> lagrangeWriter(lagrangeGridView);
+    auto gf = Dune::Functions::makeDiscreteGlobalBasisFunction<Dune::FieldVector<double, 2>>(*lagrangeBasis, x[lagrangeId]);
+    lagrangeWriter.addCellData(gf, Dune::VTK::FieldInfo("lagrange", Dune::VTK::FieldInfo::Type::vector, 2));
     lagrangeWriter.write("lagrange");
 
     // print parameter usage

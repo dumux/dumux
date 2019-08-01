@@ -263,7 +263,7 @@ public:
 
         // Contribution of the contact mechanics
         force += couplingManager().getContactForce(element, scvf);
-        std::cout << "ContactForce = " << couplingManager().getContactForce(element, scvf) << std::endl;
+        // std::cout << "ContactForce = " << couplingManager().getContactForce(element, scvf) << std::endl;
 
         return force;
     }

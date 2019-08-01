@@ -91,8 +91,6 @@ class Intersection
     using ctypeDomain = typename DomainGridView::ctype;
     using ctypeTarget = typename TargetGridView::ctype;
     using ctype = typename Dune::PromotionTraits<ctypeDomain, ctypeTarget>::PromotedType;
-
-    using Geometry = Dune::AffineGeometry<ctype, dimIs, dimWorld>;
     using GlobalPosition = Dune::FieldVector<ctype, dimWorld>;
 
     // we can only have multiple neighbors in the mixeddimensional case and then only for the side with the largest dimension
@@ -103,6 +101,10 @@ class Intersection
     static constexpr auto targetIdx = Dune::index_constant<1>{};
 
 public:
+    //! export the geometry type underlying this intersection
+    using Geometry = Dune::AffineGeometry<ctype, dimIs, dimWorld>;
+
+    //! Constructor
     Intersection(const DomainTree& domainTree, const TargetTree& targetTree)
     : domainTree_(domainTree)
     , targetTree_(targetTree)
@@ -207,8 +209,10 @@ class MultiDomainGlue
     static constexpr bool isMixedDimensional = dimDomain != dimTarget;
 
 public:
+    // export intersection type
+    using Intersection = Glue::Intersection<DomainGridView, TargetGridView, DomainMapper, TargetMapper>;
     // export intersection container type
-    using Intersections = std::vector<Glue::Intersection<DomainGridView, TargetGridView, DomainMapper, TargetMapper>>;
+    using Intersections = std::vector<Intersection>;
 
 
     /*!
