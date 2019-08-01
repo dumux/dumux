@@ -362,8 +362,8 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        values[0] = hBoundary_;
-        values[1] = abs(discharge_)/hBoundary_;
+        values[0] = 1.0;
+        values[1] = 0.0;
         values[2] = 0.0;
 
         return values;

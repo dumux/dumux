@@ -39,11 +39,14 @@ the computation time. Even a steady state solution is considered an implicit tim
 is applied.
 
 ##Problem set-up
-The model domain is given by a rough channel with a slope of 0.001. Bottom friction is considered by applying
+The model domain is given by a rough channel with a slope of 0.001.
+The domain is 500 meters long and 10 meters wide (![Domain](/domain.png)). 
+Bottom friction is considered by applying
 the friction law of Manning (Manning n = 0.025). At the lateral sides no friction is considered and  a
 no-flow no slip boundary condition is applied. This is the default boundary condition for the shallow water model.
 
-The domain is 500 meters long and 10 meters wide. At the left border a discharge boundary condition
+
+At the left border a discharge boundary condition
 is applied as inflow boundary condition with q = -1.0 ($m^2 s^{-1}. At the right border a water fixed depth boundary condition
 is applied for the outflow. Normal flow is assumed, therefor the water depth at the right border is calculated after
 the of Gaukler-Manning-Strickler equation:
