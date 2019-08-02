@@ -146,8 +146,10 @@ struct TwoPNCModelTraits
  * \tparam FST The fluid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
- */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
+ * \tparam DT The diffusion type
+ * \tparam EDM The effective diffusivity model
+*/
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class DT, class EDM>
 struct TwoPNCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -157,6 +159,27 @@ struct TwoPNCVolumeVariablesTraits
     using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
+    using DiffusionType = DT;
+    using EffectiveDiffusivityModel = EDM;
+};
+
+/*!
+ * \ingroup TwoPNCModel
+ * \brief Traits class for the volume variables of the single-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+  * \tparam DT The diffusion type
+ * \tparam EDM The effective diffusivity model
+ * \tparam ETCM The effective thermal conductivity model
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class DT, class EDM, class ETCM>
+struct TwoPNCNIVolumeVariablesTraits : public TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>
+{
+    using EffectiveThermalConductivityModel = ETCM;
 };
 
 namespace Properties {
@@ -195,8 +218,10 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
 public:
     using type = TwoPNCVolumeVariables<Traits>;
 };
@@ -265,6 +290,27 @@ private:
     using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+};
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPNCNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    using Traits = TwoPNCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM, ETCM>;
+public:
+    using type = TwoPNCVolumeVariables<Traits>;
 };
 
 //! Set non-isothermal output fields
