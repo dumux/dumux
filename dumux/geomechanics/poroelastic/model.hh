@@ -35,6 +35,7 @@
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
+#include "secondaryvariables.hh"
 #include "iofields.hh"
 
 namespace Dumux {
@@ -109,6 +110,24 @@ private:
     using Traits = ElasticVolumeVariablesTraits<PV, DV, MT, SST, SSY>;
 public:
     using type = PoroElasticVolumeVariables<Traits>;
+};
+
+//! Set the secondary variables property
+template<class TypeTag>
+struct SecondaryVariables<TypeTag, TTag::PoroElastic>
+{
+private:
+    static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using DV = Dune::FieldVector<typename PV::value_type, dim>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+
+    // we reuse the elastic volume variable traits here
+    using Traits = ElasticVolumeVariablesTraits<PV, DV, MT, SST, SSY>;
+public:
+    using type = PoroElasticSecondaryVariables<Traits>;
 };
 
 //! Per default, we use effective stresses on the basis of Hooke's Law
