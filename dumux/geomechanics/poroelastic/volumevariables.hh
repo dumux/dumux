@@ -79,7 +79,7 @@ public:
         solidState_.setDensity(SolidSystem::density(solidState_));
     }
 
-    //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv.
+    //! Return the solid density \f$\mathrm{[kg/m^3]}\f$ within the control volume.
     Scalar solidDensity() const
     { return solidState_.density(); }
 
