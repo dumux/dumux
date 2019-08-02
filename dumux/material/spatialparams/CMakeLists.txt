@@ -6,6 +6,7 @@ fvelastic.hh
 fvnonequilibrium.hh
 fvporoelastic.hh
 gstatrandomfield.hh
+poroelastic.hh
 sequentialfv.hh
 sequentialfv1p.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/spatialparams)
