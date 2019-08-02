@@ -30,6 +30,8 @@
 #include <dumux/common/typetraits/state.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/fem/ipdata.hh>
+#include <dumux/discretization/fem/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
 #include "evalsolution.hh"
@@ -130,6 +132,81 @@ evalGradients(const Element& element,
               const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
               const typename Element::Geometry::GlobalCoordinate& globalPos)
 { DUNE_THROW(Dune::NotImplemented, "General gradient evaluation for cell-centered methods"); }
+
+/*!
+ * \brief Evaluates the gradient of a given fem element solution to a given global position.
+ * \ingroup Discretization
+ *
+ * \param element The element
+ * \param geometry The element geometry
+ * \param gridGeometry The finite element grid geometry
+ * \param elemSol The primary variables at the dofs of the element
+ * \param globalPos The global position
+ *
+ * \return Dune::FieldVector with as many entries as dimension of
+ *         the PrimaryVariables object (i.e. numEq). Each entry is
+ *         a GlobalCoordinate object holding the priVar gradient.
+ */
+template<class Element, class FEElementGeometry, class PrimaryVariables>
+auto evalGradients(const Element& element,
+                   const typename Element::Geometry& geometry,
+                   const typename FEElementGeometry::GridGeometry& gridGeometry,
+                   const FEElementSolution<FEElementGeometry, PrimaryVariables>& elemSol,
+                   const typename Element::Geometry::GlobalCoordinate& globalPos,
+                   bool ignoreState = false)
+{
+    // determine if all states are the same at all vertices
+    using HasState = decltype(isValid(Detail::hasState())(elemSol[0]));
+    bool allStatesEqual = ignoreState || Detail::allStatesEqual(elemSol, HasState{});
+
+    if (allStatesEqual)
+    {
+        using GridGeometry = typename FEElementGeometry::GridGeometry;
+        using AnsatzSpaceBasis = typename GridGeometry::AnsatzSpaceBasis;
+        using FiniteElement = typename AnsatzSpaceBasis::LocalView::Tree::FiniteElement;
+        using AnsatzLocalBasis = typename FiniteElement::Traits::LocalBasisType;
+
+        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+        using IpDataAnsatz = FEIntegrationPointData<GlobalPosition, AnsatzLocalBasis>;
+
+        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+        auto feGeometry = localView(gridGeometry);
+        feGeometry.bind(element);
+
+        const auto& ansatzLocalView = feGeometry.feBasisLocalView();
+        const auto& ansatzLocalBasis = ansatzLocalView.tree().finiteElement().localBasis();
+
+        const auto& localPos = geometry.local(globalPos);
+        IpDataAnsatz ipData(geometry, localPos, ansatzLocalBasis);
+
+        // the inverse transposed of the jacobian matrix
+        const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
+
+        // interpolate the gradients
+        Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( GlobalPosition(0.0) );
+        for (int i = 0; i < ansatzLocalView.size(); ++i)
+        {
+            // the global shape function gradient
+            GlobalPosition gradN;
+            jacInvT.mv(ipData.gradN(i), gradN);
+
+            // add gradient to global privar gradients
+            for (unsigned int pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+            {
+                GlobalPosition tmp(gradN);
+                tmp *= elemSol[i][pvIdx];
+                result[pvIdx] += tmp;
+            }
+        }
+
+        return result;
+    }
+    else
+    {
+        DUNE_THROW(Dune::NotImplemented, "Element vertices have different phase states. Enforce calculation by setting ignoreState to true.");
+    }
+}
 
 } // namespace Dumux
 
