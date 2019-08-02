@@ -118,7 +118,7 @@ public:
     using type = ElasticVolumeVariables<Traits>;
 };
 
-//! Set the volume variables property
+//! Set the secondary variables property (vol var traits can be reused here)
 template<class TypeTag>
 struct SecondaryVariables<TypeTag, TTag::Elastic>
 {
