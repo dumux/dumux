@@ -201,33 +201,6 @@ public:
             auto& subRes = (*residual_)[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
         });
-
-        if (getParam<bool>("Problem.PrintMatrices"))
-        {
-            static constexpr auto domain0 = Dune::index_constant<0>();
-            static constexpr auto domain1 = Dune::index_constant<1>();
-            static constexpr auto domain2 = Dune::index_constant<2>();
-            static constexpr auto domain3 = Dune::index_constant<3>();
-            Dune::printmatrix(std::cout, (*jacobian_)[domain0][domain0], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain0][domain1], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain0][domain2], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain0][domain3], "", "");
-
-            Dune::printmatrix(std::cout, (*jacobian_)[domain1][domain0], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain1][domain1], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain1][domain2], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain1][domain3], "", "");
-
-            Dune::printmatrix(std::cout, (*jacobian_)[domain2][domain0], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain2][domain1], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain2][domain2], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain2][domain3], "", "");
-
-            Dune::printmatrix(std::cout, (*jacobian_)[domain3][domain0], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain3][domain1], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain3][domain2], "", "");
-            Dune::printmatrix(std::cout, (*jacobian_)[domain3][domain3], "", "");
-        }
     }
 
     //! compute the residuals using the internal residual
@@ -485,19 +458,8 @@ private:
     void assembleJacobianAndResidual_(Dune::index_constant<i> domainId, JacRow& jacRow, SubRes& subRes,
                                       const SolutionVector& curSol)
     {
-        static const bool print = getParam<bool>("Problem.PrintMatrices");
-
-        if (print)
-        {
-            std::cout << "ASSEMBLING DOMAIN " << domainId << std::endl;
-            std::cout << "curSOl: " << std::endl;
-            Dune::printvector(std::cout, curSol[domainId], "", "");
-        }
-
         assemble_(domainId, [&](const auto& element)
         {
-            if (print)
-                std::cout << "DOING ELEMENT OF DOMAIN " << domainId << std::endl;
             SubDomainAssembler<i> subDomainAssembler(*this, element, curSol, *couplingManager_);
             subDomainAssembler.assembleJacobianAndResidual(jacRow, subRes, gridVariablesTuple_);
         });
