@@ -26,17 +26,35 @@
 #define DUMUX_PRORELASTIC_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/geomechanics/elastic/localresidual.hh>
 
 namespace Dumux {
 
+//! Forward declaration of the implementation
+template<class TypeTag, DiscretizationMethod dm>
+class PoroElasticLocalResidualImpl;
+
 /*!
- * \ingroup PoroElastic
- * \brief Element-wise calculation of the local residual
- *        for problems using the poroelastic model.
+ * \ingroup Geomechanics
+ * \brief Element-wise calculation of the local residual for problems
+ *        using the poro-elastic model. This is a convenience alias
+ *        that selects the right implementation depending on the
+ *        chosen discretization scheme.
+ * \note Currently the poro-elastic model works for box
+ *       discretization and finite element schemes
  */
 template<class TypeTag>
-class PoroElasticLocalResidual: public ElasticLocalResidual<TypeTag>
+using PoroElasticLocalResidual
+= PoroElasticLocalResidualImpl<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
+
+/*!
+ * \ingroup Geomechanics
+ * \brief Implementation of the local residual for the box scheme.
+ */
+template<class TypeTag>
+class PoroElasticLocalResidualImpl<TypeTag, DiscretizationMethod::box>
+: public ElasticLocalResidual<TypeTag>
 {
     using ParentType = ElasticLocalResidual<TypeTag>;
 
@@ -47,11 +65,9 @@ class PoroElasticLocalResidual: public ElasticLocalResidual<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
 
 public:
     using ParentType::ParentType;
@@ -73,7 +89,7 @@ public:
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
                               const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolume &scv) const
+                              const SubControlVolume& scv) const
     {
         NumEqVector source(0.0);
 
@@ -95,6 +111,74 @@ public:
 
             // add body force
             const auto& g = problem.spatialParams().gravity(scv.center());
+            for (int dir = 0; dir < GridView::dimensionworld; ++dir)
+                source[ Indices::momentum(dir) ] += rhoAverage*g[dir];
+        }
+
+        return source;
+    }
+};
+
+/*!
+ * \ingroup Geomechanics
+ * \brief Implementation of the local residual for finite element schemes.
+ */
+template<class TypeTag>
+class PoroElasticLocalResidualImpl<TypeTag, DiscretizationMethod::fem>
+: public ElasticLocalResidual<TypeTag>
+{
+    using ParentType = ElasticLocalResidual<TypeTag>;
+
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FEElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using SecondaryVariables = typename GetPropType<TypeTag, Properties::GridVariables>::SecondaryVariables;
+
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+public:
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Calculate the source term of the equation
+     *
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param feGeometry The finite-element geometry
+     * \param elemSol The element solution vector
+     * \param ipData The trial and ansatz space shape function values/gradients
+     *               evaluated at the integration point
+     * \param secVars The secondary variables evaluated at the integration point
+     */
+    template<class IpData, class ElementSolution>
+    NumEqVector computeSource(const Problem& problem,
+                              const Element& element,
+                              const FEElementGeometry& feGeometry,
+                              const ElementSolution& elemSol,
+                              const IpData& ipData,
+                              const SecondaryVariables& secVars) const
+    {
+        NumEqVector source(0.0);
+
+        // add contributions from volume flux sources
+        source += problem.source(element, feGeometry, elemSol, ipData, secVars);
+
+        // TODO: add contribution from possible point sources
+
+        // maybe add gravitational acceleration
+        static const bool gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
+        if (gravity)
+        {
+            // compute average density
+            const auto phi = secVars.porosity();
+            const auto rhoFluid = problem.effectiveFluidDensity(element, ipData, elemSol);
+            const auto rhoAverage = phi*rhoFluid + (1.0 - phi*secVars.solidDensity());
+
+            // add body force
+            const auto& g = problem.spatialParams().gravity(ipData.ipGlobal());
             for (int dir = 0; dir < GridView::dimensionworld; ++dir)
                 source[ Indices::momentum(dir) ] += rhoAverage*g[dir];
         }
