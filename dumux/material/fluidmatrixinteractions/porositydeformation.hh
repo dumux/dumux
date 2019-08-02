@@ -44,7 +44,7 @@ public:
      *       the displacements in the different grid directions are stored
      *       in the first entries of the primary variable vector.
      *
-     * \param gridGeometry The finite volume grid geometry
+     * \param gridGeometry The grid geometry
      * \param element The finite element
      * \param elemSol The element solution
      * \param globalPos The global position (in the element)
@@ -61,10 +61,10 @@ public:
      *       using the continuum mechanics sign convention, thus, the final formula reads:
      *       \f$\phi = \frac{\phi_0 + \text{div} \mathbf{u}}{1 + \text{div} \mathbf{u}}\f$.
      */
-    template< class FVGridGeom, class ElemSol >
-    static Scalar evaluatePorosity(const FVGridGeom& gridGeometry,
-                                   const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
-                                   const typename FVGridGeom::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& globalPos,
+    template< class GridGeom, class ElemSol >
+    static Scalar evaluatePorosity(const GridGeom& gridGeometry,
+                                   const typename GridGeom::GridView::template Codim<0>::Entity& element,
+                                   const typename GridGeom::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& globalPos,
                                    const ElemSol& elemSol,
                                    Scalar refPoro,
                                    Scalar minPoro = 0.0,
@@ -73,7 +73,7 @@ public:
         // compute divergence of displacement at the given position
         Scalar divU = 0.0;
         const auto gradU = evalGradients(element, element.geometry(), gridGeometry, elemSol, globalPos);
-        for (int dir = 0; dir < FVGridGeom::GridView::dimension; ++dir)
+        for (int dir = 0; dir < GridGeom::GridView::dimension; ++dir)
             divU += gradU[dir][dir];
 
         using std::clamp;
@@ -87,17 +87,17 @@ public:
      *       in the first entries of the primary variable vector.
      *
      *
-     * \param gridGeometry The finite volume grid geometry
+     * \param gridGeometry The grid geometry
      * \param element The finite element
      * \param elemSol The element solution
      * \param scv The sub-control volume
      * \param refPoro The solid matrix porosity without deformation
      * \param minPoro A minimum porosity value
      */
-    template< class FVGridGeom, class ElemSol >
-    static Scalar evaluatePorosity(const FVGridGeom& gridGeometry,
-                                   const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
-                                   const typename FVGridGeom::SubControlVolume& scv,
+    template< class GridGeom, class ElemSol >
+    static Scalar evaluatePorosity(const GridGeom& gridGeometry,
+                                   const typename GridGeom::GridView::template Codim<0>::Entity& element,
+                                   const typename GridGeom::SubControlVolume& scv,
                                    const ElemSol& elemSol,
                                    Scalar refPoro,
                                    Scalar minPoro = 0.0)
