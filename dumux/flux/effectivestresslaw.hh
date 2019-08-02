@@ -41,5 +41,6 @@ class EffectiveStressLaw;
 } // end namespace Dumux
 
 #include <dumux/flux/box/effectivestresslaw.hh>
+#include <dumux/flux/fem/effectivestresslaw.hh>
 
 #endif
