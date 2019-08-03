@@ -3,7 +3,10 @@ add_subdirectory(1pnc_1pnc)
 add_subdirectory(el1p_1p)
 add_subdirectory(tracer_tracer)
 
-dune_symlink_to_source_files(FILES "grid.msh" "grid2.msh" "test_gridmanager.input" "test_vertexmapper.input" "test_couplingmapper_boundary.input" "2d_grid.msh" "3d_grid.msh")
+dune_symlink_to_source_files(FILES "grid.msh" "markers.msh" "grid2.msh"
+                                   "test_gridmanager.input" "test_vertexmapper.input"
+                                   "test_couplingmapper_boundary.input" "test_enrichedgridmanager.input"
+                                   "2d_grid.msh" "3d_grid.msh")
 
 dumux_add_test(NAME test_facetgridmanager_alu
               LABELS multidomain multidomain_facet
@@ -106,3 +109,10 @@ dumux_add_test(NAME test_vertexmapper_alu_2d
               SOURCES test_vertexmapper.cc
               COMMAND ./test_vertexmapper_alu_2d
               CMD_ARGS test_vertexmapper.input)
+
+dune_add_test(NAME test_enrichedfacetgridmanager
+              LABELS multidomain multidomain_facet
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND dune-uggrid_FOUND )"
+              SOURCES test_enrichedgridmanager.cc
+              COMMAND ./test_enrichedfacetgridmanager
+              CMD_ARGS test_enrichedgridmanager.input)
