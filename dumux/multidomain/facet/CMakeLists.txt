@@ -8,6 +8,7 @@ couplingmanager.hh
 couplingmapper.hh
 couplingmapperbase.hh
 enrichmenthelper.hh
+enrichedgridmanager.hh
 gmshreader.hh
 gridmanager.hh
 vertexmapper.hh
