@@ -22,8 +22,8 @@
  * \brief The effective stress law specialized for different discretization schemes.
  *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
  */
-#ifndef DUMUX_DISCRETIZATION_EFFECIVESTRESS_LAW_HH
-#define DUMUX_DISCRETIZATION_EFFECIVESTRESS_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_EFFECTIVESTRESS_LAW_HH
+#define DUMUX_DISCRETIZATION_EFFECTIVESTRESS_LAW_HH
 
 #include <dumux/discretization/method.hh>
 
