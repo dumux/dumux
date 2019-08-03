@@ -1,0 +1,6 @@
+[Grid]
+File = ./markers.msh
+Verbosity = true
+DomainMarkers = true
+BoundarySegments = True
+GmshPhysicalEntityThreshold = 0
