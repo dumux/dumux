@@ -42,7 +42,6 @@ namespace Dumux {
 
 /*!
  * \file
- * \ingroup Geomechanics
  * \brief Coupling manager for porous medium flow problems coupled to a poro-mechanical problem
  *
  *        Coupling manager for porous medium flow problems coupled to a poro-mechanical
@@ -76,7 +75,6 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
     // further types specific to the sub-problems
-    template<std::size_t id> using Scalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
