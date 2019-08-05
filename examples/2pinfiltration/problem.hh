@@ -92,6 +92,11 @@ namespace Dumux {
       using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
   };
 
+   // we set the formulation for the primary variables to p0s1. In this case that means that the water pressure and the DNAPL saturation are our primary variables.
+   template<class TypeTag>
+   struct Formulation<TypeTag, TTag::PointSourceExample>
+   { static constexpr auto value = TwoPFormulation::p0s1; };
+
   // We define the spatial parameters for our simulation:
   template<class TypeTag>
   struct SpatialParams<TypeTag, TTag::PointSourceExample>
@@ -195,7 +200,7 @@ public:
           Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
           values[pressureH2OIdx] = 1e5 - factor*densityW*this->spatialParams().gravity(globalPos)[1]*depth;
-          // The saturatuib of the DNAPL Trichlorethene is zero on our Dirichlet boundary:
+          // The saturation of the DNAPL Trichlorethene is zero on our Dirichlet boundary:
           values[saturationDNAPLIdx] = 0.0;
 
           return values;
