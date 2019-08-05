@@ -21,17 +21,22 @@
  * \ingroup PoroElastic
  * \brief Coupling manager for porous medium flow problems coupled to a poro-mechanical problem
  */
-
 #ifndef DUMUX_POROMECHANICS_COUPLING_MANAGER_HH
 #define DUMUX_POROMECHANICS_COUPLING_MANAGER_HH
 
 #include <algorithm>
 #include <type_traits>
 
+#include <dune/common/indices.hh>
+
 #include <dumux/common/properties.hh>
+#include <dumux/common/indextraits.hh>
+
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
+
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/multidomain/identityindexmap.hh>
 
 namespace Dumux {
 
@@ -45,15 +50,27 @@ namespace Dumux {
  *        and permeability due to mechanical deformations and the influence of the pore
  *        pressure on the effecive stresses acting on the porous medium.
  *
+ * \tparam MDTraits The multidomain traits of the coupled problem
  * \tparam PMFlowId The porous medium flow domain id
  * \tparam PoroMechId The poro-mechanical domain id
+ * \tparam ElementIndexMap Element index map between the two sub-domains. Allows
+ *                         obtaining the element index the overlap element within
+ *                         the other sub-domain. Must fulfill the interface of
+ *                         Dumux::IdentityIndexMap.
  */
 template< class MDTraits,
           std::size_t PMFlowId = 0,
-          std::size_t PoroMechId = PMFlowId+1 >
+          std::size_t PoroMechId = PMFlowId+1,
+          class ElementIndexMap = IdentityIndexMap<Dune::index_constant<PMFlowId>, std::size_t,
+                                                   Dune::index_constant<PoroMechId>, std::size_t> >
 class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
 {
     using ParentType = CouplingManager< MDTraits >;
+
+    // evaluate if the default, static identity index map is used
+    using DefaultIndexMap = IdentityIndexMap<Dune::index_constant<PMFlowId>, std::size_t,
+                                             Dune::index_constant<PoroMechId>, std::size_t>;
+    static constexpr bool isDefaultIndexMap = std::is_same<ElementIndexMap, DefaultIndexMap>::value;
 
     // the sub-domain type tags
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
@@ -73,10 +90,6 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     template<std::size_t id> using GridIndexType = typename GridView<id>::IndexSet::IndexType;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
-
-    //! we assume that the two sub-problem operate on the same grid
-    static_assert(std::is_same< GridView<PMFlowId>, GridView<PoroMechId> >::value,
-                  "The grid types of the two sub-problems have to be equal!");
 
     //! this coupling manager is for cc - box only
     static_assert(GridGeometry<PoroMechId>::discMethod == DiscretizationMethod::box,
@@ -134,11 +147,39 @@ public:
      * \param pmFlowProblem The porous medium flow problem
      * \param poroMechanicalProblem The poro-mechanical problem
      * \param curSol The current solution
+     * \note this overload is only valid if the default identity
+     *       index map is used which does not require any state.
      */
+    template< bool isDefault = isDefaultIndexMap, std::enable_if_t<isDefault, int> = 0 >
     void init(std::shared_ptr< Problem<PMFlowId> > pmFlowProblem,
               std::shared_ptr< Problem<PoroMechId> > poroMechanicalProblem,
               const SolutionVector& curSol)
     {
+        // set the sub problems
+        this->setSubProblem(pmFlowProblem, pmFlowId);
+        this->setSubProblem(poroMechanicalProblem, poroMechId);
+
+        // copy the solution vector
+        ParentType::updateSolution(curSol);
+        // set up the coupling map pmfow -> poromechanics
+        initializeCouplingMap_();
+    }
+
+    /*!
+     * \brief Initialize the coupling manager.
+     *
+     * \param pmFlowProblem The porous medium flow problem
+     * \param poroMechanicalProblem The poro-mechanical problem
+     * \param curSol The current solution
+     * \param indexMap The element index map between the sub-domains
+     */
+    void init(std::shared_ptr< Problem<PMFlowId> > pmFlowProblem,
+              std::shared_ptr< Problem<PoroMechId> > poroMechanicalProblem,
+              const SolutionVector& curSol,
+              const ElementIndexMap& indexMap)
+    {
+        indexMap_ = indexMap;
+
         // set the sub problems
         this->setSubProblem(pmFlowProblem, pmFlowId);
         this->setSubProblem(poroMechanicalProblem, poroMechId);
@@ -191,10 +232,14 @@ public:
         auto fvGeometry = localView( this->problem(pmFlowId).gridGeometry() );
         auto elemVolVars = localView( assembler.gridVariables(Dune::index_constant<PMFlowId>()).curGridVolVars() );
 
-        fvGeometry.bindElement(element);
-        elemVolVars.bindElement(element, fvGeometry, this->curSol()[Dune::index_constant<PMFlowId>()]);
+        const auto eIdx = this->problem(poroMechId).fvGridGeometry().elementMapper().index(element);
+        const auto pmFlowElementIndex = indexMap_.map(poroMechId, eIdx);
+        const auto pmFlowElement = this->problem(pmFlowId).fvGridGeometry().element(pmFlowElementIndex);
 
-        poroMechCouplingContext_.pmFlowElement = element;
+        fvGeometry.bindElement(pmFlowElement);
+        elemVolVars.bindElement(pmFlowElement, fvGeometry, this->curSol()[pmFlowId]);
+
+        poroMechCouplingContext_.pmFlowElement = pmFlowElement;
         poroMechCouplingContext_.pmFlowFvGeometry = std::make_unique< FVElementGeometry<PMFlowId> >(fvGeometry);
         poroMechCouplingContext_.pmFlowElemVolVars = std::make_unique< ElementVolumeVariables<PMFlowId> >(elemVolVars);
     }
@@ -387,10 +432,12 @@ private:
         for (const auto& element : elements(pmFlowGridGeom.gridView()))
         {
             const auto eIdx = pmFlowGridGeom.elementMapper().index(element);
+            const auto poroMechElemIdx = indexMap_.map(pmFlowId, eIdx);
+            const auto poroMechElement = poroMechGridGeom.element(poroMechElemIdx);
 
             // firstly, the element couples to the nodal dofs in itself
             for (int i = 0; i < element.geometry().corners(); ++i)
-                pmFlowCouplingMap_[eIdx].push_back( poroMechGridGeom.vertexMapper().subIndex(element, i , dim) );
+                pmFlowCouplingMap_[eIdx].push_back( poroMechGridGeom.vertexMapper().subIndex(poroMechElement, i , dim) );
 
             // the pm flow problem couples to the same elements as in its own stencil
             // due to the dependency of the residual on all permeabilities in its stencil,
@@ -398,7 +445,7 @@ private:
             const auto& inverseConnectivity = pmFlowGridGeom.connectivityMap()[eIdx];
             for (const auto& dataJ : inverseConnectivity)
                 for (int i = 0; i < element.geometry().corners(); ++i)
-                    pmFlowCouplingMap_[dataJ.globalJ].push_back( poroMechGridGeom.vertexMapper().subIndex(element, i , dim) );
+                    pmFlowCouplingMap_[dataJ.globalJ].push_back( poroMechGridGeom.vertexMapper().subIndex(poroMechElement, i , dim) );
         }
 
         // make stencils unique
@@ -409,11 +456,10 @@ private:
         }
     }
 
-    // Container for storing the coupling element stencils for the pm flow domain
-    std::vector< CouplingStencilType<PMFlowId> > pmFlowCouplingMap_;
-
-    // the coupling context of the poromechanics domain
-    PoroMechanicsCouplingContext poroMechCouplingContext_;
+    // data members
+    ElementIndexMap indexMap_;  //!< maps element indices between the domains
+    std::vector< CouplingStencilType<PMFlowId> > pmFlowCouplingMap_; //!< coupling stencils
+    PoroMechanicsCouplingContext poroMechCouplingContext_; //!< coupling context
 };
 
 } //end namespace Dumux
