@@ -5,28 +5,38 @@
 #include <config.h>
 
 // Both, the problem_1p.hh and the problem_tracer.hh have to be included in the main file.
-
 #include "problem_1p.hh"
 #include "problem_tracer.hh"
 
+// Standard header file for C++, to get time and date information.
 #include <ctime>
+
+// Standard header file for C++, for in- and output.
 #include <iostream>
 
+// Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and linear solvers. So we need some includes from that.
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 
+// In Dumux a property system is used to specify the model. For this different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh.
 #include <dumux/common/properties.hh>
+// The following file contains the parameter class, which manages the definition of input parameters by a default value, the inputfile or the command line.
 #include <dumux/common/parameters.hh>
+// The file dumuxmessage.hh contains the class defining the start and end message of the simulation.
 #include <dumux/common/dumuxmessage.hh>
 
+// Defines Dumux sequential linear solver backends.
 #include <dumux/linear/seqsolverbackend.hh>
-
+// The following file contains the class, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
 #include <dumux/assembly/fvassembler.hh>
+// The containing class in the following file defines the different differentiation methods used to compute the derivatives of the residual.
 #include <dumux/assembly/diffmethod.hh>
 
+// The following class is needed to simplify the writing of dumux simulation data to VTK format.
 #include <dumux/io/vtkoutputmodule.hh>
+// The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the different supported grid managers.
 #include <dumux/io/grid/gridmanager.hh>
 
 int main(int argc, char** argv) try
@@ -60,7 +70,7 @@ int main(int argc, char** argv) try
     // In the following section the 1p problem is setup and solved. As the result of this problem, the pressure distribution in the problem domain is obtained.
 
     // #### Setup
-    // The finite volume grid geometry, the problem, the linear system, including the jacobian matrix and the solution vector and the gridvariables are created and initialized.
+    // The finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables are created and initialized.
 
     // The finite volume geometry builds up the sub control volumes and sub control volume faces for each element of the grid partition.
     using FVGridGeometry = GetPropType<OnePTypeTag, Properties::FVGridGeometry>;
@@ -90,7 +100,7 @@ int main(int argc, char** argv) try
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, fvGridGeometry, onePGridVariables);
     assemblerOneP->setLinearSystem(A, r);
 
-    // The local jacobian and the residual are assembled using Newton's method. The assembly timer stops the time needed for the assemblation of the linear system, which is displayed in the terminal output. Further the timer is started to evaluate the total time of the assemblation, solving and updating.
+    // The local jacobian and the residual are assembled using Newton's method. The assembly timer stops the time needed for the assembly of the linear system, which is displayed in the terminal output. Further the timer is started to evaluate the total time of the assembly, solving and updating.
     Dune::Timer timer;
     Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
     assemblerOneP->assembleJacobianAndResidual(p);
