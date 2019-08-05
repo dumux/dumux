@@ -1,44 +1,34 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
-/*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
- *                                                                           *
- *   This program is free software: you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 3 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- *   This program is distributed in the hope that it will be useful,         *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
- *   GNU General Public License for more details.                            *
- *                                                                           *
- *   You should have received a copy of the GNU General Public License       *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
- *****************************************************************************/
-/*!
- * \file
- * \ingroup TwoPTests
- * \brief Example for the two-phase porous medium flow model
- */
+// ## The main file
+// This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using newton's method
 
+// ### Includes
 #include <config.h>
 
+
+// Standard header file for C++, to get time and date information.
 #include <ctime>
+
+// Standard header file for C++, for in- and output.
 #include <iostream>
 
+// Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and linear solvers. So we need some includes from that.
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
+// In Dumux we use a property system to specify the model. For this different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh.
 #include <dumux/common/properties.hh>
+// The following file contains the parameter class, which manages the definition of input parameters by a default value, the inputfile or the command line.
 #include <dumux/common/parameters.hh>
+// The file dumuxmessage.hh contains the class defining the start and end message of the simulation.
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
+//we include the linear solver to be used to solve the linear system
 #include <dumux/linear/amgbackend.hh>
+//we include the nonlinear newtons method
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
