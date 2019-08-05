@@ -76,29 +76,29 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     // further types specific to the sub-problems
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
+
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using PrimaryVariables = typename GridVariables<id>::PrimaryVariables;
-    template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
-    template<std::size_t id> using ElementVolumeVariables = typename GridVolumeVariables<id>::LocalView;
-    template<std::size_t id> using VolumeVariables = typename GridVolumeVariables<id>::VolumeVariables;
+
     template<std::size_t id> using GridGeometry = typename GridVariables<id>::GridGeometry;
-    template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+    template<std::size_t id> using ElementGeometry = typename GridGeometry<id>::LocalView;
+
     template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using GridIndexType = typename GridView<id>::IndexSet::IndexType;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
 
-    //! this coupling manager is for cc - box only
-    static_assert(GridGeometry<PoroMechId>::discMethod == DiscretizationMethod::box,
-                  "Poro-mechanical problem must be discretized with the box scheme for this coupling manager!");
+    static constexpr bool isBox = GridGeometry<PoroMechId>::discMethod == DiscretizationMethod::box;
+    static_assert(isBox || GridGeometry<PoroMechId>::discMethod == DiscretizationMethod::fem,
+                  "Poro-mechanical sub-domain must be discretized with box or finite element scheme!");
 
     static_assert(GridGeometry<PMFlowId>::discMethod == DiscretizationMethod::cctpfa ||
                   GridGeometry<PMFlowId>::discMethod == DiscretizationMethod::ccmpfa,
                   "Porous medium flow problem must be discretized with a cell-centered scheme for this coupling manager!");
 
-    //! this does not work for enabled grid volume variables caching (update of local view in context has no effect)
-    static_assert(!getPropValue<SubDomainTypeTag<PMFlowId>, Properties::EnableGridVolumeVariablesCache>(),
-                  "Poromechanics framework does not yet work for enabled grid volume variables caching");
+    // Porous-medium flow sub-domain specific types
+    using PMFlowVolumeVariables = typename GridVariables<PMFlowId>::GridVolumeVariables::VolumeVariables;
+    using PMFlowElementVolumeVariables = typename GridVariables<PMFlowId>::GridVolumeVariables::LocalView;
 
     //! Types used for coupling stencils
     template<std::size_t id>
@@ -115,8 +115,8 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     {
         // We need unique ptrs because the local views have no default constructor
         Element<PMFlowId> pmFlowElement;
-        std::unique_ptr< FVElementGeometry<PMFlowId> > pmFlowFvGeometry;
-        std::unique_ptr< ElementVolumeVariables<PMFlowId> > pmFlowElemVolVars;
+        std::unique_ptr< ElementGeometry<PMFlowId> > pmFlowFvGeometry;
+        std::unique_ptr< PMFlowElementVolumeVariables > pmFlowElemVolVars;
     };
 
 public:
@@ -229,16 +229,16 @@ public:
         auto fvGeometry = localView( this->problem(pmFlowId).gridGeometry() );
         auto elemVolVars = localView( assembler.gridVariables(Dune::index_constant<PMFlowId>()).curGridVolVars() );
 
-        const auto eIdx = this->problem(poroMechId).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(poroMechId).gridGeometry().elementMapper().index(element);
         const auto pmFlowElementIndex = indexMap_.map(poroMechId, eIdx);
-        const auto pmFlowElement = this->problem(pmFlowId).fvGridGeometry().element(pmFlowElementIndex);
+        const auto pmFlowElement = this->problem(pmFlowId).gridGeometry().element(pmFlowElementIndex);
 
         fvGeometry.bindElement(pmFlowElement);
         elemVolVars.bindElement(pmFlowElement, fvGeometry, this->curSol()[pmFlowId]);
 
         poroMechCouplingContext_.pmFlowElement = pmFlowElement;
-        poroMechCouplingContext_.pmFlowFvGeometry = std::make_unique< FVElementGeometry<PMFlowId> >(fvGeometry);
-        poroMechCouplingContext_.pmFlowElemVolVars = std::make_unique< ElementVolumeVariables<PMFlowId> >(elemVolVars);
+        poroMechCouplingContext_.pmFlowFvGeometry = std::make_unique< ElementGeometry<PMFlowId> >(fvGeometry);
+        poroMechCouplingContext_.pmFlowElemVolVars = std::make_unique< PMFlowElementVolumeVariables >(elemVolVars);
     }
 
     /*!
@@ -313,7 +313,7 @@ public:
     template< class PMFlowLocalAssembler, class UpdatableFluxVarCache >
     void updateCoupledVariables(Dune::index_constant<PMFlowId> pmFlowDomainId,
                                 const PMFlowLocalAssembler& pmFlowLocalAssembler,
-                                ElementVolumeVariables<PMFlowId>& elemVolVars,
+                                PMFlowElementVolumeVariables& elemVolVars,
                                 UpdatableFluxVarCache& elemFluxVarsCache)
     {
         // update the element volume variables to obtain the updated porosity/permeability
@@ -331,11 +331,12 @@ public:
      * \brief Update the poro-mechanics volume variables after the coupling context has been updated.
      *        This is necessary because the fluid density is stored in them and which potentially is
      *        solution-dependent.
+     * \note This function is only valid and used in the case of the box scheme used in the mechanical domain
      */
-    template< class PoroMechLocalAssembler, class UpdatableFluxVarCache >
+    template< class PoroMechLocalAssembler, class UpdatableFluxVarCache, bool isB = isBox, std::enable_if_t<isB, int> = 0 >
     void updateCoupledVariables(Dune::index_constant<PoroMechId> poroMechDomainId,
                                 const PoroMechLocalAssembler& poroMechLocalAssembler,
-                                ElementVolumeVariables<PoroMechId>& elemVolVars,
+                                typename GridVariables<PoroMechId>::GridVolumeVariables::LocalView& elemVolVars,
                                 UpdatableFluxVarCache& elemFluxVarsCache)
     {
         elemVolVars.bind(poroMechLocalAssembler.element(),
@@ -377,8 +378,9 @@ public:
      *        respect to the porous medium flow domain. The pressure has an effect on the
      *        mechanical stresses as well as the body forces. Thus, we have to compute
      *        the fluxes as well as the source term here.
+     * \note This overload is for the case of the box scheme being used in the mechanical domain
      */
-    template< class PoroMechLocalAssembler >
+    template< class PoroMechLocalAssembler, bool isB = isBox, std::enable_if_t<isB, int> = 0 >
     typename LocalResidual<PoroMechId>::ElementResidualVector
     evalCouplingResidual(Dune::index_constant<PoroMechId> poroMechDomainId,
                          const PoroMechLocalAssembler& poroMechLocalAssembler,
@@ -392,8 +394,33 @@ public:
                                                                         poroMechLocalAssembler.elemBcTypes());
     }
 
+    /*!
+     * \brief Evaluates the coupling element residual of the poromechanical domain with
+     *        respect to the porous medium flow domain. The pressure has an effect on the
+     *        mechanical stresses as well as the body forces. Thus, we have to compute
+     *        the fluxes as well as the source term here.
+     * \note This overload is for the case of a finite element scheme being used in the mechanical domain
+     */
+    template< class PoroMechLocalAssembler, bool isB = isBox, std::enable_if_t<!isB, int> = 0 >
+    typename LocalResidual<PoroMechId>::ElementResidualVector
+    evalCouplingResidual(Dune::index_constant<PoroMechId> poroMechDomainId,
+                         const PoroMechLocalAssembler& poroMechLocalAssembler,
+                         Dune::index_constant<PMFlowId> pmFlowDomainId,
+                         GridIndexType<PMFlowId> dofIdxGlobalJ)
+    {
+        return poroMechLocalAssembler.localResidual().eval(poroMechLocalAssembler.element(),
+                                                           poroMechLocalAssembler.feGeometry(),
+                                                           poroMechLocalAssembler.curElemSol());
+    }
+
+    //! Return the coupling context (used in mechanical sub-problem to compute effective pressure)
+    [[deprecated("Obtain the volume variables directly calling getPMFlowVolVars(element). Will be removed after 3.1!")]]
+    const PoroMechanicsCouplingContext& poroMechanicsCouplingContext() const
+    { return poroMechCouplingContext_; }
+
+
     //! Return the porous medium flow variables an element/scv of the poromech domain couples to
-    const VolumeVariables<PMFlowId>& getPMFlowVolVars(const Element<PoroMechId>& element) const
+    const PMFlowVolumeVariables& getPMFlowVolVars(const Element<PoroMechId>& element) const
     {
         //! If we do not yet have the queried object, build it first
         const auto eIdx = this->problem(poroMechId).gridGeometry().elementMapper().index(element);
