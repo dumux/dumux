@@ -220,6 +220,9 @@ public:
                              const Element<PoroMechId>& element,
                              const Assembler& assembler)
     {
+        // TODO: How to realize this in an explicit way?
+        static_assert(Assembler::isImplicit(), "Poro-mechanics currently require implicit time discretization");
+
         // first reset the context
         poroMechCouplingContext_.pmFlowFvGeometry.reset(nullptr);
         poroMechCouplingContext_.pmFlowElemVolVars.reset(nullptr);
