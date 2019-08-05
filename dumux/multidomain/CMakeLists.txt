@@ -11,6 +11,7 @@ fvgridgeometry.hh
 fvgridvariables.hh
 fvproblem.hh
 glue.hh
+identityindexmap.hh
 newtonsolver.hh
 staggeredcouplingmanager.hh
 staggeredtraits.hh
