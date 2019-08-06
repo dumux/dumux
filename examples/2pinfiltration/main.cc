@@ -95,7 +95,8 @@ int main(int argc, char** argv) try
     // In the problem, we define the boundary and initial conditions.
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
-    problem->computePointSourceMap(); // enable point sources
+    // We call the `computePointSourceMap` method  to compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the dumux/common/fvproblem.hh. It calls the `addPointSources` method specified in the problem.hh file
+    problem->computePointSourceMap();
 
     // we initialize the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -139,7 +140,7 @@ int main(int argc, char** argv) try
             xOld = x;
             //We initialize the secondary variables to the new (and "new old") solution
             gridVariables->updateAfterGridAdaption(x);
-            // we update the point source map
+            // we update the point source map after adaption
             problem->computePointSourceMap();
         }
     }
