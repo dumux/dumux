@@ -519,7 +519,7 @@ private:
         for (const auto& element : elements(gridView))
         {
             const auto eIdxGlobal = fvGridGeometry.elementMapper().index(element);
-            const auto referenceElement = ReferenceElements::general(element.geometry().type());
+            const auto referenceElement = ReferenceElements::general(element.type());
 
             for (const auto& is : intersections(gridView, element))
             {

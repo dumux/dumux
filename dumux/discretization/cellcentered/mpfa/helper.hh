@@ -565,7 +565,7 @@ public:
             {
                 if (!is.neighbor() && !is.boundary())
                 {
-                    const auto refElement = ReferenceElements::general(element.geometry().type());
+                    const auto refElement = ReferenceElements::general(element.type());
 
                     for (int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
                     {

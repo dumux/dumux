@@ -1433,7 +1433,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     int localFace24 = face24->indexInInside();
     int localFace26 = face26->indexInInside();
 
-    const auto referenceElement = ReferenceElementContainer::general(neighbor.geometry().type());
+    const auto referenceElement = ReferenceElementContainer::general(neighbor.type());
 
     //find 'x'5 = edgeCoord1226
     int edge1226;

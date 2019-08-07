@@ -143,7 +143,7 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
-        elemGeometryType_ = element.geometry().type();
+        elemGeometryType_ = element.type();
         eIdx_ = fvGridGeometry().elementMapper().index(element);
     }
 

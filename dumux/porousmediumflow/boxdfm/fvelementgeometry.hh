@@ -145,7 +145,7 @@ public:
     */
     void bindElement(const Element& element)
     {
-        elemGeometryType_ = element.geometry().type();
+        elemGeometryType_ = element.type();
         eIdx_ = fvGridGeometry().elementMapper().index(element);
     }
 
