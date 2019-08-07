@@ -103,7 +103,7 @@ public:
             const auto eIdx = elementMapper.index(e);
 
             std::vector<unsigned int> handledFacets;
-            const auto refElement = ReferenceElements::general(e.geometry().type());
+            const auto refElement = ReferenceElements::general(e.type());
             for (const auto& is : intersections(gridView, e))
             {
                 // do not start path search on boundary intersections
@@ -273,7 +273,7 @@ private:
                 if (std::find(path.begin(), path.end(), outsideElemIdx) == path.end())
                 {
                     const auto idxInOutside = is.indexInOutside();
-                    const auto outsideRefElement = ReferenceElements::general(outsideElement.geometry().type());
+                    const auto outsideRefElement = ReferenceElements::general(outsideElement.type());
                     path.push_back(outsideElemIdx);
 
                     // on 2d grids, there is only going to be one more

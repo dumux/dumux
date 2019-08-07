@@ -170,7 +170,7 @@ public:
     bool isOnFacetGrid(const BulkGridElement& element, const BulkGridIntersection& intersection) const
     {
         // Intersection lies on facet grid, if the corners of the intersection make up a facet element
-        const auto refElement = BulkReferenceElements::general(element.geometry().type());
+        const auto refElement = BulkReferenceElements::general(element.type());
         const auto numCorners = intersection.geometry().corners();
         const auto facetIdx = intersection.indexInInside();
 

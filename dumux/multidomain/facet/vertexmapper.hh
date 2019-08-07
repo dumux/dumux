@@ -83,7 +83,7 @@ public:
         using ReferenceElements = typename Dune::ReferenceElements<typename GridView::ctype, dim>;
         for (const auto& e : elements(gridView))
         {
-            const auto refElem = ReferenceElements::general(e.geometry().type());
+            const auto refElem = ReferenceElements::general(e.type());
             for (const auto& is : intersections(gridView, e))
                 if (is.boundary())
                     for (int i = 0; i < is.geometry().corners(); ++i)
@@ -108,7 +108,7 @@ public:
             // otherwise, we check for immersed boundaries where we also must not enrich
             else
             {
-                const auto refElem = CodimOneReferenceElements::general(codimOneElement.geometry().type());
+                const auto refElem = CodimOneReferenceElements::general(codimOneElement.type());
                 for (const auto& intersection : intersections(codimOneGridView, codimOneElement))
                 {
                     // skip if intersection is not on boundary
