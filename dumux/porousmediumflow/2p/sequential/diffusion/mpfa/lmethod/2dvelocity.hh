@@ -209,7 +209,7 @@ public:
                 refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
                 refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
 
-                const DimVector& localPos = ReferenceElements::general(element.geometry().type()).position(0, 0);
+                const DimVector& localPos = ReferenceElements::general(element.type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
                 const JacobianTransposed jacobianT = element.geometry().jacobianTransposed(localPos);
@@ -755,7 +755,7 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                    const auto referenceElement = ReferenceElements::general(element.geometry().type());
+                    const auto referenceElement = ReferenceElements::general(element.type());
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 
@@ -864,7 +864,7 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                    const auto referenceElement = ReferenceElements::general(element.geometry().type());
+                    const auto referenceElement = ReferenceElements::general(element.type());
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

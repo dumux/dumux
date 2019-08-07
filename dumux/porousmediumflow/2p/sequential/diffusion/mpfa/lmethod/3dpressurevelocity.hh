@@ -307,7 +307,7 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-    const auto referenceElement = ReferenceElements::general(elementI.geometry().type());
+    const auto referenceElement = ReferenceElements::general(elementI.type());
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();

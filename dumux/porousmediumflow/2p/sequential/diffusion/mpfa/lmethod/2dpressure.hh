@@ -733,7 +733,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
             // get the intersection node /bar^{x_3} between 'intersection12'
             // and 'intersection14', denoted as 'corner1234'
-            const auto referenceElement = ReferenceElements::general(element.geometry().type());
+            const auto referenceElement = ReferenceElements::general(element.type());
 
             GlobalPosition corner1234(0);
 
@@ -1635,7 +1635,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                            const auto referenceElement = ReferenceElements::general(element.geometry().type());
+                            const auto referenceElement = ReferenceElements::general(element.type());
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

@@ -776,7 +776,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
         // get index
         int eIdxGlobal1 = problem_.variables().index(element);
 
-        const auto referenceElement = ReferenceElements::general(element.geometry().type());
+        const auto referenceElement = ReferenceElements::general(element.type());
 
         const auto isEndIt12 = problem_.gridView().iend(element);
         for (auto isIt12 = problem_.gridView().ibegin(element); isIt12 != isEndIt12; ++isIt12)
@@ -2350,7 +2350,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                            const auto referenceElement = ReferenceElements::general(element.geometry().type());
+                            const auto referenceElement = ReferenceElements::general(element.type());
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

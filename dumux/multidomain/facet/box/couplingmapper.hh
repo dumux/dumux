@@ -120,7 +120,7 @@ public:
             for (auto bulkElemIdx : adjoinedEntityIndices)
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
-                const auto bulkRefElem = BulkReferenceElements::general(bulkElement.geometry().type());
+                const auto bulkRefElem = BulkReferenceElements::general(bulkElement.type());
 
                 // find the bulk element facet that lies on this low dim element (assumes conformity!)
                 bool found = false;
