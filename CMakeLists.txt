@@ -32,5 +32,10 @@ add_subdirectory(doc)
 add_subdirectory(dumux)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 
+if(dune-python_FOUND)
+    add_subdirectory(python)
+    dune_python_install_package(PATH "python")
+endif()
+
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)

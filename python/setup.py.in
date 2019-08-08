@@ -1,0 +1,11 @@
+from setuptools import setup, find_packages
+
+setup(name="dumux",
+    namespace_packages=['dumux'],
+    description="Python lib for dune: dumux library",
+    version="${DUNE_PYTHON_VERSION}",
+    author="Samuel Burbulla",
+    packages = find_packages(),
+    zip_safe = 0,
+    package_data = {'': ['*.so']}
+  )
