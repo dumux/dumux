@@ -27,6 +27,7 @@
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dumux/linear/istlsparsematrixadapter.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/grid.hh>
@@ -86,8 +87,9 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
 public:
-    using type = typename Dune::BCRSMatrix<MatrixBlock>;
+    using type = typename Dumux::Linear::IstlSparseMatrixAdapter<MatrixBlock, FVGridGeometry>;
 };
 
 } // namespace Properties

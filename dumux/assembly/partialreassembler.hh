@@ -365,15 +365,15 @@ public:
         const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
 
         // loop over all dofs
-        for (unsigned int colIdx = 0; colIdx < jacobian.M(); ++colIdx)
+        for (unsigned int colIdx = 0; colIdx < jacobian.cols(); ++colIdx)
         {
             // reset all entries corresponding to a non-green element
             if (elementColor_[colIdx] != EntityColor::green)
             {
                 // set all matrix entries in the column to 0
-                jacobian[colIdx][colIdx] = 0;
+                jacobian.clearBlock(colIdx, colIdx, 0.0);
                 for (const auto& dataJ : connectivityMap[colIdx])
-                    jacobian[dataJ.globalJ][colIdx] = 0;
+                    jacobian.clearBlock(dataJ.globalJ, colIdx, 0.0);
             }
         }
     }

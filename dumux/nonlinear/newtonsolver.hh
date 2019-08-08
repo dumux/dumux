@@ -1066,7 +1066,7 @@ private:
         //! to this field vector type in Dune ISTL
         //! Could be avoided for vectors that already have the right type using SFINAE
         //! but it shouldn't impact performance too much
-        constexpr auto blockSize = JacobianMatrix::block_type::rows;
+        constexpr auto blockSize = JacobianMatrix::IstlMatrix::block_type::rows;
         using BlockType = Dune::FieldVector<Scalar, blockSize>;
         Dune::BlockVector<BlockType> xTmp; xTmp.resize(b.size());
         Dune::BlockVector<BlockType> bTmp(xTmp);
@@ -1074,7 +1074,7 @@ private:
             for (unsigned int j = 0; j < blockSize; ++j)
                 bTmp[i][j] = b[i][j];
 
-        const int converged = ls.solve(A, xTmp, bTmp);
+        const int converged = ls.solve(A.istlMatrix(), xTmp, bTmp);
 
         for (unsigned int i = 0; i < x.size(); ++i)
             for (unsigned int j = 0; j < blockSize; ++j)

@@ -88,15 +88,12 @@ public:
         }
 
         auto applyDirichlet = [&] (const auto& scvI,
-                                   const auto& dirichletValues,
-                                   const auto eqIdx,
-                                   const auto pvIdx)
+                                           const auto& dirichletValues,
+                                           const auto eqIdx,
+                                           const auto pvIdx)
         {
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
-            auto& row = jac[scvI.dofIndex()];
-            for (auto col = row.begin(); col != row.end(); ++col)
-                row[col.index()][eqIdx] = 0.0;
-            row[scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+            jac.clearRow(scvI.dofIndex());
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -112,14 +109,11 @@ public:
         this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
 
         auto applyDirichlet = [&] (const auto& scvI,
-                                   const auto& dirichletValues,
-                                   const auto eqIdx,
-                                   const auto pvIdx)
+                                      const auto& dirichletValues,
+                                      const auto eqIdx,
+                                      const auto pvIdx)
         {
-            auto& row = jac[scvI.dofIndex()];
-            for (auto col = row.begin(); col != row.end(); ++col)
-                row[col.index()][eqIdx] = 0.0;
-            row[scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+            jac.clearRow(scvI.dofIndex());
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -312,16 +306,20 @@ public:
                 partialDerivs[0][pvIdx] = 1.0;
             }
 
+            auto& jacBlockI = A.block(globalI, globalI);
             // add the current partial derivatives to the global jacobian matrix
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
             {
                 // the diagonal entries
-                A[globalI][globalI][eqIdx][pvIdx] += partialDerivs[0][eqIdx];
+                jacBlockI[eqIdx][pvIdx] += partialDerivs[0][eqIdx];
 
                 // off-diagonal entries
                 j = 1;
                 for (const auto& dataJ : connectivityMap[globalI])
-                    A[dataJ.globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
+                {
+                    auto& jacBlockJ = A.block(dataJ.globalJ, globalI);
+                    jacBlockJ[eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
+                }
             }
 
             // restore the original state of the scv's volume variables

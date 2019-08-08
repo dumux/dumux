@@ -221,9 +221,10 @@ namespace Dumux {
  * \note This is an adaptor using a TypeTag
  */
 template<class TypeTag>
-using AMGBackend = ParallelAMGBackend<GetPropType<TypeTag, Properties::GridView>, AmgTraits<GetPropType<TypeTag, Properties::JacobianMatrix>,
-                                                                                           GetPropType<TypeTag, Properties::SolutionVector>,
-                                                                                           GetPropType<TypeTag, Properties::FVGridGeometry>>>;
+using AMGBackend = ParallelAMGBackend<GetPropType<TypeTag, Properties::GridView>,
+                                       AmgTraits<typename GetPropType<TypeTag, Properties::JacobianMatrix>::IstlMatrix,
+                                                                      GetPropType<TypeTag, Properties::SolutionVector>,
+                                                                      GetPropType<TypeTag, Properties::FVGridGeometry>>>;
 
 } // namespace Dumux
 

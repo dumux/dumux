@@ -122,7 +122,7 @@ public:
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, *residual_, *fvGridGeometry_);
+        //enforcePeriodicConstraints_(*jacobian_, *residual_, *fvGridGeometry_);
     }
 
     /*!
@@ -193,6 +193,7 @@ public:
      *        This also resizes the containers to the required sizes and sets the
      *        sparsity pattern of the jacobian matrix.
      */
+    /*
     void setLinearSystem(std::shared_ptr<JacobianMatrix> A,
                          std::shared_ptr<SolutionVector> r)
     {
@@ -208,6 +209,7 @@ public:
         setJacobianPattern();
         setResidualSize();
     }
+    */
 
     /*!
      * \brief The version without arguments uses the default constructor to create
@@ -215,8 +217,9 @@ public:
      */
     void setLinearSystem()
     {
-        jacobian_ = std::make_shared<JacobianMatrix>();
-        jacobian_->setBuildMode(JacobianMatrix::random);
+        //jacobian_ = std::make_shared<>();
+        //jacobian_->setBuildMode(JacobianMatrix::random);
+        jacobian_ = std::make_shared<JacobianMatrix>(fvGridGeometry());
         residual_ = std::make_shared<SolutionVector>();
 
         setJacobianPattern();
@@ -229,14 +232,15 @@ public:
     void setJacobianPattern()
     {
         // resize the jacobian and the residual
-        const auto numDofs = this->numDofs();
-        jacobian_->setSize(numDofs, numDofs);
+        //const auto numDofs = this->numDofs();
+        //jacobian_->setSize(numDofs, numDofs);
+        jacobian_->reserve(fvGridGeometry());
 
         // create occupation pattern of the jacobian
-        const auto occupationPattern = getJacobianPattern<isImplicit>(fvGridGeometry());
+        //const auto occupationPattern = getJacobianPattern<isImplicit>(fvGridGeometry());
 
         // export pattern to jacobian
-        occupationPattern.exportIdx(*jacobian_);
+        //occupationPattern.exportIdx(*jacobian_);
     }
 
     //! Resizes the residual
@@ -340,15 +344,14 @@ private:
     {
         if(!jacobian_)
         {
-            jacobian_ = std::make_shared<JacobianMatrix>();
-            jacobian_->setBuildMode(JacobianMatrix::random);
+            jacobian_ = std::make_shared<JacobianMatrix>(fvGridGeometry());
             setJacobianPattern();
         }
 
         if (partialReassembler)
             partialReassembler->resetJacobian(*this);
         else
-            *jacobian_ = 0.0;
+           jacobian().clear();
     }
 
     // check if the assembler is in a correct state for assembly
@@ -397,6 +400,7 @@ private:
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
 
+    /*
     template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethod::box, void>
     enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& fvGridGeometry)
     {
@@ -419,7 +423,7 @@ private:
 
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
     enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& fvGridGeometry) {}
-
+    */
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
 
