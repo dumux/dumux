@@ -342,6 +342,9 @@ public:
          * 4th edition, McGraw-Hill, 1987, 407-410
          * 5th edition, McGraw-Hill, 2001, p. 9.21/22
          *
+         * assume that pure gases at state (T, p) are mixed regardless
+         * of whether that state exists physically
+         *
          * in this case, we use a simplified version in order to avoid
          * computationally costly evaluation of sqrt and pow functions and
          * divisions
@@ -349,9 +352,9 @@ public:
          */
         Scalar muResult;
         const Scalar mu[numComponents] = {
-            H2O::gasViscosity(fluidState.temperature(phaseIdx), H2O::vaporPressure(fluidState.temperature(phaseIdx))),
+            H2O::gasViscosity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)),
             Air::gasViscosity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)),
-            NAPL::gasViscosity(fluidState.temperature(phaseIdx), NAPL::vaporPressure(fluidState.temperature(phaseIdx)))
+            NAPL::gasViscosity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx))
         };
         // molar masses
         const Scalar M[numComponents] = {

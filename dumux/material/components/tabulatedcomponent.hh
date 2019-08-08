@@ -538,14 +538,14 @@ public:
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
         Scalar result = interpolateTP_(gasViscosity_, temperature, pressure,
-                                       pressGasIdx_, minGasPressure_, maxGasPressure_, "gas");
+                                       pressGasIdxForViscosity_, minGasPressure_, maxGasPressureForViscosity_, "gas");
         using std::isnan;
         if (isnan(result))
         {
             if (!gasViscosityInitialized_)
             {
                 auto gasVisc = [] (auto T, auto p) { return RawComponent::gasViscosity(T, p); };
-                initTPArray_(gasVisc, minGasPressure_, maxGasPressure_, gasViscosity_);
+                initTPArray_(gasVisc, minGasPressure_, maxGasPressureForViscosity_, gasViscosity_);
                 gasViscosityInitialized_ = true;
                 return gasViscosity(temperature, pressure);
             }
@@ -871,6 +871,16 @@ private:
         return (nPress_ - 1)*(pressure - pgMin)/(pgMax - pgMin);
     }
 
+    //! returns the index of an entry in a temperature field for the viscosity table
+    //  The viscosity table does not account for useVaporPressure. Thus the indices might differ to pressGasIdx_
+    static Scalar pressGasIdxForViscosity_(Scalar pressure, unsigned tempIdx)
+    {
+        Scalar pgMin = minGasPressure_(tempIdx);
+        Scalar pgMax = maxGasPressureForViscosity_(tempIdx);
+
+        return (nPress_ - 1)*(pressure - pgMin)/(pgMax - pgMin);
+    }
+
     //! returns the index of an entry in a density field
     static Scalar densityLiquidIdx_(Scalar density, unsigned tempIdx)
     {
@@ -925,6 +935,15 @@ private:
             return pressMax_;
         else
             return min(pressMax_, vaporPressure_[tempIdx] * 1.1);
+    }
+
+    //! returns the maximum gas pressure at a given temperature index.
+    //  regardless of whether useVaporPressure is used, for viscosity, the whole range up to
+    //  pressMax_ is needed in order to get the viscosity of gas mixtures from the single
+    //  gas viscosities, even if the singe component would be in a different phase state.
+    static Scalar maxGasPressureForViscosity_(int tempIdx)
+    {
+        return pressMax_;
     }
 
 #ifndef NDEBUG

@@ -479,10 +479,11 @@ public:
             else //using a complicated version of this fluid system
             {
                 // Wilke method (Reid et al.):
+                // assume that two pure gases at state (T, p) are mixed regardless
+                // of whether that state exists physically
                 Scalar muResult = 0;
                 const Scalar mu[numComponents] = {
-                    H2O::gasViscosity(T,
-                                      H2O::vaporPressure(T)),
+                    H2O::gasViscosity(T, p),
                     Air::gasViscosity(T, p)
                 };
 
