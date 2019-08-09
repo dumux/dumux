@@ -1,6 +1,7 @@
 add_subdirectory(geometry)
 add_subdirectory(properties)
 add_subdirectory(typetraits)
+add_subdirectory(automaticdifferentiation)
 
 install(FILES
 balanceequationopts.hh

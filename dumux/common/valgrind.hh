@@ -24,6 +24,13 @@
 #ifndef DUMUX_VALGRIND_HH
 #define DUMUX_VALGRIND_HH
 
+
+#if HAVE_VALGRIND
+#define DUMUX_VALGRIND_OPTIM_UNUSED DUMUX_OPTIM_UNUSED
+#else
+#define DUMUX_VALGRIND_OPTIM_UNUSED DUMUX_UNUSED
+#endif
+
 #if ! HAVE_VALGRIND
 namespace Valgrind
 {
@@ -69,7 +76,7 @@ inline bool Running()
  * \param value the object which valgrind should check
  */
 template <class T>
-inline bool CheckDefined(const T &value)
+inline bool CheckDefined(const T &value DUMUX_VALGRIND_OPTIM_UNUSED)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
     unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(&value, sizeof(T));
@@ -80,10 +87,10 @@ inline bool CheckDefined(const T &value)
 }
 
 template <class T>
-inline bool CheckDefined(const T *value, int size)
+inline bool CheckDefined(const T *value DUMUX_VALGRIND_OPTIM_UNUSED, int size DUMUX_VALGRIND_OPTIM_UNUSED)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
-    unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(value, size*sizeof(T));
+    unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(value , size*sizeof(T));
     return tmp == 0;
 #else
     return true;
@@ -99,7 +106,7 @@ inline bool CheckDefined(const T *value, int size)
  * \param value The object which's memory valgrind should be told is undefined
  */
 template <class T>
-inline void SetUndefined(const T &value)
+inline void SetUndefined(const T &value DUMUX_VALGRIND_OPTIM_UNUSED)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_UNDEFINED(&value, sizeof(T));
@@ -107,7 +114,7 @@ inline void SetUndefined(const T &value)
 }
 
 template <class T>
-inline void SetUndefined(const T *value, int size)
+inline void SetUndefined(const T *value DUMUX_VALGRIND_OPTIM_UNUSED, int size DUMUX_VALGRIND_OPTIM_UNUSED)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_UNDEFINED(value, size*sizeof(T));
@@ -123,7 +130,7 @@ inline void SetUndefined(const T *value, int size)
  * \param value The object which's memory valgrind should consider as defined
  */
 template <class T>
-inline void SetDefined(const T &value)
+inline void SetDefined(const T &value DUMUX_VALGRIND_OPTIM_UNUSED)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_DEFINED(&value, sizeof(T));
@@ -131,7 +138,7 @@ inline void SetDefined(const T &value)
 }
 
 template <class T>
-inline void SetDefined(const T *value, int n)
+inline void SetDefined(const T *value DUMUX_VALGRIND_OPTIM_UNUSED, int n DUMUX_VALGRIND_OPTIM_UNUSED)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_DEFINED(value, n*sizeof(T));
@@ -147,7 +154,7 @@ inline void SetDefined(const T *value, int n)
  * \param value The object which's memory valgrind should complain if accessed
  */
 template <class T>
-inline void SetNoAccess(const T &value)
+inline void SetNoAccess(const T &value DUMUX_VALGRIND_OPTIM_UNUSED)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_NOACCESS(&value, sizeof(T));
@@ -155,7 +162,7 @@ inline void SetNoAccess(const T &value)
 }
 
 template <class T>
-inline void SetNoAccess(const T *value, int n)
+inline void SetNoAccess(const T *value DUMUX_VALGRIND_OPTIM_UNUSED, int n DUMUX_VALGRIND_OPTIM_UNUSED)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_NOACCESS(value, n*sizeof(T));

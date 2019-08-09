@@ -31,7 +31,6 @@ namespace Dumux {
  * \ingroup Assembly
  * \brief Differentiation methods in order to compute the derivatives
  *        of the residual i.e. the entries in the jacobian matrix.
- * \todo automatic differentation is not yet implemented
  */
 enum class DiffMethod
 {
