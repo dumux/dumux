@@ -10,7 +10,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTAFBILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -108,7 +108,7 @@ int main(int argc, char** argv) try
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
     vtkWriter.addField(problem->getExactWaterDepth(), "exactWaterDepth");
     vtkWriter.addField(problem->getExactVelocityX(), "exactVelocityX");
-    problem->updateAnalyticalSolution();
+    problem->analyticalSolution();
     IOFields::initOutputModule(vtkWriter);
     vtkWriter.write(0.0);
 
@@ -137,9 +137,6 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
         nonLinearSolver.solve(x,*timeLoop);
-
-        // update the analytical solution
-        problem->updateAnalyticalSolution();
 
         // make the new solution the old solution
         xOld = x;
