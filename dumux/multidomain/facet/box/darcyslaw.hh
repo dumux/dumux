@@ -87,80 +87,80 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
-        // Evaluate the flux in a tpfa manner using a support point inside the element.
-        // Therefore, we create a segment between the integration point and another point
-        // in -(K*normal) direction of the face. This segment must be long enough
-        // to intersect the opposite face of the element. Then, we compute the
-        // part of the segment intersecting with the element and compute the
-        // point inside the element by moving half its length into the interior.
-        const auto& geometry = element.geometry();
-        auto distVec = mv(insideVolVars.permeability(), scvf.unitOuterNormal());
-        distVec /= -1.0*distVec.two_norm();
-        distVec *= diameter(geometry)*5.0; // make sure segment will be long enough
-
-        const auto p1 = scvf.ipGlobal();
-        auto p2 = scvf.ipGlobal();
-        p2 += distVec;
-
-        static constexpr int dimWorld = GridView::dimensionworld;
-        using Segment = Dune::MultiLinearGeometry<Scalar, 1, dimWorld>;
-
-        using Policy = IntersectionPolicy::SegmentPolicy<typename GridView::ctype, dimWorld>;
-        using IntersectionAlgorithm = GeometryIntersection<typename Element::Geometry, Segment, Policy>;
-        typename IntersectionAlgorithm::Intersection intersection;
-
-        Segment segment(Dune::GeometryTypes::line, std::vector<GlobalPosition>({p1, p2}));
-        if (!IntersectionAlgorithm::intersection(geometry, segment, intersection))
-            DUNE_THROW(Dune::InvalidStateException, "Could not compute support point for flux computation");
-
-        // use center of intersection as integration point
-        auto supportPoint = intersection[0];
-        supportPoint += intersection[1];
-        supportPoint /= 2.0;
-
-        std::vector< Dune::FieldVector<Scalar, 1> > supportPointShapeValues;
-        fvGeometry.feLocalBasis().evaluateFunction(geometry.local(supportPoint), supportPointShapeValues);
-
-        Scalar rho = 0.0;
-        Scalar supportPressure = 0.0;
-        for (const auto& scv : scvs(fvGeometry))
-        {
-            const auto& volVars = elemVolVars[scv];
-            rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
-            supportPressure += volVars.pressure(phaseIdx)*supportPointShapeValues[scv.indexInElement()][0];
-        }
-
-        // the transmissibility on the matrix side
-        const auto d = scvf.ipGlobal() - supportPoint;
-        const auto tm = 1.0/d.two_norm2()*vtmv(d, insideVolVars.permeability(), scvf.unitOuterNormal());
-
-        // compute flux depending on the user's choice of boundary types
+        // evaluate user-defined interior boundary types
         const auto bcTypes = problem.interiorBoundaryTypes(element, scvf);
-        const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
 
-        // compute tpfa flux such that flux continuity holds with flux in fracture
-        Scalar flux;
+        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
+
+        // on interior Neumann boundaries, evaluate the flux using the facet permeability
         if (bcTypes.hasOnlyNeumann())
         {
-            // On surface grids, use sqrt of aperture as distance measur
-            using std::sqrt;
-            const auto df = dim == dimWorld ? 0.5*facetVolVars.extrusionFactor() : 0.5*sqrt(facetVolVars.extrusionFactor());
-            const auto tf = 1.0/df*vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
+            // interpolate pressure/density to scvf integration point
+            Scalar p = 0.0;
+            Scalar rho = 0.0;
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[scv];
+                p += volVars.pressure(phaseIdx)*shapeValues[scv.indexInElement()][0];
+                rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
+            }
 
-            flux = tm*tf/(tm+tf)*(supportPressure - facetVolVars.pressure(phaseIdx))*scvf.area()*insideVolVars.extrusionFactor();
+            // compute tpfa flux from integration point to facet centerline
+            const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
+
+            using std::sqrt;
+            // If this is a surface grid, use the square root of the facet extrusion factor
+            // as an approximate average distance from scvf ip to facet center
+            using std::sqrt;
+            const auto a = facetVolVars.extrusionFactor();
+            auto gradP = scvf.unitOuterNormal();
+            gradP *= dim == dimWorld ? 0.5*a : 0.5*sqrt(a);
+            gradP /= gradP.two_norm2();
+            gradP *= (facetVolVars.pressure(phaseIdx) - p);
+            if (enableGravity)
+                gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
+
+            // apply facet permeability and return the flux
+            return -1.0*scvf.area()
+                       *insideVolVars.extrusionFactor()
+                       *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), gradP);
         }
+
+        // on interior Dirichlet boundaries use the facet pressure and evaluate flux
         else if (bcTypes.hasOnlyDirichlet())
-            flux = tm*(supportPressure - facetVolVars.pressure(phaseIdx))*scvf.area()*insideVolVars.extrusionFactor();
+        {
+            // create vector with nodal pressures
+            std::vector<Scalar> pressures(element.subEntities(dim));
+            for (const auto& scv : scvs(fvGeometry))
+                pressures[scv.localDofIndex()] = elemVolVars[scv].pressure(phaseIdx);
+
+            // substitute with facet pressures for those scvs touching this facet
+            for (const auto& scvfJ : scvfs(fvGeometry))
+                if (scvfJ.interiorBoundary() && scvfJ.facetIndexInElement() == scvf.facetIndexInElement())
+                    pressures[ fvGeometry.scv(scvfJ.insideScvIdx()).localDofIndex() ]
+                             = problem.couplingManager().getLowDimVolVars(element, scvfJ).pressure(phaseIdx);
+
+            // evaluate gradP - rho*g at integration point
+            Scalar rho(0.0);
+            Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                rho += elemVolVars[scv].density(phaseIdx)*shapeValues[scv.indexInElement()][0];
+                gradP.axpy(pressures[scv.localDofIndex()], fluxVarCache.gradN(scv.indexInElement()));
+            }
+
+            if (enableGravity)
+                gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
+
+            // apply matrix permeability and return the flux
+            return -1.0*scvf.area()
+                       *insideVolVars.extrusionFactor()
+                       *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), gradP);
+        }
+
         // mixed boundary types are not supported
         else
             DUNE_THROW(Dune::NotImplemented, "Mixed boundary types are not supported");
-
-        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
-        if (enableGravity)
-            flux -= rho*scvf.area()*insideVolVars.extrusionFactor()
-                    *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), problem.spatialParams().gravity(scvf.center()));
-
-        return flux;
     }
 
     // compute transmissibilities ti for analytical jacobians
