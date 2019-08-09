@@ -13,6 +13,16 @@ dune_add_test(NAME test_1p_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa params.input -Problem.Name test_1p_tpfa")
 
+dune_add_test(NAME test_1p_tpfa_autodiff
+              LABELS porousmediumflow 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa AUTOMATICDIFF=1
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa_autodiff-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa_autodiff params.input -Problem.Name test_1p_tpfa_autodiff")
+
 dune_add_test(NAME test_1p_mpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc

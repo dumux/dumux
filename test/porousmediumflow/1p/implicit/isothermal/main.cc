@@ -155,7 +155,11 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
+#ifdef AUTOMATICDIFF
+    using Assembler = FVAssembler<TypeTag, DiffMethod::automatic>;
+#else
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+#endif
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
