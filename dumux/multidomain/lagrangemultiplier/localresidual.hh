@@ -125,7 +125,7 @@ public:
         }
 
         // add contribution from neumann segments
-        residual += this->evalNeumannSegments_(element, feGeometry, elemSol, trialLocalView);
+        residual += this->evalNeumannSegments(element, feGeometry, elemSol, trialLocalView);
 
         return residual;
     }
@@ -179,7 +179,7 @@ public:
         }
 
         // add contribution from neumann segments
-        residual += this->evalNeumannSegments_(element, feGeometry, elemSol);
+        residual += this->evalNeumannSegments(element, feGeometry, elemSol);
 
         return residual;
     }

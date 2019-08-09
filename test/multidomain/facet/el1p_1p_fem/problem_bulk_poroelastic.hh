@@ -26,11 +26,15 @@
 #define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_POROELASTIC_PROBLEM_HH
 
 #include <dune/alugrid/grid.hh>
+#include <dune/functions/functionspacebases/lagrangebasis.hh>
 
 #include <dumux/geomechanics/poroelastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
 
-#include <dumux/multidomain/facet/box/properties.hh>
+#include <dumux/discretization/fem.hh>
+#include <dumux/discretization/fem/ipdata.hh>
+#include <dumux/discretization/fem/elementsolution.hh>
+#include <dumux/discretization/fem/fegridgeometry.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
@@ -46,7 +50,7 @@ namespace Properties {
 
 // Create new type tags
 namespace TTag {
-struct PoroElasticBulk { using InheritsFrom = std::tuple<BoxFacetCouplingModel, PoroElastic>; };
+struct PoroElasticBulk { using InheritsFrom = std::tuple<PoroElastic, FiniteElementModel>; };
 } // end namespace TTag
 // Set the grid type
 template<class TypeTag>
@@ -66,8 +70,25 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::PoroElasticBulk>
 {
     using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                           GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                                           GetPropType<TypeTag, Properties::GridGeometry> >;
 };
+
+// We use a lagrange basis of first order here
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::PoroElasticBulk>
+{
+private:
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FEBasis = Dune::Functions::LagrangeBasis<GridView, 2>;
+public:
+    using type = FEGridGeometry<FEBasis>;
+};
+
+// We use a lagrange basis of zero-th order here
+template<class TypeTag>
+struct FVGridGeometry<TypeTag, TTag::PoroElasticBulk>
+{ using type = GetPropType<TypeTag, Properties::GridGeometry>; };
+
 } // end namespace Properties
 
 /*!
@@ -84,34 +105,40 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SecondaryVariables = typename GridVariables::SecondaryVariables;
+
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FEElementGeometry = typename GridGeometry::LocalView;
+    using AnsatzBasis = typename GridGeometry::AnsatzSpaceBasis;
+    using FiniteElement = typename AnsatzBasis::LocalView::Tree::FiniteElement;
+    using LocalBasis = typename FiniteElement::Traits::LocalBasisType;
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using StressType = GetPropType<TypeTag, Properties::StressType>;
     using Force = typename StressType::ForceVector;
 
 public:
-    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    PoroElasticSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                           std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                           std::shared_ptr<CouplingManager> couplingManagerPtr,
                           const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         injectionPressure_ = getParam<Scalar>("Problem.InjectionPressure");
 
-        sigma_x_.resize(fvGridGeometry->gridView().size(0), Force(0.0));
-        sigma_y_.resize(fvGridGeometry->gridView().size(0), Force(0.0));
+        sigma_x_.resize(gridGeometry->gridView().size(0), Force(0.0));
+        sigma_y_.resize(gridGeometry->gridView().size(0), Force(0.0));
     }
 
     /*!
@@ -132,18 +159,45 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
-    //! Evaluates the boundary conditions for a Neumann boundary segment.
-    PrimaryVariables neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * \param element The grid element
+     * \param is The intersection
+     * \param elemSol The element solution vector
+     * \param ipData Shape function values/gradients evaluated at an integration point
+     * \param secVars The primary/secondary variables evaluated at an integration point
+     *
+     * Negative values mean influx.
+     * E.g. for a mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     */
+    template<class ElementSolution, class IpData>
+    NumEqVector neumann(const Element& element,
+                        const Intersection& is,
+                        const ElementSolution& elemSol,
+                        const IpData& ipData,
+                        const SecondaryVariables& secVars) const
     {
         PrimaryVariables values(0.0);
 
-        // apply boundary pressures on inlet/outlet
-        if (isOnInlet_(scvf.ipGlobal()))
+        // apply facet domain pressure and/or contact traction on interior boundaries
+        if (couplingManager().isOnInteriorBoundary(element, is))
         {
-            values = scvf.unitOuterNormal();
+            // Contribution of the fluid pressure
+            Force force = is.centerUnitOuterNormal();
+            force *= couplingManager().getLowDimVolVars(element, is, ipData.ipGlobal()).pressure();
+
+            // Contribution of the contact mechanics
+            force += couplingManager().getContactTraction(element, is, ipData.ipGlobal());
+
+            values = force;
+        }
+
+        // apply boundary pressures on inlet/outlet
+        else if (isOnInlet_(ipData.ipGlobal()))
+        {
+            values = is.centerUnitOuterNormal();
             values *= injectionPressure_;
             values *= -1.0;
         }
@@ -185,20 +239,23 @@ public:
     }
 
     /*!
-     * \brief Returns the effective fluid density in an scv.
+     * \brief Returns the effective fluid density (box implementation).
      */
+    template<class IpData, class ElemSol>
     Scalar effectiveFluidDensity(const Element& element,
-                                 const SubControlVolume& scv) const
+                                 const IpData& ipData,
+                                 const ElemSol& elemSol) const
     { return couplingManager().getPMFlowVolVars(element).density(); }
 
     /*!
-     * \brief Returns the effective pore pressure at a flux integration point.
+     * \brief Returns the effective pore pressure (fem implementation).
      */
-    template< class FluxVarsCache >
+    template< class IpData, class ElemSol, class SecondaryVariables >
     Scalar effectivePorePressure(const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const FluxVarsCache& fluxVarsCache) const
+                                 const FEElementGeometry& feGeometry,
+                                 const ElemSol& elemSol,
+                                 const IpData& ipData,
+                                 const SecondaryVariables& secVars) const
     { return couplingManager().getPMFlowVolVars(element).pressure(); }
 
     /*!
@@ -212,9 +269,9 @@ public:
         BoundaryTypes values;
         values.setAllNeumann();
 
-        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
-        const auto yMin = this->fvGridGeometry().bBoxMin()[1];
-        const auto yMax = this->fvGridGeometry().bBoxMax()[1];
+        const auto xMax = this->gridGeometry().bBoxMax()[0];
+        const auto yMin = this->gridGeometry().bBoxMin()[1];
+        const auto yMax = this->gridGeometry().bBoxMax()[1];
 
         if (globalPos[0] > xMax - 1e-6)
             values.setDirichlet(Indices::uxIdx);
@@ -222,49 +279,6 @@ public:
             values.setDirichlet(Indices::uyIdx);
 
         return values;
-    }
-
-    /*!
-     * \brief Specifies which kind of interior boundary condition should be
-     *        used for which equation on a given sub-control volume face
-     *        that couples to a facet element.
-     *
-     * \param element The finite element the scvf is embedded in
-     * \param scvf The sub-control volume face
-     */
-    BoundaryTypes interiorBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        BoundaryTypes values;
-        values.setAllNeumann();
-        return values;
-    }
-
-    /*!
-     * \brief Specifies which kind of interior boundary condition should be
-     *        used for which equation on a given sub-control volume face
-     *        that couples to a facet element.
-     *
-     * \param element The finite element the scvf is embedded in
-     * \param scvf The sub-control volume face
-     */
-    template<class ElementVolumeVariables>
-    Force interiorBoundaryForce(const Element& element,
-                                const FVElementGeometry& fvGeometry,
-                                const ElementVolumeVariables& elemVolVars,
-                                const SubControlVolumeFace& scvf) const
-    {
-        const auto& facetVolVars = couplingManager().getLowDimVolVars(element, scvf);
-
-        // Contribution of the fluid pressure
-        Force force = scvf.unitOuterNormal();
-        force *= facetVolVars.pressure();
-        force *= scvf.area();
-
-        // Contribution of the contact mechanics
-        force += couplingManager().getContactForce(element, scvf);
-        // std::cout << "ContactForce = " << couplingManager().getContactForce(element, scvf) << std::endl;
-
-        return force;
     }
 
     //! Returns reference to the coupling manager.
@@ -278,22 +292,22 @@ public:
                             const SolutionVector& x,
                             Id id)
     {
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->fvGridGeometry());
-            auto elemVolVars = localView(gridVariables.curGridVolVars());
+            auto feGeometry = localView(this->gridGeometry());
+            feGeometry.bind(element);
 
-            couplingManagerPtr_->bindCouplingContext(id, element, assembler);
-            fvGeometry.bindElement(element);
-            elemVolVars.bindElement(element, fvGeometry, x);
+            const auto& eg = element.geometry();
+            const auto elemSol = elementSolution(element, x, this->gridGeometry());
+            const auto& localBasis = feGeometry.feBasisLocalView().tree().finiteElement().localBasis();
 
-            using StressVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-            StressVariablesCache cache;
-            cache.update(*this, element, fvGeometry, elemVolVars, element.geometry().center());
+            FEIntegrationPointData<GlobalPosition, LocalBasis> ipData(eg, eg.local(eg.center()), localBasis);
+            SecondaryVariables secVars;
+            secVars.update(elemSol, *this, element, ipData);
 
-            const auto sigma = StressType::effectiveStressTensor(*this, element, fvGeometry, elemVolVars, cache);
+            const auto sigma = StressType::effectiveStressTensor(*this, element, feGeometry, elemSol, ipData, secVars);
             sigma_x_[eIdx] = sigma[Indices::uxIdx];
             sigma_y_[eIdx] = sigma[Indices::uyIdx];
         }
@@ -306,19 +320,19 @@ public:
 private:
     //! The inlet is on the left side of the domain
     bool isOnInlet_(const GlobalPosition& globalPos) const
-    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + 1e-6; }
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + 1e-6; }
 
     //! The outlet is on the right side of the domain
     bool isOnOutlet_(const GlobalPosition& globalPos) const
-    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - 1e-6; }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - 1e-6; }
 
     //! Returns true if position is on upper boundary
     bool isOnUpperBoundary_(const GlobalPosition& globalPos) const
-    { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - 1e-6; }
+    { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - 1e-6; }
 
     //! Returns true if position is on lower boundary
     bool isOnLowerBoundary_(const GlobalPosition& globalPos) const
-    { return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + 1e-6; }
+    { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + 1e-6; }
 
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
     static constexpr Scalar eps_ = 3e-6;

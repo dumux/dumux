@@ -42,12 +42,16 @@ namespace Dumux {
 template<class GridType>
 class EnrichedGridManager
 {
+    static constexpr int dim = GridType::dimension;
+
     using GridFactory = Dune::GridFactory<GridType>;
     using GV = typename GridType::LeafGridView;
-    using Index = typename IndexTraits<GV>::GridIndex;
-    using ctype = typename GridType::ctype;
 
-    static constexpr int dim = GridType::dimension;
+    using Element = typename GV::template Codim<0>::Entity;
+    using Vertex = typename GV::template Codim<dim>::Entity;
+    using Index = typename IndexTraits<GV>::GridIndex;
+    using ctype = typename GV::ctype;
+
     using RefElements = Dune::ReferenceElements<ctype, dim>;
 
 public:
@@ -217,8 +221,20 @@ public:
      *        that were inserted for all dofs at the
      *        original vertex with index vIdx
      */
-    Index vertexInsertionIndices(std::size_t vIdx)
+    std::vector<Index> vertexInsertionIndices(std::size_t vIdx)
     { return vertexIndexMap_[vIdx]; }
+
+    /*!
+     * \brief Return the insertion index of an element.
+     */
+    Index insertionIndex(const Element& element) const
+    { return gridFactory_->insertionIndex(element); }
+
+    /*!
+     * \brief Return the insertion index of a vertex.
+     */
+    Index insertionIndex(const Vertex& vertex) const
+    { return gridFactory_->insertionIndex(vertex); }
 
 private:
     std::shared_ptr<Grid> gridPtr_;

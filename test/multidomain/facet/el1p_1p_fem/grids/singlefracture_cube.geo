@@ -1,11 +1,11 @@
 a = 1;             // width of the domain
 b = 1;             // height of the domain
 
-numCells = 25;
+numCells = 75;
 dx_m = (a+b)/2.0/numCells; // discretization length in the matrix
 dx_f = dx_m*0.5;       // discretization length in the fracture
 
-h = DefineNumber[0.0625, Min 0.001, Max 0.1, Step 0.001, Name "Discretization length parameter"];
+h = DefineNumber[1/numCells, Min 0.001, Max 0.1, Step 0.001, Name "Discretization length parameter"];
 
 // Points
 Point(1) = {0.0,   0.0, 0.0, dx_m};

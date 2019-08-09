@@ -768,6 +768,9 @@ public:
     { return std::get<1>(emptyStencilTuple_); }
 
 protected:
+    //! Return const reference to coupling mapper
+    const CouplingMapper& couplingMapper() const { return *couplingMapperPtr_; }
+
     //! Return const references to the bulk coupling contexts
     const BulkCouplingContext& bulkCouplingContext() const { return bulkContext_; }
     const LowDimCouplingContext& lowDimCouplingContext() const { return lowDimContext_; }

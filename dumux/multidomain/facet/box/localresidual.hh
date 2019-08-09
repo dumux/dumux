@@ -107,7 +107,7 @@ public:
             const auto& bcTypes = elemBcTypes[scv.localDofIndex()];
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
-            if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
+            if (bcTypes.hasNeumann())
             {
                 auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, scvf);
 

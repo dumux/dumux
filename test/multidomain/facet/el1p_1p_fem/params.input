@@ -38,6 +38,7 @@ Assembly.FEIntegrationOrder = 2
 Problem.Name = elastic_bulk
 SpatialParams.EModule = 2.5e7
 SpatialParams.Nu = 0.2
+Assembly.FEIntegrationOrder = 2
 
 [ContactProblem]
 ContactForceIntegrationOrder = 2

@@ -19,17 +19,14 @@
 /*!
  * \file
  * \ingroup FacetTests
- * \brief The spatial parameters class for the bulk flow domain in the
+ * \brief The spatial parameters class for the facet flow domain in the
  *        elastic single-phase facet coupling test.
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_FLOW_SPATIALPARAMS_HH
-#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_FLOW_SPATIALPARAMS_HH
+#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_FACET_FLOW_SPATIALPARAMS_HH
+#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_FACET_FLOW_SPATIALPARAMS_HH
 
 #include <dumux/discretization/elementsolution.hh>
-
 #include <dumux/material/spatialparams/fv1p.hh>
-#include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
-#include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 
 namespace Dumux {
 
@@ -38,28 +35,27 @@ namespace Dumux {
  * \brief The spatial parameters for the single-phase facet coupling test.
  */
 template<class FVGridGeometry, class Scalar, class CouplingManager>
-class OnePBulkSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                                         OnePBulkSpatialParams<FVGridGeometry, Scalar, CouplingManager>>
+class OnePFacetSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                                          OnePFacetSpatialParams<FVGridGeometry, Scalar, CouplingManager>>
 {
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 
-    using ThisType = OnePBulkSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
+    using ThisType = OnePFacetSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
 
 public:
     //! Export the type used for permeability
     using PermeabilityType = Scalar;
 
-    OnePBulkSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                          std::shared_ptr<const CouplingManager> couplingManagerPtr,
-                          const std::string& paramGroup = "")
+    OnePFacetSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                           std::shared_ptr<CouplingManager> couplingManagerPtr,
+                           const std::string& paramGroup = "")
     : ParentType(fvGridGeometry)
     , couplingManagerPtr_(couplingManagerPtr)
-    , initialPorosity_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPorosity"))
-    , initialPermeability_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPermeability"))
+    , initialAperture_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialAperture"))
     {}
 
     //! Function for defining the (intrinsic) permeability \f$[m^2]\f$.
@@ -68,37 +64,26 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolution& elemSol) const
     {
-        static const bool useKK = getParam<bool>("Problem.UseKozenyKarman");
-        if (useKK)
-        {
-            PermeabilityKozenyCarman<PermeabilityType> permLaw;
-            return permLaw.evaluatePermeability(initialPermeability_, initialPorosity_, porosity(element, scv, elemSol));
-        }
-        return initialPermeability_;
+        auto a = couplingManagerPtr_->computeAperture(element, scv, initialAperture_);
+
+        static const Scalar zeroA = getParam<Scalar>("Problem.ZeroApertureThreshold");
+        static const bool considerZeroA = getParam<bool>("Problem.UseZeroApertureThreshold");
+
+        if (considerZeroA && a < zeroA)
+            a = zeroA;
+
+        return a*a/12.0;
     }
 
     //! Returns the porosity for a sub-control volume.
-    template<class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
-    {
-        return initialPorosity_;
-        // static constexpr auto mechId = CouplingManager::poroMechId;
-        //
-        // const auto& poroMechGridGeom = couplingManagerPtr_->problem(mechId).fvGridGeometry();
-        // const auto poroMechElemSol = elementSolution(element, couplingManagerPtr_->curSol()[mechId], poroMechGridGeom);
-        //
-        // // evaluate the deformation-dependent porosity at the scv center
-        // return PorosityDeformation<Scalar>::evaluatePorosity(poroMechGridGeom, element, scv.center(), poroMechElemSol, initialPorosity_);
-    }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return 1.0; }
 
 private:
     std::shared_ptr<const CouplingManager> couplingManagerPtr_;
-    Scalar initialPorosity_;
-    Scalar initialPermeability_;
+    Scalar initialAperture_;
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_FLOW_SPATIALPARAMS_HH
+#endif // DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_FACET_FLOW_SPATIALPARAMS_HH

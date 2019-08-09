@@ -126,13 +126,13 @@ public:
 
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param element The grid element
-     * \param is The intersection
+     *        used for which equation on a given boundary entity
+     *        that carries local degrees of freedom.
+     * \param entity The grid entity living on the boundary
      */
-    BoundaryTypes boundaryTypes(const Element& element, const Intersection& is) const
-    { return asImp_().boundaryTypesAtPos(is.geometry().center()); }
+    template<class Entity>
+    BoundaryTypes boundaryTypes(const Entity& entity) const
+    { return asImp_().boundaryTypesAtPos(entity.geometry().center()); }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -151,16 +151,13 @@ public:
 
     /*!
      * \brief Evaluate the Dirichlet boundary conditions for a
-     *        position on a boundary segment.
+     *        boundary entity that carries degrees of freedom.
      *
-     * \param element The grid element
-     * \param is The intersection
-     * \param globalPos global position on the intersection
+     * \param entity The grid entity living on the boundary
      */
-    PrimaryVariables dirichlet(const Element& element,
-                               const Intersection& is,
-                               const GlobalPosition& globalPos) const
-    { return asImp_().dirichletAtPos(globalPos); }
+    template<class Entity>
+    PrimaryVariables dirichlet(const Entity& entity) const
+    { return asImp_().dirichletAtPos(entity.geometry().center()); }
 
     /*!
      * \brief Evaluate the Dirichlet boundary conditions at a given position.
