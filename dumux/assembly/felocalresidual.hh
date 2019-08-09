@@ -219,7 +219,7 @@ public:
         }
 
         // add contribution from neumann segments
-        residual += evalNeumannSegments_(element, feGeometry, elemSol, trialLocalView);
+        residual += evalNeumannSegments(element, feGeometry, elemSol, trialLocalView);
 
         return residual;
     }
@@ -275,7 +275,7 @@ public:
         }
 
         // add contribution from neumann segments
-        residual += evalNeumannSegments_(element, feGeometry, elemSol);
+        residual += evalNeumannSegments(element, feGeometry, elemSol);
 
         return residual;
     }
@@ -375,13 +375,6 @@ public:
     { return intOrder_; }
 
     // \}
-protected:
-
-    Implementation& asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation& asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 
     /*!
      * \brief Compute the contributions of Neumann boundary conditions on the
@@ -393,10 +386,10 @@ protected:
      * \todo TODO Doc me.
      */
     template< class ElementSolution, class TrialSpaceBasisLocalView >
-    ElementResidualVector evalNeumannSegments_(const Element& element,
-                                               const FEElementGeometry& feGeometry,
-                                               const ElementSolution& elemSol,
-                                               const TrialSpaceBasisLocalView& trialLocalView) const
+    ElementResidualVector evalNeumannSegments(const Element& element,
+                                              const FEElementGeometry& feGeometry,
+                                              const ElementSolution& elemSol,
+                                              const TrialSpaceBasisLocalView& trialLocalView) const
     {
         using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -423,20 +416,20 @@ protected:
                 continue;
 
             // only treat faces with neumann boundary conditions
-            auto bcTypes = problem().boundaryTypes(element, is);
+            auto bcTypes = problem().boundaryTypes(element.template subEntity<1>(is.indexInInside()));
             if (!bcTypes.hasNeumann())
                 continue;
 
             // select quadrature rule for intersection faces (dim-1)
             auto insideGeom = is.geometryInInside();
-            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(insideGeom.type(), intOrder_-1);
+            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(insideGeom.type(), intOrder_);
 
             for (const auto& quadPoint : faceRule)
             {
                 // position of quadrature point in local coordinates of inside element
                 auto local = insideGeom.global(quadPoint.position());
 
-                // evaluate basis functions of all all element vertices for quadrature point
+                // evaluate basis functions of all element vertices for quadrature point
                 IpDataAnsatz ipDataAnsatz(geometry, local, ansatzLocalBasis);
                 IpDataTrial ipDataTrial(geometry, local, trialLocalBasis);
 
@@ -445,7 +438,7 @@ protected:
                 secVars.update(elemSol, this->problem(), element, ipDataAnsatz);
 
                 // evaluate neumann boundary condition
-                auto neumannFlux = problem().neumann(element, is, elemSol, ipDataAnsatz, secVars);
+                const auto neumannFlux = problem().neumann(element, is, elemSol, ipDataAnsatz, secVars);
 
                 // get quadrature rule weight for intersection
                 Scalar qWeight = quadPoint.weight();
@@ -454,8 +447,8 @@ protected:
 
                 // add entries to residual vector
                 for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    for (unsigned int i = 0; i < trialNumLocalDofs; ++i)
-                        if (bcTypes.isNeumann(eqIdx))
+                    if (bcTypes.isNeumann(eqIdx))
+                        for (unsigned int i = 0; i < trialNumLocalDofs; ++i)
                             residual[i][eqIdx] += ipDataTrial.shapeValue(i)*qWeight*neumannFlux[eqIdx];
             }
         }
@@ -473,9 +466,9 @@ protected:
      * \todo TODO Doc me.
      */
     template< class ElementSolution >
-    ElementResidualVector evalNeumannSegments_(const Element& element,
-                                               const FEElementGeometry& feGeometry,
-                                               const ElementSolution& elemSol) const
+    ElementResidualVector evalNeumannSegments(const Element& element,
+                                              const FEElementGeometry& feGeometry,
+                                              const ElementSolution& elemSol) const
     {
         using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
         using AnsatzLocalBasis = typename AnsatzSpaceBasis::LocalView::Tree::FiniteElement::Traits::LocalBasisType;
@@ -496,20 +489,20 @@ protected:
                 continue;
 
             // only treat faces with neumann boundary conditions
-            auto bcTypes = problem().boundaryTypes(element, is);
+            auto bcTypes = problem().boundaryTypes(element.template subEntity<1>(is.indexInInside()));
             if (!bcTypes.hasNeumann())
                 continue;
 
             // select quadrature rule for intersection faces (dim-1)
             auto insideGeom = is.geometryInInside();
-            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(insideGeom.type(), intOrder_-1);
+            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(insideGeom.type(), intOrder_);
 
             for (const auto& quadPoint : faceRule)
             {
                 // position of quadrature point in local coordinates of inside element
                 auto local = insideGeom.global(quadPoint.position());
 
-                // evaluate basis functions of all all element vertices for quadrature point
+                // evaluate basis functions of all element vertices for quadrature point
                 IpDataAnsatz ipDataAnsatz(geometry, local, ansatzLocalBasis);
 
                 // evaluate secondary variables
@@ -517,7 +510,7 @@ protected:
                 secVars.update(elemSol, this->problem(), element, ipDataAnsatz);
 
                 // evaluate neumann boundary condition
-                auto neumannFlux = problem().neumann(element, is, elemSol, ipDataAnsatz, secVars);
+                const auto neumannFlux = problem().neumann(element, is, elemSol, ipDataAnsatz, secVars);
 
                 // get quadrature rule weight for intersection
                 Scalar qWeight = quadPoint.weight();
@@ -526,14 +519,23 @@ protected:
 
                 // add entries to residual vector
                 for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    for (unsigned int i = 0; i < ansatzNumLocalDofs; ++i)
-                        if (bcTypes.isNeumann(eqIdx))
+                    if (bcTypes.isNeumann(eqIdx))
+                        for (unsigned int i = 0; i < ansatzNumLocalDofs; ++i)
                             residual[i][eqIdx] += ipDataAnsatz.shapeValue(i)*qWeight*neumannFlux[eqIdx];
             }
         }
 
         return residual;
     }
+
+protected:
+    //! return reference to implementation
+    Implementation& asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+    //! return const reference to implementation
+    const Implementation& asImp_() const
+    { return *static_cast<const Implementation*>(this); }
 
 private:
     const Problem* problem_; //!< the problem we are assembling this residual for

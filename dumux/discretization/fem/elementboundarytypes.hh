@@ -55,6 +55,7 @@ public:
                 const Element& element,
                 const FEElementGeometry& feGeometry)
     {
+        const auto& gridGeometry = feGeometry.gridGeometry();
         const auto& feBasisLocalView = feGeometry.feBasisLocalView();
         const auto numLocalDofs = feBasisLocalView.size();
 
@@ -63,55 +64,34 @@ public:
         hasNeumann_ = false;
         hasOutflow_ = false;
 
-        using ctype = typename Element::Geometry::ctype;
-        using RefElements = typename Dune::ReferenceElements<ctype, Element::Geometry::mydimension>;
-
-        const auto& eg = element.geometry();
-        const auto refElement = RefElements::general(eg.type());
+        static constexpr int dim = Element::Geometry::mydimension;
         const auto& fe = feBasisLocalView.tree().finiteElement();
 
-        for (const auto& is : intersections(feGeometry.gridGeometry().gridView(), element))
+        for (unsigned int localDofIdx = 0; localDofIdx < numLocalDofs; localDofIdx++)
         {
-            if (is.boundary())
-            {
-                const auto bcTypes = problem.boundaryTypes(element, is);
-                if (bcTypes.hasOutflow())
-                    DUNE_THROW(Dune::NotImplemented, "Outflow BCs for FEM");
+            // skip all dofs not living on the boundary
+            if (!gridGeometry.dofOnBoundary(feBasisLocalView.index(localDofIdx)))
+                continue;
 
-                // find local dofs lying on this intersection
-                std::vector<unsigned int> localDofs; localDofs.reserve(numLocalDofs);
-                for (unsigned int localDofIdx = 0; localDofIdx < numLocalDofs; localDofIdx++)
-                {
-                    const auto& localKey = fe.localCoefficients().localKey(localDofIdx);
-                    const auto subEntity = localKey.subEntity();
-                    const auto codim = localKey.codim();
+            const auto& localKey = fe.localCoefficients().localKey(localDofIdx);
+            const auto subEntity = localKey.subEntity();
+            const auto codim = localKey.codim();
 
-                    // skip interior dofs
-                    if (codim == 0)
-                        continue;
-
-                    bool found = false;
-                    // try to find this local dof (on entity with known codim) on the current intersection
-                    for (int j = 0; j < refElement.size(is.indexInInside(), 1, codim); j++)
-                    {
-                        // If j-th sub entity is the sub entity corresponding to local dof, continue and assign BC
-                        if (subEntity == refElement.subEntity(is.indexInInside(), 1, j, codim))
-                        { localDofs.push_back(localDofIdx); found = true; }
-
-                        if (found) break;
-                    }
-                }
-
-                // Write obtained boundary types into the ones for the local dofs
-                for (const auto localDof : localDofs)
-                    copyBTypes_(bcTypes, localBCTypes_[localDof]);
-            }
+            // Obtain user-defined boundary conditions
+            if (codim == 1) localBCTypes_[localDofIdx] = getBoundaryTypes_<1, dim>(problem, element, subEntity);
+            else if (codim == 2) localBCTypes_[localDofIdx] = getBoundaryTypes_<2, dim>(problem, element, subEntity);
+            else if (codim == 3) localBCTypes_[localDofIdx] = getBoundaryTypes_<3, dim>(problem, element, subEntity);
         }
 
         const auto beginIt = localBCTypes_.begin();
         const auto endIt = localBCTypes_.end();
         hasDirichlet_ = std::any_of(beginIt, endIt, [] (const auto& bt) { return bt.hasDirichlet(); });
         hasNeumann_ = std::any_of(beginIt, endIt, [] (const auto& bt) { return bt.hasNeumann(); });
+        hasOutflow_ = std::any_of(beginIt, endIt, [] (const auto& bt) { return bt.hasOutflow(); });
+
+        // Outflow BCs are not supported
+        if (hasOutflow_)
+            DUNE_THROW(Dune::NotImplemented, "Outflow BCs for finite element scheme");
     }
 
     /*!
@@ -146,28 +126,19 @@ public:
     }
 
 protected:
-    /*
-     * \brief Writes new boundary types into the ones stored
-     *        for a local dof. We do not overwrite previously
-     *        set Dirichlet BCS with Neumann BCS, which could
-     *        occur for vertex dofs.
-     */
-    void copyBTypes_(const auto& curBCTypes, auto& localBCTypes)
-    {
-        for (unsigned int i = 0; i < BTypes::size(); ++i)
-        {
-            const bool curIsNeumann = curBCTypes.isNeumann(i);
+    template<int codim, int dim, class Problem, class Element,
+             std::enable_if_t<(codim <= dim), int> = 0>
+    BoundaryTypes getBoundaryTypes_(const Problem& problem,
+                                    const Element& element,
+                                    unsigned int subEntity)
+    { return problem.boundaryTypes(element.template subEntity<codim>(subEntity)); }
 
-            // do not overwrite Dirichlet with Neumann
-            // if (curIsNeumann && !localBCTypes.isDirichlet(i))
-            if (curIsNeumann)
-                localBCTypes.setNeumann(i);
-
-            // always set Dirichlet BCs
-            else
-                localBCTypes.setDirichlet(i);
-        }
-    }
+    template<int codim, int dim, class Problem, class Element,
+             std::enable_if_t<(codim > dim), int> = 0>
+    BoundaryTypes getBoundaryTypes_(const Problem& problem,
+                                    const Element& element,
+                                    unsigned int subEntity)
+    { DUNE_THROW(Dune::InvalidStateException, "Codimension higher than grid dimension"); }
 
     std::vector< BoundaryTypes > localBCTypes_;
     bool hasDirichlet_ = false;

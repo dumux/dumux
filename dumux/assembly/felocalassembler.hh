@@ -336,65 +336,35 @@ public:
         // and set the residual to (privar - dirichletvalue)
         if (this->elemBcTypes().hasDirichlet())
         {
-            const auto& gridGeometry = this->feGeometry().gridGeometry();
-            for (const auto& is : intersections(gridGeometry.gridView(), this->element()))
-            {
-                if (!is.boundary())
-                    continue;
+            const auto& tsLocalView = this->trialSpaceBasisLocalView();
+            const auto& element = this->element();
+            const auto& fe = tsLocalView.tree().finiteElement();
 
-                const auto bcTypes = this->problem().boundaryTypes(this->element(), is);
+            for (unsigned int localDofIdx = 0; localDofIdx < tsLocalView.size(); localDofIdx++)
+            {
+                const auto& bcTypes = this->elemBcTypes()[localDofIdx];
+
                 if (!bcTypes.hasDirichlet())
                     continue;
 
-                // get reference elements and finite element
-                const auto& tsLocalView = this->trialSpaceBasisLocalView();
-                const auto& fe = tsLocalView.tree().finiteElement();
+                const auto dofIdx = tsLocalView.index(localDofIdx);
+                const auto& localKey = fe.localCoefficients().localKey(localDofIdx);
+                const auto subEntity = localKey.subEntity();
+                const auto codim = localKey.codim();
 
-                const auto& element = this->element();
-                const auto& eg = element.geometry();
-                const auto refElement = ReferenceElements::general(eg.type());
+                // values of dirichlet BCs
+                PrimaryVariables dirichletValues;
+                if (codim == 1) dirichletValues = this->template getDirichletValues_<1>(problem(), element, subEntity);
+                else if (codim == 2) dirichletValues = this->template getDirichletValues_<2>(problem(), element, subEntity);
+                else if (codim == 3) dirichletValues = this->template getDirichletValues_<3>(problem(), element, subEntity);
 
-                // handle Dirichlet boundaries
-                for (unsigned int localDofIdx = 0; localDofIdx < tsLocalView.size(); localDofIdx++)
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                 {
-                    const auto dofIdx = tsLocalView.index(localDofIdx);
-                    const auto& localKey = fe.localCoefficients().localKey(localDofIdx);
-                    const auto subEntity = localKey.subEntity();
-                    const auto codim = localKey.codim();
-
-                    // skip interior dofs
-                    if (codim == 0)
-                        continue;
-
-                    bool found = false;
-                    // try to find this local dof (on entity with known codim) on the current intersection
-                    for (int j = 0; j < refElement.size(is.indexInInside(), 1, codim); j++)
+                    if (bcTypes.isDirichlet(eqIdx))
                     {
-                        // If j-th sub entity is the sub entity corresponding to local dof, continue and assign BC
-                        if (subEntity == refElement.subEntity(is.indexInInside(), 1, j, codim))
-                        {
-                            // get global coordinate of this degree of freedom
-                            const auto globalPos = eg.global(refElement.position(subEntity, codim));
-
-                            // value of dirichlet BC
-                            const auto dirichletValues = this->problem().dirichlet(element, is, globalPos);
-
-                            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                            {
-                                if (bcTypes.isDirichlet(eqIdx))
-                                {
-                                    const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                                    assert(0 <= pvIdx && pvIdx < numEq);
-                                    applyDirichlet(dirichletValues, localDofIdx, dofIdx, eqIdx, pvIdx);
-                                }
-                            }
-
-                            // we found the dof
-                            found = true; break;
-                        }
-
-                        // stop search after we found the dof
-                        if (found) break;
+                        const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                        assert(0 <= pvIdx && pvIdx < numEq);
+                        applyDirichlet(dirichletValues, localDofIdx, dofIdx, eqIdx, pvIdx);
                     }
                 }
             }
@@ -477,6 +447,18 @@ protected:
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
+
+    template<int codim, std::enable_if_t<(codim <= dim), int> = 0>
+    PrimaryVariables getDirichletValues_(const Problem& problem,
+                                         const Element& element,
+                                         unsigned int subEntity)
+    { return problem.dirichlet(element.template subEntity<codim>(subEntity)); }
+
+    template<int codim, std::enable_if_t<(codim > dim), int> = 0>
+    PrimaryVariables getDirichletValues_(const Problem& problem,
+                                         const Element& element,
+                                         unsigned int subEntity)
+    { DUNE_THROW(Dune::InvalidStateException, "Codimension higher than grid dimension"); }
 
     /*!
      * \brief Returns true if a sub entity of an element is a ghost entity (specialization for dim == 1)

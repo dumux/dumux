@@ -5,7 +5,7 @@ numCells = 25;
 dx_m = (a+b)/2.0/numCells; // discretization length in the matrix
 dx_f = dx_m*0.5;       // discretization length in the fracture
 
-h = DefineNumber[0.0625, Min 0.001, Max 0.1, Step 0.001, Name "Discretization length parameter"];
+h = DefineNumber[0.0125, Min 0.001, Max 0.1, Step 0.001, Name "Discretization length parameter"];
 
 // Points
 Point(1) = {0.0,   0.0, 0.0, dx_m};
@@ -80,7 +80,6 @@ Transfinite Line{7, 17, 14, 1, 6, 16, 15, 2} = 0.5/h + 1;
 Transfinite Line{8, 10, 12, 13, 3, 5} = 0.25/h + 1;
 Transfinite Line{11, 4, 9} = 0.5/h + 1;
 Physical Line(1) = {11};//, 12, 13};
-Physical Surface(1) = {1:6};
 
 Transfinite Surface "*";
 Recombine Surface "*";

@@ -86,7 +86,7 @@ public:
         return initialPorosity_;
         // static constexpr auto mechId = CouplingManager::poroMechId;
         //
-        // const auto& poroMechGridGeom = couplingManagerPtr_->problem(mechId).fvGridGeometry();
+        // const auto& poroMechGridGeom = couplingManagerPtr_->problem(mechId).gridGeometry();
         // const auto poroMechElemSol = elementSolution(element, couplingManagerPtr_->curSol()[mechId], poroMechGridGeom);
         //
         // // evaluate the deformation-dependent porosity at the scv center

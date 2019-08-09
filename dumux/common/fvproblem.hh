@@ -581,6 +581,10 @@ public:
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 
+    //! The finite volume grid geometry
+    const FVGridGeometry& gridGeometry() const
+    { return *fvGridGeometry_; }
+
     //! The parameter group in which to retrieve runtime parameters
     const std::string& paramGroup() const
     { return paramGroup_; }

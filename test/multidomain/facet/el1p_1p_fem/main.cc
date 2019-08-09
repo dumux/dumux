@@ -52,7 +52,9 @@
 #include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
-#include <dumux/multidomain/facet/geomechanics/couplingmanager.hh>
+#include <dumux/multidomain/facet/enrichedgridmanager.hh>
+#include <dumux/multidomain/facet/vertexmapper.hh>
+#include <dumux/multidomain/facet/geomechanics/couplingmanager_fem.hh>
 #include <dumux/multidomain/io/vtkoutputmodule.hh>
 
 // obtain/define some types to be used below in the property definitions and in main
@@ -68,8 +70,7 @@ public:
                                                Dumux::Properties::TTag::LagrangeFacet>;
 
     using CouplingMapperFlow = Dumux::FacetCouplingMapper<BulkFlowFVG, FacetFlowFVG>;
-    using CouplingMapperMech = Dumux::FacetCouplingMapper<BulkMechFVG, FacetFlowFVG>;
-    using CouplingManager = Dumux::FacetCouplingPoroMechanicsCouplingManager<MDTraits, CouplingMapperFlow, CouplingMapperMech>;
+    using CouplingManager = Dumux::FacetCouplingPoroMechanicsCouplingManager<MDTraits, CouplingMapperFlow>;
 };
 
 // set the coupling manager property in the sub-problems
@@ -107,35 +108,47 @@ int main(int argc, char** argv) try
 
     // the multidomain traits and some indices
     using Traits = typename TestTraits::MDTraits;
-    constexpr auto bulkFlowId = Traits::template SubDomain<0>::Index{};
-    constexpr auto facetFlowId = Traits::template SubDomain<1>::Index{};
-    constexpr auto bulkMechId = Traits::template SubDomain<2>::Index{};
-    constexpr auto lagrangeId = Traits::template SubDomain<3>::Index{};
+    using CouplingManager = typename TestTraits::CouplingManager;
+
+    constexpr auto bulkFlowId = CouplingManager::matrixFlowId;
+    constexpr auto facetFlowId = CouplingManager::facetFlowId;
+    constexpr auto bulkMechId = CouplingManager::mechanicsId;
+    constexpr auto lagrangeId = CouplingManager::lagrangeId;
 
     // try to create a grid (from the given grid file or the input file)
-    using GridManager = FacetCouplingGridManager<Traits::template SubDomain<bulkFlowId>::Grid,
-                                                 Traits::template SubDomain<facetFlowId>::Grid>;
+    using BulkFlowGrid = Traits::template SubDomain<bulkFlowId>::Grid;
+    using FacetFlowGrid = Traits::template SubDomain<facetFlowId>::Grid;
+    using BulkFlowGridView = typename BulkFlowGrid::LeafGridView;
 
+    using GridManager = FacetCouplingGridManager<BulkFlowGrid, FacetFlowGrid>;
     GridManager gridManager;
     gridManager.init();
     gridManager.loadBalance();
 
-    // read in grid from lagrange domain
-    Dumux::GridManager<Traits::template SubDomain<lagrangeId>::Grid> lagrangeGridManager;
-    lagrangeGridManager.init("Lagrange");
-    lagrangeGridManager.loadBalance();
-
-    ////////////////////////////////////////////////////////////
-    // run stationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
-
     // we compute on the leaf grid views
     const auto& bulkGridView = gridManager.template grid<0>().leafGridView();
     const auto& facetGridView = gridManager.template grid<1>().leafGridView();
-    const auto& lagrangeGridView = lagrangeGridManager.grid().leafGridView();
+    const auto& lagrangeGridView = facetGridView;
 
-    Dune::VTKWriter<std::decay_t<decltype(lagrangeGridView)>> lagrangeWriterGrid(lagrangeGridView);
-    lagrangeWriterGrid.write("lagrange_grid");
+    // create enriched grid for mechanical sub-domain
+    using VertexMapper = Dumux::EnrichedVertexDofMapper<BulkFlowGridView>;
+    CodimOneGridAdapter<typename GridManager::Embeddings> bulkFacetGridAdapter(gridManager.getEmbeddings());
+    VertexMapper vertexMapper(bulkGridView);
+    vertexMapper.enrich(facetGridView, bulkFacetGridAdapter, true);
+
+    // create enriched bulk grid
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<BulkFlowGridView>;
+    ElementMapper elementMapper(bulkGridView, Dune::mcmgElementLayout());
+
+    using MechanicalGrid = Traits::template SubDomain<bulkMechId>::Grid;
+    using MechanicalGridView = typename MechanicalGrid::LeafGridView;
+    Dumux::EnrichedGridManager<MechanicalGrid> enrichedGridManager;
+    enrichedGridManager.init(bulkGridView,
+                             elementMapper,
+                             vertexMapper);
+    enrichedGridManager.loadBalance();
+
+    const auto& mechGridView = enrichedGridManager.grid().leafGridView();
 
     // create the finite volume grid geometries
     using MDGridGeometry = MultiDomainFVGridGeometry<Traits>;
@@ -143,7 +156,10 @@ int main(int argc, char** argv) try
     MDGridGeometry fvGridGeometry;
     fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<bulkFlowId>>(bulkGridView), bulkFlowId);
     fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<facetFlowId>>(facetGridView), facetFlowId);
-    fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<bulkMechId>>(bulkGridView), bulkMechId);
+
+    using MechSpaceBasis = typename MDGridGeometry::template Type<bulkMechId>::AnsatzSpaceBasis;
+    auto mechSpaceBasis = std::make_shared<MechSpaceBasis>(mechGridView);
+    fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<bulkMechId>>(mechSpaceBasis), bulkMechId);
 
     // create basis of the lagrange space
     using LagrangeBasis = typename MDGridGeometry::template Type<lagrangeId>::AnsatzSpaceBasis;
@@ -151,10 +167,7 @@ int main(int argc, char** argv) try
     fvGridGeometry.set(std::make_shared<typename MDGridGeometry::template Type<lagrangeId>>(lagrangeBasis), lagrangeId);
 
     // update the finite volume grid geometries
-    fvGridGeometry[bulkFlowId].update();
-    fvGridGeometry[facetFlowId].update();
-    fvGridGeometry[bulkMechId].update(facetGridView, CodimOneGridAdapter<typename GridManager::Embeddings>(gridManager.getEmbeddings()));
-    fvGridGeometry[lagrangeId].update();
+    fvGridGeometry.update();
 
     // the coupling manager
     using CouplingManager = typename TestTraits::CouplingManager;
@@ -183,12 +196,32 @@ int main(int argc, char** argv) try
 
     // the coupling mappers
     using CouplingMapperFlow = typename TestTraits::CouplingMapperFlow;
-    using CouplingMapperMech = typename TestTraits::CouplingMapperMech;
-
     auto couplingMapperFlow = std::make_shared<CouplingMapperFlow>();
-    auto couplingMapperMech = std::make_shared<CouplingMapperMech>();
     couplingMapperFlow->update(fvGridGeometry[bulkFlowId], fvGridGeometry[facetFlowId], gridManager.getEmbeddings());
-    couplingMapperMech->update(fvGridGeometry[bulkMechId], fvGridGeometry[facetFlowId], gridManager.getEmbeddings());
+
+    // set up index maps between bulk flow and mechanical elements
+    std::vector<std::size_t> mechInsertionToElemIdx(fvGridGeometry[bulkMechId].gridView().size(0));
+    for (const auto& element : elements(fvGridGeometry[bulkMechId].gridView()))
+    {
+        const auto insIdx = enrichedGridManager.insertionIndex(element);
+        const auto eIdx = fvGridGeometry[bulkMechId].elementMapper().index(element);
+        mechInsertionToElemIdx[insIdx] = eIdx;
+    }
+
+    std::vector<std::size_t> bulkFlowToMechIdx(fvGridGeometry[bulkFlowId].gridView().size(0));
+    std::vector<std::size_t> mechToBulkFlowIdx(fvGridGeometry[bulkMechId].gridView().size(0));
+    for (const auto& element : elements(fvGridGeometry[bulkFlowId].gridView()))
+    {
+        const auto eIdx = fvGridGeometry[bulkFlowId].elementMapper().index(element);
+        const auto insIdx = enrichedGridManager.elementInsertionIndex(eIdx);
+        const auto mechElemIdx = mechInsertionToElemIdx[insIdx];
+
+        bulkFlowToMechIdx[eIdx] = mechElemIdx;
+        mechToBulkFlowIdx[mechElemIdx] = eIdx;
+    }
+
+    using BulkIndexMap = FacetCouplingPoroMechIndexMap<bulkMechId, bulkFlowId>;
+    BulkIndexMap bulkIndexMap(std::move(mechToBulkFlowIdx), std::move(bulkFlowToMechIdx));
 
     // initialize the coupling manager
     couplingManager->init(problem.get(bulkFlowId),
@@ -196,7 +229,7 @@ int main(int argc, char** argv) try
                           problem.get(bulkMechId),
                           problem.get(lagrangeId),
                           couplingMapperFlow,
-                          couplingMapperMech,
+                          bulkIndexMap,
                           x);
 
     // the grid variables
@@ -207,30 +240,23 @@ int main(int argc, char** argv) try
     // intialize the vtk output modules
     using BulkFlowGridVariables = typename GridVariables::template Type<bulkFlowId>;
     using FacetFlowGridVariables = typename GridVariables::template Type<facetFlowId>;
-    using BulkMechGridVariables = typename GridVariables::template Type<bulkMechId>;
 
     using BulkFlowVtkOutputModule = VtkOutputModule<BulkFlowGridVariables, typename Traits::template SubDomain<bulkFlowId>::SolutionVector>;
     using FacetFlowVtkOutputModule = VtkOutputModule<FacetFlowGridVariables, typename Traits::template SubDomain<facetFlowId>::SolutionVector>;
-    using BulkElasticVtkOutputModule = VtkOutputModule<BulkMechGridVariables, typename Traits::template SubDomain<bulkMechId>::SolutionVector>;
 
     BulkFlowVtkOutputModule bulkFlowVtkWriter(gridVars[bulkFlowId], x[bulkFlowId], problem[bulkFlowId].name());
     FacetFlowVtkOutputModule facetFlowVtkWriter(gridVars[facetFlowId], x[facetFlowId], problem[facetFlowId].name());
-    BulkElasticVtkOutputModule bulkMechVtkWriter(gridVars[bulkMechId], x[bulkMechId], problem[bulkMechId].name(), "ElasticBulk", Dune::VTK::nonconforming);
 
     // add additional output
     bulkFlowVtkWriter.addField(problem[bulkFlowId].porosities(), "porosity");
     bulkFlowVtkWriter.addField(problem[bulkFlowId].permeabilities(), "permeability");
     facetFlowVtkWriter.addField(problem[facetFlowId].apertures(), "aperture");
     facetFlowVtkWriter.addField(problem[facetFlowId].permeabilities(), "permeability");
-    bulkMechVtkWriter.addField(problem[bulkMechId].sigma_x(), "Sigma_x", BulkElasticVtkOutputModule::FieldType::element);
-    bulkMechVtkWriter.addField(problem[bulkMechId].sigma_y(), "Sigma_y", BulkElasticVtkOutputModule::FieldType::element);
 
     using BulkFlowIOFields = GetPropType<typename Traits::template SubDomain<bulkFlowId>::TypeTag, Properties::IOFields>;
     using FacetFlowIOFields = GetPropType<typename Traits::template SubDomain<facetFlowId>::TypeTag, Properties::IOFields>;
-    using BulkMechIOFields = GetPropType<typename Traits::template SubDomain<bulkMechId>::TypeTag, Properties::IOFields>;
     BulkFlowIOFields::initOutputModule(bulkFlowVtkWriter);
     FacetFlowIOFields::initOutputModule(facetFlowVtkWriter);
-    BulkMechIOFields::initOutputModule(bulkMechVtkWriter);
 
     // bulkFlowVtkWriter.write(0.0);
     // facetFlowVtkWriter.write(0.0);
@@ -263,12 +289,12 @@ int main(int argc, char** argv) try
     // write vtk output
     bulkFlowVtkWriter.write(0.0);
     facetFlowVtkWriter.write(0.0);
-    bulkMechVtkWriter.write(0.0);
 
     // write out lagrange multiplier
     Dune::VTKWriter<std::decay_t<decltype(lagrangeGridView)>> lagrangeWriter(lagrangeGridView);
     auto gf = Dune::Functions::makeDiscreteGlobalBasisFunction<Dune::FieldVector<double, 2>>(*lagrangeBasis, x[lagrangeId]);
     lagrangeWriter.addCellData(gf, Dune::VTK::FieldInfo("lagrange", Dune::VTK::FieldInfo::Type::vector, 2));
+
     std::vector<double> fricCoeff(lagrangeGridView.size(0));
     std::vector<double> deltaUt(lagrangeGridView.size(0));
     std::vector<double> deltaUn(lagrangeGridView.size(0));
@@ -283,7 +309,23 @@ int main(int argc, char** argv) try
     lagrangeWriter.addCellData(deltaUt, "deltaUt");
     lagrangeWriter.addCellData(deltaUn, "deltaUn");
     lagrangeWriter.write("lagrange");
-    lagrangeWriter.write("lagrange");
+
+    // write out displacements
+    Dune::VTKWriter<MechanicalGridView> mechWriter(mechGridView);
+    auto u = Dune::Functions::makeDiscreteGlobalBasisFunction<Dune::FieldVector<double, 2>>(*mechSpaceBasis, x[bulkMechId]);
+    mechWriter.addVertexData(u, Dune::VTK::FieldInfo("u", Dune::VTK::FieldInfo::Type::vector, 2));
+
+    using MechElementMapper = typename MDGridGeometry::template Type<bulkMechId>::ElementMapper;
+    using P0Function = Vtk::VectorP0VTKFunction<MechanicalGridView,
+                                                MechElementMapper,
+                                                std::vector<Dune::FieldVector<double, 2>>>;
+
+    auto sigmaX = std::make_shared<P0Function>(mechGridView, fvGridGeometry[bulkMechId].elementMapper(), problem[bulkMechId].sigma_x(), "Sigma_x", 2);
+    auto sigmaY = std::make_shared<P0Function>(mechGridView, fvGridGeometry[bulkMechId].elementMapper(), problem[bulkMechId].sigma_y(), "Sigma_y", 2);
+
+    mechWriter.addCellData(sigmaX);
+    mechWriter.addCellData(sigmaY);
+    mechWriter.write("mechanics");
 
     // print parameter usage
     Parameters::print();
@@ -316,8 +358,13 @@ catch (Dune::Exception &e)
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;
 }
+catch (std::exception& e)
+{
+    std::cerr << "Standard exception: " << e.what() << " ---> Abort!" << std::endl;
+    return 4;
+}
 catch (...)
 {
     std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
+    return 5;
 }

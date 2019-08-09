@@ -1,7 +1,7 @@
 a = 1;             // width of the domain
 b = 1;             // height of the domain
 
-numCells = 50;
+numCells = 75;
 dx_m = (a+b)/2.0/numCells; // discretization length in the matrix
 dx_f = dx_m*0.5;       // discretization length in the fracture
 
@@ -12,8 +12,8 @@ Point(2) = {a,     0.0, 0.0, dx_m};
 Point(3) = {a,     b,   0.0, dx_m};
 Point(4) = {0.0,   b,   0.0, dx_m};
 
-Point(5) = {1.0*a/4.0, 0.5*b, 0.0, dx_f};
-Point(6) = {3.0*a/4.0, 0.5*b, 0.0, dx_f};
+Point(5) = {0.25, 0.5*b, 0.0, dx_f};
+Point(6) = {0.75, 0.5*b, 0.0, dx_f};
 
 // domain outline
 Line(1) = {4, 1};

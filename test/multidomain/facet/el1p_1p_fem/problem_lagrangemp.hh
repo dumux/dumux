@@ -184,8 +184,9 @@ public:
         tT *= -1.0;
         tT *= tN;
         tT += traction;
-        // if (feGeometry.gridGeometry().elementMapper().index(element) == 0){
-        // std::cout << "ip: " << ipData.ipGlobal() << " -> a " << a << " -> delta " << deltaUT << std::endl;
+        // if (feGeometry.gridGeometry().elementMapper().index(element) > -1){
+        // std::cout << "ip: " << ipData.ipGlobal() << " -> a " << a << " -> delta " << deltaUT << " // "
+        //           << couplingManager().computeNormalDisplacementJump(element, ipData.ipGlobal()) << std::endl;
         // std::cout << "TRACTION " << traction << std::endl;
         // std::cout << "BASIS Vector1:" << contactSurfaceSegment.getBasisVector(0) << std::endl;
         // std::cout << "BASIS Vector2:" << contactSurfaceSegment.getBasisVector(dimWorld-1) << std::endl;
@@ -194,7 +195,7 @@ public:
         auto tangMaxArg = deltaUT;
         tangMaxArg *= penaltyFactor_;
         tangMaxArg -= tT;
-        // if (feGeometry.gridGeometry().elementMapper().index(element) == 0){
+        // if (feGeometry.gridGeometry().elementMapper().index(element) > -1){
         // std::cout << "NORMALMAXARG " << normalMaxArg << std::endl;
         // std::cout << "TANGMAXARG " << tangMaxArg << std::endl;
         // }
@@ -205,7 +206,7 @@ public:
         result[0] = -1.0*(tT*tangent)*max(fricCoeff*normalMaxArg, tangMaxArgNorm)
                     -fricCoeff*max(0.0, normalMaxArg)*(tangMaxArg*tangent);
         result[numEq-1] = -1.0*tN - max(0.0, normalMaxArg);
-        // if (feGeometry.gridGeometry().elementMapper().index(element) == 0){
+        // if (feGeometry.gridGeometry().elementMapper().index(element) > -1){
         // std::cout << "RESIDUAL = " << result << std::endl;
     // }
         return result;

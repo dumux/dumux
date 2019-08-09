@@ -336,16 +336,16 @@ public:
      *        solution-dependent.
      * \note This function is only valid and used in the case of the box scheme used in the mechanical domain
      */
-    template< class PoroMechLocalAssembler, class UpdatableFluxVarCache, bool isB = isBox, std::enable_if_t<isB, int> = 0 >
-    void updateCoupledVariables(Dune::index_constant<PoroMechId> poroMechDomainId,
-                                const PoroMechLocalAssembler& poroMechLocalAssembler,
-                                typename GridVariables<PoroMechId>::GridVolumeVariables::LocalView& elemVolVars,
-                                UpdatableFluxVarCache& elemFluxVarsCache)
-    {
-        elemVolVars.bind(poroMechLocalAssembler.element(),
-                         poroMechLocalAssembler.fvGeometry(),
-                         this->curSol()[poroMechDomainId]);
-    }
+    // template< class PoroMechLocalAssembler, class UpdatableFluxVarCache, bool isB = isBox, std::enable_if_t<isB, int> = 0 >
+    // void updateCoupledVariables(Dune::index_constant<PoroMechId> poroMechDomainId,
+    //                             const PoroMechLocalAssembler& poroMechLocalAssembler,
+    //                             typename GridVariables<PoroMechId>::GridVolumeVariables::LocalView& elemVolVars,
+    //                             UpdatableFluxVarCache& elemFluxVarsCache)
+    // {
+    //     elemVolVars.bind(poroMechLocalAssembler.element(),
+    //                      poroMechLocalAssembler.fvGeometry(),
+    //                      this->curSol()[poroMechDomainId]);
+    // }
 
     /*!
      * \brief Evaluates the coupling element residual of the porous medium flow domain with
