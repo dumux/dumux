@@ -34,6 +34,6 @@ The primary variable of this model is the mass fraction $`X^\kappa`$.
 
 The porous medium diffusivity is yield out of the diffusion coefficient of the component, the porosity $`\phi `$ and the porous medium tortuosity $`\tau`$ by the following equation:
 
-$` 
+$`
 D^\kappa_\text{pm}= \phi \tau D^\kappa
 `$
