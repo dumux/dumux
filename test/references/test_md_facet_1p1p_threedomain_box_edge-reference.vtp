@@ -4,7 +4,7 @@
     <Piece NumberOfLines="4" NumberOfPoints="5">
       <PointData Scalars="p">
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
-          1.51027 1.50907 1.50652 1.50395 1.50273
+          1.50561 1.50403 1.50065 1.49728 1.49572
         </DataArray>
       </PointData>
       <CellData Scalars="process rank">
