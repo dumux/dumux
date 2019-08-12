@@ -1,0 +1,60 @@
+[Problem]
+EnableGravity = false
+InjectionPressure = 0
+ExtractionPressure = 0
+PrintMatrices = false
+UseAperture = false
+ZeroApertureThreshold = 1e-18
+UseZeroApertureThreshold = true
+FrictionCoefficientParam = 0.0
+BiotCoefficient = 0.0
+FractureInclinationAngle = 20
+FractureLength = 10
+
+[Component]
+SolidDensity = 2750.0 # granite
+
+[Grid]
+File = ./grids/singlefracture.msh
+
+[SpatialParams]
+InitialPorosity = 0.25 # used from both ElasticBulk & OnePBulk
+
+[OnePBulk]
+Problem.Name = onep_bulk
+SpatialParams.InitialPermeability = 1
+
+[OnePFacet]
+Problem.Name = onep_facet
+SpatialParams.InitialAperture = 1e-16
+
+[Lagrange]
+Problem.Name = lagrange
+InitialLagrangeMP = 0.0 0.0
+PenaltyFactor = 1e11
+FrictionCoefficient = 0.5
+Assembly.FEIntegrationOrder = 2
+
+[ElasticBulk]
+Problem.Name = elastic_bulk
+Problem.BoundaryStress = -200e6
+SpatialParams.EModule = 70e9
+SpatialParams.Nu = 0.2
+Assembly.FEIntegrationOrder = 2
+
+[ContactProblem]
+ContactForceIntegrationOrder = 2
+
+[Newton]
+MaxSteps = 1000
+EnableAbsoluteResidualCriterion = true
+EnableResidualCriterion = false
+SatisfyResidualAndShiftCriterion = false
+MaxAbsoluteResidual = 1.0
+
+[Vtk]
+OutputName = test_md_facet_singlecrack
+
+[0.Component]
+LiquidKinematicViscosity = 1
+LiquidDensity = 1
