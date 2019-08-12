@@ -16,53 +16,70 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+// ## Header guard
+// The header guard (or include guard) prevents compilation errors due to duplicate definitions. Here, a unique name needs to be defined for the header file:
 #ifndef DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
 #define DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
 
+// ## Include files
+// We use the dune yasp grid.
 #include <dune/grid/yaspgrid.hh>
+// We include the cell centered, two-point-flux discretization scheme.
 #include <dumux/discretization/cctpfa.hh>
+// The parameters header is needed to retrieve run-time parameters.
 #include <dumux/common/parameters.hh>
-// Specific shallow water includes
-#include "spatialparams.hh"
+
+// We include the header which are needed for shallow water models.
 #include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 
-namespace Dumux {
+// We include the header that specifies all spatially variable parameters.
+#include "spatialparams.hh"
 
+// ## Define basic properties for our simulation
+// We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don't clash with symbols from other libraries you may want to use in conjunction with Dumux. One could use these functions and classes by prefixing every use of these names by ::, but that would quickly become cumbersome and annoying. Rather, we simply import the entire Dumux namespace for general use.
+namespace Dumux {
+// The problem class is forward declared.
 template <class TypeTag>
 class RoughChannelProblem;
 
-// Specify the properties for the problem
+// We enter the namespace Properties, which is a sub-namespace of the namespace Dumux.
 namespace Properties {
 
-// Create new type tags
+// A TypeTag for our simulation is created which inherits from the shallow water model and the
+// cell centered, two-point-flux discretization scheme.
 namespace TTag {
 struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-} // end namespace TTag
-
+}
+// We define the grid of our simulation. We use a two-dimensional Yasp Grid.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::RoughChannel>
 { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
-// Set the problem property
+// We set the problem. The problem class specifies initial and boundary conditions and is defined below.
 template<class TypeTag>
 struct Problem<TypeTag, TTag::RoughChannel>
 { using type = Dumux::RoughChannelProblem<TypeTag>; };
 
-// Set the spatial parameters
+// We define the spatial parameters for our simulation. They values are specified in the corresponding spatialparameters header file, which is included above.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RoughChannel>
 {
 private:
+    // We define convenient shortcuts to the properties FVGridGeometry, Scalar, ElementVolumeVariables and VolumeVariables:
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
+    // Finally we set the spatial parameters:
 public:
     using type = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
 };
 
+// We enable caching for the FV grid geometry and the grid volume variables. The cache
+// stores values that were already calculated for later usage. This makes the simulation faster.
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = true; };
@@ -70,11 +87,17 @@ struct EnableFVGridGeometryCache<TypeTag, TTag::RoughChannel>
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = false; };
-} // end namespace Properties
 
+// We leave the namespace Properties.
+}
+
+// ## The problem class
+// We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
+// As this is a shallow water problem, we inherit from the basic ShallowWaterProblem.
 template <class TypeTag>
 class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 {
+    // We use convenient declarations that we derive from the property system.
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
@@ -93,16 +116,20 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
+    // This is the constructor of our problem class.
     RoughChannelProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
+        // We read the parameters from the params.input file.
         name_ = getParam<std::string>("Problem.Name");
-        exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
-        exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
         constManningN_ = getParam<Scalar>("Problem.ManningN");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         discharge_ = getParam<Scalar>("Problem.Discharge");
+        // We calculate the outflow boundary condition using the gaukler Manning Strickler formula.
         hBoundary_ = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
+        // We initialize the analytic solution to a verctor of the appropriate size filled with zeros.
+        exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
+        exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
     }
 
     // Get the analytical water depth
@@ -117,7 +144,7 @@ public:
         return exactVelocityX_;
     }
 
-    // Calculate the water depth with Gaukler-Manning-Strickler
+    // Get the water depth with Gaukler-Manning-Strickler
     Scalar gauklerManningStrickler(Scalar discharge, Scalar manningN, Scalar bedSlope)
     {
         using std::pow;
@@ -127,7 +154,7 @@ public:
         return pow(abs(discharge)*manningN/sqrt(bedSlope), 0.6);
     }
 
-    // calculate the analytical solution
+    // Get the analytical solution
     void analyticalSolution()
     {
         using std::abs;
@@ -143,13 +170,13 @@ public:
         }
     }
 
-    // The problem name is used as a prefix for files generated by the simulation.
+    // Get the problem name. It is used as a prefix for files generated by the simulation.
     const std::string& name() const
     {
         return name_;
     }
 
-     // In this model the bottom friction is the only source.
+    // Get the source term.
      NumEqVector source(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -158,23 +185,25 @@ public:
 
         NumEqVector source (0.0);
 
+        // In this model the bottom friction is the only source.
         source += bottomFrictionSource(element, fvGeometry, elemVolVars, scv);
 
         return source;
     }
 
-     // 'bottomFrictionSource' computes the source term due to bottom friction
+     // Get the source term due to bottom friction.
      NumEqVector bottomFrictionSource(const Element& element,
                                       const FVElementGeometry& fvGeometry,
                                       const ElementVolumeVariables& elemVolVars,
                                       const SubControlVolume &scv) const
      {
         NumEqVector bottomFrictionSource(0.0);
-
         const auto& volVars = elemVolVars[scv];
-// The bottom shear stess is the force per area, which works between the flow and the bed. It is calculated within the 'FrictionLaw'. In this model the 'FrictionLawManning is used (see 'params.input'). The bottom shear stress causes a loss of momentum. Therefore the first entry of 'bottomShearStress', the x-component, is put at the second entry of the source term, which goes down to the momentum balance equation in x directoin. Accordingly the second entry of the 'bottomShearStress' is put to the third component of the 'bottomFrictionSource'
+
+        // For the calculation of the source term due to bottom friction the two-dimensional bottom shear stess vector is needed. This is the force per area, which works between the flow and the bed. It is calculated within the 'FrictionLaw', which is a spatialParameter. In this model the 'FrictionLawManning is used (see 'params.input').
         Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).shearStress(volVars);
 
+        // The bottom shear stress causes a pure loss of momentum. Thus the first entry of the 'bottomFrictionSource', which is related to the mass balance equation is zero. The second entry of the 'bottomFricitonSource' corresponds to the momentum equation in x-direction and is therefore equal to the first, the x-component, of the 'bottomShearStress'. Accordingly the third entry of the 'bottomFrictionSource' is equal to the second component of the 'bottomShearStress'.
         bottomFrictionSource[0] = 0.0;
         bottomFrictionSource[1] = bottomShearStress[0];
         bottomFrictionSource[2] = bottomShearStress[1];
@@ -182,7 +211,7 @@ public:
         return bottomFrictionSource;
      }
 
-    // Specify the boundary condition type.
+    // We specify the boundary condition type.
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
@@ -191,13 +220,7 @@ public:
         return bcTypes;
     }
 
-     // Specifies the neumann boundary. ???
-     *
-     *  We need the Riemann invariants to compute the values depending of the boundary type.
-     *  Since we use a weak imposition we do not have a dirichlet value. We impose fluxes
-     *  based on q, h, etc. computed with the Riemann invariants
-     *
-
+     // We specify the neumann boundary. Due to the weak imposition we calculate the flux at the boundry with the Riemann invariants. The calculation of the Riemann invariants differ depending on the type of the boundary (h, q or no-flow boundary).
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
@@ -211,7 +234,7 @@ public:
         const auto gravity = this->spatialParams().gravity(scvf.center());
         std::array<Scalar, 3> boundaryStateVariables;
 
-        // impose discharge at the left side
+        // Calculate the rieman invariants for imposed discharge at the left side.
         if (scvf.center()[0] < 0.0 + eps_)
         {
             boundaryStateVariables = ShallowWater::fixedDischargeBoundary(discharge_,
@@ -221,7 +244,7 @@ public:
                                                                           gravity,
                                                                           nxy);
         }
-        // impose water depth at the right side
+        // Calculate the rieman invariants for impose water depth at the right side.
         else if (scvf.center()[0] > 100.0 - eps_)
         {
             boundaryStateVariables =  ShallowWater::fixedWaterDepthBoundary(hBoundary_,
@@ -231,14 +254,14 @@ public:
                                                                             gravity,
                                                                             nxy);
         }
-        // no flow boundary
+        // Calculate the rieman invarianty for the no-flow boundary.
         else
         {
             boundaryStateVariables[0] = insideVolVars.waterDepth();
             boundaryStateVariables[1] = -insideVolVars.velocity(0);
             boundaryStateVariables[2] = -insideVolVars.velocity(1);
         }
-
+        // We calculate the boundary fluxes based on a Riemann problem.
         auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
                                                         boundaryStateVariables[0],
                                                         insideVolVars.velocity(0),
@@ -257,15 +280,15 @@ public:
         return values;
     }
 
-    // Set the initial conditions. In this example constant initial conditions are used. Therefore the argument 'globalPos' is not needed. If you want to impose spatial variable, initial conditions you have to use the 'globalPos'.
+    // We set the initial conditions. In this example constant initial conditions are used. Therefore the argument 'globalPos' is not needed. If you want to impose spatial variable initial conditions, you have to use the 'globalPos'.
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        // Set the initial water depth to one meter.
+        // We set the initial water depth to one meter.
         values[0] = 1.0;
-        // Set the x-component of the initial velocity to zero.
+        // We set the x-component of the initial velocity to zero.
         values[1] = 0.0;
-        // Set the y-component of the initial velocity to zero.
+        // We set the y-component of the initial velocity to zero.
         values[2] = 0.0;
 
         return values;
@@ -274,20 +297,23 @@ public:
     // \}
 
 private:
-// Declare the privat variables of the problem.
-// Declare the variable for the analytic solution.
+    // We declare the privat variables of the problem. They are initialized in the problems constructor
+    // We declare the variable for the analytic solution.
     std::vector<Scalar> exactWaterDepth_;
     std::vector<Scalar> exactVelocityX_;
-    Scalar hBoundary_;
-// Declare a variable for thanalytic solution is only available for const friction.
+    // constant friction value. An analytic solution is only available for const friction. If you want to run the simulation with a non constant friciton value (specified in the spatialParams) you have to remove the analytic solution.
     Scalar constManningN_;
+    // The constant bed slope.
     Scalar bedSlope_;
-// discharge at the inflow boundary
+    // The water depth at the outflow boundary.
+    Scalar hBoundary_;
+    // The discharge at the inflow boundary.
     Scalar discharge_;
+    // eps is used as a small value for the definition of the boundry conditions
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
 };
-
-} //end namespace Dumux
+// We leave the namespace Dumux.
+}
 
 #endif
