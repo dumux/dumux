@@ -1023,6 +1023,126 @@ public:
 
 /*!
  * \ingroup Geometry
+ * \brief A class for segment--segment intersection in 3d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 3, 1, 1>
+{
+    enum { dimworld = 3 };
+    enum { dim1 = 1 };
+    enum { dim2 = 1 };
+
+    // base epsilon for floating point comparisons
+    static constexpr typename Policy::ctype eps_ = 1.5e-7;
+
+public:
+    using ctype = typename Policy::ctype;
+    using Point = typename Policy::Point;
+    using Intersection = typename Policy::Intersection;
+
+    //! Deprecated alias, will be removed after 3.1
+    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
+
+    /*!
+     * \brief Colliding two segments
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection The intersection point
+     * \note This overload is used when point-like intersections are seeked
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+
+        const auto v1 = geo1.corner(1) - geo1.corner(0);
+        const auto v2 = geo2.corner(1) - geo2.corner(0);
+        const auto ac = geo2.corner(0) - geo1.corner(0);
+
+        const auto v1Norm = v1.two_norm();
+        const auto eps = eps_*v1Norm;
+        const auto eps2 = eps*v1Norm;
+        const auto eps3 = eps2*v1Norm;
+
+        const auto n = crossProduct(v1, v2);
+
+        // first check if segments are parallel
+        using std::abs;
+        if ( n.two_norm2() < eps3*v1Norm )
+        {
+            // check if they lie on the same line
+            const auto acNorm = ac.two_norm();
+            if (acNorm > eps)
+                return false;
+
+            // they lie on the same line,
+            // if so, point intersection can only be one of the corners
+            const auto sp = v1*v2;
+            if ( sp < 0.0 )
+            {
+                if ( acNorm < eps2 )
+                { intersection = geo2.corner(0); return true; }
+
+                if ( (geo2.corner(1) - geo1.corner(1)).two_norm2() < eps2 )
+                { intersection = geo2.corner(1); return true; }
+            }
+            else
+            {
+                if ( (geo2.corner(1) - geo1.corner(0)).two_norm2() < eps2 )
+                { intersection = geo2.corner(1); return true; }
+
+                if ( (geo2.corner(0) - geo1.corner(1)).two_norm2() < eps2 )
+                { intersection = geo2.corner(0); return true; }
+            }
+
+            // no intersection
+            return false;
+        }
+
+        // check if segments are coplanar
+        if ( abs(ac*n) > eps3 )
+            return false;
+
+        // in-plane normal vector on v1
+        auto v1Normal = crossProduct(v1, n);
+        v1Normal /= v1Normal.two_norm();
+
+        // intersection point on v2 in local coords
+        const auto t2 = (ac*v1Normal) / (v2*v1Normal);
+
+        // check if the local coords are valid
+        if (t2 < -1.0*eps_ || t2 > 1.0 + eps_)
+            return false;
+
+        // compute global coordinates
+        auto isPoint = geo2.global(t2);
+
+        // check if point lies on v1
+        if (intersectsPointGeometry(isPoint, geo1))
+        {
+            intersection = std::move(isPoint);
+            return true;
+        }
+
+        return false;
+    }
+
+    /*!
+     * \brief Colliding two segments
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection Container to store corners of intersection segment
+     * \note this overload is used when segment-like intersections are seeked
+     * \todo implement this query
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+        DUNE_THROW(Dune::NotImplemented, "Segment-segment intersection detection for segment-like intersections in 3d");
+    }
+};
+
+/*!
+ * \ingroup Geometry
  * \brief A class for polygon--segment intersection in 3d space
  */
 template <class Geometry1, class Geometry2, class Policy>
