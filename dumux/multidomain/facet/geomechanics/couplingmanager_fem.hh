@@ -1374,7 +1374,24 @@ private:
             }
         }
         else
-            DUNE_THROW(Dune::NotImplemented, "Contact mechanics in 3d");
+        {
+            auto& tangent0 = basis[0];
+            auto& tangent1 = basis[1];
+            auto& normal = basis[2];
+
+            tangent0 = lgGeometry.corner(0) - center;
+            tangent0 /= tangent0.two_norm();
+
+            normal = crossProduct(tangent0, lgGeometry.corner(1) - center);
+            normal /= normal.two_norm();
+
+            // normal should point out of master side
+            const auto d = center-masterElement.geometry().center();
+            if (normal*d < 0.0)
+                normal *= -1.0;
+
+            tangent1 = crossProduct(normal, tangent0);
+        }
 
         return basis;
     }
