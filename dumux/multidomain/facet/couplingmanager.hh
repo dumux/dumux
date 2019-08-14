@@ -32,7 +32,7 @@
 #include <dumux/discretization/evalsolution.hh>
 
 namespace Dumux {
-namespace FacetCoupling{
+namespace FacetCoupling {
 
 /*!
  * \ingroup FacetCoupling
