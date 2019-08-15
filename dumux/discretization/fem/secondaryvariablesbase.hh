@@ -76,7 +76,7 @@ public:
     { return priVars_; }
 
     //! Extrusion of the domain
-    const Scalar extrusionFactor()
+    const Scalar extrusionFactor() const
     { return extrusionFactor_; }
 
 private:
