@@ -157,7 +157,10 @@ public:
         // instationary local residua
         else
         {
-            DUNE_THROW(Dune::NotImplemented, "Instationary FEM assembly");
+            if (GridGeometry::isStandardGalerkin())
+                return localResidual_.eval(element_, feGeometry_, prevElemSol_, curElemSol_, isImplicit());
+            else
+                DUNE_THROW(Dune::NotImplemented, "Instationary non-standard-galerkin FEM assembly");
         }
     }
 

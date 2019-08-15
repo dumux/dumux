@@ -136,7 +136,58 @@ public:
                                bool doImplicit = true) const
     {
         assert(timeLoop_ && "no time loop set for storage term evaluation");
-        DUNE_THROW(Dune::NotImplemented, "Instationary FEM assembly");
+        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+        using AnsatzLocalBasis = typename AnsatzSpaceBasis::LocalView::Tree::FiniteElement::Traits::LocalBasisType;
+        using IpDataAnsatz = FEIntegrationPointData<GlobalPosition, AnsatzLocalBasis>;
+
+        const auto& ansatzLocalView = feGeometry.feBasisLocalView();
+        const auto& ansatzLocalBasis = ansatzLocalView.tree().finiteElement().localBasis();
+        const auto ansatzNumLocalDofs = ansatzLocalBasis.size();
+
+        ElementResidualVector residual(ansatzNumLocalDofs);
+
+        // choose elemSol to evaluate sources/fluxes depending on implicit/explicit
+        const auto& elemSol = doImplicit ? curElemSol : prevElemSol;
+
+        const auto& geometry = element.geometry();
+        const auto& quadRule = Dune::QuadratureRules<Scalar, dim>::rule(geometry.type(), intOrder_);
+        for (const auto& quadPoint : quadRule)
+        {
+            // Obtain and store shape function values and gradients at the current quad point
+            IpDataAnsatz ipDataAnsatz(geometry, quadPoint.position(), ansatzLocalBasis);
+
+            // calculate secondary variables for the previous and the current solution at the ip
+            SecondaryVariables curSecVars, prevSecVars;
+            curSecVars.update(curElemSol, problem(), element, ipDataAnsatz);
+            prevSecVars.update(prevElemSol, problem(), element, ipDataAnsatz);
+
+            // evaluate storage term
+            auto storage = asImp_().computeStorage(this->problem(), element, feGeometry, curElemSol, ipDataAnsatz, curSecVars);
+            storage -= asImp_().computeStorage(this->problem(), element, feGeometry, prevElemSol, ipDataAnsatz, prevSecVars);
+            storage /= timeLoop_->timeStepSize();
+
+            // choose secondary variables depending on implicit/explicit
+            const auto& secVars = doImplicit ? curSecVars : prevSecVars;
+
+            // evaluate source term contribution
+            const auto source = asImp_().computeSource(this->problem(), element, feGeometry, elemSol, ipDataAnsatz, secVars);
+
+            // evaluate flux term contribution
+            const auto flux = asImp_().computeFlux(this->problem(), element, feGeometry, elemSol, ipDataAnsatz, secVars);
+
+            // add entries to residual vector
+            Scalar qWeight = quadPoint.weight()*geometry.integrationElement(quadPoint.position());
+            for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                for (unsigned int i = 0; i < ansatzNumLocalDofs; ++i)
+                    residual[i][eqIdx] -= qWeight*secVars.extrusionFactor()
+                                          *( (storage[eqIdx]+source[eqIdx])*ipDataAnsatz.shapeValue(i)
+                                             + flux[eqIdx]*ipDataAnsatz.gradN(i) );
+        }
+
+        // add contribution from neumann segments
+        residual += evalNeumannSegments(element, feGeometry, elemSol);
+
+        return residual;
     }
 
     /*!
