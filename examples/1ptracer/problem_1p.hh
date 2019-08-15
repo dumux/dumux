@@ -16,81 +16,103 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \ingroup TracerTests
- * \brief The properties for the incompressible test
- */
-
+// ## Header guard
 #ifndef DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
 #define DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
 
+// ## Include files
+
+// The dune grid interphase is included here:
 #include <dune/grid/yaspgrid.hh>
 
+// The cell centered, two-point-flux discretization scheme is included:
 #include <dumux/discretization/cctpfa.hh>
+// The one-phase flow model is included:
 #include <dumux/porousmediumflow/1p/model.hh>
+// This is the porous medium problem class that this class is derived from:
 #include <dumux/porousmediumflow/problem.hh>
+
+// The fluid properties are specified in the following headers:
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+
+// The local residual for incompressible flow is included:
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
+// We include the header that specifies all spatially variable parameters:
 #include "spatialparams_1p.hh"
 
+// ## Define basic properties for our simulation
+// We enter the namespace Dumux in order to import the entire Dumux namespace for general use
 namespace Dumux {
 
-/*!
- * \ingroup TracerTests
- * \brief The properties for the incompressible test
- */
-// forward declarations
+// The problem class is forward declared:
 template<class TypeTag>
 class OnePTestProblem;
 
+// We enter the namespace Properties, which is a sub-namespace of the namespace Dumux:
 namespace Properties {
-// Create new type tags
+// A TypeTag for our simulation is created which inherits from the one-phase flow model and the
+// cell centered, two-point-flux discretization scheme.
 namespace TTag {
 struct IncompressibleTest { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
-} // end namespace TTag
+}
 
-// Set the grid type
+// We use a structured 2D grid:
 template<class TypeTag>
 struct Grid<TypeTag, TTag::IncompressibleTest> { using type = Dune::YaspGrid<2>; };
 
-// Set the problem type
+// The problem class specifies initial and boundary conditions:
 template<class TypeTag>
 struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem<TypeTag>; };
 
+// We define the spatial parameters for our simulation:
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::IncompressibleTest>
 {
+    // We define convenient shortcuts to the properties FVGridGeometry and Scalar:
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    // Finally we set the spatial parameters:
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
+// The local residual contains analytic derivative methods for incompressible flow:
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
-// the fluid system
+  // In the following we define our fluid properties.
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::IncompressibleTest>
 {
+    // We define a convenient shortcut to the property Scalar:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    // We create a fluid system that consists of one liquid water phase. We use the simple
+    // description of water, which means we do not use tabulated values but more general equations of state.
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
-// Enable caching
+// We enable caching for the grid volume variables
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+// We enable caching for the grid flux variables
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+// We enable caching for the FV grid geometry
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-} // end namespace Properties
+//The cache stores values that were already calculated for later usage. This makes the simulation faster.
 
+// We leave the namespace Properties.
+}
+
+// ## The problem class
+// We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
+// As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
 template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
+    // We use convenient declarations that we derive from the property system.
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -104,62 +126,55 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
+    // This is the constructor of our problem class:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary control volume.
-     *
-     * \param element The finite element
-     * \param scvf The sub-control volume face
-     */
+    // First, we define the type of boundary conditions depending on location. Two types of boundary  conditions
+    // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
+    // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
+    // Mixed boundary conditions (different types for different equations on the same boundary) are not accepted.
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const
     {
         BoundaryTypes values;
+        // we retreive the global position, i.e. the  vector  including  the  global  coordinates
+        // of  the  finite  volume
         const auto globalPos = scvf.ipGlobal();
-
+        // we define a small epslon value
         Scalar eps = 1.0e-6;
+        // We specify Dirichlet boundaries on the top and bottom of our domain:
         if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
         else
+            // The top and bottom of our domain are Neumann boundaries:
             values.setAllNeumann();
 
         return values;
     }
 
-    /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
-     *
-     * \param element The finite element
-     * \param scvf The sub-control volume face
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
+    // Second, we specify the values for the Dirichlet boundaries. We need to fix values of our  primary variable
     PrimaryVariables dirichlet(const Element &element,
                                const SubControlVolumeFace &scvf) const
     {
+        // we retreive again the global position
         const auto& pos = scvf.ipGlobal();
         PrimaryVariables values(0);
+        // we assign pressure values in [Pa] according to a pressure gradient to 1e5 Pa at the top and 1.1e5 Pa at the bottom.
         values[0] = 1.0e+5*(1.1 - pos[dimWorld-1]*0.1);
         return values;
     }
 
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     *
-     * This is not specific to the discretization. By default it just
-     * throws an exception so it must be overloaded by the problem if
-     * no energy equation is used.
-     */
+    // We need to specify a constant temperature for our isothermal problem.
+    // Fluid properties that depend on temperature will be calculated with this value.
     Scalar temperature() const
     {
         return 283.15; // 10°C
     }
 
+    // This is everything the one phase problem class contains.
 };
 
-} // end namespace Dumux
-
+// We leave the namespace Dumux.
+}
 #endif
