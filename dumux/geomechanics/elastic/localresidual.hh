@@ -80,6 +80,28 @@ public:
     using ParentType::ParentType;
 
     /*!
+     * \brief For the elastic model the storage term is zero since
+     *        we neglect inertia forces.
+     *
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param feGeometry The finite-element geometry
+     * \param elemSol The element solution vector
+     * \param ipData The trial and ansatz space shape function values/gradients
+     *               evaluated at the integration point
+     * \param secVars The secondary variables evaluated at the integration point
+     */
+    template<class IpData, class ElementSolution>
+    NumEqVector computeStorage(const Problem& problem,
+                               const Element& element,
+                               const FEElementGeometry& feGeometry,
+                               const ElementSolution& elemSol,
+                               const IpData& ipData,
+                               const SecondaryVariables& secVars) const
+    { return NumEqVector(0.0); }
+
+    /*!
      * \brief Calculate the flux term of the equation
      *
      * \param problem The problem to solve
