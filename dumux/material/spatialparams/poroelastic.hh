@@ -337,7 +337,7 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
-    template<class SolidSystem, class IpData, class ElementSolution>
+    template<class IpData, class ElementSolution>
     Scalar porosity(const Element& element,
                     const IpData& ipData,
                     const ElementSolution& elemSol) const
