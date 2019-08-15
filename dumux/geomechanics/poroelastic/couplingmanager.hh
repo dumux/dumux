@@ -182,7 +182,7 @@ public:
     {
         // make sure the two grids are really the same. Note that if the two grids
         // happen to have equal number of elements by chance, we don't detect this source of error.
-        if (pmFlowProblem.gridGeometry().gridView().size(0) != poroMechanicalProblem.gridGeometry().gridView().size(0))
+        if (pmFlowProblem->gridGeometry().gridView().size(0) != poroMechanicalProblem->gridGeometry().gridView().size(0))
             DUNE_THROW(Dune::InvalidStateException, "The two sub-problems are assumed to operate on the same mesh!");
 
         indexMap_ = indexMap;
@@ -312,7 +312,7 @@ public:
 
     /*!
      * \brief We need this overload to avoid ambiguity. However, for the porous medium flow
-     *        domain weonly have to update the solution, which is done in the parent class.
+     *        domain we only have to update the solution, which is done in the parent class.
      */
     template< std::size_t j, class PMFlowLocalAssembler >
     void updateCouplingContext(Dune::index_constant<PMFlowId> pmFlowDomainId,
