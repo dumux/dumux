@@ -715,7 +715,7 @@ public:
     evalCouplingResidual(LagrangeIdType domainI,
                          const LagrangeDomainLocalAssembler& lagrangeLocalAssembler,
                          Dune::index_constant<id> domainJ,
-                         GridIndexType<lagrangeId> dofIdxGlobalJ)
+                         GridIndexType<id> dofIdxGlobalJ)
     {
         using ResidualType = typename LocalResidual<lagrangeId>::ElementResidualVector;
         ResidualType residual(lagrangeLocalAssembler.feGeometry().feBasisLocalView().size());
@@ -1051,7 +1051,7 @@ public:
                                 UpdatableElementVolVars& elemVolVars,
                                 UpdatableFluxVarCache& elemFluxVarsCache)
     {
-        BulkFacetFlowManager::updateCoupledVariables(matrixFlowId, localAssemblerI, elemVolVars, elemFluxVarsCache);
+        // only use update of the poro-mech manager which includes all variables
         PoroMechManager::updateCoupledVariables(matrixFlowId, localAssemblerI, elemVolVars, elemFluxVarsCache);
     }
 
