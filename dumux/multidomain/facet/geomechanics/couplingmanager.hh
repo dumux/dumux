@@ -345,10 +345,13 @@ public:
      * \param element The (d-1)-dimensional facet grid element
      * \param scv The (d-1)-dimensional scv for which the aperture is to be evaluated.
      * \param initialAperture The initial aperture of the scv
+     * \param u The displacement field to compute with
      */
+    template<class DisplacementField>
     Scalar<facetFlowId> computeAperture(const Element<facetFlowId>& element,
                                         const typename GridGeometry<facetFlowId>::SubControlVolume& scv,
-                                        Scalar<facetFlowId> initialAperture) const
+                                        Scalar<facetFlowId> initialAperture,
+                                        const DisplacementField& u) const
     {
         static constexpr auto bulkGridId = BulkFacetMechMapper::template gridId<bulkDim>();
         static constexpr auto lowDimGridId = BulkFacetMechMapper::template gridId<facetDim>();
@@ -367,12 +370,20 @@ public:
                 if (intersectsPointGeometry(scv.center(), subSegment.geometry()))
                 {
                     const auto lagrangeElem = problem(lagrangeId).gridGeometry().element(subSegmentIdxPairs.first);
-                    return computeAperture(lagrangeElem, scv.center(), initialAperture);
+                    return computeAperture(lagrangeElem, scv.center(), initialAperture, u);
                 }
             }
 
         DUNE_THROW(Dune::InvalidStateException, "HUE");
     }
+
+    /*!
+     * \brief Overload of the above function defaulting to the current displacement field.
+     */
+    Scalar<facetFlowId> computeAperture(const Element<facetFlowId>& element,
+                                        const typename GridGeometry<facetFlowId>::SubControlVolume& scv,
+                                        Scalar<facetFlowId> initialAperture) const
+    { return computeAperture(element, scv, initialAperture, curSol_[mechanicsId]); }
 
     /*!
      * \brief Computes the aperture within a lower-dimensional
@@ -382,14 +393,25 @@ public:
      * \param element The (d-1)-dimensional facet grid element
      * \param globalPos The global position on the facet element.
      * \param initialAperture The initial aperture of the scv
+     * \param u The displacement field to compute with
+     */
+    template<class DisplacementField>
+    Scalar<facetFlowId> computeAperture(const Element<lagrangeId>& element,
+                                        const GlobalPosition<lagrangeId>& globalPos,
+                                        Scalar<lagrangeId> initialAperture,
+                                        const DisplacementField& u) const
+    {
+        const auto deltaUN = computeNormalDisplacementJump(element, globalPos, u);
+        return initialAperture - deltaUN;
+    }
+
+    /*!
+     * \brief Overload of the above function defaulting to the current displacement field.
      */
     Scalar<facetFlowId> computeAperture(const Element<lagrangeId>& element,
                                         const GlobalPosition<lagrangeId>& globalPos,
                                         Scalar<lagrangeId> initialAperture) const
-    {
-        const auto deltaUN = computeNormalDisplacementJump(element, globalPos);
-        return initialAperture - deltaUN;
-    }
+    { return computeAperture(element, globalPos, initialAperture, curSol_[mechanicsId]); }
 
     /*!
      * \brief Computes the jump in displacement within a
@@ -398,9 +420,12 @@ public:
      *
      * \param element The (d-1)-dimensional facet grid element
      * \param globalPos The global position on the facet element.
+     * \param u The displacement field to compute with
      */
+    template<class DisplacementField>
     GlobalPosition<mechanicsId> computeDisplacementJump(const Element<lagrangeId>& element,
-                                                        const GlobalPosition<lagrangeId>& globalPos) const
+                                                        const GlobalPosition<lagrangeId>& globalPos,
+                                                        const DisplacementField& u) const
     {
         GlobalPosition<mechanicsId> deltaU(0.0);
         const auto& segment = getContactSurfaceSegment(element);
@@ -415,12 +440,12 @@ public:
             {
                 const auto masterMechIdx = subSegment.getMasterSideElementIndex();
                 const auto masterMechElement = problem(mechanicsId).fvGridGeometry().element(masterMechIdx);
-                const auto masterMechElemSol = elementSolution(masterMechElement, curSol_[mechanicsId], problem(mechanicsId).fvGridGeometry());
+                const auto masterMechElemSol = elementSolution(masterMechElement, u, problem(mechanicsId).fvGridGeometry());
                 deltaU += evalSolution(masterMechElement, masterMechElement.geometry(), masterMechElemSol, globalPos);
 
                 const auto slaveMechIdx = subSegment.getSlaveSideElementIndex();
                 const auto slaveMechElement = problem(mechanicsId).fvGridGeometry().element(slaveMechIdx);
-                const auto slaveMechElemSol = elementSolution(slaveMechElement, curSol_[mechanicsId], problem(mechanicsId).fvGridGeometry());
+                const auto slaveMechElemSol = elementSolution(slaveMechElement, u, problem(mechanicsId).fvGridGeometry());
                 deltaU -= evalSolution(slaveMechElement, slaveMechElement.geometry(), slaveMechElemSol, globalPos);
                 return deltaU;
             }
@@ -430,18 +455,28 @@ public:
     }
 
     /*!
+     * \brief Overload of the above function defaulting to the current displacement field.
+     */
+    GlobalPosition<mechanicsId> computeDisplacementJump(const Element<lagrangeId>& element,
+                                                        const GlobalPosition<lagrangeId>& globalPos) const
+    { return computeDisplacementJump(element, globalPos, curSol_[mechanicsId]); }
+
+    /*!
      * \brief Computes the jump in tangential displacement within a
      *        lower-dimensional element at the given position as a
      *        function of the actual mechanical deformation.
      *
      * \param element The (d-1)-dimensional facet grid element
      * \param globalPos The global position on the facet element.
+     * \param u The displacement field to compute with
      */
+    template<class DisplacementField>
     GlobalPosition<mechanicsId> computeTangentialDisplacementJump(const Element<facetFlowId>& element,
-                                                                  const GlobalPosition<facetFlowId>& globalPos) const
+                                                                  const GlobalPosition<facetFlowId>& globalPos,
+                                                                  const DisplacementField& u) const
     {
         // compute displacement jump
-        const auto deltaU = computeDisplacementJump(element, globalPos);
+        const auto deltaU = computeDisplacementJump(element, globalPos, u);
 
         // subtract normal part of it
         const auto& normal = getContactSurfaceSegment(element).getBasisVector(dimWorld-1);
@@ -452,23 +487,40 @@ public:
     }
 
     /*!
+     * \brief Overload of the above function defaulting to the current displacement field.
+     */
+    GlobalPosition<mechanicsId> computeTangentialDisplacementJump(const Element<facetFlowId>& element,
+                                                                  const GlobalPosition<facetFlowId>& globalPos) const
+    { return computeTangentialDisplacementJump(element, globalPos, curSol_[mechanicsId]); }
+
+    /*!
      * \brief Computes the jump in normal displacement within a
      *        lower-dimensional element at the given position as a
      *        function of the actual mechanical deformation.
      *
      * \param element The (d-1)-dimensional facet grid element
      * \param globalPos The global position on the facet element.
+     * \param u The displacement field to compute with
      */
+    template<class DisplacementField>
     Scalar<mechanicsId> computeNormalDisplacementJump(const Element<facetFlowId>& element,
-                                                      const GlobalPosition<facetFlowId>& globalPos) const
+                                                      const GlobalPosition<facetFlowId>& globalPos,
+                                                      const DisplacementField& u) const
     {
         // compute displacement jump
-        const auto deltaU = computeDisplacementJump(element, globalPos);
+        const auto deltaU = computeDisplacementJump(element, globalPos, u);
 
         // evaluate the part normal to the master side
         const auto& normal = getContactSurfaceSegment(element).getBasisVector(dimWorld-1);
         return deltaU*normal;
     }
+
+    /*!
+     * \brief Overload of the above function defaulting to the current displacement field.
+     */
+    Scalar<mechanicsId> computeNormalDisplacementJump(const Element<facetFlowId>& element,
+                                                      const GlobalPosition<facetFlowId>& globalPos) const
+    { return computeNormalDisplacementJump(element, globalPos, curSol_[mechanicsId]); }
 
     /*!
      * \brief Returns the contact force action on a sub-control
