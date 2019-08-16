@@ -1138,6 +1138,10 @@ public:
     const SolutionVector& curSol() const
     { return curSol_; }
 
+    //! return the index map between the mechanical and the bulk flow sub-domain
+    const BulkIndexMap& bulkIndexMap() const
+    { return bulkIndexMap_; }
+
 private:
     //! Sets up the coupling stencils between mechanical and facet flow domain
     void initMechFacetStencilsAndEmbedments_(const BulkFacetFlowMapper& bulkFacetFlowMapper)
