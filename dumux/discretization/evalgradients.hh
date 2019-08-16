@@ -180,16 +180,12 @@ auto evalGradients(const Element& element,
         const auto& localPos = geometry.local(globalPos);
         IpDataAnsatz ipData(geometry, localPos, ansatzLocalBasis);
 
-        // the inverse transposed of the jacobian matrix
-        const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
-
         // interpolate the gradients
         Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( GlobalPosition(0.0) );
         for (int i = 0; i < ansatzLocalView.size(); ++i)
         {
             // the global shape function gradient
-            GlobalPosition gradN;
-            jacInvT.mv(ipData.gradN(i), gradN);
+            const auto& gradN = ipData.gradN(i);
 
             // add gradient to global privar gradients
             for (unsigned int pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
@@ -204,7 +200,7 @@ auto evalGradients(const Element& element,
     }
     else
     {
-        DUNE_THROW(Dune::NotImplemented, "Element vertices have different phase states. Enforce calculation by setting ignoreState to true.");
+        DUNE_THROW(Dune::NotImplemented, "Element dofs have different phase states. Enforce calculation by setting ignoreState to true.");
     }
 }
 
