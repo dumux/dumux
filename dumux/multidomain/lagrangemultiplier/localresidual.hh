@@ -183,6 +183,23 @@ public:
 
         return residual;
     }
+
+    /*!
+     * \brief Compute the element local residual for instationary problems
+     *        with ansatz and trial space being identical.
+     *
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param
+     * \todo TODO Implement this properly and doc
+     */
+    template<class ElementSolution>
+    ElementResidualVector eval(const Element& element,
+                               const FEElementGeometry& feGeometry,
+                               const ElementSolution& prevElemSol,
+                               const ElementSolution& curElemSol,
+                               bool doImplicit = true) const
+    { return eval(element, feGeometry, curElemSol); }
 };
 
 } // end namespace Dumux
