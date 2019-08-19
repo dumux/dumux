@@ -577,13 +577,25 @@ private:
 
             // the elements couple to all dofs in the other domain
             const auto elemDofsPoroMech = getPoroMechElementDofs_(poroMechElement);
-            const auto elemDofsFlow = getPoroMechElementDofs_(element);
+            const auto elemDofsFlow = getFlowElementDofs_(element);
 
             auto& poroMechStencil = poroMechCouplingMap_[poroMechElemIdx];
             auto& pmFlowStencil = pmFlowCouplingMap_[eIdx];
 
-            poroMechStencil.insert(poroMechStencil.end(), elemDofsPoroMech.begin(), elemDofsPoroMech.end());
-            pmFlowStencil.insert(pmFlowStencil.end(), elemDofsFlow.begin(), elemDofsFlow.end());
+            poroMechStencil.insert(poroMechStencil.end(), elemDofsFlow.begin(), elemDofsFlow.end());
+            pmFlowStencil.insert(pmFlowStencil.end(), elemDofsPoroMech.begin(), elemDofsPoroMech.end());
+        }
+
+        // make stencils unique
+        for (auto& stencil : pmFlowCouplingMap_)
+        {
+            std::sort(stencil.begin(), stencil.end());
+            stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
+        }
+        for (auto& stencil : poroMechCouplingMap_)
+        {
+            std::sort(stencil.begin(), stencil.end());
+            stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
         }
     }
 
@@ -616,6 +628,21 @@ private:
         result.reserve(feBasisLocalView.size());
         for (unsigned int i = 0; i < feBasisLocalView.size(); ++i)
             result.push_back(feBasisLocalView.index(i));
+
+        return result;
+    }
+
+    //! extract dofs inside an element (box scheme)
+    std::vector<GridIndexType<poroMechId>> getFlowElementDofs_(const Element<pmFlowId>& element) const
+    {
+        std::vector<GridIndexType<pmFlowId>> result;
+
+        auto fvGeometry = localView(this->problem(pmFlowId).gridGeometry());
+        fvGeometry.bindElement(element);
+
+        result.reserve(fvGeometry.numScv());
+        for (const auto& scv : scvs(fvGeometry))
+            result.push_back(scv.dofIndex());
 
         return result;
     }
