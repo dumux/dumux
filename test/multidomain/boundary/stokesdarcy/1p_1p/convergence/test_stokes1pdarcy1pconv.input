@@ -1,0 +1,41 @@
+[Darcy.Grid]
+UpperRight = 1 1
+Cells = 10 10
+Refinement = 2
+
+[Stokes.Grid]
+LowerLeft = 0 1
+UpperRight = 1 2
+Cells = 10 10
+Refinement = 3
+
+[Stokes.Problem]
+Name = stokes
+
+[Darcy.Problem]
+Name = darcy
+
+[Darcy.SpatialParams]
+AlphaBeaversJoseph = 1.0
+
+[Problem]
+Name = test_stokes1pdarcy1pconv
+EnableGravity = false
+EnableInertiaTerms = true
+
+[Vtk]
+AddVelocity = 1
+WriteFaceData = true
+
+[Darcy.Vtk]
+AddVelocity = 1
+
+[Mpfa]
+Q = 0.5
+
+[Newton]
+MaxRelativeShift = 1.0e-8
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
