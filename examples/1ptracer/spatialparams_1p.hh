@@ -59,7 +59,7 @@ public:
     }
 
     // ### Properties of the porous matrix
-    // We define the (intrinsic) permeability \f$[m^2]\f$ using the generated random permeability field. In this test, we use element-wise distributed permeabilities.
+    // We define the (intrinsic) permeability $`[m^2]`$ using the generated random permeability field. In this test, we use element-wise distributed permeabilities.
     template<class ElementSolution>
     const PermeabilityType& permeability(const Element& element,
                                          const SubControlVolume& scv,
@@ -69,7 +69,7 @@ public:
     }
 
 
-    // We set the porosity \f$[-]\f$ for the whole domain.
+    // We set the porosity $`[-]`$ for the whole domain.
     Scalar porosityAtPos(const GlobalPosition &globalPos) const
     { return 0.2; }
 

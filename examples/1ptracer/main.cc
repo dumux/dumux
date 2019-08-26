@@ -16,9 +16,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-// ## The main file
-// We look now at the main file for the tracer problem. We setup two problems in this file and solve them sequentially, first the 1p problem and afterwards the tracer problem. The result of the 1p problem is the pressure distribution in the problem domain. We use it to calculate the volume fluxes, which act as an input for the tracer problem. Based on this volume fluxes, we calculate the transport of a tracer in the following tracer problem.
 
+// We look now at the main file for the tracer problem. We setup two problems in this file and solve them sequentially, first the 1p problem and afterwards the tracer problem. The result of the 1p problem is the pressure distribution in the problem domain. We use it to calculate the volume fluxes, which act as an input for the tracer problem. Based on this volume fluxes, we calculate the transport of a tracer in the following tracer problem.
 // ### Includes
 #include <config.h>
 
@@ -46,7 +45,7 @@
 
 // The following file contains the class, which defines the sequential linear solver backends.
 #include <dumux/linear/seqsolverbackend.hh>
-// Further we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
+// Further we include the assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
 #include <dumux/assembly/fvassembler.hh>
 // The containing class in the following file defines the different differentiation methods used to compute the derivatives of the residual.
 #include <dumux/assembly/diffmethod.hh>
@@ -76,7 +75,6 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // ### Create the grid
-
     // A gridmanager tries to create the grid either from a grid file or the input file. We solve both problems on the same grid. Hence, the grid is only created once using the type tag of the 1p problem.
     GridManager<GetPropType<OnePTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
@@ -86,10 +84,8 @@ int main(int argc, char** argv) try
 
     // ### Setup and solving of the 1p problem
     // In the following section, we setup and solve the 1p problem. As the result of this problem, we obtain the pressure distribution in the problem domain.
-
     // #### Setup
     // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-
     // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
     using FVGridGeometry = GetPropType<OnePTypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
@@ -112,13 +108,13 @@ int main(int argc, char** argv) try
     auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, fvGridGeometry);
     onePGridVariables->init(p);
 
-    // #### Assemling the linear system
+    // #### Assembling the linear system
     // We created and inizialize the assembler.
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, fvGridGeometry, onePGridVariables);
     assemblerOneP->setLinearSystem(A, r);
 
-    // We assemble the local jacobian and the residual and stop the time needed, which is displayed in the terminal output, using the assembly timer. Further, we start the timer to evaluate the total time of the assembly, solving and updating.
+    // We assemble the local jacobian and the residual and stop the time needed, which is displayed in the terminal output, using the assemblyTimer. Further, we start the timer to evaluate the total time of the assembly, solving and updating.
     Dune::Timer timer;
     Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
     assemblerOneP->assembleJacobianAndResidual(p);
@@ -207,9 +203,7 @@ int main(int argc, char** argv) try
 
 
     // ### Setup and solving of the tracer problem
-
     // #### Setup
-
     // Similar to the 1p problem, we first create and initialize the problem.
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
     auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
@@ -253,6 +247,7 @@ int main(int argc, char** argv) try
     // For the time loop we set a check point.
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 
+    // #### The time loop
     // We start the time loop and calculate a new time step as long as tEnd is reached. In every single time step the problem is assembled and solved.
     timeLoop->start(); do
     {
