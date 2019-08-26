@@ -129,11 +129,10 @@ public:
         using std::sin;
 
         source[Indices::conti0EqIdx]  = -sin(2*M_PI*x);
-        source[Indices::momentumXBalanceIdx] = -2*M_PI*y*y*sin(4*M_PI*x)
-                                               -2*y*sin(2*M_PI*x)
-                                               +2*M_PI*cos(2*M_PI*x) ;
-        source[Indices::momentumYBalanceIdx] =  -2*M_PI*y*y*cos(2*M_PI*x)
-                                                -4*M_PI*M_PI*sin(2*M_PI*x);
+        source[Indices::momentumXBalanceIdx] = -4*M_PI*y*y*sin(2*M_PI*x)*cos(2*M_PI*x)
+                                               -2*y*sin(2*M_PI*x) + 2*M_PI*cos(2*M_PI*x);
+
+        source[Indices::momentumYBalanceIdx] = -2*M_PI*y*y*cos(2*M_PI*x) - 4*M_PI*M_PI*y*sin(2*M_PI*x);
 
         return source;
     }
