@@ -154,9 +154,9 @@ public:
 
     /*!
      * \brief The constructor for instationary problems
-     * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
-     *       it is however guaranteed that the state after assembly will be the same as before
+     * \note this constructor is deprecated (use the one receiving the previous solution instead)
      */
+    [[deprecated("Please use constructor taking the previous solution instead. Will be removed after release 3.2!")]]
     MultiDomainFVAssembler(ProblemTuple&& problem,
                            FVGridGeometryTuple&& fvGridGeometry,
                            GridVariablesTuple&& gridVariables,
@@ -167,6 +167,28 @@ public:
     , fvGridGeometryTuple_(fvGridGeometry)
     , gridVariablesTuple_(gridVariables)
     , timeLoop_(timeLoop)
+    , isStationaryProblem_(false)
+    {
+        std::cout << "Instantiated assembler for an instationary problem." << std::endl;
+    }
+
+    /*!
+     * \brief The constructor for instationary problems
+     * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
+     *       it is however guaranteed that the state after assembly will be the same as before
+     */
+    MultiDomainFVAssembler(ProblemTuple&& problem,
+                           FVGridGeometryTuple&& fvGridGeometry,
+                           GridVariablesTuple&& gridVariables,
+                           std::shared_ptr<CouplingManager> couplingManager,
+                           std::shared_ptr<const TimeLoop> timeLoop,
+                           const SolutionVector& prevSol)
+    : couplingManager_(couplingManager)
+    , problemTuple_(problem)
+    , fvGridGeometryTuple_(fvGridGeometry)
+    , gridVariablesTuple_(gridVariables)
+    , timeLoop_(timeLoop)
+    , prevSol_(&prevSol)
     , isStationaryProblem_(false)
     {
         std::cout << "Instantiated assembler for an instationary problem." << std::endl;
