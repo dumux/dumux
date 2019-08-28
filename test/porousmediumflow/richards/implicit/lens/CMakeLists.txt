@@ -2,10 +2,10 @@ add_input_file_links(FILES params.input)
 
 # isothermal tests
 add_executable(test_richards_lens_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_richards_lens_tpfa PUBLIC TYPETAG=RichardsLensCC)
+target_compile_definitions(test_richards_lens_tpfa PUBLIC TYPETAG=RichardsLensCC PUBLIC DIFFMETHOD=DiffMethod::numeric)
 
 add_executable(test_richards_lens_box EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox)
+target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric)
 
 dune_add_test(TARGET test_richards_lens_box
               LABELS porousmediumflow richards
@@ -15,6 +15,17 @@ dune_add_test(TARGET test_richards_lens_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box")
 
+dune_add_test(NAME test_richards_lens_box_analyticdiff
+              SOURCES main.cc
+              LABELS porousmediumflow richards
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMPILE_DEFINITIONS DIFFMETHOD=DiffMethod::analytic
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensBox
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_analyticdiff-00007.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_analyticdiff params.input -Problem.Name test_richards_lens_box_analyticdiff")
+
 dune_add_test(TARGET test_richards_lens_tpfa
               LABELS porousmediumflow richards
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -22,6 +33,17 @@ dune_add_test(TARGET test_richards_lens_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa")
+
+dune_add_test(NAME test_richards_lens_tpfa_analyticdiff
+              SOURCES main.cc
+              LABELS porousmediumflow richards
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMPILE_DEFINITIONS DIFFMETHOD=DiffMethod::analytic
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensCC
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_analyticdiff-00007.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_analyticdiff params.input -Problem.Name test_richards_lens_tpfa_analyticdiff")
 
 dune_add_test(NAME test_richards_lens_box_parallel_yasp
               TARGET test_richards_lens_box
