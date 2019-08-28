@@ -647,11 +647,14 @@ private:
             return;
 
         if (!initialized_)
-            std::cerr << "TABULATED COMPONENT '" << name()
-                      << "' WAS NOT INITIALIZED! "
-                      << "PLEASE CALL FluidSystem::init()\n";
+            std::cerr << "Warning: tabulated component '" << name()
+                      << "' has not been initialized. "
+                      << "Call FluidSystem::init() to use the tabulation in order to reduce runtime. \n";
         else
-            std::cerr << "FORWARD METHOD CALL "<<quantity<<"("<<arg1<<", "<<arg2<<") OF COMPONENT '"<<name()<<"'. TABULATION TOO SMALL?\n";
+            std::cerr << "Warning: "<<quantity<<"(T="<<arg1<<", p="<<arg2<<") of component '"<<name()
+                      << "' is outside tabulation range: ("<< tempMin_<<"<=T<="<<tempMax_<<"), ("
+                      << pressMin_<<"<=p<=" <<pressMax_<<"). "
+                      << "Forwarded to FluidSystem for direct evaluation of "<<quantity<<". \n";
         warningPrinted_ = true;
 #endif
     }
