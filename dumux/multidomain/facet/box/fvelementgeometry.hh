@@ -66,22 +66,24 @@ public:
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = GG;
+    using GridGeometry = GG;
+    //! export type of finite volume grid geometry
+    using FVGridGeometry [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
     //! Constructor
-    BoxFacetCouplingFVElementGeometry(const FVGridGeometry& fvGridGeometry)
+    BoxFacetCouplingFVElementGeometry(const GridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry)
     {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(LocalIndexType scvIdx) const
-    { return fvGridGeometry().scvs(eIdx_)[scvIdx]; }
+    { return gridGeometry().scvs(eIdx_)[scvIdx]; }
 
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
-    { return fvGridGeometry().scvfs(eIdx_)[scvfIdx]; }
+    { return gridGeometry().scvfs(eIdx_)[scvfIdx]; }
 
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element.
@@ -91,7 +93,7 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
     scvs(const BoxFacetCouplingFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.fvGridGeometry();
+        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         return Dune::IteratorRange<Iter>(g.scvs(fvGeometry.eIdx_).begin(), g.scvs(fvGeometry.eIdx_).end());
     }
@@ -104,22 +106,22 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const BoxFacetCouplingFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.fvGridGeometry();
+        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
         return Dune::IteratorRange<Iter>(g.scvfs(fvGeometry.eIdx_).begin(), g.scvfs(fvGeometry.eIdx_).end());
     }
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return fvGridGeometry().feCache().get(elemGeometryType_).localBasis(); }
+    { return gridGeometry().feCache().get(elemGeometryType_).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
-    { return fvGridGeometry().scvs(eIdx_).size(); }
+    { return gridGeometry().scvs(eIdx_).size(); }
 
     //! The total number of sub control volume faces
     std::size_t numScvf() const
-    { return fvGridGeometry().scvfs(eIdx_).size(); }
+    { return gridGeometry().scvfs(eIdx_).size(); }
 
     //! this function is for compatibility reasons with cc methods
     //! The box stencil is always element-local so bind and bindElement
@@ -135,16 +137,21 @@ public:
     void bindElement(const Element& element)
     {
         elemGeometryType_ = element.type();
-        eIdx_ = fvGridGeometry().elementMapper().index(element);
+        eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
     //! The global finite volume geometry we are a restriction of
-    const FVGridGeometry& fvGridGeometry() const
+    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
+    { return *fvGridGeometryPtr_; }
+
+    //! The global finite volume geometry we are a restriction of
+    const GridGeometry& gridGeometry() const
     { return *fvGridGeometryPtr_; }
 
 private:
     Dune::GeometryType elemGeometryType_;
-    const FVGridGeometry* fvGridGeometryPtr_;
+    const GridGeometry* fvGridGeometryPtr_;
 
     GridIndexType eIdx_;
 };
@@ -174,7 +181,9 @@ public:
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = GG;
+    using GridGeometry = GG;
+    //! export type of finite volume grid geometry
+    using FVGridGeometry [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
@@ -217,7 +226,7 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return fvGridGeometry().feCache().get(elemGeometryType_).localBasis(); }
+    { return gridGeometry().feCache().get(elemGeometryType_).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -240,19 +249,24 @@ public:
     //! For compatibility reasons with the FVGeometry cache being disabled
     void bindElement(const Element& element)
     {
-        eIdx_ = fvGridGeometry().elementMapper().index(element);
+        eIdx_ = gridGeometry().elementMapper().index(element);
         makeElementGeometries(element);
     }
 
     //! The global finite volume geometry we are a restriction of
-    const FVGridGeometry& fvGridGeometry() const
+    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
+    { return *fvGridGeometryPtr_; }
+
+    //! The global finite volume geometry we are a restriction of
+    const GridGeometry& gridGeometry() const
     { return *fvGridGeometryPtr_; }
 
 private:
 
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = fvGridGeometry().elementMapper().index(element);
+        auto eIdx = gridGeometry().elementMapper().index(element);
 
         // get the element geometry
         auto elementGeometry = element.geometry();
@@ -270,7 +284,7 @@ private:
             scvs_.emplace_back(geometryHelper,
                                scvLocalIdx,
                                eIdx,
-                               fvGridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim));
+                               gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim));
 
         // construct the sub control volume faces
         const auto numInnerScvf = (dim==1) ? 1 : element.subEntities(dim-1);
@@ -295,7 +309,7 @@ private:
         // construct the sub control volume faces on the domain/interior boundaries
         // skip handled facets (necessary for e.g. Dune::FoamGrid)
         std::vector<unsigned int> handledFacets;
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             if (std::count(handledFacets.begin(), handledFacets.end(), intersection.indexInInside()))
                 continue;
@@ -313,7 +327,7 @@ private:
                 vIndicesLocal[i] = static_cast<LocalIndexType>(referenceElement.subEntity(idxInInside, 1, i, dim));
 
             // if all vertices are living on the facet grid, this is an interiour boundary
-            const bool isOnFacet = fvGridGeometry().isOnInteriorBoundary(element, intersection);
+            const bool isOnFacet = gridGeometry().isOnInteriorBoundary(element, intersection);
 
             if (isOnFacet || boundary)
             {

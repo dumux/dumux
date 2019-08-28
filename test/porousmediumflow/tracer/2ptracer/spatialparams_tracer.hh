@@ -70,7 +70,7 @@ public:
     //! Fluid density
     Scalar fluidDensity(const Element &element,
                         const SubControlVolume& scv) const
-    { return density_[this->fvGridGeometry().elementMapper().index(element)];; }
+    { return density_[this->gridGeometry().elementMapper().index(element)];; }
 
     void setDensity(const std::vector<Scalar>& d)
     { density_ = d; }

@@ -83,7 +83,7 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCNITransientBC>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCNITransientBC>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -141,8 +141,8 @@ class OnePTwoCNITransientBCProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -217,7 +217,7 @@ public:
     {
         BoundaryTypes values;
 
-        if(globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_ || globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -235,7 +235,7 @@ public:
         PrimaryVariables values = initial_(globalPos);
 
         // make the BCs on the left border time-dependent
-        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+        if (globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
         {
             values[pressureIdx] += time_ * 1.0;
             values[N2Idx] += time_ * 1e-8;
@@ -301,7 +301,7 @@ private:
     {
         PrimaryVariables priVars;
 
-        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+        if (globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
         {
             priVars[pressureIdx] = 1.1e5; // initial condition for the pressure
             priVars[N2Idx] = 2e-10;  // initial condition for the N2 molefraction

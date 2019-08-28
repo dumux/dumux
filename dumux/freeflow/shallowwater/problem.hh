@@ -38,7 +38,7 @@ template<class TypeTag>
 class ShallowWaterProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;

@@ -45,7 +45,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;

@@ -58,7 +58,7 @@ class StaggeredUpwindFluxVariables
     using FaceVariables = typename GridFaceVariables::FaceVariables;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -426,7 +426,7 @@ private:
                 momenta[2] = faceVars.velocityParallel(localSubFaceIdx, 1) * outsideVolVars.density();
             else
             {
-                const Element& elementParallel = fvGeometry.fvGridGeometry().element(lateralFace.outsideScvIdx());
+                const Element& elementParallel = fvGeometry.gridGeometry().element(lateralFace.outsideScvIdx());
                 const SubControlVolumeFace& firstParallelScvf = fvGeometry.scvf(lateralFace.outsideScvIdx(), ownScvf.localFaceIdx());
                 momenta[2] = getParallelVelocityFromOtherBoundary_(problem, fvGeometry, firstParallelScvf,
                                                                    localSubFaceIdx, elementParallel,

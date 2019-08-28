@@ -176,7 +176,7 @@ public:
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void updateElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void updateElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars)
     {
@@ -184,7 +184,7 @@ public:
         // solution-dependent stuff into the caches
         if (FluxVariablesCacheFiller::isSolDependent)
         {
-            const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+            const auto& fvGridGeometry = fvGeometry.gridGeometry();
             const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
 
             // helper class to fill flux variables caches
@@ -330,7 +330,7 @@ public:
 
     //! When global flux variables caching is disabled, we don't need to update the cache
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void updateElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void updateElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars) {}
 

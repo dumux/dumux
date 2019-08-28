@@ -77,7 +77,7 @@ struct FluidSystem<TypeTag, TTag::OnePNIConduction>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePNIConduction>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNISpatialParams<FVGridGeometry, Scalar>;
 };
@@ -131,7 +131,7 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
     OnePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup)
@@ -154,12 +154,12 @@ public:
     //! Udpate the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
-        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
+        const auto someElement = *(elements(this->gridGeometry().gridView()).begin());
 
-        auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
+        auto someElemSol = elementSolution(someElement, curSol, this->gridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->fvGridGeometry());
+        auto someFvGeometry = localView(this->gridGeometry());
         someFvGeometry.bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
@@ -175,9 +175,9 @@ public:
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars);
         using std::max;
         time = max(time, 1e-10);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -224,7 +224,7 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        if(globalPos[0] < eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] < eps_ || globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();

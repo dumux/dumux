@@ -63,7 +63,7 @@ struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::IncompressibleTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -96,9 +96,9 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -121,7 +121,7 @@ public:
         const auto globalPos = scvf.ipGlobal();
 
         Scalar eps = 1.0e-6;
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
         else
             values.setAllNeumann();

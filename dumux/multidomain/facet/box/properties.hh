@@ -60,7 +60,7 @@ template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::BoxFacetCouplingModel>
 {
     using type = BoxFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
-                                            GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                                            GetPropType<TypeTag, Properties::GridGeometry> >;
 };
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
@@ -68,7 +68,7 @@ template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::BoxFacetCouplingModel>
 {
     using type = PorousMediumFluxVariables<TypeTag,
-                                           BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>;
+                                           BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>;
 };
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme

@@ -73,7 +73,7 @@ struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePIncompressible>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -120,7 +120,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -153,7 +153,7 @@ public:
         BoundaryTypes values;
 
         Scalar eps = 1.0e-6;
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -171,7 +171,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0);
-        values[0] = 1.0e+5 + dp_dy_*(globalPos[dimWorld-1] - this->fvGridGeometry().bBoxMax()[dimWorld-1]);
+        values[0] = 1.0e+5 + dp_dy_*(globalPos[dimWorld-1] - this->gridGeometry().bBoxMax()[dimWorld-1]);
 
         return values;
     }

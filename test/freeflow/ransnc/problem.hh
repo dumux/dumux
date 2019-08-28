@@ -122,7 +122,7 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -131,7 +131,7 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
@@ -159,7 +159,7 @@ public:
         fluidState.setMassFraction(phaseIdx, phaseIdx, 1.0);
         Scalar density = FluidSystem::density(fluidState, phaseIdx);
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
-        Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        Scalar diameter = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
         viscosityTilde_ = 1e-3 * turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity);
         turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
         if (ModelTraits::turbulenceModel() == TurbulenceModel::komega)
@@ -290,8 +290,8 @@ public:
         PrimaryVariables values(initialAtPos(globalPos));
 
         if (isInlet_(globalPos)
-            && globalPos[1] > 0.4 * this->fvGridGeometry().bBoxMax()[1]
-            && globalPos[1] < 0.6 * this->fvGridGeometry().bBoxMax()[1])
+            && globalPos[1] > 0.4 * this->gridGeometry().bBoxMax()[1]
+            && globalPos[1] < 0.6 * this->gridGeometry().bBoxMax()[1])
         {
             values[transportCompIdx] = (time() > 10.0) ? inletMoleFraction_ : 0.0;
         }
@@ -387,7 +387,7 @@ private:
 
     bool isOutlet_(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     //! Initial conditions for the zero-eq turbulence model (none)
@@ -472,7 +472,7 @@ private:
                                         int pvIdx,
                                         std::true_type) const
     {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
 
         // set a fixed turbulent kinetic energy and dissipation near the wall
         if (this->inNearWallRegion(eIdx))
@@ -510,7 +510,7 @@ private:
     {
         const auto globalPos = scv.center();
         PrimaryVariables values(initialAtPos(globalPos));
-        unsigned int  elementIdx = this->fvGridGeometry().elementMapper().index(element);
+        unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
 
         // fixed value for the turbulent kinetic energy
         values[Indices::turbulentKineticEnergyEqIdx] = this->turbulentKineticEnergyWallFunction(elementIdx);
@@ -529,7 +529,7 @@ private:
     {
         const auto globalPos = scv.center();
         PrimaryVariables values(initialAtPos(globalPos));
-        unsigned int  elementIdx = this->fvGridGeometry().elementMapper().index(element);
+        unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
 
         const auto wallDistance = ParentType::wallDistance_[elementIdx];
         using std::pow;

@@ -53,7 +53,7 @@ struct CircleAveragePointSourceTraits
 {
 private:
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomain<i>::TypeTag;
-    template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::FVGridGeometry>;
+    template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>;
     template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
 public:
     //! export the point source type for domain i
@@ -100,7 +100,7 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::line>
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -129,14 +129,14 @@ public:
             // all inside elements are identical...
             const auto& inside = is.inside(0);
             const auto intersectionGeometry = is.geometry();
-            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).fvGridGeometry().elementMapper().index(inside);
+            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).gridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
             for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
             {
                 const auto& outside = is.outside(outsideIdx);
-                const std::size_t bulkElementIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(outside);
+                const std::size_t bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
         }
@@ -158,7 +158,7 @@ public:
     // For one-dimensional low dim domain we assume radial tubes
     Scalar lowDimVolume(const Element<bulkIdx>& element) const
     {
-        const auto eIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx];
     }
 
@@ -200,7 +200,7 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::average>
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -271,7 +271,7 @@ public:
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
         // Initialize the bulk bounding box tree
-        const auto& bulkTree = this->problem(bulkIdx).fvGridGeometry().boundingBoxTree();
+        const auto& bulkTree = this->problem(bulkIdx).gridGeometry().boundingBoxTree();
 
         // initilize the maps
         // do some logging and profiling
@@ -295,7 +295,7 @@ public:
             const auto lowDimGeometry = lowDimElement.geometry();
             const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(lowDimGeometry.type(), order);
 
-            const auto lowDimElementIdx = lowDimProblem.fvGridGeometry().elementMapper().index(lowDimElement);
+            const auto lowDimElementIdx = lowDimProblem.gridGeometry().elementMapper().index(lowDimElement);
 
             // apply the Gaussian quadrature rule and define point sources at each quadrature point
             // note that the approximation is not optimal if
@@ -347,12 +347,12 @@ public:
                     {
                         if (!static_cast<bool>(circleCornerIndices.count(bulkElementIdx)))
                         {
-                            const auto bulkElement = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx);
+                            const auto bulkElement = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx);
                             circleCornerIndices[bulkElementIdx] = this->vertexIndices(bulkIdx, bulkElementIdx);
 
                             // evaluate shape functions at the integration point
                             const auto bulkGeometry = bulkElement.geometry();
-                            this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
+                            this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
                         }
                     }
                 }
@@ -393,7 +393,7 @@ public:
                     if (isBox<lowDimIdx>())
                     {
                         ShapeValues shapeValues;
-                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).gridGeometry(), lowDimGeometry, globalPos, shapeValues);
                         psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                     }
                     else
@@ -406,9 +406,9 @@ public:
                     {
                         psData.addCircleInterpolation(circleCornerIndices, circleShapeValues, circleIpWeight, circleStencil);
 
-                        const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
+                        const auto bulkGeometry = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx).geometry();
                         ShapeValues shapeValues;
-                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, globalPos, shapeValues);
+                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, globalPos, shapeValues);
                         psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                     }
                     else
@@ -502,14 +502,14 @@ public:
             // all inside elements are identical...
             const auto& inside = is.inside(0);
             const auto intersectionGeometry = is.geometry();
-            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).fvGridGeometry().elementMapper().index(inside);
+            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).gridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
             for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
             {
                 const auto& outside = is.outside(outsideIdx);
-                const std::size_t bulkElementIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(outside);
+                const std::size_t bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
         }
@@ -531,7 +531,7 @@ public:
     // For one-dimensional low dim domain we assume radial tubes
     Scalar lowDimVolume(const Element<bulkIdx>& element) const
     {
-        const auto eIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx];
     }
 
@@ -577,7 +577,7 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::cylindersource
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -617,7 +617,7 @@ public:
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
         // Initialize the bulk bounding box tree
-        const auto& bulkTree = this->problem(bulkIdx).fvGridGeometry().boundingBoxTree();
+        const auto& bulkTree = this->problem(bulkIdx).gridGeometry().boundingBoxTree();
 
         // initilize the maps
         // do some logging and profiling
@@ -640,7 +640,7 @@ public:
             const auto lowDimGeometry = lowDimElement.geometry();
             const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(lowDimGeometry.type(), order);
 
-            const auto lowDimElementIdx = lowDimProblem.fvGridGeometry().elementMapper().index(lowDimElement);
+            const auto lowDimElementIdx = lowDimProblem.gridGeometry().elementMapper().index(lowDimElement);
 
             // apply the Gaussian quadrature rule and define point sources at each quadrature point
             // note that the approximation is not optimal if
@@ -697,7 +697,7 @@ public:
                         {
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             ShapeValues shapeValues;
-                            this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                            this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).gridGeometry(), lowDimGeometry, globalPos, shapeValues);
                             psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                         }
                         else
@@ -709,9 +709,9 @@ public:
                         if (isBox<bulkIdx>())
                         {
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                            const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
+                            const auto bulkGeometry = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx).geometry();
                             ShapeValues shapeValues;
-                            this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePos, shapeValues);
+                            this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, circlePos, shapeValues);
                             psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                         }
                         else
@@ -780,14 +780,14 @@ public:
             // all inside elements are identical...
             const auto& inside = is.inside(0);
             const auto intersectionGeometry = is.geometry();
-            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).fvGridGeometry().elementMapper().index(inside);
+            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).gridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
             for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
             {
                 const auto& outside = is.outside(outsideIdx);
-                const std::size_t bulkElementIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(outside);
+                const std::size_t bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
         }
@@ -809,7 +809,7 @@ public:
     // For one-dimensional low dim domain we assume radial tubes
     Scalar lowDimVolume(const Element<bulkIdx>& element) const
     {
-        const auto eIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx];
     }
 
@@ -853,7 +853,7 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -937,8 +937,8 @@ public:
         this->preComputeVertexIndices(bulkIdx);
         this->preComputeVertexIndices(lowDimIdx);
 
-        const auto& bulkFvGridGeometry = this->problem(bulkIdx).fvGridGeometry();
-        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
+        const auto& bulkFvGridGeometry = this->problem(bulkIdx).gridGeometry();
+        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).gridGeometry();
 
         bulkSourceIds_.resize(this->gridView(bulkIdx).size(0));
         bulkSourceWeights_.resize(this->gridView(bulkIdx).size(0));
@@ -987,9 +987,9 @@ public:
                     if (isBox<lowDimIdx>())
                     {
                         using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                        const auto lowDimGeometry = this->problem(lowDimIdx).fvGridGeometry().element(lowDimElementIdx).geometry();
+                        const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
                         ShapeValues shapeValues;
-                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).gridGeometry(), lowDimGeometry, globalPos, shapeValues);
                         psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                     }
                     else
@@ -1001,9 +1001,9 @@ public:
                     if (isBox<bulkIdx>())
                     {
                         using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                        const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
+                        const auto bulkGeometry = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx).geometry();
                         ShapeValues shapeValues;
-                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, globalPos, shapeValues);
+                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, globalPos, shapeValues);
                         psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                     }
                     else
@@ -1085,14 +1085,14 @@ public:
             // all inside elements are identical...
             const auto& inside = is.inside(0);
             const auto intersectionGeometry = is.geometry();
-            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).fvGridGeometry().elementMapper().index(inside);
+            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).gridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
             for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
             {
                 const auto& outside = is.outside(outsideIdx);
-                const std::size_t bulkElementIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(outside);
+                const std::size_t bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
         }
@@ -1114,7 +1114,7 @@ public:
     // For one-dimensional low dim domain we assume radial tubes
     Scalar lowDimVolume(const Element<bulkIdx>& element) const
     {
-        const auto eIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx];
     }
 
@@ -1162,7 +1162,7 @@ private:
 
             if (weight > 1e-13)
             {
-                const auto bulkElementIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
+                const auto bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
                 bulkSourceIds_[bulkElementIdx].push_back(id);
                 bulkSourceWeights_[bulkElementIdx].push_back(weight*pointSourceWeight);
                 mask[bulkElementIdx] = true;

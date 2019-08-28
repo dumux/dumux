@@ -167,8 +167,8 @@ public:
         // set up stuff related to sub-control volumes
         for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numLocalScvs; scvIdxLocal++)
         {
-            elements_.emplace_back(fvGeometry.fvGridGeometry().element( stencil()[scvIdxLocal] ));
-            scvs_.emplace_back(fvGeometry.fvGridGeometry().mpfaHelper(),
+            elements_.emplace_back(fvGeometry.gridGeometry().element( stencil()[scvIdxLocal] ));
+            scvs_.emplace_back(fvGeometry.gridGeometry().mpfaHelper(),
                                fvGeometry,
                                fvGeometry.scv( stencil()[scvIdxLocal] ),
                                scvIdxLocal,
@@ -209,7 +209,7 @@ public:
                 {
                     // loop over scvfs in outside scv until we find the one coinciding with current scvf
                     const auto outsideLocalScvIdx = neighborScvIndicesLocal[i];
-                    const auto& flipScvfIndex = fvGeometry.fvGridGeometry().flipScvfIndexSet()[scvf.index()][i-1];
+                    const auto& flipScvfIndex = fvGeometry.gridGeometry().flipScvfIndexSet()[scvf.index()][i-1];
                     const auto& flipScvf = fvGeometry.scvf(flipScvfIndex);
                     localFaceData_.emplace_back(faceIdxLocal,       // iv-local scvf idx
                                                 outsideLocalScvIdx, // iv-local scv index

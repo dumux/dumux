@@ -68,7 +68,7 @@ struct FluidSystem<TypeTag, TTag::WaterAir> { using type = FluidSystems::H2ON2<G
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::WaterAir>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = WaterAirSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -149,8 +149,8 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 

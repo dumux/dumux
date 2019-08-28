@@ -49,7 +49,7 @@ class ExtendedSourceStencil
     using Scalar = typename MDTraits::Scalar;
 
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -78,11 +78,11 @@ public:
             {
                 for (int i = 0; i < element.subEntities(GridView<domainI>::dimension); ++i)
                     for (const auto globalJ : dofs)
-                        pattern.add(couplingManager.problem(domainI).fvGridGeometry().vertexMapper().subIndex(element, i, GridView<domainI>::dimension), globalJ);
+                        pattern.add(couplingManager.problem(domainI).gridGeometry().vertexMapper().subIndex(element, i, GridView<domainI>::dimension), globalJ);
             }
             else
             {
-                const auto globalI = couplingManager.problem(domainI).fvGridGeometry().elementMapper().index(element);
+                const auto globalI = couplingManager.problem(domainI).gridGeometry().elementMapper().index(element);
                 for (const auto globalJ : dofs)
                     pattern.add(globalI, globalJ);
             }
@@ -167,7 +167,7 @@ private:
     //! the extended source stencil for the bulk domain due to the source average
     const std::vector<std::size_t>& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<0> bulkDomain, const Element<0>& bulkElement) const
     {
-        const auto bulkElementIdx = couplingManager.problem(bulkIdx).fvGridGeometry().elementMapper().index(bulkElement);
+        const auto bulkElementIdx = couplingManager.problem(bulkIdx).gridGeometry().elementMapper().index(bulkElement);
         if (sourceStencils_.count(bulkElementIdx))
             return sourceStencils_.at(bulkElementIdx);
         else

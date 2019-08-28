@@ -45,7 +45,7 @@ struct L2Norm
         Scalar norm = 0.0;
 
         // iterate over all elements
-        const auto& gg = problem.fvGridGeometry();
+        const auto& gg = problem.gridGeometry();
         for (const auto& element : elements(gg.gridView()))
         {
             const auto geometry = element.geometry();
@@ -79,7 +79,7 @@ struct L2Norm
         Scalar norm = 0.0;
 
         // iterate over all elements
-        const auto& gg = problem.fvGridGeometry();
+        const auto& gg = problem.gridGeometry();
         for (const auto& element : elements(gg.gridView()))
         {
             const auto geometry = element.geometry();

@@ -54,7 +54,7 @@ struct Problem<TypeTag, TTag::TestElastic> { using type = Dumux::ElasticProblem<
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TestElastic>
 { using type = ElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                     GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                                     GetPropType<TypeTag, Properties::GridGeometry> >;
 };
 } // end namespace Properties
 
@@ -77,7 +77,7 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;

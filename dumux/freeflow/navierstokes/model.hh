@@ -159,7 +159,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::NavierStokes>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr auto dim = GridView::dimension;
 public:
     using type = NavierStokesModelTraits<dim>;
@@ -220,7 +220,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::NavierStokesNI>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr auto dim = GridView::dimension;
     using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:

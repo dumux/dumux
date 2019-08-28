@@ -53,13 +53,13 @@ void makeInterpolatedVolVars(VolumeVariables& volVars,
                              const Problem& problem,
                              const SolutionVector& sol,
                              const FVGeometry& fvGeometry,
-                             const typename FVGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
-                             const typename FVGeometry::FVGridGeometry::GridView::template Codim<0>::Entity::Geometry& elemGeom,
-                             const typename FVGeometry::FVGridGeometry::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& pos)
+                             const typename FVGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                             const typename FVGeometry::GridGeometry::GridView::template Codim<0>::Entity::Geometry& elemGeom,
+                             const typename FVGeometry::GridGeometry::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& pos)
 {
     // interpolate solution and set it for each entry in element solution
-    auto elemSol = elementSolution(element, sol, fvGeometry.fvGridGeometry());
-    const auto centerSol = evalSolution(element, elemGeom, fvGeometry.fvGridGeometry(), elemSol, pos);
+    auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
+    const auto centerSol = evalSolution(element, elemGeom, fvGeometry.gridGeometry(), elemSol, pos);
     for (unsigned int i = 0; i < fvGeometry.numScv(); ++i)
         elemSol[i] = centerSol;
 
@@ -91,7 +91,7 @@ template< class MDTraits,
           class CouplingMapper,
           std::size_t bulkDomainId = 0,
           std::size_t lowDimDomainId = 1,
-          DiscretizationMethod bulkDM = GetPropType<typename MDTraits::template SubDomain<bulkDomainId>::TypeTag, Properties::FVGridGeometry>::discMethod >
+          DiscretizationMethod bulkDM = GetPropType<typename MDTraits::template SubDomain<bulkDomainId>::TypeTag, Properties::GridGeometry>::discMethod >
 class FacetCouplingManager;
 
 /*!
@@ -134,7 +134,7 @@ class FacetCouplingThreeDomainManager
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
 
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;

@@ -100,7 +100,7 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
     scvs(const BoxDfmFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.fvGridGeometry();
+        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         return Dune::IteratorRange<Iter>(g.scvs(fvGeometry.eIdx_).begin(), g.scvs(fvGeometry.eIdx_).end());
     }
@@ -116,7 +116,7 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const BoxDfmFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.fvGridGeometry();
+        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
         return Dune::IteratorRange<Iter>(g.scvfs(fvGeometry.eIdx_).begin(), g.scvfs(fvGeometry.eIdx_).end());
     }

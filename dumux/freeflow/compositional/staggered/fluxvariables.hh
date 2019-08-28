@@ -46,7 +46,7 @@ class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 {
     using ParentType = NavierStokesFluxVariables<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

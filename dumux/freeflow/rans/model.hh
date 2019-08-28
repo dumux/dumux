@@ -80,7 +80,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::RANS>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = RANSModelTraits<dim>;
@@ -105,7 +105,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::RANSNI>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 
     using IsothermalTraits = RANSModelTraits<dim>;

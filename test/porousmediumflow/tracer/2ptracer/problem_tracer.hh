@@ -58,7 +58,7 @@ struct Problem<TypeTag, TTag::TwoPTracerTest> { using type = TwoPTracerTestProbl
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPTracerTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TwoPTracerTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -78,7 +78,7 @@ class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Propert
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
@@ -138,7 +138,7 @@ class TwoPTracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -229,22 +229,22 @@ private:
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - 0.1 - eps_;
+        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - 0.1 - eps_;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
+        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onStripe1_(const GlobalPosition &globalPos) const
     {
-       const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+       const auto xMax = this->gridGeometry().bBoxMax()[0];
        return  (
            ( (xMax /4.0 - stripeWidth_*0.5) < globalPos[0] + eps_ ) &&
            ( (xMax/4.0 + stripeWidth_*0.5) > globalPos[0] + eps_  )
@@ -253,7 +253,7 @@ private:
 
     bool onStripe2_(const GlobalPosition &globalPos) const
     {
-        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto xMax = this->gridGeometry().bBoxMax()[0];
         return  (
             ( (2.0 * xMax /4.0 - stripeWidth_*0.5) < globalPos[0] + eps_ ) &&
             ( (2.0 * xMax/4.0 + stripeWidth_*0.5) > globalPos[0] + eps_ )
@@ -262,7 +262,7 @@ private:
 
     bool onStripe3_(const GlobalPosition &globalPos) const
     {
-        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto xMax = this->gridGeometry().bBoxMax()[0];
         return  (
             ( (3.0 * xMax /4.0 - stripeWidth_*0.5) < globalPos[0] + eps_ ) &&
             ( (3.0 * xMax/4.0 + stripeWidth_*0.5) > globalPos[0] + eps_ )

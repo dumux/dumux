@@ -74,7 +74,7 @@ struct Problem<TypeTag, TTag::FuelCell> { using type = FuelCellProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::FuelCell>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FuelCellSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -114,11 +114,11 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     // Select the electrochemistry method
@@ -265,7 +265,7 @@ public:
     template<class VTKWriter>
     void addVtkFields(VTKWriter& vtk)
     {
-        const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& gridView = this->gridGeometry().gridView();
         currentDensity_.resize(gridView.size(dofCodim));
         reactionSourceH2O_.resize(gridView.size(dofCodim));
         reactionSourceO2_.resize(gridView.size(dofCodim));
@@ -281,11 +281,11 @@ public:
 
     void updateVtkFields(const SolutionVector& curSol)
     {
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
+            auto elemSol = elementSolution(element, curSol, this->gridGeometry());
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -339,10 +339,10 @@ private:
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
+    { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
 
     bool inReactionLayer_(const GlobalPosition& globalPos) const
-    { return globalPos[1] < 0.1*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]) + eps_; }
+    { return globalPos[1] < 0.1*(this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]) + eps_; }
 
     Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;

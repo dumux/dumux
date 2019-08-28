@@ -88,7 +88,7 @@ struct LocalResidual<TypeTag, TTag::Fracture> { using type = OnePIncompressibleL
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Fracture>
 {
-    using type = MatrixFractureSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = MatrixFractureSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                              GetPropType<TypeTag, Properties::Scalar>>;
 };
 } // end namespace Properties
@@ -107,7 +107,7 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
@@ -181,9 +181,9 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+        if (globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
             values.setAllDirichlet();
-        else if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        else if (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             values.setAllDirichlet();
         return values;
     }
@@ -197,9 +197,9 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+        if (globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
             return PrimaryVariables(2e5);
-        else // (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        else // (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             return PrimaryVariables(1e5);
     }
 
@@ -279,9 +279,9 @@ public:
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
         NumEqVector source(0.0);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(gridVars.curGridVolVars());

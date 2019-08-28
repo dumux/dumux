@@ -94,7 +94,7 @@ auto minDistVertexSol(const Geometry& geometry, const typename Geometry::GlobalC
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 PrimaryVariables evalSolution(const Element& element,
                               const typename Element::Geometry& geometry,
-                              const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                              const typename FVElementGeometry::GridGeometry& fvGridGeometry,
                               const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                               const typename Element::Geometry::GlobalCoordinate& globalPos,
                               bool ignoreState = false)
@@ -236,7 +236,7 @@ PrimaryVariables evalSolution(const Element& element,
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 PrimaryVariables evalSolution(const Element& element,
                               const typename Element::Geometry& geometry,
-                              const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                              const typename FVElementGeometry::GridGeometry& fvGridGeometry,
                               const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                               const typename Element::Geometry::GlobalCoordinate& globalPos,
                               bool ignoreState = false)

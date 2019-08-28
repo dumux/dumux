@@ -61,7 +61,7 @@ public:
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
@@ -69,15 +69,15 @@ public:
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
-        eIdx_ = fvGeometry.fvGridGeometry().elementMapper().index(element);
+        eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element);
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
                   const typename FVElementGeometry::SubControlVolumeFace& scvf)
@@ -119,7 +119,7 @@ public:
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
@@ -127,7 +127,7 @@ public:
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
@@ -138,7 +138,7 @@ public:
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
                   const typename FVElementGeometry::SubControlVolumeFace& scvf)

@@ -49,7 +49,7 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
     using TypeTag = Properties::TTag::TYPETAG;
-    static constexpr auto dm = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
+    static constexpr auto dm = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool isBox = dm == DiscretizationMethod::box;
 
     // initialize MPI, finalize is done automatically on exit

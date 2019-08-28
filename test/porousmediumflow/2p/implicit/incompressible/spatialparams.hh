@@ -151,7 +151,7 @@ public:
     void updateMaterialInterfaceParams(const SolutionVector& x)
     {
         if (FVGridGeometry::discMethod == DiscretizationMethod::box)
-            materialInterfaceParams_.update(this->fvGridGeometry(), *this, x);
+            materialInterfaceParams_.update(this->gridGeometry(), *this, x);
     }
 
     //! Returns the material parameters associated with a nodal dof

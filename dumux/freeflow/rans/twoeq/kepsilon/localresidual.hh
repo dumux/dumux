@@ -43,7 +43,7 @@ class KEpsilonResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseLocalResidual>
-using KEpsilonResidual = KEpsilonResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using KEpsilonResidual = KEpsilonResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 }
 

@@ -36,12 +36,12 @@ namespace Dumux {
  */
 template<class TypeTag>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<GetPropType<TypeTag, Properties::FVGridGeometry>,
+: public FVSpatialParamsOneP<GetPropType<TypeTag, Properties::GridGeometry>,
                              GetPropType<TypeTag, Properties::Scalar>,
                              OnePTestSpatialParams<TypeTag>>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename FVGridGeometry::LocalView;

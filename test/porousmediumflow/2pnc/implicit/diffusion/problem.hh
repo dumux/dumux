@@ -71,7 +71,7 @@ struct FluidSystem<TypeTag, TTag::TwoPNCDiffusion>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPNCDiffusion>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -116,7 +116,7 @@ class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
@@ -192,7 +192,7 @@ public:
          priVars[Indices::pressureIdx] = 1e5;
          priVars[Indices::switchIdx] = 1e-5 ;
 
-         if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+         if (globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
              priVars[Indices::switchIdx] = 1e-3;
 
         return priVars;

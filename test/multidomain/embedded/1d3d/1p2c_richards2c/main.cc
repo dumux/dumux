@@ -83,7 +83,7 @@ struct PointSourceHelper<TypeTag, TTag::Root> { using type = typename GetPropTyp
 template<class Problem, class SolutionVector, class GridVariables>
 double computeSourceIntegral(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars)
 {
-    const auto& gg = problem.fvGridGeometry();
+    const auto& gg = problem.gridGeometry();
     typename SolutionVector::block_type source(0.0);
     for (const auto& element : elements(gg.gridView()))
     {
@@ -119,7 +119,7 @@ double computeGlobalMass(const Problem& problem, const SolutionVector& sol, cons
     static constexpr int transportCompIdx = Problem::Indices::transportCompIdx;
     double mass = 0.0;
 
-    const auto& gg = problem.fvGridGeometry();
+    const auto& gg = problem.gridGeometry();
     for (const auto& element : elements(gg.gridView()))
     {
         auto fvGeometry = localView(gg);
@@ -147,7 +147,7 @@ double computeGlobalBoundaryMass(const Problem& problem, const SolutionVector& s
     static constexpr int transportEqIdx = Problem::Indices::transportEqIdx;
     double mass = 0.0;
 
-    const auto& gg = problem.fvGridGeometry();
+    const auto& gg = problem.gridGeometry();
     for (const auto& element : elements(gg.gridView()))
     {
         auto fvGeometry = localView(gg);
@@ -209,10 +209,10 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
     // create the finite volume grid geometry
-    using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::FVGridGeometry>;
+    using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::GridGeometry>;
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     bulkFvGridGeometry->update();
-    using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::FVGridGeometry>;
+    using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::GridGeometry>;
     auto lowDimFvGridGeometry = std::make_shared<LowDimFVGridGeometry>(lowDimGridView);
     lowDimFvGridGeometry->update();
 

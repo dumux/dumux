@@ -67,7 +67,7 @@ struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePIncompressible>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -100,7 +100,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;

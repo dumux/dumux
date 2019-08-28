@@ -49,8 +49,8 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::komega> : public RANSProblemBase
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
 
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -76,11 +76,11 @@ public:
         ParentType::updateStaticWallProperties();
 
         // update size and initial values of the global vectors
-        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedDissipation_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedDissipationGradient_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
-        storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedTurbulentKineticEnergyGradient_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
+        storedDynamicEddyViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedDissipation_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedDissipationGradient_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
+        storedTurbulentKineticEnergy_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedTurbulentKineticEnergyGradient_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
     }
 
     /*!
@@ -92,11 +92,11 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -115,9 +115,9 @@ public:
         }
 
         // calculate cell-centered gradients
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             for (unsigned int dimIdx = 0; dimIdx < DimVector::dimension; ++dimIdx)
             {

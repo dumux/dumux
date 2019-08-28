@@ -127,7 +127,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::KOmega>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = KOmegaModelTraits<dim>;
@@ -193,7 +193,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::KOmegaNI>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = KOmegaModelTraits<dim>;
 public:

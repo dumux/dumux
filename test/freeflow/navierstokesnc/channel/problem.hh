@@ -111,7 +111,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -132,7 +132,7 @@ public:
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         FluidSystem::init();
-        deltaP_.resize(this->fvGridGeometry().numCellCenterDofs());
+        deltaP_.resize(this->gridGeometry().numCellCenterDofs());
     }
 
    /*!
@@ -265,8 +265,8 @@ public:
 #endif
 
         // parabolic velocity profile
-        values[Indices::velocityXIdx] =  inletVelocity_*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1])*(this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
-                                      / (0.25*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1])*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]));
+        values[Indices::velocityXIdx] =  inletVelocity_*(globalPos[1] - this->gridGeometry().bBoxMin()[1])*(this->gridGeometry().bBoxMax()[1] - globalPos[1])
+                                      / (0.25*(this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1])*(this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]));
 
         values[Indices::velocityYIdx] = 0.0;
 
@@ -284,9 +284,9 @@ public:
     template<class GridVariables, class SolutionVector>
     void calculateDeltaP(const GridVariables& gridVariables, const SolutionVector& sol)
     {
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -324,7 +324,7 @@ private:
 
     bool isOutlet_(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     const Scalar eps_;

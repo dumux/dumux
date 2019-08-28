@@ -46,7 +46,7 @@ public:
         // only do something for box
         if (discMethod == DiscretizationMethod::box)
         {
-            const auto& fvGridGeometry = problem.fvGridGeometry();
+            const auto& fvGridGeometry = problem.gridGeometry();
             scvBoundaryTypes.resize(fvGridGeometry.vertexMapper().size());
             // set all equations to Neumann by default
             for (std::size_t vIdx = 0; vIdx < scvBoundaryTypes.size(); vIdx++)

@@ -43,7 +43,7 @@ template<class Problem,
          class ElementFluxVariablesCache>
 class FluxVariablesBase
 {
-    using GridView = typename FVElementGeometry::FVGridGeometry::GridView;
+    using GridView = typename FVElementGeometry::GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Stencil = std::vector<std::size_t>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

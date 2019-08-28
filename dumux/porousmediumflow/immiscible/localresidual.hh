@@ -45,7 +45,7 @@ class ImmiscibleLocalResidual : public GetPropType<TypeTag, Properties::BaseLoca
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;

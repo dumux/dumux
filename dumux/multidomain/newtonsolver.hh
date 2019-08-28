@@ -165,7 +165,7 @@ private:
         priVarsSwitchedInLastIteration_[i] = false;
 
         const auto& problem = this->assembler().problem(id);
-        const auto& fvGridGeometry = this->assembler().fvGridGeometry(id);
+        const auto& fvGridGeometry = this->assembler().gridGeometry(id);
         auto& gridVariables = this->assembler().gridVariables(id);
         priVarSwitch.updateBoundary(problem, fvGridGeometry, gridVariables, sol[id]);
     }
@@ -184,7 +184,7 @@ private:
     {
         // update the variable switch (returns true if the pri vars at at least one dof were switched)
         // for disabled grid variable caching
-        const auto& fvGridGeometry = this->assembler().fvGridGeometry(id);
+        const auto& fvGridGeometry = this->assembler().gridGeometry(id);
         const auto& problem = this->assembler().problem(id);
         auto& gridVariables = this->assembler().gridVariables(id);
 

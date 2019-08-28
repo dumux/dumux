@@ -38,7 +38,7 @@ template<class TypeTag>
 class PorousMediumFlowProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum {

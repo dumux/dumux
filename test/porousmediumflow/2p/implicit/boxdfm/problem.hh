@@ -75,7 +75,7 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPIncompressibleBoxDfm>
 {
 private:
-    using FVG = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVG = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = TwoPTestSpatialParams<FVG, Scalar>;
@@ -125,7 +125,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 
     // some indices for convenience
@@ -178,7 +178,7 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_ || globalPos[0] < 1e-6)
+        if (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_ || globalPos[0] < 1e-6)
             values.setAllDirichlet();
         return values;
     }
@@ -217,7 +217,7 @@ public:
         PrimaryVariables values;
 
         // pressure gradient from left to right
-        values[pressureH2OIdx] = 2e5 - 1e5*globalPos[0]/this->fvGridGeometry().bBoxMax()[0];
+        values[pressureH2OIdx] = 2e5 - 1e5*globalPos[0]/this->gridGeometry().bBoxMax()[0];
         values[saturationDNAPLIdx] = 0;
         return values;
     }

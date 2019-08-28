@@ -97,7 +97,7 @@ public:
     : ParentType(assembler,
                  element,
                  curSol,
-                 localView(assembler.fvGridGeometry(domainId)),
+                 localView(assembler.gridGeometry(domainId)),
                  localView(assembler.gridVariables(domainId).curGridVolVars()),
                  localView(assembler.gridVariables(domainId).prevGridVolVars()),
                  localView(assembler.gridVariables(domainId).gridFluxVarsCache()),
@@ -347,7 +347,7 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -389,7 +389,7 @@ public:
         auto&& curElemVolVars = this->curElemVolVars();
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
+        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         auto partialDerivs = origResiduals;
         partialDerivs = 0.0;
@@ -582,7 +582,7 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -626,7 +626,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
+        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));

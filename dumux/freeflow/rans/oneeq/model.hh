@@ -135,7 +135,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::OneEq>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = OneEqModelTraits<dim>;
@@ -200,7 +200,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::OneEqNI>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = OneEqModelTraits<dim>;
 public:

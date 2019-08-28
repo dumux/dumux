@@ -70,7 +70,7 @@ struct Problem<TypeTag, TTag::SolidEnergyTest> { using type = SolidEnergyProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::SolidEnergyTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = SolidEnergySpatialParams<FVGridGeometry, Scalar>;
 };
@@ -107,7 +107,7 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 

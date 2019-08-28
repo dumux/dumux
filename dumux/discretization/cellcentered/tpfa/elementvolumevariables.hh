@@ -61,7 +61,7 @@ public:
     //! Constructor
     CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars)
-    , numScv_(gridVolVars.problem().fvGridGeometry().numScv())
+    , numScv_(gridVolVars.problem().gridGeometry().numScv())
     {}
 
     //! operator for the access with an scv
@@ -85,7 +85,7 @@ public:
 
     //! precompute all boundary volume variables in a stencil of an element, the remaining ones are cached
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
@@ -123,7 +123,7 @@ public:
 
     //! precompute the volume variables of an element - do nothing: volVars are cached
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {}
@@ -175,14 +175,14 @@ public:
 
     //! Prepares the volume variables within the element stencil
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
         clear_();
 
         const auto& problem = gridVolVars().problem();
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         const auto globalI = fvGridGeometry.elementMapper().index(element);
         const auto& connectivityMapI = fvGridGeometry.connectivityMap()[globalI];
         const auto numDofs = connectivityMapI.size() + 1;
@@ -264,19 +264,19 @@ public:
     }
 
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
         clear_();
 
-        const auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(elementSolution(element, sol, fvGeometry.fvGridGeometry()),
+        volumeVariables_[0].update(elementSolution(element, sol, fvGeometry.gridGeometry()),
                                    gridVolVars().problem(),
                                    element,
                                    scv);

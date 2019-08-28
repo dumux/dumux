@@ -42,7 +42,7 @@ class OneEqFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseFluxVariables>
-using OneEqFluxVariables = OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using OneEqFluxVariables = OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 } // end namespace
 

@@ -83,7 +83,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::KEpsilonNC>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dimension = GridView::dimension;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;
@@ -153,7 +153,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::KEpsilonNCNI>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;

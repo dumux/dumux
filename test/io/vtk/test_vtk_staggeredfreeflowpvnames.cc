@@ -313,7 +313,7 @@ int main(int argc, char** argv) try
 
     using CommonTypeTag = Properties::TTag::StaggeredPVNamesTestTypeTag;
     using Grid = GetPropType<CommonTypeTag, Properties::Grid>;
-    using FVGridGeometry = GetPropType<CommonTypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<CommonTypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<CommonTypeTag, Properties::Scalar>;
     using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimension>;
 

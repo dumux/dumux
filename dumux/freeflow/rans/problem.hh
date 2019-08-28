@@ -60,7 +60,7 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -102,27 +102,27 @@ public:
         calledUpdateStaticWallProperties = true;
 
         // update size and initial values of the global vectors
-        wallElementIdx_.resize(this->fvGridGeometry().elementMapper().size());
-        wallDistance_.resize(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
-        neighborIdx_.resize(this->fvGridGeometry().elementMapper().size());
-        cellCenter_.resize(this->fvGridGeometry().elementMapper().size(), GlobalPosition(0.0));
-        velocity_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
-        velocityMaximum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
-        velocityGradients_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
-        stressTensorScalarProduct_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        vorticityTensorScalarProduct_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        flowNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 0);
-        wallNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 1);
-        kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        sandGrainRoughness_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        wallElementIdx_.resize(this->gridGeometry().elementMapper().size());
+        wallDistance_.resize(this->gridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
+        neighborIdx_.resize(this->gridGeometry().elementMapper().size());
+        cellCenter_.resize(this->gridGeometry().elementMapper().size(), GlobalPosition(0.0));
+        velocity_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
+        velocityMaximum_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
+        velocityGradients_.resize(this->gridGeometry().elementMapper().size(), DimMatrix(0.0));
+        stressTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        vorticityTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        flowNormalAxis_.resize(this->gridGeometry().elementMapper().size(), 0);
+        wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), 1);
+        kinematicViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        sandGrainRoughness_.resize(this->gridGeometry().elementMapper().size(), 0.0);
 
         // retrieve all wall intersections and corresponding elements
         std::vector<unsigned int> wallElements;
         std::vector<GlobalPosition> wallPositions;
         std::vector<unsigned int> wallNormalAxisTemp;
 
-        const auto gridView = this->fvGridGeometry().gridView();
-        auto fvGeometry = localView(this->fvGridGeometry());
+        const auto gridView = this->gridGeometry().gridView();
+        auto fvGeometry = localView(this->gridGeometry());
 
         for (const auto& element : elements(gridView))
         {
@@ -135,7 +135,7 @@ public:
 
                 if (asImp_().isOnWall(scvf))
                 {
-                    wallElements.push_back(this->fvGridGeometry().elementMapper().index(element));
+                    wallElements.push_back(this->gridGeometry().elementMapper().index(element));
                     wallPositions.push_back(scvf.center());
                     wallNormalAxisTemp.push_back(scvf.directionIndex());
                 }
@@ -150,7 +150,7 @@ public:
         // search for shortest distance to wall for each element
         for (const auto& element : elements(gridView))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             cellCenter_[elementIdx] = element.geometry().center();
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
@@ -182,7 +182,7 @@ public:
         // search for neighbor Idxs
         for (const auto& element : elements(gridView))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 neighborIdx_[elementIdx][dimIdx][0] = elementIdx;
@@ -194,7 +194,7 @@ public:
                 if (intersection.boundary())
                     continue;
 
-                unsigned int neighborIdx = this->fvGridGeometry().elementMapper().index(intersection.outside());
+                unsigned int neighborIdx = this->gridGeometry().elementMapper().index(intersection.outside());
                 for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                 {
                     if (abs(cellCenter_[elementIdx][dimIdx] - cellCenter_[neighborIdx][dimIdx]) > 1e-8)
@@ -236,15 +236,15 @@ public:
             = getParamFromGroup<int>(this->paramGroup(), "RANS.FlowNormalAxis", -1);
 
         // re-initialize min and max values
-        velocityMaximum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(1e-16));
-        velocityMinimum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
+        velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), DimVector(1e-16));
+        velocityMinimum_.assign(this->gridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
 
         // calculate cell-center-averaged velocities
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             // calculate velocities
             DimVector velocityTemp(0.0);
@@ -259,9 +259,9 @@ public:
         }
 
         // calculate cell-center-averaged velocity gradients, maximum, and minimum values
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             unsigned int wallElementIdx = wallElementIdx_[elementIdx];
 
             Scalar maxVelocity = 0.0;
@@ -299,7 +299,7 @@ public:
                 }
             }
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
@@ -369,9 +369,9 @@ public:
         }
 
         // calculate or call all secondary variables
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> stressTensor(0.0);
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
@@ -409,7 +409,7 @@ public:
                 }
             }
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {

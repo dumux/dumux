@@ -44,16 +44,16 @@ namespace Dumux {
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag,
-         class UpwindScheme = UpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>> >
+         class UpwindScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>> >
 class PorousMediumFluxVariables
 : public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
-                           typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView,
+                           typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

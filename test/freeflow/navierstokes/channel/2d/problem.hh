@@ -95,7 +95,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -273,8 +273,8 @@ public:
      */
     Scalar parabolicProfile(const Scalar y, const Scalar vMax) const
     {
-        const Scalar yMin = this->fvGridGeometry().bBoxMin()[1];
-        const Scalar yMax = this->fvGridGeometry().bBoxMax()[1];
+        const Scalar yMin = this->gridGeometry().bBoxMin()[1];
+        const Scalar yMax = this->gridGeometry().bBoxMax()[1];
         return  vMax * (y - yMin)*(yMax - y) / (0.25*(yMax - yMin)*(yMax - yMin));
     }
 
@@ -287,8 +287,8 @@ public:
      */
     Scalar dudy(const Scalar y, const Scalar vMax) const
     {
-        const Scalar yMin = this->fvGridGeometry().bBoxMin()[1];
-        const Scalar yMax = this->fvGridGeometry().bBoxMax()[1];
+        const Scalar yMin = this->gridGeometry().bBoxMin()[1];
+        const Scalar yMax = this->gridGeometry().bBoxMax()[1];
         return vMax * (4.0*yMin + 4*yMax - 8.0*y) / ((yMin-yMax)*(yMin-yMax));
     }
 
@@ -344,7 +344,7 @@ private:
 
     bool isOutlet_(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     Scalar eps_;

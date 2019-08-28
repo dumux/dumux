@@ -113,7 +113,7 @@ public:
                 // compute the outside flux
                 const auto& fvGeometry = fluxVars.fvGeometry();
                 const auto outsideScvIdx = scvf.outsideScvIdx(i);
-                const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
+                const auto outsideElement = fvGeometry.gridGeometry().element(outsideScvIdx);
                 const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
 
                 using AdvectionType = typename FluxVariables::AdvectionType;
