@@ -64,7 +64,7 @@ struct Problem<TypeTag, TTag::OnePEdge> { using type = OnePEdgeProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePEdge>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePSpatialParams<FVGridGeometry, Scalar>;
 };

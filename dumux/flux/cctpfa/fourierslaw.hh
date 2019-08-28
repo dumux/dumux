@@ -48,7 +48,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -159,7 +159,7 @@ public:
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
+            const auto outsideElement = fvGeometry.gridGeometry().element(outsideScvIdx);
 
             const auto outsideLambda = Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
                                         outsideVolVars, problem.spatialParams(), outsideElement, fvGeometry, outsideScv);

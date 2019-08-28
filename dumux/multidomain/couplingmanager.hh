@@ -46,7 +46,7 @@ class CouplingManager
 {
     template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
-    template<std::size_t id> using GridView = typename GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>::GridView;
+    template<std::size_t id> using GridView = typename GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using ProblemWeakPtr = std::weak_ptr<const Problem<id>>;

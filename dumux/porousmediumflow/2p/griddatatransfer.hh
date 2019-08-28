@@ -49,7 +49,7 @@ class TwoPGridDataTransfer : public GridDataTransfer
     using Grid = GetPropType<TypeTag, Properties::Grid>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -77,7 +77,7 @@ class TwoPGridDataTransfer : public GridDataTransfer
 
     static constexpr int dim = Grid::dimension;
     static constexpr int dimWorld = Grid::dimensionworld;
-    static constexpr bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
 
     // saturation primary variable index
     enum { saturationIdx = Indices::saturationIdx };

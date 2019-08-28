@@ -117,7 +117,7 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.template grid<0>().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update(fractureGridAdapter);
 

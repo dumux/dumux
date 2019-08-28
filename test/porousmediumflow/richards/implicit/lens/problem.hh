@@ -77,7 +77,7 @@ struct Problem<TypeTag, TTag::RichardsLens> { using type = RichardsLensProblem<T
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsLens>
 {
-    using type = RichardsLensSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = RichardsLensSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                            GetPropType<TypeTag, Properties::Scalar>>;
 };
 } // end namespace Dumux
@@ -118,7 +118,7 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     enum {
         // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,
@@ -252,28 +252,28 @@ private:
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
+        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
+        return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
+        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
-        Scalar lambda = (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])/width;
+        Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
+        Scalar lambda = (this->gridGeometry().bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda + eps_ && lambda < 2.0/3.0 + eps_;
     }
 

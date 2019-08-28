@@ -84,7 +84,7 @@ struct FluidSystem<TypeTag, TTag::Fracture>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Fracture>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FractureSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -117,7 +117,7 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
     FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -167,7 +167,7 @@ public:
         BoundaryTypes values;
 
         values.setAllNeumann();
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         if (globalPos[0] > gg.bBoxMax()[0] - eps_ || globalPos[0] < gg.bBoxMin()[0] + eps_)
             values.setAllDirichlet();
 
@@ -201,7 +201,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         values[pressureIdx] = 1.0e5*(globalPos[0] - gg.bBoxMin()[0])/(gg.bBoxMax()[0] - gg.bBoxMin()[0]) + 1.0e5;
         return values;
     }

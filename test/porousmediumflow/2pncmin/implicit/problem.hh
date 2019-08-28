@@ -86,7 +86,7 @@ struct SolidSystem<TypeTag, TTag::Dissolution>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Dissolution>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = DissolutionSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -178,9 +178,9 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
@@ -209,7 +209,7 @@ public:
         temperatureHigh_        = getParam<Scalar>("FluidSystem.TemperatureHigh");
         name_                   = getParam<std::string>("Problem.Name");
 
-        unsigned int codim = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
+        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
@@ -264,8 +264,8 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        const Scalar rmax = this->fvGridGeometry().bBoxMax()[0];
-        const Scalar rmin = this->fvGridGeometry().bBoxMin()[0];
+        const Scalar rmax = this->gridGeometry().bBoxMax()[0];
+        const Scalar rmin = this->gridGeometry().bBoxMin()[0];
 
         // default to Neumann
         bcTypes.setAllNeumann();
@@ -289,8 +289,8 @@ public:
         PrimaryVariables priVars(0.0);
         priVars.setState(bothPhases);
 
-        const Scalar rmax = this->fvGridGeometry().bBoxMax()[0];
-        const Scalar rmin = this->fvGridGeometry().bBoxMin()[0];
+        const Scalar rmax = this->gridGeometry().bBoxMax()[0];
+        const Scalar rmin = this->gridGeometry().bBoxMin()[0];
 
         if(globalPos[0] > rmax - eps_)
         {
@@ -406,11 +406,11 @@ public:
 
     void updateVtkOutput(const SolutionVector& curSol)
         {
-            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
+                const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
 
-                auto fvGeometry = localView(this->fvGridGeometry());
+                auto fvGeometry = localView(this->gridGeometry());
                 fvGeometry.bindElement(element);
 
                 for (auto&& scv : scvs(fvGeometry))

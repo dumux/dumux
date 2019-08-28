@@ -49,15 +49,15 @@ namespace Staggered {
 //////////////////////////////////////////////////////////
 template<template<std::size_t> class SubDomainTypeTag, std::size_t i>
 struct SubDomainFVGridGeometryImpl
-{ using type = GetPropType<SubDomainTypeTag<i>, Properties::FVGridGeometry>; };
+{ using type = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainFVGridGeometryImpl<SubDomainTypeTag, 0>
-{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::CellCenterFVGridGeometryType; };
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridGeometry>::CellCenterFVGridGeometryType; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainFVGridGeometryImpl<SubDomainTypeTag, 1>
-{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::FaceFVGridGeometryType; };
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridGeometry>::FaceFVGridGeometryType; };
 //////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////

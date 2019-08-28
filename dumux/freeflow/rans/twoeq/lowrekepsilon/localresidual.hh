@@ -43,7 +43,7 @@ class LowReKEpsilonResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseLocalResidual>
-using LowReKEpsilonResidual = LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using LowReKEpsilonResidual = LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 }
 

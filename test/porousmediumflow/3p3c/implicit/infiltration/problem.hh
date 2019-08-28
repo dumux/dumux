@@ -66,7 +66,7 @@ struct Problem<TypeTag, TTag::InfiltrationThreePThreeC> { using type = Infiltrat
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::InfiltrationThreePThreeC>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = InfiltrationThreePThreeCSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -138,7 +138,7 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -194,9 +194,9 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             values.setAllDirichlet();
-        else if(globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+        else if(globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();

@@ -49,7 +49,7 @@ class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
 {
     using ParentType = DarcysLaw<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElemFluxVarCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;

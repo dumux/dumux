@@ -41,7 +41,7 @@ namespace Dumux {
  *       since we use the flux stencil for matrix and assembly. This might lead to some zeros stored
  *       in the matrix.
  */
-template<class FVElementGeometry, DiscretizationMethod discMethod = FVElementGeometry::FVGridGeometry::discMethod>
+template<class FVElementGeometry, DiscretizationMethod discMethod = FVElementGeometry::GridGeometry::discMethod>
 class FluxStencil;
 
 /*
@@ -52,7 +52,7 @@ class FluxStencil;
 template<class FVElementGeometry>
 class FluxStencil<FVElementGeometry, DiscretizationMethod::cctpfa>
 {
-    using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+    using FVGridGeometry = typename FVElementGeometry::GridGeometry;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -92,7 +92,7 @@ public:
 template<class FVElementGeometry>
 class FluxStencil<FVElementGeometry, DiscretizationMethod::ccmpfa>
 {
-    using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+    using FVGridGeometry = typename FVElementGeometry::GridGeometry;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -113,7 +113,7 @@ public:
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)
     {
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
 
         // return the scv (element) indices in the interaction region
         if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))

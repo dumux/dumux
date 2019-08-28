@@ -156,7 +156,7 @@ public:
                                                          const Element<PMFlowId>& element,
                                                          Dune::index_constant<PoroMechId> poroMechDomainId) const
     {
-        return pmFlowCouplingMap_[ this->problem(pmFlowId).fvGridGeometry().elementMapper().index(element) ];
+        return pmFlowCouplingMap_[ this->problem(pmFlowId).gridGeometry().elementMapper().index(element) ];
     }
 
     /*!
@@ -166,7 +166,7 @@ public:
                                                           const Element<PoroMechId>& element,
                                                           Dune::index_constant<PMFlowId> pmFlowDomainId) const
     {
-        const auto eIdx = this->problem(pmFlowId).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(pmFlowId).gridGeometry().elementMapper().index(element);
         return CouplingStencilType<PoroMechId>{ {eIdx} };
     }
 
@@ -188,7 +188,7 @@ public:
 
         // prepare the fvGeometry and the element volume variables
         // these quantities will be used later to obtain the effective pressure
-        auto fvGeometry = localView( this->problem(pmFlowId).fvGridGeometry() );
+        auto fvGeometry = localView( this->problem(pmFlowId).gridGeometry() );
         auto elemVolVars = localView( assembler.gridVariables(Dune::index_constant<PMFlowId>()).curGridVolVars() );
 
         fvGeometry.bindElement(element);
@@ -360,7 +360,7 @@ public:
     const VolumeVariables<PMFlowId>& getPMFlowVolVars(const Element<PoroMechId>& element) const
     {
         //! If we do not yet have the queried object, build it first
-        const auto eIdx = this->problem(poroMechId).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(poroMechId).gridGeometry().elementMapper().index(element);
         return (*poroMechCouplingContext_.pmFlowElemVolVars)[eIdx];
     }
 
@@ -380,8 +380,8 @@ private:
     void initializeCouplingMap_()
     {
         // some references for convenience
-        const auto& pmFlowGridGeom = this->problem(pmFlowId).fvGridGeometry();
-        const auto& poroMechGridGeom = this->problem(poroMechId).fvGridGeometry();
+        const auto& pmFlowGridGeom = this->problem(pmFlowId).gridGeometry();
+        const auto& poroMechGridGeom = this->problem(poroMechId).gridGeometry();
 
         // make sure the two grids are really the same. Note that if the two grids
         // happen to have equal number of elements by chance, we don't detect this source of error.

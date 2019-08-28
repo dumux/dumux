@@ -100,7 +100,7 @@ struct FluidSystem<TypeTag, TTag::Tissue>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Tissue>
 {
-    using type = TissueSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = TissueSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                      GetPropType<TypeTag, Properties::Scalar>>;
 };
 } // end namespace Properties
@@ -116,7 +116,7 @@ class TissueProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
@@ -141,10 +141,10 @@ public:
         // read parameters from input file
         name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 
-        exactPressure_.resize(this->fvGridGeometry().numDofs());
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        exactPressure_.resize(this->gridGeometry().numDofs());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -289,7 +289,7 @@ public:
 
         NumEqVector source(0.0);
 
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
         const auto& sourceIds = this->couplingManager().bulkSourceIds(eIdx);
         const auto& sourceWeights = this->couplingManager().bulkSourceWeights(eIdx);
 
@@ -334,7 +334,7 @@ public:
                               const VolumeVariables& curElemVolVars,
                               const SubControlVolume& scv) const
     {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
 
         auto key = std::make_pair(eIdx, 0);
         if (this->pointSourceMap().count(key))
@@ -394,9 +394,9 @@ public:
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
         PrimaryVariables source(0.0);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(gridVars.curGridVolVars());

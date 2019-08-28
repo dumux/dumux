@@ -45,7 +45,7 @@ class CombustionEnergyLocalResidual
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;

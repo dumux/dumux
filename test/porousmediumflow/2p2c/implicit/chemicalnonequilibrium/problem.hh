@@ -80,7 +80,7 @@ public:
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPTwoCChemicalNonequilibrium>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TwoPTwoCChemicalNonequilibriumSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -131,12 +131,12 @@ class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<Typ
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
@@ -202,7 +202,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-         if (globalPos[0] <  this->fvGridGeometry().bBoxMin()[0] + eps_)
+         if (globalPos[0] <  this->gridGeometry().bBoxMin()[0] + eps_)
             bcTypes.setAllDirichlet();
          else
             bcTypes.setAllNeumann();
@@ -243,7 +243,7 @@ public:
         const auto& volVars = elemVolVars[scvf.insideScvIdx()];
         Scalar boundaryLayerThickness = 0.0016;
         //right side
-        if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
             Scalar moleFracH2OInside = volVars.moleFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx);
             Scalar moleFracRefH2O = 0.0;
@@ -289,14 +289,14 @@ public:
 
     void updateVtkFields(const SolutionVector& curSol)
     {
-        const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& gridView = this->gridGeometry().gridView();
         xEquilxwn_.resize(gridView.size(dofCodim));
         xEquilxnw_.resize(gridView.size(dofCodim));
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
+            auto elemSol = elementSolution(element, curSol, this->gridGeometry());
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))

@@ -79,7 +79,7 @@ struct Problem<TypeTag, TTag::RichardsAnalytical> { using type = RichardsAnalyti
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsAnalytical>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsAnalyticalSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -110,7 +110,7 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     enum {
         // copy some indices for convenience
@@ -325,9 +325,9 @@ public:
         Scalar l2analytic = 0.0;
         const Scalar time = time_;
 
-        for (const auto& element :elements(this->fvGridGeometry().gridView()))
+        for (const auto& element :elements(this->gridGeometry().gridView()))
         {
-            int eIdx = this->fvGridGeometry().elementMapper().index(element);
+            int eIdx = this->gridGeometry().elementMapper().index(element);
             // value from numerical approximation
             Scalar numericalSolution = curSol[eIdx];
 
@@ -366,7 +366,7 @@ public:
         // compute L2 error if analytical solution is available
         std::cout.precision(8);
         std::cout << "L2 error for "
-                  << std::setw(6) << this->fvGridGeometry().gridView().size(0)
+                  << std::setw(6) << this->gridGeometry().gridView().size(0)
                   << " elements: "
                   << std::scientific
                   << l2error
@@ -378,13 +378,13 @@ private:
     // evaluates if global position is at lower boundary
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
+        return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_;
     }
 
     // evaluates if global position is at upper boundary
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
+        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
 
     static constexpr Scalar eps_ = 3e-6;

@@ -132,7 +132,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -184,7 +184,7 @@ public:
     {
         BoundaryTypes values;
 
-        if (globalPos[dimWorld-1] < eps_ || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps_)
+        if (globalPos[dimWorld-1] < eps_ || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();

@@ -93,7 +93,7 @@ struct FluidSystem<TypeTag, TTag::Matrix>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Matrix>
 {
-    using type = MatrixFractureSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = MatrixFractureSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                              GetPropType<TypeTag, Properties::Scalar>>;
 };
 } // end namespace Properties
@@ -108,7 +108,7 @@ class MatrixProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
@@ -258,9 +258,9 @@ public:
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
         NumEqVector source(0.0);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(gridVars.curGridVolVars());

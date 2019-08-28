@@ -99,15 +99,15 @@ template<class Assembler>
 class PartialReassemblerEngine<Assembler, DiscretizationMethod::box>
 {
     using Scalar = typename Assembler::Scalar;
-    using FVGridGeometry = typename Assembler::FVGridGeometry;
+    using FVGridGeometry = typename Assembler::GridGeometry;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using VertexMapper = typename FVGridGeometry::VertexMapper;
     static constexpr int dim = FVGridGeometry::GridView::dimension;
 
 public:
     PartialReassemblerEngine(const Assembler& assembler)
-    : elementColor_(assembler.fvGridGeometry().elementMapper().size(), EntityColor::red)
-    , vertexColor_(assembler.fvGridGeometry().vertexMapper().size(), EntityColor::red)
+    : elementColor_(assembler.gridGeometry().elementMapper().size(), EntityColor::red)
+    , vertexColor_(assembler.gridGeometry().vertexMapper().size(), EntityColor::red)
     {}
 
     // returns number of green elements
@@ -115,7 +115,7 @@ public:
                               const std::vector<Scalar>& distanceFromLastLinearization,
                               Scalar threshold)
     {
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
+        const auto& fvGridGeometry = assembler.gridGeometry();
         const auto& gridView = fvGridGeometry.gridView();
         const auto& elementMapper = fvGridGeometry.elementMapper();
         const auto& vertexMapper = fvGridGeometry.vertexMapper();
@@ -305,12 +305,12 @@ template<class Assembler>
 class PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
 {
     using Scalar = typename Assembler::Scalar;
-    using FVGridGeometry = typename Assembler::FVGridGeometry;
+    using FVGridGeometry = typename Assembler::GridGeometry;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
 
 public:
     PartialReassemblerEngine(const Assembler& assembler)
-    : elementColor_(assembler.fvGridGeometry().elementMapper().size(), EntityColor::red)
+    : elementColor_(assembler.gridGeometry().elementMapper().size(), EntityColor::red)
     {}
 
     // returns number of green elements
@@ -318,7 +318,7 @@ public:
                               const std::vector<Scalar>& distanceFromLastLinearization,
                               Scalar threshold)
     {
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
+        const auto& fvGridGeometry = assembler.gridGeometry();
         const auto& gridView = fvGridGeometry.gridView();
         const auto& elementMapper = fvGridGeometry.elementMapper();
 
@@ -362,7 +362,7 @@ public:
     void resetJacobian(Assembler& assembler) const
     {
         auto& jacobian = assembler.jacobian();
-        const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
+        const auto& connectivityMap = assembler.gridGeometry().connectivityMap();
 
         // loop over all dofs
         for (unsigned int colIdx = 0; colIdx < jacobian.M(); ++colIdx)
@@ -423,7 +423,7 @@ template<class Assembler>
 class PartialReassembler
 {
     using Scalar = typename Assembler::Scalar;
-    using FVGridGeometry = typename Assembler::FVGridGeometry;
+    using FVGridGeometry = typename Assembler::GridGeometry;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using VertexMapper = typename FVGridGeometry::VertexMapper;
 
@@ -440,7 +440,7 @@ public:
     : engine_(assembler)
     , greenElems_(0)
     {
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
+        const auto& fvGridGeometry = assembler.gridGeometry();
         totalElems_ = fvGridGeometry.elementMapper().size();
         totalElems_ = fvGridGeometry.gridView().comm().sum(totalElems_);
     }

@@ -65,7 +65,7 @@ struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePBulk>
 {
-    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
                                     GetPropType<TypeTag, Properties::Scalar> >;
 };
 
@@ -130,7 +130,7 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[1] < 1e-6 || globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - 1e-6)
+        if (globalPos[1] < 1e-6 || globalPos[1] > this->gridGeometry().bBoxMax()[1] - 1e-6)
             values.setAllDirichlet();
         return values;
     }

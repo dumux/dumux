@@ -48,9 +48,9 @@ class FVLocalResidual
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -423,7 +423,7 @@ public:
 
     //! Compute the derivative of the flux residual
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod != DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod != DiscretizationMethod::box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                             const Problem& problem,
                             const Element& element,
@@ -437,7 +437,7 @@ public:
 
     //! Compute the derivative of the flux residual for the box method
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                             const Problem& problem,
                             const Element& element,

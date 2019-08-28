@@ -75,7 +75,7 @@ private:
         if (this->numSteps_ <= 4)
         {
             // clamp saturation change to at most 20% per iteration
-            const auto& fvGridGeometry = this->assembler().fvGridGeometry();
+            const auto& fvGridGeometry = this->assembler().gridGeometry();
             for (const auto& element : elements(fvGridGeometry.gridView()))
             {
                 auto fvGeometry = localView(fvGridGeometry);

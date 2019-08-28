@@ -69,7 +69,7 @@ public:
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
@@ -78,11 +78,11 @@ public:
 
     // function to prepare the vol vars within the element
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
-        eIdx_ = fvGeometry.fvGridGeometry().elementMapper().index(element);
+        eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element);
     }
 
     //! The global volume variables object we are a restriction of
@@ -115,7 +115,7 @@ public:
 
     // specialization for box models, simply forwards to the bindElement method
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
@@ -124,12 +124,12 @@ public:
 
     // specialization for box models
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
         // get the solution at the dofs of the element
-        auto elemSol = elementSolution(element, sol, fvGeometry.fvGridGeometry());
+        auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
 
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());

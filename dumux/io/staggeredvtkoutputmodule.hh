@@ -92,8 +92,8 @@ public:
     : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
     , faceWriter_(std::make_shared<PointCloudVtkWriter<Scalar, GlobalPosition>>(coordinates_))
     , sequenceWriter_(faceWriter_, name + "-face", "","",
-                      gridVariables.curGridVolVars().problem().fvGridGeometry().gridView().comm().rank(),
-                      gridVariables.curGridVolVars().problem().fvGridGeometry().gridView().comm().size() )
+                      gridVariables.curGridVolVars().problem().gridGeometry().gridView().comm().rank(),
+                      gridVariables.curGridVolVars().problem().gridGeometry().gridView().comm().size() )
 
     {
         static_assert(std::is_same<Sol, SolutionVector>::value, "Make sure that sol has the same type as SolutionVector."

@@ -121,7 +121,7 @@ template<class TypeTag>
 struct StressType<TypeTag, TTag::Elastic>
 {
     using type = HookesLaw< GetPropType<TypeTag, Properties::Scalar>,
-                            GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                            GetPropType<TypeTag, Properties::GridGeometry> >;
 };
 
 } // namespace Properties

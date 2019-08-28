@@ -67,7 +67,7 @@ public:
     {
         homogeneous_ = getParam<bool>("Problem.Homogeneous");
 
-        const std::vector<int>& globalCell = this->fvGridGeometry().gridView().grid().globalCell();
+        const std::vector<int>& globalCell = this->gridGeometry().gridView().grid().globalCell();
 
         if (deck_->hasKeyword("PORO")) {
             std::cout << "Found PORO..." << std::endl;
@@ -134,7 +134,7 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        int eIdx = this->fvGridGeometry().gridView().indexSet().index(element);
+        int eIdx = this->gridGeometry().gridView().indexSet().index(element);
 
         PermeabilityType K(0);
         K[0][0] = K[1][1] = permX_[eIdx];
@@ -156,7 +156,7 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
-        int eIdx = this->fvGridGeometry().gridView().indexSet().index(element);
+        int eIdx = this->gridGeometry().gridView().indexSet().index(element);
         return porosity_[eIdx];
     }
 

@@ -49,7 +49,7 @@ class BoxDarcysLaw;
  */
 template<class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
-: public BoxDarcysLaw<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::FVGridGeometry>>
+: public BoxDarcysLaw<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
 { };
 
 /*!

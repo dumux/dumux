@@ -43,7 +43,7 @@ class KOmegaResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseLocalResidual>
-using KOmegaResidual = KOmegaResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using KOmegaResidual = KOmegaResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 }
 

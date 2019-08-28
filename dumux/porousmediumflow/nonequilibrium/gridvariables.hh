@@ -43,12 +43,12 @@ namespace Dumux {
  */
 template<class TypeTag>
 class NonEquilibriumGridVariables
-: public FVGridVariables<GetPropType<TypeTag, Properties::FVGridGeometry>,
+: public FVGridVariables<GetPropType<TypeTag, Properties::GridGeometry>,
                          GetPropType<TypeTag, Properties::GridVolumeVariables>,
                          GetPropType<TypeTag, Properties::GridFluxVariablesCache>>
 {
     using ThisType = NonEquilibriumGridVariables<TypeTag>;
-    using ParentType = FVGridVariables<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using ParentType = FVGridVariables<GetPropType<TypeTag, Properties::GridGeometry>,
                                        GetPropType<TypeTag, Properties::GridVolumeVariables>,
                                        GetPropType<TypeTag, Properties::GridFluxVariablesCache>>;
 

@@ -80,7 +80,7 @@ public:
                                      const PartialReassembler* partialReassembler = nullptr)
     {
         this->asImp_().bindLocalViews();
-        const auto eIdxGlobal = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        const auto eIdxGlobal = this->assembler().gridGeometry().elementMapper().index(this->element());
         if (partialReassembler
             && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
@@ -113,7 +113,7 @@ public:
                 }
 
                 // set main diagonal entries for the vertex
-                int vIdx = this->assembler().fvGridGeometry().vertexMapper().index(vertex);
+                int vIdx = this->assembler().gridGeometry().vertexMapper().index(vertex);
 
                 typedef typename JacobianMatrix::block_type BlockType;
                 BlockType &J = jac[vIdx][vIdx];
@@ -139,9 +139,9 @@ public:
             jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
 
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
-            if (this->assembler().fvGridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
+            if (this->assembler().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
             {
-                const auto periodicDof = this->assembler().fvGridGeometry().periodicallyMappedDof(scvI.dofIndex());
+                const auto periodicDof = this->assembler().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
                 res[periodicDof][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
                 const auto end = jac[periodicDof].end();
                 for (auto it = jac[periodicDof].begin(); it != end; ++it)
@@ -309,7 +309,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
+        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
@@ -430,7 +430,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
+        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));

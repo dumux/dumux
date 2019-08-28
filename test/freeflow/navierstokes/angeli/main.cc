@@ -57,7 +57,7 @@
 template<class Scalar, class Problem>
 auto createAnalyticalSolution(const Scalar time, const Problem& problem)
 {
-    const auto& fvGridGeometry = problem.fvGridGeometry();
+    const auto& fvGridGeometry = problem.gridGeometry();
     using GridView = typename std::decay_t<decltype(fvGridGeometry)>::GridView;
 
     static constexpr auto dim = GridView::dimension;
@@ -133,7 +133,7 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 

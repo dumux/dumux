@@ -91,7 +91,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -244,13 +244,13 @@ public:
                     values[Indices::velocityYIdx] *= -1.0;
             }
 
-            if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
+            if(globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
                 values[Indices::conti0EqIdx + 1] = topMoleFraction;
         }
         else // horizontal flow
         {
             static const Scalar inletMoleFraction = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletMoleFraction");
-            if(globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+            if(globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
                 values[Indices::conti0EqIdx + 1] = inletMoleFraction;
         }
 
@@ -312,10 +312,10 @@ public:
 
         auto parabolicProfile = [&](const GlobalPosition& globalPos, int coord)
         {
-            return vMax * (globalPos[coord] - this->fvGridGeometry().bBoxMin()[coord])
-                        * (this->fvGridGeometry().bBoxMax()[coord] - globalPos[coord])
-                        / (0.25 * (this->fvGridGeometry().bBoxMax()[coord] - this->fvGridGeometry().bBoxMin()[coord])
-                        * (this->fvGridGeometry().bBoxMax()[coord] - this->fvGridGeometry().bBoxMin()[coord]));
+            return vMax * (globalPos[coord] - this->gridGeometry().bBoxMin()[coord])
+                        * (this->gridGeometry().bBoxMax()[coord] - globalPos[coord])
+                        / (0.25 * (this->gridGeometry().bBoxMax()[coord] - this->gridGeometry().bBoxMin()[coord])
+                        * (this->gridGeometry().bBoxMax()[coord] - this->gridGeometry().bBoxMin()[coord]));
         };
 
         if (verticalFlow_)
@@ -360,16 +360,16 @@ public:
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_; }
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_; }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_; }
+    { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
+    { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
 
     Scalar eps_;
     bool verticalFlow_;

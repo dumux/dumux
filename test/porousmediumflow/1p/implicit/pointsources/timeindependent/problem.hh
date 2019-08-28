@@ -75,7 +75,7 @@ struct Problem<TypeTag, TTag::OnePSingularity> { using type = OnePSingularityPro
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePSingularity>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePSingularitySpatialParams<FVGridGeometry, Scalar>;
 };
@@ -112,7 +112,7 @@ class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

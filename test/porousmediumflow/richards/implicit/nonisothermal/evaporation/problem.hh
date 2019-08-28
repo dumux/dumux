@@ -72,7 +72,7 @@ struct FluidSystem<TypeTag, TTag::RichardsNIEvaporation> { using type = FluidSys
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsNIEvaporation>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
 };
@@ -100,7 +100,7 @@ class RichardsNIEvaporationProblem : public PorousMediumFlowProblem<TypeTag>
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -216,7 +216,7 @@ public:
         const auto& volVars = elemVolVars[scvf.insideScvIdx()];
         Scalar boundaryLayerThickness = 0.0016;
 
-        if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
+        if(globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
         {
              values[conti0EqIdx] = 1e-3;
              values[energyEqIdx] = FluidSystem::enthalpy( volVars.fluidState(), FluidSystem::gasPhaseIdx) * values[conti0EqIdx];

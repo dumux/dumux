@@ -108,9 +108,9 @@ public:
     , sol_(sol)
     , name_(name)
     , paramGroup_(paramGroup)
-    , verbose_(gridVariables.fvGridGeometry().gridView().comm().rank() == 0 && verbose)
+    , verbose_(gridVariables.gridGeometry().gridView().comm().rank() == 0 && verbose)
     , dm_(dm)
-    , writer_(std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.fvGridGeometry().gridView(), dm))
+    , writer_(std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.gridGeometry().gridView(), dm))
     , sequenceWriter_(writer_, name)
     , velocityOutput_(std::make_shared<VelocityOutputType>())
     {}
@@ -230,7 +230,7 @@ public:
 protected:
     // some return functions for differing implementations to use
     const auto& problem() const { return gridVariables_.curGridVolVars().problem(); }
-    const FVGridGeometry& fvGridGeometry() const { return gridVariables_.fvGridGeometry(); }
+    const FVGridGeometry& fvGridGeometry() const { return gridVariables_.gridGeometry(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
     const SolutionVector& sol() const { return sol_; }
 

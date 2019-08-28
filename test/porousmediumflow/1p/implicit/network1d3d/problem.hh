@@ -112,7 +112,7 @@ struct Problem<TypeTag, TTag::TubesTest> { using type = TubesTestProblem<TypeTag
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TubesTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TubesTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -154,13 +154,13 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box };
+    enum { isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box };
 
 public:
     TubesTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -314,7 +314,7 @@ public:
         // get the Gaussian quadrature rule for intervals
         const auto& quad = Dune::QuadratureRules<Scalar, dim>::rule(Dune::GeometryType(1), 1);
 
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         for (const auto& element : elements(gg.gridView()))
         {
             const auto eIdx = gg.elementMapper().index(element);

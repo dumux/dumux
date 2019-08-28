@@ -54,8 +54,8 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::zeroeq> : public RANSProblemBase
     using Grid = typename GridView::Grid;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -89,8 +89,8 @@ public:
         ParentType::updateStaticWallProperties();
 
         // update size and initial values of the global vectors
-        kinematicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        additionalRoughnessLength_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        kinematicEddyViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        additionalRoughnessLength_.resize(this->gridGeometry().elementMapper().size(), 0.0);
     }
 
     /*!
@@ -106,11 +106,11 @@ public:
 
         // calculate additional roughness
         bool printedRangeWarning = false;
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -161,10 +161,10 @@ public:
      */
     void updateBaldwinLomaxProperties()
     {
-        std::vector<Scalar> kinematicEddyViscosityInner(this->fvGridGeometry().elementMapper().size(), 0.0);
-        std::vector<Scalar> kinematicEddyViscosityOuter(this->fvGridGeometry().elementMapper().size(), 0.0);
-        std::vector<Scalar> kinematicEddyViscosityDifference(this->fvGridGeometry().elementMapper().size(), 0.0);
-        std::vector<Scalar> switchingPosition(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
+        std::vector<Scalar> kinematicEddyViscosityInner(this->gridGeometry().elementMapper().size(), 0.0);
+        std::vector<Scalar> kinematicEddyViscosityOuter(this->gridGeometry().elementMapper().size(), 0.0);
+        std::vector<Scalar> kinematicEddyViscosityDifference(this->gridGeometry().elementMapper().size(), 0.0);
+        std::vector<Scalar> switchingPosition(this->gridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
 
         using std::abs;
         using std::exp;
@@ -179,13 +179,13 @@ public:
 
         std::vector<Scalar> storedFMax;
         std::vector<Scalar> storedYFMax;
-        storedFMax.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedYFMax.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedFMax.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedYFMax.resize(this->gridGeometry().elementMapper().size(), 0.0);
 
         // (1) calculate inner viscosity and Klebanoff function
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
             Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
             unsigned int flowNormalAxis = this->flowNormalAxis_[elementIdx];
@@ -208,9 +208,9 @@ public:
         }
 
         // (2) calculate outer viscosity
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
             Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
 
@@ -235,9 +235,9 @@ public:
         }
 
         // (3) switching point
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
             Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
 
@@ -251,9 +251,9 @@ public:
         }
 
         // (4) finally determine eddy viscosity
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
             Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
 

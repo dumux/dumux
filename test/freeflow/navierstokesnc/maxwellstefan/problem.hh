@@ -209,7 +209,7 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -262,9 +262,9 @@ public:
             Scalar x_h2_right = 0.0;
             Scalar i = 0.0;
             Scalar j = 0.0;
-            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                auto fvGeometry = localView(this->fvGridGeometry());
+                auto fvGeometry = localView(this->gridGeometry());
                 fvGeometry.bindElement(element);
 
                 auto elemVolVars = localView(gridVariables.curGridVolVars());

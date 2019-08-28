@@ -44,7 +44,7 @@ class PorousMediumFluxVariablesCacheFillerImplementation;
  * Helps filling the flux variables cache depending several policies
  */
 template<class TypeTag>
-using PorousMediumFluxVariablesCacheFiller = PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using PorousMediumFluxVariablesCacheFiller = PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 //! Specialization of the flux variables cache filler for the cell centered tpfa method
 template<class TypeTag>
@@ -53,7 +53,7 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -218,7 +218,7 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using MpfaHelper = typename FVGridGeometry::MpfaHelper;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -281,7 +281,7 @@ public:
         elemVolVarsPtr_ = &elemVolVars;
 
         // prepare interaction volume and fill caches of all the scvfs connected to it
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
         {
             if (forceUpdateAll)

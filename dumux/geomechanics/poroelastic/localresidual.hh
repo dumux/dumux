@@ -45,7 +45,7 @@ class PoroElasticLocalResidual: public ElasticLocalResidual<TypeTag>
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;

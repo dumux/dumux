@@ -105,7 +105,7 @@ template<class TypeTag>
 struct GridVariables<TypeTag, TTag::StaggeredModel>
 {
 private:
-    using GG = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
     using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
     using GFVC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
     using GFV = GetPropType<TypeTag, Properties::GridFaceVariables>;

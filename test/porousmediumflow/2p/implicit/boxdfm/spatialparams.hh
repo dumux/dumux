@@ -148,7 +148,7 @@ public:
     template<class SolutionVector>
     void updateMaterialInterfaceParams(const SolutionVector& x)
     {
-        materialInterfaceParams_.update(this->fvGridGeometry(), *this, x);
+        materialInterfaceParams_.update(this->gridGeometry(), *this, x);
     }
 
     //! Returns the material parameters associated with a nodal dof

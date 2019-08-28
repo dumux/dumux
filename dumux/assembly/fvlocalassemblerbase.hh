@@ -53,7 +53,7 @@ class FVLocalAssemblerBase
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = typename Assembler::ResidualType;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
@@ -76,7 +76,7 @@ public:
     : FVLocalAssemblerBase(assembler,
                            element,
                            curSol,
-                           localView(assembler.fvGridGeometry()),
+                           localView(assembler.gridGeometry()),
                            localView(assembler.gridVariables().curGridVolVars()),
                            localView(assembler.gridVariables().prevGridVolVars()),
                            localView(assembler.gridVariables().gridFluxVarsCache()),

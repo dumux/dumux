@@ -49,7 +49,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa, referenceSys
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -78,7 +78,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa, referenceSys
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume related data from the filler class & upate the cache
-            if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            if (fvGeometry.gridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.secondaryInteractionVolume(),
                                                   fluxVarsCacheFiller.secondaryIvLocalFaceData(),
                                                   fluxVarsCacheFiller.secondaryIvDataHandle(),

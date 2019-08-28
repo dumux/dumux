@@ -90,7 +90,7 @@ struct SolidSystem<TypeTag, TTag::ThermoChem>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::ThermoChem>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = ThermoChemSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -131,10 +131,10 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ReactionRate = ThermoChemReaction;
@@ -180,7 +180,7 @@ public:
         boundaryVaporMoleFrac_ = getParam<Scalar>("Problem.BoundaryMoleFraction");
         boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
 
-        unsigned int codim = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
+        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
         permeability_.resize(fvGridGeometry->gridView().size(codim));
         porosity_.resize(fvGridGeometry->gridView().size(codim));
         reactionRate_.resize(fvGridGeometry->gridView().size(codim));
@@ -380,11 +380,11 @@ public:
      */
     void updateVtkOutput(const SolutionVector& curSol)
     {
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
+            const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))

@@ -46,7 +46,7 @@ class TwoPTestProblemAdaptive : public TwoPTestProblem<TypeTag>
     using Vertex = typename GridView::template Codim<GridView::dimensionworld>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
@@ -66,7 +66,7 @@ public:
     PrimaryVariables initial(const Element& element) const
     {
         const auto delta = 0.0625;
-        unsigned int cellsX = this->fvGridGeometry().bBoxMax()[0]/delta;
+        unsigned int cellsX = this->gridGeometry().bBoxMax()[0]/delta;
         const auto globalPos = element.geometry().center();
 
         // the input data corresponds to a uniform grid with discretization length deltaX_
@@ -80,7 +80,7 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         const auto delta = 0.0625;
-        unsigned int verticesX = this->fvGridGeometry().bBoxMax()[0]/delta + 1;
+        unsigned int verticesX = this->gridGeometry().bBoxMax()[0]/delta + 1;
         const auto globalPos = vertex.geometry().center();
 
         // the input data corresponds to a uniform grid with discretization length deltaX_

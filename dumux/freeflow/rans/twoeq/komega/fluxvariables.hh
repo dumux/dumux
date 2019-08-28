@@ -41,7 +41,7 @@ class KOmegaFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseFluxVariables>
-using KOmegaFluxVariables = KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using KOmegaFluxVariables = KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 } // end namespace
 

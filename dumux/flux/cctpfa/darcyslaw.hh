@@ -56,8 +56,8 @@ class CCTpfaDarcysLaw;
 template <class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 : public CCTpfaDarcysLaw<GetPropType<TypeTag, Properties::Scalar>,
-                         GetPropType<TypeTag, Properties::FVGridGeometry>,
-                         (GetPropType<TypeTag, Properties::FVGridGeometry>::GridView::dimension < GetPropType<TypeTag, Properties::FVGridGeometry>::GridView::dimensionworld)>
+                         GetPropType<TypeTag, Properties::GridGeometry>,
+                         (GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension < GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld)>
 {};
 
 /*!
@@ -191,7 +191,7 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const auto outsideK = outsideVolVars.permeability();
-                const auto outsideTi = fvGeometry.fvGridGeometry().isPeriodic()
+                const auto outsideTi = fvGeometry.gridGeometry().isPeriodic()
                     ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
                     : -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
                 const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
@@ -243,7 +243,7 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar tj = fvGeometry.fvGridGeometry().isPeriodic()
+            const Scalar tj = fvGeometry.gridGeometry().isPeriodic()
                 ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor())
                 : -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor());
 

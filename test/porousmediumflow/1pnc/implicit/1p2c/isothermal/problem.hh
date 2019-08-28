@@ -86,7 +86,7 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCTest>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -134,7 +134,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
@@ -161,7 +161,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
-    static const bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
+    static const bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;

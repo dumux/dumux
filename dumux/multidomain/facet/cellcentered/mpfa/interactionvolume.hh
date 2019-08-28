@@ -128,7 +128,7 @@ public:
         for (LocalIndexType fIdx = 0; fIdx < indexSet.numFaces(); ++fIdx)
         {
             const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(fIdx));
-            const auto element = fvGeometry.fvGridGeometry().element(scvf.insideScvIdx());
+            const auto element = fvGeometry.gridGeometry().element(scvf.insideScvIdx());
             if (problem.couplingManager().isOnInteriorBoundary(element, scvf))
             {
                 numFacetElems++;
@@ -162,9 +162,9 @@ public:
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < indexSet.numFaces(); ++faceIdxLocal)
         {
             const auto gridScvfIdx = indexSet.gridScvfIndex(faceIdxLocal);
-            const auto& flipScvfIdxSet = fvGeometry.fvGridGeometry().flipScvfIndexSet()[gridScvfIdx];
+            const auto& flipScvfIdxSet = fvGeometry.gridGeometry().flipScvfIndexSet()[gridScvfIdx];
             const auto& scvf = fvGeometry.scvf(gridScvfIdx);
-            const auto element = fvGeometry.fvGridGeometry().element(scvf.insideScvIdx());
+            const auto element = fvGeometry.gridGeometry().element(scvf.insideScvIdx());
 
             // the neighboring scvs in local indices (order: 0 - inside scv, 1..n - outside scvs)
             const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(faceIdxLocal);
@@ -192,7 +192,7 @@ public:
                 {
                     const auto outsideGridScvfIdx = flipScvfIdxSet[i-1];
                     const auto& flipScvf = fvGeometry.scvf(outsideGridScvfIdx);
-                    const auto& outsideFlipScvfIdxSet = fvGeometry.fvGridGeometry().flipScvfIndexSet()[outsideGridScvfIdx];
+                    const auto& outsideFlipScvfIdxSet = fvGeometry.gridGeometry().flipScvfIndexSet()[outsideGridScvfIdx];
 
                     // rearrange the neighbor scv index vector corresponding to this scvfs flip scvf index set
                     using std::swap;
@@ -246,7 +246,7 @@ public:
                 {
                     // loop over scvfs in outside scv until we find the one coinciding with current scvf
                     const auto outsideLocalScvIdx = neighborScvIndicesLocal[i];
-                    const auto& flipScvfIndex = fvGeometry.fvGridGeometry().flipScvfIndexSet()[scvf.index()][i-1];
+                    const auto& flipScvfIndex = fvGeometry.gridGeometry().flipScvfIndexSet()[scvf.index()][i-1];
                     const auto& flipScvf = fvGeometry.scvf(flipScvfIndex);
                     scvfIndexMap[flipScvfIndex] = curLocalScvfIdx;
                     localFaceData_.emplace_back(curLocalScvfIdx,    // iv-local scvf idx
@@ -260,8 +260,8 @@ public:
         // set up stuff related to sub-control volumes
         for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numLocalScvs; scvIdxLocal++)
         {
-            elements_.emplace_back(fvGeometry.fvGridGeometry().element( stencil()[scvIdxLocal] ));
-            scvs_.emplace_back(fvGeometry.fvGridGeometry().mpfaHelper(),
+            elements_.emplace_back(fvGeometry.gridGeometry().element( stencil()[scvIdxLocal] ));
+            scvs_.emplace_back(fvGeometry.gridGeometry().mpfaHelper(),
                                fvGeometry,
                                fvGeometry.scv( stencil()[scvIdxLocal] ),
                                scvIdxLocal,
