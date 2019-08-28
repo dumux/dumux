@@ -213,7 +213,7 @@ int main(int argc, char** argv) try
 
     //! the assembler with time loop for instationary problem
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
-    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop, xOld);
 
     //! the linear solver
     using TracerLinearSolver = ExplicitDiagonalSolver;
@@ -232,9 +232,6 @@ int main(int argc, char** argv) try
     //! start the time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
         // assemble, solve, update
         solver.solve(x);
 

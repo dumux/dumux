@@ -206,7 +206,8 @@ int main(int argc, char** argv) try
                                                                  stokesGridVariables->faceGridVariablesPtr(),
                                                                  darcyGridVariables),
                                                  couplingManager,
-                                                 timeLoop);
+                                                 timeLoop,
+                                                 solOld);
 
     // the linear solver
     using LinearSolver = UMFPackBackend;
@@ -221,10 +222,6 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(solOld);
-
-
         if(timeLoop->time() > injectionBegin - eps && timeLoop->time() < injectionEnd + eps)
             stokesProblem->setInjectionState(true);
         else

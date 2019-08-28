@@ -108,7 +108,7 @@ int main(int argc, char** argv) try
 
     //! the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic, IMPLICIT>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop, xOld);
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
@@ -137,9 +137,6 @@ int main(int argc, char** argv) try
     timeLoop->start();
     while (!timeLoop->finished())
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
         Dune::Timer assembleTimer;
         assembler->assembleJacobianAndResidual(x);
         assembleTimer.stop();
