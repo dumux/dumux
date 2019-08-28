@@ -111,8 +111,12 @@ struct BalanceEqOpts { using type = UndefinedProperty; };          //!< A class 
 template<class TypeTag, class MyTypeTag>
 struct ElementBoundaryTypes { using type = UndefinedProperty; };                //!< Stores the boundary types on an element
 
+// TODO: Remove deprecated property FVGridGeometry after 3.1
 template<class TypeTag, class MyTypeTag>
 struct FVGridGeometry { using type = UndefinedProperty; };                      //!< The type of the global finite volume geometry
+template<class TypeTag, class MyTypeTag>
+struct GridGeometry { using type = GetPropType<TypeTag, Properties::FVGridGeometry>;  };       //!< The type of the global finite volume geometry
+
 template<class TypeTag, class MyTypeTag>
 struct EnableFVGridGeometryCache { using type = UndefinedProperty; };           //!< specifies if geometric data is saved (faster, but more memory consuming)
 
