@@ -128,6 +128,9 @@ struct GridGeometry { using type = GetPropType<TypeTag, Properties::FVGridGeomet
 #pragma GCC diagnostic pop
 
 template<class TypeTag, class MyTypeTag>
+struct GridGeometry { using type = GetPropType<TypeTag, Properties::FVGridGeometry>;  };       //!< The type of the global finite volume geometry
+
+template<class TypeTag, class MyTypeTag>
 struct EnableFVGridGeometryCache { using type = UndefinedProperty; };           //!< specifies if geometric data is saved (faster, but more memory consuming)
 
 template<class TypeTag, class MyTypeTag>
