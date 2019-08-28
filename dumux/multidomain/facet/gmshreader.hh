@@ -95,9 +95,16 @@ public:
         if (gridFile.fail())
             DUNE_THROW(Dune::InvalidStateException, "Could not open the given .msh file. Make sure it exists");
 
-        // read file until we get to the list of nodes
+        // currently we only support version 2 file format
         std::string line;
         std::getline(gridFile, line);
+        if (line.find("$MeshFormat") == std::string::npos)
+            DUNE_THROW(Dune::InvalidStateException, "Expected $MeshFormat in the first line of the grid file!");
+        std::getline(gridFile, line);
+        if (line.find_first_of("2") != 0)
+            DUNE_THROW(Dune::InvalidStateException, "Currently only Gmsh mesh file format version 2 is supported!");
+
+        // read file until we get to the list of nodes
         while (line.find("$Nodes") == std::string::npos)
             std::getline(gridFile, line);
 
