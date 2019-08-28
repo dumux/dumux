@@ -173,7 +173,7 @@ int main(int argc, char** argv) try
 
     //! the assembler with time loop for instationary problem
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
-    auto tracerAssembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, tracerGridVariables, timeLoop);
+    auto tracerAssembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, tracerGridVariables, timeLoop, xOld);
     tracerAssembler->setLinearSystem(A, r);
 
     // set the flux, density and saturation from the 2p problem
@@ -199,9 +199,6 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        twoPAssembler->setPreviousSolution(pOld);
-
         // solve the non-linear system with time step control
         nonLinearSolver.solve(p, *timeLoop);
 
@@ -280,9 +277,6 @@ int main(int argc, char** argv) try
         tracerProblem->spatialParams().setVolumeFlux(volumeFlux_);
         tracerProblem->spatialParams().setDensity(density_);
         tracerProblem->spatialParams().setSaturation(saturation_);
-
-        // set previous solution for storage evaluations
-        tracerAssembler->setPreviousSolution(xOld);
 
         Dune::Timer tracerAssembleTimer;
         tracerAssembler->assembleJacobianAndResidual(x);
