@@ -580,7 +580,12 @@ public:
     // \}
 
     //! The finite volume grid geometry
+    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
     const FVGridGeometry& fvGridGeometry() const
+    { return gridGeometry(); }
+
+    //! The finite volume grid geometry
+    const FVGridGeometry& gridGeometry() const
     { return *fvGridGeometry_; }
 
     //! The parameter group in which to retrieve runtime parameters
