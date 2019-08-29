@@ -771,8 +771,8 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GridView::dimension };
+    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+    static constexpr int dim = GridView::dimension;
 
     static constexpr auto domainI = Dune::index_constant<id>();
 
@@ -873,42 +873,30 @@ public:
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
                                   const LocalResidualValues& res, GridVariables& gridVariables)
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////
+        // Calculate derivatives of all dofs in the element  //
+        // with respect to all dofs in the coupling stencil. //
+        ///////////////////////////////////////////////////////
+        this->couplingManager().addCouplingDerivatives(A, domainI, *this, domainJ);
 
-        // get some aliases for convenience
-        const auto& element = this->element();
-        const auto& fvGeometry = this->fvGeometry();
-        const auto& gridGeometry = fvGeometry.gridGeometry();
-        auto&& curElemVolVars = this->curElemVolVars();
-        // auto&& elemFluxVarsCache = this->elemFluxVarsCache();
-
-        // get stencil informations
-        const auto globalI = gridGeometry.elementMapper().index(element);
-        const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
-
-        for (const auto globalJ : stencil)
+        // add the current partial derivatives to the global jacobian matrix
+        if constexpr (Problem::enableInternalDirichletConstraints())
         {
-            const auto& elementJ = this->assembler().gridGeometry(domainJ).element(globalJ);
-            this->couplingManager().addCouplingDerivatives(A[globalI][globalJ], domainI, element, fvGeometry, curElemVolVars, domainJ, elementJ);
 
-            // add the current partial derivatives to the global jacobian matrix
-            if constexpr (Problem::enableInternalDirichletConstraints())
+            for (const auto globalJ : stencil)
             {
                 const auto& scv = fvGeometry.scv(globalI);
                 const auto internalDirichletConstraints = this->problem().hasInternalDirichletConstraint(this->element(), scv);
                 if (internalDirichletConstraints.any())
-                {
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
                         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                             if (internalDirichletConstraints[eqIdx])
                                 A[globalI][globalJ][eqIdx][pvIdx] = 0.0;
-                }
             }
         }
     }
-};
+
+}; // implicit assebler with analytic Jacobian
 
 } // end namespace Dumux
 

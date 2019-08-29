@@ -693,6 +693,111 @@ public:
     {}
 };
 
+/*!
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief Box local assembler using analytic differentiation and implicit time discretization
+ */
+template<std::size_t id, class TypeTag, class Assembler>
+class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
+: public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler,
+                                        SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, true>, true>
+{
+    using ThisType = SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, true>;
+    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, ThisType, true>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
+    static constexpr auto domainI = Dune::index_constant<id>();
+
+public:
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     *
+     * \return The element residual at the current solution.
+     */
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    {
+        // get some aliases for convenience
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& problem = this->problem();
+        const auto& curElemVolVars = this->curElemVolVars();
+        const auto& elemFluxVarsCache = this->elemFluxVarsCache();
+
+        // get the vecor of the acutal element residuals
+        const auto origResiduals = this->evalLocalResidual();
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                                                                              //
+        // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
+        // neighboring elements we do so by computing the derivatives of the fluxes which depend on the //
+        // actual element. In the actual element we evaluate the derivative of the entire residual.     //
+        //                                                                                              //
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // calculation of the source and storage derivatives
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            // dof index and corresponding actual pri vars
+            const auto dofIdx = scv.dofIndex();
+            const auto& volVars = curElemVolVars[scv];
+
+            // derivative of this scv residual w.r.t the d.o.f. of the same scv (because of mass lumping)
+            // only if the problem is instationary we add derivative of storage term
+            // TODO if e.g. porosity depends on all dofs in the element, we would have off-diagonal matrix entries!?
+            if (!this->assembler().isStationaryProblem())
+                this->localResidual().addStorageDerivatives(A[dofIdx][dofIdx], problem, element, fvGeometry, volVars, scv);
+
+            // derivative of this scv residual w.r.t the d.o.f. of the same scv (because of mass lumping)
+            // add source term derivatives
+            this->localResidual().addSourceDerivatives(A[dofIdx][dofIdx], problem, element, fvGeometry, volVars, scv);
+        }
+
+        // localJacobian[scvIdx][otherScvIdx][eqIdx][priVarIdx] of the fluxes
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            // add flux term derivatives
+            if (!scvf.boundary())
+                this->localResidual().addFluxDerivatives(A, problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+
+            // the boundary gets special treatment to simplify
+            // for the user
+            else
+            {
+                // add flux term derivatives
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                if (this->elemBcTypes()[insideScv.localDofIndex()].hasNeumann())
+                    this->localResidual().addRobinFluxDerivatives(A[insideScv.dofIndex()], problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+            }
+        }
+
+        return origResiduals;
+    }
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     *
+     * \return The element residual at the current solution.
+     */
+    template<std::size_t otherId, class JacobianBlock, class GridVariables>
+    void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
+                                  const ElementResidualVector& res, GridVariables& gridVariables)
+    {
+        ///////////////////////////////////////////////////////
+        // Calculate derivatives of all dofs in the element  //
+        // with respect to all dofs in the coupling stencil. //
+        ///////////////////////////////////////////////////////
+        this->couplingManager().addCouplingDerivatives(A, domainI, *this, domainJ);
+    }
+
+}; // implicit assebler with analytic Jacobian
+
 } // end namespace Dumux
 
 #endif
