@@ -200,10 +200,10 @@ public:
         NumEqVector bottomFrictionSource(0.0);
         const auto& volVars = elemVolVars[scv];
 
-        // For the calculation of the source term due to bottom friction the two-dimensional bottom shear stess vector is needed. This is the force per area, which works between the flow and the bed. It is calculated within the 'FrictionLaw', which is a spatialParameter. In this model the 'FrictionLawManning is used (see 'params.input').
+        // For the calculation of the source term due to bottom friction the two-dimensional bottom shear stess vector is needed. This is the force per area, which works between the flow and the bed. It is calculated within the `FrictionLaw`, which is a spatialParameter. In this model the `FrictionLawManning` is used (see `params.input`).
         Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).shearStress(volVars);
 
-        // The bottom shear stress causes a pure loss of momentum. Thus the first entry of the 'bottomFrictionSource', which is related to the mass balance equation is zero. The second entry of the 'bottomFricitonSource' corresponds to the momentum equation in x-direction and is therefore equal to the first, the x-component, of the 'bottomShearStress'. Accordingly the third entry of the 'bottomFrictionSource' is equal to the second component of the 'bottomShearStress'.
+        // The bottom shear stress causes a pure loss of momentum. Thus the first entry of the `bottomFrictionSource`, which is related to the mass balance equation is zero. The second entry of the `bottomFricitonSource` corresponds to the momentum equation in x-direction and is therefore equal to the first, the x-component, of the `bottomShearStress`. Accordingly the third entry of the `bottomFrictionSource` is equal to the second component of the `bottomShearStress`.
         bottomFrictionSource[0] = 0.0;
         bottomFrictionSource[1] = bottomShearStress[0];
         bottomFrictionSource[2] = bottomShearStress[1];
@@ -220,7 +220,7 @@ public:
         return bcTypes;
     }
 
-     // We specify the neumann boundary. Due to the weak imposition we calculate the flux at the boundary, with a  Rieman solver. For this the state of a virtual cell outside of the boundary is needed ('boundaryStateVariables'), wich is calculated with the Riemann invariants (see Yoon and Kang, Finite Volume Model for Two-Dimensional Shallow Water Flows on Unstructured Grids) . The calculation of the Riemann invariants differ depending on the type of the boundary (h, q or no-flow boundary).
+     // We specify the neumann boundary. Due to the weak imposition we calculate the flux at the boundary, with a  Rieman solver. For this the state of a virtual cell outside of the boundary is needed (`boundaryStateVariables`), wich is calculated with the Riemann invariants (see Yoon and Kang, Finite Volume Model for Two-Dimensional Shallow Water Flows on Unstructured Grids) . The calculation of the Riemann invariants differ depending on the type of the boundary (h, q or no-flow boundary).
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
@@ -280,7 +280,7 @@ public:
         return values;
     }
 
-    // We set the initial conditions. In this example constant initial conditions are used. Therefore the argument 'globalPos' is not needed. If you want to impose spatial variable initial conditions, you have to use the 'globalPos'.
+    // We set the initial conditions. In this example constant initial conditions are used. Therefore the argument `globalPos` is not needed. If you want to impose spatial variable initial conditions, you have to use the `globalPos`.
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);

@@ -18,7 +18,6 @@
  *****************************************************************************/
 // ## The main file
 // This is the main file for the shallow water example. Here we can see the programme sequence and how the system is solved using newton's method.
-
 // ### Includes
 #include <config.h>
 
@@ -73,7 +72,6 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // ### Create the grid
-
     // A gridmanager tries to create the grid either from a grid file or the input file.
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
@@ -82,10 +80,8 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // ### Setup and solving of the problem
-
     // #### Setup
     // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-
     // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
@@ -174,7 +170,6 @@ int main(int argc, char** argv) try
     timeLoop->finalize(leafGridView.comm());
 
     // ### Final Output
-
     // We print dumux end message.
     if (mpiHelper.rank() == 0)
     {
