@@ -120,7 +120,7 @@ public:
 
         // for the diagonal jacobian block
         const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
-        res[globalI] = this->asImp_().assembleJacobianAndResidualImplInverse(jacRow[domainId], *std::get<domainId>(gridVariables));
+        res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
 
         // for the coupling blocks
         using namespace Dune::Hybrid;
@@ -308,7 +308,7 @@ public:
      * \return The element residual at the current solution.
      */
     template<class JacobianMatrixDiagBlock, class GridVariables>
-    LocalResidualValues assembleJacobianAndResidualImplInverse(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
     {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -640,7 +640,7 @@ public:
      * \return The element residual at the current solution.
      */
     template<class JacobianMatrixDiagBlock, class GridVariables>
-    LocalResidualValues assembleJacobianAndResidualImplInverse(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
     {
         if (this->assembler().isStationaryProblem())
             DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
