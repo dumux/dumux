@@ -52,6 +52,12 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 
 ### Deprecated classes/files, to be removed after 3.1:
 
+- `BaseFVGridGeometry` from `dumux/discretization`. Use `BaseGridGeometry` instead.
+
+- `CakeGridCreator` and `SubgridGridCreator` from `dumux/io/grid`. Use the corresponding `...Manager` instead.
+
+- `IntRange` from `dumux/common`. Use `Dune::IntegralRange` instead.
+
 ### Deprecated member functions, to be removed after 3.1:
 
 - The convergence writer is no longer passed to `NewtonSolver`'s `solve()` method.
