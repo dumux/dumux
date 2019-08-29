@@ -32,6 +32,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -50,7 +51,9 @@ namespace Properties {
 
 // Create new type tags
 namespace TTag {
-struct Root { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+struct Root { using InheritsFrom = std::tuple<OneP>; };
+struct RootCC { using InheritsFrom = std::tuple<Root, CCTpfaModel>; };
+struct RootBox { using InheritsFrom = std::tuple<Root, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type

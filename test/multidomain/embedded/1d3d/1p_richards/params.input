@@ -35,3 +35,7 @@ Problem.Name = 1d
 InitialSoilPressure =  -0.9429e4 # [Pa]
 InitialRootPressure = -1.2e6 # [Pa]
 TranspirationRate = 2.15e-8 # [kg / s]
+
+[Assembly]
+UseNumericDifferentiationForSourceDerivatives = true
+UseNumericDifferentiationForCouplingDerivatives = true
