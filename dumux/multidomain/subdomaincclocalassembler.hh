@@ -614,6 +614,7 @@ public:
 
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
+        const auto storageResidual = this->evalLocalStorageResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -654,7 +655,7 @@ public:
                 // the residual with the deflected primary variables
                 elemSol[0][pvIdx] = priVar;
                 curVolVars.update(elemSol, this->problem(), element, scv);
-                return this->evalLocalStorageResidual()[0];
+                return this->evalLocalStorageResidual();
             };
 
             // for non-ghosts compute the derivative numerically
@@ -662,7 +663,7 @@ public:
             {
                 static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, residual,
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, storageResidual,
                                                           eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
             }
 
