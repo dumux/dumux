@@ -540,7 +540,7 @@ public:
             this->localResidual().addStorageDerivatives(A[globalI][globalI], problem, element, fvGeometry, volVars, scv);
 
         // add source term derivatives
-        this->localResidual().addSourceDerivatives(A[globalI][globalI], problem, element, fvGeometry, volVars, scv);
+        this->localResidual().addSourceDerivatives(A[globalI][globalI], problem, element, fvGeometry, curElemVolVars, scv);
 
         // add flux derivatives for each scvf
         for (const auto& scvf : scvfs(fvGeometry))
