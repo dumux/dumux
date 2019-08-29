@@ -241,8 +241,8 @@ public:
 
     /*!
      * \ingroup MultiDomain
-     * \brief evaluates the element residual derivative of a coupled element of domain i
-     *        with respect to all coupled degrees of freedom of domain j
+     * \brief Evaluates the element residual derivative of a coupled element of domain i
+     *        with respect to all coupled degrees of freedom of domain j (for analytic Jacobians)
      *
      * \param Aij the coupling block of Jacobian between domain i and j
      * \param domainI the domain index of domain i
