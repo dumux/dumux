@@ -128,7 +128,7 @@ public:
      * \brief Returns the phase mass fraction, i.e. phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
      * \param phaseIdx the index of the phase
      */
-    Scalar phaseMassFraction(int phaseIdx)
+    Scalar phaseMassFraction(int phaseIdx) const
     {
         Scalar totalMass = 0.0;
         for (int pIdx = 0; pIdx < numPhases; ++pIdx)
