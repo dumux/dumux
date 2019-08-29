@@ -69,22 +69,25 @@ public:
     //! Export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! Export type of finite volume grid geometry
-    using FVGridGeometry = GG;
+    using GridGeometry = GG;
+    //! Export type of finite volume grid geometry
+    using FVGridGeometry [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
+
     //! The maximum number of scvs per element (2^dim for cubes)
     //! multiplied by 3 for the maximum number of fracture scvs per vertex
     static constexpr std::size_t maxNumElementScvs = (1<<dim)*3;
 
     //! Constructor
-    BoxDfmFVElementGeometry(const FVGridGeometry& fvGridGeometry)
+    BoxDfmFVElementGeometry(const GridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(std::size_t scvIdx) const
-    { return fvGridGeometry().scvs(eIdx_)[scvIdx]; }
+    { return gridGeometry().scvs(eIdx_)[scvIdx]; }
 
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(std::size_t scvfIdx) const
-    { return fvGridGeometry().scvfs(eIdx_)[scvfIdx]; }
+    { return gridGeometry().scvfs(eIdx_)[scvfIdx]; }
 
    /*!
     * \brief Iterator range for sub control volumes.
@@ -120,15 +123,15 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return fvGridGeometry().feCache().get(elemGeometryType_).localBasis(); }
+    { return gridGeometry().feCache().get(elemGeometryType_).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
-    { return fvGridGeometry().scvs(eIdx_).size(); }
+    { return gridGeometry().scvs(eIdx_).size(); }
 
     //! The total number of sub control volume faces
     std::size_t numScvf() const
-    { return fvGridGeometry().scvfs(eIdx_).size(); }
+    { return gridGeometry().scvfs(eIdx_).size(); }
 
     //! This function is for compatibility reasons with cc methods
     //! The box stencil is always element-local so bind and bindElement are identical.
@@ -146,16 +149,21 @@ public:
     void bindElement(const Element& element)
     {
         elemGeometryType_ = element.type();
-        eIdx_ = fvGridGeometry().elementMapper().index(element);
+        eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
     //! The global finite volume geometry we are a restriction of
-    const FVGridGeometry& fvGridGeometry() const
+    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
+    { return *fvGridGeometryPtr_; }
+
+    //! The global finite volume geometry we are a restriction of
+    const GridGeometry& gridGeometry() const
     { return *fvGridGeometryPtr_; }
 
 private:
     Dune::GeometryType elemGeometryType_;
-    const FVGridGeometry* fvGridGeometryPtr_;
+    const GridGeometry* fvGridGeometryPtr_;
     GridIndexType eIdx_;
 };
 
@@ -184,13 +192,15 @@ public:
     //! Export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! Export type of finite volume grid geometry
-    using FVGridGeometry = GG;
+    using GridGeometry = GG;
+    //! export type of finite volume grid geometry
+    using FVGridGeometry [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     //! The maximum number of scvs per element (2^dim for cubes)
     //! multiplied by 3 for the maximum number of fracture scvs per vertex
     static constexpr std::size_t maxNumElementScvs = (1<<dim)*3;
 
     //! Constructor
-    BoxDfmFVElementGeometry(const FVGridGeometry& fvGridGeometry)
+    BoxDfmFVElementGeometry(const GridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume with a local scv index
@@ -233,7 +243,7 @@ public:
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
-    { return fvGridGeometry().feCache().get(elemGeometryType_).localBasis(); }
+    { return gridGeometry().feCache().get(elemGeometryType_).localBasis(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -258,19 +268,24 @@ public:
     */
     void bindElement(const Element& element)
     {
-        eIdx_ = fvGridGeometry().elementMapper().index(element);
+        eIdx_ = gridGeometry().elementMapper().index(element);
         makeElementGeometries(element);
     }
 
     //! The global finite volume geometry we are a restriction of
-    const FVGridGeometry& fvGridGeometry() const
+    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
+    { return *fvGridGeometryPtr_; }
+
+    //! The global finite volume geometry we are a restriction of
+    const GridGeometry& gridGeometry() const
     { return *fvGridGeometryPtr_; }
 
 private:
 
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = fvGridGeometry().elementMapper().index(element);
+        auto eIdx = gridGeometry().elementMapper().index(element);
 
         // get the element geometry
         auto elementGeometry = element.geometry();
@@ -286,7 +301,7 @@ private:
         for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
             // get asssociated dof index
-            const auto dofIdxGlobal = fvGridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
+            const auto dofIdxGlobal = gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // add scv to the local container
             scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,
@@ -325,7 +340,7 @@ private:
         //      we would have to find only those fractures that are at the boundary and aren't connected
         //      to a fracture which is a boundary.
         LocalIndexType scvLocalIdx = element.subEntities(dim);
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             // first, obtain all vertex indices on this intersection
             const auto& isGeometry = intersection.geometry();
@@ -334,7 +349,7 @@ private:
 
             std::vector<GridIndexType> isVertexIndices(numCorners);
             for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
-                isVertexIndices[vIdxLocal] = fvGridGeometry().vertexMapper().subIndex(element,
+                isVertexIndices[vIdxLocal] = gridGeometry().vertexMapper().subIndex(element,
                                                                                       referenceElement.subEntity(idxInInside, 1, vIdxLocal, dim),
                                                                                       dim);
 
@@ -359,7 +374,7 @@ private:
             }
 
             // maybe add fracture scvs & scvfs
-            if (this->fvGridGeometry().isOnFracture(element, intersection))
+            if (this->gridGeometry().isOnFracture(element, intersection))
             {
                 // add fracture scv for each vertex of intersection
                 const auto curNumScvs = scvs_.size();
@@ -430,7 +445,7 @@ private:
     GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
-    const FVGridGeometry* fvGridGeometryPtr_;
+    const GridGeometry* fvGridGeometryPtr_;
 
     /*!
      * \brief Binding of an element, has to be called before using the fvgeometries
