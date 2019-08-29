@@ -180,6 +180,9 @@ int main(int argc, char** argv) try
 
     timeLoop->finalize(leafGridView.comm());
 
+    // write Newton report
+    nonLinearSolver.report();
+
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
