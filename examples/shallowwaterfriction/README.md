@@ -1,4 +1,4 @@
-#Shallow water flow with bottom friction
+# Shallow water flow with bottom friction
 This example shows how the shallow water flow model can be
 applied to simulate steady subcritical flow including
 bottom friction (bed shear stress).
@@ -7,30 +7,30 @@ bottom friction (bed shear stress).
 ## Shallow water model
 The shallow water equations (SWEs) are given as:
 
-$$
+$`
 \frac{\partial \mathbf{U}}{\partial t} +
 \frac{\partial \mathbf{F}}{\partial x} +
 \frac{\partial \mathbf{G}}{\partial y} - \mathbf{S_b} - \mathbf{S_f} = 0
-$$
+`$
 
 where $U$, $F$ and $G$  defined as
 
-$$
+$`
 \mathbf{U} = \begin{bmatrix} h \\ uh \\ vh \end{bmatrix},
 \mathbf{F} = \begin{bmatrix} hu \\ hu^2  + \frac{1}{2} gh^2 \\ huv \end{bmatrix},
 \mathbf{G} = \begin{bmatrix} hv \\ huv \\ hv^2  + \frac{1}{2} gh^2 \end{bmatrix}
-$$
+`$
 
 Z is the bedSurface, h the water depth, u the velocity in
 x-direction and v the velocity in y-direction, g is the constant of gravity.
 
-The source terms for the bed friction $$S_b$$ and bed slope
-$$S_f$$ are given as
-$$
+The source terms for the bed friction $`S_b`$ and bed slope
+$`S_f`$ are given as
+$`
 \mathbf{S_b} = \begin{bmatrix} 0 \\ -gh \frac{\partial z}{\partial x}
                \\ -gh \frac{\partial z}{\partial y}\end{bmatrix},
 \mathbf{S_f} = \begin{bmatrix} 0 \\ -ghS_{fx} \\ -ghS_{fy}\end{bmatrix}.
-$$
+`$
 
 For this example, a cell-centered finite volume method (cctpfa) is applied to solve the SWEs
 in combination with a fully-implicit time discretization. For cases where no sharp fronts or
@@ -38,9 +38,11 @@ traveling waves occur it is possible to apply time steps larger than CFL number 
 the computation time. Even a steady state solution is considered an implicit time stepping method
 is applied.
 
-##Problem set-up
+## Problem set-up
 The model domain is given by a rough channel with a slope of 0.001.
-The domain is 500 meters long and 10 meters wide (![Domain](/doc/domain.png)).
+The domain is 500 meters long and 10 meters wide.
+![Domain](doc/domain.png).
+
 Bottom friction is considered by applying
 the friction law of Manning (Manning n = 0.025). At the lateral sides no friction is considered and  a
 no-flow no slip boundary condition is applied. This is the default boundary condition for the shallow water model.
@@ -51,17 +53,17 @@ is applied as inflow boundary condition with q = -1.0 ($m^2 s^{-1}. At the right
 is applied for the outflow. Normal flow is assumed, therefor the water depth at the right border is calculated after
 the of Gaukler-Manning-Strickler equation:
 
- $$ v_m = 1/n * R_{hy}^{2/3} * I_s^{1/2}$$
+ $` v_m = 1/n * R_{hy}^{2/3} * I_s^{1/2}`$
 
-Where the mean velocity $v_m$ is given as
+Where the mean velocity $`v_m`$ is given as
 
-$$ v_m = \frac{q}{h}$$,
+$`v_m = \frac{q}{h}`$
 
-$n$ is the friction value after Manning. $R_{hy} the hydraulic radius, which is assumed to be equal to
-the water depth. $I_s$ is the bed slope and $q$ the unity inflow discharge
+$`n`$ is the friction value after Manning. $`R_{hy}`$ the hydraulic radius, which is assumed to be equal to
+the water depth. $`I_s`$ is the bed slope and $`q`$ the unity inflow discharge
 
 The water depth h can be calculated as
-$$h = \left(\frac{n*q}{\sqrt{I_s}} \right)^{3/5}$$
+$`h = \left(\frac{n*q}{\sqrt{I_s}} \right)^{3/5}`$
 
 The formula of Gaukler Manning and Strickler is also used to calculate the analytic solution. All parameters
 for the simulation are given in the file *params.input*.
@@ -70,7 +72,7 @@ for the simulation are given in the file *params.input*.
 ## The file `spatialparams.hh`
 
 
-we include the basic spatial parameters for finite volumes file from which we will inherit
+We include the basic spatial parameters for finite volumes file from which we will inherit
 ```cpp
 #include <dumux/material/spatialparams/fv.hh>
 ```
@@ -84,7 +86,7 @@ We include all friction laws, between we can choose for the calculation of the b
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
 ```
-We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don't clash with symbols from other libraries you may want to use in conjunction with Dumux.
+We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don`t clash with symbols from other libraries you may want to use in conjunction with Dumux.
 ```cpp
 namespace Dumux {
 ```
@@ -96,7 +98,7 @@ class RoughChannelSpatialParams
                          RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>>
 {
 ```
-we introduce using declarations that are derived from the property system which we need in this class
+We introduce using declarations that are derived from the property system which we need in this class
 ```cpp
     using ThisType = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
@@ -108,7 +110,7 @@ we introduce using declarations that are derived from the property system which 
 
 public:
 ```
-In the constructor be read some values from the 'params.input' and initialize the friciton law.
+In the constructor be read some values from the `params.input` and initialize the friciton law.
 ```cpp
     RoughChannelSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -119,7 +121,7 @@ In the constructor be read some values from the 'params.input' and initialize th
         initFrictionLaw();
     }
 ```
-We initialize the friction law based on the law specified in 'params.input'.
+We initialize the friction law based on the law specified in `params.input`.
 ```cpp
     void initFrictionLaw()
     {
@@ -135,7 +137,7 @@ We initialize the friction law based on the law specified in 'params.input'.
       }
       else
       {
-          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are 'Manning' and 'Nikuradse'!"<<std::endl;
+          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are `Manning` and `Nikuradse`!"<<std::endl;
       }
     }
 ```
@@ -153,7 +155,7 @@ Use this function for a constant gravity.
         return gravity_;
     }
 ```
-This function returns an object of the friction law class, which is initialized with the appropriate friction values. If you want to use different friciton values or laws, you have to use a vector of unique_ptr for 'frictionLaw_' and pick the right friction law instances via the 'element' argument.
+This function returns an object of the friction law class, which is initialized with the appropriate friction values. If you want to use different friciton values or laws, you have to use a vector of unique_ptr for `frictionLaw_` and pick the right friction law instances via the `element` argument.
 ```cpp
     const FrictionLaw<VolumeVariables>& frictionLaw(const Element& element,
                                                     const SubControlVolume& scv) const
@@ -161,7 +163,7 @@ This function returns an object of the friction law class, which is initialized 
         return *frictionLaw_;
     }
 ```
-Define the bed surface based on the 'bedSlope_'.
+Define the bed surface based on the `bedSlope_`.
 ```cpp
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
@@ -406,11 +408,11 @@ Get the source term due to bottom friction.
         NumEqVector bottomFrictionSource(0.0);
         const auto& volVars = elemVolVars[scv];
 ```
-For the calculation of the source term due to bottom friction the two-dimensional bottom shear stess vector is needed. This is the force per area, which works between the flow and the bed. It is calculated within the 'FrictionLaw', which is a spatialParameter. In this model the 'FrictionLawManning is used (see 'params.input').
+For the calculation of the source term due to bottom friction the two-dimensional bottom shear stess vector is needed. This is the force per area, which works between the flow and the bed. It is calculated within the `FrictionLaw`, which is a spatialParameter. In this model the `FrictionLawManning` is used (see `params.input`).
 ```cpp
         Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).shearStress(volVars);
 ```
-The bottom shear stress causes a pure loss of momentum. Thus the first entry of the 'bottomFrictionSource', which is related to the mass balance equation is zero. The second entry of the 'bottomFricitonSource' corresponds to the momentum equation in x-direction and is therefore equal to the first, the x-component, of the 'bottomShearStress'. Accordingly the third entry of the 'bottomFrictionSource' is equal to the second component of the 'bottomShearStress'.
+The bottom shear stress causes a pure loss of momentum. Thus the first entry of the `bottomFrictionSource`, which is related to the mass balance equation is zero. The second entry of the `bottomFricitonSource` corresponds to the momentum equation in x-direction and is therefore equal to the first, the x-component, of the `bottomShearStress`. Accordingly the third entry of the `bottomFrictionSource` is equal to the second component of the `bottomShearStress`.
 ```cpp
         bottomFrictionSource[0] = 0.0;
         bottomFrictionSource[1] = bottomShearStress[0];
@@ -431,7 +433,7 @@ Since we use a weak imposition all boundary conditions are of Neumann type.
         return bcTypes;
     }
 ```
-We specify the neumann boundary. Due to the weak imposition we calculate the flux at the boundary, with a Rieman solver. For this the state of a virtual cell outside of the boundary is needed ('boundaryStateVariables'), wich is calculated with the Riemann invariants (see Yoon and Kang, Finite Volume Model for Two-Dimensional Shallow Water Flows on Unstructured Grids) . The calculation of the Riemann invariants differ depending on the type of the boundary (h, q or no-flow boundary).
+We specify the neumann boundary. Due to the weak imposition we calculate the flux at the boundary, with a Rieman solver. For this the state of a virtual cell outside of the boundary is needed (`boundaryStateVariables`), wich is calculated with the Riemann invariants (see Yoon and Kang, Finite Volume Model for Two-Dimensional Shallow Water Flows on Unstructured Grids) . The calculation of the Riemann invariants differ depending on the type of the boundary (h, q or no-flow boundary).
 ```cpp
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
@@ -499,7 +501,7 @@ We calculate the boundary fluxes based on a Riemann problem.
         return values;
     }
 ```
-We set the initial conditions. In this example constant initial conditions are used. Therefore the argument 'globalPos' is not needed. If you want to impose spatial variable initial conditions, you have to use the 'globalPos'.
+We set the initial conditions. In this example constant initial conditions are used. Therefore the argument `globalPos` is not needed. If you want to impose spatial variable initial conditions, you have to use the `globalPos`.
 ```cpp
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
@@ -565,8 +567,6 @@ We leave the namespace Dumux.
 
 ## The main file
 This is the main file for the shallow water example. Here we can see the programme sequence and how the system is solved using newton's method.
-```cpp
-```
 ### Includes
 ```cpp
 #include <config.h>
@@ -647,8 +647,6 @@ We parse command line arguments and input file
     Parameters::init(argc, argv);
 ```
 ### Create the grid
-```cpp
-```
 A gridmanager tries to create the grid either from a grid file or the input file.
 ```cpp
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -659,12 +657,8 @@ We compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 ```
 ### Setup and solving of the problem
-```cpp
-```
 #### Setup
 We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-```cpp
-```
 We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
 ```cpp
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
@@ -777,8 +771,6 @@ We set new dt as suggested by newton controller for the next time step.
     timeLoop->finalize(leafGridView.comm());
 ```
 ### Final Output
-```cpp
-```
 We print dumux end message.
 ```cpp
     if (mpiHelper.rank() == 0)

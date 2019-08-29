@@ -21,7 +21,7 @@
 #ifndef DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 #define DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 
-//we include the basic spatial parameters for finite volumes file from which we will inherit
+// We include the basic spatial parameters for finite volumes file from which we will inherit
 #include <dumux/material/spatialparams/fv.hh>
 // The parameters header is needed to retrieve run-time parameters.
 #include <dumux/common/parameters.hh>
@@ -30,7 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
 
-// We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don't clash with symbols from other libraries you may want to use in conjunction with Dumux.
+// We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don`t clash with symbols from other libraries you may want to use in conjunction with Dumux.
 namespace Dumux {
 
 //In the RoughChannelSpatialParams class we define all functions needed to describe the spatial distributed parameters.
@@ -39,7 +39,7 @@ class RoughChannelSpatialParams
 : public FVSpatialParams<FVGridGeometry, Scalar,
                          RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>>
 {
-    //we introduce using declarations that are derived from the property system which we need in this class
+    // We introduce using declarations that are derived from the property system which we need in this class
     using ThisType = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
     using GridView = typename FVGridGeometry::GridView;
@@ -49,7 +49,7 @@ class RoughChannelSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    // In the constructor be read some values from the 'params.input' and initialize the friciton law.
+    // In the constructor be read some values from the `params.input` and initialize the friciton law.
     RoughChannelSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
@@ -59,7 +59,7 @@ public:
         initFrictionLaw();
     }
 
-    // We initialize the friction law based on the law specified in 'params.input'.
+    // We initialize the friction law based on the law specified in `params.input`.
     void initFrictionLaw()
     {
       if (frictionLawType_ == "Manning")
@@ -74,7 +74,7 @@ public:
       }
       else
       {
-          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are 'Manning' and 'Nikuradse'!"<<std::endl;
+          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are `Manning` and `Nikuradse`!"<<std::endl;
       }
     }
 
@@ -90,14 +90,14 @@ public:
         return gravity_;
     }
 
-    // This function returns an object of the friction law class, which is initialized with the appropriate friction values. If you want to use different friciton values or laws, you have to use a vector of unique_ptr for 'frictionLaw_' and pick the right friction law instances via the 'element' argument.
+    // This function returns an object of the friction law class, which is initialized with the appropriate friction values. If you want to use different friciton values or laws, you have to use a vector of unique_ptr for `frictionLaw_` and pick the right friction law instances via the `element` argument.
     const FrictionLaw<VolumeVariables>& frictionLaw(const Element& element,
                                                     const SubControlVolume& scv) const
     {
         return *frictionLaw_;
     }
 
-    // Define the bed surface based on the 'bedSlope_'.
+    // Define the bed surface based on the `bedSlope_`.
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
     {
