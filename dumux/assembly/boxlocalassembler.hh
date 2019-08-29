@@ -560,7 +560,7 @@ public:
                                                        problem,
                                                        element,
                                                        fvGeometry,
-                                                       volVars,
+                                                       curElemVolVars,
                                                        scv);
         }
 

@@ -221,9 +221,11 @@ public:
                               const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curVolVars,
+                              const ElementVolumeVariables& curElemVolVars,
                               const SubControlVolume& scv) const
-    { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
+    {
+        problem.addSourceDerivatives(partialDerivatives, element, fvGeometry, curElemVolVars, scv);
+    }
 
     /*!
      * \brief Adds flux derivatives for wetting and non-wetting phase for cell-centered FVM using TPFA

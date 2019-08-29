@@ -76,10 +76,10 @@ public:
                               const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curVolVars,
+                              const ElementVolumeVariables& curElemVolVars,
                               const SubControlVolume& scv) const
     {
-        problem.addSourceDerivatives(partialDerivatives, element, fvGeometry, curVolVars, scv);
+        problem.addSourceDerivatives(partialDerivatives, element, fvGeometry, curElemVolVars, scv);
     }
 
     //! Flux derivatives for the cell-centered tpfa scheme

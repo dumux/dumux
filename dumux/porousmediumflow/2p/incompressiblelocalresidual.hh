@@ -131,7 +131,7 @@ public:
                               const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curVolVars,
+                              const ElementVolumeVariables& curElemVolVars,
                               const SubControlVolume& scv) const
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 

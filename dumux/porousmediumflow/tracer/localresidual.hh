@@ -213,7 +213,7 @@ public:
                               const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curVolVars,
+                              const ElementVolumeVariables& curElemVolVars,
                               const SubControlVolume& scv) const
     {
         // TODO maybe forward to the problem? -> necessary for reaction terms

@@ -423,7 +423,7 @@ public:
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& volVars,
+                              const ElementVolumeVariables& curElemVolVars,
                               const SubControlVolume& scv) const {}
 
     /*!
