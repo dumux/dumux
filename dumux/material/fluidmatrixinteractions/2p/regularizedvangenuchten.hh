@@ -356,15 +356,14 @@ public:
         // phase from the parameters
         const Scalar swThHigh = params.krwHighSw();
 
-        // derivative of the regualarization
-        if (swe < 0) {
-            // the slope is zero
+        // derivative of the regularization
+        // the slope is zero below sw=0.0 and above sw=1.0
+        if (swe < 0)
             return 0.0;
-        }
-        else if (swe > 1 - std::numeric_limits<Scalar>::epsilon()) {
-            // the slope is zero
+        else if (swe > 1 - std::numeric_limits<Scalar>::epsilon())
             return 0.0;
-        }
+
+        // for high sw we need the slope of the interpolation spline
         else if (swe > swThHigh) {
             using Spline = Dumux::Spline<Scalar>;
             Spline sp(swThHigh, 1.0, // x1, x2
