@@ -240,6 +240,28 @@ public:
     }
 
     /*!
+     * \ingroup MultiDomain
+     * \brief evaluates the element residual derivative of a coupled element of domain i
+     *        with respect to all coupled degrees of freedom of domain j
+     *
+     * \param Aij the coupling block of Jacobian between domain i and j
+     * \param domainI the domain index of domain i
+     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param domainJ the domain index of domain j
+     *
+     * \note  The element whose residual derivatives are to be evaluated can be retrieved from the local assembler
+     *        as localAssemblerI.element() as well as all up-to-date variables and caches.
+     */
+    template<std::size_t i, std::size_t j, class LocalAssemblerI, class JacobianCouplingBlock>
+    void addCouplingDerivatives(JacobianCouplingBlock& Aij,
+                                Dune::index_constant<i> domainI,
+                                const LocalAssemblerI& localAssemblerI,
+                                Dune::index_constant<j> domainJ) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "This coupling manager does not implement analytic derivatives. Use numeric differentiation instead.");
+    }
+
+    /*!
      * \brief set the pointers to the sub problems
      * \param problems A tuple of shared pointers to the sub problems
      */
