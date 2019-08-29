@@ -27,6 +27,7 @@
 #define DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
 
@@ -68,6 +69,15 @@ class RichardsLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
 
     static constexpr bool enableWaterDiffusionInAir
         = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();
+
+    //! An element solution that does not compile if the [] operator is used
+    struct InvalidElemSol
+    {
+        template<class Index>
+        double operator[] (const Index i) const
+        { static_assert(AlwaysFalse<Index>::value, "Solution-dependent material parameters not supported with analytical differentiation"); return 0.0; }
+    };
+
 public:
     using ParentType::ParentType;
 
@@ -177,9 +187,7 @@ public:
         static const auto rho = curVolVars.density(0);
 
         // material law for pc-sw
-        // TODO maybe we need an invalid element solution instance
-        using ElementSolution = std::decay_t<decltype(elementSolution(element, std::declval<ElementVolumeVariables>(), fvGeometry))>;
-        const auto& matParams = problem.spatialParams().materialLawParams(element, scv, ElementSolution{});
+        const auto& matParams = problem.spatialParams().materialLawParams(element, scv, InvalidElemSol{});
 
         // partial derivative of storage term w.r.t. p_w
         // d(Sw*rho*phi*V/dt)/dpw = rho*phi*V/dt*dsw/dpw = rho*phi*V/dt*dsw/dpc*dpc/dpw = -rho*phi*V/dt*dsw/dpc
@@ -196,6 +204,8 @@ public:
      * \param fvGeometry The finite volume element geometry
      * \param curVolVars The current volume variables
      * \param scv The sub control volume
+     *
+     * \todo Maybe forward to problem for the user to implement the source derivatives?
      */
     template<class PartialDerivativeMatrix>
     void addSourceDerivatives(PartialDerivativeMatrix& partialDerivatives,
@@ -245,10 +255,8 @@ public:
         const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
-        const auto insideElemSol = elementSolution<FVElementGeometry>(insideVolVars.priVars());
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, insideElemSol);
-        const auto outsideElemSol = elementSolution<FVElementGeometry>(outsideVolVars.priVars());
-        const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(outsideElement, outsideScv, outsideElemSol);
+        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, InvalidElemSol{});
+        const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(outsideElement, outsideScv, InvalidElemSol{});
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho = insideVolVars.density(0);
@@ -322,9 +330,8 @@ public:
         const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
-        const auto elemSol = elementSolution(element, curElemVolVars, fvGeometry);
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, elemSol);
-        const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(element, outsideScv, elemSol);
+        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, InvalidElemSol{});
+        const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(element, outsideScv, InvalidElemSol{});
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho = insideVolVars.density(0);
@@ -420,8 +427,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
-        const auto insideElemSol = elementSolution<FVElementGeometry>(insideVolVars.priVars());
-        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, insideElemSol);
+        const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, InvalidElemSol{});
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho = insideVolVars.density(0);
