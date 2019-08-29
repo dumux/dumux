@@ -685,10 +685,6 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*
     using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GridView::dimension };
-
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:
@@ -761,28 +757,14 @@ public:
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
                                   const LocalResidualValues& res, GridVariables& gridVariables)
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        // get some aliases for convenience
-        const auto& element = this->element();
-        const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
-        auto&& curElemVolVars = this->curElemVolVars();
-        // auto&& elemFluxVarsCache = this->elemFluxVarsCache();
-
-        // get stencil informations
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
-
-        for (const auto globalJ : stencil)
-        {
-            const auto& elementJ = this->assembler().gridGeometry(domainJ).element(globalJ);
-            this->couplingManager().addCouplingDerivatives(A[globalI][globalJ], domainI, element, fvGeometry, curElemVolVars, domainJ, elementJ);
-        }
+        ///////////////////////////////////////////////////////
+        // Calculate derivatives of all dofs in the element  //
+        // with respect to all dofs in the coupling stencil. //
+        ///////////////////////////////////////////////////////
+        this->couplingManager().addCouplingDerivatives(A, domainI, *this, domainJ);
     }
-};
+
+}; // implicit assebler with analytic Jacobian
 
 } // end namespace Dumux
 
