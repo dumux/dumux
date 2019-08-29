@@ -57,6 +57,9 @@ class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     enum { conti0EqIdx = Indices::conti0EqIdx };
     enum { pressureIdx = Indices::pressureIdx };
 
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
 public:
     using ParentType::ParentType;
 
@@ -98,11 +101,38 @@ public:
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
         static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
-        const auto deriv = elemFluxVarsCache[scvf].advectionTij()*up;
 
-        // add partial derivatives to the respective given matrices
-        derivativeMatrices[scvf.insideScvIdx()][conti0EqIdx][pressureIdx] += deriv;
-        derivativeMatrices[scvf.outsideScvIdx()][conti0EqIdx][pressureIdx] -= deriv;
+        // for network grids we have to do something else
+        if (dim < dimWorld && scvf.numOutsideScvs() > 1)
+        {
+            const auto insideTi = elemFluxVarsCache[scvf].advectionTij();
+            const auto sumTi = [&]
+            {
+                Scalar sumTi(insideTi);
+                for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+                {
+                    const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
+                    const auto& outsideFluxVarsCache = elemFluxVarsCache[flippedScvf];
+                    sumTi += outsideFluxVarsCache.advectionTij();
+                }
+                return sumTi;
+            }();
+
+            // add partial derivatives to the respective given matrices
+            derivativeMatrices[scvf.insideScvIdx()][conti0EqIdx][pressureIdx]
+                += up*insideTi*(1.0 - insideTi/sumTi);
+            for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+                derivativeMatrices[scvf.outsideScvIdx(i)][conti0EqIdx][pressureIdx]
+                    += -up*insideTi*elemFluxVarsCache[fvGeometry.flipScvf(scvf.index(), i)].advectionTij()/sumTi;
+
+        }
+        else
+        {
+            const auto deriv = elemFluxVarsCache[scvf].advectionTij()*up;
+            // add partial derivatives to the respective given matrices
+            derivativeMatrices[scvf.insideScvIdx()][conti0EqIdx][pressureIdx] += deriv;
+            derivativeMatrices[scvf.outsideScvIdx()][conti0EqIdx][pressureIdx] -= deriv;
+        }
     }
 
     //! Flux derivatives for the cell-centered mpfa scheme
