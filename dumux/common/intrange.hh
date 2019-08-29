@@ -24,6 +24,8 @@
 #ifndef DUMUX_INTEGER_RANGE_HH
 #define DUMUX_INTEGER_RANGE_HH
 
+#warning "This header is deprecated. Use Dune::IntegralRange instead."
+
 #include <cassert>
 
 namespace Dumux {
@@ -35,7 +37,8 @@ namespace Dumux {
  *        for(auto i : IntRange(5, 8) { ... i = 5, 6, 7 }
  *        see: https://en.wikipedia.org/wiki/Generator_(computer_programming)
  */
-class IntRange
+class [[deprecated("Use Dune::IntegralRange instead. Will be removed after 3.1!")]]
+IntRange
 {
 public:
     // constructors
