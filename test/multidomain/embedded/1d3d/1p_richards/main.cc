@@ -25,6 +25,13 @@
 
 #include <config.h>
 
+#ifndef SOILTYPETAG
+#define SOILTYPETAG SoilCC
+#endif
+#ifndef ROOTTYPETAG
+#define ROOTTYPETAG RootCC
+#endif
+
 #include <ctime>
 #include <iostream>
 #include <fstream>
@@ -56,12 +63,12 @@ namespace Properties {
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::SOILTYPETAG>
 {
-    using Traits = MultiDomainTraits<TypeTag, Properties::TTag::Root>;
+    using Traits = MultiDomainTraits<TypeTag, Properties::TTag::ROOTTYPETAG>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::Root>
+struct CouplingManager<TypeTag, TTag::ROOTTYPETAG>
 {
     using Traits = MultiDomainTraits<Properties::TTag::SOILTYPETAG, TypeTag>;
     using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
@@ -70,11 +77,11 @@ struct CouplingManager<TypeTag, TTag::Root>
 template<class TypeTag>
 struct PointSource<TypeTag, TTag::SOILTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
 template<class TypeTag>
-struct PointSource<TypeTag, TTag::Root> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
+struct PointSource<TypeTag, TTag::ROOTTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
 template<class TypeTag>
 struct PointSourceHelper<TypeTag, TTag::SOILTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
 template<class TypeTag>
-struct PointSourceHelper<TypeTag, TTag::Root> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>; };
+struct PointSourceHelper<TypeTag, TTag::ROOTTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<1>; };
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -95,7 +102,7 @@ int main(int argc, char** argv) try
 
     // Define the sub problem type tags
     using BulkTypeTag = Properties::TTag::SOILTYPETAG;
-    using LowDimTypeTag = Properties::TTag::Root;
+    using LowDimTypeTag = Properties::TTag::ROOTTYPETAG;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
@@ -188,7 +195,7 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(bulkProblem, lowDimProblem),
                                                  std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
                                                  std::make_tuple(bulkGridVariables, lowDimGridVariables),
