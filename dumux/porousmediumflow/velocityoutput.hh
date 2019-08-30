@@ -29,6 +29,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
@@ -310,7 +311,7 @@ public:
                     if (bcTypes.hasNeumann())
                     {
                         // check if we have Neumann no flow, we can just use 0
-                        const auto neumannFlux = problem_.neumann(element, fvGeometry, elemVolVars, scvf);
+                        const auto neumannFlux = Deprecated::neumann(problem_, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
                         using NumEqVector = std::decay_t<decltype(neumannFlux)>;
                         if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
                             scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;

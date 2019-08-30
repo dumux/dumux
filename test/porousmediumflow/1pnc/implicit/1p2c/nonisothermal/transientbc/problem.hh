@@ -247,24 +247,8 @@ public:
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann boundary segment.
-     *
-     * This is the method for the case where the Neumann condition is
-     * potentially solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param scvf The sub-control volume face
-     *
-     * For this method, the \a values parameter stores the flux
-     * in normal direction of each phase. Negative values mean influx.
-     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     {
         return NumEqVector(0.0);
     }

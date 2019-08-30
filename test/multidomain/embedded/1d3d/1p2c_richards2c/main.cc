@@ -151,14 +151,17 @@ double computeGlobalBoundaryMass(const Problem& problem, const SolutionVector& s
     for (const auto& element : elements(gg.gridView()))
     {
         auto fvGeometry = localView(gg);
-        fvGeometry.bindElement(element);
+        fvGeometry.bind(element);
 
         auto elemVolVars = localView(gridVars.curGridVolVars());
-        elemVolVars.bindElement(element, fvGeometry, sol);
+        elemVolVars.bind(element, fvGeometry, sol);
+
+        auto elemFluxVarsCache = localView(gridVars.gridFluxVarsCache());
+        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
         for (auto&& scvf : scvfs(fvGeometry))
             if (scvf.boundary())
-                mass += problem.neumann(element, fvGeometry, elemVolVars, scvf)[transportEqIdx]
+                mass += problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf)[transportEqIdx]
                         * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor()
                         * Problem::FluidSystem::molarMass(transportCompIdx)
                         * dt;

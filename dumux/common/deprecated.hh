@@ -76,6 +76,49 @@ auto effectiveThermalConductivity(const VV& volVars,
 {
     return ETC::effectiveThermalConductivity(volVars);
 }
+
+// support old interface of the neumann() function on problems
+template<class E, class FVEG, class EVV, class EFVC>
+class HasNewNeumannIF
+{
+    using SCVF = typename FVEG::SubControlVolumeFace;
+
+public:
+    template<class P>
+    auto operator()(P&& p) -> decltype(p.neumann(std::declval<const E&>(),
+                                                 std::declval<const FVEG&>(),
+                                                 std::declval<const EVV&>(),
+                                                 std::declval<const EFVC&>(),
+                                                 std::declval<const SCVF&>()))
+    {}
+};
+
+template<class P, class E, class FVEG, class EVV, class EFVC,
+         typename std::enable_if_t<!decltype(isValid(HasNewNeumannIF<E, FVEG, EVV, EFVC>()).template check<P>())::value, int> = 0>
+auto DUNE_DEPRECATED_MSG("Use new neumann() interface (see common/fvproblem.hh) that additionally receives the element flux variables cache in your problem!. Will be removed after 3.1 release")
+neumann(const P& problem,
+        const E& element,
+        const FVEG& fvGeometry,
+        const EVV& elemVolVars,
+        const EFVC& elemFluxVarsCache,
+        const typename FVEG::SubControlVolumeFace& scvf)
+{
+    return problem.neumann(element, fvGeometry, elemVolVars, scvf);
+}
+
+template<class P, class E, class FVEG, class EVV, class EFVC,
+         typename std::enable_if_t<decltype(isValid(HasNewNeumannIF<E, FVEG, EVV, EFVC>()).template check<P>())::value, int> = 0>
+auto neumann(const P& problem,
+             const E& element,
+             const FVEG& fvGeometry,
+             const EVV& elemVolVars,
+             const EFVC& elemFluxVarsCache,
+             const typename FVEG::SubControlVolumeFace& scvf)
+{
+    return problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+}
+
+
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 

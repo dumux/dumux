@@ -111,7 +111,6 @@ class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -190,21 +189,11 @@ public:
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann boundary segment.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param elemVolVars The element volume variables
-     * \param scvf The sub-control volume face
-     *
-     * Negative values mean influx.
+     * \param globalPos The global position
      */
-    NeumannFluxes neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NeumannFluxes neumannAtPos(const GlobalPosition& globalPos) const
     {
         NeumannFluxes values(0.0);
-        const auto& globalPos = scvf.ipGlobal();
         Scalar injectedAirMass = -1e-3;
         Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(FluidSystem::N2Idx);
         if (onInlet_(globalPos))

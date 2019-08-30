@@ -221,10 +221,11 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    template<class ElementVolumeVariables>
+    template<class ElementVolumeVariables, class ElementFluxVarsCache>
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolvars,
+                          const ElementFluxVarsCache& elemFluxVarsCache,
                           const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);

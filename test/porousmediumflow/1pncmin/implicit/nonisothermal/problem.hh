@@ -121,9 +121,13 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
+
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -245,6 +249,7 @@ public:
      * \param element The element
      * \param fvGeometry The finite volume geometry
      * \param elemVolVars The element volume variables
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The subcontrolvolume face
      *
      * \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
@@ -252,9 +257,10 @@ public:
      */
 
     NumEqVector neumann(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolVars,
-                           const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
     {
         NumEqVector flux(0.0);
         return flux;

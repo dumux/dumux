@@ -28,6 +28,7 @@
 #include <dune/geometry/type.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -163,10 +164,14 @@ public:
 
             // get the fvGeometry and elementVolVars needed for the bc and source interfaces
             auto fvGeometry = localView(*fvGridGeometry_);
-            fvGeometry.bindElement(element);
+            fvGeometry.bind(element);
 
             auto elemVolVars = localView(gridVariables_->curGridVolVars());
-            elemVolVars.bindElement(element, fvGeometry, sol);
+            elemVolVars.bind(element, fvGeometry, sol);
+
+            // elemFluxVarsCache for neumann interface
+            auto elemFluxVarsCache = localView(gridVariables_->gridFluxVarsCache());
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             //! Check if we have to refine around a source term
             if (refineAtSource_)
@@ -208,7 +213,7 @@ public:
                         // we are on a pure Neumann boundary
                         else if(refineAtFluxBC_)
                         {
-                            const auto fluxes = problem_->neumann(element, fvGeometry, elemVolVars, scvf);
+                            const auto fluxes = Deprecated::neumann(*problem_, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
                             if (fluxes.infinity_norm() > eps_)
                             {
                                 indicatorVector_[eIdx] = true;
@@ -242,7 +247,7 @@ public:
                             //! check if scvf is on Neumann boundary
                             if (scvf.boundary() && bcTypes[scvf.insideScvIdx()].hasNeumann())
                             {
-                                const auto fluxes = problem_->neumann(element, fvGeometry, elemVolVars, scvf);
+                                const auto fluxes = Deprecated::neumann(*problem_, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
                                 if (fluxes.infinity_norm() > eps_)
                                 {
                                     indicatorVector_[eIdx] = true;

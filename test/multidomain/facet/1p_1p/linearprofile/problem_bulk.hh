@@ -151,11 +151,7 @@ public:
     { return initialAtPos(globalPos); }
 
     //! Evaluates the Neumann boundary condition for a boundary segment.
-    template<class ElementVolumeVariables>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0); }
 
     //! Evaluates the initial conditions.

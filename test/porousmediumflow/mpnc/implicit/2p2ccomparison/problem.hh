@@ -209,27 +209,15 @@ public:
 
     /*!
      * \brief Evaluates the boundary conditions for a Neumann boundary segment.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param elemVolVars The volume variables of the element
-     * \param scvf The sub-control volume face
-     *
-     * Negative values mean influx.
+     * \param globalPos The global position
      */
-    NeumannFluxes neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NeumannFluxes neumannAtPos(const GlobalPosition& globalPos) const
     {
         NeumannFluxes values(0.0);
-        const auto& globalPos = scvf.ipGlobal();
         Scalar injectedAirMass = -1e-3;
-        Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(nCompIdx);
+        Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(FluidSystem::N2Idx);
         if (onInlet_(globalPos))
-        {
-          values[Indices::conti0EqIdx+1] = injectedAirMolarMass;
-        }
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = injectedAirMolarMass;
         return values;
     }
 
