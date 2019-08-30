@@ -21,6 +21,8 @@
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
+//Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
+
 // ## Include files
 
 // Again, we have to include the dune grid interphase:
@@ -208,6 +210,6 @@ private:
 };
 
 // We leave the namespace Dumux here.
-}
+} // end namespace Dumux
 
 #endif
