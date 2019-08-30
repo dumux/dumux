@@ -419,6 +419,7 @@ public:
 
         // get the vecor of the acutal element residuals
         const auto origResiduals = this->evalLocalResidual();
+        const auto origStorageResiduals = this->evalLocalStorageResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         //                                                                                              //
@@ -458,7 +459,7 @@ public:
                 // derive the residuals numerically
                 static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origStorageResiduals,
                                                           eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
