@@ -16,9 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+
 // ## Header guard
 #ifndef DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
 #define DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
+
+//Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 
 // ## Include files
 
@@ -176,5 +180,5 @@ public:
 };
 
 // We leave the namespace Dumux.
-}
+} // end namespace Dumux
 #endif
