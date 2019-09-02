@@ -546,12 +546,18 @@ private:
         pairData_[numPairsIdx].hasOuterLateral = true;
         pairData_[numPairsIdx].lateralPair.second = gridView_.indexSet().subIndex(element, isIdx, codimIntersection);
 
-        // store the element distance
-        const auto& outerLateralFacet = getFacet_(isIdx, element);
-        const auto outerLateralFacetPos = outerLateralFacet.geometry().center();
-        const auto& innerLateralFacet = getFacet_(isIdx, element_);
-        const auto innerLateralFacetPos = innerLateralFacet.geometry().center();
-        pairData_[numPairsIdx].lateralDistance = (innerLateralFacetPos - outerLateralFacetPos).two_norm();
+        // set basic global positions
+        const auto& selfFacetCenter = intersection_.geometry().center();
+        const auto& selfElementCenter = element_.geometry().center();
+
+        const auto& neighborElement = intersection_.outside();
+        const auto& neighborElementCenter = neighborElement.geometry().center();
+        const auto& neighborFacetCenter = getFacet_(intersection_.indexInOutside(), neighborElement).geometry().center();
+
+        const Scalar insideLateralDistance = (selfFacetCenter - selfElementCenter).two_norm();
+        const Scalar outsideLateralDistance = (neighborFacetCenter - neighborElementCenter).two_norm();
+
+        pairData_[numPairsIdx].lateralDistance = insideLateralDistance + outsideLateralDistance;
     }
 
     //! Sets the information about the parallel distances
