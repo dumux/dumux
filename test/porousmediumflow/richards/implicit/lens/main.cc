@@ -50,6 +50,10 @@
 
 #include "problem.hh"
 
+#ifndef DIFFMETHOD
+#define DIFFMETHOD DiffMethod::numeric
+#endif
+
 ////////////////////////
 // the main function
 ////////////////////////
