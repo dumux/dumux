@@ -264,24 +264,43 @@ public:
      */
     static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
-        // TODO: This is most probably still buggy!!
-        // calculate the saturation which corrosponds to the
-        // saturation in the non-regularized verision of van
-        // Genuchten's law
-        Scalar sw;
-        if (pc < 0)
-            sw = 1.5; // make sure we regularize below
-        else
-            sw = VanGenuchten::sw(params, pc);
+        const Scalar swThLow = params.pcLowSw();
+        const Scalar swThHigh = params.pcHighSw();
+
+        if (pc <= 0)
+        {
+            // for swThHigh = 1.0 the slope gets infinity
+            // swThHigh > 1.0 are not sensible threshold values
+            // setting swThHigh = 1.0 is a way to disable regularization
+            // return the maximum representable number with the given precision
+            if (swThHigh > 1.0 - std::numeric_limits<Scalar>::epsilon())
+                return std::numeric_limits<Scalar>::max();
+
+            Scalar yTh = VanGenuchten::pc(params, swThHigh);
+            Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
+            return 1.0/m1;
+        }
+
+        const auto sw = VanGenuchten::sw(params, pc);
 
         // derivative of the regularization
-        if (sw < params.pcLowSw()) {
-            // same as in dpc_dswe() but inverted
+        if (sw <= swThLow)
             return 1/mLow_(params);
-        }
-        if (sw > params.pcHighSw()) {
-            // same as in dpc_dswe() but inverted
-            return 1/mHigh_(params);
+
+        if (sw > swThHigh)
+        {
+            const Scalar yTh = VanGenuchten::pc(params, swThHigh);
+            const Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
+
+            // invert spline between threshold swe and 1.0
+            const Scalar mTh = VanGenuchten::dpc_dswe(params, swThHigh);
+            const Spline<Scalar> sp(swThHigh, 1.0, // x0, x1
+                                    yTh, 0, // m0, m1
+                                    mTh, m1); // m0, m1
+            const auto swReg = sp.intersectInterval(swThHigh, 1.0,
+                                                    0, 0, 0, pc);
+            // derivative of the inverse of the function is one over derivative of the function
+            return 1.0/sp.evalDerivative(swReg);
         }
 
         return VanGenuchten::dswe_dpc(params, pc);
@@ -337,15 +356,14 @@ public:
         // phase from the parameters
         const Scalar swThHigh = params.krwHighSw();
 
-        // derivative of the regualarization
-        if (swe < 0) {
-            // the slope is zero
+        // derivative of the regularization
+        // the slope is zero below sw=0.0 and above sw=1.0
+        if (swe < 0)
             return 0.0;
-        }
-        else if (swe > 1 - std::numeric_limits<Scalar>::epsilon()) {
-            // the slope is zero
+        else if (swe > 1 - std::numeric_limits<Scalar>::epsilon())
             return 0.0;
-        }
+
+        // for high sw we need the slope of the interpolation spline
         else if (swe > swThHigh) {
             using Spline = Dumux::Spline<Scalar>;
             Spline sp(swThHigh, 1.0, // x1, x2

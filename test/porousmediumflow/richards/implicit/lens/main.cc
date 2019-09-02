@@ -50,6 +50,10 @@
 
 #include "problem.hh"
 
+#ifndef DIFFMETHOD
+#define DIFFMETHOD DiffMethod::numeric
+#endif
+
 ////////////////////////
 // the main function
 ////////////////////////
@@ -136,7 +140,7 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = FVAssembler<TypeTag, DIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
@@ -175,6 +179,9 @@ int main(int argc, char** argv) try
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    // write Newton report
+    nonLinearSolver.report();
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
