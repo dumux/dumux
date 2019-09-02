@@ -395,6 +395,17 @@ private:
         const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
 
+        if (!scvf.hasParallelNeighbor(localSubFaceIdx))
+        {
+            if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+            {
+                const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+                const Scalar v = problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+                const Scalar momentum = v * 0.5*(insideVolVars.density() + outsideVolVars.density());
+                return transportingVelocity * momentum * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
+            }
+        }
+
         // Lamba function to evaluate the transported momentum, regarding an user-specified upwind weight.
         auto computeMomentum = [&problem](const VolumeVariables& upstreamVolVars,
                                   const VolumeVariables& downstreamVolVars,
