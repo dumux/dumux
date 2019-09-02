@@ -239,6 +239,7 @@ public:
 
         using std::cos;
         using std::sin;
+        using std::exp;
 
         source[Indices::conti0EqIdx] = (4*M_PI*M_PI*(exp(y+1) + 2 - exp(2)) - exp(y-1))*sin(2*M_PI*x);
 
