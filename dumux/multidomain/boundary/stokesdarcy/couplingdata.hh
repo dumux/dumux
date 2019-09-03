@@ -741,6 +741,7 @@ protected:
                           const DiffusionCoefficientAveragingType diffCoeffAvgType) const
     {
         NumEqVector flux(0.0);
+        NumEqVector diffusiveFlux(0.0);
 
         auto moleOrMassFraction = [&](const auto& volVars, int phaseIdx, int compIdx)
         { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
@@ -765,9 +766,20 @@ protected:
 
         // treat the diffusive fluxes
         const auto& insideScv = insideFvGeometry.scv(scvf.insideScvIdx());
-        flux += diffusiveMolecularFlux_(domainI, domainJ, scvf, insideScv, outsideScv, insideVolVars, outsideVolVars, diffCoeffAvgType);
+        diffusiveFlux += diffusiveMolecularFlux_(domainI, domainJ, scvf, insideScv, outsideScv, insideVolVars, outsideVolVars, diffCoeffAvgType);
 
-        // convert to total mass/mole balance, if set be user
+        if(!useMoles)
+        {
+          // convert everything to a mass flux
+          for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+              const int domainICompIdx = couplingCompIdx(domainI, compIdx);
+              diffusiveFlux[domainICompIdx] *= FluidSystem<i>::molarMass(domainICompIdx);
+            }
+        }
+        
+        flux += diffusiveFlux;
+        // convert to total mass/mole balance, if set by user
         if(replaceCompEqIdx < numComponents)
             flux[replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
 
