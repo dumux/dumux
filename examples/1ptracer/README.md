@@ -3,34 +3,35 @@ This tutorial was copied from dumux/test/porousmediumflow/tracer/1ptracer.
 # One-phase flow with random permeability distribution and a tracer model
 
 ## Problem set-up
-This example contains a 2d simulation of a stationary groundwater flow. The permeability is distributed randomly. An contaminant initially concentrated at the domain bottom gets transported by the base groundwater flow.
+This example contains a contaminant transported by a base groundwater flow in a randomly distributed permeability field. The figure below shows the simulation set-up. The permeability values range between 6.12e-15 and 1.5 e-7 $`m^2`$. A pressure gradient between the top an the bottom boundary leads to a groundwater flux from the bottom to the top. Neumann no-flow boundaries are assigned to the left and right boundary. Initially, there is a contaminant concentration at the domain bottom.
 
-The image below shows the simulation set-up. A pressure gradient between the top an the bottom boundary leads to a groundwater flux from the bottom to the top. Neumann no-flow boundaries are assigned to the left and right boundary. Initially, there is a contaminant concentration at the domain bottom.
-
- <img src="Plots/setup.png" width="500">
+ <img src="img/setup.png" width="500">
 
 ## Model description
-Two different models are applied to simulate the system: In the first step, the groundwater velocity is evaluated under stationary conditions. Therefore the single phase model is applied. In a second step, the contaminant gets transported based on the volume fluxes of the single phase flow. It is assumed, that the dissolved contaminant does not affect density and viscosity of the groundwater. The tracer model is solved instationarily.
+Two different models are applied to simulate the system: In a first step, the groundwater velocity is evaluated under stationary conditions. Therefore the single phase model is applied.
+In a second step, the contaminant gets transported based on the on the groundwater velocity field. It is assumed, that the dissolved contaminant does not affect density and viscosity of the groundwater and thus, it is handled as a tracer by the tracer model. The tracer model is then solved instationarily.
 
 ### 1p Model
-The single phase model uses Darcy's law as the equation for the conservation of momentum:
+The single phase model uses Darcy's law as the equation for the momentum conservation:
 
 $` \textbf v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right) `$
 
 With the darcy velocity $` \textbf v `$, the permeability $` \textbf K`$, the viscosity $` \mu`$, the pressure $`p`$, the density $`\rho`$ and the gravity $`\textbf g`$.
+
 Darcy's law is inserted into the continuity equation:
 
 $` \phi \frac{\partial \varrho}{\partial t} + \text{div} \textbf v = 0`$
 
-with density $`\rho`$. It is solved for the pressure as primary variable. This equation is discretized using a cell-centered finite volume scheme as spatial discretization. For details on the discretization, we refer to the dumux handbook.
+with porosity $`\phi`$.
+
+The equation is discretized using a cell-centered finite volume scheme as spatial discretization for the pressure as primary variable. For details on the discretization scheme, have a look at the dumux handbook.
 
 ### Tracer Model
-With the velocity field $`\textbf v`$ the transport of the contaminant component $`\kappa`$ is described by the following equation:
+The transport of the contaminant component $`\kappa`$ is based on the previously evaluated velocity field $`\textbf v`$  with the help the following mass balance equation:
 
 $` \phi \frac{ \partial X^\kappa}{\partial t} - \text{div} \left\lbrace X^\kappa {\textbf v}+ D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa \right\rbrace = 0 `$
 
-With the porosity $`\phi`$, the mass fraction of the component $`\kappa`$: $`X^\kappa`$, the binary diffusion coefficient in the porous medium $` D^\kappa_\text{pm} `$, the molar masses $` M `$ of the component $`\kappa`$ and the phase $`\alpha`$ and the mole fraction $`x`$.
-The primary variable of this model is the mass fraction $`X^\kappa`$.
+With the porosity $`\phi`$, the mass fraction of the contaminant component $`\kappa`$: $`X^\kappa`$, the binary diffusion coefficient in the porous medium $` D^\kappa_\text{pm} `$, the molar masses of the component $` M^\kappa `$, the average molar mass of the phase $`M_\alpha`$ and the mole fraction $`x`$.
 
 The porous medium diffusivity is yield out of the diffusion coefficient of the component, the porosity $`\phi `$ and the porous medium tortuosity $`\tau`$ by the following equation:
 
@@ -38,10 +39,234 @@ $`
 D^\kappa_\text{pm}= \phi \tau D^\kappa
 `$
 
+The primary variable of this model is the mass fraction $`X^\kappa`$. We apply the same spatial discretization as in the single pahse model and use the implicit Euler method for time discretization. For more information, have a look at the dumux handbook.
+
+In the following, we take a close look at the files containing the setup: At first, boundary conditions and spatially distributed parameters are set in `problem_1p.hh` and `spatialparams_1p.hh`, respectively, for the single phase model and subsequently in `problem_tracer.hh` and `spatialparams_tracer.hh` for the tracer model. Afterwards, we show the different steps for solving the model in the source file `main.cc`. At the end, we show some simulation results.
+
+
+## The file `problem_1p.hh`
+
+
+Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
+### Include files
+The dune grid interphase is included here:
+```cpp
+#include <dune/grid/yaspgrid.hh>
+```
+The cell centered, two-point-flux discretization scheme is included:
+```cpp
+#include <dumux/discretization/cctpfa.hh>
+```
+The one-phase flow model is included:
+```cpp
+#include <dumux/porousmediumflow/1p/model.hh>
+```
+This is the porous medium problem class that this class is derived from:
+```cpp
+#include <dumux/porousmediumflow/problem.hh>
+```
+The fluid properties are specified in the following headers:
+```cpp
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+```
+The local residual for incompressible flow is included:
+```cpp
+#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
+```
+We include the header that specifies all spatially variable parameters:
+```cpp
+#include "spatialparams_1p.hh"
+```
+### Define basic properties for our simulation
+We enter the namespace Dumux in order to import the entire Dumux namespace for general use
+```cpp
+namespace Dumux {
+```
+The problem class is forward declared:
+```cpp
+template<class TypeTag>
+class OnePTestProblem;
+```
+We enter the namespace Properties, which is a sub-namespace of the namespace Dumux:
+```cpp
+namespace Properties {
+```
+A TypeTag for our simulation is created which inherits from the one-phase flow model and the
+cell centered, two-point-flux discretization scheme.
+```cpp
+namespace TTag {
+struct IncompressibleTest { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+}
+```
+We use a structured 2D grid:
+```cpp
+template<class TypeTag>
+struct Grid<TypeTag, TTag::IncompressibleTest> { using type = Dune::YaspGrid<2>; };
+```
+The problem class specifies initial and boundary conditions:
+```cpp
+template<class TypeTag>
+struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem<TypeTag>; };
+```
+We define the spatial parameters for our simulation:
+```cpp
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::IncompressibleTest>
+{
+```
+We define convenient shortcuts to the properties FVGridGeometry and Scalar:
+```cpp
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+```
+Finally we set the spatial parameters:
+```cpp
+    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+};
+```
+The local residual contains analytic derivative methods for incompressible flow:
+```cpp
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
+```
+In the following we define our fluid properties.
+```cpp
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::IncompressibleTest>
+{
+```
+We define a convenient shortcut to the property Scalar:
+```cpp
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+```
+We create a fluid system that consists of one liquid water phase. We use the simple
+description of water, which means we do not use tabulated values but more general equations of state.
+```cpp
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+};
+```
+We enable caching for the grid volume variables
+```cpp
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+```
+We enable caching for the grid flux variables
+```cpp
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+```
+We enable caching for the FV grid geometry
+```cpp
+template<class TypeTag>
+struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+```
+The cache stores values that were already calculated for later usage. This makes the simulation faster.
+We leave the namespace Properties.
+```cpp
+}
+```
+### The problem class
+We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
+As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
+```cpp
+template<class TypeTag>
+class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
+{
+```
+We use convenient declarations that we derive from the property system.
+```cpp
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+public:
+```
+This is the constructor of our problem class:
+```cpp
+    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry) {}
+```
+First, we define the type of boundary conditions depending on location. Two types of boundary conditions
+can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
+primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
+Mixed boundary conditions (different types for different equations on the same boundary) are not accepted.
+```cpp
+    BoundaryTypes boundaryTypes(const Element &element,
+                                const SubControlVolumeFace &scvf) const
+    {
+        BoundaryTypes values;
+```
+we retreive the global position, i.e. the vector including the global coordinates
+of the finite volume
+```cpp
+        const auto globalPos = scvf.ipGlobal();
+```
+we define a small epslon value
+```cpp
+        Scalar eps = 1.0e-6;
+```
+We specify Dirichlet boundaries on the top and bottom of our domain:
+```cpp
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
+            values.setAllDirichlet();
+        else
+```
+The top and bottom of our domain are Neumann boundaries:
+```cpp
+            values.setAllNeumann();
+
+        return values;
+    }
+```
+Second, we specify the values for the Dirichlet boundaries. We need to fix values of our primary variable
+```cpp
+    PrimaryVariables dirichlet(const Element &element,
+                               const SubControlVolumeFace &scvf) const
+    {
+```
+we retreive again the global position
+```cpp
+        const auto& pos = scvf.ipGlobal();
+        PrimaryVariables values(0);
+```
+we assign pressure values in [Pa] according to a pressure gradient to 1e5 Pa at the top and 1.1e5 Pa at the bottom.
+```cpp
+        values[0] = 1.0e+5*(1.1 - pos[dimWorld-1]*0.1);
+        return values;
+    }
+```
+We need to specify a constant temperature for our isothermal problem.
+Fluid properties that depend on temperature will be calculated with this value.
+```cpp
+    Scalar temperature() const
+    {
+        return 283.15; // 10°C
+    }
+```
+This is everything the one phase problem class contains.
+```cpp
+};
+```
+We leave the namespace Dumux.
+```cpp
+} // end namespace Dumux
+```
+
+
 
 ## The file `spatialparams_1p.hh`
 
 
+In this file we generate the random permeability field in the constructor of the OnePTestSpatialParams class. Thereafter spatial properties of the porous medium like permeability and porosity are defined in various functions for the 1p problem.
 We want to generate a random permeability field. For this we use a random number generation of the C++ standard library.
 ```cpp
 #include <random>
@@ -158,331 +383,11 @@ We have a convenience definition of the position of the lens.
 
 
 
-## The file `problem_1p.hh`
-
-
-## Include files
-```cpp
-```
-The dune grid interphase is included here:
-```cpp
-#include <dune/grid/yaspgrid.hh>
-```
-The cell centered, two-point-flux discretization scheme is included:
-```cpp
-#include <dumux/discretization/cctpfa.hh>
-```
-The one-phase flow model is included:
-```cpp
-#include <dumux/porousmediumflow/1p/model.hh>
-```
-This is the porous medium problem class that this class is derived from:
-```cpp
-#include <dumux/porousmediumflow/problem.hh>
-```
-The fluid properties are specified in the following headers:
-```cpp
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-```
-The local residual for incompressible flow is included:
-```cpp
-#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
-```
-We include the header that specifies all spatially variable parameters:
-```cpp
-#include "spatialparams_1p.hh"
-```
-## Define basic properties for our simulation
-We enter the namespace Dumux in order to import the entire Dumux namespace for general use
-```cpp
-namespace Dumux {
-```
-The problem class is forward declared:
-```cpp
-template<class TypeTag>
-class OnePTestProblem;
-```
-We enter the namespace Properties, which is a sub-namespace of the namespace Dumux:
-```cpp
-namespace Properties {
-```
-A TypeTag for our simulation is created which inherits from the one-phase flow model and the
-cell centered, two-point-flux discretization scheme.
-```cpp
-namespace TTag {
-struct IncompressibleTest { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
-}
-```
-We use a structured 2D grid:
-```cpp
-template<class TypeTag>
-struct Grid<TypeTag, TTag::IncompressibleTest> { using type = Dune::YaspGrid<2>; };
-```
-The problem class specifies initial and boundary conditions:
-```cpp
-template<class TypeTag>
-struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem<TypeTag>; };
-```
-We define the spatial parameters for our simulation:
-```cpp
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::IncompressibleTest>
-{
-```
-We define convenient shortcuts to the properties FVGridGeometry and Scalar:
-```cpp
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-```
-Finally we set the spatial parameters:
-```cpp
-    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
-};
-```
-The local residual contains analytic derivative methods for incompressible flow:
-```cpp
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-```
-In the following we define our fluid properties.
-```cpp
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::IncompressibleTest>
-{
-```
-We define a convenient shortcut to the property Scalar:
-```cpp
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-```
-We create a fluid system that consists of one liquid water phase. We use the simple
-description of water, which means we do not use tabulated values but more general equations of state.
-```cpp
-    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-};
-```
-We enable caching for the grid volume variables
-```cpp
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-```
-We enable caching for the grid flux variables
-```cpp
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-```
-We enable caching for the FV grid geometry
-```cpp
-template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-```
-The cache stores values that were already calculated for later usage. This makes the simulation faster.
-```cpp
-```
-We leave the namespace Properties.
-```cpp
-}
-```
-## The problem class
-We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
-```cpp
-template<class TypeTag>
-class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
-{
-```
-We use convenient declarations that we derive from the property system.
-```cpp
-    using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-public:
-```
-This is the constructor of our problem class:
-```cpp
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
-```
-First, we define the type of boundary conditions depending on location. Two types of boundary conditions
-can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
-primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
-Mixed boundary conditions (different types for different equations on the same boundary) are not accepted.
-```cpp
-    BoundaryTypes boundaryTypes(const Element &element,
-                                const SubControlVolumeFace &scvf) const
-    {
-        BoundaryTypes values;
-```
-we retreive the global position, i.e. the vector including the global coordinates
-of the finite volume
-```cpp
-        const auto globalPos = scvf.ipGlobal();
-```
-we define a small epslon value
-```cpp
-        Scalar eps = 1.0e-6;
-```
-We specify Dirichlet boundaries on the top and bottom of our domain:
-```cpp
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
-            values.setAllDirichlet();
-        else
-```
-The top and bottom of our domain are Neumann boundaries:
-```cpp
-            values.setAllNeumann();
-
-        return values;
-    }
-```
-Second, we specify the values for the Dirichlet boundaries. We need to fix values of our primary variable
-```cpp
-    PrimaryVariables dirichlet(const Element &element,
-                               const SubControlVolumeFace &scvf) const
-    {
-```
-we retreive again the global position
-```cpp
-        const auto& pos = scvf.ipGlobal();
-        PrimaryVariables values(0);
-```
-we assign pressure values in [Pa] according to a pressure gradient to 1e5 Pa at the top and 1.1e5 Pa at the bottom.
-```cpp
-        values[0] = 1.0e+5*(1.1 - pos[dimWorld-1]*0.1);
-        return values;
-    }
-```
-We need to specify a constant temperature for our isothermal problem.
-Fluid properties that depend on temperature will be calculated with this value.
-```cpp
-    Scalar temperature() const
-    {
-        return 283.15; // 10°C
-    }
-```
-This is everything the one phase problem class contains.
-```cpp
-};
-```
-We leave the namespace Dumux.
-```cpp
-}
-```
-
-
-
-## The file `spatialparams_tracer.hh`
-
-
-In the file properties.hh all properties are declared.
-```cpp
-#include <dumux/porousmediumflow/properties.hh>
-```
-As in the 1p spatialparams we inherit from the spatial parameters for single-phase, finite volumes, which we include here.
-```cpp
-#include <dumux/material/spatialparams/fv1p.hh>
-
-namespace Dumux {
-```
-In the TracerTestSpatialParams class, we define all functions needed to describe spatially dependent parameters for the tracer_problem.
-```cpp
-
-template<class FVGridGeometry, class Scalar>
-class TracerTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             TracerTestSpatialParams<FVGridGeometry, Scalar>>
-{
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           TracerTestSpatialParams<FVGridGeometry, Scalar>>;
-
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
-
-public:
-
-    TracerTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
-```
-### Properties of the porous matrix
-We define the same porosity for the whole domain as in the 1p spatialparams.
-```cpp
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.2; }
-```
-We don't consider dispersivity for the tracer transport. So we set the dispersivity coefficient to zero.
-```cpp
-    template<class ElementSolution>
-    Scalar dispersivity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
-    { return 0; }
-```
-### Properties of the fluid system
-In the following we define fluid properties that are spatial parameters in the tracer model. They can possible vary with space but are usually constants. Further spatially constant values of the fluid system are defined in the TracerFluidSystem class in problem.hh.
-```cpp
-```
-We define the fluid density to a constant value of 1000 $`\frac{kg}{m^3}`$.
-```cpp
-    Scalar fluidDensity(const Element &element,
-                        const SubControlVolume& scv) const
-    { return 1000; }
-```
-We define the fluid molar mass.
-```cpp
-    Scalar fluidMolarMass(const Element &element,
-                          const SubControlVolume& scv) const
-    { return 18.0; }
-
-    Scalar fluidMolarMass(const GlobalPosition &globalPos) const
-    { return 18.0; }
-```
-### The volume fluxes
-We define a function which returns the field of volume fluxes. This is e.g. used to calculate the transport of the tracer.
-```cpp
-    template<class ElementVolumeVariables>
-    Scalar volumeFlux(const Element &element,
-                      const FVElementGeometry& fvGeometry,
-                      const ElementVolumeVariables& elemVolVars,
-                      const SubControlVolumeFace& scvf) const
-    {
-        return volumeFlux_[scvf.index()];
-    }
-```
-We define a function to set the volume flux. This is used in the main function to set the volume flux to the calculated value based on the solution of the 1p problem.
-```cpp
-    void setVolumeFlux(const std::vector<Scalar>& f)
-    { volumeFlux_ = f; }
-
-private:
-    std::vector<Scalar> volumeFlux_;
-};
-
-} // end namespace Dumux
-
-```
-
-
-
 ## The file `problem_tracer.hh`
 
 
-## Include files
-```cpp
-```
+Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
+### Include files
 Again, we have to include the dune grid interphase:
 ```cpp
 #include <dune/grid/yaspgrid.hh>
@@ -507,7 +412,7 @@ We include the header that specifies all spatially variable parameters for the t
 ```cpp
 #include "spatialparams_tracer.hh"
 ```
-## Define basic properties for our simulation
+### Define basic properties for our simulation
 We enter the namespace Dumux
 ```cpp
 namespace Dumux {
@@ -636,7 +541,7 @@ We leave the namespace Properties.
 }
 
 ```
-## The problem class
+### The problem class
 We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
 ```cpp
@@ -723,7 +628,103 @@ This is everything the tracer problem class contains.
 ```
 We leave the namespace Dumux here.
 ```cpp
-}
+} // end namespace Dumux
+
+```
+
+
+
+## The file `spatialparams_tracer.hh`
+
+
+In this file we define spatial properties of the porous medium like permeability and porosity in various functions for the tracer problem. Further spatial dependent properties of the tracer fluid system are defined and in the end two functions handel the calculated volume fluxes from the solution of the 1p problem.
+In the file properties.hh all properties are declared.
+```cpp
+#include <dumux/porousmediumflow/properties.hh>
+```
+As in the 1p spatialparams we inherit from the spatial parameters for single-phase, finite volumes, which we include here.
+```cpp
+#include <dumux/material/spatialparams/fv1p.hh>
+
+namespace Dumux {
+```
+In the TracerTestSpatialParams class, we define all functions needed to describe spatially dependent parameters for the tracer_problem.
+```cpp
+
+template<class FVGridGeometry, class Scalar>
+class TracerTestSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             TracerTestSpatialParams<FVGridGeometry, Scalar>>
+{
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           TracerTestSpatialParams<FVGridGeometry, Scalar>>;
+
+    static const int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
+
+public:
+
+    TracerTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry) {}
+```
+### Properties of the porous matrix
+We define the same porosity for the whole domain as in the 1p spatialparams.
+```cpp
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return 0.2; }
+```
+We don't consider dispersivity for the tracer transport. So we set the dispersivity coefficient to zero.
+```cpp
+    template<class ElementSolution>
+    Scalar dispersivity(const Element &element,
+                        const SubControlVolume& scv,
+                        const ElementSolution& elemSol) const
+    { return 0; }
+```
+### Properties of the fluid system
+In the following we define fluid properties that are spatial parameters in the tracer model. They can possible vary with space but are usually constants. Further spatially constant values of the fluid system are defined in the TracerFluidSystem class in problem.hh.
+We define the fluid density to a constant value of 1000 $`\frac{kg}{m^3}`$.
+```cpp
+    Scalar fluidDensity(const Element &element,
+                        const SubControlVolume& scv) const
+    { return 1000; }
+```
+We define the fluid molar mass.
+```cpp
+    Scalar fluidMolarMass(const Element &element,
+                          const SubControlVolume& scv) const
+    { return 18.0; }
+
+    Scalar fluidMolarMass(const GlobalPosition &globalPos) const
+    { return 18.0; }
+```
+### The volume fluxes
+We define a function which returns the field of volume fluxes. This is e.g. used to calculate the transport of the tracer.
+```cpp
+    template<class ElementVolumeVariables>
+    Scalar volumeFlux(const Element &element,
+                      const FVElementGeometry& fvGeometry,
+                      const ElementVolumeVariables& elemVolVars,
+                      const SubControlVolumeFace& scvf) const
+    {
+        return volumeFlux_[scvf.index()];
+    }
+```
+We define a function to set the volume flux. This is used in the main function to set the volume flux to the calculated value based on the solution of the 1p problem.
+```cpp
+    void setVolumeFlux(const std::vector<Scalar>& f)
+    { volumeFlux_ = f; }
+
+private:
+    std::vector<Scalar> volumeFlux_;
+};
+
+} // end namespace Dumux
 
 ```
 
@@ -1115,11 +1116,11 @@ catch (...)
 ## Results
 
 The 1-model calculated a stationary pressure distribution. It is shown in the following figure:
- <img src="Plots/pressure.png" width="300">
+ <img src="img/pressure.png" width="300">
 
 
 The random permeability distribution generates the velocity profile shown in the left plot of the next figure. The image in the middle illustrates the tracer distribution after 2500s and the image on the right after 5000s.
 
-| ![](Plots/VelocityProfile.png)| ![](Plots/Tracer_2500.png) | ![](Plots/Tracer_5000.png)|
+| ![](img/VelocityProfile.png)| ![](img/Tracer_2500.png) | ![](img/Tracer_5000.png)|
 |:---:|:---:|:---:|
 | velocity profile| tracer concentration after 2500s | tracer concentration after 5000s |

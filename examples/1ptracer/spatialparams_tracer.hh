@@ -1,11 +1,29 @@
-// ## The spatialparams for the tracer problem
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
 
 
-// In this file we define spatial properties of the porous medium like permeability and porosity in various functions for the tracer problem. Further spatial dependent properties of the tracer fluid system are defined and in the end two functions handel the calculated volume fluxes from the solution of the 1p problem.
+
 // the header guard
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 
+// In this file we define spatial properties of the porous medium like permeability and porosity in various functions for the tracer problem. Further spatial dependent properties of the tracer fluid system are defined and in the end two functions handel the calculated volume fluxes from the solution of the 1p problem.
 // In the file properties.hh all properties are declared.
 #include <dumux/porousmediumflow/properties.hh>
 // As in the 1p spatialparams we inherit from the spatial parameters for single-phase, finite volumes, which we include here.
@@ -50,7 +68,6 @@ public:
 
     // ### Properties of the fluid system
     // In the following we define fluid properties that are spatial parameters in the tracer model. They can possible vary with space but are usually constants. Further spatially constant values of the fluid system are defined in the TracerFluidSystem class in problem.hh.
-
     // We define the fluid density to a constant value of 1000 $`\frac{kg}{m^3}`$.
     Scalar fluidDensity(const Element &element,
                         const SubControlVolume& scv) const

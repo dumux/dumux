@@ -1,11 +1,27 @@
-// ## The spatialparams for the 1p problem
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
 
-
-// In this file we first include some headers, then we generate the random permeability field in the constructor of the OnePTestSpatialParams class. Thereafter spatial properties of the porous medium like permeability and porosity are defined in various functions for the 1p problem.
 // the header guard
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
+// In this file we generate the random permeability field in the constructor of the OnePTestSpatialParams class. Thereafter spatial properties of the porous medium like permeability and porosity are defined in various functions for the 1p problem.
 // We want to generate a random permeability field. For this we use a random number generation of the C++ standard library.
 #include <random>
 // In the file properties.hh all properties are declared.
