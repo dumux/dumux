@@ -5,7 +5,7 @@ This tutorial was copied from dumux/test/porousmediumflow/tracer/1ptracer.
 ## Problem set-up
 This example contains a contaminant transported by a base groundwater flow in a randomly distributed permeability field. The figure below shows the simulation set-up. The permeability values range between 6.12e-15 and 1.5 e-7 $`m^2`$. A pressure gradient between the top an the bottom boundary leads to a groundwater flux from the bottom to the top. Neumann no-flow boundaries are assigned to the left and right boundary. Initially, there is a contaminant concentration at the domain bottom.
 
- <img src="Plots/setup.png" width="500">
+ <img src="img/setup.png" width="500">
 
 ## Model description
 Two different models are applied to simulate the system: In a first step, the groundwater velocity is evaluated under stationary conditions. Therefore the single phase model is applied.
