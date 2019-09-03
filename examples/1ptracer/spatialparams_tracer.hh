@@ -1,5 +1,7 @@
 // ## The spatialparams for the tracer problem
 
+
+// In this file we define spatial properties of the porous medium like permeability and porosity in various functions for the tracer problem. Further spatial dependent properties of the tracer fluid system are defined and in the end two functions handel the calculated volume fluxes from the solution of the 1p problem.
 // the header guard
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
