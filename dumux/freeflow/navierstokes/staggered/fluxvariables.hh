@@ -477,9 +477,15 @@ private:
 
         if (!enableUnsymmetrizedVelocityGradient)
         {
+            bool doCalculation = true;
+            if (scvf.boundary())
+            {
+                if(problem.boundaryTypes(element, scvf).isDirichlet(Indices::pressureIdx))
+                    doCalculation = false;
+            }
             // If we are at a boundary, a gradient of zero is implictly assumed for all velocities,
             // thus no further calculations are required.
-            if (!scvf.boundary())
+            if (doCalculation)
             {
                 // For the normal gradient, get the velocities perpendicular to the velocity at the current scvf.
                 // The inner one is located at staggered face within the own element,
