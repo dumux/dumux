@@ -1,5 +1,7 @@
 // ## The spatialparams for the 1p problem
 
+
+// In this file we first include some headers, then we generate the random permeability field in the constructor of the OnePTestSpatialParams class. Thereafter spatial properties of the porous medium like permeability and porosity are defined in various functions for the 1p problem.
 // the header guard
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
