@@ -18,14 +18,12 @@
  *****************************************************************************/
 
 
-// ## Header guard
+// ### Header guard
 #ifndef DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
 #define DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
 
 //Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
-
-// ## Include files
-
+// ### Include files
 // The dune grid interphase is included here:
 #include <dune/grid/yaspgrid.hh>
 
@@ -46,7 +44,7 @@
 // We include the header that specifies all spatially variable parameters:
 #include "spatialparams_1p.hh"
 
-// ## Define basic properties for our simulation
+// ### Define basic properties for our simulation
 // We enter the namespace Dumux in order to import the entire Dumux namespace for general use
 namespace Dumux {
 
@@ -106,11 +104,10 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static 
 template<class TypeTag>
 struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
 //The cache stores values that were already calculated for later usage. This makes the simulation faster.
-
 // We leave the namespace Properties.
 }
 
-// ## The problem class
+// ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 // As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
 template<class TypeTag>

@@ -17,14 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// ## Header guard
+// ### Header guard
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
 //Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
-
-// ## Include files
-
+// ### Include files
 // Again, we have to include the dune grid interphase:
 #include <dune/grid/yaspgrid.hh>
 // and the cell centered, two-point-flux discretization.
@@ -38,7 +36,7 @@
 // We include the header that specifies all spatially variable parameters for the tracer problem:
 #include "spatialparams_tracer.hh"
 
-// ## Define basic properties for our simulation
+// ### Define basic properties for our simulation
 // We enter the namespace Dumux
 namespace Dumux {
 
@@ -142,7 +140,7 @@ struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<T
 }
 
 
-// ## The problem class
+// ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 // As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
 template <class TypeTag>
