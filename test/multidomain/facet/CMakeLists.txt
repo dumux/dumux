@@ -46,7 +46,7 @@ dune_add_test(NAME test_facetcouplingmapper_mpfa_alu
 
 dune_add_test(NAME test_facetcouplingmapper_mpfa_ug
               LABELS multidomain multidomain_facet
-              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::UGGrid<3>
               COMPILE_DEFINITIONS USEMPFAINBULK=true
               SOURCES test_facetcouplingmapper.cc
