@@ -816,9 +816,9 @@ public:
                          GridIndexType<mechanicsId> dofIdxGlobalJ)
     {
         // make sure this is called for the element for which the context was set
-        assert(BulkFacetFlowManager::lowDimCouplingContext().isSet);
-        assert(problem(facetFlowId).fvGridGeometry().elementMapper().index(facetFlowLocalAssembler.element())
-                                              == BulkFacetFlowManager::lowDimCouplingContext().elementIdx);
+        // assert(BulkFacetFlowManager::lowDimCouplingContext().isSet);
+        // assert(problem(facetFlowId).fvGridGeometry().elementMapper().index(facetFlowLocalAssembler.element())
+        //                                       == BulkFacetFlowManager::lowDimCouplingContext().elementIdx);
 
         // both fluxes and sources are afffected by the deformation
         const auto& localResidual = facetFlowLocalAssembler.localResidual();
