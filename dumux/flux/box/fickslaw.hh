@@ -123,7 +123,7 @@ public:
             // compute the diffusive flux
             componentFlux[compIdx] = -1.0*rho*vtmv(scvf.unitOuterNormal(), D, gradX)*scvf.area();
             if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
-                componentFlux[phaseIdx] -= componentFlux[compIdx];
+                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
         return componentFlux;
     }
