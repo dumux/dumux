@@ -401,6 +401,7 @@ public:
                          Dune::index_constant<PoroMechId> poroMechDomainId,
                          GridIndexType<PoroMechId> dofIdxGlobalJ)
     {
+        // return pmFlowLocalAssembler.evalLocalResidual();
         auto res = pmFlowLocalAssembler.localResidual().evalFluxAndSource(pmFlowLocalAssembler.element(),
                                                                           pmFlowLocalAssembler.fvGeometry(),
                                                                           pmFlowLocalAssembler.curElemVolVars(),
@@ -508,6 +509,9 @@ public:
      */
     const SolutionVector& curSol() const
     { return ParentType::curSol(); }
+
+    const ElementIndexMap& bulkIndexMap() const
+    { return indexMap_; }
 
 private:
     /*!
