@@ -19,35 +19,26 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Fick's law specilized for different discretization schemes.
- *        This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ * \brief The reference frameworks and formulations available for splitting total fluxes into a advective and diffusive part
  */
-#ifndef DUMUX_DISCRETIZATION_FICKS_LAW_HH
-#define DUMUX_DISCRETIZATION_FICKS_LAW_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/method.hh>
-#include <dumux/flux/referencesystem.hh>
+#ifndef DUMUX_FLUX_REFERENCESYSTEM_HH
+#define DUMUX_FLUX_REFERENCESYSTEM_HH
 
 namespace Dumux {
 
-// forward declaration
-template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
-class FicksLawImplementation;
-
-/*!
- * \ingroup Flux
- * \brief Evaluates the diffusive mass flux according to Fick's law
- */
-template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
-using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod, referenceSystem>;
+    /*!
+     * \brief The formulations available for Fick's law related to the reference system
+     * \ingroup Flux
+     * \note The total flux of a component can be split into an advective and a diffusive part. The advective part is in our framework determined by a momentum balance. Standard momentum balances, e.g. Navier-Stokes and Darcy's law give back mass-averaged velocites (see Multicomponent Mass Transfer, R. Taylor u. R. Krishna. J.), therefore as default we use the formulation of Fick's law which matches to these velocities (mass averaged formulation).
+     *
+     * This means that the diffusive fluxes are calculated with the mass fraction gradients and the unit of the fluxes is in kg/s. It is also possible to use a molar averaged reference system, which can be benefitial e.g. when it is known that the molar averaged advective velocity would be zero. When using a molar averaged reference velocity Fick's law is formulated with mole fraction gradients and the unit of the flux is mol/s. This means that depending on the reference system the units of the fluxes need to be adapted to be used in mass or mole balances.
+     */
+    enum class ReferenceSystemFormulation
+    {
+        massAveraged, molarAveraged
+    };
 
 } // end namespace Dumux
-
-#include <dumux/flux/cctpfa/fickslaw.hh>
-#include <dumux/flux/ccmpfa/fickslaw.hh>
-#include <dumux/flux/box/fickslaw.hh>
-#include <dumux/flux/staggered/freeflow/fickslaw.hh>
 
 #endif

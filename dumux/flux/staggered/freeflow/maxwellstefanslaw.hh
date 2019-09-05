@@ -35,15 +35,15 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class MaxwellStefansLawImplementation;
 
 /*!
  * \ingroup StaggeredFlux
  * \brief Specialization of Maxwell Stefan's Law for the Staggered method.
  */
-template <class TypeTag>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
+template <class TypeTag, ReferenceSystemFormulation referenceSystem>
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -68,9 +68,13 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
 
     static_assert(ModelTraits::numFluidPhases() == 1, "Only one phase allowed supported!");
 
+    static_assert(referenceSystem == ReferenceSystemFormulation::massAveraged, "only the mass averaged reference system is supported for the Maxwell-Stefan formulation");
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    //return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation() { return referenceSystem; }
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law
@@ -95,8 +99,8 @@ public:
         // get inside/outside volume variables
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-        const auto rhoInside = insideVolVars.molarDensity();
-        const auto rhoOutside = outsideVolVars.molarDensity();
+        const auto rhoInside = insideVolVars.density();
+        const auto rhoOutside = outsideVolVars.density();
 
         //to implement outflow boundaries correctly we need to loop over all components but the main component as only for the transported ones we implement the outflow boundary. diffusion then is 0.
         for(int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -208,10 +212,12 @@ private:
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
             const auto xi = volVars.moleFraction(compIIdx);
+            const auto Mavg = volVars.averageMolarMass(0);
+            const auto Mn = FluidSystem::molarMass(numComponents-1);
             const Scalar tin = volVars.effectiveDiffusivity(compIIdx, numComponents-1);
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
+            reducedDiffusionMatrix[compIIdx][compIIdx] +=  xi*Mavg/(tin*Mn);
 
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
@@ -220,10 +226,12 @@ private:
                     continue;
 
                 const auto xj = volVars.moleFraction(compJIdx);
+                const auto Mi = FluidSystem::molarMass(compIIdx);
+                const auto Mj = FluidSystem::molarMass(compJIdx);
                 const Scalar tij = volVars.effectiveDiffusivity(compIIdx, compJIdx);
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
+                reducedDiffusionMatrix[compIIdx][compIIdx] +=  xj*Mavg/(tij*Mi);
                 if (compJIdx < numComponents-1)
-                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
+                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(Mavg/(tin*Mn) - Mavg/(tij*Mj));
             }
         }
         return reducedDiffusionMatrix;
