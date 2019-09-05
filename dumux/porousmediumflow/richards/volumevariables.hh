@@ -112,7 +112,16 @@ public:
         if (phasePresence == Indices::gasPhaseOnly)
         {
             moleFraction_[FluidSystem::liquidPhaseIdx] = 1.0;
+            massFraction_[FluidSystem::liquidPhaseIdx] = 1.0;
+
+
             moleFraction_[FluidSystem::gasPhaseIdx] = priVars[Indices::switchIdx];
+
+            const auto averageMolarMassGasPhase = (moleFraction_[FluidSystem::gasPhaseIdx]*FluidSystem::molarMass(FluidSystem::liquidPhaseIdx)) +
+            ((1-moleFraction_[FluidSystem::gasPhaseIdx])*FluidSystem::molarMass(FluidSystem::gasPhaseIdx));
+
+            //X_w = x_w* M_w/ M_avg
+            massFraction_[FluidSystem::gasPhaseIdx] = priVars[Indices::switchIdx]*FluidSystem::molarMass(FluidSystem::liquidPhaseIdx)/averageMolarMassGasPhase;
 
             fluidState_.setSaturation(FluidSystem::liquidPhaseIdx, 0.0);
             fluidState_.setSaturation(FluidSystem::gasPhaseIdx, 1.0);
@@ -158,6 +167,12 @@ public:
 
                 moleFraction_[FluidSystem::gasPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonWettingReferencePressure();
 
+                const auto averageMolarMassGasPhase = (moleFraction_[FluidSystem::gasPhaseIdx]*FluidSystem::molarMass(FluidSystem::liquidPhaseIdx)) +
+                ((1-moleFraction_[FluidSystem::gasPhaseIdx])*FluidSystem::molarMass(FluidSystem::gasPhaseIdx));
+
+                //X_w = x_w* M_w/ M_avg
+                massFraction_[FluidSystem::gasPhaseIdx] = moleFraction_[FluidSystem::gasPhaseIdx]*FluidSystem::molarMass(FluidSystem::liquidPhaseIdx)/averageMolarMassGasPhase;
+
                 // binary diffusion coefficients
                 typename FluidSystem::ParameterCache paramCache;
                 paramCache.updateAll(fluidState_);
@@ -174,6 +189,8 @@ public:
                 molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
                 moleFraction_[FluidSystem::liquidPhaseIdx] = 1.0;
                 moleFraction_[FluidSystem::gasPhaseIdx] = 0.0;
+                massFraction_[FluidSystem::liquidPhaseIdx] = 1.0;
+                massFraction_[FluidSystem::gasPhaseIdx] = 0.0;
 
                 // binary diffusion coefficients
                 typename FluidSystem::ParameterCache paramCache;
@@ -417,6 +434,21 @@ public:
     }
 
     /*!
+     * \brief Returns the mole fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar massFraction(const int phaseIdx, const int compIdx) const
+    {
+        assert(enableWaterDiffusionInAir());
+        if (compIdx != FluidSystem::comp0Idx)
+            DUNE_THROW(Dune::InvalidStateException, "There is only one component for Richards!");
+        return massFraction_[phaseIdx];
+    }
+
+    /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume in \f$[mol/m^3]\f$.
      *
@@ -447,6 +479,7 @@ protected:
     PermeabilityType permeability_; //!< the instrinsic permeability
     Scalar minPc_; //!< the minimum capillary pressure (entry pressure)
     Scalar moleFraction_[ParentType::numFluidPhases()]; //!< The water mole fractions in water and air
+    Scalar massFraction_[ParentType::numFluidPhases()]; //!< The water mass fractions in water and air
     Scalar molarDensity_[ParentType::numFluidPhases()]; //!< The molar density of water and air
     Scalar diffCoeff_; //!< The binary diffusion coefficient of water in air
 };
