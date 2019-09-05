@@ -42,7 +42,7 @@
  \phi \frac{ \partial \varrho X^\kappa}{\partial t}
  - \text{div} \left\lbrace \varrho X^\kappa \frac{{\textbf K}}{\mu} \left( \textbf{grad}\, p -
  \varrho {\textbf g} \right)
- + \varrho D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa \right\rbrace = q.
+ + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = q.
  \f]
  *
  * All equations are discretized using a vertex-centered finite volume (box)

@@ -42,8 +42,8 @@
  (\textbf{grad}\, p_\alpha - \varrho_\alpha \mbox{\bf g}) \right\}
  \nonumber \\
  \nonumber \\
- && - \sum\limits_\alpha \text{div} \left\{ D_\text{pm}^\kappa \varrho_\alpha \frac{M^\kappa}{M_\alpha}
- \textbf{grad} x^\kappa_{\alpha} \right\}
+ && - \sum\limits_\alpha \text{div} \left\{ D_\text{pm}^\kappa \varrho_\alpha \frac{1}{M_\kappa}
+ \textbf{grad} X^\kappa_{\alpha} \right\}
  - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha
  \f}
  *
