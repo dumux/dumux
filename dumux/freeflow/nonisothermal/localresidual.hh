@@ -25,6 +25,7 @@
 #define DUMUX_FREE_FLOW_ENERGY_LOCAL_RESIDUAL_HH
 
 #include <dumux/discretization/method.hh>
+#include <dumux/flux/referencesystem.hh>
 
 namespace Dumux {
 
@@ -158,11 +159,11 @@ public:
             const bool insideIsUpstream = scvf.directionSign() == sign(diffusiveFlux[compIdx]);
             const auto& upstreamVolVars = insideIsUpstream ? elemVolVars[scvf.insideScvIdx()] : elemVolVars[scvf.outsideScvIdx()];
 
-            // always use a mass-based calculation for the energy balance
-            if (FluxVariables::useMoles)
-                diffusiveFlux[compIdx] *= elemVolVars[scvf.insideScvIdx()].molarMass(compIdx);
+            if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                flux[localEnergyBalanceIdx] += diffusiveFlux[compIdx] * upstreamVolVars.componentEnthalpy(compIdx);
+            else
+                flux[localEnergyBalanceIdx] += diffusiveFlux[compIdx] * upstreamVolVars.componentEnthalpy(compIdx)* elemVolVars[scvf.insideScvIdx()].molarMass(compIdx);
 
-            flux[localEnergyBalanceIdx] += diffusiveFlux[compIdx] * upstreamVolVars.componentEnthalpy(compIdx);
         }
     }
 };

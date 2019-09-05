@@ -26,7 +26,7 @@
  * \f[
  *    \frac{\partial \left(\varrho X^\kappa\right)}{\partial t}
  *    + \nabla \cdot \left( \varrho {\boldsymbol{v}} X^\kappa
- *    - (D^\kappa + D_\text{t}) \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa \right)
+ *    - (D^\kappa + D_\text{t}) \varrho \textbf{grad}\, X^\kappa \right)
  *    - q^\kappa = 0
  * \f]
  *
@@ -35,7 +35,7 @@
  *    \frac{\partial \varrho_g}{\partial t}
  *    + \nabla \cdot \left(
  *        \varrho {\boldsymbol{v}}
- *        - \sum_\kappa (D^\kappa + D_\text{t}) \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa
+ *        - \sum_\kappa (D^\kappa + D_\text{t}) \varrho \textbf{grad}\, X^\kappa
  *      \right)
  *    - q = 0
  * \f]
