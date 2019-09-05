@@ -309,6 +309,13 @@ public:
     const SolidState &solidState() const
     { return solidState_; }
 
+    /*!
+     * \brief Returns the average molar mass \f$\mathrm{[kg/mol]}\f$$ the of the fluid phase.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar averageMolarMass(int phaseIdx) const
+    { return fluidState_.averageMolarMass(phaseIdx); }
 
     /*!
      * \brief Returns the effective saturation of a given phase within

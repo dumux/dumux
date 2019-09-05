@@ -107,6 +107,14 @@ public:
     { return fluidDensity_; }
 
     /*!
+     * \brief Returns the average molar mass \f$\mathrm{[kg/mol]}\f$$ the of the fluid phase.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar averageMolarMass(int phaseIdx = 0) const
+    { return fluidMolarMass_; }
+
+    /*!
      * \brief Returns the phase state for the control volume.
      */
     const SolidState &solidState() const

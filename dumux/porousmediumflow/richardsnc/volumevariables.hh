@@ -200,6 +200,14 @@ public:
     { return solidState_; }
 
     /*!
+     * \brief Returns the average molar mass \f$\mathrm{[kg/mol]}\f$$ the of the fluid phase.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar averageMolarMass(const int phaseIdx = 0) const
+    { return fluidState_.averageMolarMass(phaseIdx); }
+
+    /*!
      * \brief Returns the temperature.
      */
     Scalar temperature() const
