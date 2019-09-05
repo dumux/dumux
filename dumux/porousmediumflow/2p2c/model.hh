@@ -40,8 +40,8 @@
  \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
  (\textbf{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
  \nonumber \\ \nonumber \\
- &-& \sum_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa \varrho_{\alpha} \frac{M^\kappa}{M_\alpha}
- \textbf{grad} x^\kappa_{\alpha} \right\}
+ &-& \sum_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa \varrho_{\alpha}
+ \textbf{grad} X^\kappa_{\alpha} \right\}
  - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a\} \, ,
  \alpha \in \{w, g\}
  \f}

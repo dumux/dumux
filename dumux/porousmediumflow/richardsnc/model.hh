@@ -69,8 +69,6 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/porousmediumflow/compositional/localresidual.hh>
-
 #include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
@@ -83,7 +81,7 @@
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
-
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/richards/model.hh>
 
 #include "volumevariables.hh"
