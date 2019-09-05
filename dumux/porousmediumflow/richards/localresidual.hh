@@ -148,7 +148,13 @@ public:
 
         // for extended Richards we consider water vapor diffusion in air
         if (enableWaterDiffusionInAir)
-            flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(gasPhaseIdx)[liquidCompIdx]*FluidSystem::molarMass(liquidCompIdx);
+        {
+            //check for the reference system and adapt units of the diffusive flux accordingly.
+            if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(gasPhaseIdx)[liquidCompIdx];
+            else
+                flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(gasPhaseIdx)[liquidCompIdx]*FluidSystem::molarMass(liquidCompIdx);
+        }
 
         //! Add advective phase energy fluxes for the water phase only. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, liquidPhaseIdx);

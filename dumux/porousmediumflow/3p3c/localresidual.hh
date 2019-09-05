@@ -137,6 +137,7 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
 
         // get upwind weights into local scope
         NumEqVector flux(0.0);
@@ -164,15 +165,44 @@ public:
         const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
 
         // diffusive fluxes
-        Scalar jGW = diffusionFluxesWPhase[gCompIdx];
-        Scalar jNW = diffusionFluxesWPhase[nCompIdx];
-        Scalar jWW = -(jGW+jNW);
+        Scalar jGW = 0.0;
+        Scalar jNW = 0.0;
+        Scalar jWW = 0.0;
+
+        //check for the reference system and adapt units of the diffusive flux accordingly.
+        if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+        {
+            jGW += diffusionFluxesWPhase[gCompIdx]/FluidSystem::molarMass(gCompIdx);
+            jNW += diffusionFluxesWPhase[nCompIdx]/FluidSystem::molarMass(nCompIdx);
+        }
+        else
+        {
+            jGW += diffusionFluxesWPhase[gCompIdx];
+            jNW += diffusionFluxesWPhase[nCompIdx];
+        }
+
+        jWW += -(jGW+jNW);
+
 
         const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(gPhaseIdx);
 
-        Scalar jWG = diffusionFluxesGPhase[wCompIdx];
-        Scalar jNG = diffusionFluxesGPhase[nCompIdx];
-        Scalar jGG = -(jWG+jNG);
+        Scalar jWG = 0.0;
+        Scalar jNG = 0.0;
+        Scalar jGG = 0.0;
+
+        //check for the reference system and adapt units of the diffusive flux accordingly.
+        if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+        {
+            jWG += diffusionFluxesGPhase[wCompIdx]/FluidSystem::molarMass(wCompIdx);
+            jNG += diffusionFluxesGPhase[nCompIdx]/FluidSystem::molarMass(nCompIdx);
+        }
+        else
+        {
+            jWG += diffusionFluxesGPhase[wCompIdx];
+            jNG += diffusionFluxesGPhase[nCompIdx];
+        }
+
+        jGG += -(jWG+jNG);
 
         // At the moment we do not consider diffusion in the NAPL phase
         Scalar jWN = 0.0;

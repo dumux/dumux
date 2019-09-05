@@ -143,6 +143,7 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         // get upwind weights into local scope
         NumEqVector flux(0.0);
 
@@ -170,8 +171,15 @@ public:
 
                 // diffusive fluxes (only for the component balances)
                 if(eqIdx != replaceCompEqIdx)
-                    flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]
+                {
+                    //check for the reference system and adapt units of the diffusive flux accordingly.
+                    if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                        flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx)
+                                            : diffusiveFluxes[compIdx];
+                    else
+                        flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]
                                             : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                }
             }
 
             // in case one balance is substituted by the total mole balance
@@ -184,8 +192,14 @@ public:
                 flux[replaceCompEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
                 for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
-                                                       : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                {
+                    //check for the reference system and adapt units of the diffusive flux accordingly.
+                    if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                        flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
+                    else
+                        flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
+                                                : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                }
             }
 
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.

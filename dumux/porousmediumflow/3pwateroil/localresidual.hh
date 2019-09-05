@@ -174,19 +174,40 @@ public:
 
         const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
 
+        Scalar jNW = 0.0;
+        Scalar jWW = 0.0;
         // diffusive fluxes
-        Scalar jNW =  diffusionFluxesWPhase[nCompIdx];
-        Scalar jWW = -(jNW);
+        //check for the reference system and adapt units of the diffusive flux accordingly.
+        if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+            jNW +=  diffusionFluxesWPhase[nCompIdx]/FluidSystem::molarMass(nCompIdx);
+        else
+            jNW +=  diffusionFluxesWPhase[nCompIdx];
+
+        jWW += -(jNW);
 
         const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(gPhaseIdx);
 
-        Scalar jWG = diffusionFluxesGPhase[wCompIdx];
-        Scalar jNG = -(jWG);
+        Scalar jWG = 0.0;
+        Scalar jNG = 0.0;
+
+        if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+            jWG += diffusionFluxesGPhase[wCompIdx]/FluidSystem::molarMass(wCompIdx);
+        else
+            jWG += diffusionFluxesGPhase[wCompIdx];
+
+        jNG += -(jWG);
 
         const auto diffusionFluxesNPhase = fluxVars.molecularDiffusionFlux(nPhaseIdx);
-        // At the moment we do not consider diffusion in the NAPL phase
-        Scalar jWN = diffusionFluxesNPhase[wCompIdx];
-        Scalar jNN = -jWN;
+
+        Scalar jWN = 0.0;
+        Scalar jNN = 0.0;
+
+        if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+            jWN += diffusionFluxesNPhase[wCompIdx]/FluidSystem::molarMass(wCompIdx);
+        else
+            jWN += diffusionFluxesNPhase[wCompIdx];
+
+        jNN += -jWN;
 
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;
