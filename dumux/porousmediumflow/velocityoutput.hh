@@ -28,6 +28,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/discretization/method.hh>
@@ -67,6 +68,17 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     using Problem = typename GridVolumeVariables::Problem;
     using BoundaryTypes = typename Problem::Traits::BoundaryTypes;
 
+    // helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
+    // for g++ > 5.3, this can be replaced by a lambda
+    struct hasInteriorBoundary
+    {
+        template<class Scvf>
+        auto operator()(const Scvf& scvf)
+        -> decltype(scvf.interiorBoundary())
+        {}
+    };
+
+
 public:
     using VelocityVector = typename ParentType::VelocityVector;
 
@@ -88,7 +100,7 @@ public:
             if (isBox && dim > 1)
             {
                 // resize to the number of vertices of the grid
-                cellNum_.assign(fvGridGeometry_.gridView().size(dim), 0);
+                cellNum_.assign(fvGridGeometry_.numDofs(), 0);
 
                 for (const auto& element : elements(fvGridGeometry_.gridView()))
                     for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
@@ -181,7 +193,8 @@ public:
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                if (scvf.boundary())
+                static constexpr bool hasIntB = decltype(isValid(hasInteriorBoundary())(scvf))::value;
+                if (scvf.boundary() || interiorBoundary_<hasIntB>(scvf))
                     continue;
 
                 // local position of integration point
@@ -423,6 +436,12 @@ private:
     }
 
 private:
+    template<bool hasIntB, class Scvf, std::enable_if_t<hasIntB, int> = 0>
+    bool interiorBoundary_(const Scvf& scvf) const { return scvf.interiorBoundary(); }
+
+    template<bool hasIntB, class Scvf, std::enable_if_t<!hasIntB, int> = 0>
+    bool interiorBoundary_(const Scvf& scvf) const { return false; }
+
     // The following SFINAE enable_if usage allows compilation, even if only a
     //
     // boundaryTypes(const Element&, const scv&)
