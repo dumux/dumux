@@ -110,6 +110,22 @@ public:
     }
 
     /*!
+     * \brief Get the main component of a given phase
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr int getMainComponent(int phaseIdx)
+    {
+        // For the gas phase, choosing a main component appears to be
+        // rather arbitrary. Motivated by the fact that the thermal conductivity
+        // of the gas phase is set to the thermal conductivity of pure water,
+        // water is chosen for now.
+        if (phaseIdx == nPhaseIdx)
+            return nCompIdx;
+        else
+            return wCompIdx;
+    }
+
+    /*!
      * \brief Returns whether the fluids are miscible
      */
     static constexpr bool isMiscible()
