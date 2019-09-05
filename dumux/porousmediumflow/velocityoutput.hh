@@ -29,6 +29,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/discretization/method.hh>
@@ -69,6 +70,17 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     using Problem = typename GridVolumeVariables::Problem;
     using BoundaryTypes = typename Problem::Traits::BoundaryTypes;
     using VelocityBackend = PorousMediumFlowVelocity<GridVariables, FluxVariables>;
+
+    // helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
+    // for g++ > 5.3, this can be replaced by a lambda
+    struct hasInteriorBoundary
+    {
+        template<class Scvf>
+        auto operator()(const Scvf& scvf)
+        -> decltype(scvf.interiorBoundary())
+        {}
+    };
+
 
 public:
     using VelocityVector = typename ParentType::VelocityVector;
