@@ -128,7 +128,12 @@ public:
                 enthalpy += insideVolVars.enthalpy(phaseIdx);
             else
                 enthalpy += outsideVolVars.enthalpy(phaseIdx);
-            flux[energyEq0Idx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx)*enthalpy;
+
+             //check for the reference system and adapt units of the diffusive flux accordingly.
+            if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+               flux[energyEq0Idx] += diffusiveFluxes[compIdx]*enthalpy;
+            else
+               flux[energyEq0Idx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx)*enthalpy;
         }
     }
 

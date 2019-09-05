@@ -138,7 +138,10 @@ public:
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                 // diffusive fluxes
-                flux[compIdx] += diffusiveFluxes[compIdx];
+                if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                    flux[compIdx] += diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx);
+                else
+                    flux[compIdx] += diffusiveFluxes[compIdx];
             }
         }
         // formulation with mass balances
@@ -153,7 +156,10 @@ public:
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                 // diffusive fluxes
-                flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                    flux[compIdx] += diffusiveFluxes[compIdx];
+                else
+                    flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
             }
         }
 
@@ -237,14 +243,28 @@ public:
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
+        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+
         const auto& fluxCache = elemFluxVarsCache[scvf];
-        const auto rhoMolar = 0.5*(insideVolVars.molarDensity() + outsideVolVars.molarDensity());
+        const auto rhoInside = (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged) ? insideVolVars.density(phaseIdx) :  insideVolVars.molarDensity(phaseIdx);
+
+        const auto rhoOutside = (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged) ? outsideVolVars.density(phaseIdx) :  outsideVolVars.molarDensity(phaseIdx);
+        const auto massOrMolarDensity = 0.5*(rhoInside + rhoOutside);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // diffusive term
-            const auto diffDeriv = useMoles ? rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)
-                                            : rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx);
+            auto diffDeriv = 0.0;
+            if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+            {
+                diffDeriv = useMoles ? massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)/FluidSystem::molarMass(compIdx)
+                                            : massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx);
+            }
+            else
+            {
+                diffDeriv = useMoles ? massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)
+                                            : massOrMolarDensity*fluxCache.diffusionTij(phaseIdx,         compIdx)*FluidSystem::molarMass(compIdx);
+            }
 
             derivativeMatrices[scvf.insideScvIdx()][compIdx][compIdx] += (advDerivII + diffDeriv);
             derivativeMatrices[scvf.outsideScvIdx()][compIdx][compIdx] += (advDerivIJ - diffDeriv);
@@ -282,6 +302,7 @@ public:
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
+        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         using DiffusionType = GetPropType<T, Properties::MolecularDiffusionType>;
         const auto ti = DiffusionType::calculateTransmissibilities(problem,
                                                                    element,
@@ -298,8 +319,13 @@ public:
             for (const auto& scv : scvs(fvGeometry))
             {
                 // diffusive term
-                const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
-                                                : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                auto diffDeriv = 0.0;
+                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                    diffDeriv += useMoles ? ti[compIdx][scv.indexInElement()]/FluidSystem::molarMass(compIdx)
+                                        : ti[compIdx][scv.indexInElement()];
+                else
+                    diffDeriv += useMoles ? ti[compIdx][scv.indexInElement()]
+                                            : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
                 A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
                 A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
             }
