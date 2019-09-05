@@ -20,7 +20,7 @@
  * \file
  * \ingroup CCTpfaFlux
  * \brief This file contains the data which is required to calculate
- *        diffusive molar fluxes due to molecular diffusion with Maxwell Stefan
+ *        diffusive mass fluxes due to molecular diffusion with Maxwell Stefan
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_MAXWELL_STEFAN_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_MAXWELL_STEFAN_LAW_HH
@@ -36,15 +36,15 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class MaxwellStefansLawImplementation;
 
 /*!
  * \ingroup CCTpfaFlux
  * \brief Specialization of Maxwell Stefan's Law for the CCTpfa method.
  */
-template <class TypeTag>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa >
+template <class TypeTag, ReferenceSystemFormulation referenceSystem>
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem >
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -65,6 +65,9 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa >
     static const int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
     static const int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
 
+    static_assert(referenceSystem == ReferenceSystemFormulation::massAveraged, "only the mass averaged reference system is supported for the Maxwell-Stefan formulation");
+
+
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
@@ -72,6 +75,8 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa >
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    //return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation() { return referenceSystem; }
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law
@@ -98,8 +103,8 @@ public:
         // get inside/outside volume variables
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-        const auto rhoInside = insideVolVars.molarDensity(phaseIdx);
-        const auto rhoOutside = outsideVolVars.molarDensity(phaseIdx);
+        const auto rhoInside = insideVolVars.density(phaseIdx);
+        const auto rhoOutside = outsideVolVars.density(phaseIdx);
         //calculate the mole fraction vectors
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
@@ -212,14 +217,18 @@ private:
         if(Dune::FloatCmp::eq<Scalar>(volVars.saturation(phaseIdx), 0))
             return reducedDiffusionMatrix;
 
+        const auto Mavg = volVars.averageMolarMass(phaseIdx);
+
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
             const auto xi = volVars.moleFraction(phaseIdx, compIIdx);
+
+            const auto Mn = FluidSystem::molarMass(numComponents-1);
             Scalar tin = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, volVars, scv);
             tin = EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tin);
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
+            reducedDiffusionMatrix[compIIdx][compIIdx] += xi*Mavg/(tin*Mn);
 
             // now set the rest of the entries (off-diagonal and additional entries for diagonal)
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
@@ -229,11 +238,13 @@ private:
                     continue;
 
                 const auto xj = volVars.moleFraction(phaseIdx, compJIdx);
+                const auto Mi = FluidSystem::molarMass(compIIdx);
+                const auto Mj = FluidSystem::molarMass(compJIdx);
                 Scalar tij = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, volVars, scv);
                 tij = EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tij);
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
+                reducedDiffusionMatrix[compIIdx][compIIdx] += xj*Mavg/(tij*Mi);
                 if (compJIdx < numComponents-1)
-                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
+                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(Mavg/(tin*Mn) - Mavg/(tij*Mj));
             }
         }
         return reducedDiffusionMatrix;

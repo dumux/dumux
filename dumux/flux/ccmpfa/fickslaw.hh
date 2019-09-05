@@ -31,15 +31,15 @@
 namespace Dumux {
 
 //! forward declaration of the method-specific implemetation
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
  * \ingroup CCMpfaFlux
  * \brief Fick's law for cell-centered finite volume schemes with multi-point flux approximation
  */
-template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
+template <class TypeTag, ReferenceSystemFormulation referenceSystem>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -160,7 +160,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
-
+    //return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation() { return referenceSystem; }
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;
 
@@ -248,19 +249,25 @@ private:
         // use arithmetic mean of the densities around the scvf
         if (!scvf.boundary())
         {
-            Scalar rho = elemVolVars[scvf.insideScvIdx()].molarDensity(phaseIdx);
+            const auto rhoInside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? elemVolVars[scvf.insideScvIdx()].density(phaseIdx) :  elemVolVars[scvf.insideScvIdx()].molarDensity(phaseIdx);
+
+            Scalar rho = rhoInside;
             for (const auto outsideIdx : scvf.outsideScvIndices())
-                rho += elemVolVars[outsideIdx].molarDensity(phaseIdx);
+            {
+                const auto rhoOutside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? elemVolVars[outsideIdx].density(phaseIdx) :  elemVolVars[outsideIdx].molarDensity(phaseIdx);
+                rho += rhoOutside;
+            }
             return rho/(scvf.outsideScvIndices().size()+1);
+
         }
         else
-            return elemVolVars[scvf.outsideScvIdx()].molarDensity(phaseIdx);
+            return (referenceSystem == ReferenceSystemFormulation::massAveraged) ?elemVolVars[scvf.outsideScvIdx()].density(phaseIdx) : elemVolVars[scvf.outsideScvIdx()].molarDensity(phaseIdx);
     }
 
     //! Here we want to calculate the factors with which the diffusion coefficient has to be
     //! scaled to get the effective diffusivity. For this we use the effective diffusivity with
     //! a diffusion coefficient of 1.0 as input. Then we scale the transmissibilites during flux
-    //! calculation (above) with the harmonic average of the two factors
+//     //! calculation (above) with the harmonic average of the two factors
     static Scalar computeEffectivityFactor(const ElementVolumeVariables& elemVolVars,
                                            const SubControlVolumeFace& scvf,
                                            const unsigned int phaseIdx)
