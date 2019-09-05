@@ -86,7 +86,13 @@ public:
 
             flux[compIdx] = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTerm);
 
-            flux[compIdx] += useMoles ? diffusiveFluxes[compIdx] : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+            //check for the reference system and adapt units of the diffusive flux accordingly.
+            if (MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+            {
+                flux[compIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
+            }
+            else
+                flux[compIdx] += useMoles ? diffusiveFluxes[compIdx] : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
         }
 
         // in case one balance is substituted by the total mass balance
