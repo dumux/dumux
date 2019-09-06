@@ -455,7 +455,7 @@ public:
         return std::numeric_limits<Scalar>::infinity();
     }
 
-    // using Base::diffusionCoefficient;
+    using Base::diffusionCoefficient;
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for
      *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
