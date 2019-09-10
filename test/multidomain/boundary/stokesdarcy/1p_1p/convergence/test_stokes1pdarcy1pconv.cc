@@ -202,7 +202,8 @@ int main(int argc, char** argv) try
 
     std::get<0>(stokesSol) = cellCenterSol;
     std::get<1>(stokesSol) = faceSol;
-    stokesProblem->postTimeStep(stokesSol);
+    stokesProblem->calculateL2Error(stokesSol);
+    darcyProblem->calculateL2Error(sol[darcyIdx]);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

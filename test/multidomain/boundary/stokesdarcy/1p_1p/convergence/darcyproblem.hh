@@ -123,6 +123,34 @@ public:
     bool shouldWriteRestartFile() const
     { return false; }
 
+    template <class SolutionVector>
+    void calculateL2Error(const SolutionVector& curSol) const
+    {
+        Scalar l2error = 0.0;
+
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto dofIdx = scv.dofIndex();
+                l2error += scv.volume()*(curSol[dofIdx] - analyticalPressure_[dofIdx])
+                                       *(curSol[dofIdx] - analyticalPressure_[dofIdx]);
+            }
+        }
+        using std::sqrt;
+        l2error = sqrt(l2error);
+
+        const int numDofs = this->fvGridGeometry().numDofs();
+        std::cout << std::setprecision(8) << "** L2 error (abs) for "
+                << std::setw(6) << numDofs << " cc dofs "
+                << std::scientific
+                << "L2 error = " << l2error
+                << std::endl;
+    }
+
     /*!
      * \name Problem parameters
      */
