@@ -39,6 +39,8 @@
 
 #include <dumux/multidomain/boundary/stokesdarcy/mpfa/upwindscheme.hh>
 
+#include <dune/geometry/quadraturerules.hh>
+
 #ifndef DARCYGRIDTYPE
 #define DARCYGRIDTYPE Dune::YaspGrid<2>
 #endif
@@ -92,6 +94,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
@@ -226,22 +229,33 @@ public:
      */
     // \{
 
-    /*!
-      * \brief Return the sources within the domain.
-      *
-      * \param globalPos The global position
-      */
-     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-     {
+
+    //! Evaluate the source term at a given position
+    NumEqVector source(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume& scv) const
+    {
         NumEqVector source(0.0);
-        const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
 
         using std::cos;
         using std::sin;
         using std::exp;
 
-        source[Indices::conti0EqIdx] = (4*M_PI*M_PI*(exp(y+1) + 2 - exp(2)) - exp(y-1))*sin(2*M_PI*x);
+        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(element.geometry().type(), 5);
+
+        for (auto&& qp : quad)
+        {
+            GlobalPosition globalPos = element.geometry().global(qp.position());
+            Scalar x = globalPos[0];
+            Scalar y = globalPos[1];
+
+            auto integrationElement = element.geometry().integrationElement(qp.position());
+
+            source[Indices::conti0EqIdx] += ((4*M_PI*M_PI*(exp(y+1) + 2 - exp(2)) - exp(y-1))*sin(2*M_PI*x))
+                                             * qp.weight()*integrationElement;
+        }
+        source[Indices::conti0EqIdx] /= scv.volume();
 
         return source;
     }

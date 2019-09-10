@@ -33,6 +33,11 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 
+#include <dumux/common/geometry/makegeometry.hh>
+#include <dune/geometry/quadraturerules.hh>
+
+#include <test/freeflow/navierstokes/l2error.hh>
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -81,6 +86,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -106,6 +112,26 @@ public:
     bool shouldWriteRestartFile() const
     { return false; }
 
+    template <class SolutionVector>
+    void postTimeStep(const SolutionVector& curSol) const
+    {
+        if(true)
+        {
+            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
+            const auto l2error = L2Error::calculateL2Error(*this, curSol);
+            const int numCellCenterDofs = this->fvGridGeometry().numCellCenterDofs();
+            const int numFaceDofs = this->fvGridGeometry().numFaceDofs();
+            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
+                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
+                    << std::scientific
+                    << "L2 errors = " << l2error.first[Indices::pressureIdx] << "   "
+                    << l2error.first[Indices::velocityXIdx] << "   "
+                    << l2error.first[Indices::velocityYIdx]
+                    << std::endl;
+        }
+    }
+
+
    /*!
      * \brief Return the temperature within the domain in [K].
      *
@@ -114,28 +140,84 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10°C
 
-   /*!
-     * \brief Return the sources within the domain.
-     *
-     * \param globalPos The global position
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume face.
      */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    using ParentType::source;
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const ElementFaceVariables& elemFaceVars,
+                       const SubControlVolume& scv) const
     {
         NumEqVector source(0.0);
-        const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
 
         using std::cos;
         using std::sin;
+        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(element.geometry().type(), 5);
 
-        source[Indices::conti0EqIdx]  = -sin(2*M_PI*x);
-        source[Indices::momentumXBalanceIdx] = -4*M_PI*y*y*sin(2*M_PI*x)*cos(2*M_PI*x)
-                                               -2*y*sin(2*M_PI*x) + 2*M_PI*cos(2*M_PI*x);
+        for (auto&& qp : quad)
+        {
+            GlobalPosition globalPos = element.geometry().global(qp.position());
+            Scalar x = globalPos[0];
+            Scalar y = globalPos[1];
 
-        source[Indices::momentumYBalanceIdx] = -2*M_PI*y*y*cos(2*M_PI*x) - 4*M_PI*M_PI*y*sin(2*M_PI*x);
+            auto integrationElement = element.geometry().integrationElement(qp.position());
+
+            source[Indices::conti0EqIdx]  += -sin(2*M_PI*x) * qp.weight()*integrationElement;
+        }
+        source /= scv.volume();
 
         return source;
     }
+
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    NumEqVector source(const Element &element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFaceVariables& elemFaceVars,
+                        const SubControlVolumeFace &scvf) const
+     {
+         NumEqVector source(0.0);
+
+         using std::cos;
+         using std::sin;
+
+         std::vector<Dune::FieldVector<Scalar, 3>> corners(4);
+         corners[0] = {scvf.corner(0)[0], scvf.corner(0)[1], 0};
+         corners[1] = {scvf.corner(1)[0], scvf.corner(1)[1], 0};
+         corners[2] = corners[0];
+         corners[3] = corners[1];
+         corners[2][scvf.directionIndex()] = element.geometry().center()[scvf.directionIndex()];
+         corners[3][scvf.directionIndex()] = element.geometry().center()[scvf.directionIndex()];
+
+         const auto geometry = makeDuneQuadrilaterial(corners);
+
+         const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), 5);
+
+         for (auto&& qp : quad)
+         {
+             Dune::FieldVector<Scalar, 3> globalPos = geometry.global(qp.position());
+             Scalar x = globalPos[0];
+             Scalar y = globalPos[1];
+
+             auto integrationElement = geometry.integrationElement(qp.position());
+
+             source[Indices::momentumXBalanceIdx] += (-4*M_PI*y*y*sin(2*M_PI*x)*cos(2*M_PI*x)
+                                                    -2*y*sin(2*M_PI*x) + 2*M_PI*cos(2*M_PI*x))
+                                                     * qp.weight()*integrationElement;
+
+             source[Indices::momentumYBalanceIdx] += (-2*M_PI*y*y*cos(2*M_PI*x) - 4*M_PI*M_PI*y*sin(2*M_PI*x))
+                                                      * qp.weight()*integrationElement;
+         }
+
+         source /= 0.5*element.geometry().volume();
+
+         return source;
+     }
+
     // \}
 
    /*!

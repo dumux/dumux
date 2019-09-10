@@ -200,6 +200,10 @@ int main(int argc, char** argv) try
     stokesVtkWriter.write(1.0);
     darcyVtkWriter.write(1.0);
 
+    std::get<0>(stokesSol) = cellCenterSol;
+    std::get<1>(stokesSol) = faceSol;
+    stokesProblem->postTimeStep(stokesSol);
+
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
