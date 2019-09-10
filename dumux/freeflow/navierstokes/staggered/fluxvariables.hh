@@ -397,10 +397,13 @@ private:
 
         if (!scvf.hasParallelNeighbor(localSubFaceIdx))
         {
-            if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+            if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex()))
+                || bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
             {
                 const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
-                const Scalar v = problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+                const Scalar v = bcTypes.isBJS(Indices::velocity(scvf.directionIndex()))
+                                 ? problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, velocitySelf)
+                                 : problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
                 const Scalar momentum = v * 0.5*(insideVolVars.density() + outsideVolVars.density());
                 return transportingVelocity * momentum * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
             }
