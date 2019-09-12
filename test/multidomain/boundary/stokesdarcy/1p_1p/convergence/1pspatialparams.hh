@@ -24,6 +24,7 @@
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
+#include <dune/geometry/quadraturerules.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
@@ -45,6 +46,8 @@ class OnePConvSpatialParams
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
                                            OnePConvSpatialParams<FVGridGeometry, Scalar>>;
 
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -56,23 +59,52 @@ public:
     using PermeabilityType = DimWorldMatrix;
 
     OnePConvSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry), permeability_(0.0)
+        : ParentType(fvGridGeometry)
     {
-        permeability_[0][0] = 1.0;
-        permeability_[1][1] = std::exp(-2);
-        permeability_[0][1] = permeability_[1][0] = 0.0;
-
+        omega_ = getParam<Scalar>("Problem.FreqFactor")*M_PI;
+        c_ = getParam<Scalar>("Problem.PermFactor");
         alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
     }
 
     /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
-     * \param globalPos The global position
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
-    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
-    { return permeability_; }
+    template<class ElementSolution>
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolution& elemSol) const
+    {
+        PermeabilityType perm(0.0);
+
+        using std::cos;
+        using std::sin;
+        using std::exp;
+
+        // It seems that evaluating at the cell center, (equivalent to order 1 integration)
+        // results in better rates but slightly larger errors.
+        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(element.geometry().type(), 1);
+        for (auto&& qp : quad)
+        {
+            auto globalPos = element.geometry().global(qp.position());
+            Scalar x = globalPos[0];
+
+            auto integrationElement = element.geometry().integrationElement(qp.position());
+
+            perm[1][1] += exp(-2)*(1 + c_*cos(omega_*x)) * qp.weight()*integrationElement;
+            perm[0][1] += -c_/(2*omega_) * sin(omega_*x) * qp.weight()*integrationElement;
+        }
+        perm[1][0] = perm[0][1];
+        perm /= scv.volume();
+
+        perm[0][0] = 1.0;
+
+        return perm;
+    }
 
     /*! \brief Define the porosity in [-].
      *
@@ -90,8 +122,9 @@ public:
 
 
 private:
-    PermeabilityType permeability_;
     Scalar alphaBJ_;
+    Scalar c_;
+    Scalar omega_;
 };
 
 } // end namespace

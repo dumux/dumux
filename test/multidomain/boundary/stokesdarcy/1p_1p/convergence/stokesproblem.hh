@@ -101,6 +101,7 @@ public:
     StokesSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
     {
+        omega_ = getParam<Scalar>("Problem.FreqFactor")*M_PI;
         createAnalyticalSolution_();
     }
 
@@ -163,7 +164,7 @@ public:
 
             auto integrationElement = element.geometry().integrationElement(qp.position());
 
-            source[Indices::conti0EqIdx]  += -sin(2*M_PI*x) * qp.weight()*integrationElement;
+            source[Indices::conti0EqIdx]  += -sin(omega_*x) * qp.weight()*integrationElement;
         }
         source /= scv.volume();
 
@@ -202,11 +203,11 @@ public:
 
              auto integrationElement = geometry.integrationElement(qp.position());
 
-             source[Indices::momentumXBalanceIdx] += (-4*M_PI*y*y*sin(2*M_PI*x)*cos(2*M_PI*x)
-                                                    -2*y*sin(2*M_PI*x) + 2*M_PI*cos(2*M_PI*x))
+             source[Indices::momentumXBalanceIdx] += (-2*omega_*y*y*sin(omega_*x)*cos(omega_*x)
+                                                    -2*y*sin(omega_*x) + omega_*cos(omega_*x))
                                                      * qp.weight()*integrationElement;
 
-             source[Indices::momentumYBalanceIdx] += (-2*M_PI*y*y*cos(2*M_PI*x) - 4*M_PI*M_PI*y*sin(2*M_PI*x))
+             source[Indices::momentumYBalanceIdx] += (-omega_*y*y*cos(omega_*x) - omega_*omega_*y*sin(omega_*x))
                                                       * qp.weight()*integrationElement;
          }
 
@@ -377,7 +378,7 @@ private:
         using std::sin;
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
-        return -y*y*sin(2*M_PI*x)*sin(2*M_PI*x);
+        return -y*y*sin(omega_*x)*sin(omega_*x);
     }
 
     GlobalPosition exactVelocity(const GlobalPosition &globalPos) const
@@ -387,7 +388,7 @@ private:
         Scalar y = globalPos[1];
         GlobalPosition velocity(0.0);
         velocity[0] = y;
-        velocity[1] = -y*sin(2*M_PI*x);
+        velocity[1] = -y*sin(omega_*x);
         return velocity;
     }
 
@@ -446,6 +447,7 @@ private:
     std::vector<Scalar> analyticalPressure_;
     std::vector<GlobalPosition> analyticalVelocity_;
     std::vector<GlobalPosition> analyticalVelocityOnFace_;
+    Scalar omega_;
 };
 } //end namespace
 

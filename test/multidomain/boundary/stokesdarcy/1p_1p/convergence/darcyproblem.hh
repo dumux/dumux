@@ -108,6 +108,8 @@ public:
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {
+        omega_ = getParam<Scalar>("Problem.FreqFactor")*M_PI;
+        c_ = getParam<Scalar>("Problem.PermFactor");
         createAnalyticalSolution_();
     }
 
@@ -280,8 +282,10 @@ public:
 
             auto integrationElement = element.geometry().integrationElement(qp.position());
 
-            source[Indices::conti0EqIdx] += ((4*M_PI*M_PI*(exp(y+1) + 2 - exp(2)) - exp(y-1))*sin(2*M_PI*x))
-                                             * qp.weight()*integrationElement;
+            source[Indices::conti0EqIdx] += (-(c_*cos(omega_*x) + 1)*exp(y - 1)
+                                             + 1.5*c_*exp(y + 1)*cos(omega_*x)
+                                             + omega_*omega_*(exp(y + 1) - exp(2) + 2))
+                                             *sin(omega_*x)*qp.weight()*integrationElement;
         }
         source[Indices::conti0EqIdx] /= scv.volume();
 
@@ -338,7 +342,7 @@ private:
         using std::sin;
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
-        return (exp(y+1) + 2 - exp(2))*sin(2*M_PI*x);
+        return (exp(y+1) + 2 - exp(2))*sin(omega_*x);
     }
 
     GlobalPosition exactVelocity(const GlobalPosition &globalPos) const
@@ -349,8 +353,11 @@ private:
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
         GlobalPosition velocity(0.0);
-        velocity[0] = -2*M_PI*(exp(y+1) + 2 - exp(2))*cos(2*M_PI*x);
-        velocity[1] = -exp(y-1)*sin(2*M_PI*x);
+        velocity[0] = c_/(2*omega_)*exp(y+1)*sin(omega_*x)*sin(omega_*x)
+                     -omega_*(exp(y+1) + 2 - exp(2))*cos(omega_*x);
+        velocity[1] = (0.5*c_*(exp(y+1) + 2 - exp(2))*cos(omega_*x)
+                       -(c_*cos(omega_*x) + 1)*exp(y-1))*sin(omega_*x);
+
         return velocity;
     }
 
@@ -393,6 +400,8 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     std::vector<Scalar> analyticalPressure_;
     std::vector<GlobalPosition> analyticalVelocity_;
+    Scalar omega_;
+    Scalar c_;
 };
 } //end namespace
 
