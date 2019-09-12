@@ -114,8 +114,18 @@ struct ElementBoundaryTypes { using type = UndefinedProperty; };                
 // TODO: Remove deprecated property FVGridGeometry after 3.1
 template<class TypeTag, class MyTypeTag>
 struct FVGridGeometry { using type = UndefinedProperty; };                      //!< The type of the global finite volume geometry
+
+// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
+// For ensuring backward compatibility, it is necessary to set the default value
+// of the new property to the old one, see the discussion in MR 1647.
+// Use diagnostic pragmas to prevent the emission of a warning message.
+// TODO after 3.1: change default vale to `UndefinedProperty`, remove pragmas
+// and comment.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 template<class TypeTag, class MyTypeTag>
 struct GridGeometry { using type = GetPropType<TypeTag, Properties::FVGridGeometry>;  };       //!< The type of the global finite volume geometry
+#pragma GCC diagnostic pop
 
 template<class TypeTag, class MyTypeTag>
 struct EnableFVGridGeometryCache { using type = UndefinedProperty; };           //!< specifies if geometric data is saved (faster, but more memory consuming)

@@ -65,6 +65,13 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::TubesTest> { using type = Dune::FoamGrid<1, 3>; };
 #endif
 
+// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
+// For ensuring backward compatibility on the user side, it is necessary to
+// stick to the old name for the specializations, see the discussion in MR 1647.
+// Use diagnostic pragmas to prevent the emission of a warning message.
+// TODO after 3.1: Rename to GridGeometry, remove the pragmas and this comment.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
 template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::TubesTestCCTpfa>
@@ -95,6 +102,7 @@ private:
 public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, MapperTraits>>;
 };
+#pragma GCC diagnostic pop
 
 // Set the problem property
 template<class TypeTag>
