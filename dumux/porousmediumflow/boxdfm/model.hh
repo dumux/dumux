@@ -40,6 +40,13 @@ namespace TTag {
 struct BoxDfmModel { using InheritsFrom = std::tuple<BoxModel>; };
 } // end namespace TTag
 
+// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
+// For ensuring backward compatibility on the user side, it is necessary to
+// stick to the old name for the specializations, see the discussion in MR 1647.
+// Use diagnostic pragmas to prevent the emission of a warning message.
+// TODO after 3.1: Rename to GridGeometry, remove the pragmas and this comment.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 //! Set the default for the global finite volume geometry
 template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::BoxDfmModel>
@@ -51,6 +58,7 @@ private:
 public:
     using type = BoxDfmFVGridGeometry<Scalar, GridView, enableCache>;
 };
+#pragma GCC diagnostic pop
 
 //! The flux variables cache class specific to box-dfm porous medium flow models
 template<class TypeTag>
