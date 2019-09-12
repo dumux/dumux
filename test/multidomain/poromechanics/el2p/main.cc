@@ -184,7 +184,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>( std::make_tuple(twoPProblem, poroMechProblem),
                                                   std::make_tuple(twoPFvGridGeometry, poroMechFvGridGeometry),
                                                   std::make_tuple(twoPGridVariables, poroMechGridVariables),
-                                                  couplingManager, timeLoop );
+                                                  couplingManager, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = UMFPackBackend;
@@ -197,9 +197,6 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
 

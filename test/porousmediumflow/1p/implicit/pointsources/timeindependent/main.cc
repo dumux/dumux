@@ -121,7 +121,7 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
@@ -134,9 +134,6 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
         // linearize & solve
         nonLinearSolver.solve(x, *timeLoop);
 

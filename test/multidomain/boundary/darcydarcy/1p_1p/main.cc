@@ -256,7 +256,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(std::make_tuple(problem0, problem1),
                                                  std::make_tuple(fvGridGeometry0, fvGridGeometry1),
                                                  std::make_tuple(gridVariables0, gridVariables1),
-                                                 couplingManager, timeLoop);
+                                                 couplingManager, timeLoop, oldSol);
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend;
@@ -270,9 +270,6 @@ int main(int argc, char** argv) try
     timeLoop->start();
     while (!timeLoop->finished())
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(oldSol);
-
         // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
 

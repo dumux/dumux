@@ -155,7 +155,7 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend;
@@ -170,9 +170,6 @@ int main(int argc, char** argv) try
     {
         // set time for problem for implicit Euler scheme
         problem->setTimeStepSize( timeLoop->timeStepSize() );
-
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
 
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);

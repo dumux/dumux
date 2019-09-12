@@ -149,7 +149,7 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = Dumux::AMGBackend<TypeTag>;
@@ -162,9 +162,6 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
         // set the end of the next time step as time in the problem to control
         // the boundary conditions for the implicit Euler scheme
         problem->setTime(timeLoop->time()+timeLoop->timeStepSize());

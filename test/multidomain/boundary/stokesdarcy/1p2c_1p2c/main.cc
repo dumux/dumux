@@ -193,7 +193,8 @@ int main(int argc, char** argv) try
                                                                  stokesGridVariables->faceGridVariablesPtr(),
                                                                  darcyGridVariables),
                                                  couplingManager,
-                                                 timeLoop);
+                                                 timeLoop,
+                                                 solOld);
 
     // the linear solver
     using LinearSolver = UMFPackBackend;
@@ -206,9 +207,6 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(solOld);
-
         // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
 

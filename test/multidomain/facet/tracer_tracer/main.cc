@@ -431,7 +431,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>( std::make_tuple(bulkProblem, lowDimProblem),
                                                   std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
                                                   std::make_tuple(bulkGridVariables, lowDimGridVariables),
-                                                  couplingManager, timeLoop);
+                                                  couplingManager, timeLoop, xOld);
 
     // tell the assembler which matrix/residual to use
     assembler->setLinearSystem(A, r);
@@ -449,7 +449,6 @@ int main(int argc, char** argv) try
     {
         // set previous solution for storage evaluations
         Dune::Timer assembleTimer;
-        assembler->setPreviousSolution(xOld);
         assembler->assembleJacobianAndResidual(x);
         assembleTimer.stop();
 
