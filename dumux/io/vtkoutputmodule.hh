@@ -345,7 +345,9 @@ private:
 
 #ifdef DUMUXFENICS
                 // write velocity and liquid pressure for exchange with Fenics
-                if (name() == "test_stokes1p2cdarcy2p2chorizontal_darcy") // TODO make more general
+                std::string darcyName = getParam<std::string>("Problem.Name");
+                darcyName += "_darcy";
+                if (name() == darcyName)
                 {
                     std::ofstream pmDataForFenics;
                     pmDataForFenics.open ("pmDataForFenics.csv", std::ios_base::app);
