@@ -34,6 +34,7 @@
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/fluidstates/pseudo1p2c.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 
@@ -43,11 +44,11 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-template <class Scalar, class FluidState>
-void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
+template <class Scalar, class FluidState1, class FluidState2>
+void checkSame(const FluidState1 &fsRef, const FluidState2 &fsFlash)
 {
-    enum { numPhases = FluidState::numPhases };
-    enum { numComponents = FluidState::numComponents };
+    enum { numPhases = FluidState1::numPhases };
+    enum { numComponents = FluidState1::numComponents };
 
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
         Scalar error;
@@ -108,7 +109,36 @@ void checkCompositionalFlash(const FluidState &fsRef)
 
     // call flash for testing
     FluidState fsFlash;
-    flash.concentrationFlash2p2c(fsFlash, Z0, phasePressures, 0/*dummy*/, fsRef.temperature(/*phaseIdx=*/0));
+    flash.concentrationFlash2p2c(fsFlash, Z0, phasePressures, 0/*dummy*/, fsRef.temperature(0));
+
+    // compare the "flashed" fluid state with the reference one
+    checkSame<Scalar>(fsRef, fsFlash);
+}
+
+template <class Scalar, class FluidSystem, class MaterialLaw, class FluidState>
+void checkCompositionalFlashSequential(const FluidState &fsRef, int refPhaseIdx)
+{
+    enum { numPhases = FluidSystem::numPhases };
+    enum { numComponents = FluidSystem::numComponents };
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
+
+    // calculate the total mass of the first component related to the total mass
+    // of fluids (equals phase mass fraction for one-phase state)
+    Scalar Z0 = fsRef.moleFraction(refPhaseIdx, 0) * FluidSystem::molarMass(0) /
+    (fsRef.moleFraction(refPhaseIdx, 0) * FluidSystem::molarMass(0) +
+    (1. - fsRef.moleFraction(refPhaseIdx, 0)) * FluidSystem::molarMass(1));
+
+    PhaseVector phasePressures;
+    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        phasePressures[phaseIdx] += fsRef.pressure(phaseIdx);
+    }
+
+    // make a new flash
+    Dumux::CompositionalFlash<Scalar, FluidSystem> flash;
+
+    // call flash for testing
+    Dumux::CompositionalFluidState<Scalar, FluidSystem> fsFlash;
+    flash.concentrationFlash2p2c(fsFlash, Z0, phasePressures, 0/*dummy*/, fsRef.temperature(0));
 
     // compare the "flashed" fluid state with the reference one
     checkSame<Scalar>(fsRef, fsFlash);
@@ -145,12 +175,44 @@ void completeReferenceFluidState(FluidState &fs,
                                      refPhaseIdx);
 }
 
+template <class Scalar, class FluidSystem, class MaterialLaw, class FluidState>
+void completeReferenceFluidStateSequential(FluidState &fs,
+                                 typename MaterialLaw::Params &matParams,
+                                 int refPhaseIdx)
+{
+    enum { numPhases = FluidSystem::numPhases };
+
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
+
+    int otherPhaseIdx = 1 - refPhaseIdx;
+
+    // calculate the total mass of the first component related to the total mass
+    // of fluids (equals phase mass fraction for one-phase state)
+    Scalar Z0 = fs.moleFraction(refPhaseIdx, 0) * FluidSystem::molarMass(0) /
+    (fs.moleFraction(refPhaseIdx, 0) * FluidSystem::molarMass(0) +
+    (1. - fs.moleFraction(refPhaseIdx, 0)) * FluidSystem::molarMass(1));
+
+    // calulate the capillary pressure
+    PhaseVector pc;
+    MaterialLaw::capillaryPressures(pc, matParams, fs, /*liquidPhaseIdx=*/0);
+
+    PhaseVector phasePressures(0.0);
+    phasePressures[refPhaseIdx] = fs.pressure(refPhaseIdx);
+    phasePressures[otherPhaseIdx] = fs.pressure(refPhaseIdx)
+                                    + (pc[otherPhaseIdx] - pc[refPhaseIdx]);
+
+    // make the fluid state consistent with local thermodynamic
+    // equilibrium
+    Dumux::CompositionalFlash<Scalar, FluidSystem>::concentrationFlash1p2c(fs, Z0, phasePressures, refPhaseIdx, fs.temperature(0));
+}
+
 
 int main()
 {
     using Scalar = double;
     using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, Dumux::FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
     using CompositionalFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
+    using FluidState1p2c = Dumux::PseudoOnePTwoCFluidState<Scalar, FluidSystem>;
 
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
@@ -187,26 +249,33 @@ int main()
     matParams.setLambda(2.0);
 
     CompositionalFluidState fsRef;
+    FluidState1p2c fsRefSeq;
+
 
     // create a fluid state which is consistent
 
     // set the fluid temperatures
     fsRef.setTemperature(T);
+    fsRefSeq.setTemperature(T);
 
     ////////////////
     // only liquid
     ////////////////
-    std::cout << "testing single-phase liquid\n";
+    std::cout << "testing single-phase liquid against implicit routines\n";
 
     // set liquid saturation
     fsRef.setSaturation(liquidPhaseIdx, 1.0);
 
     // set pressure of the liquid phase
     fsRef.setPressure(liquidPhaseIdx, 2e5);
+    fsRefSeq.setPressure(liquidPhaseIdx, 2e5);
 
     // set the liquid composition to pure water
     fsRef.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
     fsRef.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
+
+    fsRefSeq.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
+    fsRefSeq.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
 
     fsRef.setWettingPhase(wPhaseIdx);
 
@@ -216,19 +285,31 @@ int main()
     // check the flash calculation
     checkCompositionalFlash<Scalar, FluidSystem, MPAdapter>(fsRef);
 
+    std::cout << "testing single-phase liquid for consistency with other sequential routines\n";
+
+    // "complete" the fluid state
+    completeReferenceFluidStateSequential<Scalar, FluidSystem, MPAdapter>(fsRefSeq, matParams, liquidPhaseIdx);
+
+    // check the flash calculation
+    checkCompositionalFlashSequential<Scalar, FluidSystem, MPAdapter>(fsRefSeq, liquidPhaseIdx);
+
     ////////////////
     // only gas
     ////////////////
-    std::cout << "testing single-phase gas\n";
+    std::cout << "testing single-phase gas against implicit routines\n";
     // set gas saturation
     fsRef.setSaturation(gasPhaseIdx, 1.0);
 
     // set pressure of the gas phase
     fsRef.setPressure(gasPhaseIdx, 1e6);
+    fsRefSeq.setPressure(gasPhaseIdx, 1e6);
 
     // set the gas composition to 99.9% nitrogen and 0.1% water
     fsRef.setMoleFraction(gasPhaseIdx, N2Idx, 0.999);
     fsRef.setMoleFraction(gasPhaseIdx, H2OIdx, 0.001);
+
+    fsRefSeq.setMoleFraction(gasPhaseIdx, N2Idx, 0.999);
+    fsRefSeq.setMoleFraction(gasPhaseIdx, H2OIdx, 0.001);
 
     // "complete" the fluid state
     completeReferenceFluidState<Scalar, FluidSystem, MPAdapter>(fsRef, matParams, gasPhaseIdx);
@@ -236,10 +317,18 @@ int main()
     // check the flash calculation
     checkCompositionalFlash<Scalar, FluidSystem, MPAdapter>(fsRef);
 
+    std::cout << "testing single-phase gas for consistency with other sequential routines\n";
+
+    // "complete" the fluid state
+    completeReferenceFluidStateSequential<Scalar, FluidSystem, MPAdapter>(fsRefSeq, matParams, gasPhaseIdx);
+
+    // check the flash calculation
+    checkCompositionalFlashSequential<Scalar, FluidSystem, MPAdapter>(fsRefSeq, gasPhaseIdx);
+
     ////////////////
     // both phases
     ////////////////
-    std::cout << "testing two-phase\n";
+    std::cout << "testing two-phase against implicit routines\n";
 
     // set saturations
     fsRef.setSaturation(liquidPhaseIdx, 0.5);
@@ -256,9 +345,23 @@ int main()
     // check the flash calculation
     checkCompositionalFlash<Scalar, FluidSystem, MPAdapter>(fsRef);
 
+    std::cout << "testing two-phase for consistency with other sequential routines\n";
+
+    // "complete" the fluid state
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
+    PhaseVector pressures(0.0);
+    pressures[liquidPhaseIdx] = fsRef.pressure(liquidPhaseIdx);
+    pressures[gasPhaseIdx] = fsRef.pressure(gasPhaseIdx);
+    Dumux::CompositionalFlash<Scalar, FluidSystem>::saturationFlash2p2c(fsRef, fsRef.saturation(liquidPhaseIdx),
+                                                                        pressures, 0/*dummy*/, fsRef.temperature(0));
+
+    // check the flash calculation
+    checkCompositionalFlash<Scalar, FluidSystem, MPAdapter>(fsRef);
+
     ////////////////
     // with capillary pressure
     ////////////////
+    std::cout << "testing two-phase against implicit routines, including capillary pressure\n";
 
     MaterialLawParams matParams2;
     matParams2.setSwr(0.0);
@@ -274,7 +377,6 @@ int main()
     fsRef.setPressure(liquidPhaseIdx, 1e6);
 
     // calulate the capillary pressure
-    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
     PhaseVector pc;
     MPAdapter::capillaryPressures(pc, matParams2, fsRef, /*wPhaseIdx=*/0);
     fsRef.setPressure(gasPhaseIdx,
