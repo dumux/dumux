@@ -128,7 +128,7 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using TwoPAssembler = FVAssembler<TwoPTypeTag, DiffMethod::numeric>;
-    auto twoPAssembler = std::make_shared<TwoPAssembler>(twoPProblem, fvGridGeometry, twoPGridVariables, timeLoop);
+    auto twoPAssembler = std::make_shared<TwoPAssembler>(twoPProblem, fvGridGeometry, twoPGridVariables, timeLoop, pOld);
 
     // the linear solver
     using TwoPLinearSolver = AMGBackend<TwoPTypeTag>;
