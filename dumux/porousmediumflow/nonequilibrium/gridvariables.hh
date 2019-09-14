@@ -25,12 +25,14 @@
 #ifndef DUMUX_NONEQUILIBRIUM_GRID_VARIABLES_HH
 #define DUMUX_NONEQUILIBRIUM_GRID_VARIABLES_HH
 
+#include <memory>
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvgridvariables.hh>
+#include <dumux/porousmediumflow/velocity.hh>
 
 namespace Dumux {
 
@@ -45,41 +47,38 @@ class NonEquilibriumGridVariables
                          GetPropType<TypeTag, Properties::GridVolumeVariables>,
                          GetPropType<TypeTag, Properties::GridFluxVariablesCache>>
 {
+    using ThisType = NonEquilibriumGridVariables<TypeTag>;
     using ParentType = FVGridVariables<GetPropType<TypeTag, Properties::FVGridGeometry>,
                                        GetPropType<TypeTag, Properties::GridVolumeVariables>,
                                        GetPropType<TypeTag, Properties::GridFluxVariablesCache>>;
 
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
+    using VelocityBackend = PorousMediumFlowVelocity<ThisType, PorousMediumFluxVariables<TypeTag>>;
 
-    static constexpr auto dim = GridView::dimension; // Grid and world dimension
-    static constexpr auto dimWorld = GridView::dimensionworld;
-
-    static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr auto dim = ParentType::GridGeometry::GridView::dimension; // Grid and world dimension
+    static constexpr auto dimWorld = ParentType::GridGeometry::GridView::dimensionworld;
+    static constexpr int numPhases = ParentType::VolumeVariables::numFluidPhases();
+    static constexpr bool isBox = ParentType::GridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
     //! Export the type used for scalar values
     using typename ParentType::Scalar;
+    using typename ParentType::GridGeometry;
 
     //! Constructor
+    template<class Problem>
     NonEquilibriumGridVariables(std::shared_ptr<Problem> problem,
-                                std::shared_ptr<FVGridGeometry> fvGridGeometry)
-    : ParentType(problem, fvGridGeometry)
-    , problem_(problem)
+                                std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(problem, gridGeometry)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            velocityNorm_[phaseIdx].assign(fvGridGeometry->numDofs(), 0.0);
+            velocityNorm_[phaseIdx].assign(gridGeometry->numDofs(), 0.0);
+
+        velocityBackend_ = std::make_unique<VelocityBackend>(*this);
     }
 
     template<class SolutionVector>
     void calcVelocityAverage(const SolutionVector& curSol)
     {
-        // instatiate the velocity output
-        using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
-        VelocityOutput velocityOutput(*this);
-
         using Scalar = typename SolutionVector::field_type;
         using VelocityVector = typename Dune::FieldVector<Scalar, dimWorld>;
 
@@ -106,7 +105,7 @@ public:
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
-                velocityOutput.calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                velocityBackend_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
 
                 for (auto&& scv : scvs(fvGeometry))
                 {
@@ -131,8 +130,8 @@ public:
     { return velocityNorm_[phaseIdx][dofIdxGlobal]; }
 
 private:
-    std::shared_ptr<const Problem> problem_;
     std::array<std::vector<Dune::FieldVector<Scalar, 1> > , numPhases> velocityNorm_;
+    std::unique_ptr<VelocityBackend> velocityBackend_;
 };
 
 } // end namespace Dumux
