@@ -156,7 +156,7 @@ int main(int argc, char** argv) try
 
 
     // ### Computation of the volume fluxes
-    // We use the results of the 1p problem to calculate the the volume fluxes in the model domain.
+    // We use the results of the 1p problem to calculate the volume fluxes in the model domain.
 
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>;
     std::vector<Scalar> volumeFlux(fvGridGeometry->numScvf(), 0.0);
@@ -208,7 +208,7 @@ int main(int argc, char** argv) try
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
     auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
 
-    // We use the the volume fluxes calculated in the previous section as input for the tracer model.
+    // We use the volume fluxes calculated in the previous section as input for the tracer model.
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux);
 
     // We create and initialize the solution vector. As the tracer problem is transient, the initial solution defined in the problem is applied to the solution vector.
@@ -230,7 +230,7 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // We create and inizialize the assembler with time loop for instationary problem.
+    // We create and inizialize the assembler with time loop for the instationary problem.
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
     assembler->setLinearSystem(A, r);
@@ -248,7 +248,7 @@ int main(int argc, char** argv) try
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 
     // #### The time loop
-    // We start the time loop and calculate a new time step as long as tEnd is reached. In every single time step the problem is assembled and solved.
+    // We start the time loop and calculate a new time step as long as tEnd is not reached. In every single time step the problem is assembled and solved.
     timeLoop->start(); do
     {
         // First we define the old solution as the solution of the previous time step for storage evaluations.

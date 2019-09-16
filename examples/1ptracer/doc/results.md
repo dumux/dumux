@@ -1,6 +1,6 @@
 ## Results
 
-The 1-model calculated a stationary pressure distribution. It is shown in the following figure:
+The 1p-model calculated a stationary pressure distribution. It is shown in the following figure:
  <img src="img/pressure.png" width="300">
 
 

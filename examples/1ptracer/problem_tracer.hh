@@ -85,7 +85,7 @@ struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = false
 template<class TypeTag>
 struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTestCC> { static constexpr bool value = false; };
 
-// In the following we create a new tracer fluid system and derive from the base fluid system.
+// In the following we create a new tracer fluid system and derive it from the base fluid system.
 template<class TypeTag>
 class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>,
                                                                TracerFluidSystem<TypeTag>>
@@ -189,7 +189,7 @@ public:
         // The tracer concentration is located on the domain bottom:
         if (globalPos[1] < 0.1 + eps_)
         {
-            // We assign different values, dependent if mole concentrations or mass concentrations are used:
+            // We assign different values, depending on wether mole concentrations or mass concentrations are used:
             if (useMoles)
                 initialValues = 1e-9;
             else

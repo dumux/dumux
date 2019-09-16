@@ -142,7 +142,7 @@ public:
         // we retreive the global position, i.e. the  vector  including  the  global  coordinates
         // of  the  finite  volume
         const auto globalPos = scvf.ipGlobal();
-        // we define a small epslon value
+        // we define a small epsilon value
         Scalar eps = 1.0e-6;
         // We specify Dirichlet boundaries on the top and bottom of our domain:
         if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
