@@ -38,7 +38,7 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/amgbackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/porousmediumflow/nonequilibrium/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -156,7 +156,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
+    using NewtonSolver = Dumux::NonEquilibriumNewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
