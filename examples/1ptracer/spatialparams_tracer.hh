@@ -28,7 +28,7 @@
 #include <dumux/porousmediumflow/properties.hh>
 // As in the 1p spatialparams we inherit from the spatial parameters for single-phase, finite volumes, which we include here.
 #include <dumux/material/spatialparams/fv1p.hh>
-
+// We enter the namespace Dumux
 namespace Dumux {
 
 // In the TracerTestSpatialParams class, we define all functions needed to describe spatially dependent parameters for the tracer_problem.

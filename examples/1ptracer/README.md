@@ -3,20 +3,20 @@ This tutorial was copied from dumux/test/porousmediumflow/tracer/1ptracer.
 # One-phase flow with random permeability distribution and a tracer model
 
 ## Problem set-up
-This example contains a contaminant transported by a base groundwater flow in a randomly distributed permeability field. The figure below shows the simulation set-up. The permeability values range between 6.12e-15 and 1.5 e-7 $`m^2`$. A pressure gradient between the top an the bottom boundary leads to a groundwater flux from the bottom to the top. Neumann no-flow boundaries are assigned to the left and right boundary. Initially, there is a contaminant concentration at the domain bottom.
+This example contains a contaminant transported by a base groundwater flow in a randomly distributed permeability field. The figure below shows the simulation set-up. The permeability values range between 6.12e-15 and 1.5 e-7 $`m^2`$. A pressure gradient between the top an the bottom boundary leads to a groundwater flux from the bottom to the top. Neumann no-flow boundaries are assigned to the left and right boundary. Initially, there is a contaminant concentration at the bottom of the domain.
 
  <img src="img/setup.png" width="500">
 
 ## Model description
 Two different models are applied to simulate the system: In a first step, the groundwater velocity is evaluated under stationary conditions. Therefore the single phase model is applied.
-In a second step, the contaminant gets transported based on the on the groundwater velocity field. It is assumed, that the dissolved contaminant does not affect density and viscosity of the groundwater and thus, it is handled as a tracer by the tracer model. The tracer model is then solved instationarily.
+In a second step, the contaminant gets transported based on the groundwater velocity field. It is assumed, that the dissolved contaminant does not affect density and viscosity of the groundwater and thus, it is handled as a tracer by the tracer model. The tracer model is then solved instationarily.
 
 ### 1p Model
 The single phase model uses Darcy's law as the equation for the momentum conservation:
 
 $` \textbf v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right) `$
 
-With the darcy velocity $` \textbf v `$, the permeability $` \textbf K`$, the viscosity $` \mu`$, the pressure $`p`$, the density $`\rho`$ and the gravity $`\textbf g`$.
+With the darcy velocity $` \textbf v `$, the permeability $` \textbf K`$, the dynamic viscosity $` \mu`$, the pressure $`p`$, the density $`\rho`$ and the gravity $`\textbf g`$.
 
 Darcy's law is inserted into the continuity equation:
 
@@ -210,7 +210,7 @@ of the finite volume
 ```cpp
         const auto globalPos = scvf.ipGlobal();
 ```
-we define a small epslon value
+we define a small epsilon value
 ```cpp
         Scalar eps = 1.0e-6;
 ```
@@ -473,7 +473,7 @@ We don't use a solution dependent molecular diffusion coefficient:
 template<class TypeTag>
 struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTestCC> { static constexpr bool value = false; };
 ```
-In the following we create a new tracer fluid system and derive from the base fluid system.
+In the following we create a new tracer fluid system and derive it from the base fluid system.
 ```cpp
 template<class TypeTag>
 class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>,
@@ -604,7 +604,7 @@ The tracer concentration is located on the domain bottom:
         if (globalPos[1] < 0.1 + eps_)
         {
 ```
-We assign different values, dependent if mole concentrations or mass concentrations are used:
+We assign different values, depending on wether mole concentrations or mass concentrations are used:
 ```cpp
             if (useMoles)
                 initialValues = 1e-9;
@@ -645,7 +645,9 @@ In the file properties.hh all properties are declared.
 As in the 1p spatialparams we inherit from the spatial parameters for single-phase, finite volumes, which we include here.
 ```cpp
 #include <dumux/material/spatialparams/fv1p.hh>
-
+```
+We enter the namespace Dumux
+```cpp
 namespace Dumux {
 ```
 In the TracerTestSpatialParams class, we define all functions needed to describe spatially dependent parameters for the tracer_problem.
@@ -909,7 +911,7 @@ We stop the timer and display the total time of the simulation as well as the cu
 
 ```
 ### Computation of the volume fluxes
-We use the results of the 1p problem to calculate the the volume fluxes in the model domain.
+We use the results of the 1p problem to calculate the volume fluxes in the model domain.
 ```cpp
 
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>;
@@ -965,7 +967,7 @@ Similar to the 1p problem, we first create and initialize the problem.
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
     auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
 ```
-We use the the volume fluxes calculated in the previous section as input for the tracer model.
+We use the volume fluxes calculated in the previous section as input for the tracer model.
 ```cpp
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux);
 ```
@@ -992,7 +994,7 @@ We instantiate the time loop.
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 ```
-We create and inizialize the assembler with time loop for instationary problem.
+We create and inizialize the assembler with time loop for the instationary problem.
 ```cpp
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
@@ -1013,7 +1015,7 @@ For the time loop we set a check point.
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 ```
 #### The time loop
-We start the time loop and calculate a new time step as long as tEnd is reached. In every single time step the problem is assembled and solved.
+We start the time loop and calculate a new time step as long as tEnd is not reached. In every single time step the problem is assembled and solved.
 ```cpp
     timeLoop->start(); do
     {
@@ -1115,7 +1117,7 @@ catch (...)
 
 ## Results
 
-The 1-model calculated a stationary pressure distribution. It is shown in the following figure:
+The 1p-model calculated a stationary pressure distribution. It is shown in the following figure:
  <img src="img/pressure.png" width="300">
 
 
