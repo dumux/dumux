@@ -44,6 +44,8 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
+#include <dune/common/exceptions.hh>
+
 template <class Scalar, class FluidState1, class FluidState2>
 void checkSame(const FluidState1 &fsRef, const FluidState2 &fsFlash)
 {
