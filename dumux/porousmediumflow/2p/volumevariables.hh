@@ -165,14 +165,14 @@ public:
                                                                                 scv, elemSol, priVars[saturationIdx]);
                 fluidState.setSaturation(phase0Idx, Sn);
                 fluidState.setSaturation(phase1Idx, 1 - Sn);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                pc_ = 0.134; // MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase0Idx, priVars[pressureIdx] + pc_);
             }
             else
             {
                 fluidState.setSaturation(phase0Idx, priVars[saturationIdx]);
                 fluidState.setSaturation(phase1Idx, 1 - priVars[saturationIdx]);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                pc_ = 0.134; // MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase0Idx, priVars[pressureIdx] - pc_);
             }
         }
