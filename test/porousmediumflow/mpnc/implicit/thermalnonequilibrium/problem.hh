@@ -81,9 +81,9 @@ struct Problem<TypeTag, TTag::CombustionOneComponent>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::CombustionOneComponent>
 {
-    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = CombustionSpatialParams<FVGridGeometry, Scalar>;
+    using type = CombustionSpatialParams<GridGeometry, Scalar>;
 };
 
 template<class TypeTag>
@@ -187,7 +187,7 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
 
@@ -215,8 +215,8 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
-    CombustionProblemOneComponent(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    CombustionProblemOneComponent(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
             outputName_ = getParam<std::string>("Problem.Name");
             nRestart_ = getParam<Scalar>("Constants.nRestart");

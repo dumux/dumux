@@ -113,9 +113,9 @@ struct SolidSystem<TypeTag, TTag::EvaporationAtmosphere>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
 {
-    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
+    using type = EvaporationAtmosphereSpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -143,7 +143,7 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
@@ -175,8 +175,8 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
-    EvaporationAtmosphereProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    EvaporationAtmosphereProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         percentOfEquil_         = getParam<Scalar>("BoundaryConditions.percentOfEquil");
         nTemperature_           = getParam<Scalar>("FluidSystem.nTemperature");
