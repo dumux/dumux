@@ -79,9 +79,9 @@ struct Problem<TypeTag, TTag::OnePTest>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, GridGeometry>;
     using Scalar = GetPropType<TypeTag, Scalar>;
-    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
 };
 
 #ifdef FORCHHEIMER
@@ -132,15 +132,15 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
     }
