@@ -33,6 +33,9 @@
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/2p1c.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/3pimmiscible.hh>
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/brine.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
@@ -40,9 +43,11 @@
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
+#include <dumux/material/fluidsystems/h2oheavyoil.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
+#include <dumux/material/fluidsystems/liquidphase2c.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
@@ -117,12 +122,20 @@ int main()
     //////////////////////////
     // check all fluid systems
 
+    // 2p1c
+    {   using FluidSystem = FluidSystems::TwoPOneC<Scalar, H2O >;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+
     // 2p-immiscible
     {   using FluidSystem = FluidSystems::TwoPImmiscible<Scalar, Liquid, Liquid>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
     {   using FluidSystem = FluidSystems::TwoPImmiscible<Scalar, Liquid, Gas>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
     {   using FluidSystem = FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+
+    // 3p-immiscible
+    {   using FluidSystem = FluidSystems::ThreePImmiscible<Scalar, Liquid, Liquid, Gas>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // base
@@ -216,6 +229,10 @@ int main()
     {   using FluidSystem = FluidSystems::H2OAirXylene<Scalar>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
+    // H2O -- Heavyoil
+    {   using FluidSystem = FluidSystems::H2OHeavyOil<Scalar>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+
     // H2O -- N2
     {   using FluidSystem = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
@@ -236,6 +253,12 @@ int main()
 
     // liquid phase
     {   using FluidSystem = FluidSystems::OnePLiquid<Scalar, H2O>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+
+    // liquid phase 2c
+    {
+        using FluidSystem = FluidSystems::LiquidPhaseTwoC<Scalar, H2O, Components::Constant<1, Scalar>>;
+            Parameters::init([](auto& params){ params["Component.MolarMass"] = "1.0";});
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // spe5

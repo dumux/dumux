@@ -345,10 +345,27 @@ public:
                + mu[NAPLIdx]*fluidState.moleFraction(gPhaseIdx, NAPLIdx);
     }
 
-
     using Base::binaryDiffusionCoefficient;
+    /*!
+     * \brief Given a phase's composition, temperature and pressure,
+     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
+     *        \f$\mathrm{i}\f$ and \f$\mathrm{j}\f$ in this phase.
+     *
+     * Be aware that in this case there are only two components in three phases.
+     * Therefore, we assume the diffusion to simply be the binary diffusion coefficients.
+     * This was previously implemented in diffusionCoefficient(), but is now moved.
+     *
+     * \param fluidState The fluid state
+     * \param phaseIdx Index of the fluid phase
+     * \param compIIdx Index of the component i
+     * \param compJIdx Index of the component j
+     */
     template <class FluidState>
-    static Scalar diffusionCoefficient(const FluidState &fluidState, int phaseIdx)
+    static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
+                                             int phaseIdx,
+                                             int compIIdx,
+                                             int compJIdx)
+
     {
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);
@@ -360,9 +377,48 @@ public:
         // gas phase
         else if (phaseIdx == gPhaseIdx)
             return BinaryCoeff::H2O_HeavyOil::gasDiffCoeff(T, p);
-
         else
-            DUNE_THROW(Dune::InvalidStateException, "non-existent diffusion coefficient for phase index " << phaseIdx);
+            DUNE_THROW(Dune::InvalidStateException,
+                       "Non-existent binary diffusion coefficient for phase index "
+                       << phaseIdx);
+
+    }
+
+    using Base::diffusionCoefficient;
+    /*!
+     * \brief Calculate the binary molecular diffusion coefficient for
+     *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
+     * \param fluidState The fluid state
+     * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
+     * \param compIdx Index of the component
+     * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
+     * gradient of the chemical potential and follows the law
+     *
+     * \f[ J = - D \mathbf{grad} \mu_\kappa \f]
+     *
+     * where \f$\mathrm{\mu_\kappa}\f$ is the component's chemical potential,
+     * \f$\mathrm{D}\f$ is the diffusion coefficient and \f$\mathrm{J}\f$ is the
+     * diffusive flux. \f$\mathrm{\mu_\kappa}\f$ is connected to the component's
+     * fugacity \f$\mathrm{f_\kappa}\f$ by the relation
+     *
+     * \f[ \mu_\kappa = R T_\alpha \mathrm{ln} \frac{f_\kappa}{p_\alpha} \f]
+     *
+     * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
+     * pressure and temperature.
+     */
+    template <class FluidState>
+    static Scalar diffusionCoefficient(const FluidState &fluidState, int phaseIdx)
+    {
+        // liquid phase
+        if (phaseIdx == wPhaseIdx)
+            return binaryDiffusionCoefficient(fluidState, phaseIdx, H2OIdx, NAPLIdx);
+        // gas phase
+        else if (phaseIdx == gPhaseIdx)
+            return binaryDiffusionCoefficient(fluidState, phaseIdx, NAPLIdx, H2OIdx);
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                       "Non-existent diffusion coefficient for phase index "<< phaseIdx);
     }
 
     /*!
