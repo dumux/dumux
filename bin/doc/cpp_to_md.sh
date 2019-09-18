@@ -1,5 +1,19 @@
 #!/bin/sh
 
+# check if help is needed
+if test "$1" = "--help" || test "$1" = "-help" \
+   || test "$1" = "help" || test "$1" = ""; then
+  echo ""
+  echo "USAGE: $0 FILENAME"
+  echo ""
+  echo "The argument should be a C++ header or source file."
+  echo "The file is converted to Markdown and forwarded to stdout."
+  echo "In particular, a C++ comment is converted to its content,"
+  echo "while normal code is put into corresponding Markdown code blocks."
+  echo "Supposed to be called by the script merge_cpp_and_md.sh."
+  exit 0
+fi
+
 if [[ ${1: -3} == ".hh" ]]; then
   sed '1,/#define/d' $1 >tmpfile
   isheader=true
