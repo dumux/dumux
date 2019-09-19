@@ -74,7 +74,8 @@ public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::staggered;
     //return the reference system
-    static constexpr ReferenceSystemFormulation referenceSystemFormulation() { return referenceSystem; }
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law
@@ -212,12 +213,12 @@ private:
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
             const auto xi = volVars.moleFraction(compIIdx);
-            const auto Mavg = volVars.averageMolarMass(0);
+            const auto avgMolarMass = volVars.averageMolarMass(0);
             const auto Mn = FluidSystem::molarMass(numComponents-1);
             const Scalar tin = volVars.effectiveDiffusivity(compIIdx, numComponents-1);
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrix[compIIdx][compIIdx] +=  xi*Mavg/(tin*Mn);
+            reducedDiffusionMatrix[compIIdx][compIIdx] +=  xi*avgMolarMass/(tin*Mn);
 
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
@@ -229,9 +230,9 @@ private:
                 const auto Mi = FluidSystem::molarMass(compIIdx);
                 const auto Mj = FluidSystem::molarMass(compJIdx);
                 const Scalar tij = volVars.effectiveDiffusivity(compIIdx, compJIdx);
-                reducedDiffusionMatrix[compIIdx][compIIdx] +=  xj*Mavg/(tij*Mi);
+                reducedDiffusionMatrix[compIIdx][compIIdx] +=  xj*avgMolarMass/(tij*Mi);
                 if (compJIdx < numComponents-1)
-                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(Mavg/(tin*Mn) - Mavg/(tij*Mj));
+                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
         return reducedDiffusionMatrix;

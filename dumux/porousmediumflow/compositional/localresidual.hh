@@ -176,9 +176,11 @@ public:
                     if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
                         flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx)
                                             : diffusiveFluxes[compIdx];
-                    else
+                    else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
                         flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]
                                             : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                    else
+                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
                 }
             }
 
@@ -196,9 +198,11 @@ public:
                     //check for the reference system and adapt units of the diffusive flux accordingly.
                     if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
                         flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
-                    else
+                    else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
                         flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
                                                 : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                    else
+                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
                 }
             }
 

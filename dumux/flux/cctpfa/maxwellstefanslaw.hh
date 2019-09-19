@@ -76,7 +76,8 @@ public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
     //return the reference system
-    static constexpr ReferenceSystemFormulation referenceSystemFormulation() { return referenceSystem; }
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law
@@ -217,7 +218,7 @@ private:
         if(Dune::FloatCmp::eq<Scalar>(volVars.saturation(phaseIdx), 0))
             return reducedDiffusionMatrix;
 
-        const auto Mavg = volVars.averageMolarMass(phaseIdx);
+        const auto avgMolarMass = volVars.averageMolarMass(phaseIdx);
 
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
@@ -228,7 +229,7 @@ private:
             tin = EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tin);
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrix[compIIdx][compIIdx] += xi*Mavg/(tin*Mn);
+            reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
 
             // now set the rest of the entries (off-diagonal and additional entries for diagonal)
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
@@ -242,9 +243,9 @@ private:
                 const auto Mj = FluidSystem::molarMass(compJIdx);
                 Scalar tij = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, volVars, scv);
                 tij = EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tij);
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xj*Mavg/(tij*Mi);
+                reducedDiffusionMatrix[compIIdx][compIIdx] += xj*avgMolarMass/(tij*Mi);
                 if (compJIdx < numComponents-1)
-                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(Mavg/(tin*Mn) - Mavg/(tij*Mj));
+                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
         return reducedDiffusionMatrix;

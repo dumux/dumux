@@ -117,7 +117,8 @@ public:
     //! state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
     //! Return the reference system
-    static constexpr ReferenceSystemFormulation referenceSystemFormulation() { return referenceSystem; }
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
 
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;

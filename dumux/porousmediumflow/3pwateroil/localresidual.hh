@@ -174,14 +174,18 @@ public:
 
         const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
 
+        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+
         Scalar jNW = 0.0;
         Scalar jWW = 0.0;
         // diffusive fluxes
         //check for the reference system and adapt units of the diffusive flux accordingly.
-        if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+        if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
             jNW +=  diffusionFluxesWPhase[nCompIdx]/FluidSystem::molarMass(nCompIdx);
-        else
+        else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
             jNW +=  diffusionFluxesWPhase[nCompIdx];
+        else
+            DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
 
         jWW += -(jNW);
 
@@ -190,7 +194,7 @@ public:
         Scalar jWG = 0.0;
         Scalar jNG = 0.0;
 
-        if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+        if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
             jWG += diffusionFluxesGPhase[wCompIdx]/FluidSystem::molarMass(wCompIdx);
         else
             jWG += diffusionFluxesGPhase[wCompIdx];
@@ -202,7 +206,7 @@ public:
         Scalar jWN = 0.0;
         Scalar jNN = 0.0;
 
-        if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+        if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
             jWN += diffusionFluxesNPhase[wCompIdx]/FluidSystem::molarMass(wCompIdx);
         else
             jWN += diffusionFluxesNPhase[wCompIdx];

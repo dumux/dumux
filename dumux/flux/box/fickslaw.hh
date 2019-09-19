@@ -20,7 +20,7 @@
  * \file
  * \ingroup BoxFlux
  * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ *        diffusive fluxes due to molecular diffusion with Fick's law.
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
@@ -71,7 +71,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem
 
 public:
     //return the reference system
-    static constexpr ReferenceSystemFormulation referenceSystemFormulation() { return referenceSystem; }
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
 
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,

@@ -70,7 +70,8 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
 
 public:
     //return the reference system
-    static constexpr ReferenceSystemFormulation referenceSystemFormulation() { return referenceSystem; }
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
 
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
@@ -93,7 +94,7 @@ public:
         const auto& shapeValues = fluxVarsCache.shapeValues();
 
         Scalar rho(0.0);
-        Scalar Mavg(0.0);
+        Scalar avgMolarMass(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
@@ -101,7 +102,7 @@ public:
             // density interpolation
             rho +=  volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
             //average molar mass interpolation
-            Mavg += volVars.averageMolarMass(phaseIdx)*shapeValues[scv.indexInElement()][0];
+            avgMolarMass += volVars.averageMolarMass(phaseIdx)*shapeValues[scv.indexInElement()][0];
             //interpolate the mole fraction for the diffusion matrix
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
             {
@@ -109,7 +110,7 @@ public:
             }
         }
 
-        reducedDiffusionMatrix = setupMSMatrix_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, moleFrac, Mavg);
+        reducedDiffusionMatrix = setupMSMatrix_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, moleFrac, avgMolarMass);
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
@@ -144,7 +145,7 @@ private:
                                                  const SubControlVolumeFace& scvf,
                                                  const int phaseIdx,
                                                  const ComponentFluxVector moleFrac,
-                                                 const Scalar Mavg)
+                                                 const Scalar avgMolarMass)
     {
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
@@ -178,7 +179,7 @@ private:
             const auto tin = problem.spatialParams().harmonicMean(tinInside, tinOutside, scvf.unitOuterNormal());
 
             //begin the entrys of the diffusion matrix of the diagonal
-            reducedDiffusionMatrix[compIIdx][compIIdx] += xi*Mavg/(tin*Mn);
+            reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
 
             // now set the rest of the entries (off-diagonal and additional entries for diagonal)
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
@@ -203,9 +204,9 @@ private:
                 // the resulting averaged diffusion tensor
                 const auto tij = problem.spatialParams().harmonicMean(tijInside, tijOutside, scvf.unitOuterNormal());
 
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xj*Mavg/(tij*Mi);
+                reducedDiffusionMatrix[compIIdx][compIIdx] += xj*avgMolarMass/(tij*Mi);
                 if (compJIdx < numComponents-1)
-                    reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(Mavg/(tin*Mn) - Mavg/(tij*Mj));
+                    reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
         return reducedDiffusionMatrix;
