@@ -565,6 +565,15 @@ public:
                 return shift_ <= shiftTolerance_
                         && reduction_ <= reductionTolerance_;
         }
+        else if(enableShiftCriterion_ && enableResidualCriterion_)
+        {
+            if(enableAbsoluteResidualCriterion_)
+                return shift_ <= shiftTolerance_
+                        || residualNorm_ <= residualTolerance_;
+            else
+                return shift_ <= shiftTolerance_
+                        || reduction_ <= reductionTolerance_;
+        }
         else
         {
             return shift_ <= shiftTolerance_
