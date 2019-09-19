@@ -1,3 +1,5 @@
+add_subdirectory(2p2c)
+
 install(FILES
 compositionalflash.hh
 compositionfromfugacities.hh
