@@ -88,7 +88,6 @@ public:
      *
      * \param fluidState A container with the current (physical) state of the fluid
      * \param paramCache A container for iterative calculation of fluid composition
-     * \param knownPhaseIdx The index of the phase with known properties
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState &fluidState,
