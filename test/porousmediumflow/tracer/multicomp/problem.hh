@@ -97,18 +97,18 @@ public:
     //! The number of components
     static constexpr int numComponents = 3;
 
-    static constexpr int CompOneIdx = 0;//first major component
-    static constexpr int CompTwoIdx = 1;//second major component
-    static constexpr int CompThreeIdx = 2;//secondary component
+    static constexpr int compOneIdx = 0;//first major component
+    static constexpr int compTwoIdx = 1;//second major component
+    static constexpr int compThreeIdx = 2;//secondary component
 
     //! Human readable component name (index compIdx) (for vtk output)
     static std::string componentName(int compIdx)
     {
         switch (compIdx)
         {
-        case CompOneIdx: return "CompOne";
-        case CompTwoIdx: return "CompTwo";
-        case CompThreeIdx:return "CompThree";
+        case compOneIdx: return "CompOne";
+        case compTwoIdx: return "CompTwo";
+        case compThreeIdx:return "CompThree";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
@@ -128,11 +128,11 @@ public:
                                              const Element& element,
                                              const SubControlVolume& scv)
     {
-      if (compIdx == CompOneIdx)
+      if (compIdx == compOneIdx)
           return 0;
-      if (compIdx == CompTwoIdx)
+      if (compIdx == compTwoIdx)
           return 83.3e-6;
-      if (compIdx == CompThreeIdx)
+      if (compIdx == compThreeIdx)
           return 68.0e-6;
        DUNE_THROW(Dune::InvalidStateException,
                        "Binary diffusion coefficient of component "
@@ -153,11 +153,11 @@ public:
             swap(compIIdx, compJIdx);
         }
 
-        if (compIIdx == CompOneIdx && compJIdx == CompTwoIdx)
+        if (compIIdx == compOneIdx && compJIdx == compTwoIdx)
             return 83.3e-6;
-        if (compIIdx == CompOneIdx && compJIdx == CompThreeIdx)
+        if (compIIdx == compOneIdx && compJIdx == compThreeIdx)
             return 68.0e-6;
-        if (compIIdx == CompTwoIdx && compJIdx == CompThreeIdx)
+        if (compIIdx == compTwoIdx && compJIdx == compThreeIdx)
             return 16.8e-6;
         DUNE_THROW(Dune::InvalidStateException,
                        "Binary diffusion coefficient of components "
@@ -385,15 +385,15 @@ public:
         PrimaryVariables initialValues(0.0);
         if (globalPos[0] < 0.5)
         {
-           initialValues[FluidSystem::CompOneIdx] = 0.0;
-           initialValues[FluidSystem::CompTwoIdx] = 0.50086;
-           initialValues[FluidSystem::CompThreeIdx] = 0.49914;
+           initialValues[FluidSystem::compOneIdx] = 0.0;
+           initialValues[FluidSystem::compTwoIdx] = 0.50086;
+           initialValues[FluidSystem::compThreeIdx] = 0.49914;
         }
         else
         {
-           initialValues[FluidSystem::CompOneIdx] = 0.50121;
-           initialValues[FluidSystem::CompTwoIdx] = 0.49879;
-           initialValues[FluidSystem::CompThreeIdx] = 0.0;
+           initialValues[FluidSystem::compOneIdx] = 0.50121;
+           initialValues[FluidSystem::compTwoIdx] = 0.49879;
+           initialValues[FluidSystem::compThreeIdx] = 0.0;
         }
         return initialValues;
     }

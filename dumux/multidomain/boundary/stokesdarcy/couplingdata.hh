@@ -30,7 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/flux/referencesystem.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/common/deprecated.hh>
 
@@ -990,12 +990,12 @@ protected:
         {
             const int domainICompIIdx = couplingCompIdx(domainI, compIIdx);
             const auto xi = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIIdx);
-            const auto Mavg = volVarsI.fluidState().averageMolarMass(couplingPhaseIdx(domainI));
+            const auto avgMolarMass = volVarsI.fluidState().averageMolarMass(couplingPhaseIdx(domainI));
             const auto Mn = FluidSystem<i>::molarMass(numComponents-1);
             Scalar tin = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompIIdx, couplingCompIdx(domainI, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xi*Mavg/(tin*Mn);
+            reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xi*avgMolarMass/(tin*Mn);
 
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
@@ -1009,8 +1009,8 @@ protected:
                 const auto Mi = FluidSystem<i>::molarMass(domainICompIIdx);
                 const auto Mj = FluidSystem<i>::molarMass(domainICompJIdx);
                 Scalar tij = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompIIdx, domainICompJIdx);
-                reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xj*Mavg/(tij*Mi);
-                reducedDiffusionMatrixInside[domainICompIIdx][domainICompJIdx] +=xi*(Mavg/(tin*Mn) - Mavg/(tij*Mj));
+                reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xj*avgMolarMass/(tij*Mi);
+                reducedDiffusionMatrixInside[domainICompIIdx][domainICompJIdx] +=xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
         //outside matrix
@@ -1020,12 +1020,12 @@ protected:
             const int domainICompIIdx = couplingCompIdx(domainI, compIIdx);
 
             const auto xi =volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIIdx);
-            const auto Mavg = volVarsJ.fluidState().averageMolarMass(couplingPhaseIdx(domainJ));
+            const auto avgMolarMass = volVarsJ.fluidState().averageMolarMass(couplingPhaseIdx(domainJ));
             const auto Mn = FluidSystem<i>::molarMass(numComponents-1);
             Scalar tin =diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, couplingCompIdx(domainJ, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] +=  xi*Mavg/(tin*Mn);
+            reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] +=  xi*avgMolarMass/(tin*Mn);
 
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
@@ -1040,8 +1040,8 @@ protected:
                 const auto Mi = FluidSystem<i>::molarMass(domainJCompIIdx);
                 const auto Mj = FluidSystem<i>::molarMass(domainJCompJIdx);
                 Scalar tij = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, domainJCompJIdx);
-                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] += xj*Mavg/(tij*Mi);
-                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompJIdx] +=xi*(Mavg/(tin*Mn) - Mavg/(tij*Mj));
+                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] += xj*avgMolarMass/(tij*Mi);
+                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompJIdx] +=xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
 

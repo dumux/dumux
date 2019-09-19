@@ -126,6 +126,7 @@ public:
         NumEqVector flux(0.0);
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
 
+        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         // formulation with mole balances
         if (useMoles)
         {
@@ -138,10 +139,12 @@ public:
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                 // diffusive fluxes
-                if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
                     flux[compIdx] += diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx);
-                else
+                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
                     flux[compIdx] += diffusiveFluxes[compIdx];
+                else
+                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
             }
         }
         // formulation with mass balances
@@ -156,10 +159,12 @@ public:
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                 // diffusive fluxes
-                if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
                     flux[compIdx] += diffusiveFluxes[compIdx];
-                else
+                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
                     flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                else
+                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
             }
         }
 
@@ -260,11 +265,13 @@ public:
                 diffDeriv = useMoles ? massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)/FluidSystem::molarMass(compIdx)
                                             : massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx);
             }
-            else
+            else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
             {
                 diffDeriv = useMoles ? massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)
                                             : massOrMolarDensity*fluxCache.diffusionTij(phaseIdx,         compIdx)*FluidSystem::molarMass(compIdx);
             }
+            else
+                DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
 
             derivativeMatrices[scvf.insideScvIdx()][compIdx][compIdx] += (advDerivII + diffDeriv);
             derivativeMatrices[scvf.outsideScvIdx()][compIdx][compIdx] += (advDerivIJ - diffDeriv);
@@ -323,9 +330,11 @@ public:
                 if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
                     diffDeriv += useMoles ? ti[compIdx][scv.indexInElement()]/FluidSystem::molarMass(compIdx)
                                         : ti[compIdx][scv.indexInElement()];
-                else
+                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
                     diffDeriv += useMoles ? ti[compIdx][scv.indexInElement()]
                                             : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                else
+                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
                 A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
                 A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
             }

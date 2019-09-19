@@ -175,11 +175,13 @@ public:
             jGW += diffusionFluxesWPhase[gCompIdx]/FluidSystem::molarMass(gCompIdx);
             jNW += diffusionFluxesWPhase[nCompIdx]/FluidSystem::molarMass(nCompIdx);
         }
-        else
+        else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
         {
             jGW += diffusionFluxesWPhase[gCompIdx];
             jNW += diffusionFluxesWPhase[nCompIdx];
         }
+        else
+            DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
 
         jWW += -(jGW+jNW);
 

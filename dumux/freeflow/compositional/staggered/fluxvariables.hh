@@ -75,6 +75,8 @@ public:
 
         const auto diffusiveFluxes = MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
 
+        auto referenceSystemFormulation = MolecularDiffusionType::referenceSystemFormulation();
+
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             auto upwindTerm = [compIdx](const auto& volVars)
@@ -87,12 +89,14 @@ public:
             flux[compIdx] = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTerm);
 
             //check for the reference system and adapt units of the diffusive flux accordingly.
-            if (MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+            if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
             {
                 flux[compIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
             }
-            else
+            else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
                 flux[compIdx] += useMoles ? diffusiveFluxes[compIdx] : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+            else
+                DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
         }
 
         // in case one balance is substituted by the total mass balance
