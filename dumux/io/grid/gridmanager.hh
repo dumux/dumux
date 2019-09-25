@@ -33,5 +33,6 @@
 #include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/io/grid/gridmanager_foam.hh>
 #include <dumux/io/grid/gridmanager_sp.hh>
+#include <dumux/io/grid/gridmanager_mmesh.hh>
 
 #endif
