@@ -303,6 +303,9 @@ public:
                                      const ElementFaceVariables& stokesElemFaceVars,
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
+        if (couplingManager().couplingMode() != CouplingManager::CouplingMode::reconstructPorousMediumPressure)
+            DUNE_THROW(Dune::InvalidStateException, "This condition can only be used if the coupling mode is set to reconstructPorousMediumPressure");
+
         static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
 
         Scalar momentumFlux(0.0);
@@ -325,6 +328,64 @@ public:
         momentumFlux *= scvf.directionSign();
 
         return momentumFlux;
+    }
+
+    /*!
+     * \brief Returns the reconstructed free-flow pressure at the coupling interface
+     *        corresponding to the normal momentum flux across the interface, i.e.,
+     *        [p]^PM = n*n*[div(vv^T - mu (gradV + gradV^T) + gradp)]^FF
+     */
+    Scalar freeFlowInterfaceStress(const Element<darcyIdx>& element,
+                                   const SubControlVolumeFace<darcyIdx>& scvf) const
+    {
+        if (couplingManager().couplingMode() != CouplingManager::CouplingMode::reconstructFreeFlowNormalStress)
+            DUNE_THROW(Dune::InvalidStateException, "This condition can only be used if the coupling mode is set to reconstructFreeFlowNormalStress");
+
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
+        const auto& freeFlowScvf = darcyContext.getStokesScvf();
+        const auto& freeFlowElemVolVars = darcyContext.elemVolVars.value();
+
+        using FluxVariables = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FluxVariables>;
+        FluxVariables fluxVars;
+        return fluxVars.computeMomentumFlux(this->couplingManager().problem(stokesIdx),
+                                            darcyContext.element,
+                                            freeFlowScvf,
+                                            darcyContext.fvGeometry,
+                                            freeFlowElemVolVars,
+                                            darcyContext.elemFaceVars.value(),
+                                            darcyContext.elemFluxVarsCache->gridFluxVarsCache())
+                                            / (freeFlowElemVolVars[freeFlowScvf.insideScvIdx()].extrusionFactor() * freeFlowScvf.area());
+    }
+
+    /*!
+     * \brief Returns the reconstructed porous medium velocity at the coupling interface
+     *        using Darcy's law.
+     *        [v*n]^FF = [v*n]^PM
+     */
+    Scalar porousMediumInterfaceVelocity(const Element<stokesIdx>& element,
+                                         const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        static_assert(std::is_same_v<AdvectionType, DarcysLaw>, "This function is currently only implemented for Darcy's law");
+
+        if (couplingManager().couplingMode() != CouplingManager::CouplingMode::reconstructFreeFlowNormalStress)
+            DUNE_THROW(Dune::InvalidStateException, "This condition can only be used if the coupling mode is set to reconstructFreeFlowNormalStress");
+
+        const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
+        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const auto& darcyScvf = stokesContext.getDarcyScvf();
+
+        // v*n = -kr/mu*K * (gradP - rho*g)*n = mobility*(ti*(p_center - p_interface) + rho*n^TKg)
+        const Scalar couplingPhaseCellCenterPressure = stokesContext.volVars.pressure(darcyPhaseIdx);
+        const Scalar couplingPhaseInterfacePressure = freeFlowInterfaceStress(stokesContext.element, stokesContext.getDarcyScvf());
+        const Scalar couplingPhaseMobility = stokesContext.volVars.mobility(darcyPhaseIdx);
+        const Scalar couplingPhaseDensity = stokesContext.volVars.density(darcyPhaseIdx);
+        const auto K = stokesContext.volVars.permeability();
+
+        const auto& insideScv = stokesContext.fvGeometry.scv(darcyScvf.insideScvIdx());
+        const auto ti = computeTpfaTransmissibility(darcyScvf, insideScv, K, 1.0);
+        const auto alpha = vtmv(darcyScvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(darcyScvf.center()));
+
+        return couplingPhaseMobility * (ti * (couplingPhaseCellCenterPressure - couplingPhaseInterfacePressure) + couplingPhaseDensity*alpha);
     }
 
     /*!
@@ -548,9 +609,14 @@ public:
                                  const SubControlVolumeFace<darcyIdx>& scvf) const
     {
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
-        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar velocity = darcyContext.velocity.value() * scvf.unitOuterNormal();
         const Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(darcyIdx));
-        const Scalar stokesDensity = darcyContext.volVars.density();
+
+        const auto& stokesScvf =  darcyContext.getStokesScvf();
+        const Scalar stokesDensity = this->couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure ?
+                                     darcyContext.volVars.value().density()
+                                   : darcyContext.elemVolVars.value()[stokesScvf.insideScvIdx()].density();
+
         const bool insideIsUpstream = velocity > 0.0;
 
         return massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream);
