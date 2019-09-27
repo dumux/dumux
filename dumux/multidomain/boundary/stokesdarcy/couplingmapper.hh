@@ -57,7 +57,8 @@ public:
                                         Stencils& darcyToStokesCellCenterStencils,
                                         Stencils& darcyToStokesFaceStencils,
                                         Stencils& stokesCellCenterToDarcyStencils,
-                                        Stencils& stokesFaceToDarcyStencils)
+                                        Stencils& stokesFaceToDarcyStencils,
+                                        const typename CouplingManager::CouplingMode couplingMode = CouplingManager::CouplingMode::reconstructPorousMediumPressure)
     {
         const auto& stokesFvGridGeometry = couplingManager.problem(CouplingManager::stokesIdx).gridGeometry();
         const auto& darcyFvGridGeometry = couplingManager.problem(CouplingManager::darcyIdx).gridGeometry();
@@ -107,6 +108,20 @@ public:
 
                 darcyToStokesFaceStencils[darcyElementIdx[0]].push_back(scvf.dofIndex());
                 darcyToStokesCellCenterStencils[darcyElementIdx[0]].push_back(stokesElementIdx);
+
+                if (couplingMode == CouplingManager::CouplingMode::reconstructFreeFlowNormalStress)
+                {
+                    // get the list of face dofs that have an influence on the resdiual of the current face
+                    const auto& connectivityMap = stokesFvGridGeometry.connectivityMap();
+                    static constexpr auto faceIdx = std::decay_t<decltype(stokesFvGridGeometry)>::faceIdx();
+                    static constexpr auto cellCenterIdx = std::decay_t<decltype(stokesFvGridGeometry)>::cellCenterIdx();
+
+                    for (const auto& globalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
+                        darcyToStokesFaceStencils[darcyElementIdx[0]].push_back(globalJ);
+
+                    for (const auto& globalJ : connectivityMap(faceIdx, cellCenterIdx, scvf.index()))
+                        darcyToStokesCellCenterStencils[darcyElementIdx[0]].push_back(globalJ);
+                }
 
                 const auto& darcyElement = darcyFvGridGeometry.element(darcyElementIdx[0]);
                 darcyFvGeometry.bindElement(darcyElement);

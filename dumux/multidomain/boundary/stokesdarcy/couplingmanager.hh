@@ -27,6 +27,7 @@
 
 #include <utility>
 #include <memory>
+#include <optional>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/exceptions.hh>
@@ -83,10 +84,19 @@ private:
     template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
     template<std::size_t id> using ElementBoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::ElementBoundaryTypes>;
     template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
-    template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using PrimaryVariables = typename MDTraits::template SubDomain<id>::PrimaryVariables;
     template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
+    template<std::size_t id> using SubControlVolume  = typename FVElementGeometry<id>::SubControlVolume;
+
+
+    template<std::size_t id> using GridFaceVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>;
+    template<std::size_t id> using ElementFaceVariables = typename GridFaceVariables<id>::LocalView;
+    template<std::size_t id> using FaceVariables = typename ElementFaceVariables<id>::FaceVariables;
+
+    template<std::size_t id> using GridVariables = typename MDTraits::template SubDomain<id>::GridVariables;
+    using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
+
 
     using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;
 
@@ -101,6 +111,9 @@ private:
         std::size_t darcyScvfIdx;
         std::size_t stokesScvfIdx;
         VolumeVariables<darcyIdx> volVars;
+
+        const auto& getDarcyScvf() const
+        { return fvGeometry.scvf(darcyScvfIdx); }
     };
 
     struct StationaryDarcyCouplingContext
@@ -109,10 +122,26 @@ private:
         FVElementGeometry<stokesIdx> fvGeometry;
         std::size_t stokesScvfIdx;
         std::size_t darcyScvfIdx;
-        VelocityVector velocity;
-        VolumeVariables<stokesIdx> volVars;
+
+        // quantities only reuqired for CouplingMode::reconstructPorousMediumPressure
+        std::optional<VelocityVector> velocity;
+        std::optional<VolumeVariables<stokesIdx>> volVars;
+
+        // quantities only reuqired for CouplingMode::reconstructFreeFlowNormalStress
+        std::optional<ElementVolumeVariables<stokesIdx>> elemVolVars;
+        std::optional<ElementFaceVariables<stokesIdx>> elemFaceVars;
+        std::optional<ElementFluxVariablesCache<stokesIdx>> elemFluxVarsCache;
+
+        const auto& getStokesScvf() const
+        { return fvGeometry.scvf(stokesScvfIdx); }
     };
+
 public:
+
+    enum class CouplingMode
+    {
+        reconstructFreeFlowNormalStress, reconstructPorousMediumPressure
+    };
 
     using ParentType::couplingStencil;
     using ParentType::updateCouplingContext;
@@ -129,10 +158,34 @@ public:
     // \{
 
     //! Initialize the coupling manager
+    [[deprecated("Use init() with gridVaribales!. Will be removed after 3.3")]]
     void init(std::shared_ptr<const Problem<stokesIdx>> stokesProblem,
               std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
               const SolutionVector& curSol)
     {
+        couplingMode_ = CouplingMode::reconstructPorousMediumPressure;
+        printCouplingMode_();
+
+        if (Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->spatialParams().gravity({})))
+            DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
+
+        this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
+        this->curSol() = curSol;
+        couplingData_ = std::make_shared<CouplingData>(*this);
+        computeStencils();
+    }
+
+    //! Initialize the coupling manager
+    void init(std::shared_ptr<const Problem<stokesIdx>> stokesProblem,
+              std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
+              GridVariablesTuple&& gridVariables,
+              const SolutionVector& curSol,
+              const CouplingMode couplingMode = CouplingMode::reconstructPorousMediumPressure)
+    {
+        couplingMode_ = couplingMode;
+        gridVariables_ = gridVariables;
+        printCouplingMode_();
+
         if (Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->spatialParams().gravity({})))
             DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
 
@@ -159,7 +212,8 @@ public:
                                                        darcyToStokesCellCenterCouplingStencils_,
                                                        darcyToStokesFaceCouplingStencils_,
                                                        stokesCellCenterCouplingStencils_,
-                                                       stokesFaceCouplingStencils_);
+                                                       stokesFaceCouplingStencils_,
+                                                       couplingMode());
 
         for(auto&& stencil : darcyToStokesCellCenterCouplingStencils_)
             removeDuplicates_(stencil.second);
@@ -197,7 +251,7 @@ public:
         boundStokesElemIdx_ = stokesElementIdx;
 
         // do nothing if the element is not coupled to the other domain
-        if(!couplingMapper_.stokesElementToDarcyElementMap().count(stokesElementIdx))
+        if (!couplingMapper_.stokesElementToDarcyElementMap().count(stokesElementIdx))
             return;
 
         // prepare the coupling context
@@ -237,36 +291,61 @@ public:
         boundDarcyElemIdx_ = darcyElementIdx;
 
         // do nothing if the element is not coupled to the other domain
-        if(!couplingMapper_.darcyElementToStokesElementMap().count(darcyElementIdx))
+        if (!couplingMapper_.darcyElementToStokesElementMap().count(darcyElementIdx))
             return;
 
         // prepare the coupling context
         const auto& stokesElementIndices = couplingMapper_.darcyElementToStokesElementMap().at(darcyElementIdx);
         auto stokesFvGeometry = localView(this->problem(stokesIdx).gridGeometry());
 
-        for(auto&& indices : stokesElementIndices)
+        std::optional<VelocityVector> faceVelocity;
+        std::optional<VolumeVariables<stokesIdx>> stokesVolVars;
+        std::optional<ElementVolumeVariables<stokesIdx>> stokesElemVolVars;
+        std::optional<ElementFaceVariables<stokesIdx>> stokesElemFaceVars;
+        std::optional<ElementFluxVariablesCache<stokesIdx>> stokesElemFluxVarsCache;
+
+        if (couplingMode() == CouplingMode::reconstructFreeFlowNormalStress)
+        {
+            stokesElemVolVars.emplace(localView(gridVars_(stokesIdx).curGridVolVars()));
+            stokesElemFaceVars.emplace(localView(gridVars_(stokesIdx).curGridFaceVars()));
+            stokesElemFluxVarsCache.emplace(localView(gridVars_(stokesIdx).gridFluxVarsCache()));
+        }
+
+        for (auto&& indices : stokesElementIndices)
         {
             const auto& stokesElement = this->problem(stokesIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
-            stokesFvGeometry.bindElement(stokesElement);
+            stokesFvGeometry.bind(stokesElement);
 
-            VelocityVector faceVelocity(0.0);
-
-            for(const auto& scvf : scvfs(stokesFvGeometry))
+            if (couplingMode() == CouplingMode::reconstructPorousMediumPressure)
             {
-                if(scvf.index() == indices.scvfIdx)
-                    faceVelocity[scvf.directionIndex()] = this->curSol()[stokesFaceIdx][scvf.dofIndex()];
+                using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
+                const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][indices.eIdx];
+                const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
+
+                stokesVolVars.reset();
+                stokesVolVars.emplace();
+                for (const auto& scv : scvs(stokesFvGeometry))
+                    stokesVolVars->update(elemSol, this->problem(stokesIdx), stokesElement, scv);
+
+                faceVelocity.reset();
+                faceVelocity.emplace(0.0);
+                for (const auto& scvf : scvfs(stokesFvGeometry))
+                {
+                    if (scvf.index() == indices.scvfIdx)
+                    (*faceVelocity)[scvf.directionIndex()] = this->curSol()[stokesFaceIdx][scvf.dofIndex()];
+                }
+            }
+            else // CouplingMode::reconstructFreeFlowNormalStress
+            {
+                stokesElemVolVars->bind(stokesElement, stokesFvGeometry, this->curSol()[stokesCellCenterIdx]);
+                stokesElemFaceVars->bind(stokesElement, stokesFvGeometry, this->curSol()[stokesFaceIdx]);
+                stokesElemFluxVarsCache->bind(stokesElement, stokesFvGeometry, *stokesElemVolVars);
             }
 
-            using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
-            const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][indices.eIdx];
-            const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
-
-            VolumeVariables<stokesIdx> stokesVolVars;
-            for(const auto& scv : scvs(stokesFvGeometry))
-                stokesVolVars.update(elemSol, this->problem(stokesIdx), stokesElement, scv);
-
             // add the context
-            darcyCouplingContext_.push_back({stokesElement, stokesFvGeometry, indices.scvfIdx, indices.flipScvfIdx, faceVelocity, stokesVolVars});
+            darcyCouplingContext_.push_back({stokesElement, stokesFvGeometry, indices.scvfIdx, indices.flipScvfIdx,
+                                             faceVelocity, stokesVolVars,
+                                             stokesElemVolVars, stokesElemFaceVars, stokesElemFluxVarsCache});
         }
     }
 
@@ -301,14 +380,22 @@ public:
         {
             const auto stokesElemIdx = this->problem(stokesIdx).gridGeometry().elementMapper().index(data.element);
 
-            if(stokesElemIdx != dofIdxGlobalJ)
+            if (stokesElemIdx != dofIdxGlobalJ)
                 continue;
 
             using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
             const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(priVars);
 
-            for(const auto& scv : scvs(data.fvGeometry))
-                data.volVars.update(elemSol, this->problem(stokesIdx), data.element, scv);
+            if (couplingMode() == CouplingMode::reconstructPorousMediumPressure)
+            {
+                for (const auto& scv : scvs(data.fvGeometry))
+                    data.volVars->update(elemSol, this->problem(stokesIdx), data.element, scv);
+            }
+            else // CouplingMode::reconstructFreeFlowNormalStress
+            {
+                for (const auto& scv : scvs(data.fvGeometry))
+                    getVolVarAccess_(domainJ, gridVars_(stokesIdx).curGridVolVars(), data.elemVolVars.value(), scv).update(elemSol, this->problem(stokesIdx), data.element, scv);
+            }
         }
     }
 
@@ -324,13 +411,18 @@ public:
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
+        const auto& stokesProblem = this->problem(stokesIdx);
 
         for (auto& data : darcyCouplingContext_)
         {
-            for(const auto& scvf : scvfs(data.fvGeometry))
+            if (couplingMode() == CouplingMode::reconstructPorousMediumPressure)
+                (*data.velocity)[data.getStokesScvf().directionIndex()] = priVars;
+            else // CouplingMode::reconstructFreeFlowNormalStress
             {
-                if(scvf.dofIndex() == dofIdxGlobalJ)
-                    data.velocity[scvf.directionIndex()] = priVars;
+                using FaceSolution = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::StaggeredFaceSolution>;
+                FaceSolution faceSol(data.getStokesScvf(), this->curSol()[domainJ], stokesProblem.gridGeometry());
+                auto& faceVars = getFaceVarAccess_(domainJ, gridVars_(stokesIdx).curGridFaceVars(), data.elemFaceVars.value(), data.getStokesScvf());
+                faceVars.update(faceSol, stokesProblem, data.element, data.fvGeometry, data.getStokesScvf());
             }
         }
     }
@@ -352,14 +444,38 @@ public:
         {
             const auto darcyElemIdx = this->problem(darcyIdx).gridGeometry().elementMapper().index(data.element);
 
-            if(darcyElemIdx != dofIdxGlobalJ)
+            if (darcyElemIdx != dofIdxGlobalJ)
                 continue;
 
             const auto darcyElemSol = elementSolution(data.element, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
 
-            for(const auto& scv : scvs(data.fvGeometry))
+            for (const auto& scv : scvs(data.fvGeometry))
                 data.volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
         }
+    }
+
+    //! Pull up the base class' default implementation
+    using ParentType::updateCoupledVariables;
+
+    /*!
+     * \brief Update the porous medium flow domain volume variables and flux variables cache
+     *        after the coupling context has been updated. This has to be done because the porous medium
+              boundary volVars require the updated Dirichlet pressure variable from the free-flow domain.
+     */
+    template< class LocalAssembler, class UpdatableFluxVarCache >
+    void updateCoupledVariables(Dune::index_constant<darcyIdx> domainI,
+                                const LocalAssembler& localAssembler,
+                                ElementVolumeVariables<darcyIdx>& elemVolVars,
+                                UpdatableFluxVarCache& elemFluxVarsCache)
+    {
+        elemVolVars.bind(localAssembler.element(),
+                         localAssembler.fvGeometry(),
+                         this->curSol()[darcyIdx]);
+
+        // update the transmissibilities subject to the new permeabilities
+        elemFluxVarsCache.update(localAssembler.element(),
+                                 localAssembler.fvGeometry(),
+                                 elemVolVars);
     }
 
     // \}
@@ -380,9 +496,9 @@ public:
         if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
             bindCouplingContext(stokesIdx, element);
 
-        for(const auto& context : stokesCouplingContext_)
+        for (const auto& context : stokesCouplingContext_)
         {
-            if(scvf.index() == context.stokesScvfIdx)
+            if (scvf.index() == context.stokesScvfIdx)
                 return context;
         }
 
@@ -397,7 +513,7 @@ public:
         if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != scvf.insideScvIdx())
             bindCouplingContext(darcyIdx, element);
 
-        for(const auto& context : darcyCouplingContext_)
+        for (const auto& context : darcyCouplingContext_)
         {
             if(scvf.index() == context.darcyScvfIdx)
                 return context;
@@ -521,6 +637,27 @@ public:
         return couplingMapper_.isCoupledDarcyScvf(scvf.index());
     }
 
+    /*!
+     * \brief Returns whether the pointer to the gridVariables was set sucessfully.
+     */
+    bool gridVariablesAvailable() const
+    {
+        bool result = true;
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<std::tuple_size_v<GridVariablesTuple>>(), [&](const auto domainId)
+        {
+            if (!std::get<domainId>(gridVariables_))
+                result = false;
+        });
+        return result;
+    }
+
+    /*!
+     * \brief Returns the coupling mode.
+     */
+    CouplingMode couplingMode() const
+    { return couplingMode_; }
+
 protected:
 
     //! Return a reference to an empty stencil
@@ -535,6 +672,55 @@ protected:
 
 private:
 
+    /*!
+     * \brief Return a reference to the grid variables of a sub problem
+     * \param domainIdx The domain index
+     */
+    template<std::size_t i>
+    const GridVariables<i>& gridVars_(Dune::index_constant<i> domainIdx) const
+    {
+        if (std::get<i>(gridVariables_))
+            return *std::get<i>(gridVariables_);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The gridVariables pointer was not set. Use setGridVariables() before calling this function");
+    }
+
+    /*!
+     * \brief Return a reference to the grid variables of a sub problem
+     * \param domainIdx The domain index
+     */
+    template<std::size_t i>
+    GridVariables<i>& gridVars_(Dune::index_constant<i> domainIdx)
+    {
+        if (std::get<i>(gridVariables_))
+            return *std::get<i>(gridVariables_);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The gridVariables pointer was not set. Use setGridVariables() before calling this function");
+    }
+
+    template<std::size_t i, std::enable_if_t<!getPropValue<SubDomainTypeTag<i>, Properties::EnableGridVolumeVariablesCache>(), int> = 0>
+    VolumeVariables<i>& getVolVarAccess_(Dune::index_constant<i> domainIdx, GridVolumeVariables<i>& gridVolVars, ElementVolumeVariables<i>& elemVolVars, const SubControlVolume<i>& scv)
+    { return elemVolVars[scv]; }
+
+    template<std::size_t i, std::enable_if_t<getPropValue<SubDomainTypeTag<i>, Properties::EnableGridVolumeVariablesCache>(), int> = 0>
+    VolumeVariables<i>& getVolVarAccess_(Dune::index_constant<i> domainIdx, GridVolumeVariables<i>& gridVolVars, ElementVolumeVariables<i>& elemVolVars, const SubControlVolume<i>& scv)
+    { return gridVolVars.volVars(scv); }
+
+    template<std::size_t i, std::enable_if_t<!getPropValue<SubDomainTypeTag<i>, Properties::EnableGridFaceVariablesCache>(), int> = 0>
+    FaceVariables<i>& getFaceVarAccess_(Dune::index_constant<i> domainIdx, GridFaceVariables<i>& gridFaceVariables, ElementFaceVariables<i>& elemFaceVars, const SubControlVolumeFace<i>& scvf)
+    { return elemFaceVars[scvf]; }
+
+    template<std::size_t i, std::enable_if_t<getPropValue<SubDomainTypeTag<i>, Properties::EnableGridFaceVariablesCache>(), int> = 0>
+    FaceVariables<i>& getFaceVarAccess_(Dune::index_constant<i> domainIdx, GridFaceVariables<i>& gridFaceVariables, ElementFaceVariables<i>& elemFaceVars, const SubControlVolumeFace<i>& scvf)
+    { return gridFaceVariables.faceVars(scvf.index()); }
+
+    void printCouplingMode_() const
+    {
+        const std::string mode = couplingMode() == CouplingMode::reconstructPorousMediumPressure ? "porous medium pressure" : "free-flow normal stress";
+        std::cout << "Coupling mode: reconstruct " << mode << std::endl;
+    }
+
+
     std::vector<bool> isCoupledDarcyDof_;
     std::shared_ptr<CouplingData> couplingData_;
 
@@ -544,6 +730,8 @@ private:
     std::unordered_map<std::size_t, std::vector<std::size_t> > darcyToStokesFaceCouplingStencils_;
     std::vector<std::size_t> emptyStencil_;
 
+    CouplingMode couplingMode_;
+
     ////////////////////////////////////////////////////////////////////////////
     //! The coupling context
     ////////////////////////////////////////////////////////////////////////////
@@ -552,6 +740,11 @@ private:
 
     mutable std::size_t boundStokesElemIdx_;
     mutable std::size_t boundDarcyElemIdx_;
+
+    /*!
+    * \brief A tuple of std::shared_ptrs to the grid variables of the sub problems
+    */
+    GridVariablesTuple gridVariables_;
 
     CouplingMapper couplingMapper_;
 };
