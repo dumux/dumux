@@ -87,7 +87,7 @@ public:
         if (isBox && dim > 1)
         {
             // resize to the number of vertices of the grid
-            cellNum_.assign(fvGridGeometry_.gridView().size(dim), 0);
+            cellNum_.assign(fvGridGeometry_.vertexMapper().size(), 0);
 
             for (const auto& element : elements(fvGridGeometry_.gridView()))
                 for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
@@ -120,7 +120,7 @@ public:
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                if (scvf.boundary())
+                if (!scvf.neighbor())
                     continue;
 
                 // insantiate the flux variables
@@ -154,7 +154,7 @@ public:
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                if (scvf.boundary())
+                if (!scvf.neighbor())
                     continue;
 
                 // local position of integration point
