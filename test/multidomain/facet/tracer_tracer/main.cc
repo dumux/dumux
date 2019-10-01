@@ -407,7 +407,7 @@ int main(int argc, char** argv) try
     lowDimGridVariables->init(x[lowDimId]);
 
     // initialize the coupling manager
-    couplingManager->init(bulkProblem, lowDimProblem, bulkGridVariables, lowDimGridVariables, couplingMapper, x);
+    couplingManager->init(bulkProblem, lowDimProblem, bulkGridVariables, lowDimGridVariables, couplingMapper, x, xOld);
 
     // intialize the vtk output modules
     const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
@@ -450,10 +450,6 @@ int main(int argc, char** argv) try
     //! set some check points for the vtk output
     using std::max;
     timeLoop->setPeriodicCheckPoint( max(tEnd/10.0, dt) );
-
-    // set previous solution for storage evaluations
-    assembler->setPreviousSolution(xOld);
-    couplingManager->setPreviousSolution(xOld);
 
     //! start the time loop
     timeLoop->start(); do
