@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup KOmegaModel
- * \copydoc Dumux::KOmegaProblem
+ * \brief K-Omega turbulence model problem base class.
  */
 #ifndef DUMUX_KOMEGA_PROBLEM_HH
 #define DUMUX_KOMEGA_PROBLEM_HH

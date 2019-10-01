@@ -97,7 +97,7 @@ using FieldType = typename FieldTypeImpl<T>::type;
 /*!
  * \brief Integrate a grid function over a grid view
  * \param gg the grid geometry
- * \param f the grid function
+ * \param sol the solution vector
  * \param order the order of the quadrature rule
  */
 template<class GridGeometry, class SolutionVector,
@@ -127,9 +127,9 @@ auto integrateGridFunction(const GridGeometry& gg,
 
 /*!
  * \brief Integrate a function over a grid view
- * \param gv the grid view
- * \param f the first function
- * \param g the second function
+ * \param gg the grid geometry
+ * \param sol1 the first function
+ * \param sol2 the second function
  * \param order the order of the quadrature rule
  * \note dune functions currently doesn't support composing two functions
  */

@@ -40,6 +40,7 @@ namespace Dumux {
  * \brief Writes a container to file
  * \param v The container, requires begin() and end() method
  * \param filename The filename to write to
+ * \param floatPrecision The total number of digits stored, including decimal
  *
  * usage: std::vector<double> v(5, 0.0); writeContainerToFile(v, "myvector.txt");
  */
