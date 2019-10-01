@@ -5,6 +5,9 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 
 ### Improvements and Enhancements
 
+- The `SubControlVolumeFace` classes now implement a `neighbor()` function, which returns true if an outside sub-control volume exists.
+  In most cases this is equivalent to a face not being on the boundary, but e.g. in the case of the box facet-coupling
+  model, outside sub-control volumes are also not available on interiour boundaries, for which the `boundary()` query is false.
 - Added new porous medium model for the energy balance of a porous solid (general heat equation)
 - __Multidomain__: It is now possible to use the facet coupling module together with the mpfa-o scheme in the bulk domain.
 - Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme
