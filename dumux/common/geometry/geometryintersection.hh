@@ -1082,7 +1082,8 @@ public:
      *        published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.3.6)
      * \param is If the geometries collide, is holds the corner points of
      *        the intersection object in global coordinates.
-     * \param a/b/c/p/q \todo Doc me!
+     * \param a/b/c Points of triangle
+     * \param p/q Points of segment
      * \note This overload is used when point-like intersections are seeked
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
