@@ -116,10 +116,12 @@ public:
     }
 
     /*!
-     * \brief Initialize the coupling manager.
+     * \brief Initialize the coupling manager (stationary problems).
      *
      * \param bulkProblem The problem to be solved on the bulk domain
      * \param lowDimProblem The problem to be solved on the lower-dimensional domain
+     * \param bulkGridVariables The grid variables of the bulk domain
+     * \param lowDimGridVariables The grid variables of the lower-dimensional domain
      * \param couplingMapper The mapper object containing the connectivity between the domains
      * \param curSol The current solution
      */
@@ -143,6 +145,31 @@ public:
 
         // store pointer to mapper
         couplingMapperPtr_ = couplingMapper;
+    }
+
+    /*!
+     * \brief Initialize the coupling manager (instationary problems).
+     *
+     * \param bulkProblem The problem to be solved on the bulk domain
+     * \param lowDimProblem The problem to be solved on the lower-dimensional domain
+     * \param bulkGridVariables The grid variables of the bulk domain
+     * \param lowDimGridVariables The grid variables of the lower-dimensional domain
+     * \param couplingMapper The mapper object containing the connectivity between the domains
+     * \param curSol The current solution
+     * \param prevSol The previous solution
+     */
+    void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
+              std::shared_ptr< Problem<lowDimId> > lowDimProblem,
+              std::shared_ptr< GridVariables<bulkId> > bulkGridVariables,
+              std::shared_ptr< GridVariables<lowDimId> > lowDimGridVariables,
+              std::shared_ptr< CouplingMapper > couplingMapper,
+              const SolutionVector& curSol,
+              const SolutionVector& prevSol)
+    {
+        init(bulkProblem, lowDimProblem, bulkGridVariables, lowDimGridVariables, couplingMapper, curSol);
+
+        // pass previous solution vector to base class
+        ParentType::setPreviousSolution(prevSol);
     }
 
     /*!

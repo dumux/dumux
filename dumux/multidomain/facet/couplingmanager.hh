@@ -184,11 +184,14 @@ public:
     }
 
     /*!
-     * \brief Initialize the coupling manager.
+     * \brief Initialize the coupling manager (stationary problems).
      *
      * \param bulkProblem The problem to be solved on the (3d) bulk domain
      * \param facetProblem The problem to be solved on the (2d) facet domain
      * \param edgeProblem The problem to be solved on the (1d) edge domain
+     * \param bulkGridVars The grid variables of the (3d) bulk domain
+     * \param facetGridVars The grid variables of the (2d) facet domain
+     * \param edgeGridVars The grid variables of the (1d) edge domain
      * \param couplingMapper The mapper object containing the connectivity between the domains
      * \param curSol The current solution
      */
@@ -204,6 +207,34 @@ public:
         BulkFacetManager::init(bulkProblem, facetProblem, bulkGridVars, facetGridVars, couplingMapper, curSol);
         FacetEdgeManager::init(facetProblem, edgeProblem, facetGridVars, edgeGridVars, couplingMapper, curSol);
     }
+
+    /*!
+     * \brief Initialize the coupling manager (instationary problems).
+     *
+     * \param bulkProblem The problem to be solved on the (3d) bulk domain
+     * \param facetProblem The problem to be solved on the (2d) facet domain
+     * \param edgeProblem The problem to be solved on the (1d) edge domain
+     * \param bulkGridVars The grid variables of the (3d) bulk domain
+     * \param facetGridVars The grid variables of the (2d) facet domain
+     * \param edgeGridVars The grid variables of the (1d) edge domain
+     * \param couplingMapper The mapper object containing the connectivity between the domains
+     * \param curSol The current solution
+     * \param prevSol The previous solution
+     */
+    void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
+              std::shared_ptr< Problem<facetId> > facetProblem,
+              std::shared_ptr< Problem<edgeId> > edgeProblem,
+              std::shared_ptr< GridVariables<bulkId> > bulkGridVars,
+              std::shared_ptr< GridVariables<facetId> > facetGridVars,
+              std::shared_ptr< GridVariables<edgeId> > edgeGridVars,
+              std::shared_ptr< CouplingMapper > couplingMapper,
+              const SolutionVector& curSol,
+              const SolutionVector& prevSol)
+    {
+        BulkFacetManager::init(bulkProblem, facetProblem, bulkGridVars, facetGridVars, couplingMapper, curSol, prevSol);
+        FacetEdgeManager::init(facetProblem, edgeProblem, facetGridVars, edgeGridVars, couplingMapper, curSol, prevSol);
+    }
+
 
     //! Pull up functionalities from the parent classes
     using BulkFacetManager::couplingStencil;
