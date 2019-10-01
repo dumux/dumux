@@ -897,7 +897,7 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
  * primary variables. In case the method is called after the Transport,
  * i.e. at the end / post time step, CellData2p2c.reset() resets the volume
  * derivatives for the next time step.
- * \param elementI The element
+ * \param element The element
  * \param postTimeStep Flag indicating if we have just completed a time step
  */
 template<class TypeTag>

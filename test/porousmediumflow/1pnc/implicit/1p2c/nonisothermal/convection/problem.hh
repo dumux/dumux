@@ -300,6 +300,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache The cache related to flux computation
      * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux

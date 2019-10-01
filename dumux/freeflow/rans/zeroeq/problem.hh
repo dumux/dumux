@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup ZeroEqModel
- * \copydoc Dumux::ZeroEqProblem
+ * \brief Zero-equation turbulence problem base class.
  */
 #ifndef DUMUX_ZEROEQ_PROBLEM_HH
 #define DUMUX_ZEROEQ_PROBLEM_HH

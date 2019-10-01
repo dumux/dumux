@@ -117,6 +117,7 @@ public:
      * \brief Read a grid from a vtk/vtu/vtp file, ignoring cell and point data
      * \note use this signature if the factory might be needed outside to interpret the data via the factory's insertion indices
      * \param verbose if the output should be verbose
+     * \param factory the (emtpy) grid factory
      */
     template<class Grid>
     std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, bool verbose = false) const

@@ -252,6 +252,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scv The sub control volume
+     * \param pvIdx The primary variable index in the solution vector
      */
     template<class Element, class FVElementGeometry, class SubControlVolume>
     bool isDirichletCell(const Element& element,

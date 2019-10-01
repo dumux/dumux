@@ -45,6 +45,7 @@ namespace Dumux {
  * \param fvGridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
  *
  * \return Dune::FieldVector with as many entries as dimension of
  *         the PrimaryVariables object (i.e. numEq). Each entry is

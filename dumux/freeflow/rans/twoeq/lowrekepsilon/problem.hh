@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup LowReKEpsilonModel
- * \copydoc Dumux::LowReKEpsilonProblem
+ * \brief Low-Re k-epsilon turbulence problem base class.
  */
 #ifndef DUMUX_LOWREKEPSILON_PROBLEM_HH
 #define DUMUX_LOWREKEPSILON_PROBLEM_HH

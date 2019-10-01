@@ -112,7 +112,7 @@
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup BoxDFMModel boxdfm
-     * \brief \todo
+     * \brief Vertex-centered, continuous-pressure, conforming lower-dimensional discrete-fracture model
      * \copydetails ./porousmediumflow/boxdfm/model.hh
      */
     /*!
@@ -182,7 +182,7 @@
 /* ***************** FreeflowModels ******************/
 /*!
  * \defgroup FreeflowModels Free Flow Models
- * \brief Single-phase models basing on the Navier-Stokes equation
+ * \brief Single-phase models based on the Navier-Stokes equation
  */
     /*!
      * \ingroup FreeflowModels
@@ -251,7 +251,7 @@
      */
 /*!
  * \defgroup Geomechanics Geomechanics Models
- * \brief Models for taking into account solid deformation
+ * \brief Models taking into account solid deformation
  */
     /*!
      * \ingroup Geomechanics
@@ -460,7 +460,7 @@
 /* ***************** Flux ******************/
 /*!
  * \defgroup Flux Flux
- * \brief All flux related things available in DuMu<sup>x</sup>
+ * \brief Everything flux related in DuMu<sup>x</sup>
  */
     /*!
      * \ingroup Flux
@@ -495,7 +495,7 @@
 /* ***************** Material ******************/
 /*!
  * \defgroup Material Material and Fluid Framework
- * \brief The DuMu<sup>x</sup> material and fluid framework with constitutive laws and physics
+ * \brief The material and fluid framework with constitutive laws and mixture physics
  * \par
  * Short description of the most important concepts of the material and fluid framework:
  *
@@ -700,15 +700,15 @@
 /* ***************** InputOutput ******************/
 /*!
  * \defgroup InputOutput Input Output
- * \brief Classes and functions dealing with input and output of data and grids
+ * \brief Input and output of data and grids
  */
 
 /* ***************** MultiDomain ******************/
 /*!
  * \defgroup MultiDomain Multidomain simulations
- * \brief Classes to run problems with multiple domains
+ * \brief Coupling of several regular DuMu<sup>x</sup> problems
  *
- * The multi domain module allows to couple regular DuMu<sup>x</sup> problems.
+ * The multi domain module allows coupling regular DuMu<sup>x</sup> problems.
  * Several coupling modes are currently available.
  */
     /*!

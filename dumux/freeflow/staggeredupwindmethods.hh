@@ -38,7 +38,7 @@ enum class TvdApproach
     none, uniform, li, hou
 };
 
-//! \biraf Available differencing schemes
+//! \brief Available differencing schemes
 enum class DifferencingScheme
 {
     none, vanleer, vanalbada, minmod, superbee, umist, mclimiter, wahyd
