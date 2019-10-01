@@ -157,9 +157,9 @@ public:
                                 : branchingFacetX(problem, element, fvGeometry, elemVolVars,
                                                    elemFluxVarsCache, scvf, xInside, tij, phaseIdx, compIdx);
 
-            const auto rhoInside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? insideVolVars.density(phaseIdx) :  insideVolVars.molarDensity(phaseIdx);
+            const auto rhoInside = Dumux::massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
 
-            const auto rhoOutside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? outsideVolVars.density(phaseIdx) :  outsideVolVars.molarDensity(phaseIdx);
+            const auto rhoOutside = Dumux::massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
 
             const auto rho = scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + rhoOutside)
                                                         : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
@@ -268,7 +268,7 @@ private:
         {
             const auto outsideScvIdx = scvf.outsideScvIdx(i);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto rhoOutside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? outsideVolVars.density(phaseIdx) :  outsideVolVars.molarDensity(phaseIdx);
+            const auto rhoOutside = Dumux::massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
             rho += rhoOutside;
         }
         return rho/(scvf.numOutsideScvs()+1);

@@ -250,19 +250,19 @@ private:
         // use arithmetic mean of the densities around the scvf
         if (!scvf.boundary())
         {
-            const auto rhoInside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? elemVolVars[scvf.insideScvIdx()].density(phaseIdx) :  elemVolVars[scvf.insideScvIdx()].molarDensity(phaseIdx);
+            const auto rhoInside = Dumux::massOrMolarDensity(elemVolVars[scvf.insideScvIdx()], referenceSystem, phaseIdx);
 
             Scalar rho = rhoInside;
             for (const auto outsideIdx : scvf.outsideScvIndices())
             {
-                const auto rhoOutside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? elemVolVars[outsideIdx].density(phaseIdx) :  elemVolVars[outsideIdx].molarDensity(phaseIdx);
+                const auto rhoOutside = Dumux::massOrMolarDensity(elemVolVars[outsideIdx], referenceSystem, phaseIdx);
                 rho += rhoOutside;
             }
             return rho/(scvf.outsideScvIndices().size()+1);
 
         }
         else
-            return (referenceSystem == ReferenceSystemFormulation::massAveraged) ?elemVolVars[scvf.outsideScvIdx()].density(phaseIdx) : elemVolVars[scvf.outsideScvIdx()].molarDensity(phaseIdx);
+            return Dumux::massOrMolarDensity(elemVolVars[scvf.outsideScvIdx()], referenceSystem, phaseIdx);
     }
 
     //! Here we want to calculate the factors with which the diffusion coefficient has to be

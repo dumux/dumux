@@ -96,7 +96,7 @@ public:
         Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
-            const auto massOrMolarDensity = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? elemVolVars[scv].density(phaseIdx) : elemVolVars[scv].molarDensity(phaseIdx);
+            const Scalar massOrMolarDensity = Dumux::massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx);
 
             rho += massOrMolarDensity*shapeValues[scv.indexInElement()][0];
         }
@@ -153,8 +153,7 @@ public:
         const auto& shapeValues = fluxVarCache.shapeValues();
         for (auto&& scv : scvs(fvGeometry))
         {
-            const auto massOrMolarDensity = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? elemVolVars[scv].density(phaseIdx) : elemVolVars[scv].molarDensity(phaseIdx);
-
+            const Scalar massOrMolarDensity = Dumux::massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx);
             rho += massOrMolarDensity*shapeValues[scv.indexInElement()][0];
         }
 

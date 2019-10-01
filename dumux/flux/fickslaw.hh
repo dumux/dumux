@@ -43,6 +43,16 @@ class FicksLawImplementation;
 template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
 using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod, referenceSystem>;
 
+/*!
+ * \ingroup Flux
+ * \brief evaluates the density to be used in Fick's law based on the reference system
+ */
+template<class VolumeVariables>
+auto massOrMolarDensity(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx)
+{
+    return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.density(phaseIdx) : volVars.molarDensity(phaseIdx);
+}
+
 } // end namespace Dumux
 
 #include <dumux/flux/cctpfa/fickslaw.hh>

@@ -95,7 +95,7 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-        const Scalar insideDensity = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? insideVolVars.density() : insideVolVars.molarDensity();
+        const Scalar insideDensity = Dumux::massOrMolarDensity(insideVolVars, referenceSystem, 0);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -118,7 +118,7 @@ public:
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const Scalar outsideD = outsideVolVars.effectiveDiffusivity(0, compIdx) * outsideVolVars.extrusionFactor();
                 const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-                const Scalar outsideDensity = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? outsideVolVars.density() : outsideVolVars.molarDensity();
+                const Scalar outsideDensity = Dumux::massOrMolarDensity(outsideVolVars, referenceSystem, 0);
 
                 const Scalar avgDensity = 0.5*(insideDensity + outsideDensity);
                 const Scalar avgD = harmonicMean(insideD, outsideD, insideDistance, outsideDistance);
