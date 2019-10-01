@@ -250,25 +250,24 @@ private:
         // use arithmetic mean of the densities around the scvf
         if (!scvf.boundary())
         {
-            const auto rhoInside = Dumux::massOrMolarDensity(elemVolVars[scvf.insideScvIdx()], referenceSystem, phaseIdx);
+            const Scalar rhoInside = massOrMolarDensity(elemVolVars[scvf.insideScvIdx()], referenceSystem, phaseIdx);
 
             Scalar rho = rhoInside;
             for (const auto outsideIdx : scvf.outsideScvIndices())
             {
-                const auto rhoOutside = Dumux::massOrMolarDensity(elemVolVars[outsideIdx], referenceSystem, phaseIdx);
+                const Scalar rhoOutside = massOrMolarDensity(elemVolVars[outsideIdx], referenceSystem, phaseIdx);
                 rho += rhoOutside;
             }
             return rho/(scvf.outsideScvIndices().size()+1);
-
         }
         else
-            return Dumux::massOrMolarDensity(elemVolVars[scvf.outsideScvIdx()], referenceSystem, phaseIdx);
+            return massOrMolarDensity(elemVolVars[scvf.outsideScvIdx()], referenceSystem, phaseIdx);
     }
 
     //! Here we want to calculate the factors with which the diffusion coefficient has to be
     //! scaled to get the effective diffusivity. For this we use the effective diffusivity with
     //! a diffusion coefficient of 1.0 as input. Then we scale the transmissibilites during flux
-//     //! calculation (above) with the harmonic average of the two factors
+    //! calculation (above) with the harmonic average of the two factors
     static Scalar computeEffectivityFactor(const ElementVolumeVariables& elemVolVars,
                                            const SubControlVolumeFace& scvf,
                                            const unsigned int phaseIdx)
