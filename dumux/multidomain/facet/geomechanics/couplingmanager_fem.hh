@@ -1351,7 +1351,13 @@ private:
 
             // create sub-segment for this overlap
             const auto curSubSegmentIdx = segment.numSubSegments();
-            segment.addSubSegment( ContactSurfaceSubSegment(is.geometry(), mechElementIdx1, mechElementIdx2) );
+
+            // define master in sub-segment such that orientation matches segment basis
+            const auto d = mechElement2.geometry().center() - mechElement1.geometry().center();
+            if (d*segment.getBasisVector(dimWorld-1) > 0.0)
+                segment.addSubSegment( ContactSurfaceSubSegment(is.geometry(), mechElementIdx1, mechElementIdx2) );
+            else
+                segment.addSubSegment( ContactSurfaceSubSegment(is.geometry(), mechElementIdx2, mechElementIdx1) );
 
             // find those mechanical grid intersections that lie on this overlap
             using MechIntersectionGeometry = typename GridView<mechanicsId>::Intersection::Geometry;
