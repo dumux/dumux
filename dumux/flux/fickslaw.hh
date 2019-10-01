@@ -53,6 +53,16 @@ auto massOrMolarDensity(const VolumeVariables& volVars, ReferenceSystemFormulati
     return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.density(phaseIdx) : volVars.molarDensity(phaseIdx);
 }
 
+/*!
+ * \ingroup Flux
+ * \brief returns the mass or mole fraction to be used in Fick's law based on the reference system
+ */
+template<class VolumeVariables>
+auto massOrMoleFraction(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx, const int compIdx)
+{
+    return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.massFraction(phaseIdx, compIdx) : volVars.moleFraction(phaseIdx, compIdx);
+}
+
 } // end namespace Dumux
 
 #include <dumux/flux/cctpfa/fickslaw.hh>
