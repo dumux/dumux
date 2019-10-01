@@ -1,0 +1,35 @@
+[Darcy.Grid]
+UpperRight = 1 1
+Cells = 40 40
+
+[Stokes.Grid]
+LowerLeft = 0 1
+UpperRight = 1 2
+Cells = 40 40
+
+[Stokes.Problem]
+Name = stokes
+EnableInertiaTerms = false
+
+[Darcy.Problem]
+Name = darcy
+
+[Darcy.SpatialParams]
+Permeability = 1.0
+AlphaBeaversJoseph = 1.0
+
+[Vtk]
+OutputName = test_md_boundary_stokes1p_darcy1p_convergencetest
+
+[Problem]
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 1
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
