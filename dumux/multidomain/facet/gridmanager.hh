@@ -245,8 +245,8 @@ public:
      * \param gridFactoryPtr shared pointer to this (id-th) grid factory
      * \param embeddedEntityMap map containing the lower-dimensional entities for this grid's elements
      * \param adjoinedEntityMap map containing the (d+1)-dimensional elements in which this grid's elements are embedded in
-     * \param gridVertexIndices \todo Doc me!
-     * \param numVerticesInHierarchy \todo Doc me!
+     * \param gridVertexIndices The hierachy's insertion indices that make up this grid
+     * \param numVerticesInHierarchy Total number of vertices in entire grid hierarchy
      */
     template<std::size_t id>
     void setData( std::shared_ptr<Grid<id>> gridPtr,
