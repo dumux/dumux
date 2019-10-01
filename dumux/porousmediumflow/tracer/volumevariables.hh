@@ -107,7 +107,7 @@ public:
     { return fluidDensity_; }
 
     /*!
-     * \brief Returns the average molar mass \f$\mathrm{[kg/mol]}\f$$ the of the fluid phase.
+     * \brief Returns the average molar mass \f$\mathrm{[kg/mol]}\f$ of the fluid phase.
      *
      * \param phaseIdx The phase index
      */
