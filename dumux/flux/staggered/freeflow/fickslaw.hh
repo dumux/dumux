@@ -90,23 +90,24 @@ public:
         if (scvf.boundary() && problem.boundaryTypes(element, scvf).isOutflow(Indices::conti0EqIdx + 1))
             return flux;
 
+        const int phaseIdx = 0;
+
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-        const Scalar insideDensity = Dumux::massOrMolarDensity(insideVolVars, referenceSystem, 0);
+        const Scalar insideDensity = massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            if (compIdx == FluidSystem::getMainComponent(0))
+            if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
-            const auto massOrMoleFractionInside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? insideVolVars.massFraction(compIdx) :  insideVolVars.moleFraction(compIdx);
+            const Scalar massOrMoleFractionInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
+            const Scalar massOrMoleFractionOutside =  massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
 
-            const auto massOrMoleFractionOutside = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? outsideVolVars.massFraction(compIdx) :  outsideVolVars.moleFraction(compIdx);
-
-            const Scalar insideD = insideVolVars.effectiveDiffusivity(0, compIdx) * insideVolVars.extrusionFactor();
+            const Scalar insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx) * insideVolVars.extrusionFactor();
 
             if (scvf.boundary())
             {
@@ -116,9 +117,9 @@ public:
             else
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const Scalar outsideD = outsideVolVars.effectiveDiffusivity(0, compIdx) * outsideVolVars.extrusionFactor();
+                const Scalar outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx) * outsideVolVars.extrusionFactor();
                 const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-                const Scalar outsideDensity = Dumux::massOrMolarDensity(outsideVolVars, referenceSystem, 0);
+                const Scalar outsideDensity = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
 
                 const Scalar avgDensity = 0.5*(insideDensity + outsideDensity);
                 const Scalar avgD = harmonicMean(insideD, outsideD, insideDistance, outsideDistance);
