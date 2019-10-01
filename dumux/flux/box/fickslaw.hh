@@ -95,15 +95,11 @@ public:
         // density interpolation
         Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
-        {
-            const Scalar massOrMolarDensity = Dumux::massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx);
-
-            rho += massOrMolarDensity*shapeValues[scv.indexInElement()][0];
-        }
+            rho += massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx)*shapeValues[scv.indexInElement()][0];
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
+            if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
             // effective diffusion tensors
@@ -125,11 +121,7 @@ public:
             // the mole/mass fraction gradient
             Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto massOrMoleFraction = (referenceSystem == ReferenceSystemFormulation::massAveraged) ? elemVolVars[scv].massFraction(phaseIdx, compIdx) : elemVolVars[scv].moleFraction(phaseIdx, compIdx);
-
-                gradX.axpy(massOrMoleFraction, fluxVarsCache.gradN(scv.indexInElement()));
-            }
+                gradX.axpy(massOrMoleFraction(elemVolVars[scv], referenceSystem, phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
 
             // compute the diffusive flux
             componentFlux[compIdx] = -1.0*rho*vtmv(scvf.unitOuterNormal(), D, gradX)*scvf.area();
@@ -152,10 +144,7 @@ public:
         Scalar rho(0.0);
         const auto& shapeValues = fluxVarCache.shapeValues();
         for (auto&& scv : scvs(fvGeometry))
-        {
-            const Scalar massOrMolarDensity = Dumux::massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx);
-            rho += massOrMolarDensity*shapeValues[scv.indexInElement()][0];
-        }
+            rho += massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx)*shapeValues[scv.indexInElement()][0];
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
