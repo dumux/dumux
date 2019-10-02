@@ -5,32 +5,28 @@ can be found in the local residuals (see Doxygen documentation of the
 model's \texttt{LocalResidual} class).
 
 \subsection{Basic Definitions and Assumptions}
-The basic definitions and assumptions are made, using the example
-of a three-phase three-component system water-NAPL-gas
-\cite{A3:class:2002a}. The modification for other multi-component
-systems is straightforward and can be found, e.\ g., in
-\cite{A3:bielinski:2006,A3:acosta:2006}.
+Basic definitions and assumptions are given. More information can be found e.g. in \cite{A3:acosta:2006,A3:bielinski:2006}.
 
 \begin{description}
+\item[Phases:]
+A \emph{phase} is defined as a continuum having distinct properties (e.g. density and viscosity). If phases are miscible, they contain dissolved portions of the substance of the other phase. 
+Fluid and solid phases are distinguished. The fluid phases have different affinities to the solid phases. The phase, which has a higher affinity to the solid phases is referred to as the (more) wetting phase. In the case of two phases, the less wetting one is called the non-wetting phase. 
+
+For compositional multi-phase models, fluid phases may be composed of several components, while the solid phases are assumed to consist exclusively of a single component. 
+
 \item[Components:]
 The term \emph{component} stands for constituents of the phases which
 can be associated with a unique chemical species, or, more generally, with
-a group of species exploiting similar physical behavior. In this work, we
-assume a water-gas-NAPL system composed of the phases water (subscript
+a group of species exploiting similar physical behavior. For example, Fig. \ref{fig:phaseMassEnergyTransfer} shows a water-gas-NAPL system composed of the phases water (subscript
 $\text{w}$), gas ($\text{g}$), and NAPL ($\text{n}$). These phases are
 composed of the components water (superscript $\text{w}$), the pseudo-component
-air ($\text{a}$), and the organic contaminant ($\text{c}$) (see Fig.
-\ref{fig:phaseMassEnergyTransfer}).
+air ($\text{a}$), and an organic contaminant ($\text{c}$).
 
-\item[Phases:]
-For compositional multi-phase models, \emph{phases}
-are not only matter of a single chemical substance. Instead, their
-composition in general includes several species/components. For mass transfer,
-the component behavior is quite different from the phase behavior.
+The composition of the components in a phase can influence the phase properties. Furthermore, for mass transfer, the phase behavior is quite different from the component behavior.
 
 \item[Equilibrium:]
 For the non-isothermal, multi-phase, multi-component processes in porous media
-we state that the assumption of \emph{local thermodynamic equilibrium}.
+we state the assumption of \emph{local thermodynamic equilibrium}.
 Chemical equilibrium means that the mass/mole fractions of a component in
 different phases are in equilibrium.
 Thermal equilibrium assumes the same temperature for all considered phases.
@@ -38,8 +34,8 @@ Mechanical equilibrium is not valid in a porous medium, since discontinuities
 in pressure can occur across a fluid-fluid interface due to capillary effects.
 
 \item[Notation:]
-The subscript index $\alpha \in \{\text{w}, \text{n}, \text{g}\}$ refers
-to the phase, while the superscript $\kappa \in \{\text{w}, \text{a}, \text{c}\}$
+The subscript index $\alpha$, e.g. $\text{w}, \text{n} \text{ and } \text{g}$ in the example of Fig. \ref{fig:phaseMassEnergyTransfer}, refers
+to the phase, while the superscript $\kappa$, e.g. $\text{w}, \text{a} \text{ and } \text{c}$ in the example of Fig. \ref{fig:phaseMassEnergyTransfer},
 refers to the component.
 \end{description}
 
@@ -120,7 +116,7 @@ $\boldsymbol{v}_\alpha$ & velocity (Darcy or free flow)& & \\
     \filldraw[black!40](6,-0.2) rectangle +(0.3,0.3) node at (6.3,-0.1)[right,black]{Organic contaminant (NAPL)};
     \filldraw[black!70](6,-0.8) rectangle +(0.3,0.3) node at (6.3,-0.75)[right,black]{Solid phase};
   \end{tikzpicture}
-  \caption{Mass and energy transfer between the phases}
+  \caption{Mass and energy transfer between the phases in a water-NAPL-gas system \cite{A3:class:2002a}}
   \label{fig:phaseMassEnergyTransfer}
 \end{figure}
 
@@ -169,14 +165,7 @@ For isotropic porous media, it can be reduced to a scalar quantity $K$.
 % \end{equation}
 
 \newpage
-\subsection[Phases and components]{Phases and components\footref{foot:hommel}}\label{sec:phases_components}
-A phase is defined as a continuum having distinct properties (e.g. density and viscosity). If phases are miscible, they contain dissolved portions of the substance of the other phase. 
-Fluid and solid phases are distinguished. The fluid phases have different affinities to the solid phases. The phase, which has a higher affinity to the solid phases is referred to as the (more) wetting phase. In the case of two phases, the less wetting one is called the non-wetting phase. 
-
-The fluid phases may be composed of several components, while the solid phases are assumed to consist exclusively of a single component. Components are distinct chemical species or a group of chemical species.
-The composition of the components in a phase can influence the phase properties. 
-
-\subsubsection{Mass fraction, mole fraction}\label{sec:mole_frac_molality}
+\subsection[Mass fraction, mole fraction]{Mass fraction, mole fraction\footref{foot:hommel}}\label{sec:mole_frac_molality}
 The composition of a phase is described by mass or mole fractions of the components. 
 The mole fraction $x^\kappa_\alpha$ of component $\kappa$ in phase $\alpha$ is defined as:
 

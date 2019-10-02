@@ -131,7 +131,7 @@ The VTK file format is supported by common visualisation programs like ParaView,
 
 \subsubsection{Customize the VTK output}
 Using the respective \texttt{initOutputModule} function of the model \texttt{IOFields}, a default
-set of variables is stored in the VTK files. It is also possible to add further variables,
+set of variables is defined for the output into the VTK files. It is also possible to add further variables,
 using the member function \texttt{addField} of the \texttt{VtkOutputModule}. For example, to add a variable called \texttt{temperatureExact}:
 \begin{lstlisting}[style=DumuxCode]
 vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
@@ -150,7 +150,7 @@ It is important that the life-time of the added field exceeds the life-time of t
 to the \texttt{addField} function. The vector has to be stored somewhere, e.g. in the program main file.
 
 The second input argument is the name of the additional variable (as it should be written in the VTK files).
-The example above is taken from: \\ \texttt{test/porousmediumflow/1pnc/implicit/test\_1p2cni\_convection\_fv.cc}
+The example above is taken from: \\ \texttt{test/porousmediumflow/1pnc/implicit/1p2c/nonisothermal/convection/main.cc}
 
 \subsubsection{VTK as input format}
 There is support for reading data and grids from VTK files, see subsection \ref{sec:supportedGridFormats}.
