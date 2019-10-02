@@ -60,26 +60,13 @@ int getOrientation(const Dune::FieldVector<ctype, 3>& a,
  * \ingroup Geometry
  * \brief Compute the points making up the convex hull around the given set of unordered points
  * \note We assume that all points are coplanar and there are no indentical points in the list
- * \note This is the overload if we are not allowed to write into the given points vector
- */
-template<int dim, class Points>
-Points grahamConvexHull(const Points& points)
-{
-    auto copyPoints = points;
-    return grahamConvexHull<dim>(copyPoints);
-}
-
-/*!
- * \ingroup Geometry
- * \brief Compute the points making up the convex hull around the given set of unordered points
- * \note We assume that all points are coplanar and there are no indentical points in the list
  * \note This algorithm changes the order of the given points a bit
  *       as they are unordered anyway this shouldn't matter too much
  */
 template<int dim, class ctype,
          std::enable_if_t<(dim==2), int> = 0>
 std::vector<Dune::FieldVector<ctype, 3>>
-grahamConvexHull(std::vector<Dune::FieldVector<ctype, 3>>& points)
+grahamConvexHullImpl(std::vector<Dune::FieldVector<ctype, 3>>& points)
 {
     using Point = Dune::FieldVector<ctype, 3>;
     std::vector<Point> convexHull;
@@ -185,14 +172,14 @@ grahamConvexHull(std::vector<Dune::FieldVector<ctype, 3>>& points)
 template<int dim, class ctype,
          std::enable_if_t<(dim==2), int> = 0>
 std::vector<Dune::FieldVector<ctype, 2>>
-grahamConvexHull(const std::vector<Dune::FieldVector<ctype, 2>>& points)
+grahamConvexHullImpl(const std::vector<Dune::FieldVector<ctype, 2>>& points)
 {
     std::vector<Dune::FieldVector<ctype, 3>> points3D;
     points3D.reserve(points.size());
     std::transform(points.begin(), points.end(), std::back_inserter(points3D),
                    [](const auto& p) { return Dune::FieldVector<ctype, 3>({p[0], p[1], 0.0}); });
 
-    const auto result3D = grahamConvexHull<2>(points3D);
+    const auto result3D = grahamConvexHullImpl<2>(points3D);
 
     std::vector<Dune::FieldVector<ctype, 2>> result2D;
     result2D.reserve(result3D.size());
@@ -200,6 +187,30 @@ grahamConvexHull(const std::vector<Dune::FieldVector<ctype, 2>>& points)
                    [](const auto& p) { return Dune::FieldVector<ctype, 2>({p[0], p[1]}); });
 
     return result2D;
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the points making up the convex hull around the given set of unordered points
+ * \note We assume that all points are coplanar and there are no indentical points in the list
+ */
+template<int dim, class ctype, int dimWorld>
+std::vector<Dune::FieldVector<ctype, dimWorld>> grahamConvexHull(std::vector<Dune::FieldVector<ctype, dimWorld>>& points)
+{
+    return grahamConvexHullImpl<dim>(points);
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the points making up the convex hull around the given set of unordered points
+ * \note We assume that all points are coplanar and there are no indentical points in the list
+ * \note This is the overload if we are not allowed to write into the given points vector
+ */
+template<int dim, class ctype, int dimWorld>
+std::vector<Dune::FieldVector<ctype, dimWorld>> grahamConvexHull(const std::vector<Dune::FieldVector<ctype, dimWorld>>& points)
+{
+    auto copyPoints = points;
+    return grahamConvexHullImpl<dim>(copyPoints);
 }
 
 // deprecated interfaces
