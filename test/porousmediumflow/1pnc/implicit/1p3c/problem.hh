@@ -19,12 +19,12 @@
 /**
  * \file
  * \ingroup OnePNCTests
- * \brief Definition of a problem for the 1pnc problem:
- * Component transport of nitrogen dissolved in the water phase.
+ * \brief Definition of a problem for a 1p3c problem:
+ *        Component transport of N2, CO2 and H2 using the Maxwell-Stefan diffusion law.
  */
 
-#ifndef DUMUX_1P2C_TEST_PROBLEM_HH
-#define DUMUX_1P2C_TEST_PROBLEM_HH
+#ifndef DUMUX_1P3C_TEST_PROBLEM_HH
+#define DUMUX_1P3C_TEST_PROBLEM_HH
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
@@ -74,7 +74,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::MaxwellStefanOnePThreeCTest> { using type = MaxwellStefanOnePThreeCTestProblem<TypeTag>; };
 
 /*!
- * \ingroup NavierStokesNCTests
+ * \ingroup OnePNCTests
  * \brief  A simple fluid system with three components for testing the  multi-component diffusion with the Maxwell-Stefan formulation.
  */
 template<class TypeTag>
@@ -92,9 +92,9 @@ public:
     static constexpr int numPhases = 1;
     static constexpr int numComponents = 3;
 
-    static constexpr int H2Idx = 0;//first major component
-    static constexpr int N2Idx = 1;//second major component
-    static constexpr int CO2Idx = 2;//secondary component
+    static constexpr int H2Idx = 0; //first major component
+    static constexpr int N2Idx = 1; //second major component
+    static constexpr int CO2Idx = 2; //secondary component
 
     //! Human readable component name (index compIdx) (for vtk output)
     static std::string componentName(int compIdx)
@@ -116,9 +116,8 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);;
     }
 
-
     using Base::binaryDiffusionCoefficient;
-   /*!
+    /*!
      * \brief Given a phase's composition, temperature and pressure,
      *        returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$i\f$ and \f$j\f$ in this phase.
@@ -151,14 +150,13 @@ public:
                        << compIIdx << " and " << compJIdx << " is undefined!\n");
     }
     using Base::density;
-   /*!
+    /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, returns its
      *        density \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx index of the phase
      * \param fluidState the fluid state
-     *
      */
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
@@ -170,7 +168,7 @@ public:
     }
 
     using Base::viscosity;
-   /*!
+    /*!
      * \brief Calculates the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
      * \param fluidState An arbitrary fluid state
@@ -227,28 +225,16 @@ struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanOnePThreeCTest> { usin
 
 /*!
  * \ingroup OnePNCTests
- * \brief Definition of a problem for the 1pnc problem:
- *  Component transport of nitrogen dissolved in the water phase.
+ * \brief Definition of a problem for a 1p3c problem:
+ *        Component transport of N2, CO2 and H2.
+
+ * The domain is closed on all sides. H2 constitutes the bulk gas phase.
+ * Initially, there is N2 and CO2 in the left half of the domain,
+ * while only N2 is present in the right half of the domain.
+ * Over time, the concentrations will equilibrate.
  *
- * Nitrogen is dissolved in the water phase and is transported with the
- * water flow from the left side to the right.
+ * This problem uses the \ref OnePNCModel model and the Maxwell-Stefan diffusion law.
  *
- * The model domain is 1m times 1m with a discretization length of 0.05m
- * and homogeneous soil properties (\f$ \mathrm{K=10e-10, \Phi=0.4, \tau=0.28}\f$).
- * Initially, the domain is filled with pure water.
- *
- * At the left side, a Dirichlet condition defines a nitrogen mole fraction
- * of 0.3mol/mol.
- * The water phase flows from the left side to the right due to the applied pressure
- * gradient of 1e5Pa/m. The nitrogen is transported with the water flow
- * and leaves the domain at the right boundary, where again Dirichlet boundary
- * conditions are applied. Here, the nitrogen mole fraction is set to 0.0mol/mol.
- *
- * This problem uses the \ref OnePNCModel model.
- *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box1pnc -parameterFile ./test_box1pnc.input</tt> or
- * <tt>./test_cc1pnc -parameterFile ./test_cc1pnc.input</tt>
  */
 template <class TypeTag>
 class MaxwellStefanOnePThreeCTestProblem : public PorousMediumFlowProblem<TypeTag>
@@ -278,8 +264,8 @@ public:
     {
         name_ = getParam<std::string>("Problem.Name");
 
-        // stating in the console whether mole or mass fractions are used
-        if(useMoles)
+        // stating in the terminal whether mole or mass fractions are used
+        if (useMoles)
             std::cout<<"problem uses mole fractions" << '\n';
         else
             std::cout<<"problem uses mass fractions" << '\n';
@@ -350,7 +336,6 @@ public:
                             x_h2_right += volVars.moleFraction(0,0);
                             j +=1;
                         }
-
                     }
                 }
                 x_co2_left /= i;
@@ -360,7 +345,7 @@ public:
                 x_n2_right /= j;
                 x_h2_right /= j;
 
-                //do a gnuplot
+                // do a gnuplot
                 x_.push_back(time); // in seconds
                 y_.push_back(x_n2_left);
                 y2_.push_back(x_n2_right);
@@ -423,7 +408,6 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param globalPos The position for which the bc type should be evaluated
-     * The units must be according to either using mole or mass fractions (mole/(m^2*s) or kg/(m^2*s)).
      */
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0); }
@@ -439,9 +423,6 @@ public:
      * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
@@ -464,7 +445,6 @@ public:
     // \}
 
 private:
-    static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 
     Dumux::GnuplotInterface<Scalar> gnuplot_;
