@@ -1,7 +1,6 @@
 \section{Parameters in \Dumux}
 \label{sc_parameterfiles}
-Simulation parameters can be parsed to the program via a parameter file or the command line.
-A list of all available parameters is provided in the Doxygen documentation: \texttt{Parameter List}.
+Simulation parameters can be parsed to the program via a parameter file or via the command line.
 
 After having run the example application from section \ref{quick-start-guide} you will
 get the following output at the end of the simulation run
@@ -77,7 +76,7 @@ If you also want to set a default value for a parameter, just add it like this:
 static const TYPE paramname = getParam<TYPE>("GROUPNAME.PARAMNAME", default);
 \end{lstlisting}
 
-As this function call is relatively expensive, the respective variables should always be \texttt{static} (e.g., if used in a loop). When dealing with multiple group names, e.g., in the context of coupled models, the fowolling methods might be more convenient:
+As this function call is relatively expensive, the respective variables should always be \texttt{static} (e.g., if used in a loop). When dealing with multiple group names, e.g., in the context of coupled models, the following methods might be more convenient:
 
 \begin{lstlisting}[name=propsyscars,style=DumuxCode]
 auto modelParamGroup0 = "Model0";

@@ -5,7 +5,7 @@
 
 \paragraph{Issues and Bug Tracking}
 The bug-tracking system \emph{GitLab Issues} offers the possibility to report bugs or discuss new development requests.
-Feel free to register (if you don't have a \emph{Git} account already) and to contribute
+Feel free to register (if you don't have an account at out \emph{Git} yet) and to contribute
 at \url{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/issues}.
 
 \paragraph{Commits, Merges, etc.}
@@ -33,7 +33,7 @@ For the style guide and instructions how to contribute to \Dumux visit
 
 
 \subsection{Tips and Tricks}
-\Dumux users and developers at the LH2 are also referred to the internal Wiki for
+\Dumux users and developers at the LH2 are also referred to the internal confluence pages for
 more information.
 
 \paragraph{Optimized computation vs debugging}
@@ -46,13 +46,13 @@ in your options file. You can also do this in any of the \texttt{CMakeLists.txt}
 set(CMAKE_BUILD_TYPE Debug)
 \end{lstlisting}
 
-Afterwards rerun cmake again (run cmake <path-to-build-dir>).
+Afterwards rerun cmake (run cmake \texttt{$<$path-to-build-dir$>$}).
 
 \paragraph{Dunecontrol for selected modules}
 A complete build using \texttt{dunecontrol} takes some time. In many cases not all modules need to be re-built.
 Pass the flag \texttt{--only=dumux} to \texttt{dunecontrol} for configuring or building only \Dumux. A more
-complex example would be the use of an additional module. Then you have to configure and build only \Dune{}-grid
-and \Dumux by adding \texttt{--only=MODULE,dumux}.
+complex example would be a case in which you have to configure and build only e.g. \Dune{}-grid
+and \Dumux. This is achieved by adding \texttt{--only=MODULE,dumux}.
 
 \paragraph{Patching Files or Modules}
 If you want to send changes to an other developer of \Dumux providing patches
@@ -72,7 +72,7 @@ $ patch -p1 < PATCHFILE
 % See \ref{sc:patchingDUNE} if you need to apply patches to \Dumux or \Dune.
 
 \paragraph{File Name and Line Number by Predefined Macro}
-If you want to  know where some output or debug information came from, use the predefined
+If you want to create output in order to later know where some output or debug information came from, use the predefined
 macros \texttt{\_\_FILE\_\_} and \texttt{\_\_LINE\_\_}:
 \begin{lstlisting}[style=DumuxCode]
 std::cout << "# This was written from "<< __FILE__ << ", line " << __LINE__ << std::endl;

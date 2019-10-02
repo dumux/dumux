@@ -20,7 +20,7 @@ defined for arbitrary levels of the inheritance hierarchy.
 
 \subsection{How-to}
 All source files which use the property system should include
-the header file \path{dumux/common/propertysystem.hh}.
+the header file \path{dumux/common/properties/propertysystem.hh}.
 Declaration of type tags and
 property tags as well as defining properties must be done inside the
 namespace \texttt{Dumux::Properties}.
@@ -269,15 +269,15 @@ make sense for at least one of the nodes of Figure
 follows:
 \begin{lstlisting}[name=propsyscars,style=DumuxCode]
 template<class TypeTag, class MyTypeTag>
+struct GasUsage { using type = UndefinedProperty; }; // [l/100km]
+template<class TypeTag, class MyTypeTag>
 struct TopSpeed { using type = UndefinedProperty; }; // [km/h]
 template<class TypeTag, class MyTypeTag>
 struct NumSeats { using type = UndefinedProperty; }; // []
 template<class TypeTag, class MyTypeTag>
-struct CanonCaliber { using type = UndefinedProperty; }; // [mm]
-template<class TypeTag, class MyTypeTag>
-struct GasUsage { using type = UndefinedProperty; }; // [l/100km]
-template<class TypeTag, class MyTypeTag>
 struct AutomaticTransmission { using type = UndefinedProperty; }; // true/false
+template<class TypeTag, class MyTypeTag>
+struct CanonCaliber { using type = UndefinedProperty; }; // [mm]
 template<class TypeTag, class MyTypeTag>
 struct Payload { using type = UndefinedProperty; }; // [t]
 \end{lstlisting}
