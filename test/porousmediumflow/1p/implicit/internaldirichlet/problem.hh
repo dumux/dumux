@@ -35,7 +35,8 @@ namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePInternalDirichlet {};
-struct OnePInternalDirichletTpfa { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleTpfa>; };
+// internal Dirichlet BC are currently not implemented for cc-models
+//struct OnePInternalDirichletTpfa { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleTpfa>; };
 struct OnePInternalDirichletBox { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleBox>; };
 } // end namespace TTag
 
