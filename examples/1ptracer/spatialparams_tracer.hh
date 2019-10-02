@@ -23,15 +23,15 @@
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 
-// In this file we define spatial properties of the porous medium like permeability and porosity in various functions for the tracer problem. Further spatial dependent properties of the tracer fluid system are defined and in the end two functions handel the calculated volume fluxes from the solution of the 1p problem.
-// In the file properties.hh all properties are declared.
+// In this file, we define spatial properties of the porous medium such as the permeability and the porosity in various functions for the tracer problem. Further, spatial dependent properties of the tracer fluid system are defined and in the end two functions handel the calculated volume fluxes from the solution of the 1p problem.
+// In the file `properties.hh`, all properties are declared.
 #include <dumux/porousmediumflow/properties.hh>
-// As in the 1p spatialparams we inherit from the spatial parameters for single-phase, finite volumes, which we include here.
+// As in the 1p spatialparams, we inherit from the spatial parameters for single-phase, finite volumes, which we include here.
 #include <dumux/material/spatialparams/fv1p.hh>
 // We enter the namespace Dumux
 namespace Dumux {
 
-// In the TracerTestSpatialParams class, we define all functions needed to describe spatially dependent parameters for the tracer_problem.
+// In the `TracerTestSpatialParams` class, we define all functions needed to describe spatially dependent parameters for the `tracer_problem`.
 
 template<class FVGridGeometry, class Scalar>
 class TracerTestSpatialParams
@@ -59,7 +59,7 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.2; }
 
-    // We don't consider dispersivity for the tracer transport. So we set the dispersivity coefficient to zero.
+    // We do not consider dispersivity for the tracer transport. So we set the dispersivity coefficient to zero.
     template<class ElementSolution>
     Scalar dispersivity(const Element &element,
                         const SubControlVolume& scv,
@@ -67,7 +67,7 @@ public:
     { return 0; }
 
     // ### Properties of the fluid system
-    // In the following we define fluid properties that are spatial parameters in the tracer model. They can possible vary with space but are usually constants. Further spatially constant values of the fluid system are defined in the TracerFluidSystem class in problem.hh.
+    // In the following, we define fluid properties that are spatial parameters in the tracer model. They can possible vary with space but are usually constants. Further spatially constant values of the fluid system are defined in the `TracerFluidSystem` class in `problem.hh`.
     // We define the fluid density to a constant value of 1000 $`\frac{kg}{m^3}`$.
     Scalar fluidDensity(const Element &element,
                         const SubControlVolume& scv) const

@@ -17,8 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 // ## The main file
-// This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using newton's method
-
+// This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method
 // ### Includes
 #include <config.h>
 
@@ -36,7 +35,7 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-// In Dumux a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh.
+// In Dumux, a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh.
 #include <dumux/common/properties.hh>
 // The following file contains the parameter class, which manages the definition of input parameters by a default value, the inputfile or the command line.
 #include <dumux/common/parameters.hh>
@@ -46,9 +45,9 @@
 
 //we include the linear solver to be used to solve the linear system
 #include <dumux/linear/amgbackend.hh>
-//we include the nonlinear newtons method
+//we include the nonlinear Newton's method
 #include <dumux/nonlinear/newtonsolver.hh>
-// Further we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
+// Further, we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
 #include <dumux/assembly/fvassembler.hh>
 // The containing class in the following file defines the different differentiation methods used to compute the derivatives of the residual.
 #include <dumux/assembly/diffmethod.hh>
@@ -59,14 +58,14 @@
 // The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the different supported grid managers.
 #include <dumux/io/grid/gridmanager.hh>
 
-//we include several files which are needed for the adaptive grid
+//We include several files which are needed for the adaptive grid
 #include <dumux/adaptive/adapt.hh>
 #include <dumux/adaptive/markelements.hh>
 #include <dumux/adaptive/initializationindicator.hh>
 #include <dumux/porousmediumflow/2p/griddatatransfer.hh>
 #include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 
-//we include the problem file which defines initial and boundary conditions to describe our example problem
+//We include the problem file which defines initial and boundary conditions to describe our example problem
 #include "problem.hh"
 
 // ### Beginning of the main function
@@ -88,23 +87,20 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // ### Create the grid
-
     // A gridmanager tries to create the grid either from a grid file or the input file.
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
-
+    // The instationary non-linear problem is run on this grid.
+    //
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // ### Setup and solving of the problem
-
+    //
     // #### Setup
     // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-
+    //
     // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
@@ -113,40 +109,40 @@ int main(int argc, char** argv) try
     // In the problem, we define the boundary and initial conditions.
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
-    // We call the `computePointSourceMap` method  to compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the dumux/common/fvproblem.hh. It calls the `addPointSources` method specified in the problem.hh file
+    // We call the `computePointSourceMap` method  to compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the `dumux/common/fvproblem.hh`. It calls the `addPointSources` method specified in the `problem.hh` file.
     problem->computePointSourceMap();
 
-    // we initialize the solution vector
+    // We initialize the solution vector,
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
-    // and then use the solutionvector to intialize the gridVariables
+    // and then use the solution vector to intialize the `gridVariables`.
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
 
-    //we instantiate the indicator for grid adaption & the data transfer, we read some parameters for indicator from the input file
+    //We instantiate the indicator for grid adaption & the data transfer, we read some parameters for indicator from the input file.
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const Scalar refineTol = getParam<Scalar>("Adaptive.RefineTolerance");
     const Scalar coarsenTol = getParam<Scalar>("Adaptive.CoarsenTolerance");
-    // We use an indicator for a two-phase flow problem that is saturation-dependent and defined in the file dumux/porousmediumflow/2p/gridadaptindicator.hh. It allows to set the minimum and maximum allowed refinement levels via the input parameters
+    // We use an indicator for a two-phase flow problem that is saturation-dependent and defined in the file `dumux/porousmediumflow/2p/gridadaptindicator.hh.` It allows to set the minimum and maximum allowed refinement levels via the input parameters.
     TwoPGridAdaptIndicator<TypeTag> indicator(fvGridGeometry);
-    // The data transfer performs the transfer of data on a grid from before to after adaptation and is defined in the file dumux/porousmediumflow/2p/griddatatransfer.hh. Its main functions are to store and reconstruct the primary variables.
+    // The data transfer performs the transfer of data on a grid from before to after adaptation and is defined in the file `dumux/porousmediumflow/2p/griddatatransfer.hh`. Its main functions are to store and reconstruct the primary variables.
     TwoPGridDataTransfer<TypeTag> dataTransfer(problem, fvGridGeometry, gridVariables, x);
 
-    // we do an initial refinement around sources/BCs. We use the GridAdaptInitializationIndicator defined in dumux/adaptive/initializationindicator.hh for that.
+    // We do an initial refinement around sources/BCs. We use the `GridAdaptInitializationIndicator` defined in `dumux/adaptive/initializationindicator.hh` for that.
     GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, fvGridGeometry, gridVariables);
 
-    //we refine up to the maximum level. For every level, the indicator used for the refinement/coarsening is calculated. If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
+    //We refine up to the maximum level. For every level, the indicator used for the refinement/coarsening is calculated. If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
     const auto maxLevel = getParam<std::size_t>("Adaptive.MaxLevel", 0);
     for (std::size_t i = 0; i < maxLevel; ++i)
     {
         //we calculate the initial indicator for adaption for each grid cell using the initial solution x
         initIndicator.calculate(x);
 
-        //we mark the elements that were adapted
+        //and then we mark the elements that were adapted.
         bool wasAdapted = false;
         if (markElements(gridManager.grid(), initIndicator))
             wasAdapted = adapt(gridManager.grid(), dataTransfer);
@@ -182,13 +178,13 @@ int main(int argc, char** argv) try
         problem->computePointSourceMap();
     }
 
-    //we get some time loop parameters from the input file params.input
+    //We get some time loop parameters from the input file params.input
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // We initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model.
+    //and initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model.
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
@@ -218,7 +214,7 @@ int main(int argc, char** argv) try
         // We only want to refine/coarsen after first time step is finished, not before. The initial refinement was already done before the start of the time loop. This means we only refine when the time is greater than 0.
         if (timeLoop->time() > 0)
         {
-            // again we compute the refinement indicator with the TwoPGridAdaptIndicator
+            // again we compute the refinement indicator with the `TwoPGridAdaptIndicator`
             indicator.calculate(x, refineTol, coarsenTol);
 
             //we mark elements and adapt grid if necessary
@@ -240,20 +236,20 @@ int main(int argc, char** argv) try
                 // We update the point source map
                 problem->computePointSourceMap();
             }
-        // we leaf the refinement step
+        // we leave the refinement step
         }
 
-        // Now we start to calculate the new solution of that time step. First we define the old solution as the solution of the previous time step for storage evaluations.
+        // Now, we start to calculate the new solution of that time step. First, we define the old solution as the solution of the previous time step for storage evaluations.
         assembler->setPreviousSolution(xOld);
 
-        // We solve the non-linear system with time step control
+        // We solve the non-linear system with time step control.
         nonLinearSolver.solve(x, *timeLoop);
 
-        //We make the new solution the old solution
+        //We make the new solution the old solution.
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        //We advance to the time loop to the next step
+        //We advance to the time loop to the next step.
         timeLoop->advanceTimeStep();
 
         //We write vtk output for each time step
@@ -270,7 +266,7 @@ int main(int argc, char** argv) try
     timeLoop->finalize(leafGridView.comm());
 
     // ### Final Output
-
+    //
     // print dumux end message
     if (mpiHelper.rank() == 0)
     {

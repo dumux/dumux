@@ -13,7 +13,7 @@ To describe that problem we use a two phase model of two immiscible fluids with 
  \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
 ```
 
-If we insert this into the conservation equations for each phase $$\alpha$$ that leads to:
+If we insert this into the conservation equations for each phase $`\alpha`$ that leads to:
 
 ```math
 \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
@@ -38,7 +38,7 @@ DNAPL enters the model domain at the upper boundary between 1.75m ≤ x ≤ 2m w
 In addition, the DNAPL is injected at a point source at x = 0.502 and y = 3.02 with a rate of 0.1 kg/s.
 
 ## Discretization
-We descritize the equations with a cell-centered finete volume TPFA scheme in space and an implicit Euler scheme in time. We use Newton's method to solve the system of nonlinear equations. For more information about the discretization please have a look at the handbook.
+We discretize the equations with a cell-centered finite volume TPFA scheme in space and an implicit Euler scheme in time. We use Newton's method to solve the system of nonlinear equations. For more information about the discretization please have a look at the [handbook](https://dumux.org/handbook).
 
 ## Adaptive grid
 The grid is adapitvely refined around the injection. The adaptive behaviour can be changed with input parameters in the `params.input` file.
@@ -60,7 +60,7 @@ we include all laws which are needed to define the interaction between the solid
 
 namespace Dumux {
 ```
-In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. defines porosity and permeability
+In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability
 ```cpp
 
 template<class FVGridGeometry, class Scalar>
@@ -96,7 +96,7 @@ we get the position of the lens from the params.input file. The lens is defined 
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 ```
-we set the parameters for the material law (here Van-Genuchten Law). First we set the residual saturations for the wetting phase and the non-wetting phase. lensMaterialParams_ are the material parameters define the material parameters for the lens while outerMaterialParams_ define material marams for the rest of the domain
+we set the parameters for the material law (here Van-Genuchten Law). First we set the residual saturations for the wetting phase and the non-wetting phase. lensMaterialParams_ define the material parameters for the lens while outerMaterialParams_ define material params for the rest of the domain.
 ```cpp
         lensMaterialParams_.setSwr(0.18);
         lensMaterialParams_.setSnr(0.0);
@@ -116,7 +116,7 @@ here we get the permeabilities from the params.input file. In case that no param
         outerK_ = getParam<Scalar>("SpatialParams.outerK", 4.6e-10);
     }
 ```
-We define the (intrinsic) permeability \f$[m^2]\f$. In this test, we use element-wise distributed permeabilities.
+We define the (intrinsic) permeability $`[m^2]`$. In this test, we use element-wise distributed permeabilities.
 ```cpp
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -128,7 +128,7 @@ We define the (intrinsic) permeability \f$[m^2]\f$. In this test, we use element
         return outerK_;
     }
 ```
-We set the porosity \f$[-]\f$ depending on the position
+We set the porosity $`[-]`$ depending on the position
 ```cpp
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
@@ -429,7 +429,7 @@ The saturation of the DNAPL Trichlorethene is zero on our Dirichlet boundary:
 ```
 Third, we specify the values for the Neumann boundaries.
 In our case, we need to specify mass fluxes for our two liquid phases.
-Inflow is denoted by a negative sign, outflow by a positive sign.
+The inflow is denoted by a negative sign, and the outflow by a positive sign.
 ```cpp
       NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
       {
@@ -439,7 +439,7 @@ We initialize the fluxes with zero:
           NumEqVector values(0.0);
 ```
 At the inlet, we specify an inflow for our DNAPL Trichlorethene.
-The units are kg/(m^2 s).
+The units are $`kg/(m^2 s)`$.
 ```cpp
           if (onInlet_(globalPos))
               values[contiDNAPLEqIdx] = -0.04;
@@ -447,7 +447,7 @@ The units are kg/(m^2 s).
           return values;
       }
 ```
-Last, we specify the initial conditions. The initial condition need to be set for all primary variables.
+Last, we specify the initial conditions. The initial condition needs to be set for all primary variables.
 Here, we take the data from the file that we read in previously.
 ```cpp
   PrimaryVariables initial(const Element& element) const
@@ -475,7 +475,7 @@ Fluid properties that depend on temperature will be calculated with this value.
 ```
 Additionally, we set a point source. The point source can be solution dependent.
 It is specified in form of a vector that contains source values for alle phases and positions in space.
-The first entry is a tupel containing the position in space, the second entry contains a tupel with the source (unit kg/s)
+The first entry is a tuple containing the position in space, the second entry contains a tuple with the source (with the unit of $`kg/s`$)
 for the phases (first phase is the water phase, the second phase is the DNAPL Trichlorethene phase).
 ```cpp
   void addPointSources(std::vector<PointSource>& pointSources) const
@@ -529,9 +529,7 @@ We leave the namespace Dumux here, too.
 ## The file `main.cc`
 
 ## The main file
-This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using newton's method
-```cpp
-```
+This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method
 ### Includes
 ```cpp
 #include <config.h>
@@ -553,7 +551,7 @@ Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which 
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 ```
-In Dumux a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh.
+In Dumux, a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh.
 ```cpp
 #include <dumux/common/properties.hh>
 ```
@@ -570,11 +568,11 @@ we include the linear solver to be used to solve the linear system
 ```cpp
 #include <dumux/linear/amgbackend.hh>
 ```
-we include the nonlinear newtons method
+we include the nonlinear Newton's method
 ```cpp
 #include <dumux/nonlinear/newtonsolver.hh>
 ```
-Further we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
+Further, we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
 ```cpp
 #include <dumux/assembly/fvassembler.hh>
 ```
@@ -594,7 +592,7 @@ The gridmanager constructs a grid from the information in the input or grid file
 ```cpp
 #include <dumux/io/grid/gridmanager.hh>
 ```
-we include several files which are needed for the adaptive grid
+We include several files which are needed for the adaptive grid
 ```cpp
 #include <dumux/adaptive/adapt.hh>
 #include <dumux/adaptive/markelements.hh>
@@ -602,7 +600,7 @@ we include several files which are needed for the adaptive grid
 #include <dumux/porousmediumflow/2p/griddatatransfer.hh>
 #include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 ```
-we include the problem file which defines initial and boundary conditions to describe our example problem
+We include the problem file which defines initial and boundary conditions to describe our example problem
 ```cpp
 #include "problem.hh"
 ```
@@ -630,29 +628,22 @@ We parse command line arguments and input file
     Parameters::init(argc, argv);
 ```
 ### Create the grid
-```cpp
-```
 A gridmanager tries to create the grid either from a grid file or the input file.
 ```cpp
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 ```
-//////////////////////////////////////////////////////////
-run instationary non-linear problem on this grid
-//////////////////////////////////////////////////////////
-```cpp
-```
+The instationary non-linear problem is run on this grid.
+
 we compute on the leaf grid view
 ```cpp
     const auto& leafGridView = gridManager.grid().leafGridView();
 ```
 ### Setup and solving of the problem
-```cpp
-```
+
 #### Setup
 We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-```cpp
-```
+
 We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
 ```cpp
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
@@ -664,42 +655,42 @@ In the problem, we define the boundary and initial conditions.
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 ```
-We call the `computePointSourceMap` method to compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the dumux/common/fvproblem.hh. It calls the `addPointSources` method specified in the problem.hh file
+We call the `computePointSourceMap` method to compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the `dumux/common/fvproblem.hh`. It calls the `addPointSources` method specified in the `problem.hh` file.
 ```cpp
     problem->computePointSourceMap();
 ```
-we initialize the solution vector
+We initialize the solution vector,
 ```cpp
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 ```
-and then use the solutionvector to intialize the gridVariables
+and then use the solution vector to intialize the `gridVariables`.
 ```cpp
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
 ```
-we instantiate the indicator for grid adaption & the data transfer, we read some parameters for indicator from the input file
+We instantiate the indicator for grid adaption & the data transfer, we read some parameters for indicator from the input file.
 ```cpp
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const Scalar refineTol = getParam<Scalar>("Adaptive.RefineTolerance");
     const Scalar coarsenTol = getParam<Scalar>("Adaptive.CoarsenTolerance");
 ```
-We use an indicator for a two-phase flow problem that is saturation-dependent and defined in the file dumux/porousmediumflow/2p/gridadaptindicator.hh. It allows to set the minimum and maximum allowed refinement levels via the input parameters
+We use an indicator for a two-phase flow problem that is saturation-dependent and defined in the file `dumux/porousmediumflow/2p/gridadaptindicator.hh.` It allows to set the minimum and maximum allowed refinement levels via the input parameters.
 ```cpp
     TwoPGridAdaptIndicator<TypeTag> indicator(fvGridGeometry);
 ```
-The data transfer performs the transfer of data on a grid from before to after adaptation and is defined in the file dumux/porousmediumflow/2p/griddatatransfer.hh. Its main functions are to store and reconstruct the primary variables.
+The data transfer performs the transfer of data on a grid from before to after adaptation and is defined in the file `dumux/porousmediumflow/2p/griddatatransfer.hh`. Its main functions are to store and reconstruct the primary variables.
 ```cpp
     TwoPGridDataTransfer<TypeTag> dataTransfer(problem, fvGridGeometry, gridVariables, x);
 ```
-we do an initial refinement around sources/BCs. We use the GridAdaptInitializationIndicator defined in dumux/adaptive/initializationindicator.hh for that.
+We do an initial refinement around sources/BCs. We use the `GridAdaptInitializationIndicator` defined in `dumux/adaptive/initializationindicator.hh` for that.
 ```cpp
     GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, fvGridGeometry, gridVariables);
 ```
-we refine up to the maximum level. For every level, the indicator used for the refinement/coarsening is calculated. If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
+We refine up to the maximum level. For every level, the indicator used for the refinement/coarsening is calculated. If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
 ```cpp
     const auto maxLevel = getParam<std::size_t>("Adaptive.MaxLevel", 0);
     for (std::size_t i = 0; i < maxLevel; ++i)
@@ -709,7 +700,7 @@ we calculate the initial indicator for adaption for each grid cell using the ini
 ```cpp
         initIndicator.calculate(x);
 ```
-we mark the elements that were adapted
+and then we mark the elements that were adapted.
 ```cpp
         bool wasAdapted = false;
         if (markElements(gridManager.grid(), initIndicator))
@@ -762,14 +753,14 @@ Update the point source map
         problem->computePointSourceMap();
     }
 ```
-we get some time loop parameters from the input file params.input
+We get some time loop parameters from the input file params.input
 ```cpp
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 ```
-We initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model.
+and initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model.
 ```cpp
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
@@ -808,7 +799,7 @@ We only want to refine/coarsen after first time step is finished, not before. Th
         if (timeLoop->time() > 0)
         {
 ```
-again we compute the refinement indicator with the TwoPGridAdaptIndicator
+again we compute the refinement indicator with the `TwoPGridAdaptIndicator`
 ```cpp
             indicator.calculate(x, refineTol, coarsenTol);
 ```
@@ -844,24 +835,24 @@ We update the point source map
                 problem->computePointSourceMap();
             }
 ```
-we leaf the refinement step
+we leave the refinement step
 ```cpp
         }
 ```
-Now we start to calculate the new solution of that time step. First we define the old solution as the solution of the previous time step for storage evaluations.
+Now, we start to calculate the new solution of that time step. First, we define the old solution as the solution of the previous time step for storage evaluations.
 ```cpp
         assembler->setPreviousSolution(xOld);
 ```
-We solve the non-linear system with time step control
+We solve the non-linear system with time step control.
 ```cpp
         nonLinearSolver.solve(x, *timeLoop);
 ```
-We make the new solution the old solution
+We make the new solution the old solution.
 ```cpp
         xOld = x;
         gridVariables->advanceTimeStep();
 ```
-We advance to the time loop to the next step
+We advance to the time loop to the next step.
 ```cpp
         timeLoop->advanceTimeStep();
 ```
@@ -882,8 +873,7 @@ We set a new dt as suggested by the newton solver for the next time step
     timeLoop->finalize(leafGridView.comm());
 ```
 ### Final Output
-```cpp
-```
+
 print dumux end message
 ```cpp
     if (mpiHelper.rank() == 0)
@@ -921,5 +911,6 @@ catch (...)
 ```
 
 ## Results
+The 2p-infiltration model computes the water saturation distribution after 500 seconds according tthe following figure:
 
 ![](./img/test_2p_pointsource_adaptive.png)
