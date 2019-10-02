@@ -30,6 +30,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dumux/common/geometry/intersectspointgeometry.hh>
 #include <dumux/common/geometry/makegeometry.hh>
+#include <dumux/common/geometry/grahamconvexhull.hh>
 
 //! test if the ordering of the input points has an effect on the resulting geometry
 template<class GlobalPosition>
@@ -40,60 +41,73 @@ void permutatePointsAndTest(const std::vector<GlobalPosition>& cornerPoints,
 {
     std::array<int, 4> s = {0,1,2,3};
 
+    if (Dumux::grahamConvexHull<2>(cornerPoints).size() != 4)
+    {
+        if (verbose)
+            std::cout << "Input points do not span a strictly convex polygon. Skipping." << std::endl;
+        return;
+    }
+
     const auto area = Dumux::makeDuneQuadrilaterial(cornerPoints).volume();
 
     do {
-            std::vector<GlobalPosition> tmp = {cornerPoints[s[0]], cornerPoints[s[1]], cornerPoints[s[2]], cornerPoints[s[3]]};
+            const std::vector<GlobalPosition> corners = {cornerPoints[s[0]], cornerPoints[s[1]], cornerPoints[s[2]], cornerPoints[s[3]]};
 
-            if(verbose)
+            if (Dumux::grahamConvexHull<2>(corners).size() != 4)
             {
-                std::cout << "input corner points: " << std::endl;
-                for(auto&& i : tmp)
-                    std::cout << "(" << i << ")  ";
-                std::cout << std::endl;
+                if (verbose)
+                    std::cout << "Input points do not span a strictly convex polygon. Skipping." << std::endl;
+                continue;
             }
 
-            const auto quad = Dumux::makeDuneQuadrilaterial(tmp);
+            const auto quad = Dumux::makeDuneQuadrilaterial(corners);
 
-            if(verbose)
+            auto printCorners = [&quad]()
+            {
+                std::ostringstream tmp;
+                for (int i = 0; i < quad.corners(); ++i)
+                    tmp << "(" << quad.corner(i) << ")  ";
+                return tmp.str();
+            };
+
+            if (verbose)
             {
                 std::cout << "resulting corners \n";
-                for(int i = 0; i < quad.corners(); ++i)
-                    std::cout << "(" << quad.corner(i) << ")  ";
+                std::cout << printCorners();
                 std::cout << std::endl;
 
                 std::cout << "actual area: " << area << ", area after permuation: " << quad.volume() << std::endl;
             }
 
-            if(!Dune::FloatCmp::eq(quad.volume(), area))
+            if (!Dune::FloatCmp::eq(quad.volume(), area))
                 DUNE_THROW(Dune::InvalidStateException, "Area of quadrilateral after permuation of input points is wrong");
 
-            if(verbose)
+            if (verbose)
                 std::cout  << "checking point intersection: \n";
 
-            for(const auto& p: pointsWithinGeometry)
+            for (const auto& p: pointsWithinGeometry)
             {
-                if(Dumux::intersectsPointGeometry(p, quad))
+                if (Dumux::intersectsPointGeometry(p, quad))
                 {
                     if(verbose)
                         std::cout << "point " << p << " lies within the quadrilateral" << std::endl;
                 }
                 else
-                    DUNE_THROW(Dune::InvalidStateException, "False negative: Check for point " << p << " which is inside the geometry failed");
+                    DUNE_THROW(Dune::InvalidStateException, "False negative: Check for point " << p << " which is inside the geometry " << printCorners() << " failed");
             }
 
-            for(const auto& p : pointsOutsideGeometry)
+            for (const auto& p : pointsOutsideGeometry)
             {
-                if(!Dumux::intersectsPointGeometry(p, quad))
+                if (!Dumux::intersectsPointGeometry(p, quad))
                 {
-                    if(verbose)
+                    if (verbose)
                         std::cout << "point " << p << " lies outside of the quadrilateral" << std::endl;
                 }
                 else
-                    DUNE_THROW(Dune::InvalidStateException, "False positive: Check for point " << p << " which is outside the geometry failed");
+                    DUNE_THROW(Dune::InvalidStateException, "False positive: Check for point " << p << " which is outside the geometry " << printCorners() << "  failed");
             }
 
-    } while(std::next_permutation(s.begin(), s.end()));
+    } while (std::next_permutation(s.begin(), s.end()));
 }
 
 template<class GlobalPosition>
