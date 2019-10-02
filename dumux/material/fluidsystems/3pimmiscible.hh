@@ -121,6 +121,7 @@ public:
             case wPhaseIdx: return WettingFluid::isGas(); break;
             case nPhaseIdx: return NonwettingFluid::isGas(); break;
             case gPhaseIdx: return Gas::isGas(); break;
+            default: DUNE_THROW(Dune::InvalidStateException, "Invalid phase index");
         }
     }
 
@@ -159,6 +160,7 @@ public:
             case wPhaseIdx: return WettingFluid::isCompressible(); break;
             case nPhaseIdx: return NonwettingFluid::isCompressible(); break;
             case gPhaseIdx: return Gas::isCompressible(); break;
+            default: DUNE_THROW(Dune::InvalidStateException, "Invalid phase index");
         }
     }
 
@@ -178,6 +180,7 @@ public:
             case wPhaseIdx: return WettingFluid::isIdealGas(); break;
             case nPhaseIdx: return NonwettingFluid::isIdealGas(); break;
             case gPhaseIdx: return Gas::isIdealGas(); break;
+            default: DUNE_THROW(Dune::InvalidStateException, "Invalid phase index");
         }
     }
 
