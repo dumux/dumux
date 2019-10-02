@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup KEpsilonModel
- * \copydoc Dumux::KEpsilonProblem
+ * \brief K-epsilon turbulence problem base class.
  */
 #ifndef DUMUX_KEPSILON_PROBLEM_HH
 #define DUMUX_KEPSILON_PROBLEM_HH

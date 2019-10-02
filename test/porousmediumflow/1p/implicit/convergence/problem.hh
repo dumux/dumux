@@ -181,7 +181,6 @@ public:
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     * \param globalPos The center of the finite volume for which it is to be set.
      */
     Scalar temperature() const
     { return 283.15; }

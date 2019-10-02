@@ -125,6 +125,7 @@ public:
     /*!
      * \brief Project a solution u into up
      * \param u The solution living on the domain space
+     * \param params Optional parameters for mass matrix solve
      * \return The projection of u into the target space
      */
     template< class BlockType, std::enable_if_t<std::is_convertible<BlockType, ScalarType>::value, int> = 0 >
@@ -162,6 +163,7 @@ public:
     /*!
      * \brief Project a solution u into up
      * \param u The solution living on the domain space
+     * \param params Optional parameters for mass matrix solve
      * \return The projection of u into the target space
      */
     template< class BlockType, std::enable_if_t<!std::is_convertible<BlockType, ScalarType>::value, int> = 0 >

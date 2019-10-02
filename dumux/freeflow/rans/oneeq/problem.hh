@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup OneEqModel
- * \copydoc Dumux::OneEqProblem
+ * \brief One-equation turbulence problem base class.
  */
 #ifndef DUMUX_ONEEQ_PROBLEM_HH
 #define DUMUX_ONEEQ_PROBLEM_HH

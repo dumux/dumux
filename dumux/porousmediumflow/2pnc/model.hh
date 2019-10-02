@@ -28,23 +28,23 @@
  * The solid phases. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ * v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+ * \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
  * \f]
  *
  * By inserting this into the equations for the conservation of the
  * components, one gets one transport equation for each component
- * \f{eqnarray}
- && \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa \phi S_\alpha )}
- {\partial t}
- - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
- \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- (\text{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
- \nonumber \\ \nonumber \\
-    &-& \sum_\alpha \text{div} \left\{{\bf D_{\alpha, pm}^\kappa} \varrho_{\alpha} \text{grad}\, X^\kappa_{\alpha} \right\}
- - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,
- \alpha \in \{w, g\}
- \f}
+ * \f{eqnarray*}{
+ * && \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa \phi S_\alpha )}
+ * {\partial t}
+ * - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
+ * \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+ * (\text{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
+ * \nonumber \\ \nonumber \\
+ *   &-& \sum_\alpha \text{div} \left\{{\bf D_{\alpha, pm}^\kappa} \varrho_{\alpha} \text{grad}\, X^\kappa_{\alpha} \right\}
+ * - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,
+ * \alpha \in \{w, g\}
+ * \f}
  *
  * The solid or mineral phases are assumed to consist of a single component.
  * Their mass balance consist only of a storage and a source term:

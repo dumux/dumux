@@ -308,11 +308,8 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
-     *
-     *        \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     *        \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 281.15K (8°C) , p=0.1MPa)
+     * source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
+     * @ T= 281.15K (8°C) , p=0.1MPa)
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
      * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
      */
