@@ -45,7 +45,7 @@ constructed with a \texttt{Dune::GridView} object and a mapper, in order to cons
 parallel index set needed for communication.
 
 \begin{lstlisting}[style=DumuxCode]
-auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 \end{lstlisting}
 
 \subsection{Run a Parallel Application}
