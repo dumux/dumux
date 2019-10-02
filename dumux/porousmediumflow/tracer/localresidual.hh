@@ -242,24 +242,22 @@ public:
         const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
 
-        const auto insideWeight = std::signbit(volFlux) ? (1.0 - upwindWeight) : upwindWeight;
-        const auto outsideWeight = 1.0 - insideWeight;
+        const Scalar insideWeight = std::signbit(volFlux) ? (1.0 - upwindWeight) : upwindWeight;
+        const Scalar outsideWeight = 1.0 - insideWeight;
         const auto advDerivII = volFlux*rho(insideVolVars)*insideWeight;
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
-        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
-
+        const auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         const auto& fluxCache = elemFluxVarsCache[scvf];
-        const auto rhoInside = (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged) ? insideVolVars.density(phaseIdx) :  insideVolVars.molarDensity(phaseIdx);
-
-        const auto rhoOutside = (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged) ? outsideVolVars.density(phaseIdx) :  outsideVolVars.molarDensity(phaseIdx);
-        const auto massOrMolarDensity = 0.5*(rhoInside + rhoOutside);
+        const Scalar rhoInside = massOrMolarDensity(insideVolVars, referenceSystemFormulation, phaseIdx);
+        const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystemFormulation, phaseIdx);
+        const Scalar massOrMolarDensity = 0.5*(rhoInside + rhoOutside);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // diffusive term
-            auto diffDeriv = 0.0;
+            Scalar diffDeriv = 0.0;
             if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
             {
                 diffDeriv = useMoles ? massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)/FluidSystem::molarMass(compIdx)
@@ -268,7 +266,7 @@ public:
             else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
             {
                 diffDeriv = useMoles ? massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)
-                                            : massOrMolarDensity*fluxCache.diffusionTij(phaseIdx,         compIdx)*FluidSystem::molarMass(compIdx);
+                                            : massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx);
             }
             else
                 DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
