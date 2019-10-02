@@ -27,6 +27,7 @@
 #include <limits>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/geometry/grahamconvexhull.hh>
@@ -40,10 +41,12 @@ namespace Dumux {
 template<class CoordScalar>
 bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points, const CoordScalar scale)
 {
-    assert(points.size() == 4);
+    if (points.size() != 4)
+        DUNE_THROW(Dune::InvalidStateException, "Check only works for 4 points!");
+
     // (see "Real-Time Collision Detection" by Christer Ericson)
     Dune::FieldMatrix<CoordScalar, 4, 4> M;
-    for(int i = 0; i < 3; ++i )
+    for (int i = 0; i < 3; ++i )
         M[i] = {points[0][i], points[1][i], points[2][i], points[3][i]};
     M[3] = {1.0*scale, 1.0*scale, 1.0*scale, 1.0*scale};
 
@@ -148,7 +151,8 @@ std::vector<Dune::FieldVector<CoordScalar, 3>> getReorderedPoints(const std::vec
 template<class CoordScalar, bool enableSanityCheck = true>
 auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points)
 {
-    assert(points.size() == 4 && "A quadrilateral needs 4 corner points!");
+    if (points.size() != 4)
+        DUNE_THROW(Dune::InvalidStateException, "A quadrilateral needs 4 corner points!");
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, 3>;
     static constexpr auto coordDim = GlobalPosition::dimension;
@@ -156,7 +160,7 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<CoordScalar, 3>>
     using GeometryType = Dune::MultiLinearGeometry<CoordScalar, dim, coordDim>;
 
     // if no sanity check if desired, use the given points directly to construct the geometry
-    if(!enableSanityCheck)
+    if (!enableSanityCheck)
         return GeometryType(Dune::GeometryTypes::quadrilateral, points);
 
     // compute size
@@ -164,7 +168,7 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<CoordScalar, 3>>
     Dune::FieldVector<CoordScalar, 3> bBoxMax(std::numeric_limits<CoordScalar>::lowest());
     for (const auto& p : points)
     {
-        for (int i=0; i<3; i++)
+        for (int i = 0; i < 3; i++)
         {
             using std::min;
             using std::max;
@@ -176,20 +180,24 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<CoordScalar, 3>>
     const auto size = (bBoxMax - bBoxMin).two_norm();
 
     // otherwise, perform a number of checks and corrections
-    if(!pointsAreCoplanar(points, size))
+    if (!pointsAreCoplanar(points, size))
         DUNE_THROW(Dune::InvalidStateException, "Points do not lie within a plane");
+
+    auto corners = grahamConvexHull<2>(points);
+    if (corners.size() != 4)
+        DUNE_THROW(Dune::InvalidStateException, "Points do not span a strictly convex polygon!");
 
     // make sure points conform with dune ordering
     std::array<int, 4> orientations;
-    auto corners = getReorderedPoints(points, orientations);
+    corners = getReorderedPoints(corners, orientations);
 
-    if(std::any_of(orientations.begin(), orientations.end(), [](auto i){ return i == 0; }))
+    if (std::any_of(orientations.begin(), orientations.end(), [](auto i){ return i == 0; }))
         DUNE_THROW(Dune::InvalidStateException, "More than two points lie on the same line.");
 
     const auto quadrilateral = GeometryType(Dune::GeometryTypes::quadrilateral, corners);
 
     const auto eps = 1e-7;
-    if(quadrilateral.volume() < eps*size*size)
+    if (quadrilateral.volume() < eps*size*size)
         DUNE_THROW(Dune::InvalidStateException, "Something went wrong, geometry has area of zero");
 
     return quadrilateral;
