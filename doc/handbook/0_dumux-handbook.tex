@@ -11,6 +11,7 @@
 \usepackage{enumerate}
 \usepackage{hyperref}
 \usepackage{graphicx}
+\usepackage{mhchem}
 
 \usepackage{listings}
 \usepackage[square,numbers]{natbib}
@@ -124,7 +125,19 @@ how to build the documentation and about external libraries and modules.
 \input{3_detailedinstall}
 
 \chapter{Learning to use \Dumux}\label{chp:tutorial}
+So, you've downloaded your very own copy of \Dumux and its dependencies.
+You've run dunecontrol, and your example ``test$\_$dumux" not only compiles,
+but it even shows a nice simulation in ParaView.
+Maybe you've read through parts of the handbook, and even started looking
+through the Doxygen documentation.
+Well done. What now? \par
+%
+\textit{``How on earth is this going to help me solve my multi-(phase, component,
+	scale, physics) flow and transport problems in porous media systems?''}, you begin to wonder.
+Don't panic! In order to best ease our prospective users and developers into the
+wonderful \Dumux simulation environment, we've prepared a \Dumux course and extensively-documented examples.
 \input{4_course}
+\input{4_examples}
 \input{4_furtherpractice}
 
 \chapter{Overview and Infrastructure}
