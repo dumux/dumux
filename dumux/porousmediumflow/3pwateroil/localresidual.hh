@@ -33,8 +33,6 @@ namespace Dumux {
  * \ingroup ThreePWaterOilModel
  * \brief Element-wise calculation of the local residual for problems
  *        using the ThreePWaterOil fully implicit model.
- *
- * This class is used to fill the gaps in the CompositionalLocalResidual for the 3PWaterOil flow.
  */
 template<class TypeTag>
 class ThreePWaterOilLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
@@ -172,46 +170,28 @@ public:
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
-        const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
-
-        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
-
-        Scalar jNW = 0.0;
-        Scalar jWW = 0.0;
         // diffusive fluxes
-        //check for the reference system and adapt units of the diffusive flux accordingly.
+        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+        const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
+        Scalar jNW = diffusionFluxesWPhase[nCompIdx];
+        // check for the reference system and adapt units of the diffusive flux accordingly.
         if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-            jNW +=  diffusionFluxesWPhase[nCompIdx]/FluidSystem::molarMass(nCompIdx);
-        else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-            jNW +=  diffusionFluxesWPhase[nCompIdx];
-        else
-            DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
-
-        jWW += -(jNW);
+            jNW /=  FluidSystem::molarMass(nCompIdx);
+        const Scalar jWW = -jNW;
 
         const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(gPhaseIdx);
-
-        Scalar jWG = 0.0;
-        Scalar jNG = 0.0;
-
+        Scalar jWG = diffusionFluxesGPhase[wCompIdx];
+        // check for the reference system and adapt units of the diffusive flux accordingly.
         if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-            jWG += diffusionFluxesGPhase[wCompIdx]/FluidSystem::molarMass(wCompIdx);
-        else
-            jWG += diffusionFluxesGPhase[wCompIdx];
-
-        jNG += -(jWG);
+            jWG /= FluidSystem::molarMass(wCompIdx);
+        const Scalar jNG = -jWG;
 
         const auto diffusionFluxesNPhase = fluxVars.molecularDiffusionFlux(nPhaseIdx);
-
-        Scalar jWN = 0.0;
-        Scalar jNN = 0.0;
-
+        Scalar jWN = diffusionFluxesNPhase[wCompIdx];
+        // check for the reference system and adapt units of the diffusive flux accordingly.
         if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-            jWN += diffusionFluxesNPhase[wCompIdx]/FluidSystem::molarMass(wCompIdx);
-        else
-            jWN += diffusionFluxesNPhase[wCompIdx];
-
-        jNN += -jWN;
+            jWN /= FluidSystem::molarMass(wCompIdx);
+        const Scalar jNN = -jWN;
 
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;
