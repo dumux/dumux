@@ -467,17 +467,17 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 
-    Dumux::GnuplotInterface<double> gnuplot_;
-    Dumux::GnuplotInterface<double> gnuplot2_;
-    Dumux::GnuplotInterface<double> gnuplot3_;
+    Dumux::GnuplotInterface<Scalar> gnuplot_;
+    Dumux::GnuplotInterface<Scalar> gnuplot2_;
+    Dumux::GnuplotInterface<Scalar> gnuplot3_;
 
-    std::vector<double> x_;
-    std::vector<double> y_;
-    std::vector<double> y2_;
-    std::vector<double> y3_;
-    std::vector<double> y4_;
-    std::vector<double> y5_;
-    std::vector<double> y6_;
+    std::vector<Scalar> x_;
+    std::vector<Scalar> y_;
+    std::vector<Scalar> y2_;
+    std::vector<Scalar> y3_;
+    std::vector<Scalar> y4_;
+    std::vector<Scalar> y5_;
+    std::vector<Scalar> y6_;
 
     bool plotOutput_;
 };
