@@ -33,7 +33,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
 #warning "start.hh is deprecated. Use new style main files see e.g. /test/porousmediumflow/1p."

@@ -31,7 +31,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/linear/seqsolverbackend.hh>
