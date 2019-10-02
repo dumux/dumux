@@ -33,7 +33,7 @@
  \f[
  \phi \frac{ \partial \varrho X^\kappa}{\partial t}
  - \text{div} \left\lbrace \varrho X^\kappa {\textbf v_f}
- + \varrho D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa \right\rbrace = q.
+ + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = q.
  \f]
  *
  * All equations are discretized using a vertex-centered finite volume (box)

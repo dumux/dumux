@@ -20,7 +20,7 @@
  * \file
  * \ingroup BoxFlux
  * \brief This file contains the data which is required to calculate
- *        diffusive molar fluxes due to molecular diffusion with Fick's law.
+ *        diffusive fluxes due to molecular diffusion with Fick's law.
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
@@ -32,15 +32,15 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
  * \ingroup BoxFlux
  * \brief Specialization of Fick's Law for the box method.
  */
-template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethod::box>
+template <class TypeTag, ReferenceSystemFormulation referenceSystem>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -70,6 +70,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box>
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
+    //return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
 
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
@@ -92,11 +95,11 @@ public:
         // density interpolation
         Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
-            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
+            rho += massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx)*shapeValues[scv.indexInElement()][0];
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
+            if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
             // effective diffusion tensors
@@ -118,7 +121,7 @@ public:
             // the mole/mass fraction gradient
             Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
-                gradX.axpy(elemVolVars[scv].moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
+                gradX.axpy(massOrMoleFraction(elemVolVars[scv], referenceSystem, phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
 
             // compute the diffusive flux
             componentFlux[compIdx] = -1.0*rho*vtmv(scvf.unitOuterNormal(), D, gradX)*scvf.area();
@@ -141,7 +144,7 @@ public:
         Scalar rho(0.0);
         const auto& shapeValues = fluxVarCache.shapeValues();
         for (auto&& scv : scvs(fvGeometry))
-            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
+            rho += massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx)*shapeValues[scv.indexInElement()][0];
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];

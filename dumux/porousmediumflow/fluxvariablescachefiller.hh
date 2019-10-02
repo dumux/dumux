@@ -28,6 +28,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 
 namespace Dumux {
@@ -666,8 +667,8 @@ private:
                                             LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
 
         // assemble vector of mole fractions
-        auto getMoleFraction = [phaseIdx, compIdx] (const auto& volVars) { return volVars.moleFraction(phaseIdx, compIdx); };
-        localAssembler.assembleU(handle.diffusionHandle(), iv, getMoleFraction);
+        auto getMassOrMoleFraction = [phaseIdx, compIdx] (const auto& volVars) { return  (DiffusionType::referenceSystemFormulation()  == ReferenceSystemFormulation::massAveraged) ?volVars.massFraction(phaseIdx, compIdx) : volVars.moleFraction(phaseIdx, compIdx); };
+        localAssembler.assembleU(handle.diffusionHandle(), iv, getMassOrMoleFraction);
     }
 
     //! prepares the quantities necessary for conductive fluxes in the handle
@@ -692,8 +693,8 @@ private:
                                             LambdaFactory::template getHeatConductionLambda<ThermCondModel>());
 
         // assemble vector of temperatures
-        auto getMoleFraction = [] (const auto& volVars) { return volVars.temperature(); };
-        localAssembler.assembleU(handle.heatConductionHandle(), iv, getMoleFraction);
+        auto getTemperature = [] (const auto& volVars) { return volVars.temperature(); };
+        localAssembler.assembleU(handle.heatConductionHandle(), iv, getTemperature);
     }
 
     //! fill handle only when advection uses mpfa

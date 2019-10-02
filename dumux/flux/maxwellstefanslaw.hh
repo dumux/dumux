@@ -27,11 +27,12 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class MaxwellStefansLawImplementation
 {};
 
@@ -39,8 +40,8 @@ class MaxwellStefansLawImplementation
  * \ingroup Flux
  * \brief Evaluates the diffusive mass flux according to Maxwell Stafan's law
  */
-template <class TypeTag>
-using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
+using MaxwellStefansLaw = MaxwellStefansLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod, referenceSystem>;
 
 } // end namespace
 

@@ -33,17 +33,17 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
  * \ingroup CCTpfaFlux
  * \brief Fick's law for cell-centered finite volume schemes with two-point flux approximation
  */
-template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
+template <class TypeTag, ReferenceSystemFormulation referenceSystem>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>
 {
-    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
+    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
@@ -116,6 +116,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 public:
     //! state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+    //! Return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
 
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;
@@ -142,14 +145,17 @@ public:
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-            // the inside and outside mole fractions
-            const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
-            const auto xOutside = scvf.numOutsideScvs() == 1 ? outsideVolVars.moleFraction(phaseIdx, compIdx)
-                                : branchingFacetX(problem, element, fvGeometry, elemVolVars,
-                                                   elemFluxVarsCache, scvf, xInside, tij, phaseIdx, compIdx);
+            // the inside and outside mass/mole fractions fractions
+            const Scalar xInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
+            const Scalar massOrMoleFractionOutside = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
+            const Scalar xOutside = scvf.numOutsideScvs() == 1 ? massOrMoleFractionOutside
+                                  : branchingFacetX(problem, element, fvGeometry, elemVolVars,
+                                                    elemFluxVarsCache, scvf, xInside, tij, phaseIdx, compIdx);
 
-            const auto rhoInside = insideVolVars.molarDensity(phaseIdx);
-            const auto rho = scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + outsideVolVars.molarDensity(phaseIdx))
+            const Scalar rhoInside = massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
+            const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
+
+            const Scalar rho = scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + rhoOutside)
                                                         : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = rho*tij*(xInside - xOutside);
@@ -234,11 +240,12 @@ private:
         {
             const auto outsideScvIdx = scvf.outsideScvIdx(i);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const Scalar massOrMoleFractionOutside = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
             const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
 
-            auto outsideTi = elemFluxVarsCache[flippedScvf].diffusionTij(phaseIdx, compIdx);
+            const Scalar outsideTi = elemFluxVarsCache[flippedScvf].diffusionTij(phaseIdx, compIdx);
             sumTi += outsideTi;
-            sumXTi += outsideTi*outsideVolVars.moleFraction(phaseIdx, compIdx);
+            sumXTi += outsideTi*massOrMoleFractionOutside;
         }
 
         return sumTi > 0 ? sumXTi/sumTi : 0;
@@ -255,7 +262,8 @@ private:
         {
             const auto outsideScvIdx = scvf.outsideScvIdx(i);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            rho += outsideVolVars.molarDensity(phaseIdx);
+            const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
+            rho += rhoOutside;
         }
         return rho/(scvf.numOutsideScvs()+1);
     }

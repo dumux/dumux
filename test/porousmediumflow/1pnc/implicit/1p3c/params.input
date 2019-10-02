@@ -1,0 +1,18 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 70000 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 30 30
+
+[Problem]
+Name = maxwellstefan_1pnc # name passed to the output routines
+EnableGravity = false
+
+[Vtk]
+AddVelocity = true
+
+[Newton]
+MaxRelativeShift = 1e-12
+

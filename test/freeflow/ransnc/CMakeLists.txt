@@ -11,7 +11,7 @@ dune_add_test(NAME test_ff_rans2c_kepsilon_twolayer
                             COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_kepsilon_twolayer-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon_twolayer-00031.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon_twolayer-00032.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon params.input
                              -Problem.Name test_ff_rans2c_kepsilon_twolayer")
 
@@ -46,7 +46,7 @@ dune_add_test(NAME test_ff_rans2c_lowrekepsilon
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_lowrekepsilon-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_lowrekepsilon-00035.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_lowrekepsilon-00036.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_lowrekepsilon params.input
                              -Problem.Name test_ff_rans2c_lowrekepsilon")
 
@@ -71,7 +71,7 @@ dune_add_test(NAME test_ff_rans2c_zeroeq
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_zeroeq-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq-00029.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq-00030.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq params.input
                              -Problem.Name test_ff_rans2c_zeroeq")
 

@@ -30,6 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/common/deprecated.hh>
 
@@ -99,7 +100,7 @@ struct IsSameFluidSystem<FS, FS>
 };
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
@@ -115,8 +116,8 @@ struct IsFicksLaw : public std::false_type {};
  * \brief This structs indicates that Fick's law is used for diffusion.
  * \tparam DiffLaw The diffusion law.
  */
-template<class T, DiscretizationMethod discMethod>
-struct IsFicksLaw<FicksLawImplementation<T, discMethod>> : public std::true_type {};
+template<class T, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
+struct IsFicksLaw<FicksLawImplementation<T, discMethod, referenceSystem>> : public std::true_type {};
 
 /*!
  * \ingroup StokesDarcyCoupling
@@ -423,7 +424,9 @@ protected:
                                 const SubControlVolume<darcyIdx>& scv) const
     {
         using ThermalConductivityModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ThermalConductivityModel>;
-        return ThermalConductivityModel::effectiveThermalConductivity(volVars);
+        const auto& problem = this->couplingManager().problem(darcyIdx);
+        return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
+                 volVars, problem.spatialParams(), fvGeometry.fvGridGeometry().element(scv.elementIndex()), fvGeometry, scv);
     }
 
     /*!
@@ -707,11 +710,13 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
     static constexpr bool isFicksLaw = IsFicksLaw<GetPropType<SubDomainTypeTag<stokesIdx>, Properties::MolecularDiffusionType>>();
-    static_assert(isFicksLaw == IsFicksLaw<GetPropType<SubDomainTypeTag<darcyIdx>,Properties:: MolecularDiffusionType>>(),
+    static_assert(isFicksLaw == IsFicksLaw<GetPropType<SubDomainTypeTag<darcyIdx>, Properties::MolecularDiffusionType>>(),
                   "Both submodels must use the same diffusion law.");
 
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
+
+    using MolecularDiffusionType = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::MolecularDiffusionType>;
 
 public:
     using ParentType::ParentType;
@@ -859,11 +864,18 @@ protected:
         else //maxwell stefan
             diffusiveFlux += diffusiveMolecularFluxMaxwellStefan_(domainI, domainJ, scvf, insideScv, outsideScv, insideVolVars, outsideVolVars);
 
-        if(!useMoles)
+            //convert everything to a molar flux by deviding with molar mass of component
+        if (MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
         {
-            //convert everything to a mass flux
-            for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusiveFlux[compIdx] *= FluidSystem<i>::molarMass(compIdx);
+            if (useMoles)
+                for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    diffusiveFlux[compIdx] *=1/ FluidSystem<i>::molarMass(compIdx);
+        }
+        else
+        {
+           if (!useMoles)
+                for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    diffusiveFlux[compIdx] *=FluidSystem<i>::molarMass(compIdx);
         }
 
         flux += diffusiveFlux;
@@ -962,9 +974,9 @@ protected:
             assert(FluidSystem<i>::componentName(domainICompIdx) == FluidSystem<j>::componentName(domainJCompIdx));
 
             //calculate x_inside
-            const auto xInside = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIdx);
+            const Scalar xInside = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIdx);
             //calculate outside molefraction with the respective transmissibility
-            const auto xOutside = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIdx);
+            const Scalar xOutside = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIdx);
             moleFracInside[domainICompIdx] = xInside;
             moleFracOutside[domainICompIdx] = xOutside;
         }
@@ -977,11 +989,13 @@ protected:
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
             const int domainICompIIdx = couplingCompIdx(domainI, compIIdx);
-            const auto xi = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIIdx);
-            Scalar tin = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompIIdx, couplingCompIdx(domainI, numComponents-1));
+            const Scalar xi = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIIdx);
+            const Scalar avgMolarMass = volVarsI.averageMolarMass(couplingPhaseIdx(domainI));
+            const Scalar Mn = FluidSystem<i>::molarMass(numComponents-1);
+            const Scalar tin = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompIIdx, couplingCompIdx(domainI, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xi/tin;
+            reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xi*avgMolarMass/(tin*Mn);
 
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
@@ -991,10 +1005,12 @@ protected:
                 if (domainICompIIdx == domainICompJIdx)
                     continue;
 
-                const auto xj = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompJIdx);
-                Scalar tij = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompIIdx, domainICompJIdx);
-                reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xj/tij;
-                reducedDiffusionMatrixInside[domainICompIIdx][domainICompJIdx] += xi*(1/tin - 1/tij);
+                const Scalar xj = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompJIdx);
+                const Scalar Mi = FluidSystem<i>::molarMass(domainICompIIdx);
+                const Scalar Mj = FluidSystem<i>::molarMass(domainICompJIdx);
+                const Scalar tij = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompIIdx, domainICompJIdx);
+                reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xj*avgMolarMass/(tij*Mi);
+                reducedDiffusionMatrixInside[domainICompIIdx][domainICompJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
         //outside matrix
@@ -1003,11 +1019,13 @@ protected:
             const int domainJCompIIdx = couplingCompIdx(domainJ, compIIdx);
             const int domainICompIIdx = couplingCompIdx(domainI, compIIdx);
 
-            const auto xi =volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIIdx);
-            Scalar tin =diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, couplingCompIdx(domainJ, numComponents-1));
+            const Scalar xi = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIIdx);
+            const Scalar avgMolarMass = volVarsJ.averageMolarMass(couplingPhaseIdx(domainJ));
+            const Scalar Mn = FluidSystem<i>::molarMass(numComponents-1);
+            const Scalar tin = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, couplingCompIdx(domainJ, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] += xi/tin;
+            reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] +=  xi*avgMolarMass/(tin*Mn);
 
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
@@ -1018,20 +1036,22 @@ protected:
                 if (domainJCompJIdx == domainJCompIIdx)
                     continue;
 
-                const auto xj = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompJIdx);
-                Scalar tij = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, domainJCompJIdx);
-                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] += xj/tij;
-                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompJIdx] += xi*(1/tin - 1/tij);
+                const Scalar xj = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompJIdx);
+                const Scalar Mi = FluidSystem<i>::molarMass(domainJCompIIdx);
+                const Scalar Mj = FluidSystem<i>::molarMass(domainJCompJIdx);
+                const Scalar tij = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, domainJCompJIdx);
+                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] += xj*avgMolarMass/(tij*Mi);
+                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
 
-        Scalar omegai = 1/insideDistance;
-        Scalar omegaj = 1/outsideDistance;
+        const Scalar omegai = 1/insideDistance;
+        const Scalar omegaj = 1/outsideDistance;
 
         reducedDiffusionMatrixInside.invert();
-        reducedDiffusionMatrixInside *= omegai*volVarsI.molarDensity(couplingPhaseIdx(domainI));
+        reducedDiffusionMatrixInside *= omegai*volVarsI.density(couplingPhaseIdx(domainI));
         reducedDiffusionMatrixOutside.invert();
-        reducedDiffusionMatrixOutside *= omegaj*volVarsJ.molarDensity(couplingPhaseIdx(domainJ));
+        reducedDiffusionMatrixOutside *= omegaj*volVarsJ.density(couplingPhaseIdx(domainJ));
 
         //in the helpervector we store the values for x*
         ReducedComponentVector helperVector(0.0);
@@ -1075,19 +1095,24 @@ protected:
     {
         NumEqVector diffusiveFlux(0.0);
 
-        const Scalar avgMolarDensity = 0.5 * volVarsI.molarDensity(couplingPhaseIdx(domainI)) + 0.5 *  volVarsJ.molarDensity(couplingPhaseIdx(domainJ));
+        const Scalar rhoInside = massOrMolarDensity(volVarsI, MolecularDiffusionType::referenceSystemFormulation(), couplingPhaseIdx(domainI));
+        const Scalar rhoOutside = massOrMolarDensity(volVarsJ, MolecularDiffusionType::referenceSystemFormulation(), couplingPhaseIdx(domainJ));
+        const Scalar avgDensity = 0.5 * rhoInside + 0.5 * rhoOutside;
 
         const Scalar insideDistance = this->getDistance_(scvI, scvfI);
         const Scalar outsideDistance = this->getDistance_(scvJ, scvfI);
 
-        for(int compIdx = 1; compIdx < numComponents; ++compIdx)
+        for (int compIdx = 1; compIdx < numComponents; ++compIdx)
         {
             const int domainICompIdx = couplingCompIdx(domainI, compIdx);
             const int domainJCompIdx = couplingCompIdx(domainJ, compIdx);
 
             assert(FluidSystem<i>::componentName(domainICompIdx) == FluidSystem<j>::componentName(domainJCompIdx));
 
-            const Scalar deltaMoleFrac = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIdx) - volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIdx);
+            const Scalar massOrMoleFractionInside = massOrMoleFraction(volVarsI, MolecularDiffusionType::referenceSystemFormulation(), couplingPhaseIdx(domainI), domainICompIdx);
+            const Scalar massOrMoleFractionOutside = massOrMoleFraction(volVarsJ, MolecularDiffusionType::referenceSystemFormulation(), couplingPhaseIdx(domainJ), domainJCompIdx);
+
+            const Scalar deltaMassOrMoleFrac = massOrMoleFractionOutside - massOrMoleFractionInside;
             const Scalar tij = this->transmissibility_(domainI,
                                                        domainJ,
                                                        insideDistance,
@@ -1095,7 +1120,7 @@ protected:
                                                        diffusionCoefficient_(volVarsI, couplingPhaseIdx(domainI), domainICompIdx),
                                                        diffusionCoefficient_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIdx),
                                                        diffCoeffAvgType);
-            diffusiveFlux[domainICompIdx] += -avgMolarDensity * tij * deltaMoleFrac;
+            diffusiveFlux[domainICompIdx] += -avgDensity * tij * deltaMassOrMoleFrac;
         }
 
         const Scalar cumulativeFlux = std::accumulate(diffusiveFlux.begin(), diffusiveFlux.end(), 0.0);
@@ -1146,10 +1171,10 @@ protected:
                                              getComponentEnthalpy(insideVolVars, couplingPhaseIdx(domainI), domainICompIdx)
                                            : getComponentEnthalpy(outsideVolVars, couplingPhaseIdx(domainJ), domainJCompIdx);
 
-            // always use a mass-based calculation for the energy balance
-            diffusiveFlux[domainICompIdx] *= FluidSystem<i>::molarMass(domainICompIdx);
-
-            flux += diffusiveFlux[domainICompIdx] * componentEnthalpy;
+            if (MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                flux += diffusiveFlux[domainICompIdx] * componentEnthalpy;
+            else
+                flux += diffusiveFlux[domainICompIdx] * FluidSystem<i>::molarMass(domainICompIdx) * componentEnthalpy;
         }
 
         return flux;

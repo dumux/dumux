@@ -36,15 +36,15 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class MaxwellStefansLawImplementation;
 
 /*!
  * \ingroup BoxFlux
  * \brief Specialization of Maxwell Stefan's Law for the Box method.
  */
-template <class TypeTag>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
+template <class TypeTag, ReferenceSystemFormulation referenceSystem>
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -65,7 +65,14 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
 
+    static_assert(referenceSystem == ReferenceSystemFormulation::massAveraged, "only the mass averaged reference system is supported for the Maxwell-Stefan formulation");
+
+
 public:
+    //return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
+
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
@@ -87,13 +94,15 @@ public:
         const auto& shapeValues = fluxVarsCache.shapeValues();
 
         Scalar rho(0.0);
+        Scalar avgMolarMass(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
 
             // density interpolation
-            rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
-
+            rho +=  volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
+            //average molar mass interpolation
+            avgMolarMass += volVars.averageMolarMass(phaseIdx)*shapeValues[scv.indexInElement()][0];
             //interpolate the mole fraction for the diffusion matrix
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
             {
@@ -101,7 +110,7 @@ public:
             }
         }
 
-        reducedDiffusionMatrix = setupMSMatrix_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, moleFrac);
+        reducedDiffusionMatrix = setupMSMatrix_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, moleFrac, avgMolarMass);
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
@@ -135,7 +144,8 @@ private:
                                                  const ElementVolumeVariables& elemVolVars,
                                                  const SubControlVolumeFace& scvf,
                                                  const int phaseIdx,
-                                                 const ComponentFluxVector moleFrac)
+                                                 const ComponentFluxVector moleFrac,
+                                                 const Scalar avgMolarMass)
     {
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
@@ -153,15 +163,15 @@ private:
             // effective diffusion tensors
             using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
-            const auto xi = moleFrac[compIIdx];
-
             //calculate diffusivity for i,numComponents
+            const auto xi = moleFrac[compIIdx];
+            const auto Mn = FluidSystem::molarMass(numComponents-1);
             auto tinInside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
             tinInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tinInside);
             auto tinOutside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
             tinOutside = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), tinOutside);
 
-                            // scale by extrusion factor
+            // scale by extrusion factor
             tinInside *= insideVolVars.extrusionFactor();
             tinOutside *= outsideVolVars.extrusionFactor();
 
@@ -169,7 +179,7 @@ private:
             const auto tin = problem.spatialParams().harmonicMean(tinInside, tinOutside, scvf.unitOuterNormal());
 
             //begin the entrys of the diffusion matrix of the diagonal
-            reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
+            reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
 
             // now set the rest of the entries (off-diagonal and additional entries for diagonal)
             for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
@@ -180,6 +190,8 @@ private:
 
                 //calculate diffusivity for compIIdx, compJIdx
                 const auto xj = moleFrac[compJIdx];
+                const auto Mi = FluidSystem::molarMass(compIIdx);
+                const auto Mj = FluidSystem::molarMass(compJIdx);
                 auto tijInside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
                 tijInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tijInside);
                 auto tijOutside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
@@ -192,9 +204,9 @@ private:
                 // the resulting averaged diffusion tensor
                 const auto tij = problem.spatialParams().harmonicMean(tijInside, tijOutside, scvf.unitOuterNormal());
 
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
+                reducedDiffusionMatrix[compIIdx][compIIdx] += xj*avgMolarMass/(tij*Mi);
                 if (compJIdx < numComponents-1)
-                    reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(1/tin - 1/tij);
+                    reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
         return reducedDiffusionMatrix;

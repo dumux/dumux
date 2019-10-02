@@ -38,15 +38,15 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
  * \ingroup StaggeredFlux
  * \brief Specialization of Fick's Law for the staggered free flow method.
  */
-template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
+template <class TypeTag, ReferenceSystemFormulation referenceSystem>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
@@ -67,6 +67,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    //return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
 
     //! state the type for the corresponding cache
     //! We don't cache anything for this law
@@ -87,46 +90,46 @@ public:
         if (scvf.boundary() && problem.boundaryTypes(element, scvf).isOutflow(Indices::conti0EqIdx + 1))
             return flux;
 
+        const int phaseIdx = 0;
+
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-        const Scalar insideMolarDensity = insideVolVars.molarDensity();
+        const Scalar insideDensity = massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            if (compIdx == FluidSystem::getMainComponent(0))
+            if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
-            const Scalar insideMoleFraction = insideVolVars.moleFraction(compIdx);
-            const Scalar outsideMoleFraction = outsideVolVars.moleFraction(compIdx);
+            const Scalar massOrMoleFractionInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
+            const Scalar massOrMoleFractionOutside =  massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
 
-            const Scalar insideD = insideVolVars.effectiveDiffusivity(0, compIdx) * insideVolVars.extrusionFactor();
+            const Scalar insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx) * insideVolVars.extrusionFactor();
 
             if (scvf.boundary())
             {
-                flux[compIdx] = insideMolarDensity * insideD
-                                * (insideMoleFraction - outsideMoleFraction) / insideDistance;
+                flux[compIdx] = insideDensity * insideD
+                                * (massOrMoleFractionInside - massOrMoleFractionOutside) / insideDistance;
             }
             else
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const Scalar outsideD = outsideVolVars.effectiveDiffusivity(0, compIdx) * outsideVolVars.extrusionFactor();
+                const Scalar outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx) * outsideVolVars.extrusionFactor();
                 const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-                const Scalar outsideMolarDensity = outsideVolVars.molarDensity();
+                const Scalar outsideDensity = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
 
-                const Scalar avgDensity = 0.5*(insideMolarDensity + outsideMolarDensity);
+                const Scalar avgDensity = 0.5*(insideDensity + outsideDensity);
                 const Scalar avgD = harmonicMean(insideD, outsideD, insideDistance, outsideDistance);
 
                 flux[compIdx] = avgDensity * avgD
-                                * (insideMoleFraction - outsideMoleFraction) / (insideDistance + outsideDistance);
+                                * (massOrMoleFractionInside - massOrMoleFractionOutside) / (insideDistance + outsideDistance);
             }
         }
 
-        // Fick's law (for binary systems) states that the net flux of moles within the bulk phase has to be zero:
-        // If a given amount of molecules A travel into one direction, the same amount of molecules B have to
-        // go into the opposite direction.
+        // Fick's law (for binary systems) states that the net flux of mass within the bulk phase has to be zero:
         const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
         flux[FluidSystem::getMainComponent(0)] = -cumulativeFlux;
 

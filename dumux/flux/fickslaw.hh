@@ -28,19 +28,40 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod discMethod>
+template <class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
  * \ingroup Flux
  * \brief Evaluates the diffusive mass flux according to Fick's law
  */
-template <class TypeTag>
-using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+template <class TypeTag, ReferenceSystemFormulation referenceSystem =  ReferenceSystemFormulation::massAveraged>
+using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod, referenceSystem>;
+
+/*!
+ * \ingroup Flux
+ * \brief evaluates the density to be used in Fick's law based on the reference system
+ */
+template<class VolumeVariables>
+auto massOrMolarDensity(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx)
+{
+    return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.density(phaseIdx) : volVars.molarDensity(phaseIdx);
+}
+
+/*!
+ * \ingroup Flux
+ * \brief returns the mass or mole fraction to be used in Fick's law based on the reference system
+ */
+template<class VolumeVariables>
+auto massOrMoleFraction(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx, const int compIdx)
+{
+    return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.massFraction(phaseIdx, compIdx) : volVars.moleFraction(phaseIdx, compIdx);
+}
 
 } // end namespace Dumux
 

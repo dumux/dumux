@@ -31,15 +31,15 @@
 namespace Dumux {
 
 //! forward declaration of the method-specific implemetation
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation;
 
 /*!
  * \ingroup CCMpfaFlux
  * \brief Fick's law for cell-centered finite volume schemes with multi-point flux approximation
  */
-template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
+template <class TypeTag, ReferenceSystemFormulation referenceSystem>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -160,7 +160,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
-
+    //return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;
 
@@ -248,13 +250,18 @@ private:
         // use arithmetic mean of the densities around the scvf
         if (!scvf.boundary())
         {
-            Scalar rho = elemVolVars[scvf.insideScvIdx()].molarDensity(phaseIdx);
+            const Scalar rhoInside = massOrMolarDensity(elemVolVars[scvf.insideScvIdx()], referenceSystem, phaseIdx);
+
+            Scalar rho = rhoInside;
             for (const auto outsideIdx : scvf.outsideScvIndices())
-                rho += elemVolVars[outsideIdx].molarDensity(phaseIdx);
+            {
+                const Scalar rhoOutside = massOrMolarDensity(elemVolVars[outsideIdx], referenceSystem, phaseIdx);
+                rho += rhoOutside;
+            }
             return rho/(scvf.outsideScvIndices().size()+1);
         }
         else
-            return elemVolVars[scvf.outsideScvIdx()].molarDensity(phaseIdx);
+            return massOrMolarDensity(elemVolVars[scvf.outsideScvIdx()], referenceSystem, phaseIdx);
     }
 
     //! Here we want to calculate the factors with which the diffusion coefficient has to be

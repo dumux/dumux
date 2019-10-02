@@ -126,6 +126,7 @@ public:
         NumEqVector flux(0.0);
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
 
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         // formulation with mole balances
         if (useMoles)
         {
@@ -138,7 +139,12 @@ public:
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                 // diffusive fluxes
-                flux[compIdx] += diffusiveFluxes[compIdx];
+                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                    flux[compIdx] += diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx);
+                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                    flux[compIdx] += diffusiveFluxes[compIdx];
+                else
+                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
             }
         }
         // formulation with mass balances
@@ -153,7 +159,12 @@ public:
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                 // diffusive fluxes
-                flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                    flux[compIdx] += diffusiveFluxes[compIdx];
+                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                    flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                else
+                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
             }
         }
 
@@ -231,20 +242,34 @@ public:
         const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
 
-        const auto insideWeight = std::signbit(volFlux) ? (1.0 - upwindWeight) : upwindWeight;
-        const auto outsideWeight = 1.0 - insideWeight;
+        const Scalar insideWeight = std::signbit(volFlux) ? (1.0 - upwindWeight) : upwindWeight;
+        const Scalar outsideWeight = 1.0 - insideWeight;
         const auto advDerivII = volFlux*rho(insideVolVars)*insideWeight;
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         const auto& fluxCache = elemFluxVarsCache[scvf];
-        const auto rhoMolar = 0.5*(insideVolVars.molarDensity() + outsideVolVars.molarDensity());
+        const Scalar rhoInside = massOrMolarDensity(insideVolVars, referenceSystemFormulation, phaseIdx);
+        const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystemFormulation, phaseIdx);
+        const Scalar massOrMolarDensity = 0.5*(rhoInside + rhoOutside);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // diffusive term
-            const auto diffDeriv = useMoles ? rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)
-                                            : rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx);
+            Scalar diffDeriv = 0.0;
+            if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+            {
+                diffDeriv = useMoles ? massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)/FluidSystem::molarMass(compIdx)
+                                            : massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx);
+            }
+            else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+            {
+                diffDeriv = useMoles ? massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)
+                                            : massOrMolarDensity*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx);
+            }
+            else
+                DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
 
             derivativeMatrices[scvf.insideScvIdx()][compIdx][compIdx] += (advDerivII + diffDeriv);
             derivativeMatrices[scvf.outsideScvIdx()][compIdx][compIdx] += (advDerivIJ - diffDeriv);
@@ -282,6 +307,7 @@ public:
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         using DiffusionType = GetPropType<T, Properties::MolecularDiffusionType>;
         const auto ti = DiffusionType::calculateTransmissibilities(problem,
                                                                    element,
@@ -298,8 +324,15 @@ public:
             for (const auto& scv : scvs(fvGeometry))
             {
                 // diffusive term
-                const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
-                                                : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                auto diffDeriv = 0.0;
+                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                    diffDeriv += useMoles ? ti[compIdx][scv.indexInElement()]/FluidSystem::molarMass(compIdx)
+                                        : ti[compIdx][scv.indexInElement()];
+                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                    diffDeriv += useMoles ? ti[compIdx][scv.indexInElement()]
+                                            : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                else
+                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
                 A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
                 A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
             }

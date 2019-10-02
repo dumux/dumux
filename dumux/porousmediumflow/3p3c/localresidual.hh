@@ -34,8 +34,6 @@ namespace Dumux
  * \ingroup ThreePThreeCModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the three-phase three-component fully implicit model.
- *
- * This class is used to fill the gaps in BoxLocalResidual for the 3P3C flow.
  */
 template<class TypeTag>
 class ThreePThreeCLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
@@ -137,6 +135,7 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
 
         // get upwind weights into local scope
         NumEqVector flux(0.0);
@@ -161,23 +160,35 @@ public:
         // Add diffusive energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
-        const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
-
         // diffusive fluxes
+        const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
         Scalar jGW = diffusionFluxesWPhase[gCompIdx];
         Scalar jNW = diffusionFluxesWPhase[nCompIdx];
-        Scalar jWW = -(jGW+jNW);
+
+        //check for the reference system and adapt units of the diffusive flux accordingly.
+        if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+        {
+            jGW /= FluidSystem::molarMass(gCompIdx);
+            jNW /= FluidSystem::molarMass(nCompIdx);
+        }
+        const Scalar jWW = -(jGW+jNW);
 
         const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(gPhaseIdx);
-
         Scalar jWG = diffusionFluxesGPhase[wCompIdx];
         Scalar jNG = diffusionFluxesGPhase[nCompIdx];
-        Scalar jGG = -(jWG+jNG);
+
+        //check for the reference system and adapt units of the diffusive flux accordingly.
+        if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+        {
+            jWG /= FluidSystem::molarMass(wCompIdx);
+            jNG /= FluidSystem::molarMass(nCompIdx);
+        }
+        const Scalar jGG = -(jWG+jNG);
 
         // At the moment we do not consider diffusion in the NAPL phase
-        Scalar jWN = 0.0;
-        Scalar jGN = 0.0;
-        Scalar jNN = 0.0;
+        const Scalar jWN = 0.0;
+        const Scalar jGN = 0.0;
+        const Scalar jNN = 0.0;
 
         flux[contiWEqIdx] += jWW+jWG+jWN;
         flux[contiNEqIdx] += jNW+jNG+jNN;

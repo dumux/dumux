@@ -80,8 +80,8 @@ struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanTest> { using type = M
 
 //! A simple fluid system with one MaxwellStefan component
 template<class TypeTag>
-class H2N2CO2FluidSystem
-: public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>, H2N2CO2FluidSystem<TypeTag>>
+class MaxwellStefanTracerFluidSystem
+: public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>, MaxwellStefanTracerFluidSystem<TypeTag>>
 
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -97,18 +97,18 @@ public:
     //! The number of components
     static constexpr int numComponents = 3;
 
-    static constexpr int H2Idx = 0;//first major component
-    static constexpr int N2Idx = 1;//second major component
-    static constexpr int CO2Idx = 2;//secondary component
+    static constexpr int compOneIdx = 0;//first major component
+    static constexpr int compTwoIdx = 1;//second major component
+    static constexpr int compThreeIdx = 2;//secondary component
 
     //! Human readable component name (index compIdx) (for vtk output)
     static std::string componentName(int compIdx)
     {
         switch (compIdx)
         {
-        case H2Idx: return "H2";
-        case N2Idx: return "N2";
-        case CO2Idx:return "CO2";
+        case compOneIdx: return "CompOne";
+        case compTwoIdx: return "CompTwo";
+        case compThreeIdx:return "CompThree";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
@@ -117,17 +117,9 @@ public:
     static std::string phaseName(int phaseIdx = 0)
     { return "Gas"; }
 
-    //! Molar mass in kg/mol of the component with index compIdx
+    //! Molar mass in kg/mol of the component with index compIdx.
     static Scalar molarMass(unsigned int compIdx)
-    {
-        switch (compIdx)
-        {
-        case H2Idx: return 0.002;
-        case N2Idx: return 0.028;
-        case CO2Idx:return 0.044;
-        }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
-    }
+    { return 0.02896; /*air*/ }
 
     //! Binary diffusion coefficient
     //! (might depend on spatial parameters like pressure / temperature)
@@ -136,11 +128,11 @@ public:
                                              const Element& element,
                                              const SubControlVolume& scv)
     {
-      if (compIdx == H2Idx)
+      if (compIdx == compOneIdx)
           return 0;
-      if (compIdx == N2Idx)
+      if (compIdx == compTwoIdx)
           return 83.3e-6;
-      if (compIdx == CO2Idx)
+      if (compIdx == compThreeIdx)
           return 68.0e-6;
        DUNE_THROW(Dune::InvalidStateException,
                        "Binary diffusion coefficient of component "
@@ -161,11 +153,11 @@ public:
             swap(compIIdx, compJIdx);
         }
 
-        if (compIIdx == H2Idx && compJIdx == N2Idx)
+        if (compIIdx == compOneIdx && compJIdx == compTwoIdx)
             return 83.3e-6;
-        if (compIIdx == H2Idx && compJIdx == CO2Idx)
+        if (compIIdx == compOneIdx && compJIdx == compThreeIdx)
             return 68.0e-6;
-        if (compIIdx == N2Idx && compJIdx == CO2Idx)
+        if (compIIdx == compTwoIdx && compJIdx == compThreeIdx)
             return 16.8e-6;
         DUNE_THROW(Dune::InvalidStateException,
                        "Binary diffusion coefficient of components "
@@ -189,7 +181,7 @@ public:
 };
 
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::MaxwellStefanTest> { using type = H2N2CO2FluidSystem<TypeTag>; };
+struct FluidSystem<TypeTag, TTag::MaxwellStefanTest> { using type = MaxwellStefanTracerFluidSystem<TypeTag>; };
 
 } // end namespace Properties
 
@@ -258,12 +250,12 @@ public:
     {
         if (plotOutput_)
         {
-            Scalar x_co2_left = 0.0;
-            Scalar x_n2_left = 0.0;
-            Scalar x_co2_right = 0.0;
-            Scalar x_n2_right = 0.0;
-            Scalar x_h2_left = 0.0;
-            Scalar x_h2_right = 0.0;
+            Scalar x_CompThree_left = 0.0;
+            Scalar x_CompTwo_left = 0.0;
+            Scalar x_CompThree_right = 0.0;
+            Scalar x_CompTwo_right = 0.0;
+            Scalar x_CompOne_left = 0.0;
+            Scalar x_CompOne_right = 0.0;
             Scalar i = 0.0;
             Scalar j = 0.0;
             if (!(time < 0.0))
@@ -282,64 +274,64 @@ public:
 
                         if (globalPos[0] < 0.5)
                         {
-                            x_co2_left += volVars.moleFraction(0,2);
+                            x_CompThree_left += volVars.moleFraction(0,2);
 
-                            x_n2_left += volVars.moleFraction(0,1);
-                            x_h2_left += volVars.moleFraction(0,0);
+                            x_CompTwo_left += volVars.moleFraction(0,1);
+                            x_CompOne_left += volVars.moleFraction(0,0);
                             i +=1;
                         }
                         else
                         {
-                            x_co2_right += volVars.moleFraction(0,2);
-                            x_n2_right += volVars.moleFraction(0,1);
-                            x_h2_right += volVars.moleFraction(0,0);
+                            x_CompThree_right += volVars.moleFraction(0,2);
+                            x_CompTwo_right += volVars.moleFraction(0,1);
+                            x_CompOne_right += volVars.moleFraction(0,0);
                             j +=1;
                         }
 
                     }
                 }
-                x_co2_left /= i;
-                x_n2_left /= i;
-                x_h2_left /= i;
-                x_co2_right /= j;
-                x_n2_right /= j;
-                x_h2_right /= j;
+                x_CompThree_left /= i;
+                x_CompTwo_left /= i;
+                x_CompOne_left /= i;
+                x_CompThree_right /= j;
+                x_CompTwo_right /= j;
+                x_CompOne_right /= j;
 
                 //do a gnuplot
                 x_.push_back(time); // in seconds
-                y_.push_back(x_n2_left);
-                y2_.push_back(x_n2_right);
-                y3_.push_back(x_co2_left);
-                y4_.push_back(x_co2_right);
-                y5_.push_back(x_h2_left);
-                y6_.push_back(x_h2_right);
+                y_.push_back(x_CompTwo_left);
+                y2_.push_back(x_CompTwo_right);
+                y3_.push_back(x_CompThree_left);
+                y4_.push_back(x_CompThree_right);
+                y5_.push_back(x_CompOne_left);
+                y6_.push_back(x_CompOne_right);
 
                 gnuplot_.resetPlot();
                 gnuplot_.setXRange(0, std::min(time, 72000.0));
                 gnuplot_.setYRange(0.4, 0.6);
                 gnuplot_.setXlabel("time [s]");
                 gnuplot_.setYlabel("mole fraction mol/mol");
-                gnuplot_.addDataSetToPlot(x_, y_, "N2_left.dat", "w l t 'N_2 left'");
-                gnuplot_.addDataSetToPlot(x_, y2_, "N2_right.dat", "w l t 'N_2 right'");
-                gnuplot_.plot("mole_fraction_N2");
+                gnuplot_.addDataSetToPlot(x_, y_, "CompTwo_left.dat", "w l t 'CompTwo left'");
+                gnuplot_.addDataSetToPlot(x_, y2_, "CompTwo_right.dat", "w l t 'CompTwo right'");
+                gnuplot_.plot("mole_fraction_CompTwo");
 
                 gnuplot2_.resetPlot();
                 gnuplot2_.setXRange(0, std::min(time, 72000.0));
                 gnuplot2_.setYRange(0.0, 0.6);
                 gnuplot2_.setXlabel("time [s]");
                 gnuplot2_.setYlabel("mole fraction mol/mol");
-                gnuplot2_.addDataSetToPlot(x_, y3_, "CO2_left.dat", "w l t 'CO_2 left'");
-                gnuplot2_.addDataSetToPlot(x_, y4_, "C02_right.dat", "w l t CO_2 right");
-                gnuplot2_.plot("mole_fraction_C02");
+                gnuplot2_.addDataSetToPlot(x_, y3_, "CompThree_left.dat", "w l t 'CompThree left'");
+                gnuplot2_.addDataSetToPlot(x_, y4_, "CompThree_right.dat", "w l t 'CompThree right");
+                gnuplot2_.plot("mole_fraction_CompThree");
 
                 gnuplot3_.resetPlot();
                 gnuplot3_.setXRange(0, std::min(time, 72000.0));
                 gnuplot3_.setYRange(0.0, 0.6);
                 gnuplot3_.setXlabel("time [s]");
                 gnuplot3_.setYlabel("mole fraction mol/mol");
-                gnuplot3_.addDataSetToPlot(x_, y5_, "H2_left.dat", "w l t 'H_2 left'");
-                gnuplot3_.addDataSetToPlot(x_, y6_, "H2_right.dat", "w l t 'H_2 right'");
-                gnuplot3_.plot("mole_fraction_H2");
+                gnuplot3_.addDataSetToPlot(x_, y5_, "CompOne_left.dat", "w l t 'CompOne left'");
+                gnuplot3_.addDataSetToPlot(x_, y6_, "CompOne_right.dat", "w l t 'CompOne right'");
+                gnuplot3_.plot("mole_fraction_CompOne");
            }
         }
     }
@@ -393,15 +385,15 @@ public:
         PrimaryVariables initialValues(0.0);
         if (globalPos[0] < 0.5)
         {
-           initialValues[FluidSystem::H2Idx] = 0.0;
-           initialValues[FluidSystem::N2Idx] = 0.50086;
-           initialValues[FluidSystem::CO2Idx] = 0.49914;
+           initialValues[FluidSystem::compOneIdx] = 0.0;
+           initialValues[FluidSystem::compTwoIdx] = 0.50086;
+           initialValues[FluidSystem::compThreeIdx] = 0.49914;
         }
         else
         {
-           initialValues[FluidSystem::H2Idx] = 0.50121;
-           initialValues[FluidSystem::N2Idx] = 0.49879;
-           initialValues[FluidSystem::CO2Idx] = 0.0;
+           initialValues[FluidSystem::compOneIdx] = 0.50121;
+           initialValues[FluidSystem::compTwoIdx] = 0.49879;
+           initialValues[FluidSystem::compThreeIdx] = 0.0;
         }
         return initialValues;
     }

@@ -59,6 +59,7 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, false>: public GetPropT
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Indices = typename ModelTraits::Indices;
 
     static constexpr int numPhases = ModelTraits::numFluidPhases();
@@ -116,6 +117,10 @@ public:
                     flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
                 // diffusive fluxes (only for the component balances)
+                //check for the reference system and adapt units of the diffusive flux accordingly.
+                if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                    flux[eqIdx] += diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx);
+                else
                     flux[eqIdx] += diffusiveFluxes[compIdx];
             }
 
@@ -271,7 +276,11 @@ public:
                 // do not add diffusive flux of main component, as that is not done in master as well
                 if (compIdx == phaseIdx)
                         continue;
-                flux[eqIdx] += diffusiveFluxes[compIdx];
+                //check for the reference system and adapt units of the diffusive flux accordingly.
+                if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                    flux[eqIdx] += diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx);
+                else
+                    flux[eqIdx] += diffusiveFluxes[compIdx];
             }
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
             EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
