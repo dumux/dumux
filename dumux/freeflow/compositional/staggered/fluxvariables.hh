@@ -75,7 +75,7 @@ public:
 
         const auto diffusiveFluxes = MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
 
-        auto referenceSystemFormulation = MolecularDiffusionType::referenceSystemFormulation();
+        static constexpr auto referenceSystemFormulation = MolecularDiffusionType::referenceSystemFormulation();
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {

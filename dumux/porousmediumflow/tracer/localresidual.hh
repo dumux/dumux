@@ -126,7 +126,7 @@ public:
         NumEqVector flux(0.0);
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
 
-        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         // formulation with mole balances
         if (useMoles)
         {
@@ -248,7 +248,7 @@ public:
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
-        const auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         const auto& fluxCache = elemFluxVarsCache[scvf];
         const Scalar rhoInside = massOrMolarDensity(insideVolVars, referenceSystemFormulation, phaseIdx);
         const Scalar rhoOutside = massOrMolarDensity(outsideVolVars, referenceSystemFormulation, phaseIdx);
@@ -307,7 +307,7 @@ public:
         const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
 
         // diffusive term
-        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         using DiffusionType = GetPropType<T, Properties::MolecularDiffusionType>;
         const auto ti = DiffusionType::calculateTransmissibilities(problem,
                                                                    element,

@@ -171,7 +171,7 @@ public:
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
         // diffusive fluxes
-        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
         Scalar jNW = diffusionFluxesWPhase[nCompIdx];
         // check for the reference system and adapt units of the diffusive flux accordingly.
