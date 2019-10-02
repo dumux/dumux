@@ -135,7 +135,7 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
 
         // get upwind weights into local scope
         NumEqVector flux(0.0);
