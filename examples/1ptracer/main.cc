@@ -21,11 +21,11 @@
 // ### Includes
 #include <config.h>
 
-// We include both problems in the main file, the problem_1p.hh and the problem_tracer.hh.
+// We include both problems in the main file, the `problem_1p.hh` and the `problem_tracer.hh`.
 #include "problem_1p.hh"
 #include "problem_tracer.hh"
 
-// Further we include a standard header file for C++, to get time and date information
+// Further, we include a standard header file for C++, to get time and date information
 #include <ctime>
 // and another one for in- and output.
 #include <iostream>
@@ -36,11 +36,11 @@
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-// In Dumux a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh.
+// In Dumux, a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file `properties.hh`.
 #include <dumux/common/properties.hh>
 // The following file contains the parameter class, which manages the definition of input parameters by a default value, the inputfile or the command line.
 #include <dumux/common/parameters.hh>
-// The file dumuxmessage.hh contains the class defining the start and end message of the simulation.
+// The file `dumuxmessage.hh` contains the class defining the start and end message of the simulation.
 #include <dumux/common/dumuxmessage.hh>
 
 // The following file contains the class, which defines the sequential linear solver backends.
@@ -95,7 +95,7 @@ int main(int argc, char** argv) try
     using OnePProblem = GetPropType<OnePTypeTag, Properties::Problem>;
     auto problemOneP = std::make_shared<OnePProblem>(fvGridGeometry);
 
-    // The jacobian matrix A, the solution vector p and the residual r are parts of the linear system.
+    // The jacobian matrix (`A`), the solution vector (`p`) and the residual (`r`) are parts of the linear system.
     using JacobianMatrix = GetPropType<OnePTypeTag, Properties::JacobianMatrix>;
     using SolutionVector = GetPropType<OnePTypeTag, Properties::SolutionVector>;
     SolutionVector p(leafGridView.size(0));
@@ -114,17 +114,17 @@ int main(int argc, char** argv) try
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, fvGridGeometry, onePGridVariables);
     assemblerOneP->setLinearSystem(A, r);
 
-    // We assemble the local jacobian and the residual and stop the time needed, which is displayed in the terminal output, using the assemblyTimer. Further, we start the timer to evaluate the total time of the assembly, solving and updating.
+    // We assemble the local jacobian and the residual and stop the time needed, which is displayed in the terminal output, using the `assemblyTimer`. Further, we start the timer to evaluate the total time of the assembly, solving and updating.
     Dune::Timer timer;
     Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
     assemblerOneP->assembleJacobianAndResidual(p);
     assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
-    // We want to solve Ax = -r.
+    // We want to solve `Ax = -r`.
     (*r) *= -1.0;
 
     // #### Solution
-    // We set the linear solver "UMFPack" as the linear solver. Afterwards we solve the linear system. The time needed to solve the system is recorded by the solverTimer and displayed in the terminal output.
+    // We set the linear solver "UMFPack" as the linear solver. Afterwards we solve the linear system. The time needed to solve the system is recorded by the `solverTimer` and displayed in the terminal output.
     using LinearSolver = UMFPackBackend;
     Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -138,7 +138,7 @@ int main(int argc, char** argv) try
     updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
 
 
-    // We initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model. We add the pressure data from the solution vector p and the permeability field as output data.
+    // We initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model. We add the pressure data from the solution vector (`p`) and the permeability field as output data.
     using GridView = GetPropType<OnePTypeTag, Properties::GridView>;
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
     onepWriter.addCellData(p, "p");
@@ -221,7 +221,7 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(tracerProblem, fvGridGeometry);
     gridVariables->init(x);
 
-    // We read in some time loop parameters from the input file. The parameter tEnd defines the duration of the simulation, dt the initial time step size and maxDt the maximal time step size.
+    // We read in some time loop parameters from the input file. The parameter `tEnd` defines the duration of the simulation, dt the initial time step size and `maxDt` the maximal time step size.
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
@@ -248,7 +248,7 @@ int main(int argc, char** argv) try
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 
     // #### The time loop
-    // We start the time loop and calculate a new time step as long as tEnd is not reached. In every single time step the problem is assembled and solved.
+    // We start the time loop and calculate a new time step as long as `tEnd` is not reached. In every single time step, the problem is assembled and solved.
     timeLoop->start(); do
     {
         // First we define the old solution as the solution of the previous time step for storage evaluations.
@@ -259,7 +259,7 @@ int main(int argc, char** argv) try
         assembler->assembleJacobianAndResidual(x);
         assembleTimer.stop();
 
-        // We solve the linear system A(xOld-xNew) = r.
+        // We solve the linear system `A(xOld-xNew) = r`.
         Dune::Timer solveTimer;
         SolutionVector xDelta(x);
         linearSolver->solve(*A, xDelta, *r);

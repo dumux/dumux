@@ -208,20 +208,20 @@ public:
 
       // Third, we specify the values for the Neumann boundaries.
       // In our case, we need to specify mass fluxes for our two liquid phases.
-      // Inflow is denoted by a negative sign, outflow by a positive sign.
+      // The inflow is denoted by a negative sign, and the outflow by a positive sign.
       NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
       {
           // We initialize the fluxes with zero:
           NumEqVector values(0.0);
           // At the inlet, we specify an inflow for our DNAPL Trichlorethene.
-          // The units are kg/(m^2 s).
+          // The units are $`kg/(m^2 s)`$.
           if (onInlet_(globalPos))
               values[contiDNAPLEqIdx] = -0.04;
 
           return values;
       }
 
-  // Last, we specify the initial conditions. The initial condition need to be set for all primary variables.
+  // Last, we specify the initial conditions. The initial condition needs to be set for all primary variables.
   // Here, we take the data from the file that we read in previously.
   PrimaryVariables initial(const Element& element) const
   {
@@ -245,7 +245,7 @@ public:
 
   // Additionally, we set a point source. The point source can be solution dependent.
   // It is specified in form of a vector that contains source values for alle phases and positions in space.
-  // The first entry is a tupel containing the position in space, the second entry contains a tupel with the source (unit kg/s)
+  // The first entry is a tuple containing the position in space, the second entry contains a tuple with the source (with the unit of $`kg/s`$)
   // for the phases (first phase is the water phase, the second phase is the DNAPL Trichlorethene phase).
   void addPointSources(std::vector<PointSource>& pointSources) const
   {

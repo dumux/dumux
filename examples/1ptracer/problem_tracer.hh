@@ -23,7 +23,7 @@
 
 //Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
-// Again, we have to include the dune grid interphase:
+// Again, we have to include the dune grid interface:
 #include <dune/grid/yaspgrid.hh>
 // and the cell centered, two-point-flux discretization.
 #include <dumux/discretization/cctpfa.hh>
@@ -46,7 +46,7 @@ class TracerTestProblem;
 
 // We enter the namespace Properties,
 namespace Properties {
-// A TypeTag for our simulation is created which inherits from the tracer model and the
+// A `TypeTag` for our simulation is created which inherits from the tracer model and the
 // cell centered, two-point-flux discretization scheme.
 namespace TTag {
 struct TracerTest { using InheritsFrom = std::tuple<Tracer>; };
@@ -81,17 +81,17 @@ struct SpatialParams<TypeTag, TTag::TracerTest>
 // We define that mass fractions are used to define the concentrations
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = false; };
-// We don't use a solution dependent molecular diffusion coefficient:
+// We do not use a solution dependent molecular diffusion coefficient:
 template<class TypeTag>
 struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTestCC> { static constexpr bool value = false; };
 
-// In the following we create a new tracer fluid system and derive it from the base fluid system.
+// In the following, we create a new tracer fluid system and derive it from the base fluid system.
 template<class TypeTag>
 class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>,
                                                                TracerFluidSystem<TypeTag>>
 {
-    // We define convenient shortcuts to the properties Scalar, Problem, GridView,
-    // Element, FVElementGeometry and SubControlVolume:
+    // We define convenient shortcuts to the properties `Scalar`, `Problem`, `GridView`,
+    // `Element`, `FVElementGeometry` and `SubControlVolume`:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -111,19 +111,19 @@ public:
     // and the number of components
     static constexpr int numComponents = 1;
 
-    // We set the component name for the component index (compIdx) for the vtk output:
+    // We set the component name for the component index (`compIdx`) for the vtk output:
     static std::string componentName(int compIdx)
     { return "tracer_" + std::to_string(compIdx); }
 
-    //We set the phase name for the phase index (phaseIdx) for velocity vtk output:
+    //We set the phase name for the phase index (`phaseIdx`) for velocity vtk output:
     static std::string phaseName(int phaseIdx = 0)
     { return "Groundwater"; }
 
-    // We set the molar mass of the tracer component with index compIdx
+    // We set the molar mass of the tracer component with index `compIdx`.
     static Scalar molarMass(unsigned int compIdx)
     { return 0.300; }
 
-    // And we set the value for the binary diffusion coefficient. This
+    // We set the value for the binary diffusion coefficient. This
     // might depend on spatial parameters like pressure / temperature. But for our case it is 0.0:
     static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
@@ -142,7 +142,7 @@ struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<T
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
+// As this is a porous medium problem, we inherit from the basic `PorousMediumFlowProblem`.
 template <class TypeTag>
 class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
 {

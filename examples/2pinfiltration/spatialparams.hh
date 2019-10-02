@@ -30,7 +30,7 @@
 
 namespace Dumux {
 
-//In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. defines porosity and permeability
+//In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability
 
 template<class FVGridGeometry, class Scalar>
 class TwoPTestSpatialParams
@@ -61,7 +61,7 @@ public:
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
-        //we set the parameters for the material law (here Van-Genuchten Law). First we set the residual saturations for the wetting phase and the non-wetting phase. lensMaterialParams_ are the material parameters define the material parameters for the lens while outerMaterialParams_ define material marams for the rest of the domain
+        //we set the parameters for the material law (here Van-Genuchten Law). First we set the residual saturations for the wetting phase and the non-wetting phase. lensMaterialParams_ define the material parameters for the lens while outerMaterialParams_ define material params for the rest of the domain.
         lensMaterialParams_.setSwr(0.18);
         lensMaterialParams_.setSnr(0.0);
         outerMaterialParams_.setSwr(0.05);
@@ -78,7 +78,7 @@ public:
         outerK_ = getParam<Scalar>("SpatialParams.outerK", 4.6e-10);
     }
 
-    // We define the (intrinsic) permeability \f$[m^2]\f$. In this test, we use element-wise distributed permeabilities.
+    // We define the (intrinsic) permeability $`[m^2]`$. In this test, we use element-wise distributed permeabilities.
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
@@ -89,7 +89,7 @@ public:
         return outerK_;
     }
 
-    // We set the porosity \f$[-]\f$ depending on the position
+    // We set the porosity $`[-]`$ depending on the position
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
          if (isInLens_(globalPos))

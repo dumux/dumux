@@ -13,7 +13,7 @@ To describe that problem we use a two phase model of two immiscible fluids with 
  \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
 ```
 
-If we insert this into the conservation equations for each phase $$\alpha$$ that leads to:
+If we insert this into the conservation equations for each phase $`\alpha`$ that leads to:
 
 ```math
 \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
@@ -38,7 +38,7 @@ DNAPL enters the model domain at the upper boundary between 1.75m ≤ x ≤ 2m w
 In addition, the DNAPL is injected at a point source at x = 0.502 and y = 3.02 with a rate of 0.1 kg/s.
 
 ## Discretization
-We descritize the equations with a cell-centered finete volume TPFA scheme in space and an implicit Euler scheme in time. We use Newton's method to solve the system of nonlinear equations. For more information about the discretization please have a look at the handbook.
+We discretize the equations with a cell-centered finite volume TPFA scheme in space and an implicit Euler scheme in time. We use Newton's method to solve the system of nonlinear equations. For more information about the discretization please have a look at the [handbook](https://dumux.org/handbook).
 
 ## Adaptive grid
 The grid is adapitvely refined around the injection. The adaptive behaviour can be changed with input parameters in the `params.input` file.

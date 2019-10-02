@@ -54,8 +54,7 @@ class OnePTestProblem;
 
 // We enter the namespace Properties, which is a sub-namespace of the namespace Dumux:
 namespace Properties {
-// A TypeTag for our simulation is created which inherits from the one-phase flow model and the
-// cell centered, two-point-flux discretization scheme.
+// A `TypeTag` for our simulation is created which inherits from the one-phase flow model and the cell centered, two-point-flux discretization scheme.
 namespace TTag {
 struct IncompressibleTest { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 }
@@ -72,10 +71,10 @@ struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::IncompressibleTest>
 {
-    // We define convenient shortcuts to the properties FVGridGeometry and Scalar:
+    // We define convenient shortcuts to the properties `FVGridGeometry` and `Scalar`:
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    // Finally we set the spatial parameters:
+    // Finally, we set the spatial parameters:
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
@@ -94,10 +93,10 @@ struct FluidSystem<TypeTag, TTag::IncompressibleTest>
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
-// We enable caching for the grid volume variables
+// We enable caching for the grid volume variables.
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-// We enable caching for the grid flux variables
+// We enable caching for the grid flux variables.
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
 // We enable caching for the FV grid geometry
@@ -109,7 +108,7 @@ struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static con
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
+// As this is a porous medium problem, we inherit from the basic `PorousMediumFlowProblem`.
 template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
