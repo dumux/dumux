@@ -44,6 +44,8 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
+#include <dune/common/exceptions.hh>
+
 template <class Scalar, class FluidState>
 void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
 {
@@ -57,28 +59,35 @@ void checkSame(const FluidState &fsRef, const FluidState &fsFlash)
         using std::abs;
         error = 1 - fsRef.pressure(phaseIdx)/fsFlash.pressure(phaseIdx);
         if (abs(error) > 1e-6) {
-            std::cout << "pressure error phase " << phaseIdx << ": "
-                      << fsFlash.pressure(phaseIdx)  << " flash vs "
-                      << fsRef.pressure(phaseIdx) << " reference"
-                      << " error=" << error << "\n";
+            DUNE_THROW(Dune::Exception, "Mismatch to reference. Pressure of phase "
+            << phaseIdx << " calculated by flash is: "
+            << fsFlash.pressure(phaseIdx)  << " vs "
+            << fsRef.pressure(phaseIdx) << " calculated as reference."
+            << " Error = " << error << "\n");
         }
 
         // check the saturations
         error = fsRef.saturation(phaseIdx) - fsFlash.saturation(phaseIdx);
-        if (abs(error) > 1e-6)
-            std::cout << "saturation error phase " << phaseIdx << ": "
-                      << fsFlash.saturation(phaseIdx) << " flash vs "
-                      << fsRef.saturation(phaseIdx) << " reference"
-                      << " error=" << error << "\n";
+        if (abs(error) > 1e-6) {
+            DUNE_THROW(Dune::Exception, "Mismatch to reference. Saturation of phase "
+            << phaseIdx << " calculated by flash is: "
+            << fsFlash.saturation(phaseIdx)  << " vs "
+            << fsRef.saturation(phaseIdx) << " calculated as reference."
+            << " Error = " << error << "\n");
+        }
+
 
         // check the compositions
         for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
             error = fsRef.moleFraction(phaseIdx, compIdx) - fsFlash.moleFraction(phaseIdx, compIdx);
-            if (abs(error) > 1e-6)
-                std::cout << "composition error phase " << phaseIdx << ", component " << compIdx << ": "
-                          << fsFlash.moleFraction(phaseIdx, compIdx) << " flash vs "
-                          << fsRef.moleFraction(phaseIdx, compIdx) << " reference"
-                          << " error=" << error << "\n";
+            if (abs(error) > 1e-6) {
+                DUNE_THROW(Dune::Exception, "Mismatch to reference. Mole fraction of component "
+                << compIdx << " in phase "
+                << phaseIdx << " calculated by flash is: "
+                << fsFlash.moleFraction(phaseIdx, compIdx) << " vs "
+                << fsRef.moleFraction(phaseIdx, compIdx) << " calculated as reference."
+                << " Error = " << error << "\n");
+            }
         }
     }
 }
