@@ -5,16 +5,16 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 
 ### Improvements and Enhancements
 
-- Added new porous medium model for the energy balance of a porous solid (general heat equation)
+- Added a new porous medium model for the energy balance of a porous solid (general heat equation).
 - __Multidomain__: It is now possible to use the facet coupling module together with the mpfa-o scheme in the bulk domain.
-- Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme
-- The box scheme works now on grids with prism / wedge elements in 3D
-- The GridManager now support reading unstructured grids and data from vtu/vtp files (ASCII, XML format) sequential
-  This means for UGGrid and FoamGrid you can now specify a grid in such a format in the input file
-  `Grid.File = mygrid.vtu` / `Grid.File = mygrid.vtp` and the associated data is available in the grid data object
+- Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme.
+- The box scheme works now on grids with prism / wedge elements in 3D.
+- __GridManager__: Supports now reading unstructured grids and data from vtu/vtp files (ASCII, XML format) sequential.
+  For UGGrid and FoamGrid you can specify a grid in such a format in the input file:
+  `Grid.File = mygrid.vtu` / `Grid.File = mygrid.vtp`. The associated data is then available in the grid data object.
 - __Freeflow__: A second order approximation of the convective term of all navier-stokes based models is now available.
-  This can be enabled using the property UpwindSchemeOrder. This property defaults to a first order upwinding approximation,
-  the method used for all models in release/3.0. If this property is set to `2`, a second order flux limiter method will be used.
+  This can be enabled using the property `UpwindSchemeOrder`. This property defaults to a first order upwinding approximation,
+  which is the method used for all models in release/3.0. If this property is set to `2`, a second order flux limiter method will be used.
   Various flux limiter functions have been implemented to maintain the monotonicity of this discretization. Per default the
   `Minmod` flux limiter is used, but `Vanleer`, `Vanalbada`, `Superbee`, `Umist`, `Mclimiter`, and `Wahyd` based flux limiters
   are also available. These can be specified using the input file entry `Flux.DifferencingScheme`. These methods are also
@@ -31,16 +31,16 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 - __GridManager__ Instead of always including all gridmanager specializations you can now only include the specialization that you need.
   For example, if you only use YaspGrid in your code, you only need to include `dumux/io/grid/gridmanager_yasp.hh`. The convenience header
   `dumux/io/grid/gridmanager.hh` still includes all specializations.
-- __Solver__ There is a new abstract base class PDESolver that is a class that does linearize & assemble, solve, update.
-  The NewtonSolver now derives from this class (interface is unchanged). A new class LinearPDESolver simplifies solving linear problems
+- __Solver__ There is a new abstract base class `PDESolver` that is a class that does linearize & assemble, solve and update.
+  The NewtonSolver now derives from this class (interface is unchanged). A new class `LinearPDESolver` simplifies solving linear problems
   by reducing the code in the main file and streamlining the terminal output to look like the Newton output.
  - Added a `NetPBMReader` which allows to read simple raster images files (`*.pbm` and `*.pgm`). Can be used, e.g., with `dune-subgrid` in order to create a grid
    from an image file.
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
-- `NewtonConvergenceWriter`'s first template argument has changed from `GridView`, the `FVGridGeometry`. This allows to call the `resize()` method after a grid change without any arguments.
-  Here is an example of how to instatiate the convergence writer:
+- `NewtonConvergenceWriter`'s first template argument has changed from `GridView` to `FVGridGeometry`. This allows to call the `resize()` method after a grid change without any arguments.
+  Here is an example how to instatiate the convergence writer:
   ```
   using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
   auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
