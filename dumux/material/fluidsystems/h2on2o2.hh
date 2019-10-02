@@ -792,7 +792,31 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "Component enthalpies");
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        if (phaseIdx == phase0Idx)
+        {
+            if (componentIdx == H2OIdx)
+                return H2O::liquidEnthalpy(T, p);
+            else if (componentIdx == N2Idx)
+                DUNE_THROW(Dune::NotImplemented, "Component enthalpy of nitrogen in liquid phase");
+            else if (componentIdx == O2Idx)
+                DUNE_THROW(Dune::NotImplemented, "Component enthalpy of oxygen in liquid phase");
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        else if (phaseIdx == phase1Idx)
+        {
+            if (componentIdx == H2OIdx)
+                return H2O::gasEnthalpy(T, p);
+            else if (componentIdx == N2Idx)
+                return N2::gasEnthalpy(T, p);
+            else if (componentIdx == O2Idx)
+                return O2::gasEnthalpy(T, p);
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     using Base::thermalConductivity;

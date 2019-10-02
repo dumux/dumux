@@ -616,10 +616,8 @@ public:
     template <class FluidState>
     static Scalar componentEnthalpy(const FluidState& fluidState, int phaseIdx, int componentIdx)
     {
-        Scalar T = fluidState.temperature(gasPhaseIdx);
-        Scalar p = fluidState.pressure(gasPhaseIdx);
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(p);
+        const Scalar T = fluidState.temperature(gasPhaseIdx);
+        const Scalar p = fluidState.pressure(gasPhaseIdx);
 
         if (phaseIdx == liquidPhaseIdx)
             DUNE_THROW(Dune::NotImplemented, "The component enthalpies in the liquid phase are not implemented.");

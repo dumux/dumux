@@ -517,6 +517,45 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
+    /*!
+     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase
+     * \param componentIdx The index of the component
+     */
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState& fluidState, int phaseIdx, int componentIdx)
+    {
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        if (phaseIdx == wPhaseIdx)
+        {
+            if (componentIdx == H2OIdx)
+                return H2O::liquidEnthalpy(T, p);
+            else if (componentIdx == NAPLIdx)
+                DUNE_THROW(Dune::NotImplemented, "The component enthalpy for NAPL in water is not implemented.");
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        else if (phaseIdx == nPhaseIdx)
+        {
+            if (componentIdx == H2OIdx)
+                DUNE_THROW(Dune::NotImplemented, "The component enthalpy for water in NAPL is not implemented.");
+            else if (componentIdx == NAPLIdx)
+                return HeavyOil::liquidEnthalpy(T, p);
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        else if (phaseIdx == gPhaseIdx)
+        {
+            if (componentIdx == H2OIdx)
+                return H2O::gasEnthalpy(T, p);
+            else if (componentIdx == NAPLIdx)
+                return HeavyOil::gasEnthalpy(T, p);
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
+
     using Base::heatCapacity;
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,

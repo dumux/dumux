@@ -244,6 +244,28 @@ public:
     }
 
     /*!
+    * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in the specified phase
+    * \param fluidState The fluid state
+    * \param phaseIdx The index of the phase
+    * \param componentIdx The index of the component
+    */
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int componentIdx)
+    {
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        if (componentIdx == mainCompIdx)
+            return MainComponent::liquidEnthalpy(T, p);
+        else if (componentIdx == secondCompIdx)
+            return SecondComponent::liquidEnthalpy(T, p);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+    }
+
+    /*!
      * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
      */
     static const Scalar internalEnergy(Scalar temperature, Scalar pressure)
