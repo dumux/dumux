@@ -48,7 +48,8 @@ using FicksLaw = FicksLawImplementation<TypeTag, GetPropType<TypeTag, Properties
  * \brief evaluates the density to be used in Fick's law based on the reference system
  */
 template<class VolumeVariables>
-auto massOrMolarDensity(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx)
+typename VolumeVariables::PrimaryVariables::value_type
+massOrMolarDensity(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx)
 {
     return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.density(phaseIdx) : volVars.molarDensity(phaseIdx);
 }
@@ -58,7 +59,7 @@ auto massOrMolarDensity(const VolumeVariables& volVars, ReferenceSystemFormulati
  * \brief returns the mass or mole fraction to be used in Fick's law based on the reference system
  */
 template<class VolumeVariables>
-auto massOrMoleFraction(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx, const int compIdx)
+typename VolumeVariables::PrimaryVariables::value_type massOrMoleFraction(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx, const int compIdx)
 {
     return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.massFraction(phaseIdx, compIdx) : volVars.moleFraction(phaseIdx, compIdx);
 }
