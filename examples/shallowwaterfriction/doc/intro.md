@@ -35,13 +35,13 @@ $`
 For this example, a cell-centered finite volume method (cctpfa) is applied to solve the SWEs
 in combination with a fully-implicit time discretization. For cases where no sharp fronts or
 traveling waves occur it is possible to apply time steps larger than CFL number = 1 to reduce
-the computation time. Even a steady state solution is considered an implicit time stepping method
+the computation time. Even if a steady state solution is considered, an implicit time stepping method
 is applied.
 
 ## Problem set-up
 The model domain is given by a rough channel with a slope of 0.001.
 The domain is 500 meters long and 10 meters wide.
-![Domain](doc/domain.png).
+![Domain](img/domain.png).
 
 Bottom friction is considered by applying
 the friction law of Manning (Manning n = 0.025). At the lateral sides no friction is considered and  a
@@ -49,8 +49,8 @@ no-flow no slip boundary condition is applied. This is the default boundary cond
 
 
 At the left border a discharge boundary condition
-is applied as inflow boundary condition with q = -1.0 ($m^2 s^{-1}. At the right border a water fixed depth boundary condition
-is applied for the outflow. Normal flow is assumed, therefor the water depth at the right border is calculated after
+is applied as inflow boundary condition with q = -1.0 ($`m^2 s^{-1}`$). At the right border a water fixed depth boundary condition
+is applied for the outflow. Normal flow is assumed, therefore the water depth at the right border is calculated after
 the of Gaukler-Manning-Strickler equation:
 
  $` v_m = 1/n * R_{hy}^{2/3} * I_s^{1/2}`$

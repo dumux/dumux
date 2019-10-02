@@ -63,7 +63,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::RoughChannel>
 { using type = Dumux::RoughChannelProblem<TypeTag>; };
 
-// We define the spatial parameters for our simulation. They values are specified in the corresponding spatialparameters header file, which is included above.
+// We define the spatial parameters for our simulation. The values are specified in the corresponding spatialparameters header file, which is included above.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RoughChannel>
 {
@@ -125,7 +125,7 @@ public:
         constManningN_ = getParam<Scalar>("Problem.ManningN");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         discharge_ = getParam<Scalar>("Problem.Discharge");
-        // We calculate the outflow boundary condition using the gaukler Manning Strickler formula.
+        // We calculate the outflow boundary condition using the Gauckler-Manning-Strickler formula.
         hBoundary_ = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
         // We initialize the analytic solution to a verctor of the appropriate size filled with zeros.
         exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
@@ -144,7 +144,7 @@ public:
         return exactVelocityX_;
     }
 
-    // Get the water depth with Gaukler-Manning-Strickler
+    // Get the water depth with Gauckler-Manning-Strickler
     Scalar gauklerManningStrickler(Scalar discharge, Scalar manningN, Scalar bedSlope)
     {
         using std::pow;
@@ -297,7 +297,7 @@ public:
     // \}
 
 private:
-    // We declare the privat variables of the problem. They are initialized in the problems constructor
+    // We declare the private variables of the problem. They are initialized in the problems constructor.
     // We declare the variable for the analytic solution.
     std::vector<Scalar> exactWaterDepth_;
     std::vector<Scalar> exactVelocityX_;
