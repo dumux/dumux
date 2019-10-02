@@ -15,8 +15,7 @@ Copy the following lines into a text file named \texttt{installDumux.sh}:
 \lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=1, firstnumber=1]{installDumux.sh}
 
 Place the \texttt{installDumux.sh} script in the directory where you want to install \Dumux and \Dune (a single
-root folder \texttt{DUMUX} will be produced, so you do not need to provide one).
-Run the script by typing into the terminal: \texttt{./installDumux.sh}
+root folder \texttt{DUMUX} will be produced, so you do not need to provide one). Make \texttt{installDumux.sh} executable and run the script by typing into the terminal: \texttt{./installDumux.sh}
 
 Configuring \Dune and \Dumux is done by the command-line script \texttt{dunecontrol}
 using optimized configure options, see the line entitled \texttt{\# run build} in the \texttt{installDumux.sh} script.
@@ -33,7 +32,7 @@ make -B test_1p_tpfa
 ./test_1p_tpfa params.input
 paraview *pvd
 \end{lstlisting}
-The script \texttt{test\_dumux.sh} can be executed by typing into the terminal: \texttt{./test\_dumux.sh}.
+After making \texttt{test\_dumux.sh} executable, it can be executed by typing into the terminal: \texttt{./test\_dumux.sh}.
 If everything works fine, a ParaView window with the result should open automatically, showing the initial
-conditions. Advance ParaView to the next frame (green arrow button) and rescale to data range to admire
+conditions. Advance ParaView to the next frame (green arrow button) and rescale to data range (green double arrow on top right) to admire
 the colorful pressure distribution.
