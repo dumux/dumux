@@ -117,7 +117,7 @@ public:
     static std::string phaseName(int phaseIdx = 0)
     { return "Gas"; }
 
-    //! Molar mass in kg/mol of the component with index compIdx. All compoents have the same molar mass so that the molar mass does not play a role anymore
+    //! Molar mass in kg/mol of the component with index compIdx.
     static Scalar molarMass(unsigned int compIdx)
     { return 0.02896; /*air*/ }
 
