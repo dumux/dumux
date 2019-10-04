@@ -82,7 +82,7 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using CouplingManager = typename Assembler::CouplingManager;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
-    static_assert(!Assembler::Problem::enableInternalDirichletConstraints(), "Internal Dirichlet constraints are currently not implemented for cc-methods!");
+    static_assert(!Problem::enableInternalDirichletConstraints(), "Internal Dirichlet constraints are currently not implemented for cc-methods!");
 
 public:
     //! export the domain id of this sub-domain
