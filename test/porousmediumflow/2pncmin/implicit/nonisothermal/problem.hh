@@ -43,7 +43,7 @@
 namespace Dumux {
 /*!
  * \ingroup TwoPNCMinTests
- * \brief Problem where brine is evaporating at the top boundary. The system is closed the remaining boundaries.
+ * \brief Problem where brine is evaporating at the top boundary. The system is closed at the remaining boundaries.
  */
 template <class TypeTag>
 class SalinizationProblem;
