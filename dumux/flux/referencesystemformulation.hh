@@ -46,6 +46,28 @@ enum class ReferenceSystemFormulation
     massAveraged, molarAveraged
 };
 
+/*!
+ * \ingroup Flux
+ * \brief evaluates the density to be used in Fick's law based on the reference system
+ */
+template<class VolumeVariables>
+typename VolumeVariables::PrimaryVariables::value_type
+massOrMolarDensity(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx)
+{
+    return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.density(phaseIdx) : volVars.molarDensity(phaseIdx);
+}
+
+/*!
+ * \ingroup Flux
+ * \brief returns the mass or mole fraction to be used in Fick's law based on the reference system
+ */
+template<class VolumeVariables>
+typename VolumeVariables::PrimaryVariables::value_type
+massOrMoleFraction(const VolumeVariables& volVars, ReferenceSystemFormulation referenceSys, const int phaseIdx, const int compIdx)
+{
+    return (referenceSys == ReferenceSystemFormulation::massAveraged) ? volVars.massFraction(phaseIdx, compIdx) : volVars.moleFraction(phaseIdx, compIdx);
+}
+
 } // end namespace Dumux
 
 #endif
