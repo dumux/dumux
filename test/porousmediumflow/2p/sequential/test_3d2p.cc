@@ -26,7 +26,6 @@
 #if HAVE_DUNE_ALUGRID
 
 #include <dumux/common/start.hh>
-#include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
