@@ -47,7 +47,7 @@ D^\kappa_\text{pm}= \phi \tau D^\kappa
 
 The primary variable of this model is the mass fraction $`X^\kappa`$. We apply the same spatial discretization as in the single pahse model and use the implicit Euler method for time discretization. For more information, have a look at the dumux handbook.
 
-In the following, we take a close look at the files containing the setup: At first, boundary conditions and spatially distributed parameters are set in `problem_1p.hh` and `spatialparams_1p.hh`, respectively, for the single phase model and subsequently in `problem_tracer.hh` and `spatialparams_tracer.hh` for the tracer model. Afterwards, we show the different steps for solving the model in the source file `main.cc`. At the end, we show some simulation results.
+In the following, we take a close look at the files containing the set-up: At first, boundary conditions and spatially distributed parameters are set in `problem_1p.hh` and `spatialparams_1p.hh`, respectively, for the single phase model and subsequently in `problem_tracer.hh` and `spatialparams_tracer.hh` for the tracer model. Afterwards, we show the different steps for solving the model in the source file `main.cc`. At the end, we show some simulation results.
 
 
 ## The file `spatialparams_1p.hh`
@@ -740,7 +740,7 @@ We leave the namespace Dumux here.
 ## The file `main.cc`
 
 
-We look now at the main file for the tracer problem. We setup two problems in this file and solve them sequentially, first the 1p problem and afterwards the tracer problem. The result of the 1p problem is the pressure distribution in the problem domain. We use it to calculate the volume fluxes, which act as an input for the tracer problem. Based on this volume fluxes, we calculate the transport of a tracer in the following tracer problem.
+We look now at the main file for the tracer problem. We set up two problems in this file and solve them sequentially, first the 1p problem and afterwards the tracer problem. The result of the 1p problem is the pressure distribution in the problem domain. We use it to calculate the volume fluxes, which act as an input for the tracer problem. Based on this volume fluxes, we calculate the transport of a tracer in the following tracer problem.
 ### Includes
 ```cpp
 #include <config.h>
@@ -831,9 +831,9 @@ We compute on the leaf grid view.
 ```cpp
     const auto& leafGridView = gridManager.grid().leafGridView();
 ```
-### Setup and solving of the 1p problem
-In the following section, we setup and solve the 1p problem. As the result of this problem, we obtain the pressure distribution in the problem domain.
-#### Setup
+### Set-up and solving of the 1p problem
+In the following section, we set up and solve the 1p problem. As the result of this problem, we obtain the pressure distribution in the problem domain.
+#### Set-up
 We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
 We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
 ```cpp
@@ -965,8 +965,8 @@ We calculate the volume flux for every subcontrolvolume face, which is not on a 
     }
 
 ```
-### Setup and solving of the tracer problem
-#### Setup
+### Set-up and solving of the tracer problem
+#### Set-up
 Similar to the 1p problem, we first create and initialize the problem.
 ```cpp
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
@@ -1128,6 +1128,6 @@ The 1p-model calculated a stationary pressure distribution. It is shown in the f
 
 The random permeability distribution generates the velocity profile shown in the left plot of the next figure. The image in the middle illustrates the tracer distribution after 2500s and the image on the right after 5000s.
 
-| ![](img/velocityProfile.png)| ![](img/tracer_2500.png) | ![](img/tracer_5000.png)|
+| ![](img/velocityprofile.png)| ![](img/tracer_2500.png) | ![](img/tracer_5000.png)|
 |:---:|:---:|:---:|
 | velocity profile| tracer concentration after 2500s | tracer concentration after 5000s |
