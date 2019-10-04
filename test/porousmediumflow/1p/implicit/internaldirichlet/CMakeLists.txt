@@ -3,17 +3,18 @@
 # The compilation triggers a copmiler error (static_assert)
 # Once its implemented replace OnePInternalDirichletBox by OnePInternalDirichletTpfa (and uncomment OnePInternalDirichletTpfa in the problem.hh)
 #    and remove the EXPECT_COMPILE_FAIL flag
-dune_add_test(NAME test_1p_internaldirichlet_tpfa
-              EXPECT_COMPILE_FAIL
-              SOURCES ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/implicit/incompressible/main.cc
-              LABELS porousmediumflow 1p
-              COMPILE_DEFINITIONS TYPETAG=OnePInternalDirichletBox
-              COMPILE_DEFINITIONS NUMDIFFMETHOD=DiffMethod::analytic
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_internaldirichlet_tpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa-00001.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/implicit/incompressible/params.input -Problem.Name test_1p_internaldirichlet_tpfa -Problem.EnableGravity false")
+
+# dune_add_test(NAME test_1p_internaldirichlet_tpfa
+#               EXPECT_COMPILE_FAIL
+#               SOURCES ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/implicit/incompressible/main.cc
+#               LABELS porousmediumflow 1p
+#               COMPILE_DEFINITIONS TYPETAG=OnePInternalDirichletTpfa
+#               COMPILE_DEFINITIONS NUMDIFFMETHOD=DiffMethod::analytic
+#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+#               CMD_ARGS  --script fuzzy
+#                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_internaldirichlet_tpfa-reference.vtu
+#                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa-00001.vtu
+#                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/implicit/incompressible/params.input -Problem.Name test_1p_internaldirichlet_tpfa -Problem.EnableGravity false")
 
 dune_add_test(NAME test_1p_internaldirichlet_box
               SOURCES ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/implicit/incompressible/main.cc
