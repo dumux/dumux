@@ -3,7 +3,7 @@ This tutorial was copied from dumux/test/porousmediumflow/tracer/1ptracer.
 # One-phase flow with random permeability distribution and a tracer model
 
 ## Problem set-up
-This example contains a contaminant transported by a base groundwater flow in a randomly distributed permeability field. The figure below shows the simulation set-up. The permeability values range between 6.12e-15 and 1.5 e-7 $`m^2`$. A pressure gradient between the top an the bottom boundary leads to a groundwater flux from the bottom to the top. Neumann no-flow boundaries are assigned to the left and right boundary. Initially, there is a contaminant concentration at the bottom of the domain.
+This example contains a contaminant transported by a base groundwater flow in a randomly distributed permeability field. The figure below shows the simulation set-up. The permeability values range between 6.12e-15 and 1.5 e-7 $`m^2`$. A pressure gradient between the top and the bottom boundary leads to a groundwater flux from the bottom to the top. Neumann no-flow boundaries are assigned to the left and right boundary. Initially, there is a contaminant concentration at the bottom of the domain.
 
 ![](./img/setup.png)
 
@@ -34,10 +34,10 @@ The equation is discretized using a cell-centered finite volume scheme as spatia
 The transport of the contaminant component $`\kappa`$ is based on the previously evaluated velocity field $`\textbf v`$  with the help the following mass balance equation:
 
 ```math
-\phi \frac{ \partial X^\kappa}{\partial t} - \text{div} \left\lbrace X^\kappa {\textbf v}+ D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa \right\rbrace = 0
+\phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa {\textbf v} + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = 0
 ```
 
-With the porosity $`\phi`$, the mass fraction of the contaminant component $`\kappa`$: $`X^\kappa`$, the porous medium diffusivity $` D^\kappa_\text{pm} `$, the molar masses of the component $` M^\kappa `$, the average molar mass of the phase $`M_\alpha`$ and the mole fraction $`x`$.
+With the porosity $`\phi`$, the mass fraction of the contaminant component $`\kappa`$: $`X^\kappa`$, the porous medium diffusivity $` D^\kappa_\text{pm} `$ and the density of the fluid phase $`\varrho`$.
 
 The porous medium diffusivity is a function of the diffusion coefficient of the component $`D^\kappa`$, the porosity $`\phi`$ and the porous medium tortuosity $`\tau`$ by the following equation:
 
@@ -45,7 +45,7 @@ The porous medium diffusivity is a function of the diffusion coefficient of the 
 D^\kappa_\text{pm}= \phi \tau D^\kappa
 ```
 
-The primary variable of this model is the mass fraction $`X^\kappa`$. We apply the same spatial discretization as in the single pahse model and use the implicit Euler method for time discretization. For more information, have a look at the dumux handbook.
+The primary variable of this model is the mass fraction $`X^\kappa`$. We apply the same spatial discretization as in the single phase model and use the implicit Euler method for time discretization. For more information, have a look at the dumux handbook.
 
 In the following, we take a close look at the files containing the set-up: At first, boundary conditions and spatially distributed parameters are set in `problem_1p.hh` and `spatialparams_1p.hh`, respectively, for the single phase model and subsequently in `problem_tracer.hh` and `spatialparams_tracer.hh` for the tracer model. Afterwards, we show the different steps for solving the model in the source file `main.cc`. At the end, we show some simulation results.
 
