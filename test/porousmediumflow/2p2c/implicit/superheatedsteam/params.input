@@ -1,0 +1,26 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+MaxTimeStepSize = 1000
+TEnd = 1e4 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 0.1
+Cells = 100 10
+
+[Problem]
+Name = superheated steam
+
+[Output]
+PlotFluidMatrixInteractions = false
+
+[LinearSolver]
+ResidualReduction = 1e-10
+
+[Newton]
+MaxRelativeShift = 1e-8
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

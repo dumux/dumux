@@ -1,0 +1,160 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup TwoPTwoCTests
+ * \brief Definition of the spatial parameters for the water-air problem.
+ */
+#ifndef DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
+#define DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
+
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/ploteffectivediffusivitymodel.hh>
+#include <dumux/io/plotmateriallaw.hh>
+#include <dumux/io/plotthermalconductivitymodel.hh>
+#include <dumux/porousmediumflow/properties.hh>
+#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup TwoPTwoCModel
+ * \brief Definition of the spatial parameters for the water-air problem.
+ */
+template<class FVGridGeometry, class Scalar>
+class WaterAirSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         WaterAirSpatialParams<FVGridGeometry, Scalar>>
+{
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       WaterAirSpatialParams<FVGridGeometry, Scalar>>;
+
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+public:
+    //! Export the type used for the permeability
+    using PermeabilityType = Scalar;
+    //! Export the type used for the material law
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
+
+    WaterAirSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    {
+        // intrinsic permeabilities
+        K_ = 1e-11;
+
+        // porosities
+        porosity_ = 0.3;
+
+        // residual saturations
+        materialParams_.setSwr(0.1);
+        materialParams_.setSnr(0.0);
+
+        // parameters for the Brooks-Corey law
+        materialParams_.setPe(1e2);
+        materialParams_.setLambda(2.0);
+
+        plotFluidMatrixInteractions_ = getParam<bool>("Output.PlotFluidMatrixInteractions");
+    }
+
+    /*!
+     * \brief This is called from the problem and creates a gnuplot output
+     *        of e.g the pc-Sw curve
+     */
+    void plotMaterialLaw()
+    {
+        PlotMaterialLaw<Scalar, MaterialLaw> plotMaterialLaw;
+        GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
+        gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
+        plotMaterialLaw.addpcswcurve(gnuplot, materialParams_, 0.2, 1.0, "w lp");
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+        gnuplot.plot("pc-Sw");
+
+        gnuplot.resetAll();
+        plotMaterialLaw.addkrcurves(gnuplot, materialParams_, 0.2, 1.0);
+        gnuplot.plot("kr");
+    }
+
+    /*!
+     * \brief Applies the intrinsic permeability tensor to a pressure
+     *        potential gradient.
+     *
+     * \param globalPos The global position
+     */
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    {
+        return K_;
+    }
+
+    /*!
+     * \brief Defines the porosity \f$[-]\f$ of the spatial parameters
+     *
+     * \param globalPos The global position
+     */
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    {
+            return porosity_;
+    }
+
+
+    /*!
+     * \brief Returns the parameter object for the Brooks-Corey material law
+     * which depends on the position
+     *
+     * \param globalPos The global position
+     */
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    {
+            return materialParams_;
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \param globalPos The position of the center of the element
+     * \return The wetting phase index
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
+
+private:
+    Scalar K_;
+
+    Scalar porosity_;
+
+    MaterialLawParams materialParams_;
+
+    bool plotFluidMatrixInteractions_;
+};
+
+} // end namespace Dumux
+
+#endif
