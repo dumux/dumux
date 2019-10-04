@@ -11,104 +11,189 @@
  * | Group       | Parameter    | Type       | Default Value     | Explanation |
  * | :-         | :-            | :-         | :-                | :-          |
  * | -          | ParameterFile | std::string| executable.input  | name of the parameter file |
- * | \b Component | GasDensity | Scalar | 1.0 | |
- * |  | GasDiffusionCoefficient | Scalar | 1.0 | |
- * |  | GasKinematicViscosity | Scalar | 1.0 | |
- * |  | HenryComponentInWater | Scalar | 1.0 | |
- * |  | HenryWaterInComponent | Scalar | 1.0 | |
- * |  | LiquidDensity | Scalar | 1.0 | |
- * |  | LiquidDiffusionCoefficient | Scalar | 1.0 | |
- * |  | LiquidKinematicViscosity | Scalar | 1.0 | |
- * |  | MolarMass | Scalar | 1.0 | |
- * |  | Name | std::string | component | |
- * | \b ElectroChemistry | ActivationBarrier | Scalar | | |
- * |  | CellVoltage | Scalar | | |
- * |  | MaxIterations | Scalar | | |
- * |  | NumElectrons | Scalar | | |
- * |  | pO2Inlet | Scalar | | |
- * |  | RefCurrentDensity | Scalar | | |
- * |  | RefO2PartialPressure | Scalar | | |
- * |  | RefTemperature | Scalar | | |
- * |  | ReversibleVoltage | Scalar | | |
- * |  | SpecificResistance | Scalar | | |
- * |  | SurfaceIncreasingFactor | Scalar | | |
- * |  | ThermoneutralVoltage | Scalar | | |
- * |  | TransferCoefficient | Scalar | | |
- * |  | TransportNumberH20 | Scalar | | |
- * | \b Grid | Angular+std::to_string(i) | Scalar | | |
- * |  | Axial+std::to_string(i) | Scalar | | |
- * |  | BoundarySegments | bool | false | |
- * |  | Cells | CellArray | cells | |
- * |  | Cells | GlobalPosition | | |
- * |  | Cells | int | 1 | |
- * |  | Cells | intdim | cells | |
- * |  | Cellsstd::array< | | | |
- * |  | Cells+std::to_string(i) | int | cells[i] | |
- * |  | CellType | std::string | Cube | |
- * |  | ClosureType | std::string | Green | |
- * |  | Coordinates | std::vector<typenameGrid::ctype> | | |
- * |  | DomainMarkers | bool | false | |
- * |  | File | std::string | | |
- * |  | File | std::string | modelParamGroup | |
- * |  | Grading+std::to_string(i) | Scalar | grading[i] | |
- * |  | Grading+std::to_string(i) | std::vector<ctype> | grading[i] | |
- * |  | HeapSize | int | | |
- * |  | KeepPhysicalOverlap | bool | true | |
- * |  | LeftBoundary | CoordinateType | 0.0 | |
- * |  | LowerLeft | GlobalPosition | GlobalPosition(0.0) | |
- * |  | Overlap | int | 1 | |
- * |  | Partitioning | intdim | | |
- * |  | Periodicstd::bitset<dim | | | |
- * |  | Positions+std::to_string(i) | std::vector<ctype> | | |
- * |  | Radial+std::to_string(i) | Scalar | | |
- * |  | Refinement | int | | |
- * |  | RefinementType | std::string | Local | |
- * |  | RightBoundary | CoordinateType | | |
- * |  | UpperRight | Dune::FieldVector<ctdim> | | |
- * |  | UpperRight | GlobalPosition | | |
- * |  | UpperRight | GlobalPosition | GlobalPosition(0.0) | |
- * |  | Verbosity | bool | false | |
- * |  | WellRadius | Scalar | | |
- * | \b Impet | ErrorTermFactor | Scalar | GET_PROP_VALUE(TypeTagImpetErrorTermFactor) | |
- * |  | ErrorTermLowerBound | Scalar | GET_PROP_VALUE(TypeTagImpetErrorTermLowerBound) | |
- * |  | ErrorTermUpperBound | Scalar | GET_PROP_VALUE(TypeTagImpetErrorTermUpperBound) | |
- * | \b Implicit | NumericDifferenceMethod | int | | |
- * |  | UpwindWeight | Scalar | | |
- * | \b LinearSolver | GMResRestart | double | | |
- * |  | GMResRestart | int | | |
- * |  | MaxIterations | int | | |
- * |  | PreconditionerIterations | int | | |
- * |  | PreconditionerRelaxation | Scalar | | |
- * |  | ResidualReduction | Scalar | | |
- * |  | ResidualReduction | Scalar | 1e-6 | |
- * |  | Verbosity | int | | |
- * | \b Mpfa | Q | Scalar | | |
- * | \b Newton | EnableAbsoluteResidualCriterion | bool | | |
- * |  | EnableChop | bool | | |
- * |  | EnableResidualCriterion | bool | | |
- * |  | EnableShiftCriterion | bool | | |
- * |  | MaxAbsoluteResidual | Scalar | | |
- * |  | MaxRelativeShift | Scalar | | |
- * |  | MaxSteps | int | | |
- * |  | ResidualReduction | Scalar | | |
- * |  | SatisfyResidualAndShiftCriterion | bool | | |
- * |  | TargetSteps | int | | |
- * |  | UseLineSearch | bool | | |
- * | \b Problem | AddVelocity | bool | | |
- * |  | EnableGravity | bool | | |
- * |  | Name | std::string | | |
- * |  | Salinity | Scalar | 1e-3 | |
- * |  | UsePrimaryVariableSwitch | bool | | |
- * | \b SpatialParams | ForchCoeff | Scalar | 0.55 | |
- * |  | Tortuosity | Scalar | 0.5 | |
- * | \b TimeLoop | Restart | double | | |
- * | \b TimeManager | DtInitial | Scalar | | |
- * |  | MaxTimeStepSizestd::numeric_limits<Scalar> | | | |
- * |  | Restart | Scalar | | |
- * |  | TEnd | double | | |
- * |  | TEnd | Scalar | | |
- * | \b Vtk | AddProcessRank | bool | | |
- * |  | AddVelocity | bool | | |
- * |  | OutputLevel | int | | |
- * |  | WriteFaceData | bool | false | |
+* | \b Adaptive | BCRefinementThreshold | Scalar | 1e-10 | |
+Adaptive | MaxLevel | std::size_t | 0 | |
+* | \b Assembly | NumericDifference.BaseEpsilon | Scalar | 1e-10 | |
+* |  | NumericDifferenceMethod | int | | |
+* |  | NumericDifferenceMethod | int | | |
+* |  | NumericDifference.PriVarMagnitude | NumEqVector(-1) | | |
+* | \b BinaryCoefficients | GasDiffCoeff | Scalar | | |
+* |  | LiquidDiffCoeff | Scalar | | |
+* | \b Brine | Salinity | Scalar | | |
+* | \b Component | GasDensity | Scalar | | |
+* |  | GasDiffusionCoefficient | Scalar | 1.0 | |
+* |  | GasKinematicViscosity | Scalar | | |
+* |  | HenryComponentInWater | Scalar | 1.0 | |
+* |  | HenryWaterInComponent | Scalar | 1.0 | |
+* |  | LiquidDensity | Scalar | | |
+* |  | LiquidDiffusionCoefficient | Scalar | 1.0 | |
+* |  | LiquidKinematicViscosity | Scalar | | |
+* |  | MolarMass | Scalar | | |
+* |  | Name | std::string | component | |
+* |  | SolidDensity | Scalar | | |
+* |  | SolidHeatCapacity | Scalar | | |
+* |  | SolidThermalConductivity | Scalar | | |
+* | \b ElectroChemistry | ActivationBarrier | Scalar | | |
+* |  | CellVoltage | Scalar | | |
+* |  | MaxIterations | int | | |
+* |  | NumElectrons | Scalar | | |
+* |  | pO2Inlet | Scalar | | |
+* |  | RefCurrentDensity | Scalar | | |
+* |  | RefO2PartialPressure | Scalar | | |
+* |  | RefTemperature | Scalar | | |
+* |  | ReversibleVoltage | Scalar | | |
+* |  | SpecificResistance | Scalar | | |
+* |  | SurfaceIncreasingFactor | Scalar | | |
+* |  | ThermoneutralVoltage | Scalar | | |
+* |  | TransferCoefficient | Scalar | | |
+* |  | TransportNumberH20 | Scalar | | |
+* | \b Flux | DifferencingScheme | std::string | Minmod | |
+* |  | TvdApproach | std::string | Uniform | |
+* |  | UpwindWeight | Scalar | | |
+* | \b Forchheimer | MaxIterations | std::size_t | 30 | |
+* |  | NewtonTolerance | Scalar | 1e-12 | |
+* | \b FreeFlow | EnableUnsymmetrizedVelocityGradient | bool | false | |
+* |  | EnableUnsymmetrizedVelocityGradientForBeaversJoseph | bool | false | |
+* | \b GridAdapt | AdaptionInterval | int | 1 | |
+* |  | CoarsenTolerance | Scalar | | |
+* |  | EnableInitializationIndicator | bool | | |
+* |  | EnableMultiPointFluxApproximation | bool | | |
+* |  | MaxInteractionVolumes!=1 | int | | |
+* |  | MaxInteractionVolumes | int | | |
+* |  | MaxLevel | int | | |
+* |  | MinLevel | int | | |
+* |  | RefineAtDirichletBC | bool | | |
+* |  | RefineAtFluxBC | bool | | |
+* |  | RefineAtSource | bool | | |
+* |  | RefineTolerance | Scalar | | |
+* | \b Grid | Angularstd::to_string(i) | Scalar | | |
+* |  | Axialstd::to_string(i) | Scalar | | |
+* |  | BoundarySegments | bool | false | |
+* |  | Cells | CellArray | cells | |
+* |  | Cells | cells | | |
+* |  | Cells | GlobalPosition | | |
+* |  | Cells | int | 1 | |
+* |  | Cells | intdim | cells | |
+* |  | Cellsstd::array< | | | |
+* |  | Cellsstd::to_string(i) | int | cells[i] | |
+* |  | CellType | std::string | Cube | |
+* |  | ClosureType | std::string | Green | |
+* |  | Coordinates | std::vector<typenameGrid::ctype> | | |
+* |  | DomainMarkers | bool | false | |
+* |  | File | std::string | | |
+* |  | File | std::string | modelParamGroup | |
+* |  | GmshPhysicalEntityThreshold | std::size_t | 0 | |
+* |  | Gradingstd::to_string(i) | Scalar | grading[i] | |
+* |  | Gradingstd::to_string(i) | std::vector<ctype> | grading[i] | |
+* |  | HeapSize | int | | |
+* |  | Image | std::string | | |
+* |  | KeepPhysicalOverlap | bool | true | |
+* |  | LeftBoundary | CoordinateType | 0.0 | |
+* |  | LowerLeft | GlobalPosition | GlobalPosition(0.0) | |
+* |  | Marker | bool | 0 | |
+* |  | Overlap | int | 1 | |
+* |  | Partitioning | intdim | | |
+* |  | Periodicstd::bitset<dim | | | |
+* |  | Positionsstd::to_string(i) | std::vector<ctype> | | |
+* |  | Radialstd::to_string(i) | Scalar | | |
+* |  | Refinement | int | | |
+* |  | RefinementType | std::string | Local | |
+* |  | RightBoundary | CoordinateType | | |
+* |  | UpperRight | GlobalPosition | | |
+* |  | Verbosity | bool | false | |
+* |  | WellRadius | Scalar | | |
+* |  | WriteSubGridToDGF | bool | false) | |
+* |  | WriteSubGridToVtk | bool | false) | |
+* | \b Impet | CFLFactor | Scalar | | |
+* |  | DtVariationRestrictionFactorstd::numeric_limits<Scalar | | | |
+* |  | EnableVolumeIntegral | bool | | |
+* |  | ErrorTermFactor | Scalar | | |
+* |  | ErrorTermLowerBound | Scalar | | |
+* |  | ErrorTermLowerBound | Scalar | 0.2 | |
+* |  | ErrorTermUpperBound | Scalar | | |
+* |  | IterationFlag | int | 0 | |
+* |  | IterationNumber | int | 2 | |
+* |  | MaximumDefect | Scalar | 1e-5 | |
+* |  | PorosityThreshold | Scalar | | |
+* |  | RelaxationFactor | Scalar | 1.0 | |
+* |  | RestrictFluxInTransport | int | 0 | |
+* |  | SubCFLFactor | Scalar | cFLFactor | |
+* |  | SwitchNormals | bool | | |
+* | \b KEpsilon | EnableKinematicViscosity | bool | true | |
+* |  | EnableZeroEqScaling | bool | true | |
+* |  |YPlusThreshold | Scalar | 30 | |
+* | \b KOmega | EnableDissipationLimiter | bool | true | |
+* |  | EnableProductionLimiter | bool | false | |
+* | \b LinearSolver | GMResRestart | double | | |
+* |  | GMResRestart | int | | |
+* |  | MaxIterations | int | | |
+* |  | PreconditionerIterations | int | | |
+* |  | PreconditionerRelaxation | double | | |
+* |  | ResidualReduction | double | | |
+* |  | ResidualReduction | Scalar | 1e-6) | |
+* |  | Verbosity | int | | |
+* | \b LoadSolution | CellCenterPriVarNames | std::vector<std::string> | | |
+* |  | FacePriVarNames | std::vector<std::string> | | |
+* |  | PriVarNames | std::vector<std::string> | | |
+* | \b MixedDimension | IntegrationOrder | int | 1 | |
+* |  | KernelWidth | Scalar | | |
+* |  | NumCircleSegments | int | | |
+* |  | NumCircleSegments | int | 25 | |
+* | \b MPFA | CalcVelocityInTransport | bool | | |
+* |  | EnableComplexLStencil | bool | true | |
+* |  | EnableSimpleLStencil | bool | true | |
+* |  | EnableTPFA | bool | false | |
+* |  | Q | Scalar | | |
+* |  | TransmissibilityCriterion | int | 0 | |
+* |  | TransmissibilityCriterionThreshold | Scalar | 1e-8 | |
+* | \b Newton | EnableAbsoluteResidualCriterion | bool | | |
+* |  | EnableChop | bool | | |
+* |  | EnableDynamicOutput | bool | true | |
+* |  | EnablePartialReassembly | bool | | |
+* |  | EnableResidualCriterion | bool | | |
+* |  | EnableShiftCriterion | bool | | |
+* |  | MaxAbsoluteResidual | Scalar | | |
+* |  | MaxRelativeShift | Scalar | | |
+* |  | MaxSteps | int | | |
+* |  | MaxTimeStepDivisions | std::size_t | 10 | |
+* |  | MinSteps | int | | |
+* |  | ReassemblyMaxThreshold | Scalar | 1e2*shiftTolerance_ | |
+* |  | ReassemblyMinThreshold | Scalar | 1e-1*shiftTolerance_ | |
+* |  | ReassemblyShiftWeight | Scalar | 1e-3 | |
+* |  | ResidualReduction | Scalar | | |
+* |  | RetryTimeStepReductionFactor | Scalar | 0.5 | |
+* |  | SatisfyResidualAndShiftCriterion | bool | | |
+* |  | TargetSteps | int | | |
+* |  | UseLineSearch | bool | | |
+* |  | Verbosity | int | 2 | |
+* | \b Problem | EnableGravity | bool | | |
+* |  | EnableGravity | bool | | |
+* |  | EnableInertiaTerms | bool | | |
+* |  | Name | std::string | | |
+* |  | Name | std::string | | |
+* |  | UsePrimaryVariableSwitch | bool | | |
+* | \b RANS | EddyViscosityModel | std::string | vanDriest | |
+* |  | FlowNormalAxis | int | -1 | |
+* |  | TurbulentPrandtlNumber | Scalar | 1.0 | |
+* |  | TurbulentSchmidtNumber | Scalar | 1.0 | |
+* |  | UseStoredEddyViscosity | bool | false | |
+* |  | UseStoredEddyViscosity | bool | true | |
+* |  | WallNormalAxis | int | -1 | |
+* | \b SpatialParams | ComputeAwsFromAnsAndPcMax | bool | true | |
+* |  | ForchCoeff | Scalar | 0.55 | |
+* |  | MinBoundaryPermeability | Scalar | | |
+* |  | Tortuosity | Scalar | 0.5 | |
+* | \b TimeLoop | Restart | double | 0.0 | |
+* | \b TimeManager | double | Restart | | |
+* |  | DtInitial | Scalar | | |
+* |  | MaxTimeStepSizestd::numeric_limits<Scalar | | | |
+* |  | Restart | Scalar | | |
+* |  | SubTimestepVerbosity | int | | |
+* |  | TEnd | Scalar | | |
+* | \b Vtk | AddProcessRank | bool | | |
+* |  | AddProcessRank | bool | | |
+* |  | AddVelocity | bool | | |
+* |  | AddVelocity | bool | true | |
+* |  | OutputLevel | int | | |
+* |  | WriteFaceData | bool | false | |
  */
