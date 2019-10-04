@@ -187,7 +187,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-        if(globalPos[0] > 1. - eps_)
+        if(globalPos[0] > 0.8 - eps_)
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
@@ -222,11 +222,11 @@ public:
         // we inject superheated steam from the left boundary
         if (isInjectionArea_(globalPos))
         {
-            values[contiAirEqIdx] = useMoles ? -1e-5/FluidSystem::molarMass(AirIdx) : -1e-5; // kg/(m^2*s) or mole/(m^2*s)
-            values[contiH2OEqIdx] = useMoles ? -1e-1/FluidSystem::molarMass(H2OIdx) : -1e-1; // kg/(m^2*s) or mole/(m^2*s)
+            values[contiAirEqIdx] = -1e-5; // mole/(m^2*s)
+            values[contiH2OEqIdx] = -0.4; // mole/(m^2*s)
 
             // note: energy equation is always formulated in terms of mass specific quantities, not per mole
-            values[energyEqIdx] = -1.8e5;
+            values[energyEqIdx] = -2e4;
         }
 
         return values;
