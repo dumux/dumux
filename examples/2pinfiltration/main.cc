@@ -96,9 +96,9 @@ int main(int argc, char** argv) try
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
-    // ### Setup and solving of the problem
+    // ### Set-up and solving of the problem
     //
-    // #### Setup
+    // #### Set-up
     // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
     //
     // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.

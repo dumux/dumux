@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// We look now at the main file for the tracer problem. We setup two problems in this file and solve them sequentially, first the 1p problem and afterwards the tracer problem. The result of the 1p problem is the pressure distribution in the problem domain. We use it to calculate the volume fluxes, which act as an input for the tracer problem. Based on this volume fluxes, we calculate the transport of a tracer in the following tracer problem.
+// We look now at the main file for the tracer problem. We set up two problems in this file and solve them sequentially, first the 1p problem and afterwards the tracer problem. The result of the 1p problem is the pressure distribution in the problem domain. We use it to calculate the volume fluxes, which act as an input for the tracer problem. Based on this volume fluxes, we calculate the transport of a tracer in the following tracer problem.
 // ### Includes
 #include <config.h>
 
@@ -82,9 +82,9 @@ int main(int argc, char** argv) try
     // We compute on the leaf grid view.
     const auto& leafGridView = gridManager.grid().leafGridView();
 
-    // ### Setup and solving of the 1p problem
-    // In the following section, we setup and solve the 1p problem. As the result of this problem, we obtain the pressure distribution in the problem domain.
-    // #### Setup
+    // ### Set-up and solving of the 1p problem
+    // In the following section, we set up and solve the 1p problem. As the result of this problem, we obtain the pressure distribution in the problem domain.
+    // #### Set-up
     // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
     // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
     using FVGridGeometry = GetPropType<OnePTypeTag, Properties::FVGridGeometry>;
@@ -202,8 +202,8 @@ int main(int argc, char** argv) try
     }
 
 
-    // ### Setup and solving of the tracer problem
-    // #### Setup
+    // ### Set-up and solving of the tracer problem
+    // #### Set-up
     // Similar to the 1p problem, we first create and initialize the problem.
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
     auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
