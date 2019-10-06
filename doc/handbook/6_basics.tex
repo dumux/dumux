@@ -260,7 +260,7 @@ It is a value between zero and one, depending on the saturation.
 The relations describing the relative permeabilities of the wetting and non-wetting phase are different 
 as the wetting phase predominantly occupies small pores and the edges of larger pores while the 
 non-wetting phases occupies large pores.
-The relative permeabilities for the wetting phase $k_\mathrm{r,w}$ and the non-wetting phase are calculated as:
+The relative permeabilities for the wetting phase $k_\mathrm{r,w}$ and the non-wetting phase are e.g. calculated as (also by \citet{brooks1964hydrau}):
 
 \begin{equation}\label{eq:krw}
 k_\mathrm{r,w} = S_\mathrm{e}^{\frac{2+3\lambda}{\lambda}}
@@ -301,7 +301,7 @@ Molecular diffusion is a process determined by the concentration gradient.
 It is commonly modeled as Fickian diffusion following Fick's first law:
 
 \begin{equation} \label{eq:Diffusion}
-\mathbf{j_d}=-\rho_{\mathrm{mol},\alpha} D^\kappa_\alpha \nabla x^\kappa_\alpha,
+\mathbf{j_d}=-\rho_{\alpha} D^\kappa_\alpha \nabla X^\kappa_\alpha,
 \end{equation}
 
 where $D^\kappa_\alpha$ is the molecular diffusion coefficient of component $\kappa$ in phase $\alpha$.
