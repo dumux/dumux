@@ -27,7 +27,7 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
     //! \todo Please doc me!
     ```
 
-* We use Doxygen to generate documentation from the source code
+* We use Doxygen to generate documentation from the source code. Detailed instructions can be found [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/dox/doxygen/README.md).
 
     ```c++
     int lineOfCode = 1; // Short comment on line of code 1 that will _not_ show in doxygen
