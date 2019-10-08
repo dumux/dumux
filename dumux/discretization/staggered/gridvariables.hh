@@ -92,7 +92,7 @@ public:
     { return gridVariables_->prevGridFaceVars(); }
 
     //! return the fv grid geometry
-    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const FVGridGeometry& fvGridGeometry() const
     { return (*gridVariables_->fvGridGeometry_);    }
     //! return the fv grid geometry

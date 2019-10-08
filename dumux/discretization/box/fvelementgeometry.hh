@@ -67,7 +67,7 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
-    using FVGridGeometry [[deprecated ("Use more general GridGeometry instead. Will be removed after 3.1!")]]= GridGeometry;
+    using FVGridGeometry [[deprecated ("Use GridGeometry instead. Will be removed after 3.1!")]]= GridGeometry;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
@@ -149,7 +149,7 @@ public:
     }
 
     //! The global finite volume geometry we are a restriction of
-    [[deprecated ("Use more general GridGeometry instead. Will be removed after 3.1!")]]
+    [[deprecated ("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const FVGridGeometry& fvGridGeometry() const
     { return gridGeometry(); }
     const GridGeometry& gridGeometry() const
@@ -190,7 +190,7 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
-    using FVGridGeometry [[deprecated ("Use more general GridGeometry instead. Will be removed after 3.1!")]]= GridGeometry;
+    using FVGridGeometry [[deprecated ("Use GridGeometry instead. Will be removed after 3.1!")]]= GridGeometry;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
@@ -270,7 +270,7 @@ public:
     }
 
     //! The global finite volume geometry we are a restriction of
-    [[deprecated ("Use more general GridGeometry instead. Will be removed after 3.1!")]]
+    [[deprecated ("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const FVGridGeometry& fvGridGeometry() const
     { return gridGeometry(); }
     const GridGeometry& gridGeometry() const
