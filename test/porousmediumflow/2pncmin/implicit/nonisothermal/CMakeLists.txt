@@ -9,6 +9,7 @@ dune_add_test(NAME test_2pncminni_salinization_box
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncminni_salinization_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_box-00035.vtu
+                            --zeroThreshold {"velocity_liq \(m/s\)_0":1e-18,"velocity_gas \(m/s\)_0":1e-14}
                                --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_box -ParameterFile params.input -Problem.Name test_2pncminni_salinization_box")
 
 dune_add_test(NAME test_2pncminni_salinization_tpfa
@@ -19,4 +20,5 @@ dune_add_test(NAME test_2pncminni_salinization_tpfa
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncminni_salinization_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_tpfa-00035.vtu
+                            --zeroThreshold {"velocity_liq \(m/s\)_0":1e-18,"velocity_gas \(m/s\)_0":1e-14}
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_tpfa -ParameterFile params.input -Problem.Name test_2pncminni_salinization_tpfa")
