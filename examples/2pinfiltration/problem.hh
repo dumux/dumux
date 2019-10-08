@@ -101,9 +101,9 @@ namespace Dumux {
   template<class TypeTag>
   struct SpatialParams<TypeTag, TTag::PointSourceExample>
   {
-      // We define convenient shortcuts to the properties FVGridGeometry and Scalar:
+      // We define convenient shortcuts to the properties GridGeometry and Scalar:
   private:
-      using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+      using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
       // Finally we set the spatial parameters:
   public:
@@ -136,7 +136,7 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PointSource =  GetPropType<TypeTag, Properties::PointSource>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -193,10 +193,10 @@ public:
           Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
           // The water phase pressure is the hydrostatic pressure, scaled with a factor:
-          Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
-          Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
+          Scalar height = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
+          Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
           Scalar alpha = 1 + 1.5/height;
-          Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
+          Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
           Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
           values[pressureH2OIdx] = 1e5 - factor*densityW*this->spatialParams().gravity(globalPos)[1]*depth;
@@ -229,7 +229,7 @@ public:
       // Accordingly, we need to find the index of our cells, depending on the x and y coordinates,
       // that corresponds to the indices of the input data set.
       const auto delta = 0.0625;
-      unsigned int cellsX = this->fvGridGeometry().bBoxMax()[0]/delta;
+      unsigned int cellsX = this->gridGeometry().bBoxMax()[0]/delta;
       const auto globalPos = element.geometry().center();
 
       unsigned int dataIdx = std::trunc(globalPos[1]/delta) * cellsX + std::trunc(globalPos[0]/delta);
@@ -257,23 +257,23 @@ public:
   private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
+        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
+        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
-        Scalar lambda = (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])/width;
+        Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
+        Scalar lambda = (this->gridGeometry().bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 

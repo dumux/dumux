@@ -426,7 +426,7 @@ protected:
         using ThermalConductivityModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ThermalConductivityModel>;
         const auto& problem = this->couplingManager().problem(darcyIdx);
         return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                 volVars, problem.spatialParams(), fvGeometry.fvGridGeometry().element(scv.elementIndex()), fvGeometry, scv);
+                 volVars, problem.spatialParams(), fvGeometry.gridGeometry().element(scv.elementIndex()), fvGeometry, scv);
     }
 
     /*!

@@ -211,7 +211,7 @@ public:
 
     //! The global finite volume geometry we are a restriction of
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
+    const GridGeometry& fvGridGeometry() const
     { return gridGeometry(); }
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }

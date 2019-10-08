@@ -69,7 +69,7 @@ struct SpatialParams<TypeTag, TTag::RoughChannel>
 {
 private:
     // We define convenient shortcuts to the properties FVGridGeometry, Scalar, ElementVolumeVariables and VolumeVariables:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
@@ -103,13 +103,13 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -161,12 +161,12 @@ public:
     {
         using std::abs;
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             const Scalar h = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
             const Scalar u = abs(discharge_)/h;
 
-            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
             exactWaterDepth_[eIdx] = h;
             exactVelocityX_[eIdx] = u;
         }
