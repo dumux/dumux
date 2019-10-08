@@ -25,7 +25,7 @@ The following resources are useful to get started with DuMux:
 
 * [Handbook](https://dumux.org/handbook), a detailed DuMux manual,
 * [DuMux course materials](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master),
-* [Examples](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/feature/documented-tutorials/examples), with detailed description of code and results,
+* [Examples](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples), with detailed description of code and results,
 * [Class documentation](https://dumux.org/classdocumentation) generated from the source code,
 * [Mailing list](https://listserv.uni-stuttgart.de/mailman/listinfo/dumux),
 * [Changelog](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CHANGELOG.md), where all changes between different release versions are listed and explained.
