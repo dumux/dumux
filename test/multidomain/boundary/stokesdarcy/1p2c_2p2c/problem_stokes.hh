@@ -99,7 +99,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -299,7 +299,7 @@ public:
         const Scalar density = FluidSystem::density(fluidState, 0);
 
         PrimaryVariables values(0.0);
-        values[Indices::pressureIdx] = refPressure() + density*this->gravity()[1]*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1]);
+        values[Indices::pressureIdx] = refPressure() + density*this->gravity()[1]*(globalPos[1] - this->gridGeometry().bBoxMin()[1]);
         values[Indices::conti0EqIdx + 1] = refMoleFrac();
         values[Indices::velocityXIdx] = xVelocity_(globalPos);
 
@@ -355,16 +355,16 @@ public:
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_; }
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_; }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_; }
+    { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
+    { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
 
     //! Updates the fluid state to obtain required quantities for IC/BC
     void updateFluidStateForBC_(FluidState& fluidState, const Scalar pressure) const
@@ -392,13 +392,13 @@ private:
     const Scalar xVelocity_(const GlobalPosition &globalPos) const
     {
         const Scalar vmax = refVelocity();
-        return  4 * vmax * (globalPos[1] - this->fvGridGeometry().bBoxMin()[1]) * (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
+        return  4 * vmax * (globalPos[1] - this->gridGeometry().bBoxMin()[1]) * (this->gridGeometry().bBoxMax()[1] - globalPos[1])
                 / (height_() * height_());
     }
 
     // the height of the free-flow domain
     const Scalar height_() const
-    { return this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]; }
+    { return this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]; }
 
     Scalar eps_;
 

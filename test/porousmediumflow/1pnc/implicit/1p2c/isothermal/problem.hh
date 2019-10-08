@@ -86,7 +86,7 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCTest>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -134,8 +134,8 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -161,7 +161,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
-    static const bool isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box;
+    static const bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
@@ -263,7 +263,7 @@ public:
     {
         // no-flow everywhere except at the right boundary
         NumEqVector values(0.0);
-        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto xMax = this->gridGeometry().bBoxMax()[0];
         const auto& ipGlobal = scvf.ipGlobal();
         if (ipGlobal[0] < xMax - eps_)
             return values;
@@ -319,7 +319,7 @@ public:
      {
         // no-flow everywhere except at the right boundary
         NumEqVector values(0.0);
-        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto xMax = this->gridGeometry().bBoxMax()[0];
         const auto& ipGlobal = scvf.ipGlobal();
         if (ipGlobal[0] < xMax - eps_)
             return values;

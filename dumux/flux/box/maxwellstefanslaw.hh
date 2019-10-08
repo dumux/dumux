@@ -50,7 +50,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;

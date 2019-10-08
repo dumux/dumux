@@ -43,7 +43,7 @@ class OneEqResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag, class BaseLocalResidual>
-using OneEqResidual = OneEqResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using OneEqResidual = OneEqResidualImpl<TypeTag, BaseLocalResidual, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 } // end namespace Dumux
 

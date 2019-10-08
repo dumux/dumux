@@ -98,7 +98,7 @@ public:
         for (const auto& data : iv.interiorBoundaryData())
         {
             const auto& scvf = this->fvGeometry().scvf(data.scvfIndex());
-            const auto element = this->fvGeometry().fvGridGeometry().element(scvf.insideScvIdx());
+            const auto element = this->fvGeometry().gridGeometry().element(scvf.insideScvIdx());
             u[i++] = getU( this->problem().couplingManager().getLowDimVolVars(element, scvf) );
         }
 
@@ -204,7 +204,7 @@ public:
 
                 if (curIsInteriorBoundary)
                 {
-                    const auto posElement = this->fvGeometry().fvGridGeometry().element(posGlobalScv.elementIndex());
+                    const auto posElement = this->fvGeometry().gridGeometry().element(posGlobalScv.elementIndex());
                     const auto& facetVolVars = this->problem().couplingManager().getLowDimVolVars(posElement, curGlobalScvf);
                     rho += getRho(facetVolVars);
                     rho /= 2.0;
@@ -222,7 +222,7 @@ public:
             // use average density between facet and cell density on interior Dirichlet boundaries
             else if (curIsInteriorBoundary)
             {
-                const auto posElement = this->fvGeometry().fvGridGeometry().element(posGlobalScv.elementIndex());
+                const auto posElement = this->fvGeometry().gridGeometry().element(posGlobalScv.elementIndex());
                 const auto& facetVolVars = this->problem().couplingManager().getLowDimVolVars(posElement, curGlobalScvf);
                 rho = 0.5*(getRho(facetVolVars) + getRho(posVolVars));
             }

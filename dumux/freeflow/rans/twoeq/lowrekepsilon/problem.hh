@@ -49,8 +49,8 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::lowrekepsilon> : public RANSProb
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
 
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -74,9 +74,9 @@ public:
         ParentType::updateStaticWallProperties();
 
         // update size and initial values of the global vectors
-        storedDissipationTilde_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedDissipationTilde_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedDynamicEddyViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedTurbulentKineticEnergy_.resize(this->gridGeometry().elementMapper().size(), 0.0);
     }
 
     /*!
@@ -88,11 +88,11 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {

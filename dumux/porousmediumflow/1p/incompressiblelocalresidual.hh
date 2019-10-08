@@ -47,7 +47,7 @@ class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -81,7 +81,7 @@ public:
 
     //! Flux derivatives for the cell-centered tpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -107,7 +107,7 @@ public:
 
     //! Flux derivatives for the cell-centered mpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::ccmpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::ccmpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -144,7 +144,7 @@ public:
 
     //! Flux derivatives for the box scheme
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,
@@ -182,7 +182,7 @@ public:
 
     //! Dirichlet flux derivatives for the cell-centered tpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
     addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                   const Problem& problem,
                                   const Element& element,
@@ -202,7 +202,7 @@ public:
 
     //! Dirichlet flux derivatives for the cell-centered mpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::ccmpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::ccmpfa, void>
     addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                   const Problem& problem,
                                   const Element& element,

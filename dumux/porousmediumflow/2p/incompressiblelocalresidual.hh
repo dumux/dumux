@@ -56,7 +56,7 @@ class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -150,7 +150,7 @@ public:
      * \param scvf The sub control volume face
      */
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::cctpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -187,7 +187,7 @@ public:
         // get references to the two participating vol vars & parameters
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto outsideScvIdx = scvf.outsideScvIdx();
-        const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
+        const auto outsideElement = fvGeometry.gridGeometry().element(outsideScvIdx);
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
         const auto& insideVolVars = curElemVolVars[insideScvIdx];
@@ -269,7 +269,7 @@ public:
      * \param scvf The sub control volume face
      */
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GetPropType<T, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box, void>
+    std::enable_if_t<GetPropType<T, Properties::GridGeometry>::discMethod == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,

@@ -51,7 +51,7 @@ struct DefaultPointSourceTraits
 {
 private:
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomain<i>::TypeTag;
-    template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::FVGridGeometry>;
+    template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>;
     template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
 public:
     //! export the point source type for domain i
@@ -87,7 +87,7 @@ class EmbeddedCouplingManagerBase
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using ElementMapper = typename FVGridGeometry<id>::ElementMapper;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
@@ -176,7 +176,7 @@ public:
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
-        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         if (couplingStencils(domainI).count(eIdx))
             return couplingStencils(domainI).at(eIdx);
         else
@@ -246,8 +246,8 @@ public:
         this->preComputeVertexIndices(bulkIdx);
         this->preComputeVertexIndices(lowDimIdx);
 
-        const auto& bulkFvGridGeometry = this->problem(bulkIdx).fvGridGeometry();
-        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
+        const auto& bulkFvGridGeometry = this->problem(bulkIdx).gridGeometry();
+        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).gridGeometry();
 
         // intersect the bounding box trees
         glueGrids();
@@ -291,9 +291,9 @@ public:
                     if (isBox<lowDimIdx>())
                     {
                         using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                        const auto lowDimGeometry = this->problem(lowDimIdx).fvGridGeometry().element(lowDimElementIdx).geometry();
+                        const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
                         ShapeValues shapeValues;
-                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).gridGeometry(), lowDimGeometry, globalPos, shapeValues);
                         psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                     }
                     else
@@ -305,9 +305,9 @@ public:
                     if (isBox<bulkIdx>())
                     {
                         using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                        const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
+                        const auto bulkGeometry = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx).geometry();
                         ShapeValues shapeValues;
-                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, globalPos, shapeValues);
+                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, globalPos, shapeValues);
                         psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                     }
                     else
@@ -377,7 +377,7 @@ public:
     //! Return a reference to the bulk problem
     template<std::size_t id>
     const GridView<id>& gridView(Dune::index_constant<id> domainIdx) const
-    { return this->problem(domainIdx).fvGridGeometry().gridView(); }
+    { return this->problem(domainIdx).gridGeometry().gridView(); }
 
     //! Return data for a bulk point source with the identifier id
     PrimaryVariables<bulkIdx> bulkPriVars(std::size_t id) const
@@ -436,10 +436,10 @@ protected:
             for (const auto& element : elements(gridView(domainIdx)))
             {
                 constexpr int dim = GridView<domainIdx>::dimension;
-                const auto eIdx = this->problem(domainIdx).fvGridGeometry().elementMapper().index(element);
+                const auto eIdx = this->problem(domainIdx).gridGeometry().elementMapper().index(element);
                 this->vertexIndices(domainIdx, eIdx).resize(element.subEntities(dim));
                 for (int i = 0; i < element.subEntities(dim); ++i)
-                    this->vertexIndices(domainIdx, eIdx)[i] = this->problem(domainIdx).fvGridGeometry().vertexMapper().subIndex(element, i, dim);
+                    this->vertexIndices(domainIdx, eIdx)[i] = this->problem(domainIdx).gridGeometry().vertexMapper().subIndex(element, i, dim);
             }
         }
     }
@@ -449,7 +449,7 @@ protected:
     void getShapeValues(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
         const auto ipLocal = geo.local(globalPos);
-        const auto& localBasis = this->problem(domainI).fvGridGeometry().feCache().get(geo.type()).localBasis();
+        const auto& localBasis = this->problem(domainI).gridGeometry().feCache().get(geo.type()).localBasis();
         localBasis.evaluateFunction(ipLocal, shapeValues);
     }
 
@@ -478,8 +478,8 @@ protected:
     //! compute the intersections between the two grids
     void glueGrids()
     {
-        const auto& bulkFvGridGeometry = this->problem(bulkIdx).fvGridGeometry();
-        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
+        const auto& bulkFvGridGeometry = this->problem(bulkIdx).gridGeometry();
+        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).gridGeometry();
 
         // intersect the bounding box trees
         glue_->build(bulkFvGridGeometry.boundingBoxTree(), lowDimFvGridGeometry.boundingBoxTree());

@@ -118,13 +118,13 @@ public:
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void updateElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void updateElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars)
     {
         if (FluxVariablesCacheFiller::isSolDependent)
         {
-            const auto globalI = fvGeometry.fvGridGeometry().elementMapper().index(element);
+            const auto globalI = fvGeometry.gridGeometry().elementMapper().index(element);
 
             // instantiate filler class
             FluxVariablesCacheFiller filler(problem());
@@ -134,9 +134,9 @@ public:
                 filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf);
 
             // update the caches in the neighbors
-            for (const auto& dataJ : fvGeometry.fvGridGeometry().connectivityMap()[globalI])
+            for (const auto& dataJ : fvGeometry.gridGeometry().connectivityMap()[globalI])
             {
-                const auto elementJ = fvGeometry.fvGridGeometry().element(dataJ.globalJ);
+                const auto elementJ = fvGeometry.gridGeometry().element(dataJ.globalJ);
                 for (const auto scvfIdxJ : dataJ.scvfsJ)
                 {
                     const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
@@ -202,7 +202,7 @@ public:
 
     //! When global flux variables caching is disabled, we don't need to update the cache
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void updateElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void updateElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars) {}
 

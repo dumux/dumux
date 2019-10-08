@@ -74,7 +74,7 @@ public:
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::InjectionProblem>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = InjectionProblemSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -106,12 +106,12 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     // copy some indices for convenience
     enum {
@@ -161,7 +161,7 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_ || globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
            bcTypes.setAllDirichlet();
         else
            bcTypes.setAllNeumann();
@@ -235,7 +235,7 @@ public:
         PrimaryVariables values(0.0);
 
         const Scalar densityW = 1000.0;
-        values[pressureIdx] = 101300.0 + (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])*densityW*9.81; // hydrostatic pressure
+        values[pressureIdx] = 101300.0 + (this->gridGeometry().bBoxMax()[1] - globalPos[1])*densityW*9.81; // hydrostatic pressure
         values[switchIdx] = 283.13;
 
         values.setState(liquidPhaseOnly);

@@ -91,7 +91,7 @@ public:
                       const ElementVolumeVariables& elemVolVars,
                       const SubControlVolumeFace& scvf) const
     {
-        return isBox ? volumeFlux_[this->fvGridGeometry().elementMapper().index(element)][scvf.index()]
+        return isBox ? volumeFlux_[this->gridGeometry().elementMapper().index(element)][scvf.index()]
                      : volumeFlux_[scvf.index()][0];
     }
 

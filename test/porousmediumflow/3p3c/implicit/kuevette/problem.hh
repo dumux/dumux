@@ -72,7 +72,7 @@ struct Problem<TypeTag, TTag::Kuevette> { using type = KuevetteProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Kuevette>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = KuevetteSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -145,8 +145,8 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -191,7 +191,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
@@ -272,7 +272,7 @@ public:
     template<class VTKWriter>
     void addVtkFields(VTKWriter& vtk)
     {
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         Kxx_.resize(gg.numDofs());
         vtk.addField(Kxx_, "permeability");
 

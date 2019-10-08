@@ -94,7 +94,7 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        const Scalar r = radius(this->fvGridGeometry().gridView().indexSet().index(element));
+        const Scalar r = radius(this->gridGeometry().gridView().indexSet().index(element));
         return constantKx_ / (M_PI*r*r) * Components::SimpleH2O<Scalar>::liquidViscosity(285.15, 1e5);
     }
 

@@ -115,7 +115,7 @@ struct StressType<TypeTag, TTag::PoroElastic>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElasticStressType = HookesLaw< Scalar, FVGridGeometry >;
 public:
     using type = EffectiveStressLaw< ElasticStressType, FVGridGeometry >;

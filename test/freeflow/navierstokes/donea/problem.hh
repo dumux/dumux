@@ -91,7 +91,7 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -128,8 +128,8 @@ public:
         {
             using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
             const auto l2error = L2Error::calculateL2Error(*this, curSol);
-            const int numCellCenterDofs = this->fvGridGeometry().numCellCenterDofs();
-            const int numFaceDofs = this->fvGridGeometry().numFaceDofs();
+            const int numCellCenterDofs = this->gridGeometry().numCellCenterDofs();
+            const int numFaceDofs = this->gridGeometry().numFaceDofs();
             std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
                     << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
                     << std::scientific
@@ -292,13 +292,13 @@ private:
      */
     void createAnalyticalSolution_()
     {
-        analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs());
-        analyticalVelocity_.resize(this->fvGridGeometry().numCellCenterDofs());
-        analyticalVelocityOnFace_.resize(this->fvGridGeometry().numFaceDofs());
+        analyticalPressure_.resize(this->gridGeometry().numCellCenterDofs());
+        analyticalVelocity_.resize(this->gridGeometry().numCellCenterDofs());
+        analyticalVelocityOnFace_.resize(this->gridGeometry().numFaceDofs());
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {

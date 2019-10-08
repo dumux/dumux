@@ -69,7 +69,7 @@ struct Problem<TypeTag, TTag::RichardsWellTracer> { using type = RichardsWellTra
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsWellTracer>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -112,7 +112,7 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
@@ -121,7 +121,7 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     enum {
@@ -144,7 +144,7 @@ public:
         // for initial conditions
         const Scalar sw = 0.4; // start with 80% saturation on top
         using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->fvGridGeometry().bBoxMax()), sw);
+        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->gridGeometry().bBoxMax()), sw);
 
         // for post time step mass balance
         accumulatedSource_ = 0.0;
@@ -159,9 +159,9 @@ public:
         Scalar tracerMass = 0.0;
 
         // bulk elements
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(gridVariables.curGridVolVars());
@@ -280,7 +280,7 @@ public:
      */
     void addPointSources(std::vector<PointSource>& pointSources) const
     {
-        auto globalPos = this->fvGridGeometry().bBoxMax()-this->fvGridGeometry().bBoxMin();
+        auto globalPos = this->gridGeometry().bBoxMax()-this->gridGeometry().bBoxMin();
         globalPos *= 0.5;
         //! Add point source in middle of domain
         pointSources.emplace_back(globalPos,
@@ -316,8 +316,8 @@ private:
     {
         const auto xTracer = [&,this]()
         {
-            const GlobalPosition contaminationPos({0.2*this->fvGridGeometry().bBoxMax()[0], 0.5*this->fvGridGeometry().bBoxMax()[1]});
-            if ((globalPos - contaminationPos).two_norm() < 0.1*(this->fvGridGeometry().bBoxMax()-this->fvGridGeometry().bBoxMin()).two_norm() + eps_)
+            const GlobalPosition contaminationPos({0.2*this->gridGeometry().bBoxMax()[0], 0.5*this->gridGeometry().bBoxMax()[1]});
+            if ((globalPos - contaminationPos).two_norm() < 0.1*(this->gridGeometry().bBoxMax()-this->gridGeometry().bBoxMin()).two_norm() + eps_)
                 return contaminantMoleFraction_;
             else
                 return 0.0;
@@ -326,29 +326,29 @@ private:
         PrimaryVariables values(0.0);
         //! Hydrostatic pressure profile
         values[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
-                               - 9.81*1000*(globalPos[dimWorld-1] - this->fvGridGeometry().bBoxMax()[dimWorld-1]);
+                               - 9.81*1000*(globalPos[dimWorld-1] - this->gridGeometry().bBoxMax()[dimWorld-1]);
         values[compIdx] = xTracer;
         return values;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
+        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
+        return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
+        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
 
     static constexpr Scalar eps_ = 1.5e-7;

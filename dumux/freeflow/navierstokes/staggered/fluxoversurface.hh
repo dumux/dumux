@@ -284,15 +284,15 @@ public:
             surface.second.resetValues();
 
         // make sure not to iterate over the same dofs twice
-        std::vector<bool> dofVisited(problem_().fvGridGeometry().numFaceDofs(), false);
+        std::vector<bool> dofVisited(problem_().gridGeometry().numFaceDofs(), false);
 
         auto elemVolVars = localView(gridVariables_.curGridVolVars());
         auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
 
-        for(auto&& element : elements(problem_().fvGridGeometry().gridView()))
+        for(auto&& element : elements(problem_().gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem_().fvGridGeometry());
+            auto fvGeometry = localView(problem_().gridGeometry());
             fvGeometry.bind(element);
 
             elemVolVars.bind(element, fvGeometry, sol_);

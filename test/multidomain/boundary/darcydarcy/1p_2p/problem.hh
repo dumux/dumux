@@ -46,7 +46,7 @@ class OnePTestProblem
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;

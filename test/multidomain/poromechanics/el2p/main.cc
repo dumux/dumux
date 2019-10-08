@@ -110,8 +110,8 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometries
-    using TwoPFVGridGeometry = GetPropType<TwoPTypeTag, Properties::FVGridGeometry>;
-    using PoroMechFVGridGeometry = GetPropType<PoroMechTypeTag, Properties::FVGridGeometry>;
+    using TwoPFVGridGeometry = GetPropType<TwoPTypeTag, Properties::GridGeometry>;
+    using PoroMechFVGridGeometry = GetPropType<PoroMechTypeTag, Properties::GridGeometry>;
     auto twoPFvGridGeometry = std::make_shared<TwoPFVGridGeometry>(leafGridView);
     auto poroMechFvGridGeometry = std::make_shared<PoroMechFVGridGeometry>(leafGridView);
     twoPFvGridGeometry->update();

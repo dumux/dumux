@@ -91,12 +91,12 @@ public:
      */
     void getParamsFromGrid()
     {
-        const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& gridView = this->gridGeometry().gridView();
         paramIdx_.resize(gridView.size(0));
 
         for (const auto& element : elements(gridView))
         {
-            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
             paramIdx_[eIdx] = gridData_->parameters(element)[0];
         }
     }
@@ -117,7 +117,7 @@ public:
                                   const ElementSolution& elemSol) const
     {
         // Get the global index of the element
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
         return permeability(eIdx);
     }
 
@@ -153,7 +153,7 @@ public:
                                int compIdx) const
     {
         // Get the global index of the element
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
         return inertVolumeFraction(eIdx);
     }
 

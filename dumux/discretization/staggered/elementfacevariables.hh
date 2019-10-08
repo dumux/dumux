@@ -68,7 +68,7 @@ public:
     //! For compatibility reasons with the case of not storing the face vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {}
@@ -76,7 +76,7 @@ public:
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {}
@@ -128,14 +128,14 @@ public:
     //! For compatibility reasons with the case of not storing the vol vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
         faceVariables_.resize(fvGeometry.numScvf());
         faceVarIndices_.resize(fvGeometry.numScvf());
 
-        constexpr auto faceIdx = FVElementGeometry::FVGridGeometry::faceIdx();
+        constexpr auto faceIdx = FVElementGeometry::GridGeometry::faceIdx();
 
         for(auto&& scvf : scvfs(fvGeometry))
         {
@@ -147,14 +147,14 @@ public:
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
         faceVariables_.resize(fvGeometry.numScvf());
         faceVarIndices_.resize(fvGeometry.numScvf());
 
-        constexpr auto faceIdx = FVElementGeometry::FVGridGeometry::faceIdx();
+        constexpr auto faceIdx = FVElementGeometry::GridGeometry::faceIdx();
 
         for(auto&& scvf : scvfs(fvGeometry))
         {

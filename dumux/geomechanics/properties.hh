@@ -49,7 +49,7 @@ template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::Geomechanics>
 {
     using type = StressVariablesCache< GetPropType<TypeTag, Properties::Scalar>,
-                                       GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                                       GetPropType<TypeTag, Properties::GridGeometry> >;
 };
 
 //! The (currently empty) velocity output

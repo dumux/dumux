@@ -42,7 +42,7 @@ class StaggeredCouplingManager: virtual public CouplingManager<MDTraits>
 {
     using ParentType = CouplingManager<MDTraits>;
 
-    template<std::size_t id> using FVGridGeometry = typename MDTraits::template SubDomain<id>::FVGridGeometry;
+    template<std::size_t id> using FVGridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
 
     using FVElementGeometry = typename FVGridGeometry<0>::LocalView;
@@ -94,8 +94,8 @@ public:
                                            const Element& elementI,
                                            Dune::index_constant<faceIdx> domainJ) const
     {
-        const auto& connectivityMap = this->problem(domainI).fvGridGeometry().connectivityMap();
-        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(elementI);
+        const auto& connectivityMap = this->problem(domainI).gridGeometry().connectivityMap();
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(elementI);
         return connectivityMap(domainI, domainJ, eIdx);
     }
 
@@ -135,7 +135,7 @@ public:
                                            const SubControlVolumeFace& scvfI,
                                            Dune::index_constant<cellCenterIdx> domainJ) const
     {
-        const auto& connectivityMap = this->problem(domainI).fvGridGeometry().connectivityMap();
+        const auto& connectivityMap = this->problem(domainI).gridGeometry().connectivityMap();
         return connectivityMap(domainI, domainJ, scvfI.index());
     }
 

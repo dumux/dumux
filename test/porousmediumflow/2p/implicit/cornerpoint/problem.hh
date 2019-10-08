@@ -77,7 +77,7 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPCornerPoint>
 {
 private:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = TwoPCornerPointTestSpatialParams<FVGridGeometry, Scalar>;
@@ -104,7 +104,7 @@ class TwoPCornerPointTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
@@ -185,7 +185,7 @@ public:
     {
         NumEqVector values(0.0);
 
-        int eIdx = this->fvGridGeometry().gridView().indexSet().index(element);
+        int eIdx = this->gridGeometry().gridView().indexSet().index(element);
         if (eIdx == injectionElement_)
             values[FluidSystem::phase1Idx] = injectionRate_/element.geometry().volume();
 
@@ -236,7 +236,7 @@ public:
     template<class VTKWriter>
     void addFieldsToWriter(VTKWriter& vtk)
     {
-        const auto numElements = this->fvGridGeometry().gridView().size(0);
+        const auto numElements = this->gridGeometry().gridView().size(0);
 
         permX_.resize(numElements);
         permZ_.resize(numElements);
@@ -244,10 +244,10 @@ public:
         vtk.addField(permX_, "PERMX [mD]");
         vtk.addField(permZ_, "PERMZ [mD]");
 
-        const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& gridView = this->gridGeometry().gridView();
         for (const auto& element : elements(gridView))
         {
-            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
 
             // transfer output to mD = 9.86923e-16 m^2
             permX_[eIdx] = this->spatialParams().permeabilityX(eIdx)/9.86923e-16;

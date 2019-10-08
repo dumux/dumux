@@ -89,7 +89,7 @@ struct LocalResidual<TypeTag, TTag::Root> { using type = OnePIncompressibleLocal
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Root>
 {
-    using type = RootSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = RootSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                    GetPropType<TypeTag, Properties::Scalar>>;
 };
 } // end namespace Properties
@@ -108,7 +108,7 @@ class RootProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
@@ -144,7 +144,7 @@ public:
                            const SubControlVolume &scv,
                            const ElementSolution& elemSol) const
     {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
         const auto radius = this->spatialParams().radius(eIdx);
         return M_PI*radius*radius;
     }
@@ -213,7 +213,7 @@ public:
                           const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);
-        if (scvf.center()[2] + eps_ > this->fvGridGeometry().bBoxMax()[2])
+        if (scvf.center()[2] + eps_ > this->gridGeometry().bBoxMax()[2])
         {
             const auto r = this->spatialParams().radius(scvf.insideScvIdx());
             values[Indices::conti0EqIdx] = transpirationRate_/(M_PI*r*r)/scvf.area();
@@ -297,9 +297,9 @@ public:
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
         PrimaryVariables source(0.0);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(gridVars.curGridVolVars());

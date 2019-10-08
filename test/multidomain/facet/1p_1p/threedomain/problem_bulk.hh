@@ -62,7 +62,7 @@ struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePBulk>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -128,7 +128,7 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + 1e-6 || globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - 1e-6)
+        if (globalPos[1] < this->gridGeometry().bBoxMin()[1] + 1e-6 || globalPos[1] > this->gridGeometry().bBoxMax()[1] - 1e-6)
             values.setAllDirichlet();
         return values;
     }
@@ -152,8 +152,8 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         const auto y = globalPos[1];
-        const auto yMin = this->fvGridGeometry().bBoxMin()[1];
-        const auto yMax = this->fvGridGeometry().bBoxMax()[1];
+        const auto yMin = this->gridGeometry().bBoxMin()[1];
+        const auto yMax = this->gridGeometry().bBoxMax()[1];
 
         return PrimaryVariables( {2.0 - (y-yMin)/(yMax-yMin)} );
     }

@@ -105,10 +105,10 @@ int main(int argc, char** argv) try
     const auto& stokesGridView = stokesGridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using StokesFVGridGeometry = GetPropType<StokesTypeTag, Properties::FVGridGeometry>;
+    using StokesFVGridGeometry = GetPropType<StokesTypeTag, Properties::GridGeometry>;
     auto stokesFvGridGeometry = std::make_shared<StokesFVGridGeometry>(stokesGridView);
     stokesFvGridGeometry->update();
-    using DarcyFVGridGeometry = GetPropType<DarcyTypeTag, Properties::FVGridGeometry>;
+    using DarcyFVGridGeometry = GetPropType<DarcyTypeTag, Properties::GridGeometry>;
     auto darcyFvGridGeometry = std::make_shared<DarcyFVGridGeometry>(darcyGridView);
     darcyFvGridGeometry->update();
 

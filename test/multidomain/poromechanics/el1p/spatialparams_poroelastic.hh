@@ -76,7 +76,7 @@ public:
                     const ElementSolution& elemSol) const
 
     {
-        return PorosityDeformation<Scalar>::evaluatePorosity(this->fvGridGeometry(), element, scv, elemSol, initPorosity_);
+        return PorosityDeformation<Scalar>::evaluatePorosity(this->gridGeometry(), element, scv, elemSol, initPorosity_);
     }
 
     //! Returns the Biot coefficient of the porous medium.

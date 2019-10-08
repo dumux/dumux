@@ -74,7 +74,7 @@ struct Problem<TypeTag, TTag::TracerTestBulk> { using type = TracerBulkProblem<T
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TracerTestBulk>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TracerSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -111,7 +111,7 @@ class TracerBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;

@@ -100,7 +100,7 @@ public:
     : ParentType(assembler,
                  element,
                  curSol,
-                 localView(assembler.fvGridGeometry(domainId)),
+                 localView(assembler.gridGeometry(domainId)),
                  localView(assembler.gridVariables(domainId).curGridVolVars()),
                  localView(assembler.gridVariables(domainId).prevGridVolVars()),
                  localView(assembler.gridVariables(domainId).gridFluxVarsCache()),
@@ -119,7 +119,7 @@ public:
         this->asImp_().bindLocalViews();
 
         // for the diagonal jacobian block
-        const auto globalI = this->fvGeometry().fvGridGeometry().elementMapper().index(this->element());
+        const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
         res[globalI] = this->asImp_().assembleJacobianAndResidualImplInverse(jacRow[domainId], *std::get<domainId>(gridVariables));
 
         // for the coupling blocks
@@ -158,7 +158,7 @@ public:
     void assembleResidual(SubSolutionVector& res)
     {
         this->asImp_().bindLocalViews();
-        const auto globalI = this->fvGeometry().fvGridGeometry().elementMapper().index(this->element());
+        const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
         res[globalI] = this->evalLocalResidual()[0]; // forward to the internal implementation
     }
 
@@ -284,7 +284,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -318,7 +318,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
@@ -457,7 +457,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
@@ -594,7 +594,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
 
         // reference to the element's scv (needed later) and corresponding vol vars
@@ -711,7 +711,7 @@ public:
         const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get reference to the element's current vol vars
-        const auto globalI = this->assembler().fvGridGeometry(domainI).elementMapper().index(element);
+        const auto globalI = this->assembler().gridGeometry(domainI).elementMapper().index(element);
         const auto& scv = fvGeometry.scv(globalI);
         const auto& volVars = curElemVolVars[scv];
 
@@ -768,7 +768,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         // auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
@@ -778,7 +778,7 @@ public:
 
         for (const auto globalJ : stencil)
         {
-            const auto& elementJ = this->assembler().fvGridGeometry(domainJ).element(globalJ);
+            const auto& elementJ = this->assembler().gridGeometry(domainJ).element(globalJ);
             this->couplingManager().addCouplingDerivatives(A[globalI][globalJ], domainI, element, fvGeometry, curElemVolVars, domainJ, elementJ);
         }
     }

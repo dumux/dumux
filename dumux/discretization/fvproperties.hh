@@ -48,7 +48,7 @@ template<class TypeTag>
 struct GridVariables<TypeTag, TTag::FiniteVolumeModel>
 {
 private:
-    using GG = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
     using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
     using GFVC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
 public:

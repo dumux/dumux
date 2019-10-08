@@ -123,10 +123,10 @@ int main(int argc, char** argv) try
     const auto& lowDimGridView = lowDimGridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::FVGridGeometry>;
+    using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::GridGeometry>;
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     bulkFvGridGeometry->update();
-    using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::FVGridGeometry>;
+    using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::GridGeometry>;
     auto lowDimFvGridGeometry = std::make_shared<LowDimFVGridGeometry>(lowDimGridView);
     lowDimFvGridGeometry->update();
 

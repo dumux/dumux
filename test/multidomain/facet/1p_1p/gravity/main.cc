@@ -54,8 +54,8 @@ namespace Dumux {
 template< class BulkTypeTag, class LowDimTypeTag >
 class TestTraits
 {
-    using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::FVGridGeometry>;
-    using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::FVGridGeometry>;
+    using BulkFVGridGeometry = GetPropType<BulkTypeTag, Properties::GridGeometry>;
+    using LowDimFVGridGeometry = GetPropType<LowDimTypeTag, Properties::GridGeometry>;
 public:
     using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
     using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
@@ -114,8 +114,8 @@ int main(int argc, char** argv) try
     const auto& lowDimGridView = gridManager.template grid<1>().leafGridView();
 
     // create the finite volume grid geometries
-    using BulkFVGridGeometry = GetPropType<BulkProblemTypeTag, Properties::FVGridGeometry>;
-    using LowDimFVGridGeometry = GetPropType<LowDimProblemTypeTag, Properties::FVGridGeometry>;
+    using BulkFVGridGeometry = GetPropType<BulkProblemTypeTag, Properties::GridGeometry>;
+    using LowDimFVGridGeometry = GetPropType<LowDimProblemTypeTag, Properties::GridGeometry>;
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     auto lowDimFvGridGeometry = std::make_shared<LowDimFVGridGeometry>(lowDimGridView);
     bulkFvGridGeometry->update();

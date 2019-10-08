@@ -42,7 +42,7 @@ class NavierStokesFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using NavierStokesFluxVariables = NavierStokesFluxVariablesImpl<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using NavierStokesFluxVariables = NavierStokesFluxVariablesImpl<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 
 } // end namespace

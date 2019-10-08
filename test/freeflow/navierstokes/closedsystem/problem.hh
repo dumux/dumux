@@ -84,7 +84,7 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -186,7 +186,7 @@ public:
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
 
-        if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
+        if(globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
             values[Indices::velocityXIdx] = lidVelocity_;
 
         return values;

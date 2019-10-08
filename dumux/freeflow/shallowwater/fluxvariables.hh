@@ -37,7 +37,7 @@ namespace Dumux {
 template<class TypeTag>
 class ShallowWaterFluxVariables
 : public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
-                           typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView,
+                           typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>
 {
@@ -49,7 +49,7 @@ class ShallowWaterFluxVariables
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
 

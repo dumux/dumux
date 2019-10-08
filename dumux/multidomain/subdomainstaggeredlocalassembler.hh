@@ -98,7 +98,7 @@ public:
     : ParentType(assembler,
                  element,
                  curSol,
-                 localView(assembler.fvGridGeometry(domainId)),
+                 localView(assembler.gridGeometry(domainId)),
                  localView(assembler.gridVariables(domainId).curGridVolVars()),
                  localView(assembler.gridVariables(domainId).prevGridVolVars()),
                  localView(assembler.gridVariables(domainId).gridFluxVarsCache()),
@@ -167,7 +167,7 @@ public:
             residual += evalLocalStorageResidualForCellCenter();
 
         // handle cells with a fixed Dirichlet value
-        const auto cellCenterGlobalI = problem().fvGridGeometry().elementMapper().index(this->element());
+        const auto cellCenterGlobalI = problem().gridGeometry().elementMapper().index(this->element());
         const auto& scvI = this->fvGeometry().scv(cellCenterGlobalI);
         for (int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
         {
@@ -319,7 +319,7 @@ private:
     template<class SubSol>
     void assembleResidualImpl_(Dune::index_constant<0>, SubSol& res)
     {
-        const auto cellCenterGlobalI = problem().fvGridGeometry().elementMapper().index(this->element());
+        const auto cellCenterGlobalI = problem().gridGeometry().elementMapper().index(this->element());
         res[cellCenterGlobalI] = this->asImp_().assembleCellCenterResidualImpl();
     }
 
@@ -336,7 +336,7 @@ private:
     auto assembleJacobianAndResidualImpl_(Dune::index_constant<0>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
     {
         auto& gridVariablesI = *std::get<domainId>(gridVariables);
-        const auto cellCenterGlobalI = problem().fvGridGeometry().elementMapper().index(this->element());
+        const auto cellCenterGlobalI = problem().gridGeometry().elementMapper().index(this->element());
         const auto residual = this->asImp_().assembleCellCenterJacobianAndResidualImpl(jacRow[domainId], gridVariablesI);
         res[cellCenterGlobalI] = residual;
 
@@ -376,7 +376,7 @@ private:
     template<class JacobianMatrixRow>
     void incorporateDirichletCells_(JacobianMatrixRow& jacRow)
     {
-        const auto cellCenterGlobalI = problem().fvGridGeometry().elementMapper().index(this->element());
+        const auto cellCenterGlobalI = problem().gridGeometry().elementMapper().index(this->element());
 
         // overwrite the partial derivative with zero in case a fixed Dirichlet BC is used
         static constexpr auto offset = numEq - numEqCellCenter;
@@ -497,7 +497,7 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using GridFaceVariables = GetPropType<TypeTag, Properties::GridFaceVariables>;
     using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
     using FaceVariables = typename ElementFaceVariables::FaceVariables;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
@@ -543,7 +543,7 @@ public:
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
-        const auto& fvGridGeometry = this->problem().fvGridGeometry();
+        const auto& fvGridGeometry = this->problem().gridGeometry();
         const auto& curSol = this->curSol()[domainI];
 
         const auto cellCenterGlobalI = fvGridGeometry.elementMapper().index(element);
@@ -558,7 +558,7 @@ public:
         {
             // get the volVars of the element with respect to which we are going to build the derivative
             auto&& scvJ = fvGeometry.scv(globalJ);
-            const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
+            const auto elementJ = fvGeometry.gridGeometry().element(globalJ);
             auto& curVolVars =  this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
             const auto origVolVars(curVolVars);
 
@@ -634,7 +634,7 @@ public:
         const auto& problem = this->problem();
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->problem().fvGridGeometry();
+        const auto& fvGridGeometry = this->problem().gridGeometry();
         const auto& curSol = this->curSol()[domainI];
 
         using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>; // TODO: use reserved vector
@@ -735,7 +735,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->problem().fvGridGeometry();
+        const auto& fvGridGeometry = this->problem().gridGeometry();
         const auto& curSol = this->curSol()[domainJ];
         // build derivatives with for cell center dofs w.r.t. cell center dofs
         const auto cellCenterGlobalI = fvGridGeometry.elementMapper().index(element);
@@ -831,7 +831,7 @@ public:
                                                           epsCoupl(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
-                const auto cellCenterGlobalI = this->problem().fvGridGeometry().elementMapper().index(element);
+                const auto cellCenterGlobalI = this->problem().gridGeometry().elementMapper().index(element);
                 updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
 
                 // restore the undeflected state of the coupling context
@@ -857,7 +857,7 @@ public:
         // get some aliases for convenience
         const auto& problem = this->problem();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->problem().fvGridGeometry();
+        const auto& fvGridGeometry = this->problem().gridGeometry();
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
         const auto& curSol = this->curSol()[domainJ];
 
@@ -872,7 +872,7 @@ public:
             {
                 // get the volVars of the element with respect to which we are going to build the derivative
                 auto&& scvJ = fvGeometry.scv(globalJ);
-                const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
+                const auto elementJ = fvGeometry.gridGeometry().element(globalJ);
                 auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), this->curElemVolVars(), scvJ);
                 const auto origVolVars(curVolVars);
                 const auto origCellCenterPriVars = curSol[globalJ];

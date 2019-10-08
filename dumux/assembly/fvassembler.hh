@@ -96,11 +96,11 @@ public:
      */
     [[deprecated("Please use constructor taking the previous solution instead. Will be removed after release 3.2!")]]
     FVAssembler(std::shared_ptr<const Problem> problem,
-                std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<GridVariables> gridVariables,
                 std::shared_ptr<const TimeLoop> timeLoop)
     : problem_(problem)
-    , gridGeometry_(fvGridGeometry)
+    , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
     , timeLoop_(timeLoop)
     , isStationaryProblem_(!timeLoop)

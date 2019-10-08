@@ -76,7 +76,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::ZeroEqNC>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;
@@ -126,7 +126,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::ZeroEqNCNI>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int numComponents = FluidSystem::numComponents;

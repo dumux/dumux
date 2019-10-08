@@ -64,26 +64,26 @@ public:
 
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) {}
 
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars) {}
 
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
                   const typename FVElementGeometry::SubControlVolumeFace& scvf) {}
 
     //! Specialization for the global caching being enabled - do nothing here
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void update(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void update(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars) {}
 
@@ -126,7 +126,7 @@ public:
      * \note this function has to be called prior to flux calculations on the element.
      */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
@@ -154,12 +154,12 @@ public:
      * \note this function has to be called prior to flux calculations on the element.
      */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
         const auto& problem = gridFluxVarsCache().problem();
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         const auto globalI = fvGridGeometry.elementMapper().index(element);
         const auto& connectivityMapI = fvGridGeometry.connectivityMap()[globalI];
         const auto numNeighbors = connectivityMapI.size();
@@ -203,7 +203,7 @@ public:
      * \note this function has to be called prior to flux calculations on the element.
      */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
                   const typename FVElementGeometry::SubControlVolumeFace& scvf)
@@ -223,14 +223,14 @@ public:
      * \note Results in undefined behaviour if called before bind() or with a different element
      */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void update(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void update(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
     {
         if (FluxVariablesCacheFiller::isSolDependent)
         {
             const auto& problem = gridFluxVarsCache().problem();
-            const auto globalI = fvGeometry.fvGridGeometry().elementMapper().index(element);
+            const auto globalI = fvGeometry.gridGeometry().elementMapper().index(element);
 
             // instantiate filler class
             FluxVariablesCacheFiller filler(problem);
@@ -243,7 +243,7 @@ public:
                 const auto scvfInsideScvIdx = scvf.insideScvIdx();
                 const auto& insideElement = scvfInsideScvIdx == globalI ?
                                             element :
-                                            fvGeometry.fvGridGeometry().element(scvfInsideScvIdx);
+                                            fvGeometry.gridGeometry().element(scvfInsideScvIdx);
 
                 filler.fill(*this, fluxVarsCache_[localScvfIdx], insideElement, fvGeometry, elemVolVars, scvf);
             }

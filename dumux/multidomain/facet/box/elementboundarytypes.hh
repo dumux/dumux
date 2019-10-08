@@ -59,7 +59,7 @@ public:
                 const Element &element,
                 const FVElementGeometry &fvGeometry)
     {
-        using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+        using FVGridGeometry = typename FVElementGeometry::GridGeometry;
         using GridView = typename FVGridGeometry::GridView;
 
         this->vertexBCTypes_.resize( element.subEntities(GridView::dimension) );
@@ -82,14 +82,14 @@ public:
             };
 
             // We have to have Neumann-type BCs on nodes that touch interior boundaries
-            if (fvGeometry.fvGridGeometry().dofOnInteriorBoundary(scv.dofIndex()))
+            if (fvGeometry.gridGeometry().dofOnInteriorBoundary(scv.dofIndex()))
             {
                 this->vertexBCTypes_[scvIdxLocal].setAllNeumann();
                 updateElemBCInfo(this->vertexBCTypes_[scvIdxLocal]);
             }
 
             // otherwise, let the problem decide
-            else if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
+            else if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
             {
                 this->vertexBCTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
                 updateElemBCInfo(this->vertexBCTypes_[scvIdxLocal]);

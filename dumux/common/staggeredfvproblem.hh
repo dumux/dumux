@@ -55,7 +55,7 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -167,12 +167,12 @@ public:
     template<class SolutionVector>
     void applyInitialSolution(SolutionVector& sol) const
     {
-        sol[cellCenterIdx].resize(this->fvGridGeometry().numCellCenterDofs());
-        sol[faceIdx].resize(this->fvGridGeometry().numFaceDofs());
+        sol[cellCenterIdx].resize(this->gridGeometry().numCellCenterDofs());
+        sol[faceIdx].resize(this->gridGeometry().numFaceDofs());
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             // loop over sub control volumes

@@ -60,7 +60,7 @@ public:
     //! Constructor
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars)
-    , numScv_(gridVolVars.problem().fvGridGeometry().numScv())
+    , numScv_(gridVolVars.problem().gridGeometry().numScv())
     {}
 
     //! operator for the access with an scv
@@ -86,18 +86,18 @@ public:
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
     template<class FVElementGeometry, class ...Args>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const Dune::MultiTypeBlockVector<Args...>& sol)
     {
         // forward to the actual method
-        bind(element, fvGeometry, sol[FVElementGeometry::FVGridGeometry::cellCenterIdx()]);
+        bind(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
     }
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
     template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
@@ -133,7 +133,7 @@ public:
 
     //! function to prepare the vol vars within the element
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {}
@@ -191,28 +191,28 @@ public:
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
     template<class FVElementGeometry, class ...Args>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const Dune::MultiTypeBlockVector<Args...>& sol)
     {
         // forward to the actual method
-        bind(element, fvGeometry, sol[FVElementGeometry::FVGridGeometry::cellCenterIdx()]);
+        bind(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
     }
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
     template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
         clear_();
 
         const auto& problem = gridVolVars().problem();
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         const auto globalI = fvGridGeometry.elementMapper().index(element);
         const auto& map = fvGridGeometry.connectivityMap();
-        constexpr auto cellCenterIdx = FVElementGeometry::FVGridGeometry::cellCenterIdx();
+        constexpr auto cellCenterIdx = FVElementGeometry::GridGeometry::cellCenterIdx();
         const auto& connectivityMapI = map(cellCenterIdx, cellCenterIdx, globalI);
         const auto numDofs = connectivityMapI.size();
 
@@ -271,24 +271,24 @@ public:
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
     template<class FVElementGeometry, class ...Args>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const Dune::MultiTypeBlockVector<Args...>& sol)
     {
         // forward to the actual method
-        bindElement(element, fvGeometry, sol[FVElementGeometry::FVGridGeometry::cellCenterIdx()]);
+        bindElement(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
     }
 
     //! Binding of an element, prepares only the volume variables of the element.
     //! Specialization for Staggered models
     template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
         clear_();
 
-        const auto globalI = fvGeometry.fvGridGeometry().elementMapper().index(element);
+        const auto globalI = fvGeometry.gridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 

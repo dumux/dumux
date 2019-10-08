@@ -135,7 +135,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::LowReKEpsilon>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = LowReKEpsilonModelTraits<dim>;
@@ -200,7 +200,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::LowReKEpsilonNI>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = LowReKEpsilonModelTraits<dim>;
 public:

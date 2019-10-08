@@ -50,13 +50,13 @@ class PorousMediumFluxVariablesCacheImplementation;
  * cache class are provided for different combinations of processes.
  */
 template<class TypeTag>
-using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 //! We only store discretization-related quantities for the box method. Thus, we need no
 //! physics-dependent specialization and simply inherit from the physics-independent implementation.
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::box>
-: public BoxFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::FVGridGeometry>>
+: public BoxFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
 {
 public:
     //! export type used for scalar values
@@ -97,7 +97,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 {
     using GridIndexType = typename GetPropType<TypeTag, Properties::GridView>::IndexSet::IndexType;
 
-    using MpfaHelper = typename GetPropType<TypeTag, Properties::FVGridGeometry>::MpfaHelper;
+    using MpfaHelper = typename GetPropType<TypeTag, Properties::GridGeometry>::MpfaHelper;
     static constexpr bool considerSecondary = MpfaHelper::considerSecondaryIVs();
 public:
     //! export type used for scalar values

@@ -49,10 +49,10 @@ public:
     template<class Problem, class SolutionVector>
     static auto calculateL2Error(const Problem& problem, const SolutionVector& curSol)
     {
-        using FVGridGeometry = std::decay_t<decltype(problem.fvGridGeometry())>;
+        using FVGridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
         PrimaryVariables sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
 
-        const int numFaceDofs = problem.fvGridGeometry().numFaceDofs();
+        const int numFaceDofs = problem.gridGeometry().numFaceDofs();
 
         std::vector<Scalar> staggeredVolume(numFaceDofs);
         std::vector<Scalar> errorVelocity(numFaceDofs);
@@ -61,9 +61,9 @@ public:
 
         Scalar totalVolume = 0.0;
 
-        for (const auto& element : elements(problem.fvGridGeometry().gridView()))
+        for (const auto& element : elements(problem.gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(problem.fvGridGeometry());
+            auto fvGeometry = localView(problem.gridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))

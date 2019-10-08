@@ -95,7 +95,7 @@ public:
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Column>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = ColumnSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -160,8 +160,8 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
@@ -234,7 +234,7 @@ public:
         NumEqVector values(0.0);
 
         // negative values for injection
-        if (globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
+        if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
         {
             values[contiWEqIdx] = -0.395710;
             values[contiGEqIdx] = -0.000001;
@@ -271,7 +271,7 @@ public:
     template<class VTKWriter>
     void addVtkFields(VTKWriter& vtk)
     {
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         Kxx_.resize(gg.numDofs());
         vtk.addField(Kxx_, "permeability");
 
@@ -293,7 +293,7 @@ private:
         PrimaryVariables values;
         values.setState(threePhases);
         const auto y = globalPos[1];
-        const auto yMax = this->fvGridGeometry().bBoxMax()[1];
+        const auto yMax = this->gridGeometry().bBoxMax()[1];
 
         values[temperatureIdx] = 296.15;
         values[pressureIdx] = 1.e5;

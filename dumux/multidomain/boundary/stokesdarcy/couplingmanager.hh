@@ -81,7 +81,7 @@ private:
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t id> using GridVolumeVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>;
     template<std::size_t id> using VolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using ElementBoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::ElementBoundaryTypes>;
     template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
@@ -194,7 +194,7 @@ public:
     {
         stokesCouplingContext_.clear();
 
-        const auto stokesElementIdx = this->problem(stokesIdx).fvGridGeometry().elementMapper().index(element);
+        const auto stokesElementIdx = this->problem(stokesIdx).gridGeometry().elementMapper().index(element);
         boundStokesElemIdx_ = stokesElementIdx;
 
         // do nothing if the element is not coupled to the other domain
@@ -203,15 +203,15 @@ public:
 
         // prepare the coupling context
         const auto& darcyIndices = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
-        auto darcyFvGeometry = localView(this->problem(darcyIdx).fvGridGeometry());
+        auto darcyFvGeometry = localView(this->problem(darcyIdx).gridGeometry());
 
         for(auto&& indices : darcyIndices)
         {
-            const auto& darcyElement = this->problem(darcyIdx).fvGridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
+            const auto& darcyElement = this->problem(darcyIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
             darcyFvGeometry.bindElement(darcyElement);
             const auto& scv = (*scvs(darcyFvGeometry).begin());
 
-            const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).fvGridGeometry());
+            const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
             VolumeVariables<darcyIdx> darcyVolVars;
             darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), darcyElement, scv);
 
@@ -234,7 +234,7 @@ public:
     {
         darcyCouplingContext_.clear();
 
-        const auto darcyElementIdx = this->problem(darcyIdx).fvGridGeometry().elementMapper().index(element);
+        const auto darcyElementIdx = this->problem(darcyIdx).gridGeometry().elementMapper().index(element);
         boundDarcyElemIdx_ = darcyElementIdx;
 
         // do nothing if the element is not coupled to the other domain
@@ -243,11 +243,11 @@ public:
 
         // prepare the coupling context
         const auto& stokesElementIndices = couplingMapper_.darcyElementToStokesElementMap().at(darcyElementIdx);
-        auto stokesFvGeometry = localView(this->problem(stokesIdx).fvGridGeometry());
+        auto stokesFvGeometry = localView(this->problem(stokesIdx).gridGeometry());
 
         for(auto&& indices : stokesElementIndices)
         {
-            const auto& stokesElement = this->problem(stokesIdx).fvGridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
+            const auto& stokesElement = this->problem(stokesIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
             stokesFvGeometry.bindElement(stokesElement);
 
             VelocityVector faceVelocity(0.0);
@@ -300,7 +300,7 @@ public:
 
         for (auto& data : darcyCouplingContext_)
         {
-            const auto stokesElemIdx = this->problem(stokesIdx).fvGridGeometry().elementMapper().index(data.element);
+            const auto stokesElemIdx = this->problem(stokesIdx).gridGeometry().elementMapper().index(data.element);
 
             if(stokesElemIdx != dofIdxGlobalJ)
                 continue;
@@ -351,12 +351,12 @@ public:
 
         for (auto& data : stokesCouplingContext_)
         {
-            const auto darcyElemIdx = this->problem(darcyIdx).fvGridGeometry().elementMapper().index(data.element);
+            const auto darcyElemIdx = this->problem(darcyIdx).gridGeometry().elementMapper().index(data.element);
 
             if(darcyElemIdx != dofIdxGlobalJ)
                 continue;
 
-            const auto darcyElemSol = elementSolution(data.element, this->curSol()[darcyIdx], this->problem(darcyIdx).fvGridGeometry());
+            const auto darcyElemSol = elementSolution(data.element, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
 
             for(const auto& scv : scvs(data.fvGeometry))
                 data.volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
@@ -419,7 +419,7 @@ public:
                                            const Element<stokesIdx>& element,
                                            Dune::index_constant<darcyIdx> domainJ) const
     {
-        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         if(stokesCellCenterCouplingStencils_.count(eIdx))
             return stokesCellCenterCouplingStencils_.at(eIdx);
         else
@@ -444,7 +444,7 @@ public:
                                            const Element<darcyIdx>& element,
                                            Dune::index_constant<stokesCellCenterIdx> domainJ) const
     {
-        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         if(darcyToStokesCellCenterCouplingStencils_.count(eIdx))
             return darcyToStokesCellCenterCouplingStencils_.at(eIdx);
         else
@@ -459,7 +459,7 @@ public:
                                            const Element<darcyIdx>& element,
                                            Dune::index_constant<stokesFaceIdx> domainJ) const
     {
-        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         if (darcyToStokesFaceCouplingStencils_.count(eIdx))
             return darcyToStokesFaceCouplingStencils_.at(eIdx);
         else

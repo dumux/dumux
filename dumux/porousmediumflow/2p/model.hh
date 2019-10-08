@@ -181,7 +181,7 @@ private:
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
-    static constexpr auto DM = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     // class used for scv-wise reconstruction of non-wetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;

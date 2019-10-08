@@ -122,7 +122,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::KEpsilon>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
 public:
     using type = KEpsilonModelTraits<dim>;
@@ -187,7 +187,7 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::KEpsilonNI>
 {
 private:
-    using GridView = typename GetPropType<TypeTag, Properties::FVGridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = KEpsilonModelTraits<dim>;
 public:

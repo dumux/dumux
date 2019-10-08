@@ -46,7 +46,7 @@ class MultiDomainFVGridGeometry
 public:
     //! export base types of the stored type
     template<std::size_t i>
-    using Type = typename MDTraits::template SubDomain<i>::FVGridGeometry;
+    using Type = typename MDTraits::template SubDomain<i>::GridGeometry;
 
     //! export pointer types the stored type
     template<std::size_t i>

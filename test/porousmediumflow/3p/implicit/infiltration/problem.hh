@@ -83,7 +83,7 @@ public:
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::InfiltrationThreeP>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = InfiltrationThreePSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -141,7 +141,7 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -203,8 +203,8 @@ public:
     {
         BoundaryTypes values;
 
-        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_
-           || globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
+        if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_
+           || globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -241,7 +241,7 @@ public:
         if (time_ < 2592000.0 - eps_)
         {
             if ((globalPos[0] < 175.0 + eps_) && (globalPos[0] > 155.0 - eps_)
-                 && (globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_))
+                 && (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_))
             {
                 // mol fluxes, convert with M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
                 values[Indices::conti0EqIdx + FluidSystem::nCompIdx] = -0.001;

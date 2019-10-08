@@ -61,7 +61,7 @@ struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePBulk>
 {
-    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
                                     GetPropType<TypeTag, Properties::Scalar> >;
 };
 

@@ -65,7 +65,7 @@ struct Problem<TypeTag, TTag::MaxwellStefanTest> { using type = MaxwellStefanTes
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::MaxwellStefanTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = MaxwellStefanTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -88,7 +88,7 @@ class MaxwellStefanTracerFluidSystem
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
@@ -208,7 +208,7 @@ class MaxwellStefanTestProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
@@ -260,12 +260,12 @@ public:
             Scalar j = 0.0;
             if (!(time < 0.0))
             {
-                for (const auto& element : elements(this->fvGridGeometry().gridView()))
+                for (const auto& element : elements(this->gridGeometry().gridView()))
                 {
-                    auto fvGeometry = localView(this->fvGridGeometry());
+                    auto fvGeometry = localView(this->gridGeometry());
                     fvGeometry.bindElement(element);
 
-                    const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
+                    const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
                     for (auto&& scv : scvs(fvGeometry))
                     {
                         const auto& globalPos = scv.dofPosition();
