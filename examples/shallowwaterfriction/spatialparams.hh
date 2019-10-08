@@ -67,7 +67,7 @@ public:
           Scalar manningN = getParam<Scalar>("Problem.ManningN");
           frictionLaw_ = std::make_unique<FrictionLawManning<VolumeVariables>>(gravity_, manningN);
       }
-      if (frictionLawType_ == "Nikuradse")
+      else if (frictionLawType_ == "Nikuradse")
       {
           Scalar ks = getParam<Scalar>("Problem.Ks");
           frictionLaw_ = std::make_unique<FrictionLawNikuradse<VolumeVariables>>(ks);
