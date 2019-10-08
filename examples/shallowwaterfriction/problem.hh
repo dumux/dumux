@@ -106,6 +106,8 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -224,6 +226,7 @@ public:
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
+                          const ElementFluxVariablesCache& elemFluxVarsCache,
                           const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);
