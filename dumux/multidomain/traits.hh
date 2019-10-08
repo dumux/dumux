@@ -182,7 +182,7 @@ public:
         using TypeTag = SubDomainTypeTag<id>;
         using Grid = GetPropType<SubDomainTypeTag<id>, Properties::Grid>;
         using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-        using FVGridGeometry [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
+        using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
         using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
         using GridVariables =GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
         using IOFields = GetPropType<SubDomainTypeTag<id>, Properties::IOFields>;

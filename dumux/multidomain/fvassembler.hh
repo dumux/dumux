@@ -76,7 +76,7 @@ public:
     using GridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
 
     template<std::size_t id>
-    using FVGridGeometry [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry<id>;
+    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry<id>;
 
     template<std::size_t id>
     using Problem = typename MDTraits::template SubDomain<id>::Problem;
@@ -360,7 +360,7 @@ public:
 
     //! the finite volume grid geometry of domain i
     template<std::size_t i>
-    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const auto& fvGridGeometry(Dune::index_constant<i> domainId) const
     { return gridGeometry(domainId); }
 

@@ -67,7 +67,7 @@ public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVGridGeometry [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
+    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -100,7 +100,7 @@ public:
                 std::shared_ptr<GridVariables> gridVariables,
                 std::shared_ptr<const TimeLoop> timeLoop)
     : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    , gridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
     , timeLoop_(timeLoop)
     , isStationaryProblem_(!timeLoop)
@@ -271,7 +271,7 @@ public:
     { return *problem_; }
 
     //! The global finite volume geometry
-    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const GridGeometry& fvGridGeometry() const
     { return gridGeometry(); }
 
