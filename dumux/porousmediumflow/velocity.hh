@@ -80,7 +80,7 @@ public:
      */
     PorousMediumFlowVelocity(const GridVariables& gridVariables)
     : problem_(gridVariables.curGridVolVars().problem())
-    , fvGridGeometry_(gridVariables.fvGridGeometry())
+    , fvGridGeometry_(gridVariables.gridGeometry())
     , gridVariables_(gridVariables)
     {
         // set the number of scvs the vertices are connected to

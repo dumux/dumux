@@ -135,7 +135,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
     using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -263,7 +263,7 @@ public:
     {
         // no-flow everywhere except at the right boundary
         NumEqVector values(0.0);
-        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto xMax = this->gridGeometry().bBoxMax()[0];
         const auto& ipGlobal = scvf.ipGlobal();
         if (ipGlobal[0] < xMax - eps_)
             return values;
@@ -319,7 +319,7 @@ public:
      {
         // no-flow everywhere except at the right boundary
         NumEqVector values(0.0);
-        const auto xMax = this->fvGridGeometry().bBoxMax()[0];
+        const auto xMax = this->gridGeometry().bBoxMax()[0];
         const auto& ipGlobal = scvf.ipGlobal();
         if (ipGlobal[0] < xMax - eps_)
             return values;

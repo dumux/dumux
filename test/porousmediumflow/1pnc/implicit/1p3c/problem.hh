@@ -209,7 +209,7 @@ struct FluidSystem<TypeTag, TTag::MaxwellStefanOnePThreeCTest>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::MaxwellStefanOnePThreeCTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -248,7 +248,7 @@ class MaxwellStefanOnePThreeCTestProblem : public PorousMediumFlowProblem<TypeTa
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
@@ -309,12 +309,12 @@ public:
             Scalar j = 0.0;
             if (!(time < 0.0))
             {
-                for (const auto& element : elements(this->fvGridGeometry().gridView()))
+                for (const auto& element : elements(this->gridGeometry().gridView()))
                 {
-                    auto fvGeometry = localView(this->fvGridGeometry());
+                    auto fvGeometry = localView(this->gridGeometry());
                     fvGeometry.bindElement(element);
 
-                    const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
+                    const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
                     for (auto&& scv : scvs(fvGeometry))
                     {
                         const auto& globalPos = scv.dofPosition();

@@ -46,7 +46,8 @@ public:
 
     //! export primary variable type
     using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
-    using FVGridGeometry = typename ActualGridVariables::GridGeometry;
+    using GridGeometry = typename ActualGridVariables::GridGeometry;
+    using FVGridGeometry [[deprecated ("Use GridGeometry instead. Will be removed after 3.1!")]]= GridGeometry;
 
     explicit StaggeredGridVariablesView(ActualGridVariables* gridVariables)
     : gridVariables_(gridVariables) {}
