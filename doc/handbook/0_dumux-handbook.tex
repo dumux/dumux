@@ -11,6 +11,7 @@
 \usepackage{enumerate}
 \usepackage{hyperref}
 \usepackage{graphicx}
+\usepackage{mhchem}
 
 \usepackage{listings}
 \usepackage[square,numbers]{natbib}
@@ -41,7 +42,7 @@
 % Dune and Dumux logo
 \newcommand{\Dune}{{DUNE}\xspace}
 \newcommand{\Dumux}{\texorpdfstring{Du\-Mu$^\text{x}$\xspace}{DuMuX\xspace}}
-\newcommand{\DumuxVersion}{3.0}
+\newcommand{\DumuxVersion}{3.1}
 \definecolor{dumuxYellow}{HTML}{E19417}
 \definecolor{dumuxBlue}{HTML}{0C73CF}
 
@@ -114,7 +115,7 @@ your first \Dumux experience, including an install script with all necessary ins
 on how to very quickly install the latest release version of \Dumux.
 You should have a recent working Linux environment.
 If you need more information, please have a look at the detailed installation
-instructions in the next chapter \ref{detailed-install}.
+instructions in chapter \ref{detailed-install}.
 \input{2_quickinstall}
 
 \chapter{Detailed Installation, Documentation, and Externals}\label{detailed-install}
@@ -124,15 +125,27 @@ how to build the documentation and about external libraries and modules.
 \input{3_detailedinstall}
 
 \chapter{Learning to use \Dumux}\label{chp:tutorial}
+So, you've downloaded your very own copy of \Dumux and its dependencies.
+You've run dunecontrol, and your example ``test$\_$dumux" not only compiles,
+but it even shows a nice simulation in ParaView.
+Maybe you've read through parts of the handbook, and even started looking
+through the Doxygen documentation.
+Well done. What now? \par
+%
+\textit{``How on earth is this going to help me solve my multi-(phase, component,
+	scale, physics) flow and transport problems in porous media systems?''}, you begin to wonder.
+Don't panic! In order to best ease our prospective users and developers into the
+wonderful \Dumux simulation environment, we've prepared a \Dumux course and extensively-documented examples.
 \input{4_course}
+\input{4_examples}
 \input{4_furtherpractice}
 
 \chapter{Overview and Infrastructure}
-This chapter provides an overview of the general structure in \Dumux \ref{sc_structure}
+This chapter provides an overview of the general structure in \Dumux (\ref{sc_structure})
 and gives help for basic work with \Dumux
-(\ref{sc_newfoldersetup},\ref{sc_parameterfiles},\ref{sc_restartsimulations}, \ref{sc_developingdumux}).
-Further it presents useful external tools \ref{sc_externaltools} and basic
-concepts \ref{sc_linearsystem}.
+(\ref{sc_newfoldersetup}-\ref{sc_developingdumux}).
+Further it presents useful external tools (\ref{sc_externaltools}) and basic
+concepts (\ref{sc_linearsystem}).
 \input{5_structure}
 \input{5_newfoldersetup}
 \input{5_parameterfiles}

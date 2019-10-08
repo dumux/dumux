@@ -50,7 +50,7 @@ direction of maximum growth $\textbf{x}^i$ until our approximated solution becom
 \subsection{Structure of matrix and vectors}
 To understand the meaning of an entry in the matrix or the vector of the linear system, we have
 to define their structure. Both have a blocking structure. Each block contains the degrees of
-freedom (also called variable or unknown) for a control volume. The equation index is used
+freedom (also called variables or unknowns) for a control volume. The equation index is used
 to order of the degrees of freedom. For each control volume we have one block. The mapper is
 used to order the blocks.
 
@@ -113,8 +113,8 @@ used to order the blocks.
   \draw (11,2.2) -- (10.7,1.6);
 \end{tikzpicture}
 \end{center}
-\caption{Structure of matrix and vector, left blocking structure, right within block}
+\caption{Structure of matrix and vector, left: block structure, right: within block}
 \end{figure}
 
-Accessing entries follows this structure. You can access the pressure value in the third sub-control volume in
-a vector \lstinline{sol} with \lstinline{sol[2][pressureIdx]}.
+Accessing entries follows this structure. You can access the pressure value in the third ($n=3$) sub-control volume in
+a solution vector \lstinline{sol} with \lstinline{sol[n-1][pressureIdx]=sol[2][pressureIdx]}.

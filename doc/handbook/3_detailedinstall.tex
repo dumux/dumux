@@ -60,7 +60,7 @@ $ tar xzvf path_to_tarball_of/dune-geometry-2.6.0.tar.gz
 $ tar xzvf path_to_tarball_of/dune-grid-2.6.0.tar.gz
 $ tar xzvf path_to_tarball_of/dune-istl-2.6.0.tar.gz
 $ tar xzvf path_to_tarball_of/dune-localfunctions-2.6.0.tar.gz
-$ tar xzvf path_to_tarball_of/dumux-3.0.tar.gz
+$ tar xzvf path_to_tarball_of/dumux-3.1.tar.gz
 \end{lstlisting}
 
 Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
@@ -92,7 +92,7 @@ $ git clone -b releases/2.6 https://gitlab.dune-project.org/core/dune-geometry.g
 $ git clone -b releases/2.6 https://gitlab.dune-project.org/core/dune-grid.git
 $ git clone -b releases/2.6 https://gitlab.dune-project.org/core/dune-istl.git
 $ git clone -b releases/2.6 https://gitlab.dune-project.org/core/dune-localfunctions.git
-$ git clone -b releases/3.0 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+$ git clone -b releases/3.1 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 \end{lstlisting}
 
 The newest and maybe unstable developments of \Dune and \Dumux are also provided in these repositories and can be found in the \emph{master} branch.
@@ -132,7 +132,7 @@ on the Dune grid interface, act similar.
 % $ path -p0 -R < ../dumux/patches/grid-2.3.1.patch
 % \end{lstlisting}
 
-\section{Build of \Dune and \Dumux}
+\section{Building \Dune and \Dumux}
 \label{buildIt}
 Configuring \Dune and \Dumux is done by the shell-command \texttt{dunecontrol} which is part of the \Dune build system.
 If you are interested in more details about the build system that is used,
@@ -150,7 +150,7 @@ $ # make sure you are in the common root directory
 $ ./dune-common/bin/dunecontrol --configure-opts="CXXFLAGS=-fno-strict-aliasing" --use-cmake all
 \end{lstlisting}
 
-Too many options can make life hard. That's why usually option files are being used together with \texttt{dunecontrol} and its sub-tools.
+Too many options within the command line can make life hard. That's why usually option files are being used together with \texttt{dunecontrol} and its sub-tools.
 Larger sets of options are kept in them. If you are going to compile with modified options, the following
 can be a starting point:
 \begin{lstlisting}[style=Bash]
@@ -179,7 +179,7 @@ All executables are compiled in the \texttt{build} sub-directories of \Dumux.
 If not specified differently in the options file, this is \texttt{build-cmake} as default.
 
 \begin{enumerate}
-\item Enter the folder \texttt{porousmediumflow/2p/implicit/incompressible}.\\ Type \texttt{make test{\_}2p{\_}incompressible{\_}tpfa}
+\item Enter the folder \texttt{test/porousmediumflow/2p/implicit/incompressible} within your build directory.\\ Type \texttt{make test{\_}2p{\_}incompressible{\_}tpfa}
       in order to compile the application\\\texttt{test{\_}2p{\_}incompressible{\_}tpfa}. To run the simulation,
       type \texttt{./test{\_}2p{\_}incompressible{\_}tpfa params.input}
       into the console.
@@ -192,21 +192,21 @@ If not specified differently in the options file, this is \texttt{build-cmake} a
       files. It is possible to stop a running application by pressing $<$Ctrl$><$c$>$.
 \item You can display the results using the visualization tool ParaView (or
       alternatively VisIt). Just type \texttt{paraview} in the console and open the
-      PVD file. On the left hand side, you can choose the desired parameter to be displayed.
+      PVD file. On the upper left hand side, you can choose the desired parameter to be displayed.
 \end{enumerate}
 
 \section{Building Documentation}
 \label{sec:build-doc}
-The building of included documentation like this handbook requires \LaTeX{} and auxiliary tools
+Building the included documentation like this handbook requires \LaTeX{} and the auxiliary tool
 \texttt{bibtex}. One usually chooses a \LaTeX{} distribution like \texttt{texlive} for this purpose.
-It is possible to switch off the building of the documentation by setting the switch \texttt{--disable-documentation}
+It is possible to switch off building the documentation by setting the switch \texttt{--disable-documentation}
 in the \texttt{CONFIGURE\_FLAGS} of the building options, see section \ref{buildIt}.
 
 \subsection{Doxygen}
 \label{sec:build-doxy-doc}
 Doxygen documentation is done by specifically formatted comments integrated in the source code,
 which can get extracted by the program \texttt{doxygen}. Beside extracting these comments,
-\texttt{doxygen} builds up a web-browsable code structure documentation
+\texttt{doxygen} builds up a web-browsable code-structure documentation
 like class hierarchy of code displayed as graphs, see \url{http://www.stack.nl/~dimitri/doxygen/}.
 
 The Doxygen documentation of a module can be built if \texttt{doxygen} is installed,

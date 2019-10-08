@@ -14,7 +14,7 @@ for MOD in common geometry grid localfunctions istl; do
 done
 
 # dumux
-git clone -b releases/3.0 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+git clone -b releases/3.1 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 
 if [ $? -ne 0 ]; then
     echo "*************************************************"

@@ -6,8 +6,8 @@ the grid formats that can be used by \Dumux and introduces the \Dumux \texttt{Gr
 Finally, this section informs about handling output in \Dumux.
 
 \subsection{Supported grid file formats}
-\Dumux can read grids from file using the Dune Grid Format (DGF), the Gmsh mesh format (MSH), or the Eclipse grid format (GRDECL).
-Using the class \texttt{Dumux::VTKReader}, \Dumux has experimental support for reading grids and data from VTK files.
+\label{sec:supportedGridFormats}
+\Dumux can read grids from file using the Dune Grid Format (DGF), the Gmsh mesh format (MSH), the Eclipse grid format (GRDECL), or the Visualization ToolKit (VTK/VTU/VTP) format. 
 
 \subsubsection{Dune Grid Format}
 Most of our \Dumux tests use the Dune Grid Format (DGF) to read in grids. A detailed description
@@ -38,15 +38,19 @@ Furthermore, petrophysical properties can be defined (for each cell), by using e
 \Dumux supports the Eclipse Grid Format by using the \texttt{opm-grid} module (see (\url{https://opm-project.org}).
 An example can be found in \texttt{dumux/test\allowbreak/porousmediumflow/2p/implicit/cornerpoint}.
 
+\subsubsection{VTK File Format}
+VTK format uses ASCII or XML format. It is mostly used by \Dumux for output purposes and can be visualized by programs such as Paraview, ViIt or Tecplot. Using VTK files to input grid and parameter data is also possible.
+An example can be found in \texttt{dumux/test\allowbreak/io/gridmanager}.
+
 \subsubsection{Other Grid Formats}
-Grid formats other than DGF, MSH, GRDECL, VTK will have to be converted to the DGF, MSH, GRDECL, VTK format before they can be used in \Dumux.
+Grid formats other than DGF, MSH, GRDECL, or VTK will have to be converted to the DGF, MSH, GRDECL, or VTK format before they can be used in \Dumux.
 If conversion is not an option, another possibility would be to write your own \texttt{GridManager}s. Examples of other grid formats,
 which have previously been either converted or custom-created in \Dumux, are ArtMesh grids (fractured network grids), and ICEM grids (CAD developed grids).
 
 \subsection{The \Dumux \texttt{GridManager}}
 The \texttt{Dumux::GridManager} class constructs the grid from information in the input file and handles the data.
 Currently, supported Dune grid interface implementations  are \texttt{YaspGrid}, \texttt{OneDGrid}, \texttt{dune-uggrid}, \texttt{dune-alugrid}, \texttt{dune-foamgrid}, \texttt{dune-subgrid}, \texttt{opm-grid} (cornerpoint grids) and \texttt{dune-spgrid}.
-Grids can be constructed from a DGF or MSH file by simply providing the filename to the grid in the \texttt{Grid} group~\footnote{Note,
+Grids can be constructed from a DGF, VTK or MSH file by simply providing the filename to the grid in the \texttt{Grid} group~\footnote{Note,
 that group name \texttt{Grid} is the default group name and can be customized in your problem changing the string property \texttt{GridParameterGroup}.
 This way, it is possible, e.g., for problems with more than one grid, to set different group names for each grid, thus configuring them separately.}
 of the input file:
@@ -55,12 +59,12 @@ of the input file:
 File = mydgfgrid.dgf
 \end{lstlisting}
 
-If you are using an unstructured grid interface like \texttt{UGGrid} or \texttt{ALUGrid}, constructing a grid from a MSH is just changing a line:
+If you are using an unstructured grid interface like \texttt{UGGrid} or \texttt{FOAMGrid}, constructing a grid from a VTK or MSH is just changing a line:
 \begin{lstlisting}[style=DumuxParameterFile]
 [Grid]
 File = mygmshgrid.msh
 \end{lstlisting}
-\Dumux will tell you in case your selected grid manager does not support reading MSH files.
+\Dumux will tell you in case your selected grid manager does not support reading such files.
 
 You want to initially refine your grid? It's just adding a line:
 \begin{lstlisting}[style=DumuxParameterFile]
@@ -69,7 +73,7 @@ File = mydgfgrid.dgf
 Refinement = 4
 \end{lstlisting}
 
-When reading a MSH file, further parameters are recognized. \texttt{Verbose} enables verbose output on grid construction when set to $1$.
+When reading a MSH or VTK file, further parameters are recognized. \texttt{Verbose} enables verbose output on grid construction when set to $1$.
 \texttt{BoundarySegments} enables reading parameterized boundaries. \texttt{PhysicalEntities} enables reading boundary and element flags.
 
 \subsubsection{Parameters specific to the grid implementation}
@@ -127,7 +131,7 @@ The VTK file format is supported by common visualisation programs like ParaView,
 
 \subsubsection{Customize the VTK output}
 Using the respective \texttt{initOutputModule} function of the model \texttt{IOFields}, a default
-set of variables is stored in the VTK files. It is also possible to add further variables,
+set of variables is defined for the output into the VTK files. It is also possible to add further variables,
 using the member function \texttt{addField} of the \texttt{VtkOutputModule}. For example, to add a variable called \texttt{temperatureExact}:
 \begin{lstlisting}[style=DumuxCode]
 vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
@@ -146,10 +150,10 @@ It is important that the life-time of the added field exceeds the life-time of t
 to the \texttt{addField} function. The vector has to be stored somewhere, e.g. in the program main file.
 
 The second input argument is the name of the additional variable (as it should be written in the VTK files).
-The example above is taken from: \\ \texttt{test/porousmediumflow/1pnc/implicit/test\_1p2cni\_convection\_fv.cc}
+The example above is taken from: \\ \texttt{test/porousmediumflow/1pnc/implicit/1p2c/nonisothermal/convection/main.cc}
 
 \subsubsection{VTK as input format}
-There is experimental support for reading data and grids from VTK files. Have a look at the \texttt{Dumux::VTKReader} class.
+There is support for reading data and grids from VTK files, see subsection \ref{sec:supportedGridFormats}.
 
 \subsubsection{Gnuplot interface}
 \Dumux provides a small interface to GNUPlot, which can be used to plot results and generate
