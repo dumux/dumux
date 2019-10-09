@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPNCMinTests
- * \brief Problem where water is injected in a for flushing precipitated salt clogging a gas reservoir.
+ * \brief Problem where brine is evaporating at the top boundary. The system is closed at the remaining boundaries.
  */
 #ifndef DUMUX_SALINIZATION_PROBLEM_HH
 #define DUMUX_SALINIZATION_PROBLEM_HH
@@ -85,7 +85,7 @@ struct SolidSystem<TypeTag, TTag::Salinization>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Salinization>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = SalinizationSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -182,14 +182,13 @@ class SalinizationProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
 public:
     SalinizationProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -213,9 +212,9 @@ public:
         initGasSaturation_      = getParam<Scalar>("Problem.InitialGasSaturation");
         initSalinity_          = getParam<Scalar>("Problem.InitialSalinity");
 
-        unsigned int codim = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box ? dim : 0;
-        permeability_.resize(fvGridGeometry->gridView().size(codim));
+        unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
 
+        permeability_.resize(fvGridGeometry->gridView().size(codim));
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
                           /*nT=*/nTemperature_,
@@ -320,7 +319,7 @@ public:
 
         const auto& globalPos = scvf.ipGlobal();
         const auto& volVars = elemVolVars[scvf.insideScvIdx()];
-        const Scalar hmax = this->fvGridGeometry().bBoxMax()[1];
+        const Scalar hmax = this->gridGeometry().bBoxMax()[1];
 
         static const Scalar temperatureRef = getParam<Scalar>("FreeFlow.RefTemperature");
 
@@ -490,11 +489,11 @@ public:
 
     void updateVtkOutput(const SolutionVector& curSol)
         {
-            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
+                const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
 
-                auto fvGeometry = localView(this->fvGridGeometry());
+                auto fvGeometry = localView(this->gridGeometry());
                 fvGeometry.bindElement(element);
 
                 for (auto&& scv : scvs(fvGeometry))
@@ -525,7 +524,7 @@ private:
      */
     static Scalar massToMoleFrac_(Scalar XwNaCl)
     {
-       const Scalar Mw = 18.015e-3; //FluidSystem::molarMass(H2OIdx); /* molecular weight of water [kg/mol] */ //TODO use correct link to FluidSyswem later
+       const Scalar Mw = 18.015e-3; //FluidSystem::molarMass(H2OIdx); /* molecular weight of water [kg/mol] */
        const Scalar Ms = 58.44e-3;  //FluidSystem::molarMass(NaClIdx); /* molecular weight of NaCl  [kg/mol] */
 
        const Scalar X_NaCl = XwNaCl;
