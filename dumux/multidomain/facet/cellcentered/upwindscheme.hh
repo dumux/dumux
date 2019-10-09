@@ -37,10 +37,10 @@ namespace Dumux {
  *        This is a modified scheme for models involving coupling
  *        with a lower-dimensional domain across the element facets.
  */
-template<class FVGridGeometry>
+template<class GridGeometry>
 class CCFacetCouplingUpwindScheme
 {
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 

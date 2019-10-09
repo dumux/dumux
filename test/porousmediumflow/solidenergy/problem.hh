@@ -52,14 +52,14 @@ class SolidEnergyProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
 
 public:
-    SolidEnergyProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    SolidEnergyProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {
         name_ = getParam<std::string>("Problem.Name");

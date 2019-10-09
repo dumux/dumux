@@ -55,11 +55,11 @@ struct StaggeredFreeFlowDefaultFVGridGeometryTraits
         using FaceIdx = Dune::index_constant<1>;
     };
 
-    template<class FVGridGeometry>
-    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry>;
+    template<class GridGeometry>
+    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<GridGeometry>;
 
-    template<class FVGridGeometry, bool cachingEnabled>
-    using LocalView = StaggeredFVElementGeometry<FVGridGeometry, cachingEnabled>;
+    template<class GridGeometry, bool cachingEnabled>
+    using LocalView = StaggeredFVElementGeometry<GridGeometry, cachingEnabled>;
 };
 
 } //end namespace Dumux

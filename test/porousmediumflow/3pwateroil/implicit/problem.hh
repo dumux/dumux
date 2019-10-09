@@ -62,9 +62,9 @@ struct Problem<TypeTag, TTag::Sagd> { using type = Dumux::SagdProblem<TypeTag>; 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Sagd>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = SagdSpatialParams<FVGridGeometry, Scalar>;
+    using type = SagdSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the fluid system
@@ -99,7 +99,7 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -136,7 +136,7 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
 
-    SagdProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    SagdProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), pOut_(4e6)
     {
         maxDepth_ = 400.0; // [m]

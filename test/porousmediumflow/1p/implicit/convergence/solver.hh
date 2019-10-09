@@ -88,8 +88,8 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
     Dune::Timer timer;
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (boundary conditions)

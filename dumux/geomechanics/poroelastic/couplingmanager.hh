@@ -67,9 +67,9 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
     template<std::size_t id> using ElementVolumeVariables = typename GridVolumeVariables<id>::LocalView;
     template<std::size_t id> using VolumeVariables = typename GridVolumeVariables<id>::VolumeVariables;
-    template<std::size_t id> using FVGridGeometry = typename GridVariables<id>::GridGeometry;
-    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = typename GridVariables<id>::GridGeometry;
+    template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using GridIndexType = typename GridView<id>::IndexSet::IndexType;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
@@ -79,11 +79,11 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
                   "The grid types of the two sub-problems have to be equal!");
 
     //! this coupling manager is for cc - box only
-    static_assert(FVGridGeometry<PoroMechId>::discMethod == DiscretizationMethod::box,
+    static_assert(GridGeometry<PoroMechId>::discMethod == DiscretizationMethod::box,
                   "Poro-mechanical problem must be discretized with the box scheme for this coupling manager!");
 
-    static_assert(FVGridGeometry<PMFlowId>::discMethod == DiscretizationMethod::cctpfa ||
-                  FVGridGeometry<PMFlowId>::discMethod == DiscretizationMethod::ccmpfa,
+    static_assert(GridGeometry<PMFlowId>::discMethod == DiscretizationMethod::cctpfa ||
+                  GridGeometry<PMFlowId>::discMethod == DiscretizationMethod::ccmpfa,
                   "Porous medium flow problem must be discretized with a cell-centered scheme for this coupling manager!");
 
     //! this does not work for enabled grid volume variables caching (update of local view in context has no effect)

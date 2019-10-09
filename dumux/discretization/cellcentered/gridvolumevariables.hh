@@ -64,8 +64,8 @@ public:
 
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         const auto numScv = fvGridGeometry.numScv();
         volumeVariables_.resize(numScv);
@@ -136,8 +136,8 @@ public:
 
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     //! The problem we are solving
     const Problem& problem() const

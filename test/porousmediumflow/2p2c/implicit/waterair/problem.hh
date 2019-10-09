@@ -68,9 +68,9 @@ struct FluidSystem<TypeTag, TTag::WaterAir> { using type = FluidSystems::H2ON2<G
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::WaterAir>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = WaterAirSpatialParams<FVGridGeometry, Scalar>;
+    using type = WaterAirSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -150,7 +150,7 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
@@ -158,7 +158,7 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
-    WaterAirProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    WaterAirProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         maxDepth_ = 1000.0; // [m]

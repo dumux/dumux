@@ -76,8 +76,8 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (boundary conditions)
@@ -87,8 +87,8 @@ int main(int argc, char** argv) try
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x;
-    x[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
-    x[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
+    x[GridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
+    x[GridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;

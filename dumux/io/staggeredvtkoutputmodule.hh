@@ -49,11 +49,11 @@ class StaggeredVtkOutputModule
 : public VtkOutputModule<GridVariables, SolutionVector>
 {
     using ParentType = VtkOutputModule<GridVariables, SolutionVector>;
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using GridView = typename GridGeometry::GridView;
     using Scalar = typename GridVariables::Scalar;
     using FaceVariables = typename GridVariables::GridFaceVariables::FaceVariables;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;

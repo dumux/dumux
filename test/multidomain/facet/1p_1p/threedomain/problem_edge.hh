@@ -64,9 +64,9 @@ struct Problem<TypeTag, TTag::OnePEdge> { using type = OnePEdgeProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePEdge>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePSpatialParams<GridGeometry, Scalar>;
 };
 
 // the fluid system
@@ -97,11 +97,11 @@ class OnePEdgeProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
     using Scalar = typename GridVariables::Scalar;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -109,7 +109,7 @@ class OnePEdgeProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    OnePEdgeProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    OnePEdgeProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                     std::shared_ptr<CouplingManager> couplingManagerPtr,
                     const std::string& paramGroup = "Edge")

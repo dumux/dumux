@@ -82,9 +82,9 @@ public:
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPTwoCChemicalNonequilibrium>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TwoPTwoCChemicalNonequilibriumSpatialParams<FVGridGeometry, Scalar>;
+    using type = TwoPTwoCChemicalNonequilibriumSpatialParams<GridGeometry, Scalar>;
 };
 
 // decide which type to use for floating values (double / quad)
@@ -138,7 +138,7 @@ class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<Typ
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
@@ -147,10 +147,10 @@ class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<Typ
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     enum { dofCodim = isBox ? dim : 0 };
 public:
-    TwoPTwoCChemicalNonequilibriumProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPTwoCChemicalNonequilibriumProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C

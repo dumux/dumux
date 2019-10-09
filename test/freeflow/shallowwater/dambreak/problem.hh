@@ -66,10 +66,10 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DamBreakWet>
 {
 private:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = DamBreakSpatialParams<FVGridGeometry, Scalar>;
+    using type = DamBreakSpatialParams<GridGeometry, Scalar>;
 };
 
 template<class TypeTag>
@@ -113,7 +113,7 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -126,7 +126,7 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    DamBreakProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    DamBreakProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");

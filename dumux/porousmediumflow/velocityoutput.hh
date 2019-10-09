@@ -46,11 +46,11 @@ template<class GridVariables, class FluxVariables>
 class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
 {
     using ParentType = VelocityOutput<GridVariables>;
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -61,7 +61,7 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

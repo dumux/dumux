@@ -46,10 +46,10 @@ class OnePTestProblem
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -62,7 +62,7 @@ class OnePTestProblem
     static constexpr auto domainIdx = Dune::index_constant<tag>{};
 
 public:
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                     std::shared_ptr<CouplingManager> couplingManager,
                     const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)

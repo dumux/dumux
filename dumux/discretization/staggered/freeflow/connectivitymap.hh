@@ -34,31 +34,31 @@ namespace Dumux {
  * \brief Stores the dof indices corresponding to the neighboring cell centers and faces
  *        that contribute to the derivative calculation. Specialization for the staggered free flow model.
  */
-template<class FVGridGeometry>
+template<class GridGeometry>
 class StaggeredFreeFlowConnectivityMap
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
-    using CellCenterIdxType = typename FVGridGeometry::DofTypeIndices::CellCenterIdx;
-    using FaceIdxType = typename FVGridGeometry::DofTypeIndices::FaceIdx;
+    using CellCenterIdxType = typename GridGeometry::DofTypeIndices::CellCenterIdx;
+    using FaceIdxType = typename GridGeometry::DofTypeIndices::FaceIdx;
 
     using SmallLocalIndex = typename IndexTraits<GridView>::SmallLocalIndex;
 
     using Stencil = std::vector<GridIndexType>;
     using Map = std::vector<Stencil>;
 
-    static constexpr SmallLocalIndex upwindSchemeOrder = FVGridGeometry::upwindSchemeOrder;
+    static constexpr SmallLocalIndex upwindSchemeOrder = GridGeometry::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
 
     //! Update the map and prepare the stencils
-    void update(const FVGridGeometry& fvGridGeometry)
+    void update(const GridGeometry& fvGridGeometry)
     {
         const auto numDofsCC = fvGridGeometry.gridView().size(0);
         const auto numDofsFace = fvGridGeometry.gridView().size(1);

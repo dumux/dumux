@@ -75,9 +75,9 @@ struct FluidSystem<TypeTag, TTag::ThreePNIConvection>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::ThreePNIConvection>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ThreePNISpatialParams<FVGridGeometry, Scalar>;
+    using type = ThreePNISpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -115,7 +115,7 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -149,7 +149,7 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    ThreePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ThreePNIConvectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         //initialize fluid system

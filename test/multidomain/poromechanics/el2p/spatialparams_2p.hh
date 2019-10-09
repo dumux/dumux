@@ -40,17 +40,17 @@ namespace Dumux {
  * \ingroup PoromechanicsTests
  * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem.
  */
-template<class FVGridGeometry, class Scalar, class CouplingManager>
-class TwoPSpatialParams : public FVSpatialParams<FVGridGeometry, Scalar,
-                                                 TwoPSpatialParams<FVGridGeometry, Scalar, CouplingManager>>
+template<class GridGeometry, class Scalar, class CouplingManager>
+class TwoPSpatialParams : public FVSpatialParams<GridGeometry, Scalar,
+                                                 TwoPSpatialParams<GridGeometry, Scalar, CouplingManager>>
 {
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using ThisType = TwoPSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using ThisType = TwoPSpatialParams<GridGeometry, Scalar, CouplingManager>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
 
 public:
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
@@ -59,7 +59,7 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TwoPSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    TwoPSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry,
                       std::shared_ptr<CouplingManager> couplingManagerPtr)
     : ParentType(fvGridGeometry)
     , couplingManagerPtr_(couplingManagerPtr)

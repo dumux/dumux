@@ -48,10 +48,10 @@ class CCFacetCouplingLocalResidual : public CCLocalResidual<TypeTag>
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
 
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 

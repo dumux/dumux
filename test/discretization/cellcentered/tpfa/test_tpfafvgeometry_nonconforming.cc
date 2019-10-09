@@ -120,8 +120,8 @@ int main (int argc, char *argv[]) try
 
     constexpr int dim = Grid::dimension;
 
-    using FVGridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, ENABLE_CACHING>;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, ENABLE_CACHING>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     //! make a grid
@@ -142,7 +142,7 @@ int main (int argc, char *argv[]) try
         DUNE_THROW(Dune::InvalidStateException, "Refined grid does not have exactly 12 elements!");
 
     //! instantiate and update fvGridGeometry
-    FVGridGeometry fvGridGeometry(leafGridView);
+    GridGeometry fvGridGeometry(leafGridView);
     fvGridGeometry.update();
 
     //! We should have constructed 12 scvfs

@@ -52,9 +52,9 @@ class FluxStencil;
 template<class FVElementGeometry>
 class FluxStencil<FVElementGeometry, DiscretizationMethod::cctpfa>
 {
-    using FVGridGeometry = typename FVElementGeometry::GridGeometry;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
@@ -92,14 +92,14 @@ public:
 template<class FVElementGeometry>
 class FluxStencil<FVElementGeometry, DiscretizationMethod::ccmpfa>
 {
-    using FVGridGeometry = typename FVElementGeometry::GridGeometry;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
     // Use the stencil type of the primary interaction volume
-    using NodalIndexSet = typename FVGridGeometry::GridIVIndexSets::DualGridIndexSet::NodalIndexSet;
+    using NodalIndexSet = typename GridGeometry::GridIVIndexSets::DualGridIndexSet::NodalIndexSet;
 
 public:
     //! We don't know yet how many faces couple to a neighboring element

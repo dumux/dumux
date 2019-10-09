@@ -33,20 +33,20 @@ namespace Dumux {
  * \ingroup EmbeddedTests
  * \brief Definition of the spatial parameters for the tissue problem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TissueSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar, TissueSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar, TissueSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = TissueSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
+    using ThisType = TissueSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TissueSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TissueSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.PermeabilityTissue");

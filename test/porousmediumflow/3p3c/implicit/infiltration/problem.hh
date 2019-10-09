@@ -66,9 +66,9 @@ struct Problem<TypeTag, TTag::InfiltrationThreePThreeC> { using type = Infiltrat
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::InfiltrationThreePThreeC>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = InfiltrationThreePThreeCSpatialParams<FVGridGeometry, Scalar>;
+    using type = InfiltrationThreePThreeCSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the fluid system
@@ -138,13 +138,13 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    InfiltrationThreePThreeCProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    InfiltrationThreePThreeCProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius

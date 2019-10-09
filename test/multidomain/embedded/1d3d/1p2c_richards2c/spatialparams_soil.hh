@@ -36,15 +36,15 @@ namespace Dumux {
  * \ingroup EmbeddedTests
  * \brief Definition of the spatial parameters for the soil problem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class SoilSpatialParams
-: public FVSpatialParams<FVGridGeometry,Scalar, SoilSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry,Scalar, SoilSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = SoilSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
+    using ThisType = SoilSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
@@ -55,7 +55,7 @@ public:
     // export material law params
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    SoilSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    SoilSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         // residual saturations

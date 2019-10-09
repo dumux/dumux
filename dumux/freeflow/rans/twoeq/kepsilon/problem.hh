@@ -51,8 +51,8 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::kepsilon> : public RANSProblemBa
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -83,7 +83,7 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::kepsilon> : public RANSProblemBa
 public:
 
     //! The constructor sets the gravity, if desired by the user.
-    RANSProblemImpl(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    RANSProblemImpl(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {
         yPlusThreshold_ = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30);
@@ -125,9 +125,9 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();
-                const auto& cellCenterPriVars = curSol[FVGridGeometry::cellCenterIdx()][dofIdx];
+                const auto& cellCenterPriVars = curSol[GridGeometry::cellCenterIdx()][dofIdx];
                 PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
-                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
+                auto elemSol = elementSolution<typename GridGeometry::LocalView>(std::move(priVars));
                 // NOTE: first update the turbulence quantities
                 storedDissipation_[elementIdx] = elemSol[0][Indices::dissipationEqIdx];
                 storedTurbulentKineticEnergy_[elementIdx] = elemSol[0][Indices::turbulentKineticEnergyEqIdx];

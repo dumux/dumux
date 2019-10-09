@@ -56,15 +56,15 @@ bool pointInLens(const GlobalPosition& globalPos,
  * \brief The spatial parameters class for the test problem using the
  *        incompressible 1p model.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar, OnePTestSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = OnePTestSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
+    using ThisType = OnePTestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -72,7 +72,7 @@ class OnePTestSpatialParams
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     , lensLowerLeft_(std::numeric_limits<Scalar>::max())
     , lensUpperRight_(std::numeric_limits<Scalar>::lowest())

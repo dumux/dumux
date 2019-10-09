@@ -95,15 +95,15 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
@@ -115,7 +115,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     };
 
 public:
-    ChannelTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ChannelTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");

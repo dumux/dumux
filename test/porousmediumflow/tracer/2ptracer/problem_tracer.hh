@@ -60,9 +60,9 @@ struct Problem<TypeTag, TTag::TwoPTracerTest> { using type = TwoPTracerTestProbl
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPTracerTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TwoPTracerTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = TwoPTracerTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -140,7 +140,7 @@ class TwoPTracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -149,11 +149,11 @@ class TwoPTracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    TwoPTracerTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPTracerTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         // stating in the console whether mole or mass fractions are used

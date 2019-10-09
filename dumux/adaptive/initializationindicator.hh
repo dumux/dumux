@@ -49,7 +49,7 @@ class GridAdaptInitializationIndicator
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
@@ -70,7 +70,7 @@ public:
      * \param gridVariables The secondary variables on the grid
      */
     GridAdaptInitializationIndicator(std::shared_ptr<const Problem> problem,
-                                     std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                                     std::shared_ptr<const GridGeometry> fvGridGeometry,
                                      std::shared_ptr<const GridVariables> gridVariables)
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
@@ -281,7 +281,7 @@ public:
 
 private:
     std::shared_ptr<const Problem> problem_;               //!< The problem to be solved
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_; //!< The finite volume grid geometry
+    std::shared_ptr<const GridGeometry> fvGridGeometry_; //!< The finite volume grid geometry
     std::shared_ptr<const GridVariables> gridVariables_;   //!< The secondary variables on the grid
     std::vector<bool> indicatorVector_;                    //!< Indicator for BCs/sources
 

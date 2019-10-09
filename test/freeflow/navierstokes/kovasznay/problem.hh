@@ -91,9 +91,9 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -102,18 +102,18 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 
 public:
-    KovasznayTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    KovasznayTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-        std::cout<< "upwindSchemeOrder is: " << FVGridGeometry::upwindStencilOrder() << "\n";
+        std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
         lambda_ = 0.5 * reynoldsNumber

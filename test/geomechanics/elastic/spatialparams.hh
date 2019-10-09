@@ -34,16 +34,16 @@ namespace Dumux {
  * \ingroup GeomechanicsTests
  * \brief Definition of the spatial parameters for the linear elasticity problem.
  */
-template<class Scalar, class FVGridGeometry>
+template<class Scalar, class GridGeometry>
 class ElasticSpatialParams : public FVSpatialParamsElastic< Scalar,
-                                                            FVGridGeometry,
-                                                            ElasticSpatialParams<Scalar, FVGridGeometry> >
+                                                            GridGeometry,
+                                                            ElasticSpatialParams<Scalar, GridGeometry> >
 {
-    using ThisType = ElasticSpatialParams<Scalar, FVGridGeometry>;
-    using ParentType = FVSpatialParamsElastic<Scalar, FVGridGeometry, ThisType>;
+    using ThisType = ElasticSpatialParams<Scalar, GridGeometry>;
+    using ParentType = FVSpatialParamsElastic<Scalar, GridGeometry, ThisType>;
 
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -51,7 +51,7 @@ public:
     //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    ElasticSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ElasticSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         lameParams_.setLambda(3e9);

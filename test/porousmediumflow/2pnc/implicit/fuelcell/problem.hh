@@ -74,9 +74,9 @@ struct Problem<TypeTag, TTag::FuelCell> { using type = FuelCellProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::FuelCell>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FuelCellSpatialParams<FVGridGeometry, Scalar>;
+    using type = FuelCellSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the primary variable combination for the 2pnc model
@@ -118,23 +118,23 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     // Select the electrochemistry method
 #ifdef NONISOTHERMAL
-    using ElectroChemistry = typename Dumux::ElectroChemistryNI<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;
+    using ElectroChemistry = typename Dumux::ElectroChemistryNI<Scalar, Indices, FluidSystem, GridGeometry, ElectroChemistryModel::Ochs>;
 #else
-    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;
+    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FluidSystem, GridGeometry, ElectroChemistryModel::Ochs>;
 #endif
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     enum { dofCodim = isBox ? dim : 0 };
 public:
-    FuelCellProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FuelCellProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         nTemperature_       = getParam<int>("Problem.NTemperature");

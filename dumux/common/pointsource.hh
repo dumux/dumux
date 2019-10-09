@@ -276,12 +276,12 @@ class BoundingBoxTreePointSourceHelper
 {
 public:
     //! calculate a DOF index to point source map from given vector of point sources
-    template<class FVGridGeometry, class PointSource, class PointSourceMap>
-    static void computePointSourceMap(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class PointSource, class PointSourceMap>
+    static void computePointSourceMap(const GridGeometry& fvGridGeometry,
                                       std::vector<PointSource>& sources,
                                       PointSourceMap& pointSourceMap)
     {
-        constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+        constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
 
         const auto& boundingBoxTree = fvGridGeometry.boundingBoxTree();
 

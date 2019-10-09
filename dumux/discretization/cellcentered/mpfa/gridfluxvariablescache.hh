@@ -124,8 +124,8 @@ public:
     {}
 
     //! When global caching is enabled, precompute transmissibilities for all scv faces
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false)
@@ -254,8 +254,8 @@ public:
 
 private:
     //! returns true if an scvf is contained in an interaction volume that touches the boundary
-    template<class SubControlVolumeFace, class FVGridGeometry>
-    bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf, const FVGridGeometry& fvGridGeometry) const
+    template<class SubControlVolumeFace, class GridGeometry>
+    bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf, const GridGeometry& fvGridGeometry) const
     {
         const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
         if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
@@ -322,8 +322,8 @@ public:
     CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     //! When global flux variables caching is disabled, we don't need to update the cache
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}

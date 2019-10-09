@@ -45,11 +45,11 @@ namespace Dumux {
 template<class GridVariables, class FluxVariables>
 class PorousMediumFlowVelocity
 {
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -60,7 +60,7 @@ class PorousMediumFlowVelocity
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -205,7 +205,7 @@ public:
             // For the number of scvfs per facet (mpfa) we simply obtain the number of
             // corners of the first facet as prisms/pyramids are not supported here anyway
             // -> for prisms/pyramids the number of scvfs would differ from facet to facet
-            static constexpr bool isMpfa = FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa;
+            static constexpr bool isMpfa = GridGeometry::discMethod == DiscretizationMethod::ccmpfa;
             const int numScvfsPerFace = isMpfa ? element.template subEntity<1>(0).geometry().corners() : 1;
 
             if (fvGeometry.numScvf() != element.subEntities(1)*numScvfsPerFace)
@@ -420,7 +420,7 @@ private:
     { return BoundaryTypes(); }
 
     const Problem& problem_;
-    const FVGridGeometry& fvGridGeometry_;
+    const GridGeometry& fvGridGeometry_;
     const GridVariables& gridVariables_;
 
     std::vector<int> cellNum_;

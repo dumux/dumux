@@ -48,14 +48,14 @@ namespace Dumux {
  *        to compute these fluxes. The same holds for scvfs in the cells J, i.e. we need only those
  *        scvfs in the cells J in which the cell I is in the stencil.
  */
-template<class FVGridGeometry>
+template<class GridGeometry>
 class CCSimpleConnectivityMap
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
-    static constexpr int maxElemStencilSize = FVGridGeometry::maxElementStencilSize;
+    static constexpr int maxElemStencilSize = GridGeometry::maxElementStencilSize;
 
     struct DataJ
     {
@@ -75,7 +75,7 @@ public:
      *
      * \param fvGridGeometry The grid's finite volume geometry.
      */
-    void update(const FVGridGeometry& fvGridGeometry)
+    void update(const GridGeometry& fvGridGeometry)
     {
         map_.clear();
         map_.resize(fvGridGeometry.gridView().size(0));
@@ -115,7 +115,7 @@ public:
                         if (dataJForI.size() > maxElemStencilSize - 1)
                             DUNE_THROW(Dune::InvalidStateException, "Maximum admissible stencil size (" << maxElemStencilSize-1
                                                                      << ") is surpassed (" << dataJForI.size() << "). "
-                                                                     << "Please adjust the FVGridGeometry traits accordingly!");
+                                                                     << "Please adjust the GridGeometry traits accordingly!");
 
                         dataJForI.push_back(std::make_pair(globalI, DataJ({globalJ, {scvf.index()}, {}})));
                     }

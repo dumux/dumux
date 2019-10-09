@@ -81,8 +81,8 @@ public:
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Update all face variables
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& faceSol)
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry, const SolutionVector& faceSol)
     {
 
         faceVariables_.resize(fvGridGeometry.numScvf());
@@ -137,8 +137,8 @@ public:
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Do nothing here.
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const
     { return *problemPtr_; }

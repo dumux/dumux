@@ -72,10 +72,10 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using Scalar = typename GridVariables::Scalar;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -284,9 +284,9 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
@@ -294,7 +294,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
 
     static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     static constexpr bool enableGridVolVarsCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    static constexpr int maxElementStencilSize = FVGridGeometry::maxElementStencilSize;
+    static constexpr int maxElementStencilSize = GridGeometry::maxElementStencilSize;
     static constexpr auto domainI = Dune::index_constant<id>();
 
 public:

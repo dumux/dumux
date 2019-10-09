@@ -33,14 +33,14 @@ namespace Dumux {
  * \ingroup SpatialParameters
  * \brief Definition of the spatial parameters for non-equilibrium
  */
-template<class FVGridGeometry, class Scalar, class Implementation>
+template<class GridGeometry, class Scalar, class Implementation>
 class FVNonEquilibriumSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar, Implementation>
+: public FVSpatialParams<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, Implementation>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, Implementation>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -50,7 +50,7 @@ public:
     using AwsSurfaceParams = Scalar;
     using AnsSurfaceParams = Scalar;
 
-    FVNonEquilibriumSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FVNonEquilibriumSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {  }
 

@@ -44,9 +44,9 @@ namespace Dumux {
 class CCMpfaScvGradients
 {
     //! Return type of the gradient computation function (pair of scv centers and corresponding gradients)
-    template<class FVGridGeometry, class Scalar>
-    using ResultPair = std::pair< std::vector<typename FVGridGeometry::SubControlVolume::GlobalPosition>,
-                                  std::vector<Dune::FieldVector<Scalar, FVGridGeometry::GridView::dimension>> >;
+    template<class GridGeometry, class Scalar>
+    using ResultPair = std::pair< std::vector<typename GridGeometry::SubControlVolume::GlobalPosition>,
+                                  std::vector<Dune::FieldVector<Scalar, GridGeometry::GridView::dimension>> >;
 
 public:
 
@@ -58,9 +58,9 @@ public:
      * \param x The vector containing the solution
      * \param phaseIdx The index of the fluid phase to be considered
      */
-    template<class FVGridGeometry, class GridVariables, class SolutionVector>
-    static ResultPair<FVGridGeometry, typename GridVariables::Scalar>
-    computeVelocities(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVariables, class SolutionVector>
+    static ResultPair<GridGeometry, typename GridVariables::Scalar>
+    computeVelocities(const GridGeometry& fvGridGeometry,
                       const GridVariables& gridVariables,
                       const SolutionVector& x,
                       unsigned int phaseIdx)
@@ -83,9 +83,9 @@ public:
      * \param x The vector containing the solution
      * \param phaseIdx The index of the fluid phase to be considered
      */
-    template<class FVGridGeometry, class GridVariables, class SolutionVector>
-    static ResultPair<FVGridGeometry, typename GridVariables::Scalar>
-    computePressureGradients(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVariables, class SolutionVector>
+    static ResultPair<GridGeometry, typename GridVariables::Scalar>
+    computePressureGradients(const GridGeometry& fvGridGeometry,
                              const GridVariables& gridVariables,
                              const SolutionVector& x,
                              unsigned int phaseIdx)
@@ -110,16 +110,16 @@ public:
      *          variables and returns the modified gradient. This can be
      *          used e.g. to turn the pressure gradients into velocities.
      */
-    template<class FVGridGeometry, class GridVariables, class SolutionVector, class F>
-    static ResultPair<FVGridGeometry, typename GridVariables::Scalar>
-    computePressureGradients(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVariables, class SolutionVector, class F>
+    static ResultPair<GridGeometry, typename GridVariables::Scalar>
+    computePressureGradients(const GridGeometry& fvGridGeometry,
                              const GridVariables& gridVariables,
                              const SolutionVector& x,
                              unsigned int phaseIdx,
                              F& f)
     {
         using ElemVolVars = typename GridVariables::GridVolumeVariables::LocalView;
-        using FVElementGeometry = typename FVGridGeometry::LocalView;
+        using FVElementGeometry = typename GridGeometry::LocalView;
 
         auto handleFunction = [&] (auto& result,
                                    const auto& handle,
@@ -146,14 +146,14 @@ private:
      * \brief Computes the gradients executing the provided function
      *        on an interaction volume / data handle pair.
      */
-    template<class FVGridGeometry, class GridVariables, class SolutionVector, class HandleFunction>
-    static ResultPair<FVGridGeometry, typename GridVariables::Scalar>
-    computeGradients_(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVariables, class SolutionVector, class HandleFunction>
+    static ResultPair<GridGeometry, typename GridVariables::Scalar>
+    computeGradients_(const GridGeometry& fvGridGeometry,
                       const GridVariables& gridVariables,
                       const SolutionVector& x,
                       const HandleFunction& handleFunction)
     {
-        using GridView = typename FVGridGeometry::GridView;
+        using GridView = typename GridGeometry::GridView;
         static constexpr int dim = GridView::dimension;
 
         // first, find out how many scvs live on this grid
@@ -162,7 +162,7 @@ private:
         for (const auto& element : elements(gridView))
             numScvs += element.subEntities(dim);
 
-        ResultPair<FVGridGeometry, typename GridVariables::Scalar> result;
+        ResultPair<GridGeometry, typename GridVariables::Scalar> result;
         result.first.reserve(numScvs);
         result.second.reserve(numScvs);
         std::vector<bool> vertexHandled(gridView.size(dim), false);

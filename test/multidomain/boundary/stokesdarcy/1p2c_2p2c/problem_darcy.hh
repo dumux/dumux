@@ -78,9 +78,9 @@ struct UseMoles<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr bool value = tr
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyTwoPTwoC>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TwoPTwoCSpatialParams<FVGridGeometry, Scalar>;
+    using type = TwoPTwoCSpatialParams<GridGeometry, Scalar>;
 };
 
 } // end namespace Properties
@@ -98,7 +98,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -124,7 +124,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
 public:
-    DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    DarcySubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {

@@ -72,10 +72,10 @@ class SubDomainBoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using Scalar = typename GridVariables::Scalar;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -347,9 +347,9 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
@@ -582,9 +582,9 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };

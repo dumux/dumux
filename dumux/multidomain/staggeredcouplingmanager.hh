@@ -42,10 +42,10 @@ class StaggeredCouplingManager: virtual public CouplingManager<MDTraits>
 {
     using ParentType = CouplingManager<MDTraits>;
 
-    template<std::size_t id> using FVGridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
 
-    using FVElementGeometry = typename FVGridGeometry<0>::LocalView;
+    using FVElementGeometry = typename GridGeometry<0>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView<0>::template Codim<0>::Entity;
 
@@ -58,8 +58,8 @@ public:
 
     using Traits = MDTraits;
 
-    static constexpr auto cellCenterIdx = FVGridGeometry<0>::cellCenterIdx();
-    static constexpr auto faceIdx = FVGridGeometry<0>::faceIdx();
+    static constexpr auto cellCenterIdx = GridGeometry<0>::cellCenterIdx();
+    static constexpr auto faceIdx = GridGeometry<0>::faceIdx();
 
     /*!
      * \copydoc Dumux::CouplingManager::updateCouplingContext()
@@ -186,7 +186,7 @@ public:
      * \brief return the numeric epsilon used for deflecting primary variables of coupled domain i.
      * \note  specialization for non-staggered schemes
      */
-    template<std::size_t i, typename std::enable_if_t<(FVGridGeometry<i>::discMethod != DiscretizationMethod::staggered), int> = 0>
+    template<std::size_t i, typename std::enable_if_t<(GridGeometry<i>::discMethod != DiscretizationMethod::staggered), int> = 0>
     decltype(auto) numericEpsilon(Dune::index_constant<i> id,
                                   const std::string& paramGroup) const
     {
@@ -197,13 +197,13 @@ public:
      * \brief return the numeric epsilon used for deflecting primary variables of coupled domain i.
      * \note  specialization for non-staggered schemes
      */
-    template<std::size_t i, typename std::enable_if_t<(FVGridGeometry<i>::discMethod == DiscretizationMethod::staggered), int> = 0>
+    template<std::size_t i, typename std::enable_if_t<(GridGeometry<i>::discMethod == DiscretizationMethod::staggered), int> = 0>
     decltype(auto) numericEpsilon(Dune::index_constant<i>,
                                   const std::string& paramGroup) const
     {
         constexpr std::size_t numEqCellCenter = Traits::template SubDomain<cellCenterIdx>::PrimaryVariables::dimension;
         constexpr std::size_t numEqFace = Traits::template SubDomain<faceIdx>::PrimaryVariables::dimension;
-        constexpr bool isCellCenter = FVGridGeometry<i>::isCellCenter();
+        constexpr bool isCellCenter = GridGeometry<i>::isCellCenter();
         constexpr std::size_t numEq = isCellCenter ? numEqCellCenter : numEqFace;
         constexpr auto prefix = isCellCenter ? "CellCenter" : "Face";
 

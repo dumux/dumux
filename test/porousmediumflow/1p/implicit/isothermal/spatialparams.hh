@@ -37,17 +37,17 @@ namespace Dumux {
  * \brief The spatial parameters class for the test problem using the
  *        1p box model.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             OnePTestSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexSet = typename GridView::IndexSet;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           OnePTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           OnePTestSpatialParams<GridGeometry, Scalar>>;
 
     enum {
         dim=GridView::dimension,
@@ -61,7 +61,7 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry),
           randomPermeability_(fvGridGeometry->gridView().size(dim), 0.0),
           indexSet_(fvGridGeometry->gridView().indexSet())
@@ -113,7 +113,7 @@ public:
      *
      * \param gg The finite-volume grid geometry used by the problem
      */
-    void initRandomField(const FVGridGeometry& gg)
+    void initRandomField(const GridGeometry& gg)
     {
         const auto& gridView = gg.gridView();
         const auto& elementMapper = gg.elementMapper();

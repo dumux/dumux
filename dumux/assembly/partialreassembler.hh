@@ -99,10 +99,10 @@ template<class Assembler>
 class PartialReassemblerEngine<Assembler, DiscretizationMethod::box>
 {
     using Scalar = typename Assembler::Scalar;
-    using FVGridGeometry = typename Assembler::GridGeometry;
+    using GridGeometry = typename Assembler::GridGeometry;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
-    using VertexMapper = typename FVGridGeometry::VertexMapper;
-    static constexpr int dim = FVGridGeometry::GridView::dimension;
+    using VertexMapper = typename GridGeometry::VertexMapper;
+    static constexpr int dim = GridGeometry::GridView::dimension;
 
 public:
     PartialReassemblerEngine(const Assembler& assembler)
@@ -305,7 +305,7 @@ template<class Assembler>
 class PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
 {
     using Scalar = typename Assembler::Scalar;
-    using FVGridGeometry = typename Assembler::GridGeometry;
+    using GridGeometry = typename Assembler::GridGeometry;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
 
 public:
@@ -423,11 +423,11 @@ template<class Assembler>
 class PartialReassembler
 {
     using Scalar = typename Assembler::Scalar;
-    using FVGridGeometry = typename Assembler::GridGeometry;
+    using GridGeometry = typename Assembler::GridGeometry;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
-    using VertexMapper = typename FVGridGeometry::VertexMapper;
+    using VertexMapper = typename GridGeometry::VertexMapper;
 
-    static constexpr DiscretizationMethod discMethod = FVGridGeometry::discMethod;
+    static constexpr DiscretizationMethod discMethod = GridGeometry::discMethod;
     using Engine = PartialReassemblerEngine<Assembler, discMethod>;
 
 public:

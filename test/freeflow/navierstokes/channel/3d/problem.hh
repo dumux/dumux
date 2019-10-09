@@ -105,8 +105,8 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
@@ -123,7 +123,7 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     static constexpr bool enablePseudoThreeDWallFriction = !DIM_3D;
 
 public:
-    ThreeDChannelTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         deltaP_ = getParam<Scalar>("Problem.DeltaP");

@@ -73,9 +73,9 @@ struct FluidSystem<TypeTag, TTag::RichardsNIConduction> { using type = FluidSyst
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsNIConduction>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
+    using type = RichardsNISpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -108,7 +108,7 @@ class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
@@ -133,7 +133,7 @@ class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    RichardsNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RichardsNIConductionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         //initialize fluid system

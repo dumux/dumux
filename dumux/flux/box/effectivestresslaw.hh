@@ -35,16 +35,16 @@ namespace Dumux {
  * \brief Effective stress law for box scheme
  * \tparam StressType type used for the computation of
  *         purely mechanical stresses (i.e. material law)
- * \tparam FVGridGeometry the finite volume grid geometry
+ * \tparam GridGeometry the finite volume grid geometry
  */
-template<class StressType, class FVGridGeometry>
-class EffectiveStressLaw<StressType, FVGridGeometry, DiscretizationMethod::box>
+template<class StressType, class GridGeometry>
+class EffectiveStressLaw<StressType, GridGeometry, DiscretizationMethod::box>
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static constexpr int dim = GridView::dimension;

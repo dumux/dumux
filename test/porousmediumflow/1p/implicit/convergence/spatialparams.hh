@@ -33,15 +33,15 @@ namespace Dumux {
  * \ingroup OnePTests
  * \brief The spatial params of the incompressible single-phase convergence test
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             OnePTestSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = OnePTestSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
+    using ThisType = OnePTestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
 
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
@@ -51,7 +51,7 @@ public:
      * \brief The constructor.
      * \param fvGridGeometry The finite-volume grid geometry
      */
-    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 

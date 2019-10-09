@@ -74,9 +74,9 @@ public:
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::InjectionProblem>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = InjectionProblemSpatialParams<FVGridGeometry, Scalar>;
+    using type = InjectionProblemSpatialParams<GridGeometry, Scalar>;
 };
 
 //Define whether spurious cold-water flow into the steam is blocked
@@ -111,7 +111,7 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     // copy some indices for convenience
     enum {
@@ -129,7 +129,7 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    InjectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     { FluidSystem::init(); }
 

@@ -97,8 +97,8 @@ public:
     {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false)
@@ -187,8 +187,8 @@ public:
       {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}

@@ -71,9 +71,9 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
     using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
     using FaceResidualValue = typename LocalResidual::FaceResidualValue;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -497,9 +497,9 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using GridFaceVariables = GetPropType<TypeTag, Properties::GridFaceVariables>;
     using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
     using FaceVariables = typename ElementFaceVariables::FaceVariables;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;

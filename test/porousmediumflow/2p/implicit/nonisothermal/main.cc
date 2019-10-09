@@ -104,8 +104,8 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (initial and boundary conditions)
@@ -154,7 +154,7 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     //the convergence writer
-    using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
+    using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<GridGeometry, SolutionVector>;
     auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
     nonLinearSolver.attachConvergenceWriter(convergenceWriter);
 

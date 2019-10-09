@@ -37,16 +37,16 @@ namespace Dumux {
  * \ingroup BoxFlux
  * \brief Hooke's law for box scheme
  * \tparam ScalarType the scalar type for scalar physical quantities
- * \tparam FVGridGeometry the grid geometry
+ * \tparam GridGeometry the grid geometry
  */
-template<class ScalarType, class FVGridGeometry>
-class HookesLaw<ScalarType, FVGridGeometry, DiscretizationMethod::box>
+template<class ScalarType, class GridGeometry>
+class HookesLaw<ScalarType, GridGeometry, DiscretizationMethod::box>
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static constexpr int dim = GridView::dimension;

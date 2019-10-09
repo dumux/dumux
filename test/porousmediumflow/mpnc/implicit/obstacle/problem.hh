@@ -76,9 +76,9 @@ struct Problem<TypeTag, TTag::Obstacle> { using type = ObstacleProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Obstacle>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ObstacleSpatialParams<FVGridGeometry, Scalar>;
+    using type = ObstacleSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set fluid configuration
@@ -139,7 +139,7 @@ class ObstacleProblem
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
 
@@ -161,7 +161,7 @@ class ObstacleProblem
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
 public:
-    ObstacleProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ObstacleProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C

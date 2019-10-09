@@ -55,24 +55,24 @@ public:
      * \param spatialParams Class encapsulating the spatial parameters
      * \param x The current state of the solution vector
      */
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry,
                 const SpatialParams& spatialParams,
                 const SolutionVector& x)
     {
         using MaterialLaw = typename SpatialParams::MaterialLaw;
 
         // Make sure the spatial params return a const ref and no copy!
-        using Elem = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+        using Elem = typename GridGeometry::GridView::template Codim<0>::Entity;
         using ElemSol = decltype( elementSolution(Elem(), x, fvGridGeometry) );
-        using Scv = typename FVGridGeometry::SubControlVolume;
+        using Scv = typename GridGeometry::SubControlVolume;
         using ReturnType = decltype(spatialParams.materialLawParams(Elem(), Scv(), ElemSol()));
         static_assert(std::is_lvalue_reference<ReturnType>::value,
                       "In order to use the box-interface solver please provide access "
                       "to the material law parameters via returning (const) references");
 
         // make sure this is only called for geometries of the box method!
-        if (FVGridGeometry::discMethod != DiscretizationMethod::box)
+        if (GridGeometry::discMethod != DiscretizationMethod::box)
             DUNE_THROW(Dune::InvalidStateException, "Determination of the interface material parameters with "
                                                     "this class only makes sense when using the box method!");
 

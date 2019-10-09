@@ -49,7 +49,7 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::komega> : public RANSProblemBase
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
 
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
@@ -58,11 +58,11 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::komega> : public RANSProblemBase
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using DimVector = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    RANSProblemImpl(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    RANSProblemImpl(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
@@ -101,9 +101,9 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();
-                const auto& cellCenterPriVars = curSol[FVGridGeometry::cellCenterIdx()][dofIdx];
+                const auto& cellCenterPriVars = curSol[GridGeometry::cellCenterIdx()][dofIdx];
                 PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
-                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
+                auto elemSol = elementSolution<typename GridGeometry::LocalView>(std::move(priVars));
                 // NOTE: first update the turbulence quantities
                 storedDissipation_[elementIdx] = elemSol[0][Indices::dissipationEqIdx];
                 storedTurbulentKineticEnergy_[elementIdx] = elemSol[0][Indices::turbulentKineticEnergyEqIdx];

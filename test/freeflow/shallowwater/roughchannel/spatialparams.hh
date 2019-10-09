@@ -37,21 +37,21 @@ namespace Dumux {
  * \brief The spatial parameters class for the rough channel test.
  *
  */
-template<class FVGridGeometry, class Scalar, class VolumeVariables>
+template<class GridGeometry, class Scalar, class VolumeVariables>
 class RoughChannelSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
-    using ThisType = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    RoughChannelSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         gravity_ = getParam<Scalar>("Problem.Gravity");

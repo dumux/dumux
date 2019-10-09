@@ -38,7 +38,7 @@ template<class TypeTag>
 class ShallowWaterProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
@@ -50,7 +50,7 @@ public:
      * \param spatialParams The spatial parameter class
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    ShallowWaterProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    ShallowWaterProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                         std::shared_ptr<SpatialParams> spatialParams,
                         const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
@@ -63,7 +63,7 @@ public:
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    ShallowWaterProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    ShallowWaterProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                         const std::string& paramGroup = "")
     : ShallowWaterProblem(fvGridGeometry,
                           std::make_shared<SpatialParams>(fvGridGeometry),

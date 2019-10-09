@@ -68,11 +68,11 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
         using FaceIdx = Dune::index_constant<1>;
     };
 
-    template<class FVGridGeometry>
-    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry>;
+    template<class GridGeometry>
+    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<GridGeometry>;
 
-    template<class FVGridGeometry, bool cachingEnabled>
-    using LocalView = StaggeredFVElementGeometry<FVGridGeometry, cachingEnabled>;
+    template<class GridGeometry, bool cachingEnabled>
+    using LocalView = StaggeredFVElementGeometry<GridGeometry, cachingEnabled>;
 };
 
 } // end namespace Dumux
@@ -95,9 +95,9 @@ int main (int argc, char *argv[]) try
 
     static constexpr int upwindSchemeOrder = 2;
 
-    using FVGridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
+    using GridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
                                                    TestFVGGTraits<typename Grid::LeafGridView, upwindSchemeOrder> >;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
@@ -109,7 +109,7 @@ int main (int argc, char *argv[]) try
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
 
     auto leafGridView = grid->leafGridView();
-    FVGridGeometry fvGridGeometry(leafGridView);
+    GridGeometry fvGridGeometry(leafGridView);
     fvGridGeometry.update();
 
     std::cout << "Abbreviatons:\n"

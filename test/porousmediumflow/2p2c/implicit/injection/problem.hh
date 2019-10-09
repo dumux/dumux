@@ -76,9 +76,9 @@ struct FluidSystem<TypeTag, TTag::Injection>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Injection>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = InjectionSpatialParams<FVGridGeometry, Scalar>;
+    using type = InjectionSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -143,7 +143,7 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
@@ -190,7 +190,7 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
-    InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    InjectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         nTemperature_       = getParam<int>("Problem.NTemperature");

@@ -39,17 +39,17 @@ namespace Dumux {
  * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the infiltration problem
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class InfiltrationThreePThreeCSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         InfiltrationThreePThreeCSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         InfiltrationThreePThreeCSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       InfiltrationThreePThreeCSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       InfiltrationThreePThreeCSpatialParams<GridGeometry, Scalar>>;
 
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
@@ -60,7 +60,7 @@ public:
    using MaterialLawParams = typename MaterialLaw::Params;
    using PermeabilityType = Scalar;
 
-    InfiltrationThreePThreeCSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    InfiltrationThreePThreeCSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities

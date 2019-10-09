@@ -105,15 +105,15 @@ struct CouplingManager<TypeTag, TTag::OnePEdgeBox> { using type = typename BoxTr
  * we have to create additional faces on interior boundaries, which wouldn't be
  * created in the standard scheme.
  */
-template< class FVGridGeometry,
+template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
-          std::enable_if_t<FVGridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
-void updateFVGridGeometry(FVGridGeometry& fvGridGeometry,
+          std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
+void updateFVGridGeometry(GridGeometry& fvGridGeometry,
                           const GridManager& gridManager,
                           const LowDimGridView& lowDimGridView)
 {
-    static constexpr int higherGridId = int(FVGridGeometry::GridView::dimension) == 3 ? 0 : 1;
+    static constexpr int higherGridId = int(GridGeometry::GridView::dimension) == 3 ? 0 : 1;
     using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings, higherGridId, higherGridId+1>;
     BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
     fvGridGeometry.update(lowDimGridView, facetGridAdapter);
@@ -122,11 +122,11 @@ void updateFVGridGeometry(FVGridGeometry& fvGridGeometry,
 /*!
  * \brief Updates the finite volume grid geometry for the cell-centered schemes.
  */
-template< class FVGridGeometry,
+template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
-          std::enable_if_t<FVGridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-void updateFVGridGeometry(FVGridGeometry& fvGridGeometry,
+          std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
+void updateFVGridGeometry(GridGeometry& fvGridGeometry,
                           const GridManager& gridManager,
                           const LowDimGridView& lowDimGridView)
 {

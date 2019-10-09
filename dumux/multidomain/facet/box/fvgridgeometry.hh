@@ -59,8 +59,8 @@ struct BoxFacetCouplingDefaultGridGeometryTraits
     using SubControlVolume = BoxSubControlVolume<GridView>;
     using SubControlVolumeFace = BoxFacetCouplingSubControlVolumeFace<GridView>;
 
-    template<class FVGridGeometry, bool enableCache>
-    using LocalView = BoxFacetCouplingFVElementGeometry<FVGridGeometry, enableCache>;
+    template<class GridGeometry, bool enableCache>
+    using LocalView = BoxFacetCouplingFVElementGeometry<GridGeometry, enableCache>;
 
     // per default we use an mcmg mapper for the elements
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;

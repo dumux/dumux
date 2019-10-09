@@ -34,17 +34,17 @@ namespace Dumux {
  * \ingroup OnePNCTests
  * \brief Definition of the spatial parameters for the 1pnc test problems.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePNCTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePNCTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             OnePNCTestSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           OnePNCTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           OnePNCTestSpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
@@ -53,7 +53,7 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePNCTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePNCTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         permeability_ = 1e-10;

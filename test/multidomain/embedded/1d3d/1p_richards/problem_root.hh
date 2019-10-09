@@ -108,12 +108,12 @@ class RootProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GlobalPosition = typename GridGeometry::GlobalCoordinate;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -122,7 +122,7 @@ class RootProblem : public PorousMediumFlowProblem<TypeTag>
 public:
 
     template<class SpatialParams>
-    RootProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    RootProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                 std::shared_ptr<SpatialParams> spatialParams,
                 std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, spatialParams, "Root")

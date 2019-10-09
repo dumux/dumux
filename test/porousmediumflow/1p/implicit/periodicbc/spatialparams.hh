@@ -41,19 +41,19 @@ class OnePTestSpatialParams
                              OnePTestSpatialParams<TypeTag>>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePTestSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, OnePTestSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");

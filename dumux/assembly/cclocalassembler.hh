@@ -137,8 +137,8 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 
@@ -146,7 +146,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
 
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
-    static constexpr int maxElementStencilSize = FVGridGeometry::maxElementStencilSize;
+    static constexpr int maxElementStencilSize = GridGeometry::maxElementStencilSize;
     static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
 
 public:

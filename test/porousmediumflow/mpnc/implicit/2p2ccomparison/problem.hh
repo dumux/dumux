@@ -73,9 +73,9 @@ struct Problem<TypeTag, TTag::MPNCComparison> { using type = MPNCComparisonProbl
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::MPNCComparison>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = MPNCComparisonSpatialParams<FVGridGeometry, Scalar>;
+    using type = MPNCComparisonSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set fluid configuration
@@ -118,7 +118,7 @@ class MPNCComparisonProblem
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
 
@@ -137,7 +137,7 @@ class MPNCComparisonProblem
     static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
 
 public:
-    MPNCComparisonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    MPNCComparisonProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C

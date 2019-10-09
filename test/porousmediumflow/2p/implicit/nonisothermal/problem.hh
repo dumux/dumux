@@ -82,9 +82,9 @@ struct FluidSystem<TypeTag, TTag::Injection2PNITypeTag> { using type = FluidSyst
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Injection2PNITypeTag>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = InjectionSpatialParams<FVGridGeometry, Scalar>;
+    using type = InjectionSpatialParams<GridGeometry, Scalar>;
 };
 
 } // namespace Properties
@@ -151,14 +151,14 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
 public:
-    InjectionProblem2PNI(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    InjectionProblem2PNI(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         maxDepth_ = 2700.0; // [m]

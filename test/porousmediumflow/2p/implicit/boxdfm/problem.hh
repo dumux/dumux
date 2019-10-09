@@ -125,8 +125,8 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
 
     // some indices for convenience
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -144,7 +144,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    TwoPTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 

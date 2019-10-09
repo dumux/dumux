@@ -32,14 +32,14 @@ namespace Dumux {
  * \ingroup FacetTests
  * \brief The spatial parameters for the single-phase facet coupling test.
  */
-template< class FVGridGeometry, class Scalar >
+template< class GridGeometry, class Scalar >
 class OnePSpatialParams
-: public FVSpatialParamsOneP< FVGridGeometry, Scalar, OnePSpatialParams<FVGridGeometry, Scalar> >
+: public FVSpatialParamsOneP< GridGeometry, Scalar, OnePSpatialParams<GridGeometry, Scalar> >
 {
-    using ThisType = OnePSpatialParams< FVGridGeometry, Scalar >;
-    using ParentType = FVSpatialParamsOneP< FVGridGeometry, Scalar, ThisType >;
+    using ThisType = OnePSpatialParams< GridGeometry, Scalar >;
+    using ParentType = FVSpatialParamsOneP< GridGeometry, Scalar, ThisType >;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -47,7 +47,7 @@ public:
     //! Export the type used for permeabilities
     using PermeabilityType = Scalar;
 
-    OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    OnePSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry)
     {
         permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");

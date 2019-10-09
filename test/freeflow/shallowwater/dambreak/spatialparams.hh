@@ -33,21 +33,21 @@ namespace Dumux {
  * \brief The spatial parameters class for the dam break test.
  *
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class DamBreakSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         DamBreakSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         DamBreakSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = DamBreakSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using ThisType = DamBreakSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    DamBreakSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    DamBreakSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 

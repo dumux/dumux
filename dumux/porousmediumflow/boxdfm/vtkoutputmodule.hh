@@ -56,12 +56,12 @@ template<class GridVariables, class SolutionVector, class FractureGrid>
 class BoxDfmVtkOutputModule : public VtkOutputModule<GridVariables, SolutionVector>
 {
     using ParentType = VtkOutputModule<GridVariables, SolutionVector>;
-    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using GridGeometry = typename GridVariables::GridGeometry;
     using VV = typename GridVariables::VolumeVariables;
     using FluidSystem = typename VV::FluidSystem;
     using Scalar = typename GridVariables::Scalar;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using FractureGridView = typename FractureGrid::LeafGridView;
     using FractureMapper = Dune::MultipleCodimMultipleGeomTypeMapper<FractureGridView>;
 
@@ -82,7 +82,7 @@ class BoxDfmVtkOutputModule : public VtkOutputModule<GridVariables, SolutionVect
     static_assert(dim > 1, "Box-Dfm output only works for dim > 1");
     static_assert(FractureGrid::dimension == int(dim-1), "Fracture grid must be of codimension one!");
     static_assert(FractureGrid::dimensionworld == int(dimWorld), "Fracture grid has to has the same coordinate dimension!");
-    static_assert(FVGridGeometry::discMethod == DiscretizationMethod::box, "Box-Dfm output module can only be used with the box scheme!");
+    static_assert(GridGeometry::discMethod == DiscretizationMethod::box, "Box-Dfm output module can only be used with the box scheme!");
 public:
 
     //! The constructor

@@ -91,7 +91,7 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -100,12 +100,12 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    DoneaTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    DoneaTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
@@ -200,8 +200,8 @@ public:
      * \param pvIdx The primary variable index in the solution vector
      */
     bool isDirichletCell(const Element& element,
-                         const typename FVGridGeometry::LocalView& fvGeometry,
-                         const typename FVGridGeometry::SubControlVolume& scv,
+                         const typename GridGeometry::LocalView& fvGeometry,
+                         const typename GridGeometry::SubControlVolume& scv,
                          int pvIdx) const
     {
         bool onBoundary = false;

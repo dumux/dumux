@@ -46,15 +46,15 @@ namespace Dumux {
  *        where coupling occurs across the facets of the bulk domain elements
  *        with a lower-dimensional domain living on these facets.
  */
-template<class Scalar, class FVGridGeometry>
+template<class Scalar, class GridGeometry>
 class BoxFacetCouplingDarcysLaw
 {
-    using DefaultBoxDarcysLaw = BoxDarcysLaw<Scalar, FVGridGeometry>;
+    using DefaultBoxDarcysLaw = BoxDarcysLaw<Scalar, GridGeometry>;
 
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

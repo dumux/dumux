@@ -49,8 +49,8 @@ class TwoPGridDataTransfer : public GridDataTransfer
     using Grid = GetPropType<TypeTag, Properties::Grid>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
@@ -59,7 +59,7 @@ class TwoPGridDataTransfer : public GridDataTransfer
     using Element = typename Grid::template Codim<0>::Entity;
     using ElementSolution = std::decay_t<decltype(elementSolution(std::declval<Element>(),
                                                                   std::declval<SolutionVector>(),
-                                                                  std::declval<FVGridGeometry>()))>;
+                                                                  std::declval<GridGeometry>()))>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
@@ -114,7 +114,7 @@ public:
      * \param sol The solution (primary variables) on the grid
      */
     TwoPGridDataTransfer(std::shared_ptr<const Problem> problem,
-                         std::shared_ptr<FVGridGeometry> fvGridGeometry,
+                         std::shared_ptr<GridGeometry> fvGridGeometry,
                          std::shared_ptr<const GridVariables> gridVariables,
                          SolutionVector& sol)
     : GridDataTransfer()
@@ -434,7 +434,7 @@ public:
     }
 
     std::shared_ptr<const Problem> problem_;
-    std::shared_ptr<FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<GridGeometry> fvGridGeometry_;
     std::shared_ptr<const GridVariables> gridVariables_;
     SolutionVector& sol_;
     PersistentContainer adaptionMap_;

@@ -67,9 +67,9 @@ struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePIncompressible>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // use the incompressible local residual (provides analytic jacobian)
@@ -100,10 +100,10 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -112,7 +112,7 @@ public:
      * \brief The constructor.
      * \param fvGridGeometry The finite-volume grid geometry
      */
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 
