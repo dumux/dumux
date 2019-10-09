@@ -119,7 +119,7 @@ public:
                          SolutionVector& sol)
     : GridDataTransfer()
     , problem_(problem)
-    , fvGridGeometry_(gridGeometry)
+    , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
     , sol_(sol)
     , adaptionMap_(gridGeometry->gridView().grid(), 0)
@@ -137,7 +137,7 @@ public:
     {
         adaptionMap_.resize();
 
-        const auto& grid = fvGridGeometry_->gridView().grid();
+        const auto& grid = gridGeometry_->gridView().grid();
         for (auto level = grid.maxLevel(); level >= 0; level--)
         {
             for (const auto& element : elements(grid.levelGridView(level)))
@@ -148,11 +148,11 @@ public:
                 // put values in the map for leaf elements
                 if (element.isLeaf())
                 {
-                    auto fvGeometry = localView(*fvGridGeometry_);
+                    auto fvGeometry = localView(*gridGeometry_);
                     fvGeometry.bindElement(element);
 
                     // store current element solution
-                    adaptedValues.u = ElementSolution(element, sol_, *fvGridGeometry_);
+                    adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
 
                     // compute mass in the scvs
                     for (const auto& scv : scvs(fvGeometry))
@@ -183,7 +183,7 @@ public:
                 // This element solution constructor uses the vertex mapper to obtain
                 // the privars at the vertices, thus, this works for non-leaf elements!
                 if(isBox && !element.isLeaf())
-                    adaptedValues.u = ElementSolution(element, sol_, *fvGridGeometry_);
+                    adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
             }
         }
     }
@@ -203,8 +203,8 @@ public:
     {
         // resize stuff (grid might have changed)
         adaptionMap_.resize();
-        fvGridGeometry_->update();
-        sol_.resize(fvGridGeometry_->numDofs());
+        gridGeometry_->update();
+        sol_.resize(gridGeometry_->numDofs());
 
         // vectors storing the mass associated with each vertex, when using the box method
         std::vector<Scalar> massCoeff;
@@ -212,18 +212,18 @@ public:
 
         if(isBox)
         {
-            massCoeff.resize(fvGridGeometry_->numDofs(), 0.0);
-            associatedMass.resize(fvGridGeometry_->numDofs(), 0.0);
+            massCoeff.resize(gridGeometry_->numDofs(), 0.0);
+            associatedMass.resize(gridGeometry_->numDofs(), 0.0);
         }
 
         // iterate over leaf and reconstruct the solution
-        for (const auto& element : elements(fvGridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(gridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
         {
             if (!element.isNew())
             {
                 const auto& adaptedValues = adaptionMap_[element];
 
-                auto fvGeometry = localView(*fvGridGeometry_);
+                auto fvGeometry = localView(*gridGeometry_);
                 fvGeometry.bindElement(element);
 
                 // obtain element solution from map (divide by count!)
@@ -302,7 +302,7 @@ public:
                     auto elemSolSon = adaptedValuesFather.u;
                     elemSolSon[0] /= adaptedValuesFather.count;
 
-                    auto fvGeometry = localView(*fvGridGeometry_);
+                    auto fvGeometry = localView(*gridGeometry_);
                     fvGeometry.bindElement(element);
 
                     for (const auto& scv : scvs(fvGeometry))
@@ -326,11 +326,11 @@ public:
                 {
                     auto& adaptedValuesFather = adaptionMap_[fatherElement];
 
-                    auto fvGeometry = localView(*fvGridGeometry_);
+                    auto fvGeometry = localView(*gridGeometry_);
                     fvGeometry.bindElement(element);
 
                     // interpolate solution in the father to the vertices of the new son
-                    ElementSolution elemSolSon(element, sol_, *fvGridGeometry_);
+                    ElementSolution elemSolSon(element, sol_, *gridGeometry_);
                     const auto fatherGeometry = fatherElement.geometry();
                     for (const auto& scv : scvs(fvGeometry))
                         elemSolSon[scv.localDofIndex()] = evalSolution(fatherElement,
@@ -367,7 +367,7 @@ public:
 
         if(isBox)
         {
-            for(std::size_t dofIdxGlobal = 0; dofIdxGlobal < fvGridGeometry_->numDofs(); dofIdxGlobal++)
+            for(std::size_t dofIdxGlobal = 0; dofIdxGlobal < gridGeometry_->numDofs(); dofIdxGlobal++)
                 sol_[dofIdxGlobal][saturationIdx] = associatedMass[dofIdxGlobal] / massCoeff[dofIdxGlobal];
         }
 
@@ -434,7 +434,7 @@ public:
     }
 
     std::shared_ptr<const Problem> problem_;
-    std::shared_ptr<GridGeometry> fvGridGeometry_;
+    std::shared_ptr<GridGeometry> gridGeometry_;
     std::shared_ptr<const GridVariables> gridVariables_;
     SolutionVector& sol_;
     PersistentContainer adaptionMap_;

@@ -42,7 +42,7 @@ class GridGeometryView
 public:
 
     explicit GridGeometryView(const ActualFVGridGeometry* actualFVGridGeometry)
-    : fvGridGeometry_(actualFVGridGeometry) {}
+    : gridGeometry_(actualFVGridGeometry) {}
 
     //! export  the GridView type and the discretization method
     using GridView = typename ActualFVGridGeometry::GridView;
@@ -75,35 +75,35 @@ public:
      * \brief Return the gridView this grid geometry object lives on
      */
     const auto& gridView() const
-    { return fvGridGeometry_->gridView(); }
+    { return gridGeometry_->gridView(); }
 
     /*!
      * \brief Returns the connectivity map of which dofs have derivatives with respect
      *        to a given dof.
      */
     const auto& connectivityMap() const // TODO return correct map
-    { return fvGridGeometry_->connectivityMap(); }
+    { return gridGeometry_->connectivityMap(); }
 
     /*!
      * \brief Returns the mapper for vertices to indices for possibly adaptive grids.
      */
     const auto& vertexMapper() const
-    { return fvGridGeometry_->vertexMapper(); }
+    { return gridGeometry_->vertexMapper(); }
 
     /*!
      * \brief Returns the mapper for elements to indices for constant grids.
      */
     const auto& elementMapper() const
-    { return fvGridGeometry_->elementMapper(); }
+    { return gridGeometry_->elementMapper(); }
 
     /*!
      * \brief Returns the actual gridGeometry we are a restriction of
      */
     const ActualFVGridGeometry& actualfvGridGeometry() const
-    { return *fvGridGeometry_; }
+    { return *gridGeometry_; }
 
 protected:
-    const ActualFVGridGeometry* fvGridGeometry_;
+    const ActualFVGridGeometry* gridGeometry_;
 
 };
 
@@ -129,7 +129,7 @@ public:
      * \brief The total number of cell centered dofs
      */
     std::size_t numDofs() const
-    { return this->fvGridGeometry_->numCellCenterDofs(); }
+    { return this->gridGeometry_->numCellCenterDofs(); }
 };
 
 /*!
@@ -154,7 +154,7 @@ public:
      * \brief The total number of cell centered dofs
      */
     std::size_t numDofs() const
-    { return this->fvGridGeometry_->numFaceDofs(); }
+    { return this->gridGeometry_->numFaceDofs(); }
 };
 
 /*!

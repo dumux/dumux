@@ -95,10 +95,10 @@ public:
     //! return the fv grid geometry
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const FVGridGeometry& fvGridGeometry() const
-    { return (*gridVariables_->fvGridGeometry_);    }
+    { return (*gridVariables_->gridGeometry_);    }
     //! return the fv grid geometry
     const FVGridGeometry& gridGeometry() const
-    { return (*gridVariables_->fvGridGeometry_);    }
+    { return (*gridVariables_->gridGeometry_);    }
 
     // return the actual grid variables
     const ActualGridVariables& gridVariables() const
@@ -249,7 +249,7 @@ public:
     void update(const SolutionVector& curSol)
     {
         ParentType::update(curSol[cellCenterIdx]);
-        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
+        curGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
     }
 
     //! initialize all variables (stationary case)
@@ -257,8 +257,8 @@ public:
     void init(const SolutionVector& curSol)
     {
         ParentType::init(curSol[cellCenterIdx]);
-        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
-        prevGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
+        curGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
+        prevGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
     }
 
     //! initialize all variables (instationary case)

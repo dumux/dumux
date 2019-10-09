@@ -80,18 +80,18 @@ public:
      */
     PorousMediumFlowVelocity(const GridVariables& gridVariables)
     : problem_(gridVariables.curGridVolVars().problem())
-    , fvGridGeometry_(gridVariables.gridGeometry())
+    , gridGeometry_(gridVariables.gridGeometry())
     , gridVariables_(gridVariables)
     {
         // set the number of scvs the vertices are connected to
         if (isBox && dim > 1)
         {
             // resize to the number of vertices of the grid
-            cellNum_.assign(fvGridGeometry_.gridView().size(dim), 0);
+            cellNum_.assign(gridGeometry_.gridView().size(dim), 0);
 
-            for (const auto& element : elements(fvGridGeometry_.gridView()))
+            for (const auto& element : elements(gridGeometry_.gridView()))
                 for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-                    ++cellNum_[fvGridGeometry_.vertexMapper().subIndex(element, vIdx, dim)];
+                    ++cellNum_[gridGeometry_.vertexMapper().subIndex(element, vIdx, dim)];
         }
     }
 
@@ -135,7 +135,7 @@ public:
                 flux /= insideVolVars.extrusionFactor();
                 tmpVelocity *= flux;
 
-                const int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
+                const int eIdxGlobal = gridGeometry_.elementMapper().index(element);
                 velocity[eIdxGlobal] = tmpVelocity;
             }
             return;
@@ -225,7 +225,7 @@ public:
             // find the local face indices of the scvfs (for conforming meshes)
             std::vector<unsigned int> scvfIndexInInside(fvGeometry.numScvf());
             int localScvfIdx = 0;
-            for (const auto& intersection : intersections(fvGridGeometry_.gridView(), element))
+            for (const auto& intersection : intersections(gridGeometry_.gridView(), element))
             {
                 if (dim < dimWorld)
                     if (handledScvf[intersection.indexInInside()])
@@ -331,7 +331,7 @@ public:
 
             scvVelocity /= geometry.integrationElement(localPos);
 
-            int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
+            int eIdxGlobal = gridGeometry_.elementMapper().index(element);
 
             velocity[eIdxGlobal] = scvVelocity;
 
@@ -420,7 +420,7 @@ private:
     { return BoundaryTypes(); }
 
     const Problem& problem_;
-    const GridGeometry& fvGridGeometry_;
+    const GridGeometry& gridGeometry_;
     const GridVariables& gridVariables_;
 
     std::vector<int> cellNum_;

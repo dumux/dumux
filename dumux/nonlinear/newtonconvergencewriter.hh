@@ -67,7 +67,7 @@ public:
      */
     NewtonConvergenceWriter(const GridGeometry& gridGeometry,
                             const std::string& name = "newton_convergence")
-    : fvGridGeometry_(gridGeometry)
+    : gridGeometry_(gridGeometry)
     , writer_(gridGeometry.gridView(), name, "", "")
     {
         resize();
@@ -95,7 +95,7 @@ public:
     //! Resizes the output fields. This has to be called whenever the grid changes
     void resize()
     {
-        const auto numDofs = fvGridGeometry_.numDofs();
+        const auto numDofs = gridGeometry_.numDofs();
 
         // resize the output fields
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -135,7 +135,7 @@ private:
     std::size_t id_ = 0UL;
     std::size_t iteration_ = 0UL;
 
-    const GridGeometry& fvGridGeometry_;
+    const GridGeometry& gridGeometry_;
 
     Dune::VTKSequenceWriter<GridView> writer_;
 

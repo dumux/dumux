@@ -69,7 +69,7 @@ public:
      */
     StaggeredNewtonConvergenceWriter(const GridGeometry& gridGeometry,
                                      const std::string& name = "newton_convergence")
-    : fvGridGeometry_(gridGeometry)
+    : gridGeometry_(gridGeometry)
     , ccWriter_(gridGeometry.gridView(), name, "", "")
     , faceWriter_(std::make_shared<PointCloudVtkWriter<Scalar, GlobalPosition>>(coordinates_))
     , faceSequenceWriter_(faceWriter_, name + "-face", "","",
@@ -89,8 +89,8 @@ public:
     //! Resizes the output fields. This has to be called whenever the grid changes
     void resize()
     {
-        const auto numCellCenterDofs = fvGridGeometry_.numCellCenterDofs();
-        const auto numFaceDofs = fvGridGeometry_.numFaceDofs();
+        const auto numCellCenterDofs = gridGeometry_.numCellCenterDofs();
+        const auto numFaceDofs = gridGeometry_.numFaceDofs();
 
         // resize the cell center output fields
         for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
@@ -109,9 +109,9 @@ public:
         }
 
         coordinates_.resize(numFaceDofs);
-        for (auto&& facet : facets(fvGridGeometry_.gridView()))
+        for (auto&& facet : facets(gridGeometry_.gridView()))
         {
-            const auto dofIdxGlobal = fvGridGeometry_.gridView().indexSet().index(facet);
+            const auto dofIdxGlobal = gridGeometry_.gridView().indexSet().index(facet);
             coordinates_[dofIdxGlobal] = facet.geometry().center();
         }
     }
@@ -163,7 +163,7 @@ private:
     std::size_t id_ = 0UL;
     std::size_t iteration_ = 0UL;
 
-    const GridGeometry& fvGridGeometry_;
+    const GridGeometry& gridGeometry_;
 
     Dune::VTKSequenceWriter<GridView> ccWriter_;
 
