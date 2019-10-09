@@ -64,7 +64,7 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    WaterAirSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    WaterAirSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
         layerBottom_ = 22.0;
 

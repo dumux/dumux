@@ -52,8 +52,8 @@ public:
     //! Constructor with element, solution vector and grid geometry
     template<class SolutionVector>
     CCElementSolution(const Element& element, const SolutionVector& sol,
-                      const GridGeometry& fvGridGeometry)
-    : CCElementSolution(sol[fvGridGeometry.elementMapper().index(element)])
+                      const GridGeometry& gridGeometry)
+    : CCElementSolution(sol[gridGeometry.elementMapper().index(element)])
     {}
 
     //! Constructor with element, element volume variables and fv element geometry
@@ -76,9 +76,9 @@ public:
     //! extract the element solution from the solution vector using a mapper
     template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
-                const GridGeometry& fvGridGeometry)
+                const GridGeometry& gridGeometry)
     {
-        priVars_ = sol[fvGridGeometry.elementMapper().index(element)];
+        priVars_ = sol[gridGeometry.elementMapper().index(element)];
     }
 
     //! return the size of the element solution

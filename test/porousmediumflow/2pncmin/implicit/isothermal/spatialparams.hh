@@ -64,8 +64,8 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    DissolutionSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    DissolutionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);

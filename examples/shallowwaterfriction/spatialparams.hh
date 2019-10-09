@@ -50,8 +50,8 @@ class RoughChannelSpatialParams
 
 public:
     // In the constructor be read some values from the `params.input` and initialize the friciton law.
-    RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         gravity_ = getParam<Scalar>("Problem.Gravity");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");

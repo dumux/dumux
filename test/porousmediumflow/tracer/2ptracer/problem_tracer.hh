@@ -153,8 +153,8 @@ class TwoPTracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    TwoPTracerTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPTracerTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // stating in the console whether mole or mass fractions are used
         if(useMoles)

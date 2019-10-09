@@ -81,8 +81,8 @@ public:
     using AwsSurfaceParams = typename AwsSurface::Params;
     using AnsSurfaceParams = typename AnsSurface::Params;
 
-    EvaporationAtmosphereSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    EvaporationAtmosphereSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         heightPM_               = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
         heightDomain_           = getParam<std::vector<Scalar>>("Grid.Positions1")[2];

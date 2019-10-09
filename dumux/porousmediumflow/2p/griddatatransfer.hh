@@ -109,20 +109,20 @@ public:
      * \brief Constructor
      *
      * \param problem The DuMuX problem to be solved
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param gridVariables The secondary variables on the grid
      * \param sol The solution (primary variables) on the grid
      */
     TwoPGridDataTransfer(std::shared_ptr<const Problem> problem,
-                         std::shared_ptr<GridGeometry> fvGridGeometry,
+                         std::shared_ptr<GridGeometry> gridGeometry,
                          std::shared_ptr<const GridVariables> gridVariables,
                          SolutionVector& sol)
     : GridDataTransfer()
     , problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    , fvGridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
     , sol_(sol)
-    , adaptionMap_(fvGridGeometry->gridView().grid(), 0)
+    , adaptionMap_(gridGeometry->gridView().grid(), 0)
     {}
 
     /*!

@@ -81,27 +81,27 @@ public:
      * \param curSol The current solution to be updated / modified
      * \param gridVariables The secondary variables on the grid
      * \param problem The problem
-     * \param fvGridGeometry The finite-volume grid geometry
+     * \param gridGeometry The finite-volume grid geometry
      */
     template<class SolutionVector, class GridVariables, class Problem>
     bool update(SolutionVector& curSol,
                 GridVariables& gridVariables,
                 const Problem& problem,
-                const typename GridVariables::GridGeometry& fvGridGeometry)
+                const typename GridVariables::GridGeometry& gridGeometry)
     {
         bool switched = false;
         visited_.assign(wasSwitched_.size(), false);
         std::size_t countSwitched = 0;
-        for (const auto& element : elements(fvGridGeometry.gridView()))
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
-            const auto curElemSol = elementSolution(element, curSol, fvGridGeometry);
+            const auto curElemSol = elementSolution(element, curSol, gridGeometry);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
@@ -126,12 +126,12 @@ public:
 
         if (verbosity_ > 0 && countSwitched > 0)
             std::cout << "Switched primary variables at " << countSwitched << " dof locations on processor "
-                      << fvGridGeometry.gridView().comm().rank() << "." << std::endl;
+                      << gridGeometry.gridView().comm().rank() << "." << std::endl;
 
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag for our partition.
-        if (fvGridGeometry.gridView().comm().size() > 1)
-            switched = fvGridGeometry.gridView().comm().max(switched);
+        if (gridGeometry.gridView().comm().size() > 1)
+            switched = gridGeometry.gridView().comm().max(switched);
 
         return switched;
     }
@@ -146,12 +146,12 @@ public:
              std::enable_if_t<GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
     void updateSwitchedVolVars(const Problem& problem,
                                const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
-                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               const typename GridVariables::GridGeometry& gridGeometry,
                                GridVariables& gridVariables,
                                const SolutionVector& sol)
     {
         // make sure FVElementGeometry is bound to the element
-        auto fvGeometry = localView(fvGridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bindElement(element);
 
         // update the secondary variables if global caching is enabled
@@ -160,7 +160,7 @@ public:
             const auto dofIdxGlobal = scv.dofIndex();
             if (asImp_().wasSwitched(dofIdxGlobal))
             {
-                const auto elemSol = elementSolution(element, sol, fvGridGeometry);
+                const auto elemSol = elementSolution(element, sol, gridGeometry);
                 auto& volVars = gridVariables.curGridVolVars().volVars(scv);
                 volVars.update(elemSol, problem, element, scv);
             }
@@ -178,17 +178,17 @@ public:
                                GridVariables::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
     void updateSwitchedFluxVarsCache(const Problem& problem,
                                      const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
-                                     const typename GridVariables::GridGeometry& fvGridGeometry,
+                                     const typename GridVariables::GridGeometry& gridGeometry,
                                      GridVariables& gridVariables,
                                      const SolutionVector& sol)
     {
         // update the flux variables if global caching is enabled
-        const auto dofIdxGlobal = fvGridGeometry.dofMapper().index(element);
+        const auto dofIdxGlobal = gridGeometry.dofMapper().index(element);
 
         if (asImp_().wasSwitched(dofIdxGlobal))
         {
             // make sure FVElementGeometry and the volume variables are bound
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bind(element);
             auto curElemVolVars = localView(gridVariables.curGridVolVars());
             curElemVolVars.bind(element, fvGeometry, sol);
@@ -204,16 +204,16 @@ public:
     template<class Problem, class GridVariables, class SolutionVector,
              std::enable_if_t<(GridVariables::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
     void updateBoundary(const Problem& problem,
-                        const typename GridVariables::GridGeometry& fvGridGeometry,
+                        const typename GridVariables::GridGeometry& gridGeometry,
                         GridVariables& gridVariables,
                         SolutionVector& sol)
     {
         std::vector<bool> stateChanged(sol.size(), false);
         std::size_t countChanged = 0;
 
-        for (const auto& element : elements(fvGridGeometry.gridView()))
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             // skip if the element is not at a boundary
@@ -227,7 +227,7 @@ public:
             {
                 // this implies that state is set equal for all scvs associated with the dof
                 const auto dofIdx = scv.dofIndex();
-                if (!fvGridGeometry.dofOnBoundary(dofIdx) || stateChanged[dofIdx])
+                if (!gridGeometry.dofOnBoundary(dofIdx) || stateChanged[dofIdx])
                     continue;
 
                 const auto bcTypes = problem.boundaryTypes(element, scv);
@@ -264,7 +264,7 @@ public:
             // update the volVars if caching is enabled
             if (GridVariables::GridVolumeVariables::cachingEnabled && countChanged > 0)
             {
-                const auto curElemSol = elementSolution(element, sol, fvGridGeometry);
+                const auto curElemSol = elementSolution(element, sol, gridGeometry);
                 for (const auto& scv : scvs(fvGeometry))
                 {
                     if (stateChanged[scv.dofIndex()])
@@ -278,7 +278,7 @@ public:
 
         if (verbosity_ > 0 && countChanged > 0)
             std::cout << "Changed primary variable states and solution values at boundary to Dirichlet states and values at " << countChanged << " dof locations on processor "
-                      << fvGridGeometry.gridView().comm().rank() << "." << std::endl;
+                      << gridGeometry.gridView().comm().rank() << "." << std::endl;
     }
 
     //! Do nothing when volume variables are not cached globally.
@@ -286,7 +286,7 @@ public:
              std::enable_if_t<!GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
     void updateSwitchedVolVars(const Problem& problem,
                                const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
-                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               const typename GridVariables::GridGeometry& gridGeometry,
                                GridVariables& gridVariables,
                                const SolutionVector &uCurrentIter) const {}
 
@@ -296,7 +296,7 @@ public:
                                GridVariables::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
     void updateSwitchedFluxVarsCache(const Problem& problem,
                                const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
-                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               const typename GridVariables::GridGeometry& gridGeometry,
                                GridVariables& gridVariables,
                                const SolutionVector& sol) const {}
 
@@ -304,7 +304,7 @@ public:
     template<class Problem, class GridVariables, class SolutionVector,
              std::enable_if_t<(GridVariables::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
     void updateBoundary(const Problem& problem,
-                        const typename GridVariables::GridGeometry& fvGridGeometry,
+                        const typename GridVariables::GridGeometry& gridGeometry,
                         GridVariables& gridVariables,
                         SolutionVector& sol) const {}
 

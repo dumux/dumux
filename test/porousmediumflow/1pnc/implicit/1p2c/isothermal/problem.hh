@@ -167,8 +167,8 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    OnePTwoCTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), useNitscheTypeBc_(getParam<bool>("Problem.UseNitscheTypeBc", false))
+    OnePTwoCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), useNitscheTypeBc_(getParam<bool>("Problem.UseNitscheTypeBc", false))
     {
         //initialize fluid system
         FluidSystem::init();

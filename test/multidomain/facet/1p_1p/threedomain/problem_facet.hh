@@ -108,11 +108,11 @@ class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    OnePFacetProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    OnePFacetProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                      std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                      std::shared_ptr<CouplingManager> couplingManagerPtr,
                      const std::string& paramGroup = "Facet")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     , aperture_(getParam<Scalar>("Extrusion.Aperture"))
     {

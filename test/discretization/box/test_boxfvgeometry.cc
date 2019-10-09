@@ -72,15 +72,15 @@ int main (int argc, char *argv[]) try
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
     auto leafGridView = grid->leafGridView();
 
-    GridGeometry fvGridGeometry(leafGridView);
-    fvGridGeometry.update();
+    GridGeometry gridGeometry(leafGridView);
+    gridGeometry.update();
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
-        auto eIdx = fvGridGeometry.elementMapper().index(element);
+        auto eIdx = gridGeometry.elementMapper().index(element);
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = localView(fvGridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);

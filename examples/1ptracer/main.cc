@@ -88,12 +88,12 @@ int main(int argc, char** argv) try
     // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
     // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
     using GridGeometry = GetPropType<OnePTypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // In the problem, we define the boundary and initial conditions.
     using OnePProblem = GetPropType<OnePTypeTag, Properties::Problem>;
-    auto problemOneP = std::make_shared<OnePProblem>(fvGridGeometry);
+    auto problemOneP = std::make_shared<OnePProblem>(gridGeometry);
 
     // The jacobian matrix (`A`), the solution vector (`p`) and the residual (`r`) are parts of the linear system.
     using JacobianMatrix = GetPropType<OnePTypeTag, Properties::JacobianMatrix>;
@@ -105,13 +105,13 @@ int main(int argc, char** argv) try
 
     // The grid variables store variables on scv and scvf (volume and flux variables).
     using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
-    auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, fvGridGeometry);
+    auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, gridGeometry);
     onePGridVariables->init(p);
 
     // #### Assembling the linear system
     // We created and inizialize the assembler.
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
-    auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, fvGridGeometry, onePGridVariables);
+    auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, gridGeometry, onePGridVariables);
     assemblerOneP->setLinearSystem(A, r);
 
     // We assemble the local jacobian and the residual and stop the time needed, which is displayed in the terminal output, using the `assemblyTimer`. Further, we start the timer to evaluate the total time of the assembly, solving and updating.
@@ -159,7 +159,7 @@ int main(int argc, char** argv) try
     // We use the results of the 1p problem to calculate the volume fluxes in the model domain.
 
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>;
-    std::vector<Scalar> volumeFlux(fvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> volumeFlux(gridGeometry->numScvf(), 0.0);
 
     using FluxVariables =  GetPropType<OnePTypeTag, Properties::FluxVariables>;
     auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
@@ -167,7 +167,7 @@ int main(int argc, char** argv) try
     // We iterate over all elements.
     for (const auto& element : elements(leafGridView))
     {
-        auto fvGeometry = localView(*fvGridGeometry);
+        auto fvGeometry = localView(*gridGeometry);
         fvGeometry.bind(element);
 
         auto elemVolVars = localView(onePGridVariables->curGridVolVars());
@@ -206,7 +206,7 @@ int main(int argc, char** argv) try
     // #### Set-up
     // Similar to the 1p problem, we first create and initialize the problem.
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
-    auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
+    auto tracerProblem = std::make_shared<TracerProblem>(gridGeometry);
 
     // We use the volume fluxes calculated in the previous section as input for the tracer model.
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux);
@@ -218,7 +218,7 @@ int main(int argc, char** argv) try
 
     // We create and initialize the grid variables.
     using GridVariables = GetPropType<TracerTypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(tracerProblem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(tracerProblem, gridGeometry);
     gridVariables->init(x);
 
     // We read in some time loop parameters from the input file. The parameter `tEnd` defines the duration of the simulation, dt the initial time step size and `maxDt` the maximal time step size.
@@ -232,7 +232,7 @@ int main(int argc, char** argv) try
 
     // We create and inizialize the assembler with time loop for the instationary problem.
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
-    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop);
     assembler->setLinearSystem(A, r);
 
     // We initialize the vtk output module and add a velocity output.

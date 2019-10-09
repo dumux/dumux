@@ -48,8 +48,8 @@ public:
     //! Export the type used for permeabilities
     using PermeabilityType = Scalar;
 
-    OnePSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry)
+    OnePSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry)
     {
         permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");
     }

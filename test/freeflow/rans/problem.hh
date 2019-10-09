@@ -133,8 +133,8 @@ class PipeLauferProblem : public RANSProblem<TypeTag>
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
 
 public:
-    PipeLauferProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    PipeLauferProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);

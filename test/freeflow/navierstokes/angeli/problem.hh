@@ -104,8 +104,8 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    AngeliTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    AngeliTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
     }

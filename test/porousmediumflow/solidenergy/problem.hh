@@ -59,8 +59,8 @@ class SolidEnergyProblem : public PorousMediumFlowProblem<TypeTag>
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
 
 public:
-    SolidEnergyProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    SolidEnergyProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
     {
         name_ = getParam<std::string>("Problem.Name");
         temperatureHigh_ = getParam<Scalar>("Problem.TemperatureHigh");

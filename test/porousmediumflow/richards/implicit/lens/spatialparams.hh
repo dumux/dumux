@@ -57,8 +57,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RichardsLensSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RichardsLensSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
 
         lensLowerLeft_ = {1.0, 2.0};

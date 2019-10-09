@@ -59,9 +59,9 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TwoPSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    TwoPSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<CouplingManager> couplingManagerPtr)
-    : ParentType(fvGridGeometry)
+    : ParentType(gridGeometry)
     , couplingManagerPtr_(couplingManagerPtr)
     , initPermeability_(getParam<Scalar>("SpatialParams.Permeability"))
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))

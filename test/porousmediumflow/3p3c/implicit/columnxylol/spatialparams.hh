@@ -57,8 +57,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    ColumnSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    ColumnSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // intrinsic permeabilities
         fineK_ = 1.4e-11;

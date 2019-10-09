@@ -182,9 +182,9 @@ public:
         clear_();
 
         const auto& problem = gridVolVars().problem();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& connectivityMapI = fvGridGeometry.connectivityMap()[globalI];
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto globalI = gridGeometry.elementMapper().index(element);
+        const auto& connectivityMapI = gridGeometry.connectivityMap()[globalI];
         const auto numDofs = connectivityMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
@@ -194,7 +194,7 @@ public:
 
         // update the volume variables of the element at hand
         auto&& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(elementSolution(element, sol, fvGridGeometry),
+        volumeVariables_[localIdx].update(elementSolution(element, sol, gridGeometry),
                                           problem,
                                           element,
                                           scvI);
@@ -204,9 +204,9 @@ public:
         // Update the volume variables of the neighboring elements
         for (const auto& dataJ : connectivityMapI)
         {
-            const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
+            const auto& elementJ = gridGeometry.element(dataJ.globalJ);
             auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(elementSolution(elementJ, sol, fvGridGeometry),
+            volumeVariables_[localIdx].update(elementSolution(elementJ, sol, gridGeometry),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -250,10 +250,10 @@ public:
         //     volVarIndices_.resize(volVarIndices_.size() + additionalDofDependencies.size());
         //     for (auto globalJ : additionalDofDependencies)
         //     {
-        //         const auto& elementJ = fvGridGeometry.element(globalJ);
+        //         const auto& elementJ = gridGeometry.element(globalJ);
         //         auto&& scvJ = fvGeometry.scv(globalJ);
 
-        //         volumeVariables_[localIdx].update(elementSolution(elementJ, sol, fvGridGeometry),
+        //         volumeVariables_[localIdx].update(elementSolution(elementJ, sol, gridGeometry),
         //                                           problem,
         //                                           elementJ,
         //                                           scvJ);

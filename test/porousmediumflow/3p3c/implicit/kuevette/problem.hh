@@ -155,8 +155,8 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    KuevetteProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    KuevetteProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         FluidSystem::init();
         name_ = getParam<std::string>("Problem.Name");

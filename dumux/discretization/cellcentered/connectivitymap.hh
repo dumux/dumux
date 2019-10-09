@@ -73,22 +73,22 @@ public:
     /*!
      * \brief Initialize the ConnectivityMap object.
      *
-     * \param fvGridGeometry The grid's finite volume geometry.
+     * \param gridGeometry The grid's finite volume geometry.
      */
-    void update(const GridGeometry& fvGridGeometry)
+    void update(const GridGeometry& gridGeometry)
     {
         map_.clear();
-        map_.resize(fvGridGeometry.gridView().size(0));
+        map_.resize(gridGeometry.gridView().size(0));
 
         // container to store for each element J the elements I which have J in their flux stencil
         Dune::ReservedVector<std::pair<GridIndexType, DataJ>, maxElemStencilSize> dataJForI;
 
-        for (const auto& element : elements(fvGridGeometry.gridView()))
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
             // We are looking for the elements I, for which this element J is in the flux stencil
-            const auto globalJ = fvGridGeometry.elementMapper().index(element);
+            const auto globalJ = gridGeometry.elementMapper().index(element);
 
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             // obtain the data of J in elements I

@@ -152,8 +152,8 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTwoCNIConductionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), temperatureHigh_(300.0)
+    OnePTwoCNIConductionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), temperatureHigh_(300.0)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -164,7 +164,7 @@ public:
         else
             std::cout<<"problem uses mass fractions"<<std::endl;
 
-        temperatureExact_.resize(fvGridGeometry->numDofs(), 290.0);
+        temperatureExact_.resize(gridGeometry->numDofs(), 290.0);
     }
 
     //! Get the analytical temperature

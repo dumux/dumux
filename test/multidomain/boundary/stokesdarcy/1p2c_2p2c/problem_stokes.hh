@@ -120,8 +120,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     static constexpr bool useMoles = GetPropType<TypeTag, Properties::ModelTraits>::useMoles();
 
 public:
-    StokesSubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
+    StokesSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
     {
         refVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RefVelocity");
         refPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RefPressure");

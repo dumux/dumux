@@ -47,9 +47,9 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    MatrixFractureSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    MatrixFractureSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                                 const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");
         porosity_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Porosity", 1.0);

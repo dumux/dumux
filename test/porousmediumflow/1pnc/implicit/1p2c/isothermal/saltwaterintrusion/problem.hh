@@ -106,8 +106,8 @@ class SaltWaterIntrusionTestProblem : public PorousMediumFlowProblem<TypeTag>
     static_assert(!getPropValue<TypeTag, Properties::UseMoles>(), "This test uses mass fractions!");
 
 public:
-    SaltWaterIntrusionTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    SaltWaterIntrusionTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();

@@ -144,8 +144,8 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    TwoPTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {}
 
     /*!

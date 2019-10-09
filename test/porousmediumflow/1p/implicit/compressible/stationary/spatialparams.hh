@@ -52,8 +52,8 @@ class OnePTestSpatialParams
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");

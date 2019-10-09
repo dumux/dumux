@@ -51,8 +51,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePNISpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    OnePNISpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     /*!
      * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.

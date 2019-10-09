@@ -34,7 +34,7 @@ namespace Dumux {
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Base class for cell center of face specific auxiliary FvGridGeometry classes.
- *        Provides a common interface and a pointer to the actual fvGridGeometry.
+ *        Provides a common interface and a pointer to the actual gridGeometry.
  */
 template<class ActualFVGridGeometry>
 class GridGeometryView
@@ -97,7 +97,7 @@ public:
     { return fvGridGeometry_->elementMapper(); }
 
     /*!
-     * \brief Returns the actual fvGridGeometry we are a restriction of
+     * \brief Returns the actual gridGeometry we are a restriction of
      */
     const ActualFVGridGeometry& actualfvGridGeometry() const
     { return *fvGridGeometry_; }

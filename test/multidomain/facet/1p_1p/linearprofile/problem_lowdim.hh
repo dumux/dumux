@@ -109,11 +109,11 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
 public:
-    OnePLowDimProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    OnePLowDimProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                       std::shared_ptr<CouplingManager> couplingManager,
                       const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
     , aperture_(getParam<Scalar>("Problem.FractureAperture"))
     {

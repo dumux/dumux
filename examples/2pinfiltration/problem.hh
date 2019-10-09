@@ -157,8 +157,8 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     // This is the constructor of our problem class:
-    PointSourceProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-  : ParentType(fvGridGeometry)
+    PointSourceProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+  : ParentType(gridGeometry)
   {
     // We read in the values for the initial condition of our simulation:
     initialValues_ = readFileToContainer<std::vector<PrimaryVariables>>("initialsolutioncc.txt");

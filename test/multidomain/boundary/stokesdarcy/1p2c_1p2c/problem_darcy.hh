@@ -110,9 +110,9 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 
 public:
-    DarcySubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    DarcySubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
+    : ParentType(gridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 

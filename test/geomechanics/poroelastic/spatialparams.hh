@@ -52,8 +52,8 @@ public:
     //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         lameParams_.setLambda(2);
         lameParams_.setMu(2);

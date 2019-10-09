@@ -109,8 +109,8 @@ int main (int argc, char *argv[]) try
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
 
     auto leafGridView = grid->leafGridView();
-    GridGeometry fvGridGeometry(leafGridView);
-    fvGridGeometry.update();
+    GridGeometry gridGeometry(leafGridView);
+    gridGeometry.update();
 
     std::cout << "Abbreviatons:\n"
               << "pos - postition of face center\n"
@@ -125,11 +125,11 @@ int main (int argc, char *argv[]) try
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
-        auto eIdx = fvGridGeometry.elementMapper().index(element);
+        auto eIdx = gridGeometry.elementMapper().index(element);
         if(eIdx == 12 || eIdx == 0)
         {
             std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bind(element);
 
             auto range = scvs(fvGeometry);
@@ -162,11 +162,11 @@ int main (int argc, char *argv[]) try
                 std::cout <<  std::fixed << std::left << std::setprecision(2);
 
                 std::cout << " On Axis Dof Index: \n";
-                if(fvGridGeometry.upwindStencilOrder() > 1)
+                if(gridGeometry.upwindStencilOrder() > 1)
                 {std::cout << " | Forward dofIdx : " << std::setw(3) << scvf.axisData().inAxisForwardDofs[0] << "\n";}
                 std::cout << " | Self dofIdx : " << std::setw(3) << scvf.dofIndex() << "\n";
                 std::cout << " | Opposite dofIdx : " << std::setw(3) << scvf.dofIndexOpposingFace() << "\n";
-                if(fvGridGeometry.upwindStencilOrder() > 1)
+                if(gridGeometry.upwindStencilOrder() > 1)
                 {std::cout << " | Backward dofIdx : " << std::setw(3) << scvf.axisData().inAxisBackwardDofs[0] << "\n";}
 
                 std::cout << " Normal Dof Index: \n";
@@ -179,22 +179,22 @@ int main (int argc, char *argv[]) try
                 std::cout << " Parallel Dof Index: \n";
                 for(int i = 0; i < scvf.pairData().size(); i++)
                 {
-                    for(int j = 0; j < fvGridGeometry.upwindStencilOrder(); j++)
+                    for(int j = 0; j < gridGeometry.upwindStencilOrder(); j++)
                     {
                         std::cout << " | Parallel Dof "<< j << " on axis " << i << ": "<<  std::setw(3) << scvf.pairData(i).parallelDofs[j] << "\n";
                     }
                 }
 
                 std::cout << " Distances: \n";
-                if(fvGridGeometry.upwindStencilOrder() > 1)
+                if(gridGeometry.upwindStencilOrder() > 1)
                 {std::cout << " | Opposite To Backwards Face Dist : " << std::setw(3) << scvf.axisData().inAxisBackwardDistances[0] << "\n";}
                 std::cout << " | self To Opposite Dist : " << std::setw(3) << scvf.selfToOppositeDistance() << "\n";
-                if(fvGridGeometry.upwindStencilOrder() > 1)
+                if(gridGeometry.upwindStencilOrder() > 1)
                 {std::cout << " | self To Forwards Face Dist : " << std::setw(3) << scvf.axisData().inAxisForwardDistances[0] << "\n";}
 
                 for(int i = 0; i < scvf.pairData().size(); i++)
                 {
-                    for(int j = 0; j < fvGridGeometry.upwindStencilOrder(); j++)
+                    for(int j = 0; j < gridGeometry.upwindStencilOrder(); j++)
                     {
                         std::cout << " | Parallel Cell Widths "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.pairData(i).parallelCellWidths[j] << "\n";
                     }
@@ -202,7 +202,7 @@ int main (int argc, char *argv[]) try
 
                 for(int i = 0; i < scvf.pairData().size(); i++)
                 {
-                    for(int j = 0; j < fvGridGeometry.upwindStencilOrder(); j++)
+                    for(int j = 0; j < gridGeometry.upwindStencilOrder(); j++)
                     {
                         std::cout << " | Cell Centered Parallel Distance "<< j << " on axis " << i << ": "<< std::setw(3) << scvf.parallelDofsDistance(i,j) << "\n";
                     }

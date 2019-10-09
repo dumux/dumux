@@ -125,8 +125,8 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using Geometry = typename GridView::template Codim<0>::Entity::Geometry;
 
 public:
-    RichardsAnalyticalProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RichardsAnalyticalProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         pnRef_ = 1e5; // air pressure
         name_ = getParam<std::string>("Problem.Name");

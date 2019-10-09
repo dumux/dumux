@@ -59,7 +59,7 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
         // residual saturations
         matrixMaterialParams_.setSwr(0.18);

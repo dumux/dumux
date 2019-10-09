@@ -83,8 +83,8 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::kepsilon> : public RANSProblemBa
 public:
 
     //! The constructor sets the gravity, if desired by the user.
-    RANSProblemImpl(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
     {
         yPlusThreshold_ = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30);
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);

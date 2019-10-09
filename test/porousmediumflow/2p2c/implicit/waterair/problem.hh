@@ -158,8 +158,8 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
-    WaterAirProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    WaterAirProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         maxDepth_ = 1000.0; // [m]
 

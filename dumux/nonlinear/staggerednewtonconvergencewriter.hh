@@ -64,17 +64,17 @@ class StaggeredNewtonConvergenceWriter : public ConvergenceWriterInterface<Solut
 public:
     /*!
      * \brief Constructor
-     * \param fvGridGeometry The finite volume geometry on the grid view
+     * \param gridGeometry The finite volume geometry on the grid view
      * \param name Base name of the vtk output
      */
-    StaggeredNewtonConvergenceWriter(const GridGeometry& fvGridGeometry,
+    StaggeredNewtonConvergenceWriter(const GridGeometry& gridGeometry,
                                      const std::string& name = "newton_convergence")
-    : fvGridGeometry_(fvGridGeometry)
-    , ccWriter_(fvGridGeometry.gridView(), name, "", "")
+    : fvGridGeometry_(gridGeometry)
+    , ccWriter_(gridGeometry.gridView(), name, "", "")
     , faceWriter_(std::make_shared<PointCloudVtkWriter<Scalar, GlobalPosition>>(coordinates_))
     , faceSequenceWriter_(faceWriter_, name + "-face", "","",
-                          fvGridGeometry.gridView().comm().rank(),
-                          fvGridGeometry.gridView().comm().size())
+                          gridGeometry.gridView().comm().rank(),
+                          gridGeometry.gridView().comm().size())
     {
         resize();
 

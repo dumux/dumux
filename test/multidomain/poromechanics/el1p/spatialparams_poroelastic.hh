@@ -52,8 +52,8 @@ public:
     //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {
         // Young's modulus [Pa]

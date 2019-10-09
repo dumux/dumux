@@ -67,7 +67,7 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
 
-    CombustionSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    CombustionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
         // this is the parameter value from file part
         porosity_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");

@@ -64,8 +64,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RichardsAnalyticalSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    RichardsAnalyticalSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         K_ = 5e-12;
         materialParams_.setSwr(0.0);

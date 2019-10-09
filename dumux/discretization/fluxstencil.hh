@@ -113,13 +113,13 @@ public:
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)
     {
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
 
         // return the scv (element) indices in the interaction region
-        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-            return fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).gridScvIndices();
+        if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            return gridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).gridScvIndices();
         else
-            return fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).gridScvIndices();
+            return gridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).gridScvIndices();
     }
 };
 

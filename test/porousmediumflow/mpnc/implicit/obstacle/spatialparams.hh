@@ -60,7 +60,7 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    ObstacleSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    ObstacleSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;

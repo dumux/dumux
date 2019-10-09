@@ -52,8 +52,8 @@ class MaxwellStefanTestSpatialParams
 
 public:
 
-    MaxwellStefanTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    MaxwellStefanTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     /*!
      * \brief Defines the porosity \f$\mathrm{[-]}\f$.

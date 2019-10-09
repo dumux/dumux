@@ -127,8 +127,8 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     // This is the constructor of our problem class:
-    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     // First, we define the type of boundary conditions depending on location. Two types of boundary  conditions
     // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the

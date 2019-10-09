@@ -104,11 +104,11 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
 public:
-    OnePBulkProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    OnePBulkProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                     std::shared_ptr<CouplingManager> couplingManagerPtr,
                     const std::string& paramGroup = "Bulk")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     , lowDimPermeability_(getParam<Scalar>("LowDim.SpatialParams.Permeability"))
     , aperture_(getParam<Scalar>("Problem.FractureAperture"))

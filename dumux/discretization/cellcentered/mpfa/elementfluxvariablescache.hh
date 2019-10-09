@@ -162,8 +162,8 @@ public:
         std::size_t numSecondaryIv; numSecondaryIv = 0;
         std::size_t numCaches;      numCaches = 0;
 
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
 
         // lambda to check if a scvf was handled already
         auto scvfHandled = [&] (auto idx)
@@ -191,21 +191,21 @@ public:
 
         // search for ivs at boundary vertices
         for (const auto& scvf : scvfs(fvGeometry))
-            fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()) ?
+            gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()) ?
                     handleScvf(scvf, gridIvIndexSets.secondaryIndexSet(scvf), true) :
                     handleScvf(scvf, gridIvIndexSets.primaryIndexSet(scvf),  false) ;
 
         // skip the rest if there are no boundary caches to be created
         if (numCaches > 0)
         {
-            const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
+            const auto& assemblyMapI = gridGeometry.connectivityMap()[gridGeometry.elementMapper().index(element)];
 
             for (const auto& dataJ : assemblyMapI)
             {
                 for (const auto& scvfJIdx : dataJ.scvfsJ)
                 {
                     const auto& scvfJ = fvGeometry.scvf(scvfJIdx);
-                    if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvfJ.vertexIndex()))
+                    if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvfJ.vertexIndex()))
                         handleScvf(scvfJ, gridIvIndexSets.secondaryIndexSet(scvfJ), true);
                     else
                         handleScvf(scvfJ, gridIvIndexSets.primaryIndexSet(scvfJ), false);
@@ -320,9 +320,9 @@ private:
     template<class SubControlVolumeFace>
     bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf) const
     {
-        const auto& fvGridGeometry = gridFluxVarsCachePtr_->problem().gridGeometry();
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
-        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+        const auto& gridGeometry = gridFluxVarsCachePtr_->problem().gridGeometry();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
+        if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
             return gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
         else
             return gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
@@ -397,10 +397,10 @@ public:
 
         // some references for convenience
         const auto& problem = gridFluxVarsCache().problem();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
 
         // the assembly map of the given element
-        const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
+        const auto& assemblyMapI = gridGeometry.connectivityMap()[gridGeometry.elementMapper().index(element)];
 
         // reserve memory for scvf index container
         unsigned int numNeighborScvfs = 0;
@@ -445,7 +445,7 @@ public:
 
         for (const auto& dataJ : assemblyMapI)
         {
-            const auto elementJ = fvGridGeometry.element(dataJ.globalJ);
+            const auto elementJ = gridGeometry.element(dataJ.globalJ);
             for (const auto scvfIdx : dataJ.scvfsJ)
             {
                 auto& scvfCache = fluxVarsCache_[i++];
@@ -485,8 +485,8 @@ public:
         if (FluxVariablesCacheFiller::isSolDependent)
         {
             const auto& problem = gridFluxVarsCache().problem();
-            const auto& fvGridGeometry = fvGeometry.gridGeometry();
-            const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
+            const auto& gridGeometry = fvGeometry.gridGeometry();
+            const auto& assemblyMapI = gridGeometry.connectivityMap()[gridGeometry.elementMapper().index(element)];
 
             // helper class to fill flux variables caches
             FluxVariablesCacheFiller filler(problem);
@@ -506,7 +506,7 @@ public:
 
             for (const auto& dataJ : assemblyMapI)
             {
-                const auto elementJ = fvGridGeometry.element(dataJ.globalJ);
+                const auto elementJ = gridGeometry.element(dataJ.globalJ);
                 for (const auto scvfIdx : dataJ.scvfsJ)
                 {
                     auto& scvfCache = fluxVarsCache_[i++];

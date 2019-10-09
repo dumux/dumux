@@ -105,10 +105,10 @@ class TwoPSubProblem : public PorousMediumFlowProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
-    TwoPSubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    TwoPSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                    std::shared_ptr<GetPropType<TypeTag, Properties::SpatialParams>> spatialParams,
                    const std::string& paramGroup = "TwoP")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     {
         FluidSystem::init();
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");

@@ -146,8 +146,8 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
-    OnePNIConvectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup)
-    : ParentType(fvGridGeometry, paramGroup)
+    OnePNIConvectionProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup)
+    : ParentType(gridGeometry, paramGroup)
     {
         //initialize fluid system
         FluidSystem::init();

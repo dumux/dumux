@@ -189,7 +189,7 @@ void assignValues(SolutionVector& sol, Values values)
 }
 
 template<class TypeTag, class GridGeometry, std::size_t numValues>
-void testWriteAndReadVtk(std::shared_ptr<GridGeometry> fvGridGeometry,
+void testWriteAndReadVtk(std::shared_ptr<GridGeometry> gridGeometry,
                          const std::array<Dumux::GetPropType<TypeTag, Dumux::Properties::Scalar>, numValues>& values,
                          const std::string& fileName,
                          bool verbose = false,
@@ -201,14 +201,14 @@ void testWriteAndReadVtk(std::shared_ptr<GridGeometry> fvGridGeometry,
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector writeFrom;
 
-    writeFrom[GridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
-    writeFrom[GridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
+    writeFrom[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
+    writeFrom[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
 
     SolutionVector readTo = writeFrom;
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     assignValues(writeFrom[GridGeometry::cellCenterIdx()], values);
     assignValues(writeFrom[GridGeometry::faceIdx()], std::array<GetPropType<TypeTag, Properties::Scalar>, 1>{1.0});
@@ -218,7 +218,7 @@ void testWriteAndReadVtk(std::shared_ptr<GridGeometry> fvGridGeometry,
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(writeFrom);
 
     // initialize the vtk output module
@@ -237,7 +237,7 @@ void testWriteAndReadVtk(std::shared_ptr<GridGeometry> fvGridGeometry,
     // cc dofs
     loadSolution(readTo[GridGeometry::cellCenterIdx()], fileName + "-00000.vtu",
                  createCellCenterPVNameFunction<IOFields, CellCenterPrimaryVariables, ModelTraits, FluidSystem>(),
-                 *fvGridGeometry);
+                 *gridGeometry);
 
     if (verbose)
     {
@@ -259,7 +259,7 @@ void testWriteAndReadVtk(std::shared_ptr<GridGeometry> fvGridGeometry,
     // face dofs
     loadSolution(readTo[GridGeometry::faceIdx()], fileName + "-face-00000.vtp",
                  createFacePVNameFunction<IOFields, FacePrimaryVariables, ModelTraits, FluidSystem>(),
-                 *fvGridGeometry);
+                 *gridGeometry);
 
      if (verbose)
      {
@@ -324,41 +324,41 @@ int main(int argc, char** argv) try
 
     const auto grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cells);
     const auto gridView = grid->leafGridView();
-    auto fvGridGeometry = std::make_shared<GridGeometry>(gridView);
-    fvGridGeometry->update();
+    auto gridGeometry = std::make_shared<GridGeometry>(gridView);
+    gridGeometry->update();
 
     using FluidSystem = GetPropType<CommonTypeTag, Properties::FluidSystem>;
     FluidSystem::init();
 
-    testWriteAndReadVtk<Properties::TTag::NavierStokesPVNameTypeTag>(fvGridGeometry, std::array<Scalar, 1>{1e5}, "navierstokes");
-    testWriteAndReadVtk<Properties::TTag::NavierStokesNIPVNameTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 300.0}, "navierstokesni");
-    testWriteAndReadVtk<Properties::TTag::NavierStokesNCPVNameTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1e-3}, "navierstokesnc");
-    testWriteAndReadVtk<Properties::TTag::NavierStokesNCNIPVNameTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 300.0}, "navierstokesncni");
+    testWriteAndReadVtk<Properties::TTag::NavierStokesPVNameTypeTag>(gridGeometry, std::array<Scalar, 1>{1e5}, "navierstokes");
+    testWriteAndReadVtk<Properties::TTag::NavierStokesNIPVNameTypeTag>(gridGeometry, std::array<Scalar, 2>{1e5, 300.0}, "navierstokesni");
+    testWriteAndReadVtk<Properties::TTag::NavierStokesNCPVNameTypeTag>(gridGeometry, std::array<Scalar, 2>{1e5, 1e-3}, "navierstokesnc");
+    testWriteAndReadVtk<Properties::TTag::NavierStokesNCNIPVNameTypeTag>(gridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 300.0}, "navierstokesncni");
 
-    testWriteAndReadVtk<Properties::TTag::ZeroEqNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 1>{1e5}, "zeroeq");
-    testWriteAndReadVtk<Properties::TTag::ZeroEqNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 300.0}, "zeroeqni");
-    testWriteAndReadVtk<Properties::TTag::ZeroEqNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1e-3}, "zeroeqnc");
-    testWriteAndReadVtk<Properties::TTag::ZeroEqNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 300.0}, "zeroeqncni");
+    testWriteAndReadVtk<Properties::TTag::ZeroEqNameTestTypeTag>(gridGeometry, std::array<Scalar, 1>{1e5}, "zeroeq");
+    testWriteAndReadVtk<Properties::TTag::ZeroEqNINameTestTypeTag>(gridGeometry, std::array<Scalar, 2>{1e5, 300.0}, "zeroeqni");
+    testWriteAndReadVtk<Properties::TTag::ZeroEqNCNameTestTypeTag>(gridGeometry, std::array<Scalar, 2>{1e5, 1e-3}, "zeroeqnc");
+    testWriteAndReadVtk<Properties::TTag::ZeroEqNCNINameTestTypeTag>(gridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 300.0}, "zeroeqncni");
 
-    testWriteAndReadVtk<Properties::TTag::OneEqNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 2>{1e5, 1.0}, "oneeq");
-    testWriteAndReadVtk<Properties::TTag::OneEqNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.0, 300.0}, "oneeqni");
-    testWriteAndReadVtk<Properties::TTag::OneEqNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 1.0}, "oneeqnc");
-    testWriteAndReadVtk<Properties::TTag::OneEqNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.0, 300.0}, "oneeqncni");
+    testWriteAndReadVtk<Properties::TTag::OneEqNameTestTypeTag>(gridGeometry, std::array<Scalar, 2>{1e5, 1.0}, "oneeq");
+    testWriteAndReadVtk<Properties::TTag::OneEqNINameTestTypeTag>(gridGeometry, std::array<Scalar, 3>{1e5, 1.0, 300.0}, "oneeqni");
+    testWriteAndReadVtk<Properties::TTag::OneEqNCNameTestTypeTag>(gridGeometry, std::array<Scalar, 3>{1e5, 1e-3, 1.0}, "oneeqnc");
+    testWriteAndReadVtk<Properties::TTag::OneEqNCNINameTestTypeTag>(gridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.0, 300.0}, "oneeqncni");
 
-    testWriteAndReadVtk<Properties::TTag::KEpsilonNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "kepsilon");
-    testWriteAndReadVtk<Properties::TTag::KEpsilonNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "kepsilonni");
-    testWriteAndReadVtk<Properties::TTag::KEpsilonNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "kepsilonnc");
-    testWriteAndReadVtk<Properties::TTag::KEpsilonNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "kepsilonncni");
+    testWriteAndReadVtk<Properties::TTag::KEpsilonNameTestTypeTag>(gridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "kepsilon");
+    testWriteAndReadVtk<Properties::TTag::KEpsilonNINameTestTypeTag>(gridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "kepsilonni");
+    testWriteAndReadVtk<Properties::TTag::KEpsilonNCNameTestTypeTag>(gridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "kepsilonnc");
+    testWriteAndReadVtk<Properties::TTag::KEpsilonNCNINameTestTypeTag>(gridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "kepsilonncni");
 
-    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "lowrekepsilon");
-    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "lowrekepsilonni");
-    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "lowrekepsilonnc");
-    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "lowrekepsilonncni");
+    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNameTestTypeTag>(gridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "lowrekepsilon");
+    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNINameTestTypeTag>(gridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "lowrekepsilonni");
+    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNCNameTestTypeTag>(gridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "lowrekepsilonnc");
+    testWriteAndReadVtk<Properties::TTag::LowReKEpsilonNCNINameTestTypeTag>(gridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "lowrekepsilonncni");
 
-    testWriteAndReadVtk<Properties::TTag::KOmegaNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "komega");
-    testWriteAndReadVtk<Properties::TTag::KOmegaNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "komegani");
-    testWriteAndReadVtk<Properties::TTag::KOmegaNCNameTestTypeTag>(fvGridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "komeganc");
-    testWriteAndReadVtk<Properties::TTag::KOmegaNCNINameTestTypeTag>(fvGridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "komegancni");
+    testWriteAndReadVtk<Properties::TTag::KOmegaNameTestTypeTag>(gridGeometry, std::array<Scalar, 3>{1e5, 1.1, 1.2}, "komega");
+    testWriteAndReadVtk<Properties::TTag::KOmegaNINameTestTypeTag>(gridGeometry, std::array<Scalar, 4>{1e5, 1.1, 1.2, 300.0}, "komegani");
+    testWriteAndReadVtk<Properties::TTag::KOmegaNCNameTestTypeTag>(gridGeometry, std::array<Scalar, 4>{1e5, 1e-3, 1.1, 1.2}, "komeganc");
+    testWriteAndReadVtk<Properties::TTag::KOmegaNCNINameTestTypeTag>(gridGeometry, std::array<Scalar, 5>{1e5, 1e-3, 1.1, 1.2, 300.0}, "komegancni");
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

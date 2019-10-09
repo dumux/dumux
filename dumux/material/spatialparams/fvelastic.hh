@@ -66,8 +66,8 @@ class FVSpatialParamsElastic
 
 public:
     //! The constructor
-    FVSpatialParamsElastic(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : fvGridGeometry_(fvGridGeometry)
+    FVSpatialParamsElastic(std::shared_ptr<const GridGeometry> gridGeometry)
+    : fvGridGeometry_(gridGeometry)
     , gravity_(0.0)
     {
         const bool enableGravity = getParam<bool>("Problem.EnableGravity");
@@ -159,7 +159,7 @@ public:
     }
 
     //! The finite volume grid geometry
-    [[deprecated("Use more general GridGeometry instead. GridGeometry will be removed after 3.1!")]]
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const GridGeometry& fvGridGeometry() const
     { return *fvGridGeometry_; }
 

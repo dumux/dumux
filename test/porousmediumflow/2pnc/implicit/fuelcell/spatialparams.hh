@@ -62,8 +62,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
-    FuelCellSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), K_(0)
+    FuelCellSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), K_(0)
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;

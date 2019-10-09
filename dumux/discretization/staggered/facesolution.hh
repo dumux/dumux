@@ -44,10 +44,10 @@ public:
 
     template<class SubControlVolumeFace, class GridGeometry>
     StaggeredFaceSolution(const SubControlVolumeFace& scvf, const FaceSolutionVector& sol,
-                          const GridGeometry& fvGridGeometry)
+                          const GridGeometry& gridGeometry)
     {
 
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
+        const auto& connectivityMap = gridGeometry.connectivityMap();
         const auto& stencil = connectivityMap(GridGeometry::faceIdx(), GridGeometry::faceIdx(), scvf.index());
 
         facePriVars_.reserve(stencil.size()+1);

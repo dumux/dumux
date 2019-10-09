@@ -136,8 +136,8 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
 
-    SagdProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), pOut_(4e6)
+    SagdProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), pOut_(4e6)
     {
         maxDepth_ = 400.0; // [m]
         FluidSystem::init();

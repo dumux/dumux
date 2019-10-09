@@ -190,8 +190,8 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
-    InjectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    InjectionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         nTemperature_       = getParam<int>("Problem.NTemperature");
         nPressure_          = getParam<int>("Problem.NPressure");

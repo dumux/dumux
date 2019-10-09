@@ -122,8 +122,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
 public:
-    StokesSubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), injectionState_(false), couplingManager_(couplingManager)
+    StokesSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, "Stokes"), eps_(1e-6), injectionState_(false), couplingManager_(couplingManager)
     {
         inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");

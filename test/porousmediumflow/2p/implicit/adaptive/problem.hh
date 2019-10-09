@@ -51,8 +51,8 @@ class TwoPTestProblemAdaptive : public TwoPTestProblem<TypeTag>
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
-    TwoPTestProblemAdaptive(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPTestProblemAdaptive(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         if(!isBox)
             initialValues_ = readFileToContainer<std::vector<PrimaryVariables>>("initialsolutioncc.txt");

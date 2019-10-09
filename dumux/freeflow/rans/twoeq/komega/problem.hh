@@ -62,8 +62,8 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::komega> : public RANSProblemBase
     using DimVector = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    RANSProblemImpl(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
     {
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
     }

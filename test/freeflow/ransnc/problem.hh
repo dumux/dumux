@@ -142,8 +142,8 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
     static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
 
 public:
-    FlatPlateNCTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    FlatPlateNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity", 0.1);
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);

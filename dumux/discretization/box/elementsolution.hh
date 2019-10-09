@@ -51,9 +51,9 @@ public:
     //! Constructor with element and solution and grid geometry
     template<class SolutionVector>
     BoxElementSolution(const Element& element, const SolutionVector& sol,
-                       const GridGeometry& fvGridGeometry)
+                       const GridGeometry& gridGeometry)
     {
-        update(element, sol, fvGridGeometry);
+        update(element, sol, gridGeometry);
     }
 
     //! Constructor with element and elemVolVars and fvGeometry
@@ -70,12 +70,12 @@ public:
     //! extract the element solution from the solution vector using a mapper
     template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
-                const GridGeometry& fvGridGeometry)
+                const GridGeometry& gridGeometry)
     {
         const auto numVert = element.subEntities(GridView::dimension);
         priVars_.resize(numVert);
         for (int vIdx = 0; vIdx < numVert; ++vIdx)
-            priVars_[vIdx] = sol[fvGridGeometry.vertexMapper().subIndex(element, vIdx, GridView::dimension)];
+            priVars_[vIdx] = sol[gridGeometry.vertexMapper().subIndex(element, vIdx, GridView::dimension)];
     }
 
     //! extract the element solution from the solution vector using a local fv geometry

@@ -60,8 +60,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
-    InjectionProblemSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    InjectionProblemSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         gasWetting_ = getParam<bool>("SpatialParams.GasWetting", false);
 

@@ -166,8 +166,8 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
-    ColumnProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    ColumnProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         FluidSystem::init();
         name_ = getParam<std::string>("Problem.Name");

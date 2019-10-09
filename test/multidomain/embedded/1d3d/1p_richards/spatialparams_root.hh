@@ -61,15 +61,15 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RootSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    RootSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<const GridData<Grid>> gridData)
-    : ParentType(fvGridGeometry), gridData_(gridData)
+    : ParentType(gridGeometry), gridData_(gridData)
     {
         porosity_ = getParam<Scalar>("Root.SpatialParams.Porosity", 0.4);
         constantKx_ = getParam<Scalar>("SpatialParams.Kx", 5.0968e-17);
         constantKr_ = getParam<Scalar>("SpatialParams.Kr", 2.04e-13);
 
-        const auto& gv = fvGridGeometry->gridView();
+        const auto& gv = gridGeometry->gridView();
         radii_.resize(gv.size(0));
         for (const auto& element : elements(gv))
         {

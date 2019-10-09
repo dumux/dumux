@@ -167,8 +167,8 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    OnePTwoCNIConvectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTwoCNIConvectionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -179,7 +179,7 @@ public:
         else
             std::cout<<"problem uses mass fractions"<<std::endl;
 
-        temperatureExact_.resize(fvGridGeometry->numDofs(), 290.0);
+        temperatureExact_.resize(gridGeometry->numDofs(), 290.0);
 
         darcyVelocity_ = getParam<Scalar>("Problem.DarcyVelocity");
 

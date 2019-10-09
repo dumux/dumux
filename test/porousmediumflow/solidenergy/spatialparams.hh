@@ -45,8 +45,8 @@ class SolidEnergySpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    SolidEnergySpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    SolidEnergySpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.

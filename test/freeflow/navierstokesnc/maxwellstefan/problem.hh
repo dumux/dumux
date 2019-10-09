@@ -226,8 +226,8 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
     };
 
 public:
-    MaxwellStefanNCTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    MaxwellStefanNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         plotOutput_ = getParam<bool>("Problem.PlotOutput", false);
     }

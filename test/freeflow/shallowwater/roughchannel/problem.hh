@@ -131,12 +131,12 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
-    RoughChannelProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RoughChannelProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
-        exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
-        exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
+        exactWaterDepth_.resize(gridGeometry->numDofs(), 0.0);
+        exactVelocityX_.resize(gridGeometry->numDofs(), 0.0);
         constManningN_ = getParam<Scalar>("Problem.ManningN");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         discharge_ = getParam<Scalar>("Problem.Discharge");

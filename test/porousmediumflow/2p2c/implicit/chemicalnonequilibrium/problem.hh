@@ -150,8 +150,8 @@ class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<Typ
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     enum { dofCodim = isBox ? dim : 0 };
 public:
-    TwoPTwoCChemicalNonequilibriumProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPTwoCChemicalNonequilibriumProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C
 

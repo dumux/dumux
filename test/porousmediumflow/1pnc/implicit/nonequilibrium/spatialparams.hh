@@ -56,8 +56,8 @@ public:
     using PermeabilityType = Scalar;
     using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
 
-    OnePNCNonequilibriumTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePNCNonequilibriumTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = 1e-11;
         porosity_ = 0.4;

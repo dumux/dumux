@@ -56,8 +56,8 @@ public:
 
     using PermeabilityType = Scalar;
 
-    TestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         materialParams_.setSwr(0.05);
         materialParams_.setSnr(0.0);

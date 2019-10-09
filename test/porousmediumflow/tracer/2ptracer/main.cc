@@ -93,16 +93,16 @@ int main(int argc, char** argv) try
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TwoPTypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // the problem (initial and boundary conditions)
     using TwoPProblem = GetPropType<TwoPTypeTag, Properties::Problem>;
-    auto twoPProblem = std::make_shared<TwoPProblem>(fvGridGeometry);
+    auto twoPProblem = std::make_shared<TwoPProblem>(gridGeometry);
 
     // the solution vector
     using TwoPSolutionVector = GetPropType<TwoPTypeTag, Properties::SolutionVector>;
-    TwoPSolutionVector p(fvGridGeometry->numDofs());
+    TwoPSolutionVector p(gridGeometry->numDofs());
     twoPProblem->applyInitialSolution(p);
     auto pOld = p;
 
@@ -112,7 +112,7 @@ int main(int argc, char** argv) try
 
     // the grid variables
     using TwoPGridVariables = GetPropType<TwoPTypeTag, Properties::GridVariables>;
-    auto twoPGridVariables = std::make_shared<TwoPGridVariables>(twoPProblem, fvGridGeometry);
+    auto twoPGridVariables = std::make_shared<TwoPGridVariables>(twoPProblem, gridGeometry);
     twoPGridVariables->init(p);
 
     // intialize the vtk output module
@@ -128,11 +128,11 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using TwoPAssembler = FVAssembler<TwoPTypeTag, DiffMethod::numeric>;
-    auto twoPAssembler = std::make_shared<TwoPAssembler>(twoPProblem, fvGridGeometry, twoPGridVariables, timeLoop, pOld);
+    auto twoPAssembler = std::make_shared<TwoPAssembler>(twoPProblem, gridGeometry, twoPGridVariables, timeLoop, pOld);
 
     // the linear solver
     using TwoPLinearSolver = AMGBackend<TwoPTypeTag>;
-    auto twoPLinearSolver = std::make_shared<TwoPLinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto twoPLinearSolver = std::make_shared<TwoPLinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<TwoPAssembler, TwoPLinearSolver>;
@@ -144,7 +144,7 @@ int main(int argc, char** argv) try
 
     //! the problem (initial and boundary conditions)
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
-    auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
+    auto tracerProblem = std::make_shared<TracerProblem>(gridGeometry);
 
     //! the solution vector
     using TracerSolutionVector = GetPropType<TracerTypeTag, Properties::SolutionVector>;
@@ -153,18 +153,18 @@ int main(int argc, char** argv) try
     auto xOld = x;
 
     //! initialize the flux, density and saturation vectors
-    std::vector<Scalar> volumeFlux_(fvGridGeometry->numScvf(), 0.0);
-    std::vector<Scalar> density_(fvGridGeometry->numScv(), 0.0);
-    std::vector<Scalar> saturation_(fvGridGeometry->numScv(), 0.0);
+    std::vector<Scalar> volumeFlux_(gridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> density_(gridGeometry->numScv(), 0.0);
+    std::vector<Scalar> saturation_(gridGeometry->numScv(), 0.0);
 
     //! the grid variables
     using TracerGridVariables = GetPropType<TracerTypeTag, Properties::GridVariables>;
-    auto tracerGridVariables = std::make_shared<TracerGridVariables>(tracerProblem, fvGridGeometry);
+    auto tracerGridVariables = std::make_shared<TracerGridVariables>(tracerProblem, gridGeometry);
     tracerGridVariables->init(x);
 
     // the linear solver
     using TracerLinearSolver = AMGBackend<TracerTypeTag>;
-    auto tracerLinearSolver = std::make_shared<TracerLinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto tracerLinearSolver = std::make_shared<TracerLinearSolver>(leafGridView, gridGeometry->dofMapper());
 
      //! the linear system
     using JacobianMatrix = GetPropType<TracerTypeTag, Properties::JacobianMatrix>;
@@ -173,7 +173,7 @@ int main(int argc, char** argv) try
 
     //! the assembler with time loop for instationary problem
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
-    auto tracerAssembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, tracerGridVariables, timeLoop, xOld);
+    auto tracerAssembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, tracerGridVariables, timeLoop, xOld);
     tracerAssembler->setLinearSystem(A, r);
 
     // set the flux, density and saturation from the 2p problem
@@ -225,7 +225,7 @@ int main(int argc, char** argv) try
             // compute volume fluxes for the tracer model
             ///////////////////////////////////////////////////////////
 
-            auto fvGeometry = localView(*fvGridGeometry);
+            auto fvGeometry = localView(*gridGeometry);
             fvGeometry.bind(element);
 
             auto elemVolVars = localView(twoPGridVariables->curGridVolVars());

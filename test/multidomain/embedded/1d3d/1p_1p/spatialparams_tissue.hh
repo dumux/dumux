@@ -46,8 +46,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TissueSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TissueSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.PermeabilityTissue");
         porosity_ = 1.0;

@@ -51,8 +51,8 @@ class RoughChannelSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         gravity_ = getParam<Scalar>("Problem.Gravity");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");

@@ -160,14 +160,14 @@ public:
 
     //! Update all volume variables
     template<class GridGeometry, class SolutionVector>
-    void update(const GridGeometry& fvGridGeometry, const SolutionVector& sol)
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
-        auto numScv = fvGridGeometry.numScv();
+        auto numScv = gridGeometry.numScv();
         volumeVariables_.resize(numScv);
 
-        for (const auto& element : elements(fvGridGeometry.gridView()))
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -240,7 +240,7 @@ public:
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     template<class GridGeometry, class SolutionVector>
-    void update(const GridGeometry& fvGridGeometry, const SolutionVector& sol) {}
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const
     { return *problemPtr_;}

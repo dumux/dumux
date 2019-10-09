@@ -104,8 +104,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 
 public:
-    StokesSubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
+    StokesSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 

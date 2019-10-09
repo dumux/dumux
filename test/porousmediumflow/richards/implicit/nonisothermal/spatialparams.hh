@@ -58,8 +58,8 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using  MaterialLawParams = typename MaterialLaw::Params;
 
-    RichardsNISpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    RichardsNISpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;

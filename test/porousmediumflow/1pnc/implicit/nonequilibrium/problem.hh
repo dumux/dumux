@@ -152,8 +152,8 @@ class OnePTwoCThermalNonequilibriumProblem : public PorousMediumFlowProblem<Type
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTwoCThermalNonequilibriumProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTwoCThermalNonequilibriumProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();

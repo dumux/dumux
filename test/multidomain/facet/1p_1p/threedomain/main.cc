@@ -109,14 +109,14 @@ template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
           std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
-void updateFVGridGeometry(GridGeometry& fvGridGeometry,
+void updateFVGridGeometry(GridGeometry& gridGeometry,
                           const GridManager& gridManager,
                           const LowDimGridView& lowDimGridView)
 {
     static constexpr int higherGridId = int(GridGeometry::GridView::dimension) == 3 ? 0 : 1;
     using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings, higherGridId, higherGridId+1>;
     BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
-    fvGridGeometry.update(lowDimGridView, facetGridAdapter);
+    gridGeometry.update(lowDimGridView, facetGridAdapter);
 }
 
 /*!
@@ -126,11 +126,11 @@ template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
           std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-void updateFVGridGeometry(GridGeometry& fvGridGeometry,
+void updateFVGridGeometry(GridGeometry& gridGeometry,
                           const GridManager& gridManager,
                           const LowDimGridView& lowDimGridView)
 {
-    fvGridGeometry.update();
+    gridGeometry.update();
 }
 
 int main(int argc, char** argv) try
@@ -180,10 +180,10 @@ int main(int argc, char** argv) try
     const auto& edgeGridView = gridManager.template grid<edgeId>().leafGridView();
 
     // create the finite volume grid geometries
-    MultiDomainFVGridGeometry<Traits> fvGridGeometry(std::make_tuple(bulkGridView, facetGridView, edgeGridView));
-    updateFVGridGeometry(fvGridGeometry[bulkId], gridManager, facetGridView);
-    updateFVGridGeometry(fvGridGeometry[facetId], gridManager, edgeGridView);
-    fvGridGeometry[edgeId].update();
+    MultiDomainFVGridGeometry<Traits> gridGeometry(std::make_tuple(bulkGridView, facetGridView, edgeGridView));
+    updateFVGridGeometry(gridGeometry[bulkId], gridManager, facetGridView);
+    updateFVGridGeometry(gridGeometry[facetId], gridManager, edgeGridView);
+    gridGeometry[edgeId].update();
 
     // the coupling manager
     using CouplingManager = typename ThisTestTraits::CouplingManager;
@@ -196,13 +196,13 @@ int main(int argc, char** argv) try
     using FacetProblem = MultiDomainFVProblem<Traits>::template Type<facetId>;
     using EdgeProblem = MultiDomainFVProblem<Traits>::template Type<edgeId>;
 
-    auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(fvGridGeometry.get(bulkId), "Bulk");
-    auto facetSpatialParams = std::make_shared<typename FacetProblem::SpatialParams>(fvGridGeometry.get(facetId), "Facet");
-    auto edgeSpatialParams = std::make_shared<typename EdgeProblem::SpatialParams>(fvGridGeometry.get(edgeId), "Edge");
+    auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(gridGeometry.get(bulkId), "Bulk");
+    auto facetSpatialParams = std::make_shared<typename FacetProblem::SpatialParams>(gridGeometry.get(facetId), "Facet");
+    auto edgeSpatialParams = std::make_shared<typename EdgeProblem::SpatialParams>(gridGeometry.get(edgeId), "Edge");
 
-    problem.set(std::make_shared<BulkProblem>(fvGridGeometry.get(bulkId), bulkSpatialParams, couplingManager, "Bulk"), bulkId);
-    problem.set(std::make_shared<FacetProblem>(fvGridGeometry.get(facetId), facetSpatialParams, couplingManager, "Facet"), facetId);
-    problem.set(std::make_shared<EdgeProblem>(fvGridGeometry.get(edgeId), edgeSpatialParams, couplingManager, "Edge"), edgeId);
+    problem.set(std::make_shared<BulkProblem>(gridGeometry.get(bulkId), bulkSpatialParams, couplingManager, "Bulk"), bulkId);
+    problem.set(std::make_shared<FacetProblem>(gridGeometry.get(facetId), facetSpatialParams, couplingManager, "Facet"), facetId);
+    problem.set(std::make_shared<EdgeProblem>(gridGeometry.get(edgeId), edgeSpatialParams, couplingManager, "Edge"), edgeId);
 
     // the solution vector
     typename Traits::SolutionVector x;
@@ -211,14 +211,14 @@ int main(int argc, char** argv) try
     // the coupling mapper
     using CouplingMapper = typename ThisTestTraits::CouplingMapper;
     auto couplingMapper = std::make_shared<CouplingMapper>();
-    couplingMapper->update(fvGridGeometry[bulkId], fvGridGeometry[facetId], fvGridGeometry[edgeId], gridManager.getEmbeddings());
+    couplingMapper->update(gridGeometry[bulkId], gridGeometry[facetId], gridGeometry[edgeId], gridManager.getEmbeddings());
 
     // initialize the coupling manager
     couplingManager->init(problem.get(bulkId), problem.get(facetId), problem.get(edgeId), couplingMapper, x);
 
     // the grid variables
     using GridVariables = MultiDomainFVGridVariables<Traits>;
-    GridVariables gridVars(fvGridGeometry.getTuple(), problem.getTuple());
+    GridVariables gridVars(gridGeometry.getTuple(), problem.getTuple());
     gridVars.init(x);
 
     // intialize the vtk output module
@@ -229,7 +229,7 @@ int main(int argc, char** argv) try
 
     // the assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
-    auto assembler = std::make_shared<Assembler>( problem.getTuple(), fvGridGeometry.getTuple(), gridVars.getTuple(), couplingManager);
+    auto assembler = std::make_shared<Assembler>( problem.getTuple(), gridGeometry.getTuple(), gridVars.getTuple(), couplingManager);
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend;

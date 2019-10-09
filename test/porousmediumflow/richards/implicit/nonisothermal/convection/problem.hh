@@ -141,8 +141,8 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    RichardsNIConvectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RichardsNIConvectionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // initialize fluid system
         FluidSystem::init();
@@ -153,7 +153,7 @@ public:
         temperatureLow_ = 290.;
         pressureHigh_ = 2e5;
         pressureLow_ = 1e5;
-        temperatureExact_.resize(fvGridGeometry->numDofs());
+        temperatureExact_.resize(gridGeometry->numDofs());
     }
 
     //! Get the analytical temperature

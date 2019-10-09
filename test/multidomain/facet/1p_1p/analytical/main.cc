@@ -164,13 +164,13 @@ template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
           std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFVGridGeometry(GridGeometry& fvGridGeometry,
+void updateBulkFVGridGeometry(GridGeometry& gridGeometry,
                               const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {
     using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
     BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
-    fvGridGeometry.update(lowDimGridView, facetGridAdapter);
+    gridGeometry.update(lowDimGridView, facetGridAdapter);
 }
 
 /*!
@@ -180,11 +180,11 @@ template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
           std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFVGridGeometry(GridGeometry& fvGridGeometry,
+void updateBulkFVGridGeometry(GridGeometry& gridGeometry,
                               const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {
-    fvGridGeometry.update();
+    gridGeometry.update();
 }
 
 // main program

@@ -82,11 +82,11 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
 public:
     /*!
      * \brief The constructor
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    RANSProblemBase(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    RANSProblemBase(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
     { }
 
     /*!

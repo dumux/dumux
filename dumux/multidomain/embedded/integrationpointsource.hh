@@ -109,7 +109,7 @@ class IntegrationPointSourceHelper
 public:
     //! calculate a DOF index to point source map from given vector of point sources
     template<class GridGeometry, class PointSource, class PointSourceMap>
-    static void computePointSourceMap(const GridGeometry& fvGridGeometry,
+    static void computePointSourceMap(const GridGeometry& gridGeometry,
                                       std::vector<PointSource>& sources,
                                       PointSourceMap& pointSourceMap)
     {
@@ -125,8 +125,8 @@ public:
                 if (GridGeometry::discMethod == DiscretizationMethod::box)
                 {
                     // check in which subcontrolvolume(s) we are
-                    const auto element = fvGridGeometry.boundingBoxTree().entitySet().entity(eIdx);
-                    auto fvGeometry = localView(fvGridGeometry);
+                    const auto element = gridGeometry.boundingBoxTree().entitySet().entity(eIdx);
+                    auto fvGeometry = localView(gridGeometry);
                     fvGeometry.bindElement(element);
                     const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside

@@ -50,8 +50,8 @@ public:
     using AwsSurfaceParams = Scalar;
     using AnsSurfaceParams = Scalar;
 
-    FVNonEquilibriumSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    FVNonEquilibriumSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {  }
 
     /*!

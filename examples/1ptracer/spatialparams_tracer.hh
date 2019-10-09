@@ -51,8 +51,8 @@ class TracerTestSpatialParams
 
 public:
 
-    TracerTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    TracerTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     // ### Properties of the porous matrix
     // We define the same porosity for the whole domain as in the 1p spatialparams.

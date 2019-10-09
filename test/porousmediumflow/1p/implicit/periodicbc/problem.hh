@@ -119,8 +119,8 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         sourcePosition_ = getParam<GlobalPosition>("Source.Position");
         sourceValues_ = getParam<SourceValues>("Source.Values");

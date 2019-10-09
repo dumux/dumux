@@ -105,8 +105,8 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
-    NavierStokesAnalyticProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    NavierStokesAnalyticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         density_ = getParam<Scalar>("Component.LiquidDensity");

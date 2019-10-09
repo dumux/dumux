@@ -82,14 +82,14 @@ public:
 
     //! Update all face variables
     template<class GridGeometry, class SolutionVector>
-    void update(const GridGeometry& fvGridGeometry, const SolutionVector& faceSol)
+    void update(const GridGeometry& gridGeometry, const SolutionVector& faceSol)
     {
 
-        faceVariables_.resize(fvGridGeometry.numScvf());
+        faceVariables_.resize(gridGeometry.numScvf());
 
-        for(auto&& element : elements(fvGridGeometry.gridView()))
+        for(auto&& element : elements(gridGeometry.gridView()))
         {
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             for(auto&& scvf : scvfs(fvGeometry))
@@ -138,7 +138,7 @@ public:
 
     //! Do nothing here.
     template<class GridGeometry, class SolutionVector>
-    void update(const GridGeometry& fvGridGeometry, const SolutionVector& sol) {}
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const
     { return *problemPtr_; }

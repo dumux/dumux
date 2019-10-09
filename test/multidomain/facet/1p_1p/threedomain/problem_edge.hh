@@ -109,11 +109,11 @@ class OnePEdgeProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    OnePEdgeProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    OnePEdgeProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                     std::shared_ptr<CouplingManager> couplingManagerPtr,
                     const std::string& paramGroup = "Edge")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     {
         const auto a = getParam<Scalar>("Extrusion.Aperture");

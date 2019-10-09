@@ -161,8 +161,8 @@ class ObstacleProblem
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
 public:
-    ObstacleProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    ObstacleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C
 

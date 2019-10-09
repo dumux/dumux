@@ -144,8 +144,8 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    InfiltrationThreePThreeCProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    InfiltrationThreePThreeCProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius
         FluidSystem::init(/*tempMin=*/temperature_ - 1,
