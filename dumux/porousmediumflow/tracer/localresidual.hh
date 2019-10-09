@@ -29,6 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
 

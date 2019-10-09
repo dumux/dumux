@@ -29,6 +29,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
+#include <dumux/flux/referencesystemformulation.hh>
+
 namespace Dumux {
 
 // forward declaration

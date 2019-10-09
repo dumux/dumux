@@ -27,6 +27,8 @@
 #ifndef DUMUX_TWOPTWOC_MPNC_PROBLEM_HH
 #define DUMUX_TWOPTWOC_MPNC_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dune/common/parametertreeparser.hh>
 
 #include <dumux/discretization/box.hh>

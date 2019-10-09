@@ -33,6 +33,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvgridvariables.hh>
 #include <dumux/porousmediumflow/velocity.hh>
+#include <dumux/porousmediumflow/fluxvariables.hh>
 
 namespace Dumux {
 

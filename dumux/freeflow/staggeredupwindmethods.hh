@@ -29,6 +29,7 @@
 #include <string>
 
 #include <dumux/common/exceptions.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux {
 

@@ -30,6 +30,8 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
+#include <dumux/flux/referencesystemformulation.hh>
+
 namespace Dumux {
 
 // forward declaration

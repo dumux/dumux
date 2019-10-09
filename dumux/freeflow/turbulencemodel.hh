@@ -24,6 +24,8 @@
 #ifndef DUMUX_FREEFLOW_TURBLENCEMODEL_HH
 #define DUMUX_FREEFLOW_TURBLENCEMODEL_HH
 
+#include <string>
+
 namespace Dumux {
 
     /*!
