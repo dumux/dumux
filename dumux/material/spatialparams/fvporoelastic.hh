@@ -88,7 +88,7 @@ class FVSpatialParamsPoroElastic
 public:
     //! The constructor
     FVSpatialParamsPoroElastic(std::shared_ptr<const GridGeometry> gridGeometry)
-    : fvGridGeometry_(gridGeometry)
+    : gridGeometry_(gridGeometry)
     , gravity_(0.0)
     {
         const bool enableGravity = getParam<bool>("Problem.EnableGravity");
@@ -316,11 +316,11 @@ public:
     //! The finite volume grid geometry
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const GridGeometry& fvGridGeometry() const
-    { return *fvGridGeometry_; }
+    { return *gridGeometry_; }
 
     //! The finite volume grid geometry
     const GridGeometry& gridGeometry() const
-    { return *fvGridGeometry_; }
+    { return *gridGeometry_; }
     
 protected:
     Implementation &asImp_()
@@ -330,7 +330,7 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
-    std::shared_ptr<const GridGeometry> fvGridGeometry_;
+    std::shared_ptr<const GridGeometry> gridGeometry_;
     GlobalPosition gravity_; //!< The gravity vector
 };
 } // end namespace Dumux

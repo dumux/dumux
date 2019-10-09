@@ -88,15 +88,15 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             if(isBox && dim == 1)
-                velocity[phaseIdx].resize(this->fvGridGeometry_->gridView().size(0));
+                velocity[phaseIdx].resize(this->gridGeometry_->gridView().size(0));
             else
-                velocity[phaseIdx].resize(this->fvGridGeometry_->numDofs());
+                velocity[phaseIdx].resize(this->gridGeometry_->numDofs());
         }
-        for (const auto& element : elements(this->fvGridGeometry_->gridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(this->gridGeometry_->gridView(), Dune::Partitions::interior))
         {
-            const auto eIdxGlobal = this->fvGridGeometry_->elementMapper().index(element);
+            const auto eIdxGlobal = this->gridGeometry_->elementMapper().index(element);
 
-            auto fvGeometry = localView(*this->fvGridGeometry_);
+            auto fvGeometry = localView(*this->gridGeometry_);
             auto elemVolVars = localView(this->curGridVolVars());
             auto elemFluxVarsCache = localView(this->gridFluxVarsCache());
 

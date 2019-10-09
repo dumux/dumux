@@ -62,7 +62,7 @@ public:
     template<class Problem>
     FVGridVariables(std::shared_ptr<Problem> problem,
                     std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : fvGridGeometry_(fvGridGeometry)
+    : gridGeometry_(fvGridGeometry)
     , curGridVolVars_(*problem)
     , prevGridVolVars_(*problem)
     , gridFluxVarsCache_(*problem)
@@ -73,10 +73,10 @@ public:
     void init(const SolutionVector& curSol)
     {
         // resize and update the volVars with the initial solution
-        curGridVolVars_.update(*fvGridGeometry_, curSol);
+        curGridVolVars_.update(*gridGeometry_, curSol);
 
         // update the flux variables caches (always force flux cache update on initialization)
-        gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol, true);
+        gridFluxVarsCache_.update(*gridGeometry_, curGridVolVars_, curSol, true);
 
         // set the volvars of the previous time step in case we have an instationary problem
         // note that this means some memory overhead in the case of enabled caching, however
@@ -99,10 +99,10 @@ public:
     void update(const SolutionVector& curSol, bool forceFluxCacheUpdate = false)
     {
         // resize and update the volVars with the initial solution
-        curGridVolVars_.update(*fvGridGeometry_, curSol);
+        curGridVolVars_.update(*gridGeometry_, curSol);
 
         // update the flux variables caches
-        gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol, forceFluxCacheUpdate);
+        gridFluxVarsCache_.update(*gridGeometry_, curGridVolVars_, curSol, forceFluxCacheUpdate);
     }
 
     //! update all variables after grid adaption
@@ -134,7 +134,7 @@ public:
         curGridVolVars_ = prevGridVolVars_;
 
         // update the flux variables caches
-        gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, solution);
+        gridFluxVarsCache_.update(*gridGeometry_, curGridVolVars_, solution);
     }
 
     //! return the flux variables cache
@@ -168,11 +168,11 @@ public:
 
     //! return the finite volume grid geometry
     const GridGeometry& gridGeometry() const
-    { return *fvGridGeometry_; }
+    { return *gridGeometry_; }
 
 protected:
 
-    std::shared_ptr<const GridGeometry> fvGridGeometry_; //!< pointer to the constant grid geometry
+    std::shared_ptr<const GridGeometry> gridGeometry_; //!< pointer to the constant grid geometry
 
 private:
     GridVolumeVariables curGridVolVars_; //!< the current volume variables (primary and secondary variables)
