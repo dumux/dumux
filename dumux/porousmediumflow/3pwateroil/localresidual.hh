@@ -27,6 +27,7 @@
 #define DUMUX_3P2CNI_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
 /*!

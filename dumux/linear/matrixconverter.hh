@@ -33,6 +33,8 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
+#include <dumux/common/parameters.hh>
+
 namespace Dumux {
 
 /*!

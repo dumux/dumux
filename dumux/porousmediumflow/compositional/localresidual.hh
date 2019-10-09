@@ -27,7 +27,9 @@
 #define DUMUX_COMPOSITIONAL_LOCAL_RESIDUAL_HH
 
 #include <vector>
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
 

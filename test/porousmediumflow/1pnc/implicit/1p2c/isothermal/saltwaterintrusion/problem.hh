@@ -26,6 +26,8 @@
 #ifndef DUMUX_SALTWATERINTRUSION_TEST_PROBLEM_HH
 #define DUMUX_SALTWATERINTRUSION_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>

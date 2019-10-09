@@ -34,6 +34,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
 

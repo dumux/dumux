@@ -25,6 +25,7 @@
 #ifndef DUMUX_POROELASTIC_SUBPROBLEM_HH
 #define DUMUX_POROELASTIC_SUBPROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/discretization/box.hh>

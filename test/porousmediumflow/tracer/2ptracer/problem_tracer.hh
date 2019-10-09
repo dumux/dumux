@@ -24,6 +24,8 @@
 #ifndef DUMUX_TWOP_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TWOP_TRACER_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>

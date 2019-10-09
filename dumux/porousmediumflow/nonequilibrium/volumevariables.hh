@@ -34,6 +34,7 @@
 #include <array>
 
 #include <dumux/common/dimensionlessnumbers.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux {
 

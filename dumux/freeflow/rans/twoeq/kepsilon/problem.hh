@@ -24,6 +24,8 @@
 #ifndef DUMUX_KEPSILON_PROBLEM_HH
 #define DUMUX_KEPSILON_PROBLEM_HH
 
+#include <numeric>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
