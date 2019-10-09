@@ -129,11 +129,11 @@ class TracerBulkProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     using typename ParentType::SpatialParams;
 
-    TracerBulkProblem(std::shared_ptr<const GridGeometry> fvGridGeom,
+    TracerBulkProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<SpatialParams> spatialParams,
                       std::shared_ptr<CouplingManager> couplingManager,
                       const std::string& paramGroup = "")
-    : ParentType(fvGridGeom, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
     , initialMassFraction_(getParamFromGroup<Scalar>(paramGroup, "Problem.ContaminationMassFraction"))
     {
