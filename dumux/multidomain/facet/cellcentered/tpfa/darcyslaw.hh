@@ -42,7 +42,7 @@
 namespace Dumux {
 
 //! Forward declaration of the implementation
-template<class ScalarType, class FVGridGeometry, bool isNetwork>
+template<class ScalarType, class GridGeometry, bool isNetwork>
 class CCTpfaFacetCouplingDarcysLawImpl;
 
 /*!
@@ -51,7 +51,7 @@ class CCTpfaFacetCouplingDarcysLawImpl;
  * \note We distinguish between network and non-network grids here. Specializations
  *       for the two cases can be found below.
  */
-template<class AdvectionType, class FVGridGeometry, bool isNetwork>
+template<class AdvectionType, class GridGeometry, bool isNetwork>
 class CCTpfaFacetCouplingDarcysLawCache;
 
 /*!
@@ -60,26 +60,26 @@ class CCTpfaFacetCouplingDarcysLawCache;
  *        in the context of coupled models where the coupling occurs across the facets of the bulk
  *        domain elements with a lower-dimensional domain living on these facets.
  */
-template<class ScalarType, class FVGridGeometry>
+template<class ScalarType, class GridGeometry>
 using CCTpfaFacetCouplingDarcysLaw =
-      CCTpfaFacetCouplingDarcysLawImpl< ScalarType, FVGridGeometry, ( int(FVGridGeometry::GridView::dimension) <
-                                                                      int(FVGridGeometry::GridView::dimensionworld) ) >;
+      CCTpfaFacetCouplingDarcysLawImpl< ScalarType, GridGeometry, ( int(GridGeometry::GridView::dimension) <
+                                                                      int(GridGeometry::GridView::dimensionworld) ) >;
 
 /*!
  * \ingroup FacetCoupling
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for non-network grids.
  */
-template<class AdvectionType, class FVGridGeometry>
-class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, FVGridGeometry, /*isNetwork*/false>
+template<class AdvectionType, class GridGeometry>
+class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, GridGeometry, /*isNetwork*/false>
 {
     using Scalar = typename AdvectionType::Scalar;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
 
 public:
     //! export the corresponding filler class
-    using Filler = TpfaDarcysLawCacheFiller<FVGridGeometry>;
+    using Filler = TpfaDarcysLawCacheFiller<GridGeometry>;
 
     //! we store the transmissibilities associated with the interior
     //! cell, outside cell, and the fracture facet in an array. Access
@@ -137,17 +137,17 @@ private:
  * \ingroup FacetCoupling
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
  */
-template<class ScalarType, class FVGridGeometry>
-class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/false>
+template<class ScalarType, class GridGeometry>
+class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/false>
 {
-    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, false>;
-    using TpfaDarcysLaw = CCTpfaDarcysLaw<ScalarType, FVGridGeometry, false>;
+    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, false>;
+    using TpfaDarcysLaw = CCTpfaDarcysLaw<ScalarType, GridGeometry, false>;
 
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -168,7 +168,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
     //! export the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
     //! export the type for the corresponding cache
-    using Cache = CCTpfaFacetCouplingDarcysLawCache<ThisType, FVGridGeometry, /*isNetwork*/false>;
+    using Cache = CCTpfaFacetCouplingDarcysLawCache<ThisType, GridGeometry, /*isNetwork*/false>;
     //! export the type used to store transmissibilities
     using TijContainer = typename Cache::AdvectionTransmissibilityContainer;
 
@@ -355,17 +355,17 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
  * \ingroup FacetCoupling
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for network grids
  */
-template<class AdvectionType, class FVGridGeometry>
-class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, FVGridGeometry, /*isNetwork*/true>
+template<class AdvectionType, class GridGeometry>
+class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, GridGeometry, /*isNetwork*/true>
 {
     using Scalar = typename AdvectionType::Scalar;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
 
 public:
     //! export the corresponding filler class
-    using Filler = TpfaDarcysLawCacheFiller<FVGridGeometry>;
+    using Filler = TpfaDarcysLawCacheFiller<GridGeometry>;
 
     //! we store the transmissibilities associated with the interior
     //! cell and the fracture facet in an array. Access to this array
@@ -410,17 +410,17 @@ private:
  * \ingroup FacetCoupling
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim<dimWorld
  */
-template<class ScalarType, class FVGridGeometry>
-class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/true>
+template<class ScalarType, class GridGeometry>
+class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/true>
 {
-    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, true>;
-    using TpfaDarcysLaw = CCTpfaDarcysLaw<ScalarType, FVGridGeometry, true>;
+    using ThisType = CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, true>;
+    using TpfaDarcysLaw = CCTpfaDarcysLaw<ScalarType, GridGeometry, true>;
 
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -430,7 +430,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, FVGridGeometry, /*isNetwork*/
     //! state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
     //! state the type for the corresponding cache
-    using Cache = CCTpfaFacetCouplingDarcysLawCache<ThisType, FVGridGeometry, /*isNetwork*/true>;
+    using Cache = CCTpfaFacetCouplingDarcysLawCache<ThisType, GridGeometry, /*isNetwork*/true>;
     //! export the type used to store transmissibilities
     using TijContainer = typename Cache::AdvectionTransmissibilityContainer;
 

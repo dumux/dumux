@@ -60,9 +60,9 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -85,7 +85,7 @@ public:
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    RANSProblemBase(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    RANSProblemBase(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     { }
 
@@ -251,7 +251,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const int dofIdxFace = scvf.dofIndex();
-                const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][Indices::velocity(scvf.directionIndex())];
+                const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][dofIdxFace][Indices::velocity(scvf.directionIndex())];
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
@@ -416,9 +416,9 @@ public:
                 const int dofIdx = scv.dofIndex();
 
                 // construct a privars object from the cell center solution vector
-                const auto& cellCenterPriVars = curSol[FVGridGeometry::cellCenterIdx()][dofIdx];
+                const auto& cellCenterPriVars = curSol[GridGeometry::cellCenterIdx()][dofIdx];
                 PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
-                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
+                auto elemSol = elementSolution<typename GridGeometry::LocalView>(std::move(priVars));
 
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);

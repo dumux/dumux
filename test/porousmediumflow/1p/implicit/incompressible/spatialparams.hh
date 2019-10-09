@@ -35,24 +35,24 @@ namespace Dumux {
  * \brief The spatial parameters class for the test problem using the
  *        incompressible 1p model
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             OnePTestSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           OnePTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           OnePTestSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");

@@ -218,9 +218,9 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using MpfaHelper = typename FVGridGeometry::MpfaHelper;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using MpfaHelper = typename GridGeometry::MpfaHelper;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;

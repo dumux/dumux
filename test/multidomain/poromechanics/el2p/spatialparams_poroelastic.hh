@@ -35,16 +35,16 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the poro-elastic
  *        sub-problem in the coupled poro-mechanical el1p problem.
  */
-template<class Scalar, class FVGridGeometry>
+template<class Scalar, class GridGeometry>
 class PoroElasticSpatialParams : public FVSpatialParamsPoroElastic< Scalar,
-                                                                    FVGridGeometry,
-                                                                    PoroElasticSpatialParams<Scalar, FVGridGeometry> >
+                                                                    GridGeometry,
+                                                                    PoroElasticSpatialParams<Scalar, GridGeometry> >
 {
-    using ThisType = PoroElasticSpatialParams<Scalar, FVGridGeometry>;
-    using ParentType = FVSpatialParamsPoroElastic<Scalar, FVGridGeometry, ThisType>;
+    using ThisType = PoroElasticSpatialParams<Scalar, GridGeometry>;
+    using ParentType = FVSpatialParamsPoroElastic<Scalar, GridGeometry, ThisType>;
 
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -52,7 +52,7 @@ public:
     //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    PoroElasticSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {

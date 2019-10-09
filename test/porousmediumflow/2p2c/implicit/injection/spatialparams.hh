@@ -38,16 +38,16 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the injection problem
  *        which uses the isothermal two-phase two-component fully implicit model.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class InjectionSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         InjectionSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         InjectionSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, InjectionSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, InjectionSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -62,7 +62,7 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    InjectionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    InjectionSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         layerBottom_ = 22.5;

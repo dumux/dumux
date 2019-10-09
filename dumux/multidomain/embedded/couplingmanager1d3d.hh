@@ -53,12 +53,12 @@ struct CircleAveragePointSourceTraits
 {
 private:
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomain<i>::TypeTag;
-    template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>;
+    template<std::size_t i> using GridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>;
     template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
 public:
     //! export the point source type for domain i
     template<std::size_t i>
-    using PointSource = IntegrationPointSource<typename FVGridGeometry<i>::GlobalCoordinate, NumEqVector<i>>;
+    using PointSource = IntegrationPointSource<typename GridGeometry<i>::GlobalCoordinate, NumEqVector<i>>;
 
     //! export the point source helper type  for domain i
     template<std::size_t i>
@@ -100,8 +100,8 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::line>
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
 public:
@@ -200,15 +200,15 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::average>
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
 
 public:
@@ -577,15 +577,15 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::cylindersource
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
@@ -853,15 +853,15 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>
     // the sub domain type aliases
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
     enum {
         bulkDim = GridView<bulkIdx>::dimension,

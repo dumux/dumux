@@ -39,23 +39,23 @@ namespace Dumux {
  * \ingroup CCMpfaDiscretization
  * \brief Dimension-specific helper class to get data required for mpfa scheme.
  */
-template<class FVGridGeometry, int dim, int dimWorld>
+template<class GridGeometry, int dim, int dimWorld>
 class MpfaDimensionHelper;
 
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief  Dimension-specific mpfa helper class for dim == 2 & dimWorld == 2
  */
-template<class FVGridGeometry>
-class MpfaDimensionHelper<FVGridGeometry, /*dim*/2, /*dimWorld*/2>
+template<class GridGeometry>
+class MpfaDimensionHelper<GridGeometry, /*dim*/2, /*dimWorld*/2>
 {
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using CoordScalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
 
     // Container to store the positions of intersections required for scvf
@@ -199,11 +199,11 @@ public:
  * \brief  Dimension-specific mpfa helper class for dim == 2 & dimWorld == 2.
  *         Reuses some functionality of the specialization for dim = dimWorld = 2
  */
-template<class FVGridGeometry>
-class MpfaDimensionHelper<FVGridGeometry, /*dim*/2, /*dimWorld*/3>
-: public MpfaDimensionHelper<FVGridGeometry, 2, 2>
+template<class GridGeometry>
+class MpfaDimensionHelper<GridGeometry, /*dim*/2, /*dimWorld*/3>
+: public MpfaDimensionHelper<GridGeometry, 2, 2>
 {
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using CoordScalar = typename GridView::ctype;
 public:
 
@@ -260,14 +260,14 @@ public:
  * \brief   Dimension-specific mpfa helper class for dim == 3 & dimWorld == 3.
  *
  */
-template<class FVGridGeometry>
-class MpfaDimensionHelper<FVGridGeometry, /*dim*/3, /*dimWorld*/3>
+template<class GridGeometry>
+class MpfaDimensionHelper<GridGeometry, /*dim*/3, /*dimWorld*/3>
 {
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
 
     // Be picky about the dimensions
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -498,22 +498,22 @@ public:
  * \ingroup CCMpfaDiscretization
  * \brief Helper class to get the required information on an interaction volume.
  *
- * \tparam FVGridGeometry The finite volume grid geometry
+ * \tparam GridGeometry The finite volume grid geometry
  */
-template<class FVGridGeometry>
-class CCMpfaHelper : public MpfaDimensionHelper<FVGridGeometry,
-                                                FVGridGeometry::GridView::dimension,
-                                                FVGridGeometry::GridView::dimensionworld>
+template<class GridGeometry>
+class CCMpfaHelper : public MpfaDimensionHelper<GridGeometry,
+                                                GridGeometry::GridView::dimension,
+                                                GridGeometry::GridView::dimensionworld>
 {
-    using PrimaryInteractionVolume = typename FVGridGeometry::GridIVIndexSets::PrimaryInteractionVolume;
-    using SecondaryInteractionVolume = typename FVGridGeometry::GridIVIndexSets::SecondaryInteractionVolume;
+    using PrimaryInteractionVolume = typename GridGeometry::GridIVIndexSets::PrimaryInteractionVolume;
+    using SecondaryInteractionVolume = typename GridGeometry::GridIVIndexSets::SecondaryInteractionVolume;
 
-    using VertexMapper = typename FVGridGeometry::VertexMapper;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using VertexMapper = typename GridGeometry::VertexMapper;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     static constexpr int dim = GridView::dimension;
 
     using Element = typename GridView::template Codim<0>::Entity;

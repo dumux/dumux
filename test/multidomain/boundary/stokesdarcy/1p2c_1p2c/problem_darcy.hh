@@ -82,9 +82,9 @@ struct Grid<TypeTag, TTag::DarcyOnePTwoC> { using type = Dune::YaspGrid<2>; };
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyOnePTwoC>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePSpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Dumux
 
@@ -92,8 +92,8 @@ template <class TypeTag>
 class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -110,7 +110,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 
 public:
-    DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    DarcySubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {

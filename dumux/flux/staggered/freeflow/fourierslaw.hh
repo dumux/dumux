@@ -44,11 +44,11 @@ template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
 public:

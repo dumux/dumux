@@ -57,14 +57,14 @@
 #include "../internaldirichlet/problem.hh"
 
 //! Function to write out the scv-wise velocities (overload for mpfa)
-template<class FVGridGeometry, class GridVariables, class Sol,
-         std::enable_if_t<FVGridGeometry::discMethod == Dumux::DiscretizationMethod::ccmpfa, int> = 0>
-void writeMpfaVelocities(const FVGridGeometry& fvGridGeometry,
+template<class GridGeometry, class GridVariables, class Sol,
+         std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::ccmpfa, int> = 0>
+void writeMpfaVelocities(const GridGeometry& fvGridGeometry,
                          const GridVariables& gridVariables,
                          const Sol& x)
 {
     using Scalar = typename GridVariables::Scalar;
-    using GlobalPos = typename FVGridGeometry::SubControlVolume::GlobalPosition;
+    using GlobalPos = typename GridGeometry::SubControlVolume::GlobalPosition;
 
     const auto velocities = Dumux::CCMpfaScvGradients::computeVelocities(fvGridGeometry, gridVariables, x, /*phaseIdx*/0);
     Dumux::PointCloudVtkWriter<Scalar, GlobalPos> writer(velocities.first);
@@ -73,9 +73,9 @@ void writeMpfaVelocities(const FVGridGeometry& fvGridGeometry,
 }
 
 //! Function to write out the scv-wise velocities (overload for NOT mpfa)
-template<class FVGridGeometry, class GridVariables, class Sol,
-         std::enable_if_t<FVGridGeometry::discMethod != Dumux::DiscretizationMethod::ccmpfa, int> = 0>
-void writeMpfaVelocities(const FVGridGeometry& fvGridGeometry,
+template<class GridGeometry, class GridVariables, class Sol,
+         std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::ccmpfa, int> = 0>
+void writeMpfaVelocities(const GridGeometry& fvGridGeometry,
                          const GridVariables& gridVariables,
                          const Sol& x)
 {}
@@ -114,8 +114,8 @@ int main(int argc, char** argv) try
     Dune::Timer timer;
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (boundary conditions)
@@ -163,8 +163,8 @@ int main(int argc, char** argv) try
         using VelocityVector = typename VelocityOutput::VelocityVector;
         VelocityVector velocity;
 
-        constexpr bool isBox = FVGridGeometry::discMethod == Dumux::DiscretizationMethod::box;
-        constexpr int dimWorld = FVGridGeometry::GridView::dimensionworld;
+        constexpr bool isBox = GridGeometry::discMethod == Dumux::DiscretizationMethod::box;
+        constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
         const auto numCells = leafGridView.size(0);
         const auto numDofs = fvGridGeometry->numDofs();
         auto numVelocities = (isBox && dimWorld == 1) ? numCells : numDofs;

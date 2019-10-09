@@ -44,18 +44,18 @@ namespace Dumux {
  * \ingroup TwoPTwoCTests
  * \brief The spatial parameters for the 2p2c chemical nonequilibrium problem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TwoPTwoCChemicalNonequilibriumSpatialParams
-: public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                       TwoPTwoCChemicalNonequilibriumSpatialParams<FVGridGeometry, Scalar>>
+: public FVNonEquilibriumSpatialParams<GridGeometry, Scalar,
+                                       TwoPTwoCChemicalNonequilibriumSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                                     TwoPTwoCChemicalNonequilibriumSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVNonEquilibriumSpatialParams<GridGeometry, Scalar,
+                                                     TwoPTwoCChemicalNonequilibriumSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -73,7 +73,7 @@ public:
     using AwnSurface = EffToAbsLawIA<EffectiveIALawAwn, MaterialLawParams>;
     using AwnSurfaceParams = typename AwnSurface::Params;
 
-    TwoPTwoCChemicalNonequilibriumSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPTwoCChemicalNonequilibriumSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities

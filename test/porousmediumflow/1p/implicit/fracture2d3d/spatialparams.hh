@@ -36,14 +36,14 @@ namespace Dumux {
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class FractureSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             FractureSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             FractureSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           FractureSpatialParams<FVGridGeometry, Scalar>>;
+    using GridView = typename GridGeometry::GridView;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           FractureSpatialParams<GridGeometry, Scalar>>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -52,7 +52,7 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    FractureSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FractureSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 

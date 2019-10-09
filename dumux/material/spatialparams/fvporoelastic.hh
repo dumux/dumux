@@ -74,12 +74,12 @@ struct hasBiotCoeffAtPos
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of poro-elastic geomechanical problems
  */
-template<class Scalar, class FVGridGeometry, class Implementation>
+template<class Scalar, class GridGeometry, class Implementation>
 class FVSpatialParamsPoroElastic
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -87,7 +87,7 @@ class FVSpatialParamsPoroElastic
 
 public:
     //! The constructor
-    FVSpatialParamsPoroElastic(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FVSpatialParamsPoroElastic(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : fvGridGeometry_(fvGridGeometry)
     , gravity_(0.0)
     {
@@ -314,12 +314,12 @@ public:
     }
 
     //! The finite volume grid geometry
-    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
+    [[deprecated("Use more general GridGeometry instead. GridGeometry will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
     { return *fvGridGeometry_; }
 
     //! The finite volume grid geometry
-    const FVGridGeometry& gridGeometry() const
+    const GridGeometry& gridGeometry() const
     { return *fvGridGeometry_; }
     
 protected:
@@ -330,7 +330,7 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const GridGeometry> fvGridGeometry_;
     GlobalPosition gravity_; //!< The gravity vector
 };
 } // end namespace Dumux

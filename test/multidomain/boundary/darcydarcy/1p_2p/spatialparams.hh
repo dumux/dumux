@@ -36,15 +36,15 @@ namespace Dumux {
  * \brief The spatial parameters class for the test problem using the
  *        incompressible 1p model.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TestSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar, TestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar, TestSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = TestSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
+    using ThisType = TestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -56,7 +56,7 @@ public:
 
     using PermeabilityType = Scalar;
 
-    TestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         materialParams_.setSwr(0.05);

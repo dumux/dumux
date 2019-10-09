@@ -113,13 +113,13 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         sourcePosition_ = getParam<GlobalPosition>("Source.Position");

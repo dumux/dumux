@@ -48,7 +48,7 @@ enum ElectroChemistryModel { Ochs, Acosta };
  * \todo TODO: Scalar type should be extracted from VolumeVariables!
  * \todo TODO: This shouldn't depend on grid and discretization!!
  */
-template <class Scalar, class Indices, class FluidSystem, class FVGridGeometry, ElectroChemistryModel electroChemistryModel>
+template <class Scalar, class Indices, class FluidSystem, class GridGeometry, ElectroChemistryModel electroChemistryModel>
 class ElectroChemistry
 {
 
@@ -74,8 +74,8 @@ class ElectroChemistry
         gasPhaseIdx = FluidSystem::gasPhaseIdx
     };
 
-    using GridView = typename FVGridGeometry::GridView;
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    using GridView = typename GridGeometry::GridView;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
 
 public:

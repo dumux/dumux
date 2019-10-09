@@ -63,8 +63,8 @@ struct BoxDfmDefaultGridGeometryTraits
     using SubControlVolume = BoxDfmSubControlVolume<GridView>;
     using SubControlVolumeFace = BoxDfmSubControlVolumeFace<GridView>;
 
-    template<class FVGridGeometry, bool enableCache>
-    using LocalView = BoxDfmFVElementGeometry<FVGridGeometry, enableCache>;
+    template<class GridGeometry, bool enableCache>
+    using LocalView = BoxDfmFVElementGeometry<GridGeometry, enableCache>;
 
     // Mapper type for mapping edges
     using FacetMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
@@ -106,7 +106,7 @@ class BoxDfmFVGridGeometry<Scalar, GV, true, Traits>
     using CoordScalar = typename GV::ctype;
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
-    static_assert(dim == 2 || dim == 3, "The box-dfm FVGridGeometry is only implemented in 2 or 3 dimensions.");
+    static_assert(dim == 2 || dim == 3, "The box-dfm GridGeometry is only implemented in 2 or 3 dimensions.");
 
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
     using FaceReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim-1>;

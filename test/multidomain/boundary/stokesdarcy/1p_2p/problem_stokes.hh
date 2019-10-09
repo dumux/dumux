@@ -77,8 +77,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -92,7 +92,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    StokesSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    StokesSubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
     {
         inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");

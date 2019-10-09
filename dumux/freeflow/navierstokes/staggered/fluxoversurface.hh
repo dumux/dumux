@@ -49,14 +49,14 @@ template<class GridVariables, class SolutionVector, class ModelTraits, class Loc
 class FluxOverSurface
 {
     using Scalar = typename GridVariables::Scalar;
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using CellCenterPrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[FVGridGeometry::cellCenterIdx()][0])>;
+    using CellCenterPrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[GridGeometry::cellCenterIdx()][0])>;
 
     enum {
         // Grid and world dimension

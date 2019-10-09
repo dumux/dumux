@@ -77,9 +77,9 @@ struct FluidSystem<TypeTag, TTag::OnePNIConduction>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePNIConduction>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNISpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePNISpatialParams<GridGeometry, Scalar>;
 };
 }
 
@@ -131,10 +131,10 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
-    OnePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup)
+    OnePNIConductionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup)
     : ParentType(fvGridGeometry, paramGroup)
     {
         //initialize fluid system

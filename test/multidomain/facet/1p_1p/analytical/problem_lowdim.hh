@@ -91,10 +91,10 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
     using Scalar = typename GridVariables::Scalar;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -103,7 +103,7 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
 public:
-    OnePLowDimProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    OnePLowDimProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                       std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                       std::shared_ptr<CouplingManager> couplingManagerPtr,
                       const std::string& paramGroup = "LowDim")

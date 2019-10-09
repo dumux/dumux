@@ -54,11 +54,11 @@ struct CCTpfaDefaultGridGeometryTraits
     using SubControlVolume = CCSubControlVolume<GridView>;
     using SubControlVolumeFace = CCTpfaSubControlVolumeFace<GridView>;
 
-    template<class FVGridGeometry>
-    using ConnectivityMap = CCSimpleConnectivityMap<FVGridGeometry>;
+    template<class GridGeometry>
+    using ConnectivityMap = CCSimpleConnectivityMap<GridGeometry>;
 
-    template<class FVGridGeometry, bool enableCache>
-    using LocalView = CCTpfaFVElementGeometry<FVGridGeometry, enableCache>;
+    template<class GridGeometry, bool enableCache>
+    using LocalView = CCTpfaFVElementGeometry<GridGeometry, enableCache>;
 
     //! State the maximum admissible number of neighbors per scvf
     //! Per default, we allow for 8 branches on network/surface grids, where

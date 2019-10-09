@@ -75,9 +75,9 @@ struct Problem<TypeTag, TTag::OnePSingularity> { using type = OnePSingularityPro
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePSingularity>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSingularitySpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePSingularitySpatialParams<GridGeometry, Scalar>;
 };
 }
 
@@ -112,12 +112,12 @@ class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePSingularityProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePSingularityProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");

@@ -52,19 +52,19 @@ struct hasMaterialLawParamsAtPos
  * \brief The base class for spatial parameters of multi-phase problems
  * using a fully implicit discretization method.
  */
-template<class FVGridGeometry, class Scalar, class Implementation>
-class FVSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar, Implementation>
+template<class GridGeometry, class Scalar, class Implementation>
+class FVSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>
 {
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, Implementation>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, Implementation>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    FVSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FVSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 

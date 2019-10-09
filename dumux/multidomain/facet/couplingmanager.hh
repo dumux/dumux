@@ -134,10 +134,10 @@ class FacetCouplingThreeDomainManager
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
 
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
-    template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+    template<std::size_t id> using SubControlVolumeFace = typename GridGeometry<id>::SubControlVolumeFace;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using GridIndexType = typename IndexTraits<GridView<id>>::GridIndex;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
@@ -148,7 +148,7 @@ class FacetCouplingThreeDomainManager
     // helper function to check if a domain uses mpfa
     template<std::size_t id>
     static constexpr bool usesMpfa(Dune::index_constant<id> domainId)
-    { return FVGridGeometry<domainId>::discMethod == DiscretizationMethod::ccmpfa; }
+    { return GridGeometry<domainId>::discMethod == DiscretizationMethod::ccmpfa; }
 
 public:
     //! types used for coupling stencils

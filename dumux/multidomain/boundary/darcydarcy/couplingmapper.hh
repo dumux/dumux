@@ -49,9 +49,9 @@ class DarcyDarcyBoundaryCouplingMapper
 {
     using Scalar = typename MDTraits::Scalar;
 
-    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomain<i>::GridGeometry;
-    template<std::size_t i> using SubControlVolumeFace = typename FVGridGeometry<i>::SubControlVolumeFace;
-    template<std::size_t i> using GridView = typename FVGridGeometry<i>::GridView;
+    template<std::size_t i> using GridGeometry = typename MDTraits::template SubDomain<i>::GridGeometry;
+    template<std::size_t i> using SubControlVolumeFace = typename GridGeometry<i>::SubControlVolumeFace;
+    template<std::size_t i> using GridView = typename GridGeometry<i>::GridView;
     template<std::size_t i> using Element = typename GridView<i>::template Codim<0>::Entity;
 
     template<std::size_t i>
@@ -60,7 +60,7 @@ class DarcyDarcyBoundaryCouplingMapper
 
     template<std::size_t i>
     static constexpr bool isCCTpfa()
-    { return FVGridGeometry<i>::discMethod == DiscretizationMethod::cctpfa; }
+    { return GridGeometry<i>::discMethod == DiscretizationMethod::cctpfa; }
 
     struct ScvfInfo
     {

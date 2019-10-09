@@ -76,9 +76,9 @@ struct FluidSystem<TypeTag, TTag::TwoPTwoCComparison>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPTwoCComparison>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TwoPTwoCComparisonSpatialParams<FVGridGeometry, Scalar>;
+    using type = TwoPTwoCComparisonSpatialParams<GridGeometry, Scalar>;
 };
 
 // decide which type to use for floating values (double / quad)
@@ -118,13 +118,13 @@ class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
 public:
-    TwoPTwoCComparisonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPTwoCComparisonProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C

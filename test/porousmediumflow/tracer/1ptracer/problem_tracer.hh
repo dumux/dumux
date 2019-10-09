@@ -71,9 +71,9 @@ struct Problem<TypeTag, TTag::TracerTest> { using type = TracerTestProblem<TypeT
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TracerTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TracerTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = TracerTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -153,7 +153,7 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -162,11 +162,11 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    TracerTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeom)
+    TracerTestProblem(std::shared_ptr<const GridGeometry> fvGridGeom)
     : ParentType(fvGridGeom)
     {
         // stating in the console whether mole or mass fractions are used

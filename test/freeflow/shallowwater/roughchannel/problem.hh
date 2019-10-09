@@ -60,12 +60,12 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RoughChannel>
 {
 private:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
 public:
-    using type = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
+    using type = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
 };
 
 template<class TypeTag>
@@ -116,7 +116,7 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -131,7 +131,7 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
-    RoughChannelProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RoughChannelProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");

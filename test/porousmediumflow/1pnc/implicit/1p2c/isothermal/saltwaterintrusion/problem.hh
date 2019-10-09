@@ -63,9 +63,9 @@ struct FluidSystem<TypeTag, TTag::SaltWaterIntrusionTest>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::SaltWaterIntrusionTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePNCTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Use mass fractions to set salinity conveniently
@@ -97,7 +97,7 @@ class SaltWaterIntrusionTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     // copy pressure index for convenience
     enum { pressureIdx = Indices::pressureIdx };
@@ -106,7 +106,7 @@ class SaltWaterIntrusionTestProblem : public PorousMediumFlowProblem<TypeTag>
     static_assert(!getPropValue<TypeTag, Properties::UseMoles>(), "This test uses mass fractions!");
 
 public:
-    SaltWaterIntrusionTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    SaltWaterIntrusionTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         //initialize fluid system

@@ -98,13 +98,13 @@ class DensityDrivenFlowProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
@@ -115,7 +115,7 @@ class DensityDrivenFlowProblem : public NavierStokesProblem<TypeTag>
     static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
 
 public:
-    DensityDrivenFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    DensityDrivenFlowProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         useWholeLength_ = getParam<bool>("Problem.UseWholeLength");

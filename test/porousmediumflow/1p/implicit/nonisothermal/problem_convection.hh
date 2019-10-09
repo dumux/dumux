@@ -77,9 +77,9 @@ struct FluidSystem<TypeTag, TTag::OnePNIConvection>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePNIConvection>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNISpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePNISpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -143,10 +143,10 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
-    OnePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup)
+    OnePNIConvectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup)
     : ParentType(fvGridGeometry, paramGroup)
     {
         //initialize fluid system

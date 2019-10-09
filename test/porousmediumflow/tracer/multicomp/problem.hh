@@ -65,9 +65,9 @@ struct Problem<TypeTag, TTag::MaxwellStefanTest> { using type = MaxwellStefanTes
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::MaxwellStefanTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = MaxwellStefanTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = MaxwellStefanTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -208,18 +208,18 @@ class MaxwellStefanTestProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    MaxwellStefanTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    MaxwellStefanTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");

@@ -188,8 +188,8 @@ void assignValues(SolutionVector& sol, Values values)
     }
 }
 
-template<class TypeTag, class FVGridGeometry, std::size_t numValues>
-void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
+template<class TypeTag, class GridGeometry, std::size_t numValues>
+void testWriteAndReadVtk(std::shared_ptr<GridGeometry> fvGridGeometry,
                          const std::array<Dumux::GetPropType<TypeTag, Dumux::Properties::Scalar>, numValues>& values,
                          const std::string& fileName,
                          bool verbose = false,
@@ -201,8 +201,8 @@ void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector writeFrom;
 
-    writeFrom[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
-    writeFrom[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
+    writeFrom[GridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
+    writeFrom[GridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
 
     SolutionVector readTo = writeFrom;
 
@@ -210,8 +210,8 @@ void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
-    assignValues(writeFrom[FVGridGeometry::cellCenterIdx()], values);
-    assignValues(writeFrom[FVGridGeometry::faceIdx()], std::array<GetPropType<TypeTag, Properties::Scalar>, 1>{1.0});
+    assignValues(writeFrom[GridGeometry::cellCenterIdx()], values);
+    assignValues(writeFrom[GridGeometry::faceIdx()], std::array<GetPropType<TypeTag, Properties::Scalar>, 1>{1.0});
 
     problem->updateStaticWallProperties();
     problem->updateDynamicWallProperties(writeFrom);
@@ -235,47 +235,47 @@ void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry,
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
 
     // cc dofs
-    loadSolution(readTo[FVGridGeometry::cellCenterIdx()], fileName + "-00000.vtu",
+    loadSolution(readTo[GridGeometry::cellCenterIdx()], fileName + "-00000.vtu",
                  createCellCenterPVNameFunction<IOFields, CellCenterPrimaryVariables, ModelTraits, FluidSystem>(),
                  *fvGridGeometry);
 
     if (verbose)
     {
         std::cout << "reference cc " << std::endl;
-        for (const auto& block : writeFrom[FVGridGeometry::cellCenterIdx()])
+        for (const auto& block : writeFrom[GridGeometry::cellCenterIdx()])
         std::cout << block << std::endl;
 
         std::cout << "result cc " << std::endl;
-        for (const auto& block : readTo[FVGridGeometry::cellCenterIdx()])
+        for (const auto& block : readTo[GridGeometry::cellCenterIdx()])
         std::cout << block << std::endl;
     }
 
-    for (int i = 0; i < readTo[FVGridGeometry::cellCenterIdx()].size(); ++i)
+    for (int i = 0; i < readTo[GridGeometry::cellCenterIdx()].size(); ++i)
     {
-        if (Dune::FloatCmp::ne(readTo[FVGridGeometry::cellCenterIdx()][i], writeFrom[FVGridGeometry::cellCenterIdx()][i]))
-            DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[FVGridGeometry::cellCenterIdx()][i] << ", old " << writeFrom[FVGridGeometry::cellCenterIdx()][i]);
+        if (Dune::FloatCmp::ne(readTo[GridGeometry::cellCenterIdx()][i], writeFrom[GridGeometry::cellCenterIdx()][i]))
+            DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[GridGeometry::cellCenterIdx()][i] << ", old " << writeFrom[GridGeometry::cellCenterIdx()][i]);
     }
 
     // face dofs
-    loadSolution(readTo[FVGridGeometry::faceIdx()], fileName + "-face-00000.vtp",
+    loadSolution(readTo[GridGeometry::faceIdx()], fileName + "-face-00000.vtp",
                  createFacePVNameFunction<IOFields, FacePrimaryVariables, ModelTraits, FluidSystem>(),
                  *fvGridGeometry);
 
      if (verbose)
      {
          std::cout << "reference face " << std::endl;
-         for (const auto& block : writeFrom[FVGridGeometry::faceIdx()])
+         for (const auto& block : writeFrom[GridGeometry::faceIdx()])
          std::cout << block << std::endl;
 
          std::cout << "result face " << std::endl;
-         for (const auto& block : readTo[FVGridGeometry::faceIdx()])
+         for (const auto& block : readTo[GridGeometry::faceIdx()])
          std::cout << block << std::endl;
      }
 
-     for (int i = 0; i < readTo[FVGridGeometry::faceIdx()].size(); ++i)
+     for (int i = 0; i < readTo[GridGeometry::faceIdx()].size(); ++i)
      {
-         if (Dune::FloatCmp::ne(readTo[FVGridGeometry::faceIdx()][i], writeFrom[FVGridGeometry::faceIdx()][i]))
-             DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[FVGridGeometry::faceIdx()][i] << ", old " << writeFrom[FVGridGeometry::faceIdx()][i]);
+         if (Dune::FloatCmp::ne(readTo[GridGeometry::faceIdx()][i], writeFrom[GridGeometry::faceIdx()][i]))
+             DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[GridGeometry::faceIdx()][i] << ", old " << writeFrom[GridGeometry::faceIdx()][i]);
      }
 
      // clean up the folder
@@ -313,7 +313,7 @@ int main(int argc, char** argv) try
 
     using CommonTypeTag = Properties::TTag::StaggeredPVNamesTestTypeTag;
     using Grid = GetPropType<CommonTypeTag, Properties::Grid>;
-    using FVGridGeometry = GetPropType<CommonTypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<CommonTypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<CommonTypeTag, Properties::Scalar>;
     using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimension>;
 
@@ -324,7 +324,7 @@ int main(int argc, char** argv) try
 
     const auto grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cells);
     const auto gridView = grid->leafGridView();
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(gridView);
+    auto fvGridGeometry = std::make_shared<GridGeometry>(gridView);
     fvGridGeometry->update();
 
     using FluidSystem = GetPropType<CommonTypeTag, Properties::FluidSystem>;

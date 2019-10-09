@@ -43,7 +43,7 @@ namespace Dumux {
 template<class TypeTag>
 class TwoPGridAdaptIndicator
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -63,7 +63,7 @@ public:
      *        in a way such that the indicator returns false for all elements
      *        before having been calculated.
      */
-    TwoPGridAdaptIndicator(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    TwoPGridAdaptIndicator(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : fvGridGeometry_(fvGridGeometry)
     , refineBound_(std::numeric_limits<Scalar>::max())
     , coarsenBound_(std::numeric_limits<Scalar>::lowest())
@@ -269,7 +269,7 @@ private:
         return true;
     }
 
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const GridGeometry> fvGridGeometry_;
 
     Scalar refineBound_;
     Scalar coarsenBound_;

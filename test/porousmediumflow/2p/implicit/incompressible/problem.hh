@@ -84,10 +84,10 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPIncompressible>
 {
 private:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = TwoPTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Enable caching
@@ -116,7 +116,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -130,7 +130,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
 public:
-    TwoPTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
 
     /*!

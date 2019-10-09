@@ -116,10 +116,10 @@ class TissueProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -128,12 +128,12 @@ class TissueProblem : public PorousMediumFlowProblem<TypeTag>
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using GlobalPosition = typename GridGeometry::GlobalCoordinate;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    TissueProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    TissueProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
                   std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Tissue")
     , couplingManager_(couplingManager)

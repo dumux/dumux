@@ -51,8 +51,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa, referenceSys
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -100,7 +100,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa, referenceSys
         using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
         static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
-        static constexpr bool considerSecondaryIVs = FVGridGeometry::MpfaHelper::considerSecondaryIVs();
+        static constexpr bool considerSecondaryIVs = GridGeometry::MpfaHelper::considerSecondaryIVs();
         using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle::DiffusionHandle;
         using SecondaryDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle::DiffusionHandle;
 

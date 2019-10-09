@@ -225,11 +225,11 @@ class StokesDarcyCouplingDataImplementationBase
     using Scalar = typename MDTraits::Scalar;
 
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
-    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
-    template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::LocalView::SubControlVolumeFace;
-    template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using Element = typename GridGeometry<id>::GridView::template Codim<0>::Entity;
+    template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+    template<std::size_t id> using SubControlVolumeFace = typename GridGeometry<id>::LocalView::SubControlVolumeFace;
+    template<std::size_t id> using SubControlVolume = typename GridGeometry<id>::LocalView::SubControlVolume;
     template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t id> using VolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
@@ -241,8 +241,8 @@ class StokesDarcyCouplingDataImplementationBase
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
     using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
-    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, FVGridGeometry<darcyIdx>::discMethod>;
-    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, FVGridGeometry<darcyIdx>::discMethod>;
+    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
+    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
 
     static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numFluidPhases() > 1;
     using IndexHelper = Dumux::IndexHelper<stokesIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>;
@@ -525,11 +525,11 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
-    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
-    template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::LocalView::SubControlVolumeFace;
-    template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using Element = typename GridGeometry<id>::GridView::template Codim<0>::Entity;
+    template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+    template<std::size_t id> using SubControlVolumeFace = typename GridGeometry<id>::LocalView::SubControlVolumeFace;
+    template<std::size_t id> using SubControlVolume = typename GridGeometry<id>::LocalView::SubControlVolume;
     template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t id> using ElementFaceVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>::LocalView;
@@ -687,11 +687,11 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using Element = typename FVGridGeometry<id>::GridView::template Codim<0>::Entity;
-    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using Element = typename GridGeometry<id>::GridView::template Codim<0>::Entity;
+    template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolumeFace = typename FVElementGeometry<id>::SubControlVolumeFace;
-    template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::LocalView::SubControlVolume;
+    template<std::size_t id> using SubControlVolume = typename GridGeometry<id>::LocalView::SubControlVolume;
     template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t id> using ElementFaceVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>::LocalView;

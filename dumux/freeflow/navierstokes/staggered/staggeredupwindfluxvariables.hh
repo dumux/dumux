@@ -58,9 +58,9 @@ class StaggeredUpwindFluxVariables
     using FaceVariables = typename GridFaceVariables::FaceVariables;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -70,7 +70,7 @@ class StaggeredUpwindFluxVariables
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using VelocityGradients = StaggeredVelocityGradients<Scalar, FVGridGeometry, BoundaryTypes, Indices>;
+    using VelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry, BoundaryTypes, Indices>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;

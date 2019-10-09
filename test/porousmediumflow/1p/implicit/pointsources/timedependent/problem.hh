@@ -75,10 +75,10 @@ class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTa
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
-    OnePSingularityProblemTimeDependent(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePSingularityProblemTimeDependent(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {}
 

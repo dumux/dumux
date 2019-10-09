@@ -42,17 +42,17 @@ namespace Dumux {
 /**
  * \brief Definition of the spatial parameters for the one component combustion problem
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class CombustionSpatialParams
-: public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                       CombustionSpatialParams<FVGridGeometry, Scalar>>
+: public FVNonEquilibriumSpatialParams<GridGeometry, Scalar,
+                                       CombustionSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ThisType = CombustionSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using ThisType = CombustionSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVNonEquilibriumSpatialParams<GridGeometry, Scalar, ThisType>;
 
     enum {dimWorld = GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
@@ -67,7 +67,7 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
 
-    CombustionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    CombustionSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // this is the parameter value from file part
         porosity_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");

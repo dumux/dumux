@@ -56,8 +56,8 @@ class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;

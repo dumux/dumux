@@ -87,8 +87,8 @@ int main(int argc, char** argv) try
     Dune::Timer timer;
 
     //! create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<OnePTypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
+    using GridGeometry = GetPropType<OnePTypeTag, Properties::GridGeometry>;
+    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     //! the problem (boundary conditions)

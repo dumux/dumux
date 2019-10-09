@@ -36,17 +36,17 @@ namespace Dumux {
  * \brief A test problem for the 1p model: A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TubesTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             TubesTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             TubesTestSpatialParams<GridGeometry, Scalar>>
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           TubesTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           TubesTestSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -54,7 +54,7 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TubesTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TubesTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
         radius_ = 1.0;

@@ -39,18 +39,18 @@ namespace Dumux {
  * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class KuevetteSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         KuevetteSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         KuevetteSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       KuevetteSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       KuevetteSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
@@ -61,7 +61,7 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    KuevetteSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    KuevetteSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities

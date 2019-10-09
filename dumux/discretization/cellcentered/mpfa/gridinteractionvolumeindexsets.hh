@@ -47,7 +47,7 @@ class CCMpfaGridInteractionVolumeIndexSets
     using SecondaryIVIndexSet = typename SI::Traits::IndexSet;
 
 public:
-    using FVGridGeometry = FVG;
+    using GridGeometry = FVG;
     using PrimaryInteractionVolume = PI;
     using SecondaryInteractionVolume = SI;
 
@@ -60,7 +60,7 @@ public:
      * \param fvGridGeometry The finite volume geometry on the grid view
      * \param dualGridIdSet The index sets of the dual grid on the grid view
      */
-    void update(FVGridGeometry& fvGridGeometry, DualGridIndexSet&& dualGridIdSet)
+    void update(GridGeometry& fvGridGeometry, DualGridIndexSet&& dualGridIdSet)
     {
         dualGridIndexSet_ = std::make_unique<DualGridIndexSet>(std::move(dualGridIdSet));
 

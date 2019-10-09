@@ -49,7 +49,7 @@ public:
     template<class Problem, class SolutionVector>
     static auto calculateL2Error(const Problem& problem, const SolutionVector& curSol)
     {
-        using FVGridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
+        using GridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
         PrimaryVariables sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
 
         const int numFaceDofs = problem.gridGeometry().numFaceDofs();
@@ -72,7 +72,7 @@ public:
                 const auto dofIdxCellCenter = scv.dofIndex();
                 const auto& posCellCenter = scv.dofPosition();
                 const auto analyticalSolutionCellCenter = problem.dirichletAtPos(posCellCenter)[Indices::pressureIdx];
-                const auto numericalSolutionCellCenter = curSol[FVGridGeometry::cellCenterIdx()][dofIdxCellCenter][Indices::pressureIdx - ModelTraits::dim()];
+                const auto numericalSolutionCellCenter = curSol[GridGeometry::cellCenterIdx()][dofIdxCellCenter][Indices::pressureIdx - ModelTraits::dim()];
                 sumError[Indices::pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
                 sumReference[Indices::pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
                 totalVolume += scv.volume();
@@ -83,7 +83,7 @@ public:
                     const int dofIdxFace = scvf.dofIndex();
                     const int dirIdx = scvf.directionIndex();
                     const auto analyticalSolutionFace = problem.dirichletAtPos(scvf.center())[Indices::velocity(dirIdx)];
-                    const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][0];
+                    const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][dofIdxFace][0];
                     directionIndex[dofIdxFace] = dirIdx;
                     errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
                     velocityReference[dofIdxFace] = squaredDiff_(analyticalSolutionFace, 0.0);

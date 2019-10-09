@@ -122,14 +122,14 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -142,7 +142,7 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
     static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
 
 public:
-    FlatPlateNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FlatPlateNCTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity", 0.1);

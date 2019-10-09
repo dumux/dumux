@@ -37,16 +37,16 @@ namespace Dumux {
  * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TwoPCornerPointTestSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar, TwoPCornerPointTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar, TwoPCornerPointTestSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ThisType = TwoPCornerPointTestSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using ThisType = TwoPCornerPointTestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -60,7 +60,7 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
-    TwoPCornerPointTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    TwoPCornerPointTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry,
                                      std::shared_ptr<const Opm::Deck> deck)
     : ParentType(fvGridGeometry)
     , deck_(deck)

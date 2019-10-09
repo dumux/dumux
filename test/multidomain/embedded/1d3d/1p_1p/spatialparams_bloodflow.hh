@@ -33,19 +33,19 @@ namespace Dumux {
  * \ingroup EmbeddedTests
  * \brief Definition of the spatial parameters for the blood flow problem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class BloodFlowSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar, BloodFlowSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar, BloodFlowSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = BloodFlowSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
-    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using ThisType = BloodFlowSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using GlobalPosition = typename GridGeometry::GlobalCoordinate;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    BloodFlowSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    BloodFlowSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         radius_ = getParam<Scalar>("SpatialParams.Radius");

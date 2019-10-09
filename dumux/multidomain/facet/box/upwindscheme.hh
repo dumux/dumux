@@ -36,7 +36,7 @@ namespace Dumux {
  *        This is a modified scheme for models involving coupling
  *        with a lower-dimensional domain across the element facets.
  */
-template<class FVGridGeometry>
+template<class GridGeometry>
 class BoxFacetCouplingUpwindScheme
 {
 public:

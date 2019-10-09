@@ -74,9 +74,9 @@ struct FluidSystem<TypeTag, TTag::RichardsNIConvection> { using type = FluidSyst
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsNIConvection>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
+    using type = RichardsNISpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -111,7 +111,7 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -141,7 +141,7 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    RichardsNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RichardsNIConvectionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         // initialize fluid system

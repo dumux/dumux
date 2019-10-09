@@ -44,9 +44,9 @@ class GmshBoundaryFlagTest
 
 public:
 
-    template<class FVGridGeometry>
+    template<class GridGeometry>
     static void testGmshBoundaryFlag(const GridView& leafGridView,
-                                     std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                                     std::shared_ptr<const GridGeometry> fvGridGeometry,
                                      std::shared_ptr<const GridData<Grid>> gridData)
     {
 

@@ -41,14 +41,14 @@ namespace Dumux {
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the RichardsAnalyticalProblem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class RichardsAnalyticalSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         RichardsAnalyticalSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       RichardsAnalyticalSpatialParams<FVGridGeometry, Scalar>>;
+    using GridView = typename GridGeometry::GridView;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       RichardsAnalyticalSpatialParams<GridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
     using Element = typename GridView::template Codim<0>::Entity;
@@ -64,7 +64,7 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RichardsAnalyticalSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RichardsAnalyticalSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry)
     {
         K_ = 5e-12;

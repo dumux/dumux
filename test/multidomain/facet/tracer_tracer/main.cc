@@ -119,11 +119,11 @@ struct CouplingManager<TypeTag, TTag::TracerLowDimMpfa> { using type = typename 
  * have to create additional faces on interior boundaries, which wouldn't be
  * created in the standard scheme.
  */
-template< class FVGridGeometry,
+template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
-          std::enable_if_t<FVGridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
+          std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
+void updateBulkFVGridGeometry(GridGeometry& fvGridGeometry,
                               const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {
@@ -135,11 +135,11 @@ void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
 /*!
  * \brief Updates the finite volume grid geometry for the cell centered schemes.
  */
- template< class FVGridGeometry,
+ template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
-          std::enable_if_t<FVGridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
+          std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
+void updateBulkFVGridGeometry(GridGeometry& fvGridGeometry,
                               const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {

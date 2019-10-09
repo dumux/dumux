@@ -37,17 +37,17 @@ namespace Dumux {
  * \brief Definition of the spatial params properties for the obstacle problem.
  *
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class ObstacleSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         ObstacleSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         ObstacleSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       ObstacleSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       ObstacleSpatialParams<GridGeometry, Scalar>>;
 
     enum {dimWorld=GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
@@ -60,7 +60,7 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    ObstacleSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    ObstacleSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;

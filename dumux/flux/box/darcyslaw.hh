@@ -40,7 +40,7 @@ template<class TypeTag, DiscretizationMethod discMethod>
 class DarcysLawImplementation;
 
 // forward declaration
-template<class Scalar, class FVGridGeometry>
+template<class Scalar, class GridGeometry>
 class BoxDarcysLaw;
 
 /*!
@@ -56,15 +56,15 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
  * \ingroup BoxFlux
  * \brief Darcy's law for box schemes
  * \tparam Scalar the scalar type for scalar physical quantities
- * \tparam FVGridGeometry the grid geometry
+ * \tparam GridGeometry the grid geometry
  */
-template<class Scalar, class FVGridGeometry>
+template<class Scalar, class GridGeometry>
 class BoxDarcysLaw
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
 

@@ -77,10 +77,10 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -92,7 +92,7 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
-    ElasticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ElasticProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
 
     //! Returns the temperature in the domain.

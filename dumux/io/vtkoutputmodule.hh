@@ -64,12 +64,12 @@ namespace Dumux {
 template<class GridVariables, class SolutionVector>
 class VtkOutputModule
 {
-    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using GridGeometry = typename GridVariables::GridGeometry;
 
     using VV = typename GridVariables::VolumeVariables;
     using Scalar = typename GridVariables::Scalar;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
 
     enum {
         dim = GridView::dimension,
@@ -79,7 +79,7 @@ class VtkOutputModule
     using Element = typename GridView::template Codim<0>::Entity;
     using VolVarsVector = Dune::FieldVector<Scalar, dimWorld>;
 
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
@@ -230,7 +230,7 @@ public:
 protected:
     // some return functions for differing implementations to use
     const auto& problem() const { return gridVariables_.curGridVolVars().problem(); }
-    const FVGridGeometry& fvGridGeometry() const { return gridVariables_.gridGeometry(); }
+    const GridGeometry& fvGridGeometry() const { return gridVariables_.gridGeometry(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
     const SolutionVector& sol() const { return sol_; }
 

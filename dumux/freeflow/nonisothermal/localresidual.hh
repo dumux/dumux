@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class FVGridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool enableEneryBalance, bool isCompositional>
+template<class GridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool enableEneryBalance, bool isCompositional>
 class FreeFlowEnergyLocalResidualImplementation;
 
 /*!
@@ -38,19 +38,19 @@ class FreeFlowEnergyLocalResidualImplementation;
  * \brief Element-wise calculation of the local residual for non-isothermal
  *        free-flow models
  */
-template<class FVGridGeometry, class FluxVariables, bool enableEneryBalance, bool isCompositional>
+template<class GridGeometry, class FluxVariables, bool enableEneryBalance, bool isCompositional>
 using FreeFlowEnergyLocalResidual =
-      FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
+      FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                 FluxVariables,
-                                                FVGridGeometry::discMethod,
+                                                GridGeometry::discMethod,
                                                 enableEneryBalance, isCompositional>;
 
 /*!
  * \ingroup FreeflowNIModel
  * \brief Specialization for isothermal models, does nothing
  */
-template<class FVGridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool isCompositional>
-class FreeFlowEnergyLocalResidualImplementation<FVGridGeometry, FluxVariables, discMethod, false, isCompositional>
+template<class GridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool isCompositional>
+class FreeFlowEnergyLocalResidualImplementation<GridGeometry, FluxVariables, discMethod, false, isCompositional>
 {
 public:
 
@@ -69,14 +69,14 @@ public:
  * \ingroup FreeflowNIModel
  * \brief Specialization for staggered one-phase, non-isothermal models
  */
-template<class FVGridGeometry, class FluxVariables>
-class FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
+template<class GridGeometry, class FluxVariables>
+class FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                 FluxVariables,
                                                 DiscretizationMethod::staggered,
                                                 true, false>
 {
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
@@ -121,22 +121,22 @@ public:
  * \ingroup FreeflowNIModel
  * \brief Specialization for staggered compositional, non-isothermal models
  */
-template<class FVGridGeometry, class FluxVariables>
-class FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
+template<class GridGeometry, class FluxVariables>
+class FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                 FluxVariables,
                                                 DiscretizationMethod::staggered,
                                                 true, true>
-    : public FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
+    : public FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                        FluxVariables,
                                                        DiscretizationMethod::staggered,
                                                        true, false>
 {
-    using ParentType = FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
+    using ParentType = FreeFlowEnergyLocalResidualImplementation<GridGeometry,
                                                                  FluxVariables,
                                                                  DiscretizationMethod::staggered,
                                                                  true, false>;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:

@@ -82,8 +82,8 @@ void assembleElementStresses(SigmaStorage& sigmaStorage,
         const auto effSigma = StressType::effectiveStressTensor(problem, element, fvGeometry, elemVolVars, fluxVarsCache);
 
         // pass values into storage container
-        using FVGridGeometry = typename GridVariables::GridGeometry;
-        for (int dir = 0; dir < FVGridGeometry::GridView::dimension; ++dir)
+        using GridGeometry = typename GridVariables::GridGeometry;
+        for (int dir = 0; dir < GridGeometry::GridView::dimension; ++dir)
         {
             const auto eIdx = fvGridGeometry.elementMapper().index(element);
             sigmaStorage[dir][eIdx] = sigma[dir];
@@ -125,8 +125,8 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (initial and boundary conditions)
@@ -156,8 +156,8 @@ int main(int argc, char** argv) try
     vtkWriter.addField(xExact, "u_exact");
 
     // Furthermore, write out element stress tensors
-    static constexpr int dim = FVGridGeometry::GridView::dimension;
-    static constexpr int dimWorld = FVGridGeometry::GridView::dimensionworld;
+    static constexpr int dim = GridGeometry::GridView::dimension;
+    static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ForceVector = Dune::FieldVector< Scalar, dimWorld >;
 

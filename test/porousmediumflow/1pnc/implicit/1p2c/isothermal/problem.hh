@@ -86,9 +86,9 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCTest>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePNCTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -134,7 +134,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
@@ -167,7 +167,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    OnePTwoCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTwoCTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), useNitscheTypeBc_(getParam<bool>("Problem.UseNitscheTypeBc", false))
     {
         //initialize fluid system

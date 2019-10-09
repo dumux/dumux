@@ -55,8 +55,8 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -64,8 +64,8 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
-    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
+    static constexpr auto cellCenterIdx = GridGeometry::cellCenterIdx();
+    static constexpr auto faceIdx = GridGeometry::faceIdx();
 
     static constexpr auto numEqCellCenter = getPropValue<TypeTag, Properties::NumEqCellCenter>();
     static constexpr auto numEqFace = getPropValue<TypeTag, Properties::NumEqFace>();
@@ -76,7 +76,7 @@ public:
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    StaggeredFVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    StaggeredFVProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     { }
 

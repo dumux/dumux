@@ -66,9 +66,9 @@ struct Problem<TypeTag, TTag::OnePCompressible> { using type = OnePTestProblem<T
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePCompressible>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // the fluid system
@@ -105,13 +105,13 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         Components::TabulatedComponent<Components::H2O<Scalar>>::init(272.15, 294.15, 10,

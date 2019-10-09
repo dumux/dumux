@@ -73,9 +73,9 @@ struct Problem<TypeTag, TTag::OnePIncompressible> { using type = OnePTestProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePIncompressible>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // use the incompressible local residual (provides analytic jacobian)
@@ -120,14 +120,14 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
 
 public:
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), velocity_(0.0)
     {
         extrusionFactor_ = getParam<Scalar>("Problem.ExtrusionFactor");

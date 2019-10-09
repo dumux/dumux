@@ -34,14 +34,14 @@ namespace Dumux {
  * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the 1pni problems.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePNISpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePNISpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             OnePNISpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           OnePNISpatialParams<FVGridGeometry, Scalar>>;
+    using GridView = typename GridGeometry::GridView;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           OnePNISpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -51,7 +51,7 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePNISpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePNISpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
 
     /*!

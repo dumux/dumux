@@ -78,8 +78,8 @@ public:
 
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false)
@@ -144,8 +144,8 @@ public:
 
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}

@@ -188,9 +188,9 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////
 
     // create the finite volume grid geometries
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry0 = std::make_shared<FVGridGeometry>(gridView0);
-    auto fvGridGeometry1 = std::make_shared<FVGridGeometry>(gridView1);
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto fvGridGeometry0 = std::make_shared<GridGeometry>(gridView0);
+    auto fvGridGeometry1 = std::make_shared<GridGeometry>(gridView1);
     fvGridGeometry0->update();
     fvGridGeometry1->update();
 

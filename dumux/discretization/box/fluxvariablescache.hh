@@ -35,15 +35,15 @@ namespace Dumux {
  *        For the box scheme, this class does not contain any physics-/process-dependent
  *        data. It solely stores disretization-/grid-related data.
  */
-template< class Scalar, class FVGridGeometry >
+template< class Scalar, class GridGeometry >
 class BoxFluxVariablesCache
 {
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;

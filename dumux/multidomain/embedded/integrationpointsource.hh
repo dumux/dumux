@@ -108,8 +108,8 @@ class IntegrationPointSourceHelper
 
 public:
     //! calculate a DOF index to point source map from given vector of point sources
-    template<class FVGridGeometry, class PointSource, class PointSourceMap>
-    static void computePointSourceMap(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class PointSource, class PointSourceMap>
+    static void computePointSourceMap(const GridGeometry& fvGridGeometry,
                                       std::vector<PointSource>& sources,
                                       PointSourceMap& pointSourceMap)
     {
@@ -122,7 +122,7 @@ public:
             // loop over all intersected elements
             for (unsigned int eIdx : entities)
             {
-                if (FVGridGeometry::discMethod == DiscretizationMethod::box)
+                if (GridGeometry::discMethod == DiscretizationMethod::box)
                 {
                     // check in which subcontrolvolume(s) we are
                     const auto element = fvGridGeometry.boundingBoxTree().entitySet().entity(eIdx);
@@ -130,7 +130,7 @@ public:
                     fvGeometry.bindElement(element);
                     const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside
-                    constexpr int dim = FVGridGeometry::GridView::dimension;
+                    constexpr int dim = GridGeometry::GridView::dimension;
                     Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
                     for (auto&& scv : scvs(fvGeometry))
                         if (intersectsPointGeometry(globalPos, scv.geometry()))

@@ -111,7 +111,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -127,7 +127,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     static constexpr auto transportEqIdx = Indices::conti0EqIdx + compIdx;
 
 public:
-    ChannelNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    ChannelNCTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");

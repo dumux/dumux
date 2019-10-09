@@ -42,13 +42,13 @@ class StaggeredFaceSolution
 
 public:
 
-    template<class SubControlVolumeFace, class FVGridGeometry>
+    template<class SubControlVolumeFace, class GridGeometry>
     StaggeredFaceSolution(const SubControlVolumeFace& scvf, const FaceSolutionVector& sol,
-                          const FVGridGeometry& fvGridGeometry)
+                          const GridGeometry& fvGridGeometry)
     {
 
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
-        const auto& stencil = connectivityMap(FVGridGeometry::faceIdx(), FVGridGeometry::faceIdx(), scvf.index());
+        const auto& stencil = connectivityMap(GridGeometry::faceIdx(), GridGeometry::faceIdx(), scvf.index());
 
         facePriVars_.reserve(stencil.size()+1);
         map_.reserve(stencil.size()+1);

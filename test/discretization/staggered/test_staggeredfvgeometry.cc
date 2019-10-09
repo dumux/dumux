@@ -65,19 +65,19 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
         using FaceIdx = Dune::index_constant<1>;
     };
 
-    //! Dummy connectivity map, required by FVGridGeometry
-    template<class FVGridGeometry>
+    //! Dummy connectivity map, required by GridGeometry
+    template<class GridGeometry>
     struct MockConnectivityMap
     {
-        void update(const FVGridGeometry& fvGridGeometry) {}
+        void update(const GridGeometry& fvGridGeometry) {}
         void setStencilOrder(const int order) {}
     };
 
-    template<class FVGridGeometry>
-    using ConnectivityMap = MockConnectivityMap<FVGridGeometry>;
+    template<class GridGeometry>
+    using ConnectivityMap = MockConnectivityMap<GridGeometry>;
 
-    template<class FVGridGeometry, bool enableCache>
-    using LocalView = StaggeredFVElementGeometry<FVGridGeometry, enableCache>;
+    template<class GridGeometry, bool enableCache>
+    using LocalView = StaggeredFVElementGeometry<GridGeometry, enableCache>;
 };
 
 } // end namespace Dumux
@@ -101,9 +101,9 @@ int main (int argc, char *argv[]) try
     constexpr int dimworld = Grid::dimensionworld;
 
     using GlobalPosition = typename Dune::FieldVector<Grid::ctype, dimworld>;
-    using FVGridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
+    using GridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
                                                    TestFVGGTraits<typename Grid::LeafGridView> >;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
@@ -114,7 +114,7 @@ int main (int argc, char *argv[]) try
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
     auto leafGridView = grid->leafGridView();
 
-    FVGridGeometry fvGridGeometry(leafGridView);
+    GridGeometry fvGridGeometry(leafGridView);
     fvGridGeometry.update();
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces

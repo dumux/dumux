@@ -46,12 +46,12 @@ class TwoPTestProblemAdaptive : public TwoPTestProblem<TypeTag>
     using Vertex = typename GridView::template Codim<GridView::dimensionworld>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
-    TwoPTestProblemAdaptive(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPTestProblemAdaptive(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         if(!isBox)
