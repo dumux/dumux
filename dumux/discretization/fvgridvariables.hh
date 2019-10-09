@@ -61,8 +61,8 @@ public:
 
     template<class Problem>
     FVGridVariables(std::shared_ptr<Problem> problem,
-                    std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : gridGeometry_(fvGridGeometry)
+                    std::shared_ptr<const GridGeometry> gridGeometry)
+    : gridGeometry_(gridGeometry)
     , curGridVolVars_(*problem)
     , prevGridVolVars_(*problem)
     , gridFluxVarsCache_(*problem)

@@ -94,10 +94,10 @@ public:
 
     //! return the fv grid geometry
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
+    const GridGeometry& fvGridGeometry() const
     { return (*gridVariables_->gridGeometry_);    }
     //! return the fv grid geometry
-    const FVGridGeometry& gridGeometry() const
+    const GridGeometry& gridGeometry() const
     { return (*gridVariables_->gridGeometry_);    }
 
     // return the actual grid variables
@@ -215,12 +215,11 @@ template<class GG, class GVV, class GFVC, class GFV>
 class StaggeredGridVariables : public FVGridVariables<GG, GVV, GFVC>
 {
     using ParentType = FVGridVariables<GG, GVV, GFVC>;
-    using FVGridGeometry = GG;
     using ThisType = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
     friend class StaggeredGridVariablesView<ThisType>;
 
-    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
-    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
+    static constexpr auto cellCenterIdx = GG::cellCenterIdx();
+    static constexpr auto faceIdx = GG::faceIdx();
 
 public:
     using CellCenterGridVariablesType = CellCenterGridVariablesView<ThisType>;
@@ -238,8 +237,8 @@ public:
     //! Constructor
     template<class Problem>
     StaggeredGridVariables(std::shared_ptr<Problem> problem,
-                           std::shared_ptr<GridGeometry> fvGridGeometry)
-    : ParentType(problem, fvGridGeometry)
+                           std::shared_ptr<GridGeometry> gridGeometry)
+    : ParentType(problem, gridGeometry)
     , curGridFaceVariables_(*problem)
     , prevGridFaceVariables_(*problem)
     {}

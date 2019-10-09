@@ -159,7 +159,7 @@ public:
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
+    const GridGeometry& fvGridGeometry() const
     { return gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
@@ -363,7 +363,7 @@ public:
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
+    const GridGeometry& fvGridGeometry() const
     { return gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
