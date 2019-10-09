@@ -68,14 +68,14 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RoughChannel>
 {
 private:
-    // We define convenient shortcuts to the properties FVGridGeometry, Scalar, ElementVolumeVariables and VolumeVariables:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    // We define convenient shortcuts to the properties GridGeometry, Scalar, ElementVolumeVariables and VolumeVariables:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     // Finally we set the spatial parameters:
 public:
-    using type = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
+    using type = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
 };
 
 // We enable caching for the FV grid geometry and the grid volume variables. The cache
@@ -103,7 +103,7 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -119,7 +119,7 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 
 public:
     // This is the constructor of our problem class.
-    RoughChannelProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RoughChannelProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         // We read the parameters from the params.input file.

@@ -106,11 +106,11 @@ namespace Dumux {
   {
       // We define convenient shortcuts to the properties GridGeometry and Scalar:
   private:
-      using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+      using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
       // Finally we set the spatial parameters:
   public:
-      using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
+      using type = TwoPTestSpatialParams<GridGeometry, Scalar>;
   };
 
   // We enable caching for the grid volume variables, the grid flux variables and the FV grid geometry. The cache
@@ -139,7 +139,7 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PointSource =  GetPropType<TypeTag, Properties::PointSource>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -157,7 +157,7 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     // This is the constructor of our problem class:
-    PointSourceProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    PointSourceProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
   : ParentType(fvGridGeometry)
   {
     // We read in the values for the initial condition of our simulation:
