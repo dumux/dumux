@@ -74,7 +74,7 @@ struct FluidSystem<TypeTag, TTag::RichardsNIConvection> { using type = FluidSyst
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsNIConvection>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
 };
@@ -110,8 +110,8 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -165,12 +165,12 @@ public:
     //! Update the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
-        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
+        const auto someElement = *(elements(this->gridGeometry().gridView()).begin());
 
-        const auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
+        const auto someElemSol = elementSolution(someElement, curSol, this->gridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->fvGridGeometry());
+        auto someFvGeometry = localView(this->gridGeometry());
         someFvGeometry.bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
@@ -186,9 +186,9 @@ public:
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars);
         using std::max;
         time = max(time, 1e-10);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -234,7 +234,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }

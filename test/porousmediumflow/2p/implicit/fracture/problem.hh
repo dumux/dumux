@@ -82,7 +82,7 @@ struct FluidSystem<TypeTag, TTag::Fracture>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Fracture>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FractureSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -111,7 +111,7 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
@@ -193,7 +193,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        const auto depth = this->fvGridGeometry().bBoxMax()[dimWorld-1] - globalPos[dimWorld-1];
+        const auto depth = this->gridGeometry().bBoxMax()[dimWorld-1] - globalPos[dimWorld-1];
         const auto g = this->spatialParams().gravity(globalPos)[dimWorld-1];
 
         PrimaryVariables values;

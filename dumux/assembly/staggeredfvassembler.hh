@@ -65,16 +65,17 @@ class StaggeredFVAssembler: public MultiDomainFVAssembler<StaggeredMultiDomainTr
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
 
 public:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using CouplingManager = typename ParentType::CouplingManager;
 
     //! The constructor for stationary problems
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
-                         std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                         std::shared_ptr<const GridGeometry> gridGeometry,
                          std::shared_ptr<GridVariables> gridVariables)
     : ParentType(std::make_tuple(problem, problem),
-                 std::make_tuple(fvGridGeometry->cellCenterFVGridGeometryPtr(), fvGridGeometry->faceFVGridGeometryPtr()),
+                 std::make_tuple(gridGeometry->cellCenterFVGridGeometryPtr(), gridGeometry->faceFVGridGeometryPtr()),
                  std::make_tuple(gridVariables->cellCenterGridVariablesPtr(), gridVariables->faceGridVariablesPtr()),
                  std::make_shared<CouplingManager>())
     {
@@ -85,11 +86,11 @@ public:
     //! The constructor for instationary problems
     [[deprecated("Please use the constructor additionally taking the previous solution. Will be removed after 3.2 release!")]]
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
-                         std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                         std::shared_ptr<const GridGeometry> gridGeometry,
                          std::shared_ptr<GridVariables> gridVariables,
                          std::shared_ptr<const TimeLoop> timeLoop)
     : ParentType(std::make_tuple(problem, problem),
-                 std::make_tuple(fvGridGeometry->cellCenterFVGridGeometryPtr(), fvGridGeometry->faceFVGridGeometryPtr()),
+                 std::make_tuple(gridGeometry->cellCenterFVGridGeometryPtr(), gridGeometry->faceFVGridGeometryPtr()),
                  std::make_tuple(gridVariables->cellCenterGridVariablesPtr(), gridVariables->faceGridVariablesPtr()),
                  std::make_shared<CouplingManager>(),
                  timeLoop)
@@ -123,8 +124,12 @@ public:
     { return ParentType::gridVariables(Dune::index_constant<0>()); }
 
     //! The global finite volume geometry
-    const FVGridGeometry& fvGridGeometry() const
-    { return ParentType::fvGridGeometry(Dune::index_constant<0>()).actualfvGridGeometry(); }
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
+    { return gridGeometry(); }
+
+    const GridGeometry& gridGeometry() const
+    { return ParentType::gridGeometry(Dune::index_constant<0>()).actualfvGridGeometry(); }
 
 };
 

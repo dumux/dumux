@@ -70,7 +70,7 @@ public:
                     const ElemSol& elemSol) const
     {
         PorosityDeformation<Scalar> poroLaw;
-        return poroLaw.evaluatePorosity(this->fvGridGeometry(), element, scv, elemSol, /*refPoro*/0.3);
+        return poroLaw.evaluatePorosity(this->gridGeometry(), element, scv, elemSol, /*refPoro*/0.3);
     }
 
     //! Returns the Biot coefficient of the porous medium.

@@ -45,7 +45,7 @@ class MultiDomainFVGridVariables
     static constexpr std::size_t numSubDomains = MDTraits::numSubDomains;
 
     template<std::size_t i>
-    using GridGeometry = typename MDTraits::template SubDomain<i>::FVGridGeometry;
+    using GridGeometry = typename MDTraits::template SubDomain<i>::GridGeometry;
     using GridGeometries = typename MDTraits::template TupleOfSharedPtrConst<GridGeometry>;
 
     template<std::size_t i>

@@ -49,15 +49,15 @@ namespace Staggered {
 //////////////////////////////////////////////////////////
 template<template<std::size_t> class SubDomainTypeTag, std::size_t i>
 struct SubDomainFVGridGeometryImpl
-{ using type = GetPropType<SubDomainTypeTag<i>, Properties::FVGridGeometry>; };
+{ using type = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainFVGridGeometryImpl<SubDomainTypeTag, 0>
-{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::CellCenterFVGridGeometryType; };
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridGeometry>::CellCenterFVGridGeometryType; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainFVGridGeometryImpl<SubDomainTypeTag, 1>
-{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::FVGridGeometry>::FaceFVGridGeometryType; };
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridGeometry>::FaceFVGridGeometryType; };
 //////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////
@@ -194,7 +194,8 @@ public:
         using Index = Dune::index_constant<id>;
         using TypeTag = SubDomainTypeTag<id>;
         using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-        using FVGridGeometry = typename Detail::Staggered::SubDomainFVGridGeometryImpl<SubDomainTypeTag, id>::type;
+        using GridGeometry = typename Detail::Staggered::SubDomainFVGridGeometryImpl<SubDomainTypeTag, id>::type;
+        using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
         using GridVariables = typename Detail::Staggered::SubDomainGridVariablesImpl<SubDomainTypeTag, id>::type;
         using SolutionVector = typename Detail::Staggered::SubDomainSolutionVectorImpl<SubDomainTypeTag, id>::type;
         using PrimaryVariables = typename Detail::Staggered::SubDomainPrimaryVariablesImpl<SubDomainTypeTag, id>::type;

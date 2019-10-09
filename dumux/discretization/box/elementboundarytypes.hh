@@ -52,7 +52,7 @@ public:
                 const Element &element,
                 const FVElementGeometry &fvGeometry)
     {
-        using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+        using FVGridGeometry = typename FVElementGeometry::GridGeometry;
         using GridView = typename FVGridGeometry::GridView;
 
         vertexBCTypes_.resize( element.subEntities(GridView::dimension) );
@@ -66,7 +66,7 @@ public:
             int scvIdxLocal = scv.localDofIndex();
             vertexBCTypes_[scvIdxLocal].reset();
 
-            if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
+            if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
             {
                 vertexBCTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
 

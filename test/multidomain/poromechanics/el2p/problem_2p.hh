@@ -68,7 +68,7 @@ struct Problem<TypeTag, TTag::TwoPSub> { using type = TwoPSubProblem<TypeTag> ; 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPSub>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using type = TwoPSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
@@ -102,7 +102,7 @@ class TwoPSubProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
     TwoPSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

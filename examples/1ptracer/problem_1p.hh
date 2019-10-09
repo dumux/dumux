@@ -71,8 +71,8 @@ struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::IncompressibleTest>
 {
-    // We define convenient shortcuts to the properties `FVGridGeometry` and `Scalar`:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    // We define convenient shortcuts to the properties `GridGeometry` and `Scalar`:
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     // Finally, we set the spatial parameters:
     using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
@@ -118,9 +118,9 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -144,7 +144,7 @@ public:
         // we define a small epsilon value
         Scalar eps = 1.0e-6;
         // We specify Dirichlet boundaries on the top and bottom of our domain:
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
         else
             // The top and bottom of our domain are Neumann boundaries:

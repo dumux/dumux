@@ -57,8 +57,8 @@
 template< class BulkTypeTag, class LowDimTypeTag >
 class TestTraits
 {
-    using BulkFVGridGeometry = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::FVGridGeometry>;
-    using LowDimFVGridGeometry = Dumux::GetPropType<LowDimTypeTag, Dumux::Properties::FVGridGeometry>;
+    using BulkFVGridGeometry = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::GridGeometry>;
+    using LowDimFVGridGeometry = Dumux::GetPropType<LowDimTypeTag, Dumux::Properties::GridGeometry>;
 public:
     using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
     using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
@@ -122,7 +122,7 @@ computeL2Norm(const GridView& gridView,
     for (const auto& element : elements(gridView))
     {
         // make discrete element solution
-        const auto elemSol = elementSolution(element, x, problem.fvGridGeometry());
+        const auto elemSol = elementSolution(element, x, problem.gridGeometry());
 
         // integrate the pressure error over the element
         const auto eg = element.geometry();
@@ -227,8 +227,8 @@ int main(int argc, char** argv) try
     const auto& lowDimGridView = gridManager.template grid<1>().leafGridView();
 
     // create the finite volume grid geometries
-    using BulkFVGridGeometry = GetPropType<BulkProblemTypeTag, Properties::FVGridGeometry>;
-    using LowDimFVGridGeometry = GetPropType<LowDimProblemTypeTag, Properties::FVGridGeometry>;
+    using BulkFVGridGeometry = GetPropType<BulkProblemTypeTag, Properties::GridGeometry>;
+    using LowDimFVGridGeometry = GetPropType<LowDimProblemTypeTag, Properties::GridGeometry>;
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     auto lowDimFvGridGeometry = std::make_shared<LowDimFVGridGeometry>(lowDimGridView);
     updateBulkFVGridGeometry(*bulkFvGridGeometry, gridManager, lowDimGridView);

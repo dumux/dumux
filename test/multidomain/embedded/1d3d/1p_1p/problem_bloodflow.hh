@@ -94,7 +94,7 @@ struct LocalResidual<TypeTag, TTag::BloodFlow> { using type = OnePIncompressible
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::BloodFlow>
 {
-    using type = BloodFlowSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = BloodFlowSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                         GetPropType<TypeTag, Properties::Scalar>>;
 };
 } // end namespace Properties
@@ -112,7 +112,7 @@ class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
@@ -132,11 +132,11 @@ public:
         name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         p_in_ = getParam<Scalar>("BoundaryConditions1D.PressureInput");
         delta_p_ = getParam<Scalar>("BoundaryConditions1D.DeltaPressure");
-        exactPressure_.resize(this->fvGridGeometry().numDofs());
+        exactPressure_.resize(this->gridGeometry().numDofs());
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -155,7 +155,7 @@ public:
                            const SubControlVolume &scv,
                            const ElementSolution& elemSol) const
     {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
         const auto radius = this->spatialParams().radius(eIdx);
         return M_PI*radius*radius;
     }
@@ -310,7 +310,7 @@ public:
                               const VolumeVariables& curElemVolVars,
                               const SubControlVolume& scv) const
     {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
 
         auto key = std::make_pair(eIdx, 0);
         if (this->pointSourceMap().count(key))
@@ -345,9 +345,9 @@ public:
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
         PrimaryVariables source(0.0);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(gridVars.curGridVolVars());

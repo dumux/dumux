@@ -75,10 +75,10 @@ private:
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
 
-    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::staggered,
+    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::staggered,
                   "The free flow domain must use the staggered discretization");
 
-    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::cctpfa,
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::cctpfa,
                   "The Darcy domain must use the CCTpfa discretization");
 public:
 
@@ -99,8 +99,8 @@ public:
         const auto& stokesProblem = couplingManager_.problem(stokesIdx);
         const auto& darcyProblem = couplingManager_.problem(darcyIdx);
 
-        const auto& stokesFvGridGeometry = stokesProblem.fvGridGeometry();
-        const auto& darcyFvGridGeometry = darcyProblem.fvGridGeometry();
+        const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
+        const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
 
         isCoupledDarcyScvf_.resize(darcyFvGridGeometry.numScvf(), false);
 

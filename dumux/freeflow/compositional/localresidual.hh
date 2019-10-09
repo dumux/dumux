@@ -43,7 +43,7 @@ class FreeflowNCResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using FreeflowNCResidual = FreeflowNCResidualImpl<TypeTag, GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>;
+using FreeflowNCResidual = FreeflowNCResidualImpl<TypeTag, GetPropType<TypeTag, Properties::GridGeometry>::discMethod>;
 
 }
 

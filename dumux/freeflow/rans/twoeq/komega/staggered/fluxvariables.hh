@@ -65,7 +65,7 @@ class KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;

@@ -65,14 +65,14 @@ public:
     //! Constructor getting a auxiliary cell center of face specific FvGridGeometry type.
     //! Needed for the multi-domain framework.
     template<class CellCenterOrFaceFVGridGeometry>
-    StaggeredFVElementGeometry(const CellCenterOrFaceFVGridGeometry& fvGridGeometry)
-    : ParentType(fvGridGeometry.actualfvGridGeometry()) {}
+    StaggeredFVElementGeometry(const CellCenterOrFaceFVGridGeometry& gridGeometry)
+    : ParentType(gridGeometry.actualfvGridGeometry()) {}
 
     //! Get a sub control volume face with an element index and a local scvf index
     using ParentType::scvf;
     const SubControlVolumeFace& scvf(GridIndexType eIdx, LocalIndexType localScvfIdx) const
     {
-        return this->fvGridGeometry().scvf(eIdx, localScvfIdx);
+        return this->gridGeometry().scvf(eIdx, localScvfIdx);
     }
 };
 
@@ -98,22 +98,23 @@ public:
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = GG;
+    using GridGeometry = GG;
+    using FVGridGeometry [[deprecated ("Use GridGeometry instead. Will be removed after 3.1!")]] = GridGeometry;
 
     //! Constructor getting a auxiliary cell center of face specific FvGridGeometry type.
     //! Needed for the multi-domain framework.
     template<class CellCenterOrFaceFVGridGeometry>
-    StaggeredFVElementGeometry(const CellCenterOrFaceFVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry.actualfvGridGeometry()) {}
+    StaggeredFVElementGeometry(const CellCenterOrFaceFVGridGeometry& gridGeometry)
+    : gridGeometryPtr_(&gridGeometry.actualfvGridGeometry()) {}
 
     //! Constructor
-    StaggeredFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    StaggeredFVElementGeometry(const GridGeometry& gridGeometry)
+    : gridGeometryPtr_(&gridGeometry) {}
 
     //! Get a sub control volume face with an element index and a local scvf index
     const SubControlVolumeFace& scvf(GridIndexType eIdx, LocalIndexType localScvfIdx) const
     {
-        return scvf(this->fvGridGeometry().localToGlobalScvfIndex(eIdx, localScvfIdx));
+        return scvf(this->gridGeometry().localToGlobalScvfIndex(eIdx, localScvfIdx));
     }
 
     //! Get an elment sub control volume with a global scv index
@@ -181,12 +182,12 @@ public:
 
         std::vector<GridIndexType> handledNeighbors;
         handledNeighbors.reserve(element.subEntities(1));
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             if (intersection.neighbor())
             {
                 const auto outside = intersection.outside();
-                const auto outsideIdx = fvGridGeometry().elementMapper().index(outside);
+                const auto outsideIdx = gridGeometry().elementMapper().index(outside);
 
                 // make outside geometries only if not done yet (could happen on non-conforming grids)
                 if ( std::find(handledNeighbors.begin(), handledNeighbors.end(), outsideIdx) == handledNeighbors.end() )
@@ -209,8 +210,11 @@ public:
     }
 
     //! The global finite volume geometry we are a restriction of
-    const FVGridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
+    { return gridGeometry(); }
+    const GridGeometry& gridGeometry() const
+    { return *gridGeometryPtr_; }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
@@ -221,23 +225,23 @@ private:
     //! create scvs and scvfs of the bound element
     void makeElementGeometries_(const Element& element)
     {
-        const auto eIdx = fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = gridGeometry().elementMapper().index(element);
         scvs_[0] = SubControlVolume(element.geometry(), eIdx);
         scvIndices_[0] = eIdx;
 
-        const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdx);
-        const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
+        const auto& scvFaceIndices = gridGeometry().scvfIndicesOfScv(eIdx);
+        const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdx);
 
-        typename FVGridGeometry::GeometryHelper geometryHelper(element, fvGridGeometry().gridView());
+        typename GridGeometry::GeometryHelper geometryHelper(element, gridGeometry().gridView());
 
         int scvfCounter = 0;
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             const auto& scvfNeighborVolVarIndex = neighborVolVarIndices[scvfCounter];
 
             if (intersection.neighbor() || intersection.boundary())
             {
-                geometryHelper.updateLocalFace(fvGridGeometry().intersectionMapper(), intersection);
+                geometryHelper.updateLocalFace(gridGeometry().intersectionMapper(), intersection);
                 std::vector<GridIndexType> scvIndices{eIdx, scvfNeighborVolVarIndex};
                 scvfs_.emplace_back(intersection,
                                     intersection.geometry(),
@@ -262,16 +266,16 @@ private:
         neighborScvs_.emplace_back(element.geometry(), eIdx);
         neighborScvIndices_.push_back(eIdx);
 
-        const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdx);
-        const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
+        const auto& scvFaceIndices = gridGeometry().scvfIndicesOfScv(eIdx);
+        const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdx);
 
-        typename FVGridGeometry::GeometryHelper geometryHelper(element, fvGridGeometry().gridView());
+        typename GridGeometry::GeometryHelper geometryHelper(element, gridGeometry().gridView());
 
         int scvfCounter = 0;
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             const auto& scvfNeighborVolVarIndex = neighborVolVarIndices[scvfCounter];
-            geometryHelper.updateLocalFace(fvGridGeometry().intersectionMapper(), intersection);
+            geometryHelper.updateLocalFace(gridGeometry().intersectionMapper(), intersection);
 
             if (intersection.neighbor())
             {
@@ -317,7 +321,7 @@ private:
     }
 
     const Element* elementPtr_; //!< the element to which this fvgeometry is bound
-    const FVGridGeometry* fvGridGeometryPtr_;  //!< the grid fvgeometry
+    const GridGeometry* gridGeometryPtr_;  //!< the grid fvgeometry
 
     // local storage after binding an element
     std::array<GridIndexType, 1> scvIndices_;

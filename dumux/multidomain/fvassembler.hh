@@ -73,7 +73,10 @@ public:
     using GridVariables = typename MDTraits::template SubDomain<id>::GridVariables;
 
     template<std::size_t id>
-    using FVGridGeometry = typename MDTraits::template SubDomain<id>::FVGridGeometry;
+    using GridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
+
+    template<std::size_t id>
+    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry<id>;
 
     template<std::size_t id>
     using Problem = typename MDTraits::template SubDomain<id>::Problem;
@@ -357,13 +360,19 @@ public:
 
     //! the finite volume grid geometry of domain i
     template<std::size_t i>
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const auto& fvGridGeometry(Dune::index_constant<i> domainId) const
+    { return gridGeometry(domainId); }
+
+    //! the finite volume grid geometry of domain i
+    template<std::size_t i>
+    const auto& gridGeometry(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(fvGridGeometryTuple_); }
 
     //! the grid view of domain i
     template<std::size_t i>
     const auto& gridView(Dune::index_constant<i> domainId) const
-    { return fvGridGeometry(domainId).gridView(); }
+    { return gridGeometry(domainId).gridView(); }
 
     //! the grid variables of domain i
     template<std::size_t i>
@@ -500,7 +509,7 @@ private:
     Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
                                              Dune::index_constant<j> domainJ) const
     {
-        const auto& gg = fvGridGeometry(domainI);
+        const auto& gg = gridGeometry(domainI);
         auto pattern = getJacobianPattern<isImplicit()>(gg);
         couplingManager_->extendJacobianPattern(domainI, pattern);
         return pattern;
@@ -512,8 +521,8 @@ private:
                                              Dune::index_constant<j> domainJ) const
     {
         return getCouplingJacobianPattern<isImplicit()>(*couplingManager_,
-                                                        domainI, fvGridGeometry(domainI),
-                                                        domainJ, fvGridGeometry(domainJ));
+                                                        domainI, gridGeometry(domainI),
+                                                        domainJ, gridGeometry(domainJ));
     }
 
     //! pointer to the problem to be solved

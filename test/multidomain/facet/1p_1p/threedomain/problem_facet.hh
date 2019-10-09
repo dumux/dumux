@@ -63,7 +63,7 @@ struct Problem<TypeTag, TTag::OnePFacet> { using type = OnePFacetProblem<TypeTag
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePFacet>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePSpatialParams<FVGridGeometry, Scalar>;
 };

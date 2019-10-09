@@ -68,7 +68,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using ElementBoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::ElementBoundaryTypes>;
     template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
 
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::FVGridGeometry>;
+    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::SubControlVolume;
     template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
@@ -204,7 +204,7 @@ public:
 
         // determine all bulk elements that couple to low dim elements
         const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-        bulkElemIsCoupled_.assign(bulkProblem->fvGridGeometry().gridView().size(0), false);
+        bulkElemIsCoupled_.assign(bulkProblem->gridGeometry().gridView().size(0), false);
         std::for_each( bulkMap.begin(),
                        bulkMap.end(),
                        [&] (const auto& entry) { bulkElemIsCoupled_[entry.first] = true; });
@@ -217,7 +217,7 @@ public:
                                                        const Element<bulkId>& element,
                                                        LowDimIdType domainJ) const
     {
-        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
 
         if (bulkElemIsCoupled_[eIdx])
         {
@@ -237,7 +237,7 @@ public:
                                                          const Element<lowDimId>& element,
                                                          BulkIdType domainJ) const
     {
-        const auto eIdx = this->problem(lowDimId).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(lowDimId).gridGeometry().elementMapper().index(element);
 
         const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
         auto it = map.find(eIdx);
@@ -267,7 +267,7 @@ public:
     const VolumeVariables<lowDimId>& getLowDimVolVars(const Element<bulkId>& element,
                                                       const SubControlVolumeFace<bulkId>& scvf) const
     {
-        const auto eIdx = this->problem(bulkId).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(bulkId).gridGeometry().elementMapper().index(element);
         assert(bulkContext_.isSet);
         assert(bulkElemIsCoupled_[eIdx]);
 
@@ -306,7 +306,7 @@ public:
                                              const SubControlVolumeFace<bulkId>& scvf) const
     {
         const auto lowDimElemIdx = getLowDimElementIndex(element, scvf);
-        return this->problem(lowDimId).fvGridGeometry().element(lowDimElemIdx);
+        return this->problem(lowDimId).gridGeometry().element(lowDimElemIdx);
     }
 
     /*!
@@ -315,7 +315,7 @@ public:
     const GridIndexType<lowDimId> getLowDimElementIndex(const Element<bulkId>& element,
                                                         const SubControlVolumeFace<bulkId>& scvf) const
     {
-        const auto eIdx = this->problem(bulkId).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(bulkId).gridGeometry().elementMapper().index(element);
 
         assert(bulkElemIsCoupled_[eIdx]);
         const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
@@ -353,7 +353,7 @@ public:
         assert(bulkContext_.isSet);
         assert(bulkElemIsCoupled_[bulkContext_.elementIdx]);
         assert(map.find(bulkContext_.elementIdx) != map.end());
-        assert(bulkContext_.elementIdx == this->problem(bulkId).fvGridGeometry().elementMapper().index(bulkLocalAssembler.element()));
+        assert(bulkContext_.elementIdx == this->problem(bulkId).gridGeometry().elementMapper().index(bulkLocalAssembler.element()));
 
         const auto& fvGeometry = bulkLocalAssembler.fvGeometry();
         typename LocalResidual<bulkId>::ElementResidualVector res(fvGeometry.numScv());
@@ -392,7 +392,7 @@ public:
     {
         // make sure this is called for the element for which the context was set
         assert(lowDimContext_.isSet);
-        assert(this->problem(lowDimId).fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()) == lowDimContext_.elementIdx);
+        assert(this->problem(lowDimId).gridGeometry().elementMapper().index(lowDimLocalAssembler.element()) == lowDimContext_.elementIdx);
 
         // evaluate sources for all scvs in lower-dimensional element
         typename LocalResidual<lowDimId>::ElementResidualVector res(lowDimLocalAssembler.fvGeometry().numScv());
@@ -414,7 +414,7 @@ public:
                                               const SubControlVolume<lowDimId>& scv)
     {
         // make sure the this is called for the element of the context
-        assert(this->problem(lowDimId).fvGridGeometry().elementMapper().index(element) == lowDimContext_.elementIdx);
+        assert(this->problem(lowDimId).gridGeometry().elementMapper().index(element) == lowDimContext_.elementIdx);
 
         NumEqVector<lowDimId> sources(0.0);
         const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
@@ -434,7 +434,7 @@ public:
             const auto& scvfList = lowDimUsesBox ? std::vector<GridIndexType<lowDimId>>{ coincidingScvfs[scv.localDofIndex()] }
                                                  : coincidingScvfs;
 
-            sources += evalBulkFluxes_(this->problem(bulkId).fvGridGeometry().element(embedment.first),
+            sources += evalBulkFluxes_(this->problem(bulkId).gridGeometry().element(embedment.first),
                                        *(lowDimContext_.bulkFvGeometries[i]),
                                        *(lowDimContext_.bulkElemVolVars[i]),
                                        lowDimContext_.bulkElemBcTypes[i],
@@ -458,7 +458,7 @@ public:
         bulkContext_.reset();
 
         // set index in context in any case
-        const auto bulkElemIdx = this->problem(bulkId).fvGridGeometry().elementMapper().index(element);
+        const auto bulkElemIdx = this->problem(bulkId).gridGeometry().elementMapper().index(element);
         bulkContext_.elementIdx = bulkElemIdx;
 
         // if element is coupled, actually set the context
@@ -473,14 +473,14 @@ public:
 
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldGridGeometry = this->problem(lowDimId).fvGridGeometry();
+                const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
                 const auto& ldSol = Assembler::isImplicit() ? this->curSol()[lowDimId] : assembler.prevSol()[lowDimId];
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
                 auto fvGeom = localView(ldGridGeometry);
                 fvGeom.bindElement(elemJ);
 
-                auto elemSol = elementSolution(elemJ, ldSol, fvGeom.fvGridGeometry());
+                auto elemSol = elementSolution(elemJ, ldSol, fvGeom.gridGeometry());
                 std::vector<VolumeVariables<lowDimId>> elemVolVars;
 
                 // for tpfa, make only one volume variables object for the element
@@ -525,7 +525,7 @@ public:
         lowDimContext_.reset();
 
         // set index in context in any case
-        const auto lowDimElemIdx = this->problem(lowDimId).fvGridGeometry().elementMapper().index(element);
+        const auto lowDimElemIdx = this->problem(lowDimId).gridGeometry().elementMapper().index(element);
         lowDimContext_.elementIdx = lowDimElemIdx;
 
         const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
@@ -537,7 +537,7 @@ public:
             // first bind the low dim context for the first neighboring bulk element
             // this will set up the lower-dimensional data on this current lowdim element
             // which will be enough to compute the fluxes in all neighboring elements
-            const auto& bulkGridGeom = this->problem(bulkId).fvGridGeometry();
+            const auto& bulkGridGeom = this->problem(bulkId).gridGeometry();
             const auto bulkElem = bulkGridGeom.element(it->second.embedments[0].first);
             bindCouplingContext(bulkId, bulkElem, assembler);
 
@@ -595,7 +595,7 @@ public:
         {
             const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
             const auto& couplingElemStencil = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
-            const auto& ldGridGeometry = this->problem(lowDimId).fvGridGeometry();
+            const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
             // find the low-dim elements in coupling stencil, where this dof is contained in
             const auto couplingElements = [&] ()
@@ -631,7 +631,7 @@ public:
 
                 auto& elemVolVars = bulkContext_.lowDimElemVolVars[idxInContext];
                 const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
-                auto elemSol = elementSolution(element, this->curSol()[lowDimId], fvGeom.fvGridGeometry());
+                auto elemSol = elementSolution(element, this->curSol()[lowDimId], fvGeom.gridGeometry());
 
                 if (!lowDimUsesBox)
                     elemVolVars[0].update(elemSol, this->problem(lowDimId), element, *scvs(fvGeom).begin());
@@ -684,14 +684,14 @@ public:
         // skip the rest if context is empty
         if (lowDimContext_.isSet)
         {
-            assert(lowDimContext_.elementIdx == this->problem(lowDimId).fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()));
+            assert(lowDimContext_.elementIdx == this->problem(lowDimId).gridGeometry().elementMapper().index(lowDimLocalAssembler.element()));
 
             const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
             auto it = map.find(lowDimContext_.elementIdx);
 
             assert(it != map.end());
             const auto& embedments = it->second.embedments;
-            const auto& bulkGridGeometry = this->problem(bulkId).fvGridGeometry();
+            const auto& bulkGridGeometry = this->problem(bulkId).gridGeometry();
 
             // TODO more efficient (only one dof update per embedment)
             // update the elem volvars in context of those elements that contain globalJ
@@ -744,7 +744,7 @@ public:
         if (lowDimContext_.isSet)
         {
             assert(bulkContext_.isSet);
-            assert(lowDimContext_.elementIdx == this->problem(lowDimId).fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()));
+            assert(lowDimContext_.elementIdx == this->problem(lowDimId).gridGeometry().elementMapper().index(lowDimLocalAssembler.element()));
 
             // update the corresponding vol vars in the bulk context
             const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
@@ -756,7 +756,7 @@ public:
             auto& elemVolVars = bulkContext_.lowDimElemVolVars[idxInContext];
             const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
             const auto& element = lowDimLocalAssembler.element();
-            auto elemSol = elementSolution(element, this->curSol()[lowDimId], fvGeom.fvGridGeometry());
+            auto elemSol = elementSolution(element, this->curSol()[lowDimId], fvGeom.gridGeometry());
 
             if (!lowDimUsesBox)
                 elemVolVars[0].update(elemSol, this->problem(lowDimId), element, *scvs(fvGeom).begin());

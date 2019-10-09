@@ -62,7 +62,7 @@ struct Problem<TypeTag, TTag::Sagd> { using type = Dumux::SagdProblem<TypeTag>; 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Sagd>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = SagdSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -99,7 +99,7 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -130,7 +130,7 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 

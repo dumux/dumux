@@ -85,7 +85,7 @@ struct FluidSystem<TypeTag, TTag::Root>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Root>
 {
-    using type = RootSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = RootSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                    GetPropType<TypeTag, Properties::Scalar>>;
 };
 
@@ -108,7 +108,7 @@ class RootProblem : public PorousMediumFlowProblem<TypeTag>
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
@@ -160,7 +160,7 @@ public:
                            const SubControlVolume &scv,
                            const ElementSolution& elemSol) const
     {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
         const auto radius = this->spatialParams().radius(eIdx);
         return M_PI*radius*radius;
     }
@@ -229,7 +229,7 @@ public:
                           const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);
-        if (scvf.center()[2] + eps_ > this->fvGridGeometry().bBoxMax()[2])
+        if (scvf.center()[2] + eps_ > this->gridGeometry().bBoxMax()[2])
         {
             const auto& volVars = elemVolvars[scvf.insideScvIdx()];
             const Scalar value = transpirationRate_ * volVars.molarDensity(liquidPhaseIdx)/volVars.density(liquidPhaseIdx);

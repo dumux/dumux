@@ -105,7 +105,7 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -131,7 +131,7 @@ public:
         rho_ = getParam<Scalar>("Component.LiquidDensity");
         nu_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
 
-        if(dim == 3 && !Dune::FloatCmp::eq(height_, this->fvGridGeometry().bBoxMax()[2]))
+        if(dim == 3 && !Dune::FloatCmp::eq(height_, this->gridGeometry().bBoxMax()[2]))
             DUNE_THROW(Dune::InvalidStateException, "z-dimension must equal height");
 
         if(enablePseudoThreeDWallFriction)
@@ -246,8 +246,8 @@ public:
     Scalar analyticalFlux() const
     {
         const Scalar h = height_;
-        const Scalar w = this->fvGridGeometry().bBoxMax()[1];
-        const Scalar L = this->fvGridGeometry().bBoxMax()[0];
+        const Scalar w = this->gridGeometry().bBoxMax()[1];
+        const Scalar L = this->gridGeometry().bBoxMax()[0];
 
         const Scalar mu = nu_*rho_;
 
@@ -263,7 +263,7 @@ private:
 
     bool isOutlet_(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     Scalar eps_;

@@ -92,7 +92,7 @@ public:
         using std::sqrt;
 
         // calculate characteristic properties of the turbulent flow
-        elementIdx_ = problem.fvGridGeometry().elementMapper().index(element);
+        elementIdx_ = problem.gridGeometry().elementMapper().index(element);
         wallElementIdx_ = problem.wallElementIdx_[elementIdx_];
         wallDistance_ = problem.wallDistance_[elementIdx_];
         velocity_ = problem.velocity_[elementIdx_];

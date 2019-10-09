@@ -52,7 +52,7 @@ class NavierStokesFluxVariablesImpl;
 template<class TypeTag>
 class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 : public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
-                           typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView,
+                           typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView,
                            typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView>
 {
@@ -70,7 +70,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using FaceVariables = typename GridFaceVariables::FaceVariables;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

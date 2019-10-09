@@ -49,7 +49,7 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::kepsilon> : public RANSProblemBa
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -59,7 +59,7 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::kepsilon> : public RANSProblemBa
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
 
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
@@ -96,12 +96,12 @@ public:
         ParentType::updateStaticWallProperties();
 
         // update size and initial values of the global vectors
-        matchingPointIdx_.resize(this->fvGridGeometry().elementMapper().size(), 0);
-        storedDensity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedDissipation_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        zeroEqDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        matchingPointIdx_.resize(this->gridGeometry().elementMapper().size(), 0);
+        storedDensity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedDissipation_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedTurbulentKineticEnergy_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedDynamicEddyViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        zeroEqDynamicEddyViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
     }
 
     /*!
@@ -114,11 +114,11 @@ public:
         ParentType::updateDynamicWallProperties(curSol);
 
         // update the stored eddy viscosities
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -139,9 +139,9 @@ public:
 
         // get matching point for k-epsilon wall function
         unsigned int numElementsInNearWallRegion = 0;
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementIdx];
             unsigned int neighborIdx0 = asImp_().neighborIdx_[elementIdx][wallNormalAxis][0];
             unsigned int neighborIdx1 = asImp_().neighborIdx_[elementIdx][wallNormalAxis][1];
@@ -158,9 +158,9 @@ public:
         std::cout << "numElementsInNearWallRegion: " << numElementsInNearWallRegion << std::endl;
 
         // calculate the potential zeroeq eddy viscosities for two-layer model
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             zeroEqDynamicEddyViscosity_[elementIdx] = zeroEqEddyViscosityModel(elementIdx);
         }
 
@@ -169,9 +169,9 @@ public:
             = getParamFromGroup<bool>(this->paramGroup(), "KEpsilon.EnableZeroEqScaling", true);
         if (enableZeroEqScaling)
         {
-            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+                unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
                 unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]];
 
                 Scalar scalingFactor = storedDynamicEddyViscosity_[matchingPointIdx]
@@ -182,9 +182,9 @@ public:
                     zeroEqDynamicEddyViscosity_[elementIdx] *= scalingFactor;
                 }
             }
-            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+                unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
                 unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]];
                 if (isMatchingPoint(elementIdx))
                 {
@@ -308,7 +308,7 @@ public:
                          const SubControlVolumeFace& localSubFace,
                          const int& eqIdx) const
     {
-        unsigned int elementIdx = asImp_().fvGridGeometry().elementMapper().index(element);
+        unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
         auto bcTypes = asImp_().boundaryTypes(element, localSubFace);
         return asImp_().isOnWall(localSubFace)
                && bcTypes.isDirichlet(eqIdx)
@@ -323,7 +323,7 @@ public:
                                       const SubControlVolumeFace& scvf,
                                       const SubControlVolumeFace& localSubFace) const
     {
-        unsigned int elementIdx = asImp_().fvGridGeometry().elementMapper().index(element);
+        unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
         return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementIdx, elemFaceVars[scvf].velocitySelf())
                                     * elemVolVars[scvf.insideScvIdx()].density());
     }
@@ -380,7 +380,7 @@ public:
     {
         using std::log;
         auto wallFunctionFlux = CellCenterPrimaryVariables(0.0);
-        unsigned int elementIdx = asImp_().fvGridGeometry().elementMapper().index(element);
+        unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
 
         // component mass fluxes
         for (int compIdx = 0; compIdx < ModelTraits::numFluidComponents(); ++compIdx)
@@ -421,7 +421,7 @@ public:
     {
         using std::log;
         auto wallFunctionFlux = CellCenterPrimaryVariables(0.0);
-        unsigned int elementIdx = asImp_().fvGridGeometry().elementMapper().index(element);
+        unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
         // energy fluxes
         Scalar prandtlNumber = elemVolVars[scvf.insideScvIdx()].kinematicViscosity()
                                * elemVolVars[scvf.insideScvIdx()].density()

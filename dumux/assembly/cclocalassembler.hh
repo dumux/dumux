@@ -78,7 +78,7 @@ public:
                                      const PartialReassembler* partialReassembler)
     {
         this->asImp_().bindLocalViews();
-        const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
         if (partialReassembler
             && partialReassembler->elementColor(globalI) == EntityColor::green)
         {
@@ -106,7 +106,7 @@ public:
     void assembleResidual(SolutionVector& res)
     {
         this->asImp_().bindLocalViews();
-        const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
         res[globalI] = this->asImp_().evalLocalResidual()[0]; // forward to the internal implementation
     }
 };
@@ -137,7 +137,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
@@ -170,7 +170,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->assembler().fvGridGeometry();
+        const auto& fvGridGeometry = this->assembler().gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
@@ -349,7 +349,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->assembler().fvGridGeometry();
+        const auto& fvGridGeometry = this->assembler().gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
 
         // reference to the element's scv (needed later) and corresponding vol vars
@@ -452,7 +452,7 @@ public:
         const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get reference to the element's current vol vars
-        const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(element);
+        const auto globalI = this->assembler().gridGeometry().elementMapper().index(element);
         const auto& scv = fvGeometry.scv(globalI);
         const auto& volVars = curElemVolVars[scv];
 
@@ -524,7 +524,7 @@ public:
         const auto residual = this->evalLocalResidual()[0];
 
         // get reference to the element's current vol vars
-        const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
         const auto& scv = this->fvGeometry().scv(globalI);
         const auto& volVars = this->curElemVolVars()[scv];
 

@@ -65,6 +65,13 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::TubesTest> { using type = Dune::FoamGrid<1, 3>; };
 #endif
 
+// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
+// For ensuring backward compatibility on the user side, it is necessary to
+// stick to the old name for the specializations, see the discussion in MR 1647.
+// Use diagnostic pragmas to prevent the emission of a warning message.
+// TODO after 3.1: Rename to GridGeometry, remove the pragmas and this comment.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 // if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
 template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::TubesTestCCTpfa>
@@ -95,6 +102,7 @@ private:
 public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, MapperTraits>>;
 };
+#pragma GCC diagnostic pop
 
 // Set the problem property
 template<class TypeTag>
@@ -104,7 +112,7 @@ struct Problem<TypeTag, TTag::TubesTest> { using type = TubesTestProblem<TypeTag
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TubesTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = TubesTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -146,13 +154,13 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { isBox = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box };
+    enum { isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box };
 
 public:
     TubesTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -306,7 +314,7 @@ public:
         // get the Gaussian quadrature rule for intervals
         const auto& quad = Dune::QuadratureRules<Scalar, dim>::rule(Dune::GeometryType(1), 1);
 
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         for (const auto& element : elements(gg.gridView()))
         {
             const auto eIdx = gg.elementMapper().index(element);

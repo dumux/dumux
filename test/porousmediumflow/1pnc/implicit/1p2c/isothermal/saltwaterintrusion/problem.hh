@@ -61,7 +61,7 @@ struct FluidSystem<TypeTag, TTag::SaltWaterIntrusionTest>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::SaltWaterIntrusionTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -95,7 +95,7 @@ class SaltWaterIntrusionTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     // copy pressure index for convenience
     enum { pressureIdx = Indices::pressureIdx };
@@ -142,7 +142,7 @@ public:
         values.setAllNeumann();
 
         // use Dirichlet BCs on the left and right boundary
-        if(globalPos[0] < eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] < eps_ || globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             values.setAllDirichlet();
 
         return values;
@@ -158,7 +158,7 @@ public:
         PrimaryVariables values = initialAtPos(globalPos);
 
         // salt water is in contact on the right boundary
-        if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             values[FluidSystem::NaClIdx] = 0.035; // 3.5% salinity (sea water)
 
         return values;
@@ -178,7 +178,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        const Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
+        const Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
         PrimaryVariables priVars;
         priVars[pressureIdx] = 1e5 + depth*9.81*1000; // hydrostatic pressure (assume rho_water = 1000.0)
         priVars[FluidSystem::NaClIdx] = 0.0;          // initially only fresh water is present

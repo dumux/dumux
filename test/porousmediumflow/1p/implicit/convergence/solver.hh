@@ -51,7 +51,7 @@ template<class TypeTag>
 struct SolutionStorage
 {
     using Grid = Dumux::GetPropType<TypeTag, Dumux::Properties::Grid>;
-    using GridGeometry = Dumux::GetPropType<TypeTag, Dumux::Properties::FVGridGeometry>;
+    using GridGeometry = Dumux::GetPropType<TypeTag, Dumux::Properties::GridGeometry>;
     using SolutionVector = Dumux::GetPropType<TypeTag, Dumux::Properties::SolutionVector>;
 
 public:
@@ -88,7 +88,7 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
     Dune::Timer timer;
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 

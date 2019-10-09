@@ -54,8 +54,8 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::oneeq> : public RANSProblemBase<
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using DimVector = Dune::FieldVector<Scalar, Grid::dimension>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
@@ -81,9 +81,9 @@ public:
         ParentType::updateStaticWallProperties();
 
         // update size and initial values of the global vectors
-        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedViscosityTilde_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedViscosityTildeGradient_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
+        storedDynamicEddyViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedViscosityTilde_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedViscosityTildeGradient_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
     }
 
     /*!
@@ -95,11 +95,11 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -117,9 +117,9 @@ public:
         }
 
         // calculate cell-center-averaged velocity gradients, maximum, and minimum values
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             for (unsigned int dimIdx = 0; dimIdx < Grid::dimension; ++dimIdx)
             {
@@ -130,7 +130,7 @@ public:
                           - ParentType::cellCenter_[ParentType::neighborIdx_[elementIdx][dimIdx][0]][dimIdx]);
             }
 
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {

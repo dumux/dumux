@@ -84,7 +84,7 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCNIConvection>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCNIConvection>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -130,8 +130,8 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -198,12 +198,12 @@ public:
     //! Udpate the analytical temperature
     void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
-        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
+        const auto someElement = *(elements(this->gridGeometry().gridView()).begin());
 
-        auto someElemSol = elementSolution(someElement, curSol, this->fvGridGeometry());
+        auto someElemSol = elementSolution(someElement, curSol, this->gridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->fvGridGeometry());
+        auto someFvGeometry = localView(this->gridGeometry());
         someFvGeometry.bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
@@ -224,9 +224,9 @@ public:
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -267,7 +267,7 @@ public:
     {
         BoundaryTypes values;
 
-        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }

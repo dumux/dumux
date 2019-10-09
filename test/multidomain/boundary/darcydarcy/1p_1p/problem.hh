@@ -45,7 +45,7 @@ class OnePTestProblem
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
@@ -91,8 +91,8 @@ public:
         BoundaryTypes values;
         const auto& globalPos = scvf.ipGlobal();
 
-        if (globalPos[dimWorld-1] < this->fvGridGeometry().bBoxMin()[dimWorld-1] + eps_
-            || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps_)
+        if (globalPos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + eps_
+            || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();

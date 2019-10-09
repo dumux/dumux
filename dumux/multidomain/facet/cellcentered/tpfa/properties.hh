@@ -53,7 +53,7 @@ template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::CCTpfaFacetCouplingModel>
 {
     using type = CCTpfaFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
-                                               GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                                               GetPropType<TypeTag, Properties::GridGeometry> >;
 };
 
 //! Use the cc local residual for models with facet coupling
@@ -65,7 +65,7 @@ template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::CCTpfaFacetCouplingModel>
 {
     using type = PorousMediumFluxVariables<TypeTag,
-                                           CCFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>;
+                                           CCFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>;
 };
 
 } // namespace Properties

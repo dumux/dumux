@@ -56,9 +56,9 @@
 template<class BulkTypeTag, class FacetTypeTag, class EdgeTypeTag>
 class TestTraits
 {
-    using BulkFVG = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::FVGridGeometry>;
-    using FacetFVG = Dumux::GetPropType<FacetTypeTag, Dumux::Properties::FVGridGeometry>;
-    using EdgeFVG = Dumux::GetPropType<EdgeTypeTag, Dumux::Properties::FVGridGeometry>;
+    using BulkFVG = Dumux::GetPropType<BulkTypeTag, Dumux::Properties::GridGeometry>;
+    using FacetFVG = Dumux::GetPropType<FacetTypeTag, Dumux::Properties::GridGeometry>;
+    using EdgeFVG = Dumux::GetPropType<EdgeTypeTag, Dumux::Properties::GridGeometry>;
 public:
     using MDTraits = Dumux::MultiDomainTraits<BulkTypeTag, FacetTypeTag, EdgeTypeTag>;
     using CouplingMapper = Dumux::FacetCouplingThreeDomainMapper<BulkFVG, FacetFVG, EdgeFVG>;

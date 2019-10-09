@@ -168,8 +168,8 @@ public:
         // set up stuff related to sub-control volumes
         for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numScv; scvIdxLocal++)
         {
-            elements_[scvIdxLocal] = fvGeometry.fvGridGeometry().element( stencil()[scvIdxLocal] );
-            scvs_[scvIdxLocal] = LocalScvType(fvGeometry.fvGridGeometry().mpfaHelper(),
+            elements_[scvIdxLocal] = fvGeometry.gridGeometry().element( stencil()[scvIdxLocal] );
+            scvs_[scvIdxLocal] = LocalScvType(fvGeometry.gridGeometry().mpfaHelper(),
                                               fvGeometry,
                                               fvGeometry.scv( stencil()[scvIdxLocal] ),
                                               scvIdxLocal,

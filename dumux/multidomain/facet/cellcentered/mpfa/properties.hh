@@ -86,7 +86,7 @@ template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::CCMpfaFacetCouplingModel>
 {
     using type = PorousMediumFluxVariables<TypeTag,
-                                           CCFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>;
+                                           CCFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>;
 };
 
 } // namespace Properties

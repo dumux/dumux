@@ -49,7 +49,7 @@ template <class TypeTag, ReferenceSystemFormulation referenceSystem>
 class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, referenceSystem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;

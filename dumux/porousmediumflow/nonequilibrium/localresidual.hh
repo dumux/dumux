@@ -49,7 +49,7 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, false>: public GetPropT
     using ParentType = GetPropType<TypeTag, Properties::EquilibriumLocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
@@ -170,7 +170,7 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true>: public GetPropTy
     using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;

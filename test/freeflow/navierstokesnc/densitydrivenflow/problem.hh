@@ -98,7 +98,7 @@ class DensityDrivenFlowProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -120,7 +120,7 @@ public:
     {
         useWholeLength_ = getParam<bool>("Problem.UseWholeLength");
         FluidSystem::init();
-        deltaRho_.resize(this->fvGridGeometry().numCellCenterDofs());
+        deltaRho_.resize(this->gridGeometry().numCellCenterDofs());
     }
 
    /*!
@@ -173,7 +173,7 @@ public:
         values.setNeumann(Indices::conti0EqIdx);
         values.setNeumann(transportEqIdx);
 
-        if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
+        if(globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
         {
             if(useWholeLength_)
                 values.setDirichlet(transportCompIdx);
@@ -254,9 +254,9 @@ public:
     template<class GridVariables, class SolutionVector>
     void calculateDeltaRho(const GridVariables& gridVariables, const SolutionVector& sol)
     {
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {

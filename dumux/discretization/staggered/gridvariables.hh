@@ -46,7 +46,8 @@ public:
 
     //! export primary variable type
     using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
-    using FVGridGeometry = typename ActualGridVariables::FVGridGeometry;
+    using GridGeometry = typename ActualGridVariables::GridGeometry;
+    using FVGridGeometry [[deprecated ("Use GridGeometry instead. Will be removed after 3.1!")]]= GridGeometry;
 
     explicit StaggeredGridVariablesView(ActualGridVariables* gridVariables)
     : gridVariables_(gridVariables) {}
@@ -92,7 +93,11 @@ public:
     { return gridVariables_->prevGridFaceVars(); }
 
     //! return the fv grid geometry
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const FVGridGeometry& fvGridGeometry() const
+    { return (*gridVariables_->fvGridGeometry_);    }
+    //! return the fv grid geometry
+    const FVGridGeometry& gridGeometry() const
     { return (*gridVariables_->fvGridGeometry_);    }
 
     // return the actual grid variables
@@ -123,9 +128,9 @@ public:
     template<class SolVector>
     void init(const SolVector& curSol)
     {
-        this->curGridVolVars().update(this->fvGridGeometry(), curSol);
-        this->gridFluxVarsCache().update(this->fvGridGeometry(), this->curGridVolVars(), curSol, true);
-        this->prevGridVolVars().update(this->fvGridGeometry(), curSol);
+        this->curGridVolVars().update(this->gridGeometry(), curSol);
+        this->gridFluxVarsCache().update(this->gridGeometry(), this->curGridVolVars(), curSol, true);
+        this->prevGridVolVars().update(this->gridGeometry(), curSol);
     }
 
     //! initialize all variables (instationary case)
@@ -140,8 +145,8 @@ public:
     template<class SolVector>
     void update(const SolVector& curSol)
     {
-        this->curGridVolVars().update(this->fvGridGeometry(), curSol);
-        this->gridFluxVarsCache().update(this->fvGridGeometry(), this->curGridVolVars(), curSol);
+        this->curGridVolVars().update(this->gridGeometry(), curSol);
+        this->gridFluxVarsCache().update(this->gridGeometry(), this->curGridVolVars(), curSol);
     }
 
     //! resets state to the one before time integration
@@ -149,7 +154,7 @@ public:
     void resetTimeStep(const SolVector& sol)
     {
         this->curGridVolVars() = this->prevGridVolVars();
-        this->gridFluxVarsCache().update(this->fvGridGeometry(), this->curGridVolVars(), sol);
+        this->gridFluxVarsCache().update(this->gridGeometry(), this->curGridVolVars(), sol);
     }
 };
 
@@ -169,8 +174,8 @@ public:
     template<class SolVector>
     void init(const SolVector& curSol)
     {
-        this->curGridFaceVars().update(this->fvGridGeometry(), curSol);
-        this->prevGridFaceVars().update(this->fvGridGeometry(), curSol);
+        this->curGridFaceVars().update(this->gridGeometry(), curSol);
+        this->prevGridFaceVars().update(this->gridGeometry(), curSol);
     }
 
     //! initialize all variables (instationary case)
@@ -185,7 +190,7 @@ public:
     template<class SolVector>
     void update(const SolVector& curSol)
     {
-        this->curGridFaceVars().update(this->fvGridGeometry(), curSol);
+        this->curGridFaceVars().update(this->gridGeometry(), curSol);
     }
 
     //! resets state to the one before time integration
@@ -221,18 +226,19 @@ public:
     using CellCenterGridVariablesType = CellCenterGridVariablesView<ThisType>;
     using FaceGridVariablesType = FaceGridVariablesView<ThisType>;
 
-
     //! export the type of the grid volume variables
     using GridVolumeVariables = GVV;
     //! export the type of the grid flux variables cache
     using GridFluxVariablesCache = GFVC;
     //! export the type of the grid face variables
     using GridFaceVariables = GFV;
+    //! export the type of the grid geometry
+    using GridGeometry = GG;
 
     //! Constructor
     template<class Problem>
     StaggeredGridVariables(std::shared_ptr<Problem> problem,
-                           std::shared_ptr<FVGridGeometry> fvGridGeometry)
+                           std::shared_ptr<GridGeometry> fvGridGeometry)
     : ParentType(problem, fvGridGeometry)
     , curGridFaceVariables_(*problem)
     , prevGridFaceVariables_(*problem)

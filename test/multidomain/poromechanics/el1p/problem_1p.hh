@@ -67,7 +67,7 @@ struct Problem<TypeTag, TTag::OnePSub> { using type = OnePSubProblem<TypeTag> ; 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePSub>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using type = OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
@@ -94,7 +94,7 @@ class OnePSubProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
     OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,

@@ -55,8 +55,8 @@ class PointSourceData
     using LowDimSolutionVector = GetPropType<LowDimTypeTag, Properties::SolutionVector>;
 
     enum {
-        bulkIsBox = GetPropType<BulkTypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box,
-        lowDimIsBox = GetPropType<LowDimTypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box
+        bulkIsBox = GetPropType<BulkTypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box,
+        lowDimIsBox = GetPropType<LowDimTypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box
     };
 
 public:
@@ -162,8 +162,8 @@ class PointSourceDataCircleAverage : public PointSourceData<MDTraits>
     using LowDimSolutionVector = GetPropType<LowDimTypeTag, Properties::SolutionVector>;
 
     enum {
-        bulkIsBox = GetPropType<BulkTypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box,
-        lowDimIsBox = GetPropType<LowDimTypeTag, Properties::FVGridGeometry>::discMethod == DiscretizationMethod::box
+        bulkIsBox = GetPropType<BulkTypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box,
+        lowDimIsBox = GetPropType<LowDimTypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box
     };
 
 public:

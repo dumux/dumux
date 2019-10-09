@@ -61,7 +61,7 @@ class OnePTestProblemInternalDirichlet : public OnePTestProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannValues = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -94,7 +94,7 @@ public:
      */
     NeumannValues neumannAtPos(const GlobalPosition& globalPos) const
     {
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         if (globalPos[0] < gg.bBoxMin()[0] + eps_)
             return NeumannValues(1e3);
         else if (globalPos[1] < gg.bBoxMin()[1] + eps_)
@@ -121,7 +121,7 @@ public:
     {
         // the pure Neumann problem is only defined up to a constant
         // we create a well-posed problem by fixing the pressure at one dof in the middle of the domain
-        return (scv.dofIndex() == static_cast<std::size_t>(this->fvGridGeometry().numDofs()/2));
+        return (scv.dofIndex() == static_cast<std::size_t>(this->gridGeometry().numDofs()/2));
     }
 
     /*!

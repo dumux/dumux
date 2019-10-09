@@ -109,7 +109,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -213,7 +213,7 @@ public:
         values = initialAtPos(globalPos);
 
         // start injecting after the velocity field had enough time to initialize
-        if(globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_ && isInjectionPeriod())
+        if(globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_ && isInjectionPeriod())
             values[Indices::conti0EqIdx + 1] = inletMoleFraction_;
 
         return values;
@@ -268,10 +268,10 @@ public:
     {
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = pressure_;
-        values[Indices::velocityXIdx] = inletVelocity_ * (globalPos[1] - this->fvGridGeometry().bBoxMin()[1])
-                                              * (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
-                                              / (0.25 * (this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1])
-                                              * (this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]));
+        values[Indices::velocityXIdx] = inletVelocity_ * (globalPos[1] - this->gridGeometry().bBoxMin()[1])
+                                              * (this->gridGeometry().bBoxMax()[1] - globalPos[1])
+                                              / (0.25 * (this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1])
+                                              * (this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]));
 
         return values;
     }
@@ -308,16 +308,16 @@ public:
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_; }
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_; }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_; }
+    { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
+    { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
 
     Scalar eps_;
     Scalar inletVelocity_;

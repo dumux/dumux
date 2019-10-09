@@ -60,7 +60,7 @@ class DarcyDarcyBoundaryCouplingManager
     template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
     template<std::size_t i> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t i> using VolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::VolumeVariables;
-    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomain<i>::FVGridGeometry;
+    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomain<i>::GridGeometry;
     template<std::size_t i> using FVElementGeometry = typename FVGridGeometry<i>::LocalView;
     template<std::size_t i> using SubControlVolumeFace = typename FVGridGeometry<i>::SubControlVolumeFace;
     template<std::size_t i> using SubControlVolume = typename FVGridGeometry<i>::SubControlVolume;
@@ -119,7 +119,7 @@ public:
                                            Dune::index_constant<j> domainJ) const
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
-        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         return couplingMapper_.couplingStencil(domainI, eIdx, domainJ);
     }
 
@@ -165,8 +165,8 @@ public:
         static const bool enableGravity = getParamFromGroup<bool>(this->problem(domainI).paramGroup(), "Problem.EnableGravity");
         constexpr auto otherDomainIdx = domainIdx<1-i>();
 
-        const auto& outsideElement = this->problem(otherDomainIdx).fvGridGeometry().element(couplingMapper_.outsideElementIndex(domainI, scvf));
-        auto fvGeometryOutside = localView(this->problem(otherDomainIdx).fvGridGeometry());
+        const auto& outsideElement = this->problem(otherDomainIdx).gridGeometry().element(couplingMapper_.outsideElementIndex(domainI, scvf));
+        auto fvGeometryOutside = localView(this->problem(otherDomainIdx).gridGeometry());
         fvGeometryOutside.bindElement(outsideElement);
 
         const auto& flipScvf = fvGeometryOutside.scvf(couplingMapper_.flipScvfIndex(domainI, scvf));
@@ -231,7 +231,7 @@ public:
                                const SubControlVolume<i>& scv) const
     {
         VolumeVariables<i> volVars;
-        const auto elemSol = elementSolution(element, this->curSol()[domainI], this->problem(domainI).fvGridGeometry());
+        const auto elemSol = elementSolution(element, this->curSol()[domainI], this->problem(domainI).gridGeometry());
         volVars.update(elemSol, this->problem(domainI), element, scv);
         return volVars;
     }

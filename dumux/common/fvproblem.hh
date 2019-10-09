@@ -50,7 +50,7 @@ class FVProblem
 {
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -580,7 +580,12 @@ public:
     // \}
 
     //! The finite volume grid geometry
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const FVGridGeometry& fvGridGeometry() const
+    { return gridGeometry(); }
+
+    //! The finite volume grid geometry
+    const FVGridGeometry& gridGeometry() const
     { return *fvGridGeometry_; }
 
     //! The parameter group in which to retrieve runtime parameters

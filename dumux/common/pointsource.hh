@@ -119,7 +119,7 @@ public:
     // to be overloaded by derived classes
     template<class Problem, class FVElementGeometry, class ElementVolumeVariables>
     void update(const Problem &problem,
-                const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity &element,
+                const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity &element,
                 const FVElementGeometry &fvGeometry,
                 const ElementVolumeVariables &elemVolVars,
                 const typename FVElementGeometry::SubControlVolume &scv)
@@ -215,7 +215,7 @@ class SolDependentPointSource : public PointSource<Dune::FieldVector<typename Ge
     using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 

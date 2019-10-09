@@ -87,7 +87,7 @@ struct Problem<TypeTag, TTag::Soil> { using type = SoilProblem<TypeTag>; };
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Soil>
 {
-    using type = SoilSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = SoilSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                    GetPropType<TypeTag, Properties::Scalar>>;
 };
 
@@ -116,7 +116,7 @@ class SoilProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
@@ -313,7 +313,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         static const Scalar extend = 0.15*(gg.bBoxMax()[0]-gg.bBoxMin()[0]);
         const auto xTracer = [&]()
         {

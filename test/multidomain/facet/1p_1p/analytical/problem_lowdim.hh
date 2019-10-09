@@ -61,7 +61,7 @@ struct Problem<TypeTag, TTag::OnePLowDim> { using type = OnePLowDimProblem<TypeT
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePLowDim>
 {
-    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
                                     GetPropType<TypeTag, Properties::Scalar> >;
 };
 

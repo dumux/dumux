@@ -81,9 +81,9 @@ struct Problem<TypeTag, TTag::CombustionOneComponent>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::CombustionOneComponent>
 {
-    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = CombustionSpatialParams<FVGridGeometry, Scalar>;
+    using type = CombustionSpatialParams<GridGeometry, Scalar>;
 };
 
 template<class TypeTag>
@@ -181,13 +181,13 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
 
@@ -215,8 +215,8 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
-    CombustionProblemOneComponent(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    CombustionProblemOneComponent(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
             outputName_ = getParam<std::string>("Problem.Name");
             nRestart_ = getParam<Scalar>("Constants.nRestart");
@@ -517,13 +517,13 @@ private:
      * \brief Returns whether the tested position is on the left boundary of the domain.
      */
     bool onLeftBoundary_(const GlobalPosition & globalPos) const
-    {   return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;}
+    {   return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;}
 
     /*!
     * \brief Returns whether the tested position is on the right boundary of the domain.
      */
     bool onRightBoundary_(const GlobalPosition & globalPos) const
-    {   return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;}
+    {   return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;}
 
     /*!
      * \brief Returns whether the tested position is in a specific region (right) in the domain

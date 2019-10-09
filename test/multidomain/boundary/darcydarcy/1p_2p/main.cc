@@ -86,7 +86,7 @@ struct Grid<TypeTag, TTag::OnePSub>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePSub>
 {
-    using type = TestSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = TestSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                    GetPropType<TypeTag, Properties::Scalar>>;
 };
 
@@ -174,7 +174,7 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////
 
     // create the finite volume grid geometries
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto fvGridGeometry0 = std::make_shared<FVGridGeometry>(gridView0);
     auto fvGridGeometry1 = std::make_shared<FVGridGeometry>(gridView1);
     fvGridGeometry0->update();

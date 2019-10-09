@@ -73,7 +73,7 @@ struct Problem<TypeTag, TTag::Heterogeneous> { using type = HeterogeneousProblem
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Heterogeneous>
 {
-    using type = HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                             GetPropType<TypeTag, Properties::Scalar>>;
 };
 
@@ -111,7 +111,7 @@ struct Problem<TypeTag, TTag::HeterogeneousNI> { using type = HeterogeneousProbl
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::HeterogeneousNI>
 {
-    using type = HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
+    using type = HeterogeneousSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                             GetPropType<TypeTag, Properties::Scalar>>;
 };
 
@@ -205,8 +205,8 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
@@ -216,7 +216,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = ModelTraits::useMoles();
 
     // the discretization method we are using
-    static constexpr auto discMethod = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
+    static constexpr auto discMethod = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
 
     // world dimension to access gravity vector
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -274,8 +274,8 @@ public:
     template<class VTKWriter>
     void addFieldsToWriter(VTKWriter& vtk)
     {
-        const auto numElements = this->fvGridGeometry().gridView().size(0);
-        const auto numDofs = this->fvGridGeometry().numDofs();
+        const auto numElements = this->gridGeometry().gridView().size(0);
+        const auto numDofs = this->gridGeometry().numDofs();
 
         vtkKxx_.resize(numElements);
         vtkPorosity_.resize(numElements);
@@ -293,11 +293,11 @@ public:
         vtk.addField(vtkTemperature_, "T");
 #endif
 
-        const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& gridView = this->gridGeometry().gridView();
         for (const auto& element : elements(gridView))
         {
-            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-            auto fvGeometry = localView(this->fvGridGeometry());
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
+            auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
 
             for (const auto& scv : scvs(fvGeometry))

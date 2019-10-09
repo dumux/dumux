@@ -76,7 +76,7 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCThermalNonequilibrium>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCThermalNonequilibrium>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNCNonequilibriumTestSpatialParams<FVGridGeometry, Scalar>;
 };
@@ -114,8 +114,8 @@ class OnePTwoCThermalNonequilibriumProblem : public PorousMediumFlowProblem<Type
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -242,7 +242,7 @@ public:
         const auto& globalPos = scvf.ipGlobal();
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
-        if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        if (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
              flux[contiH2OEqIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity();
              flux[contiN2EqIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity()*elemVolVars[scv].moleFraction(0, N2Idx);

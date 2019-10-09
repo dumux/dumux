@@ -113,9 +113,9 @@ struct SolidSystem<TypeTag, TTag::EvaporationAtmosphere>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
 {
-    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
+    using type = EvaporationAtmosphereSpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -137,13 +137,13 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using ParameterCache = typename FluidSystem::ParameterCache;
@@ -175,8 +175,8 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
-    EvaporationAtmosphereProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    EvaporationAtmosphereProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         percentOfEquil_         = getParam<Scalar>("BoundaryConditions.percentOfEquil");
         nTemperature_           = getParam<Scalar>("FluidSystem.nTemperature");
@@ -488,19 +488,19 @@ private:
      * \brief Returns whether the tested position is on the left boundary of the domain.
      */
     bool onLeftBoundary_(const GlobalPosition & globalPos) const
-    {  return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;   }
+    {  return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;   }
 
     /*!
      * \brief Returns whether the tested position is on the right boundary of the domain.
      */
     bool onRightBoundary_(const GlobalPosition & globalPos) const
-    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;    }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;    }
 
     /*!
      * \brief Returns whether the tested position is on the lower boundary of the domain.
      */
     bool onLowerBoundary_(const GlobalPosition & globalPos) const
-    { return globalPos[dimWorld-1] < this->fvGridGeometry().bBoxMin()[dimWorld-1] + eps_;    }
+    { return globalPos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + eps_;    }
 
 private:
     static constexpr Scalar eps_ = 1e-6;

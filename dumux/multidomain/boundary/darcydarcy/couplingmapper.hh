@@ -49,7 +49,7 @@ class DarcyDarcyBoundaryCouplingMapper
 {
     using Scalar = typename MDTraits::Scalar;
 
-    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomain<i>::FVGridGeometry;
+    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomain<i>::GridGeometry;
     template<std::size_t i> using SubControlVolumeFace = typename FVGridGeometry<i>::SubControlVolumeFace;
     template<std::size_t i> using GridView = typename FVGridGeometry<i>::GridView;
     template<std::size_t i> using Element = typename GridView<i>::template Codim<0>::Entity;
@@ -95,8 +95,8 @@ public:
 
         const auto& problem0 = couplingManager.problem(domainIdx<0>());
         const auto& problem1 = couplingManager.problem(domainIdx<1>());
-        const auto& gg0 = problem0.fvGridGeometry();
-        const auto& gg1 = problem1.fvGridGeometry();
+        const auto& gg0 = problem0.gridGeometry();
+        const auto& gg1 = problem1.gridGeometry();
 
         isCoupledScvf_[0].resize(gg0.numScvf(), false);
         isCoupledScvf_[1].resize(gg1.numScvf(), false);

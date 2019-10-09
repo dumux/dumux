@@ -54,7 +54,7 @@ namespace Dumux {
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 auto evalGradients(const Element& element,
                    const typename Element::Geometry& geometry,
-                   const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                   const typename FVElementGeometry::GridGeometry& fvGridGeometry,
                    const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                    const typename Element::Geometry::GlobalCoordinate& globalPos,
                    bool ignoreState = false)
@@ -127,7 +127,7 @@ template<class Element, class FVElementGeometry, class PrimaryVariables>
 Dune::FieldVector<typename Element::Geometry::GlobalCoordinate, PrimaryVariables::dimension>
 evalGradients(const Element& element,
               const typename Element::Geometry& geometry,
-              const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+              const typename FVElementGeometry::GridGeometry& fvGridGeometry,
               const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
               const typename Element::Geometry::GlobalCoordinate& globalPos)
 { DUNE_THROW(Dune::NotImplemented, "General gradient evaluation for cell-centered methods"); }

@@ -52,7 +52,7 @@ class SolidEnergyProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
@@ -167,7 +167,7 @@ public:
     void addPointSources(std::vector<PointSource>& pointSources) const
     {
         // add point sources along a sinus
-        const auto& gg = this->fvGridGeometry();
+        const auto& gg = this->gridGeometry();
         const auto ampl = (gg.bBoxMax()[1] - gg.bBoxMin()[1])/3.0;
         const auto len = (gg.bBoxMax()[0] - gg.bBoxMin()[0]);
         const auto freq = 1.0/len;

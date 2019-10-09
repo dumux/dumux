@@ -56,7 +56,7 @@ class FVAssembler
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr DiscretizationMethod discMethod = GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod;
+    static constexpr DiscretizationMethod discMethod = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
     static constexpr bool isBox = discMethod == DiscretizationMethod::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
@@ -66,7 +66,8 @@ class FVAssembler
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -78,10 +79,10 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     FVAssembler(std::shared_ptr<const Problem> problem,
-                std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<GridVariables> gridVariables)
     : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
     , timeLoop_()
     , isStationaryProblem_(true)
@@ -95,11 +96,11 @@ public:
      */
     [[deprecated("Please use constructor taking the previous solution instead. Will be removed after release 3.2!")]]
     FVAssembler(std::shared_ptr<const Problem> problem,
-                std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<GridVariables> gridVariables,
                 std::shared_ptr<const TimeLoop> timeLoop)
     : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
     , timeLoop_(timeLoop)
     , isStationaryProblem_(!timeLoop)
@@ -111,12 +112,12 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     FVAssembler(std::shared_ptr<const Problem> problem,
-                std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<GridVariables> gridVariables,
                 std::shared_ptr<const TimeLoop> timeLoop,
                 const SolutionVector& prevSol)
     : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
@@ -140,7 +141,7 @@ public:
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, *residual_, *fvGridGeometry_);
+        enforcePeriodicConstraints_(*jacobian_, *residual_, *gridGeometry_);
     }
 
     /*!
@@ -189,9 +190,9 @@ public:
         // for box communicate the residual with the neighboring processes
         if (isBox && gridView().comm().size() > 1)
         {
-            using VertexMapper = typename FVGridGeometry::VertexMapper;
+            using VertexMapper = typename GridGeometry::VertexMapper;
             VertexHandleSum<typename SolutionVector::block_type, SolutionVector, VertexMapper>
-            sumResidualHandle(residual, fvGridGeometry_->vertexMapper());
+            sumResidualHandle(residual, gridGeometry_->vertexMapper());
             gridView().communicate(sumResidualHandle,
                                    Dune::InteriorBorder_InteriorBorder_Interface,
                                    Dune::ForwardCommunication);
@@ -251,7 +252,7 @@ public:
         jacobian_->setSize(numDofs, numDofs);
 
         // create occupation pattern of the jacobian
-        const auto occupationPattern = getJacobianPattern<isImplicit>(fvGridGeometry());
+        const auto occupationPattern = getJacobianPattern<isImplicit>(gridGeometry());
 
         // export pattern to jacobian
         occupationPattern.exportIdx(*jacobian_);
@@ -263,19 +264,24 @@ public:
 
     //! Returns the number of degrees of freedom
     std::size_t numDofs() const
-    { return fvGridGeometry_->numDofs(); }
+    { return gridGeometry_->numDofs(); }
 
     //! The problem
     const Problem& problem() const
     { return *problem_; }
 
     //! The global finite volume geometry
-    const FVGridGeometry& fvGridGeometry() const
-    { return *fvGridGeometry_; }
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
+    { return gridGeometry(); }
+
+    //! The global finite volume geometry
+    const GridGeometry& gridGeometry() const
+    { return *gridGeometry_; }
 
     //! The gridview
     const GridView& gridView() const
-    { return fvGridGeometry().gridView(); }
+    { return gridGeometry().gridView(); }
 
     //! The global grid variables
     GridVariables& gridVariables()
@@ -416,9 +422,9 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethod::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& fvGridGeometry)
+    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& gridGeometry)
     {
-        for (const auto& m : fvGridGeometry.periodicVertexMap())
+        for (const auto& m : gridGeometry.periodicVertexMap())
         {
             if (m.first < m.second)
             {
@@ -436,13 +442,13 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& fvGridGeometry) {}
+    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& gridGeometry) {}
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
 
     //! the finite volume geometry of the grid
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const GridGeometry> gridGeometry_;
 
     //! the variables container for the grid
     std::shared_ptr<GridVariables> gridVariables_;

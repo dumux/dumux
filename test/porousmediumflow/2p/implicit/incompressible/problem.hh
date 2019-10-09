@@ -84,7 +84,7 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPIncompressible>
 {
 private:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
@@ -116,7 +116,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -164,10 +164,10 @@ public:
 
         Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
-        Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
-        Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
+        Scalar height = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
+        Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
         Scalar alpha = 1 + 1.5/height;
-        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
+        Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
         Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
         // hydrostatic pressure scaled by alpha
@@ -213,7 +213,7 @@ public:
 
         Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
-        Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
+        Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
 
         // hydrostatic pressure
         values[pressureH2OIdx] = 1e5 - densityW*this->spatialParams().gravity(globalPos)[1]*depth;
@@ -236,28 +236,28 @@ public:
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
+        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
+        return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
+        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
-        Scalar lambda = (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])/width;
+        Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
+        Scalar lambda = (this->gridGeometry().bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 

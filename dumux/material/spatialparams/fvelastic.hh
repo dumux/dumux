@@ -159,7 +159,13 @@ public:
     }
 
     //! The finite volume grid geometry
-    const FVGridGeometry& fvGridGeometry() const { return *fvGridGeometry_; }
+    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    const FVGridGeometry& fvGridGeometry() const
+    { return *fvGridGeometry_; }
+
+    //! The finite volume grid geometry
+    const FVGridGeometry& gridGeometry() const
+    { return *fvGridGeometry_; }
 
 protected:
     Implementation &asImp_()

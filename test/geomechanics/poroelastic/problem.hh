@@ -65,7 +65,7 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TestPoroElastic>
 {
     using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
-                                           GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                                           GetPropType<TypeTag, Properties::GridGeometry> >;
 };
 } // end namespace Properties
 
@@ -85,7 +85,7 @@ class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;

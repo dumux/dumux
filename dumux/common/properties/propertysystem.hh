@@ -91,7 +91,17 @@ struct GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, std:
 template<class TypeTag, template<class,class> class Property, class LastTypeTag>
 struct GetDefined<TypeTag, Property, std::tuple<LastTypeTag>>
 {
+// As of clang 8, the following alias triggers compiler warnings if instantiated
+// from something like `GetPropType<..., DeprecatedProperty>`, even if that is
+// contained in a diagnostic pragma construct that should prevent these warnings.
+// As a workaround, also add the pragmas around this line. The desired warnings
+// from instantiating `GetPropType<..., DeprecatedProperty>` without pragmas are
+// still issued both by gcc and clang.
+// See the discussion in MR 1647 for more details.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
      using LastType = Property<TypeTag, LastTypeTag>;
+#pragma GCC diagnostic pop
      using type = std::conditional_t<isDefinedProperty<LastType>(int{}), LastType,
                                      typename GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, void>::type>;
 };
@@ -99,7 +109,11 @@ struct GetDefined<TypeTag, Property, std::tuple<LastTypeTag>>
 template<class TypeTag, template<class,class> class Property, class FirstTypeTag, class ...Args>
 struct GetDefined<TypeTag, Property, std::tuple<FirstTypeTag, Args...>>
 {
+// See the comment above.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
      using FirstType = Property<TypeTag, FirstTypeTag>;
+#pragma GCC diagnostic pop
      using type = std::conditional_t<isDefinedProperty<FirstType>(int{}), FirstType,
                                      typename GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, void>::type>;
 };

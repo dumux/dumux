@@ -48,7 +48,7 @@ struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>
 template<class TypeTag>
 using NavierStokesParentProblem =
       typename NavierStokesParentProblemImpl<TypeTag,
-      GetPropType<TypeTag, Properties::FVGridGeometry>::discMethod>::type;
+      GetPropType<TypeTag, Properties::GridGeometry>::discMethod>::type;
 
 /*!
  * \ingroup NavierStokesModel
@@ -64,7 +64,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using ParentType = NavierStokesParentProblem<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 

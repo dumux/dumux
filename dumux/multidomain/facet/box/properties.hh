@@ -60,7 +60,7 @@ template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::BoxFacetCouplingModel>
 {
     using type = BoxFacetCouplingDarcysLaw< GetPropType<TypeTag, Properties::Scalar>,
-                                            GetPropType<TypeTag, Properties::FVGridGeometry> >;
+                                            GetPropType<TypeTag, Properties::GridGeometry> >;
 };
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
@@ -68,7 +68,7 @@ template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::BoxFacetCouplingModel>
 {
     using type = PorousMediumFluxVariables<TypeTag,
-                                           BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::FVGridGeometry>>>;
+                                           BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>;
 };
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
@@ -76,6 +76,13 @@ template<class TypeTag>
 struct ElementBoundaryTypes<TypeTag, TTag::BoxFacetCouplingModel>
 { using type = BoxFacetCouplingElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>; };
 
+// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
+// For ensuring backward compatibility on the user side, it is necessary to
+// stick to the old name for the specializations, see the discussion in MR 1647.
+// Use diagnostic pragmas to prevent the emission of a warning message.
+// TODO after 3.1: Rename to GridGeometry, remove the pragmas and this comment.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 //! Set the default for the grid finite volume geometry
 template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::BoxFacetCouplingModel>
@@ -87,6 +94,7 @@ private:
 public:
     using type = BoxFacetCouplingFVGridGeometry<Scalar, GridView, enableCache>;
 };
+#pragma GCC diagnostic pop
 
 } // namespace Properties
 } // namespace Dumux

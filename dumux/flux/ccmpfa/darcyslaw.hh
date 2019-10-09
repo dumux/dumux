@@ -54,7 +54,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -75,7 +75,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume related data from the filler class & upate the cache
-            if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            if (fvGeometry.gridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.secondaryInteractionVolume(),
                                                   fluxVarsCacheFiller.secondaryIvLocalFaceData(),
                                                   fluxVarsCacheFiller.secondaryIvDataHandle());

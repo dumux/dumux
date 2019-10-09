@@ -48,7 +48,7 @@ namespace CCMpfa {
     template<class FVElementGeometry>
     std::size_t maxNumBoundaryVolVars(const FVElementGeometry& fvGeometry)
     {
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
 
         std::size_t numBoundaryVolVars = 0;
@@ -81,7 +81,7 @@ namespace CCMpfa {
     void addBoundaryVolVarsAtNode(std::vector<VolumeVariables>& volVars,
                                   std::vector<IndexType>& volVarIndices,
                                   const Problem& problem,
-                                  const typename FVElemGeom::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                                  const typename FVElemGeom::GridGeometry::GridView::template Codim<0>::Entity& element,
                                   const FVElemGeom& fvGeometry,
                                   const NodalIndexSet& nodalIndexSet)
     {
@@ -89,7 +89,7 @@ namespace CCMpfa {
             return;
 
         // index of the element the fvGeometry was bound to
-        const auto boundElemIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
+        const auto boundElemIdx = fvGeometry.gridGeometry().elementMapper().index(element);
 
         // check each scvf in the index set for boundary presence
         for (auto scvfIdx : nodalIndexSet.gridScvfIndices())
@@ -101,7 +101,7 @@ namespace CCMpfa {
                 continue;
 
             const auto insideScvIdx = ivScvf.insideScvIdx();
-            const auto insideElement = fvGeometry.fvGridGeometry().element(insideScvIdx);
+            const auto insideElement = fvGeometry.gridGeometry().element(insideScvIdx);
             const auto bcTypes = problem.boundaryTypes(insideElement, ivScvf);
 
             // Only proceed on dirichlet boundaries. On Neumann
@@ -135,10 +135,10 @@ namespace CCMpfa {
     void addBoundaryVolVars(std::vector<VolumeVariables>& volVars,
                             std::vector<IndexType>& volVarIndices,
                             const Problem& problem,
-                            const typename FVElemGeom::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                            const typename FVElemGeom::GridGeometry::GridView::template Codim<0>::Entity& element,
                             const FVElemGeom& fvGeometry)
     {
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
 
         // treat the BCs inside the element
         if (fvGeometry.hasBoundaryScvf())
@@ -209,7 +209,7 @@ public:
     //! Constructor
     CCMpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars)
-    , numScv_(gridVolVars.problem().fvGridGeometry().numScv())
+    , numScv_(gridVolVars.problem().gridGeometry().numScv())
     {}
 
     //! operator for the access with an scv
@@ -229,7 +229,7 @@ public:
 
     //! precompute all volume variables in a stencil of an element - bind Dirichlet vol vars in the stencil
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
@@ -247,7 +247,7 @@ public:
 
     //! precompute the volume variables of an element - do nothing: volVars are cached
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {}
@@ -300,14 +300,14 @@ public:
 
     //! Prepares the volume variables within the element stencil
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
         clear();
 
         const auto& problem = gridVolVars().problem();
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
 
         // stencil information
         const auto globalI = fvGridGeometry.elementMapper().index(element);
@@ -374,13 +374,13 @@ public:
 
     //! Prepares the volume variables of an element
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
         clear();
 
-        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.gridGeometry();
         auto eIdx = fvGridGeometry.elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
