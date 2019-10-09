@@ -33,25 +33,25 @@ namespace Dumux {
 
 // In the `TracerTestSpatialParams` class, we define all functions needed to describe spatially dependent parameters for the `tracer_problem`.
 
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TracerTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             TracerTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             TracerTestSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           TracerTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           TracerTestSpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
-    TracerTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TracerTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
 
     // ### Properties of the porous matrix

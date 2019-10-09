@@ -34,23 +34,23 @@
 namespace Dumux {
 
 //In the RoughChannelSpatialParams class we define all functions needed to describe the spatial distributed parameters.
-template<class FVGridGeometry, class Scalar, class VolumeVariables>
+template<class GridGeometry, class Scalar, class VolumeVariables>
 class RoughChannelSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
     // We introduce using declarations that are derived from the property system which we need in this class
-    using ThisType = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // In the constructor be read some values from the `params.input` and initialize the friciton law.
-    RoughChannelSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         gravity_ = getParam<Scalar>("Problem.Gravity");
