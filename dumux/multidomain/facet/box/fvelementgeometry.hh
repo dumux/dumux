@@ -73,8 +73,8 @@ public:
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
     //! Constructor
-    BoxFacetCouplingFVElementGeometry(const GridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry)
+    BoxFacetCouplingFVElementGeometry(const GridGeometry& gridGeometry)
+    : gridGeometryPtr_(&gridGeometry)
     {}
 
     //! Get a sub control volume with a local scv index
@@ -141,17 +141,17 @@ public:
     }
 
     //! The global finite volume geometry we are a restriction of
-    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const GridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return *gridGeometryPtr_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return *gridGeometryPtr_; }
 
 private:
     Dune::GeometryType elemGeometryType_;
-    const GridGeometry* fvGridGeometryPtr_;
+    const GridGeometry* gridGeometryPtr_;
 
     GridIndexType eIdx_;
 };
@@ -188,8 +188,8 @@ public:
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
     //! Constructor
-    BoxFacetCouplingFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry)
+    BoxFacetCouplingFVElementGeometry(const GridGeometry& gridGeometry)
+    : gridGeometryPtr_(&gridGeometry)
     {}
 
     //! Get a sub control volume with a local scv index
@@ -254,13 +254,13 @@ public:
     }
 
     //! The global finite volume geometry we are a restriction of
-    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const GridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return *gridGeometryPtr_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return *gridGeometryPtr_; }
 
 private:
 
@@ -358,7 +358,7 @@ private:
     GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
-    const FVGridGeometry* fvGridGeometryPtr_;
+    const GridGeometry* gridGeometryPtr_;
 
     //! vectors to store the geometries locally after binding an element
     std::vector<SubControlVolume> scvs_;

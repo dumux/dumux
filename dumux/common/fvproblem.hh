@@ -50,9 +50,9 @@ class FVProblem
 {
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -72,8 +72,8 @@ class FVProblem
 
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
-    static constexpr bool isStaggered = FVGridGeometry::discMethod == DiscretizationMethod::staggered;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethod::staggered;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -92,11 +92,11 @@ public:
 
     /*!
      * \brief Constructor
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : gridGeometry_(fvGridGeometry)
+    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : gridGeometry_(gridGeometry)
     , paramGroup_(paramGroup)
     {
         // set a default name for the problem
@@ -581,11 +581,11 @@ public:
 
     //! The finite volume grid geometry
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
+    const GridGeometry& fvGridGeometry() const
     { return gridGeometry(); }
 
     //! The finite volume grid geometry
-    const FVGridGeometry& gridGeometry() const
+    const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 
     //! The parameter group in which to retrieve runtime parameters
@@ -657,7 +657,7 @@ private:
     }
 
     //! The finite volume grid geometry
-    std::shared_ptr<const FVGridGeometry> gridGeometry_;
+    std::shared_ptr<const GridGeometry> gridGeometry_;
 
     //! The parameter group in which to retrieve runtime parameters
     std::string paramGroup_;
