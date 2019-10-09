@@ -115,10 +115,9 @@ class FreeFlowStaggeredSubControlVolumeFace
     using AxisData = typename T::AxisData;
 
     using Scalar = typename T::Scalar;
-    static const int dim = Geometry::mydimension;
-    static const int dimworld = Geometry::coorddimension;
+    static const int dim = GV::dimension;
 
-    static constexpr int numPairs = 2 * (dimworld - 1);
+    static constexpr int numPairs = 2 * (dim - 1);
 
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
@@ -280,7 +279,7 @@ public:
     //! Returns the length of the face in a certain direction (adaptation of area() for 3d)
     Scalar faceLength(const int localSubFaceIdx) const
     {
-        if (dimworld == 3)
+        if (dim == 3)
         {
             if (localSubFaceIdx < 2)
                 return (corner(1) - corner(0)).two_norm();
