@@ -24,6 +24,9 @@
 #define DUMUX_LENSPROBLEM_POINTSOURCE_ADAPTIVE_HH
 
 // ## Include files
+// The grid we use
+#include <dune/alugrid/grid.hh>
+
 // The cell centered, two-point-flux discretization scheme is included:
 #include <dumux/discretization/cctpfa.hh>
 

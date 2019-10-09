@@ -27,6 +27,7 @@
 #include <numeric>
 #include <dumux/common/properties.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 

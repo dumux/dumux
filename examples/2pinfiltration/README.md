@@ -190,6 +190,10 @@ we have a convenience definition of the position of the lens
 
 
 ## Include files
+The grid we use
+```cpp
+#include <dune/alugrid/grid.hh>
+```
 The cell centered, two-point-flux discretization scheme is included:
 ```cpp
 #include <dumux/discretization/cctpfa.hh>

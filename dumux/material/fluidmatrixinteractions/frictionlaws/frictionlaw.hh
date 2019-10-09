@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <dune/common/fvector.hh>
+
 namespace Dumux {
 /*!
  * \ingroup Fluidmatrixinteractions

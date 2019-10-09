@@ -28,6 +28,7 @@
 #include <utility>
 
 #include <dune/geometry/type.hh>
+#include <dune/geometry/multilineargeometry.hh>
 #include <dune/common/version.hh>
 #include <dune/common/reservedvector.hh>
 

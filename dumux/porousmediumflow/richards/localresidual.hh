@@ -27,7 +27,10 @@
 #define DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/discretization/method.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
 
