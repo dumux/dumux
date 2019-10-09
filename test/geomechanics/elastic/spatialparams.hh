@@ -51,8 +51,8 @@ public:
     //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    ElasticSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    ElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         lameParams_.setLambda(3e9);
         lameParams_.setMu(3e9);

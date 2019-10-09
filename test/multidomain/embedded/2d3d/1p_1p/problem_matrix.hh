@@ -132,11 +132,11 @@ class MatrixProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    MatrixProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    MatrixProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                   std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                   std::shared_ptr<CouplingManager> couplingManager,
                   const std::string& paramGroup = "Matrix")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManager_(couplingManager)
     {
         // read parameters from input file

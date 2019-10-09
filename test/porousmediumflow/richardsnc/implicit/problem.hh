@@ -134,8 +134,8 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
-    RichardsWellTracerProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RichardsWellTracerProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
         contaminantMoleFraction_ = getParam<Scalar>("Problem.ContaminantMoleFraction");

@@ -122,10 +122,10 @@ class RootProblem : public PorousMediumFlowProblem<TypeTag>
 public:
 
     template<class SpatialParams>
-    RootProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    RootProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<SpatialParams> spatialParams,
                 std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, spatialParams, "Root")
+    : ParentType(gridGeometry, spatialParams, "Root")
     , couplingManager_(couplingManager)
     {
         // read parameters from input file

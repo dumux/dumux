@@ -120,8 +120,8 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
-    FractureProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    FractureProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
     }

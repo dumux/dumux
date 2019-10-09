@@ -134,8 +134,8 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
 
     enum { dofCodim = isBox ? dim : 0 };
 public:
-    FuelCellProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    FuelCellProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         nTemperature_       = getParam<int>("Problem.NTemperature");
         nPressure_          = getParam<int>("Problem.NPressure");

@@ -45,8 +45,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    BloodFlowSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    BloodFlowSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         radius_ = getParam<Scalar>("SpatialParams.Radius");
     }

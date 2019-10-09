@@ -62,8 +62,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RichardsWellTracerSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    RichardsWellTracerSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
 
         lensLowerLeft_ = getParam<GlobalPosition>("Problem.LensLowerLeft");

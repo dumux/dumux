@@ -55,8 +55,8 @@ public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
 
-    ThermoChemSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    ThermoChemSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {}
 
     /*!

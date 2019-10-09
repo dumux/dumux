@@ -158,8 +158,8 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
 public:
-    InjectionProblem2PNI(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    InjectionProblem2PNI(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         maxDepth_ = 2700.0; // [m]
 

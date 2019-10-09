@@ -78,8 +78,8 @@ class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTa
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
-    OnePSingularityProblemTimeDependent(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePSingularityProblemTimeDependent(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {}
 
     /*!

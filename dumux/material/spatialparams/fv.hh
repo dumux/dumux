@@ -64,8 +64,8 @@ class FVSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar, Impleme
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    FVSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    FVSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {}
 
     /*!

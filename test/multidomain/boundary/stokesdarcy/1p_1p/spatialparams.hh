@@ -51,8 +51,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    OnePSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         permeability_ = getParam<Scalar>("Darcy.SpatialParams.Permeability");
         alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");

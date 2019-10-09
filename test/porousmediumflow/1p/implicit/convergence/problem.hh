@@ -110,10 +110,10 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     /*!
      * \brief The constructor.
-     * \param fvGridGeometry The finite-volume grid geometry
+     * \param gridGeometry The finite-volume grid geometry
      */
-    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {}
 
     /*!

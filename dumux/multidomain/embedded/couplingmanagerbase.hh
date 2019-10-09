@@ -446,7 +446,7 @@ protected:
 
     //! compute the shape function for a given point and geometry
     template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod == DiscretizationMethod::box, int> = 0>
-    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
+    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& gridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
         const auto ipLocal = geo.local(globalPos);
         const auto& localBasis = this->problem(domainI).gridGeometry().feCache().get(geo.type()).localBasis();
@@ -455,7 +455,7 @@ protected:
 
     //! compute the shape function for a given point and geometry
     template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod != DiscretizationMethod::box, int> = 0>
-    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
+    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& gridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
         DUNE_THROW(Dune::InvalidStateException, "Shape values requested for other discretization than box!");
     }

@@ -150,7 +150,7 @@ private:
         std::vector<std::vector<GlobalPosition>> volVarVectorDataFracture;
 
         // some references for convenience
-        const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& gridView = this->gridGeometry().gridView();
         const auto& fractureGridView = fractureGrid_->leafGridView();
         const auto& volVarScalarDataInfo = this->volVarScalarDataInfo();
         const auto& volVarVectorDataInfo = this->volVarVectorDataInfo();
@@ -187,9 +187,9 @@ private:
 
             for (const auto& element : elements(gridView, Dune::Partitions::interior))
             {
-                const auto eIdxGlobal = this->fvGridGeometry().elementMapper().index(element);
+                const auto eIdxGlobal = this->gridGeometry().elementMapper().index(element);
 
-                auto fvGeometry = localView(this->fvGridGeometry());
+                auto fvGeometry = localView(this->gridGeometry());
                 auto elemVolVars = localView(this->gridVariables().curGridVolVars());
 
                 // If velocity output is enabled we need to bind to the whole stencil
@@ -257,7 +257,7 @@ private:
 
             for (std::size_t i = 0; i < volVarVectorDataInfo.size(); ++i)
             {
-                this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), volVarVectorData[i],
+                this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().vertexMapper(), volVarVectorData[i],
                                                             volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim).get() );
                 fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureVertexMapper_, volVarVectorDataFracture[i],
                                                                       volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim-1).get() );
@@ -267,14 +267,14 @@ private:
             if (this->velocityOutput().enableOutput())
             {
                 for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
-                    this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), velocity[phaseIdx],
+                    this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                                 "velocity_" + std::string(this->velocityOutput().phaseName(phaseIdx)) + " (m/s)",
                                                                 /*numComp*/dimWorld, /*codim*/dim).get() );
             }
 
             // the process rank
             if (addProcessRank)
-                this->sequenceWriter().addCellData( Field(gridView, this->fvGridGeometry().elementMapper(), rank,
+                this->sequenceWriter().addCellData( Field(gridView, this->gridGeometry().elementMapper(), rank,
                                                           "process rank", /*numComp*/1, /*codim*/0).get() );
 
             // also register additional (non-standardized) user fields if any (only on matrix grid)
@@ -325,7 +325,7 @@ private:
         std::vector< VectorDataContainer > volVarVectorDataFracture;
 
         // some references for convenience
-        const auto& gridView = this->fvGridGeometry().gridView();
+        const auto& gridView = this->gridGeometry().gridView();
         const auto& fractureGridView = fractureGrid_->leafGridView();
         const auto& volVarScalarDataInfo = this->volVarScalarDataInfo();
         const auto& volVarVectorDataInfo = this->volVarVectorDataInfo();
@@ -362,10 +362,10 @@ private:
 
             for (const auto& element : elements(gridView, Dune::Partitions::interior))
             {
-                const auto eIdxGlobal = this->fvGridGeometry().elementMapper().index(element);
+                const auto eIdxGlobal = this->gridGeometry().elementMapper().index(element);
                 const auto numCorners = element.subEntities(dim);
 
-                auto fvGeometry = localView(this->fvGridGeometry());
+                auto fvGeometry = localView(this->gridGeometry());
                 auto elemVolVars = localView(this->gridVariables().curGridVolVars());
 
                 // resize element-local data containers (for bulk grid)
@@ -435,7 +435,7 @@ private:
             // volume variables if any
             for (std::size_t i = 0; i < volVarScalarDataInfo.size(); ++i)
             {
-                this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().elementMapper(), volVarScalarData[i],
+                this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().elementMapper(), volVarScalarData[i],
                                                             volVarScalarDataInfo[i].name, /*numComp*/1, /*codim*/dim,
                                                             /*nonconforming*/this->dataMode()).get() );
                 fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureElementMapper_, volVarScalarDataFracture[i],
@@ -445,7 +445,7 @@ private:
 
             for (std::size_t i = 0; i < volVarVectorDataInfo.size(); ++i)
             {
-                this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().elementMapper(), volVarVectorData[i],
+                this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().elementMapper(), volVarVectorData[i],
                                                             volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim,
                                                             /*nonconforming*/this->dataMode()).get() );
                 fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureElementMapper_, volVarVectorDataFracture[i],
@@ -457,14 +457,14 @@ private:
             if (this->velocityOutput().enableOutput())
             {
                 for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
-                    this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), velocity[phaseIdx],
+                    this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                                 "velocity_" + std::string(this->velocityOutput().phaseName(phaseIdx)) + " (m/s)",
                                                                 /*numComp*/dimWorld, /*codim*/dim).get() );
             }
 
             // the process rank
             if (addProcessRank)
-                this->sequenceWriter().addCellData( Field(gridView, this->fvGridGeometry().elementMapper(), rank,
+                this->sequenceWriter().addCellData( Field(gridView, this->gridGeometry().elementMapper(), rank,
                                                           "process rank", /*numComp*/1, /*codim*/0).get() );
 
             // also register additional (non-standardized) user fields if any (only on matrix grid)
@@ -496,8 +496,8 @@ private:
     template< class FractureGridAdapter >
     void initializeFracture_(const FractureGridAdapter& fractureGridAdapter)
     {
-        const auto& fvGridGeometry = this->fvGridGeometry();
-        const auto& gridView = fvGridGeometry.gridView();
+        const auto& gridGeometry = this->gridGeometry();
+        const auto& gridView = gridGeometry.gridView();
         Dune::GridFactory<FractureGrid> gridFactory;
 
         // insert fracture vertices
@@ -508,7 +508,7 @@ private:
             if (fractureGridAdapter.isOnFacetGrid(v))
             {
                 gridFactory.insertVertex(v.geometry().center());
-                vertexToFractureVertexIdx_[fvGridGeometry.vertexMapper().index(v)] = fracVertexCount++;
+                vertexToFractureVertexIdx_[gridGeometry.vertexMapper().index(v)] = fracVertexCount++;
             }
         }
 
@@ -518,7 +518,7 @@ private:
         std::set< std::pair<GridIndexType, unsigned int> > handledFacets;
         for (const auto& element : elements(gridView))
         {
-            const auto eIdxGlobal = fvGridGeometry.elementMapper().index(element);
+            const auto eIdxGlobal = gridGeometry.elementMapper().index(element);
             const auto referenceElement = ReferenceElements::general(element.type());
 
             for (const auto& is : intersections(gridView, element))
@@ -530,7 +530,7 @@ private:
 
                 std::vector<GridIndexType> isVertexIndices(numCorners);
                 for (unsigned int i = 0; i < numCorners; ++i)
-                    isVertexIndices[i] = fvGridGeometry.vertexMapper().subIndex(element,
+                    isVertexIndices[i] = gridGeometry.vertexMapper().subIndex(element,
                                                                                 referenceElement.subEntity(indexInInside, 1, i, dim),
                                                                                 dim);
 
@@ -542,7 +542,7 @@ private:
                     if (!is.boundary())
                     {
                         // only proceed if facet has not been handled yet
-                        const auto outsideEIdx = fvGridGeometry.elementMapper().index(is.outside());
+                        const auto outsideEIdx = gridGeometry.elementMapper().index(is.outside());
                         const auto idxInOutside = is.indexInOutside();
                         const auto pair = std::make_pair(outsideEIdx, idxInOutside);
                         if (handledFacets.count( pair ) != 0)
@@ -591,7 +591,7 @@ private:
 
         // update vertex index map
         for (GridIndexType dofIdx = 0; dofIdx < gridView.size(GridView::dimension); ++dofIdx)
-            if (fvGridGeometry.dofOnFracture(dofIdx))
+            if (gridGeometry.dofOnFracture(dofIdx))
                 vertexToFractureVertexIdx_[dofIdx] = insToVertexIdx[ vertexToFractureVertexIdx_[dofIdx] ];
 
         // update fracture element map

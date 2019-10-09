@@ -53,14 +53,14 @@ public:
     /*!
      * \brief Computes the phase velocities in the scvs of the grid.
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param gridVariables The variables living on the grid
      * \param x The vector containing the solution
      * \param phaseIdx The index of the fluid phase to be considered
      */
     template<class GridGeometry, class GridVariables, class SolutionVector>
     static ResultPair<GridGeometry, typename GridVariables::Scalar>
-    computeVelocities(const GridGeometry& fvGridGeometry,
+    computeVelocities(const GridGeometry& gridGeometry,
                       const GridVariables& gridVariables,
                       const SolutionVector& x,
                       unsigned int phaseIdx)
@@ -72,32 +72,32 @@ public:
             return vel;
         };
 
-        return computePressureGradients(fvGridGeometry, gridVariables, x, phaseIdx, gradToVelocity);
+        return computePressureGradients(gridGeometry, gridVariables, x, phaseIdx, gradToVelocity);
     }
 
     /*!
      * \brief Computes the pressure gradients in the scvs of the grid.
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param gridVariables The variables living on the grid
      * \param x The vector containing the solution
      * \param phaseIdx The index of the fluid phase to be considered
      */
     template<class GridGeometry, class GridVariables, class SolutionVector>
     static ResultPair<GridGeometry, typename GridVariables::Scalar>
-    computePressureGradients(const GridGeometry& fvGridGeometry,
+    computePressureGradients(const GridGeometry& gridGeometry,
                              const GridVariables& gridVariables,
                              const SolutionVector& x,
                              unsigned int phaseIdx)
     {
         auto f = [] (const auto& grad, const auto& volVars) { return grad; };
-        return computePressureGradients(fvGridGeometry, gridVariables, x, phaseIdx, f);
+        return computePressureGradients(gridGeometry, gridVariables, x, phaseIdx, f);
     }
 
     /*!
      * \brief Computes the pressure gradients in the scvs of the grid.
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param gridVariables The variables living on the grid
      * \param x The vector containing the solution
      * \param phaseIdx The index of the fluid phase to be considered
@@ -112,7 +112,7 @@ public:
      */
     template<class GridGeometry, class GridVariables, class SolutionVector, class F>
     static ResultPair<GridGeometry, typename GridVariables::Scalar>
-    computePressureGradients(const GridGeometry& fvGridGeometry,
+    computePressureGradients(const GridGeometry& gridGeometry,
                              const GridVariables& gridVariables,
                              const SolutionVector& x,
                              unsigned int phaseIdx,
@@ -138,7 +138,7 @@ public:
             }
         };
 
-        return computeGradients_(fvGridGeometry, gridVariables, x, handleFunction);
+        return computeGradients_(gridGeometry, gridVariables, x, handleFunction);
     }
 
 private:
@@ -148,7 +148,7 @@ private:
      */
     template<class GridGeometry, class GridVariables, class SolutionVector, class HandleFunction>
     static ResultPair<GridGeometry, typename GridVariables::Scalar>
-    computeGradients_(const GridGeometry& fvGridGeometry,
+    computeGradients_(const GridGeometry& gridGeometry,
                       const GridVariables& gridVariables,
                       const SolutionVector& x,
                       const HandleFunction& handleFunction)
@@ -158,7 +158,7 @@ private:
 
         // first, find out how many scvs live on this grid
         std::size_t numScvs = 0;
-        const auto& gridView = fvGridGeometry.gridView();
+        const auto& gridView = gridGeometry.gridView();
         for (const auto& element : elements(gridView))
             numScvs += element.subEntities(dim);
 
@@ -171,7 +171,7 @@ private:
         {
             bool allFinished = true;
             for (int i = 0; i < element.subEntities(dim); ++i)
-                if (!vertexHandled[fvGridGeometry.vertexMapper().subIndex(element, i, dim)])
+                if (!vertexHandled[gridGeometry.vertexMapper().subIndex(element, i, dim)])
                     allFinished = false;
 
             // bind views only if there is unfinished buisness
@@ -179,7 +179,7 @@ private:
                 continue;
 
             // compute gradients in all scvs of all interaction volumes in this element
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
             fvGeometry.bind(element);
@@ -191,7 +191,7 @@ private:
                 if (vertexHandled[scvf.vertexIndex()])
                     continue;
 
-                if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+                if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 {
                     const auto& iv = elemFluxVarsCache.secondaryInteractionVolume(scvf);
                     const auto& handle = elemFluxVarsCache.secondaryDataHandle(scvf);

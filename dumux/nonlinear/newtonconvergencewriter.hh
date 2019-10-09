@@ -62,13 +62,13 @@ class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector
 public:
     /*!
      * \brief Constructor
-     * \param fvGridGeometry The finite-volume grid geometry
+     * \param gridGeometry The finite-volume grid geometry
      * \param name Base name of the vtk output
      */
-    NewtonConvergenceWriter(const GridGeometry& fvGridGeometry,
+    NewtonConvergenceWriter(const GridGeometry& gridGeometry,
                             const std::string& name = "newton_convergence")
-    : fvGridGeometry_(fvGridGeometry)
-    , writer_(fvGridGeometry.gridView(), name, "", "")
+    : fvGridGeometry_(gridGeometry)
+    , writer_(gridGeometry.gridView(), name, "", "")
     {
         resize();
 

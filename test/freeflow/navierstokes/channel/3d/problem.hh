@@ -123,8 +123,8 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     static constexpr bool enablePseudoThreeDWallFriction = !DIM_3D;
 
 public:
-    ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         deltaP_ = getParam<Scalar>("Problem.DeltaP");
         height_ = getParam<Scalar>("Problem.Height");

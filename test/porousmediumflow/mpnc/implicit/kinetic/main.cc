@@ -109,12 +109,12 @@ int main(int argc, char** argv) try
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -125,7 +125,7 @@ int main(int argc, char** argv) try
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
     problem->setGridVariables(gridVariables);
 
@@ -149,11 +149,11 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop, xOld);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = Dumux::AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = Dumux::NonEquilibriumNewtonSolver<Assembler, LinearSolver>;

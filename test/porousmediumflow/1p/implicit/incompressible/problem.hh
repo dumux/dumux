@@ -127,8 +127,8 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
 
 public:
-    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), velocity_(0.0)
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), velocity_(0.0)
     {
         extrusionFactor_ = getParam<Scalar>("Problem.ExtrusionFactor");
         Scalar permeability = getParam<Scalar>("SpatialParams.Permeability");

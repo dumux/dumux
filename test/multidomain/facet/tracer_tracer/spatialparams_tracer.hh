@@ -53,10 +53,10 @@ class TracerSpatialParams
 
 public:
 
-    TracerSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    TracerSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                         const std::vector< std::vector<Scalar> >& volumeFluxes,
                         const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry)
+    : ParentType(gridGeometry)
     , volumeFlux_(volumeFluxes)
     , porosity_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Porosity"))
     {}

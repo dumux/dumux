@@ -137,8 +137,8 @@ class MPNCComparisonProblem
     static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
 
 public:
-    MPNCComparisonProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    MPNCComparisonProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C
 

@@ -115,10 +115,10 @@ public:
                               const std::vector<Scalar>& distanceFromLastLinearization,
                               Scalar threshold)
     {
-        const auto& fvGridGeometry = assembler.gridGeometry();
-        const auto& gridView = fvGridGeometry.gridView();
-        const auto& elementMapper = fvGridGeometry.elementMapper();
-        const auto& vertexMapper = fvGridGeometry.vertexMapper();
+        const auto& gridGeometry = assembler.gridGeometry();
+        const auto& gridView = gridGeometry.gridView();
+        const auto& elementMapper = gridGeometry.elementMapper();
+        const auto& vertexMapper = gridGeometry.vertexMapper();
 
         // set all vertices to green
         vertexColor_.assign(vertexColor_.size(), EntityColor::green);
@@ -318,9 +318,9 @@ public:
                               const std::vector<Scalar>& distanceFromLastLinearization,
                               Scalar threshold)
     {
-        const auto& fvGridGeometry = assembler.gridGeometry();
-        const auto& gridView = fvGridGeometry.gridView();
-        const auto& elementMapper = fvGridGeometry.elementMapper();
+        const auto& gridGeometry = assembler.gridGeometry();
+        const auto& gridView = gridGeometry.gridView();
+        const auto& elementMapper = gridGeometry.elementMapper();
 
         // mark the red elements
         for (const auto& element : elements(gridView))
@@ -340,7 +340,7 @@ public:
         }
 
         // mark the neighbors also red
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
+        const auto& connectivityMap = gridGeometry.connectivityMap();
         for (unsigned eIdx = 0; eIdx < elementColor_.size(); ++eIdx)
         {
             if (elementColor_[eIdx] == EntityColor::red)
@@ -440,9 +440,9 @@ public:
     : engine_(assembler)
     , greenElems_(0)
     {
-        const auto& fvGridGeometry = assembler.gridGeometry();
-        totalElems_ = fvGridGeometry.elementMapper().size();
-        totalElems_ = fvGridGeometry.gridView().comm().sum(totalElems_);
+        const auto& gridGeometry = assembler.gridGeometry();
+        totalElems_ = gridGeometry.elementMapper().size();
+        totalElems_ = gridGeometry.gridView().comm().sum(totalElems_);
     }
 
     /*!

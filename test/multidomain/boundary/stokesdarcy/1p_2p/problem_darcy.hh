@@ -110,9 +110,9 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    DarcySubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    DarcySubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
+    : ParentType(gridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
         saturation_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Saturation");

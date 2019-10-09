@@ -122,8 +122,8 @@ class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
 public:
-    TwoPNCDiffusionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPNCDiffusionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // initialize the tables of the fluid system
         FluidSystem::init();

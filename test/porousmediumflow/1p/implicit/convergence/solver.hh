@@ -89,25 +89,25 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    auto x = std::make_shared<SolutionVector>(fvGridGeometry->numDofs());
+    auto x = std::make_shared<SolutionVector>(gridGeometry->numDofs());
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(*x);
 
     // create assembler & linear solver
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     using LinearSolver = ILU0BiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -125,11 +125,11 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
 
         // add exact solution
         using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-        std::vector<Scalar> exact(fvGridGeometry->numDofs());
+        std::vector<Scalar> exact(gridGeometry->numDofs());
 
-        for (const auto& element : elements(fvGridGeometry->gridView()))
+        for (const auto& element : elements(gridGeometry->gridView()))
         {
-            auto fvGeometry = localView(*fvGridGeometry);
+            auto fvGeometry = localView(*gridGeometry);
             fvGeometry.bindElement(element);
 
             for (const auto& scv : scvs(fvGeometry))
@@ -141,7 +141,7 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
     }
 
     // fill storage and return
-    storage.gridGeometry = fvGridGeometry;
+    storage.gridGeometry = gridGeometry;
     storage.solution = x;
     return storage;
 }

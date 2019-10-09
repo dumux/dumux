@@ -58,8 +58,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    ConservationSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    ConservationSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         porosity_ = getParam<Scalar>("SpatialParams.Porosity");

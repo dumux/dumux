@@ -318,13 +318,13 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get stencil informations
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
+        const auto globalI = gridGeometry.elementMapper().index(element);
+        const auto& connectivityMap = gridGeometry.connectivityMap();
         const auto numNeighbors = connectivityMap[globalI].size();
 
         // container to store the neighboring elements
@@ -341,7 +341,7 @@ public:
         unsigned int j = 1;
         for (const auto& dataJ : connectivityMap[globalI])
         {
-            neighborElements[j-1] = fvGridGeometry.element(dataJ.globalJ);
+            neighborElements[j-1] = gridGeometry.element(dataJ.globalJ);
             for (const auto scvfIdx : dataJ.scvfsJ)
                 origResiduals[j] += this->evalFluxResidual(neighborElements[j-1], fvGeometry.scvf(scvfIdx));
 
@@ -457,12 +457,12 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get stencil informations
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto globalI = gridGeometry.elementMapper().index(element);
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
         const auto& curSolJ = this->curSol()[domainJ];
 
@@ -594,11 +594,11 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
 
         // reference to the element's scv (needed later) and corresponding vol vars
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto globalI = gridGeometry.elementMapper().index(element);
         const auto& scv = fvGeometry.scv(globalI);
         auto& curVolVars = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
 
@@ -609,7 +609,7 @@ public:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        auto elemSol = elementSolution(element, curSol, fvGridGeometry);
+        auto elemSol = elementSolution(element, curSol, gridGeometry);
 
         // derivatives in the neighbors with repect to the current elements
         LocalResidualValues partialDeriv;
@@ -768,12 +768,12 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         // auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get stencil informations
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto globalI = gridGeometry.elementMapper().index(element);
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
 
         for (const auto globalJ : stencil)

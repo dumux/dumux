@@ -164,8 +164,8 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    ThermoChemProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    ThermoChemProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         name_      = getParam<std::string>("Problem.Name");
         FluidSystem::init(/*tempMin=*/473.15,
@@ -181,9 +181,9 @@ public:
         boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
 
         unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
-        permeability_.resize(fvGridGeometry->gridView().size(codim));
-        porosity_.resize(fvGridGeometry->gridView().size(codim));
-        reactionRate_.resize(fvGridGeometry->gridView().size(codim));
+        permeability_.resize(gridGeometry->gridView().size(codim));
+        porosity_.resize(gridGeometry->gridView().size(codim));
+        reactionRate_.resize(gridGeometry->gridView().size(codim));
     }
 
     /*!

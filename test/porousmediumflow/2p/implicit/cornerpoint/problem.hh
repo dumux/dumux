@@ -117,9 +117,9 @@ class TwoPCornerPointTestProblem : public PorousMediumFlowProblem<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
 
 public:
-    TwoPCornerPointTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    TwoPCornerPointTestProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                                std::shared_ptr<typename ParentType::SpatialParams> spatialParams)
-    : ParentType(fvGridGeometry, spatialParams)
+    : ParentType(gridGeometry, spatialParams)
     {
         gravity_ = {0, 0, 9.81};
         injectionElement_ = getParam<int>("Problem.InjectionElement");

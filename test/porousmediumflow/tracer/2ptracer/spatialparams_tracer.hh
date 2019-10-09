@@ -53,8 +53,8 @@ class TwoPTracerTestSpatialParams
 
 public:
 
-    TwoPTracerTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    TwoPTracerTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     /*!
      * \brief Defines the porosity \f$\mathrm{[-]}\f$.

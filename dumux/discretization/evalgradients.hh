@@ -42,7 +42,7 @@ namespace Dumux {
  *
  * \param element The element
  * \param geometry The element geometry
- * \param fvGridGeometry The finite volume grid geometry
+ * \param gridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  * \param ignoreState If true, the state of primary variables is ignored
@@ -54,7 +54,7 @@ namespace Dumux {
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 auto evalGradients(const Element& element,
                    const typename Element::Geometry& geometry,
-                   const typename FVElementGeometry::GridGeometry& fvGridGeometry,
+                   const typename FVElementGeometry::GridGeometry& gridGeometry,
                    const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                    const typename Element::Geometry::GlobalCoordinate& globalPos,
                    bool ignoreState = false)
@@ -68,7 +68,7 @@ auto evalGradients(const Element& element,
         using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
         // evaluate gradients using the local finite element basis
-        const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
+        const auto& localBasis = gridGeometry.feCache().get(geometry.type()).localBasis();
 
         // evaluate the shape function gradients at the scv center
         using ShapeJacobian = typename std::decay_t< decltype(localBasis) >::Traits::JacobianType;
@@ -114,7 +114,7 @@ auto evalGradients(const Element& element,
  *
  * \param element The element
  * \param geometry The element geometry
- * \param fvGridGeometry The finite volume grid geometry
+ * \param gridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  * \throws Dune::NotImplemented
@@ -127,7 +127,7 @@ template<class Element, class FVElementGeometry, class PrimaryVariables>
 Dune::FieldVector<typename Element::Geometry::GlobalCoordinate, PrimaryVariables::dimension>
 evalGradients(const Element& element,
               const typename Element::Geometry& geometry,
-              const typename FVElementGeometry::GridGeometry& fvGridGeometry,
+              const typename FVElementGeometry::GridGeometry& gridGeometry,
               const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
               const typename Element::Geometry::GlobalCoordinate& globalPos)
 { DUNE_THROW(Dune::NotImplemented, "General gradient evaluation for cell-centered methods"); }

@@ -124,8 +124,8 @@ class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename ModelTraits::Indices;
 
 public:
-    TwoPTwoCComparisonProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    TwoPTwoCComparisonProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C
 

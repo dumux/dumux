@@ -64,9 +64,9 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    HeterogeneousSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    HeterogeneousSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                                std::shared_ptr<const GridData<Grid>> gridData)
-    : ParentType(fvGridGeometry), gridData_(gridData)
+    : ParentType(gridGeometry), gridData_(gridData)
     {
 
         // Set the permeability for the layers

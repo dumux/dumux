@@ -61,17 +61,17 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry),
-          randomPermeability_(fvGridGeometry->gridView().size(dim), 0.0),
-          indexSet_(fvGridGeometry->gridView().indexSet())
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry),
+          randomPermeability_(gridGeometry->gridView().size(dim), 0.0),
+          indexSet_(gridGeometry->gridView().indexSet())
     {
         randomField_ = getParam<bool>("SpatialParams.RandomField", false);
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         if(!randomField_)
             permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
         else
-            initRandomField(*fvGridGeometry);
+            initRandomField(*gridGeometry);
 
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");

@@ -60,10 +60,10 @@ class OnePTestProblem
     static constexpr auto domainIdx = Dune::index_constant<tag>{};
 
 public:
-    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                     std::shared_ptr<CouplingManager> couplingManager,
                     const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    : ParentType(gridGeometry, paramGroup)
     , couplingManager_(couplingManager)
     {
         // set a default name for the problem

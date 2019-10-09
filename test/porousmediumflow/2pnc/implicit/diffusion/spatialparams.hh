@@ -63,8 +63,8 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    TwoPNCDiffusionSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), K_(0)
+    TwoPNCDiffusionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), K_(0)
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;

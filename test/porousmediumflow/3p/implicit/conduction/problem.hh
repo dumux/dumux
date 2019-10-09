@@ -139,15 +139,15 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    ThreePNIConductionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    ThreePNIConductionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
         name_ = getParam<std::string>("Problem.Name");
         temperatureHigh_ = 300.0;
-        temperatureExact_.resize(fvGridGeometry->numDofs());
+        temperatureExact_.resize(gridGeometry->numDofs());
    }
 
     //! Get the analytical temperature

@@ -52,8 +52,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    FractureSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    FractureSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {}
 
     /*!

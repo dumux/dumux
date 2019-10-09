@@ -126,12 +126,12 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    DamBreakProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    DamBreakProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
-        exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
-        exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
+        exactWaterDepth_.resize(gridGeometry->numDofs(), 0.0);
+        exactVelocityX_.resize(gridGeometry->numDofs(), 0.0);
     }
 
     //! Get the analytical water depth

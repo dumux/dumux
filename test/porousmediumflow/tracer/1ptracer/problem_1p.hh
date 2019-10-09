@@ -104,8 +104,8 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    OnePTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     /*!
      * \brief Specifies which kind of boundary condition should be

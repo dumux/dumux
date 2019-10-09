@@ -119,8 +119,8 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 
 public:
     // This is the constructor of our problem class.
-    RoughChannelProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RoughChannelProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // We read the parameters from the params.input file.
         name_ = getParam<std::string>("Problem.Name");
@@ -130,8 +130,8 @@ public:
         // We calculate the outflow boundary condition using the Gauckler-Manning-Strickler formula.
         hBoundary_ = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
         // We initialize the analytic solution to a verctor of the appropriate size filled with zeros.
-        exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
-        exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
+        exactWaterDepth_.resize(gridGeometry->numDofs(), 0.0);
+        exactVelocityX_.resize(gridGeometry->numDofs(), 0.0);
     }
 
     // Get the analytical water depth

@@ -147,9 +147,9 @@ public:
         liquidPhaseIdx = FluidSystem::liquidPhaseIdx
     };
 
-    SoilProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    SoilProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Soil")
+    : ParentType(gridGeometry, "Soil")
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
@@ -159,7 +159,7 @@ public:
         // for initial conditions
         const Scalar sw = getParam<Scalar>("Problem.InitTopSaturation", 0.3); // start with 30% saturation on top
         using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(fvGridGeometry->bBoxMax()), sw);
+        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(gridGeometry->bBoxMax()), sw);
     }
 
     /*!

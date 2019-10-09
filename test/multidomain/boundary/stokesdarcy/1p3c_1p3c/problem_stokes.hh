@@ -107,8 +107,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    StokesSubProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6),
+    StokesSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, "Stokes"), eps_(1e-6),
     couplingManager_(couplingManager)
     {
         inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Velocity");

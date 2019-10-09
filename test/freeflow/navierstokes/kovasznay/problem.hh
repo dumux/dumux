@@ -109,8 +109,8 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 
 public:
-    KovasznayTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";

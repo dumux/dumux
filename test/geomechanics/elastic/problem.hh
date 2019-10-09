@@ -92,8 +92,8 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
-    ElasticProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    ElasticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     //! Returns the temperature in the domain.
     static constexpr Scalar temperature()

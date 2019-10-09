@@ -66,14 +66,14 @@ public:
      *       - Adaptive.RefineAtSource If to refine where source terms are specified (default: true)
      *       - Adaptive.BCRefinementThreshold The threshold above which fluxes are treated as non-zero (default: 1e-10)
      * \param problem The problem object
-     * \param fvGridGeometry The finite volume geometry of the grid
+     * \param gridGeometry The finite volume geometry of the grid
      * \param gridVariables The secondary variables on the grid
      */
     GridAdaptInitializationIndicator(std::shared_ptr<const Problem> problem,
-                                     std::shared_ptr<const GridGeometry> fvGridGeometry,
+                                     std::shared_ptr<const GridGeometry> gridGeometry,
                                      std::shared_ptr<const GridVariables> gridVariables)
     : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    , fvGridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
     , minLevel_(getParamFromGroup<int>(problem->paramGroup(), "Adaptive.MinLevel"))
     , maxLevel_(getParamFromGroup<int>(problem->paramGroup(), "Adaptive.MaxLevel"))

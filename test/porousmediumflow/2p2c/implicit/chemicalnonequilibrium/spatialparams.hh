@@ -73,8 +73,8 @@ public:
     using AwnSurface = EffToAbsLawIA<EffectiveIALawAwn, MaterialLawParams>;
     using AwnSurfaceParams = typename AwnSurface::Params;
 
-    TwoPTwoCChemicalNonequilibriumSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPTwoCChemicalNonequilibriumSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-11;

@@ -110,11 +110,11 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    OnePBulkProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    OnePBulkProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                     std::shared_ptr<CouplingManager> couplingManager,
                     const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" +

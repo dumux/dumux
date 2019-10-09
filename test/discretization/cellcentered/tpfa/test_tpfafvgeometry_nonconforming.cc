@@ -141,22 +141,22 @@ int main (int argc, char *argv[]) try
     if (leafGridView.size(0) != 12)
         DUNE_THROW(Dune::InvalidStateException, "Refined grid does not have exactly 12 elements!");
 
-    //! instantiate and update fvGridGeometry
-    GridGeometry fvGridGeometry(leafGridView);
-    fvGridGeometry.update();
+    //! instantiate and update gridGeometry
+    GridGeometry gridGeometry(leafGridView);
+    gridGeometry.update();
 
     //! We should have constructed 12 scvfs
-    if (fvGridGeometry.numScv() != 12)
+    if (gridGeometry.numScv() != 12)
         DUNE_THROW(Dune::InvalidStateException, "FvGridGeometry does not have exactly 12 scvs!");
 
     //! We should have constructed 52 scvfs
-    if (fvGridGeometry.numScvf() != 52)
+    if (gridGeometry.numScvf() != 52)
         DUNE_THROW(Dune::InvalidStateException, "FvGridGeometry does not have exactly 52 scvfs!");
 
     //! iterate over elements and check for each element the number of scvfs
     for (const auto& element : elements(leafGridView))
     {
-        auto fvGeometry = localView(fvGridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bind(element);
 
         //! For the tpfa scheme there is always one scv per element
@@ -224,7 +224,7 @@ int main (int argc, char *argv[]) try
             //! check levels of neighbors
             if (!scvf.boundary())
             {
-                const auto outsideElement = fvGridGeometry.element(scvf.outsideScvIdx());
+                const auto outsideElement = gridGeometry.element(scvf.outsideScvIdx());
                 const auto outsideCenter = outsideElement.geometry().center();
 
                 if (isInCentralElement(outsideCenter))

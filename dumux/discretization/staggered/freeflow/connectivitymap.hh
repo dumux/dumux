@@ -58,27 +58,27 @@ class StaggeredFreeFlowConnectivityMap
 public:
 
     //! Update the map and prepare the stencils
-    void update(const GridGeometry& fvGridGeometry)
+    void update(const GridGeometry& gridGeometry)
     {
-        const auto numDofsCC = fvGridGeometry.gridView().size(0);
-        const auto numDofsFace = fvGridGeometry.gridView().size(1);
-        const auto numBoundaryFacets = fvGridGeometry.numBoundaryScvf();
+        const auto numDofsCC = gridGeometry.gridView().size(0);
+        const auto numDofsFace = gridGeometry.gridView().size(1);
+        const auto numBoundaryFacets = gridGeometry.numBoundaryScvf();
         cellCenterToCellCenterMap_.resize(numDofsCC);
         cellCenterToFaceMap_.resize(numDofsCC);
         faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
         faceToFaceMap_.resize(2*numDofsFace - numBoundaryFacets);
 
-        for(auto&& element: elements(fvGridGeometry.gridView()))
+        for(auto&& element: elements(gridGeometry.gridView()))
         {
             // restrict the FvGeometry locally and bind to the element
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // handle the cell center dof stencils first
-                const auto dofIdxCellCenter = fvGridGeometry.elementMapper().index(element);
+                const auto dofIdxCellCenter = gridGeometry.elementMapper().index(element);
 
                 // the stencil for cell center dofs w.r.t. to other cell center dofs,
                 // includes all neighboring element indices

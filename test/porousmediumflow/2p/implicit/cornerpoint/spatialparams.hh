@@ -60,9 +60,9 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
-    TwoPCornerPointTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    TwoPCornerPointTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                                      std::shared_ptr<const Opm::Deck> deck)
-    : ParentType(fvGridGeometry)
+    : ParentType(gridGeometry)
     , deck_(deck)
     {
         homogeneous_ = getParam<bool>("Problem.Homogeneous");

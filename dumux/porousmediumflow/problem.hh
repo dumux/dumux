@@ -60,14 +60,14 @@ public:
     /*!
      * \brief Constructor, passing the spatial parameters.
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param spatialParams The spatial parameter class
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                             std::shared_ptr<SpatialParams> spatialParams,
                             const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    : ParentType(gridGeometry, paramGroup)
     , gravity_(0.0)
     , spatialParams_(spatialParams)
     {
@@ -79,13 +79,13 @@ public:
     /*!
      * \brief Constructor, constructing the spatial parameters.
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    PorousMediumFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                             const std::string& paramGroup = "")
-    : PorousMediumFlowProblem(fvGridGeometry,
-                              std::make_shared<SpatialParams>(fvGridGeometry),
+    : PorousMediumFlowProblem(gridGeometry,
+                              std::make_shared<SpatialParams>(gridGeometry),
                               paramGroup)
     {}
 

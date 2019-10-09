@@ -127,8 +127,8 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     static constexpr auto transportEqIdx = Indices::conti0EqIdx + compIdx;
 
 public:
-    ChannelNCTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    ChannelNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         FluidSystem::init();

@@ -104,8 +104,8 @@ public:
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    SincosTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), time_(0.0), timeStepSize_(0.0)
+    SincosTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), time_(0.0), timeStepSize_(0.0)
     {
         isStationary_ = getParam<bool>("Problem.IsStationary");
         enableInertiaTerms_ = getParam<bool>("Problem.EnableInertiaTerms");

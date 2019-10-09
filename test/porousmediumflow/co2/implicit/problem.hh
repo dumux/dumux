@@ -223,8 +223,8 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     template<class SpatialParams>
-    HeterogeneousProblem(std::shared_ptr<const GridGeometry> fvGridGeometry, std::shared_ptr<SpatialParams> spatialParams)
-    : ParentType(fvGridGeometry, spatialParams)
+    HeterogeneousProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
+    : ParentType(gridGeometry, spatialParams)
     , injectionTop_(1)
     , injectionBottom_(2)
     , dirichletBoundary_(3)

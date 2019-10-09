@@ -185,8 +185,8 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
-    DissolutionProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    DissolutionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         outerSalinity_          = getParam<Scalar>("Problem.OuterSalinity");
         temperature_            = getParam<Scalar>("Problem.Temperature");
@@ -210,7 +210,7 @@ public:
         name_                   = getParam<std::string>("Problem.Name");
 
         unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
-        permeability_.resize(fvGridGeometry->gridView().size(codim));
+        permeability_.resize(gridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,

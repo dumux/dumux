@@ -112,9 +112,9 @@ class SoilProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    SoilProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    SoilProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Soil")
+    : ParentType(gridGeometry, "Soil")
     , couplingManager_(couplingManager)
     {
         // read parameters from input file

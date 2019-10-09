@@ -259,8 +259,8 @@ class MaxwellStefanOnePThreeCTestProblem : public PorousMediumFlowProblem<TypeTa
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    MaxwellStefanOnePThreeCTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    MaxwellStefanOnePThreeCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
 

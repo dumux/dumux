@@ -86,7 +86,7 @@ auto minDistVertexSol(const Geometry& geometry, const typename Geometry::GlobalC
  * \return the interpolated primary variables
  * \param element The element
  * \param geometry The element geometry
- * \param fvGridGeometry The finite volume grid geometry
+ * \param gridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  * \param ignoreState If true, the state of primary variables is ignored
@@ -94,7 +94,7 @@ auto minDistVertexSol(const Geometry& geometry, const typename Geometry::GlobalC
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 PrimaryVariables evalSolution(const Element& element,
                               const typename Element::Geometry& geometry,
-                              const typename FVElementGeometry::GridGeometry& fvGridGeometry,
+                              const typename FVElementGeometry::GridGeometry& gridGeometry,
                               const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                               const typename Element::Geometry::GlobalCoordinate& globalPos,
                               bool ignoreState = false)
@@ -108,7 +108,7 @@ PrimaryVariables evalSolution(const Element& element,
         using Scalar = typename PrimaryVariables::value_type;
 
         // interpolate the solution
-        const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
+        const auto& localBasis = gridGeometry.feCache().get(geometry.type()).localBasis();
 
         // evaluate the shape functions at the scv center
         const auto localPos = geometry.local(globalPos);
@@ -150,7 +150,7 @@ PrimaryVariables evalSolution(const Element& element,
  * \ingroup Discretization
  * \brief Interpolates a given box element solution at a given global position.
  *
- * Overload of the above evalSolution() function without a given fvGridGeometry.
+ * Overload of the above evalSolution() function without a given gridGeometry.
  * The local basis is computed on the fly.
  *
  * \return the interpolated primary variables
@@ -228,7 +228,7 @@ PrimaryVariables evalSolution(const Element& element,
  * \return the primary variables (constant over the element)
  * \param element The element
  * \param geometry The element geometry
- * \param fvGridGeometry The finite volume grid geometry
+ * \param gridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  * \param ignoreState If true, the state of primary variables is ignored
@@ -236,7 +236,7 @@ PrimaryVariables evalSolution(const Element& element,
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 PrimaryVariables evalSolution(const Element& element,
                               const typename Element::Geometry& geometry,
-                              const typename FVElementGeometry::GridGeometry& fvGridGeometry,
+                              const typename FVElementGeometry::GridGeometry& gridGeometry,
                               const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                               const typename Element::Geometry::GlobalCoordinate& globalPos,
                               bool ignoreState = false)
@@ -246,7 +246,7 @@ PrimaryVariables evalSolution(const Element& element,
 
 /*!
  * \brief Interpolates a given cell-centered element solution at a given global position.
- *        Overload of the above evalSolution() function without a given fvGridGeometry.
+ *        Overload of the above evalSolution() function without a given gridGeometry.
  *        For compatibility reasons with the box scheme.
  * \ingroup Discretization
  *

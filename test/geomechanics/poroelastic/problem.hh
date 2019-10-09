@@ -100,8 +100,8 @@ class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
-    PoroElasticProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    PoroElasticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {}
 
     //! Returns the temperature in the domain.

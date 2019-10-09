@@ -97,8 +97,8 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    ClosedSystemTestProblem(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    ClosedSystemTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
     }

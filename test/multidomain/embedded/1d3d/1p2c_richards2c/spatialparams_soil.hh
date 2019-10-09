@@ -55,8 +55,8 @@ public:
     // export material law params
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    SoilSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    SoilSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // residual saturations
         materialParams_.setSwr(0.05);

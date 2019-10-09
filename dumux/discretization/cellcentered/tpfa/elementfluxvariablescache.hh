@@ -159,9 +159,9 @@ public:
               const ElementVolumeVariables& elemVolVars)
     {
         const auto& problem = gridFluxVarsCache().problem();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& connectivityMapI = fvGridGeometry.connectivityMap()[globalI];
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto globalI = gridGeometry.elementMapper().index(element);
+        const auto& connectivityMapI = gridGeometry.connectivityMap()[globalI];
         const auto numNeighbors = connectivityMapI.size();
 
         // instantiate helper class to fill the caches
@@ -186,7 +186,7 @@ public:
         // add required data on the scv faces in the neighboring elements
         for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
-            const auto elementJ = fvGridGeometry.element(connectivityMapI[localIdxJ].globalJ);
+            const auto elementJ = gridGeometry.element(connectivityMapI[localIdxJ].globalJ);
             for (auto scvfIdx : connectivityMapI[localIdxJ].scvfsJ)
             {
                 auto&& scvfJ = fvGeometry.scvf(scvfIdx);

@@ -747,9 +747,9 @@ protected:
         priVarsSwitchedInLastIteration_ = false;
 
         const auto& problem = this->assembler().problem();
-        const auto& fvGridGeometry = this->assembler().gridGeometry();
+        const auto& gridGeometry = this->assembler().gridGeometry();
         auto& gridVariables = this->assembler().gridVariables();
-        priVarSwitch_->updateBoundary(problem, fvGridGeometry, gridVariables, sol);
+        priVarSwitch_->updateBoundary(problem, gridGeometry, gridVariables, sol);
     }
 
     /*!
@@ -764,23 +764,23 @@ protected:
     {
         // update the variable switch (returns true if the pri vars at at least one dof were switched)
         // for disabled grid variable caching
-        const auto& fvGridGeometry = this->assembler().gridGeometry();
+        const auto& gridGeometry = this->assembler().gridGeometry();
         const auto& problem = this->assembler().problem();
         auto& gridVariables = this->assembler().gridVariables();
 
         // invoke the primary variable switch
         priVarsSwitchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, gridVariables,
-                                                                problem, fvGridGeometry);
+                                                                problem, gridGeometry);
 
         if (priVarsSwitchedInLastIteration_)
         {
-            for (const auto& element : elements(fvGridGeometry.gridView()))
+            for (const auto& element : elements(gridGeometry.gridView()))
             {
                 // if the volume variables are cached globally, we need to update those where the primary variables have been switched
-                priVarSwitch_->updateSwitchedVolVars(problem, element, fvGridGeometry, gridVariables, uCurrentIter);
+                priVarSwitch_->updateSwitchedVolVars(problem, element, gridGeometry, gridVariables, uCurrentIter);
 
                 // if the flux variables are cached globally, we need to update those where the primary variables have been switched
-                priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, fvGridGeometry, gridVariables, uCurrentIter);
+                priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, gridGeometry, gridVariables, uCurrentIter);
             }
         }
     }

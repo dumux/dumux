@@ -209,9 +209,9 @@ public:
         clear_();
 
         const auto& problem = gridVolVars().problem();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& map = fvGridGeometry.connectivityMap();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto globalI = gridGeometry.elementMapper().index(element);
+        const auto& map = gridGeometry.connectivityMap();
         constexpr auto cellCenterIdx = FVElementGeometry::GridGeometry::cellCenterIdx();
         const auto& connectivityMapI = map(cellCenterIdx, cellCenterIdx, globalI);
         const auto numDofs = connectivityMapI.size();
@@ -226,7 +226,7 @@ public:
         // Lambda to update the volume variables of the given index
         auto doVolVarUpdate = [&](int globalJ)
         {
-            const auto& elementJ = fvGridGeometry.element(globalJ);
+            const auto& elementJ = gridGeometry.element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
             const auto elemSol = makeElementSolutionFromCellCenterPrivars<PrimaryVariables>(sol[globalJ]);
             volumeVariables_[localIdx].update(elemSol,

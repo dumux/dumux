@@ -78,26 +78,26 @@ int main(int argc, char** argv) try
 
     // create the finite volume grid geometry (and make it periodic)
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
-    bool periodic = fvGridGeometry->isPeriodic();
-    periodic = fvGridGeometry->gridView().comm().max(periodic);
+    bool periodic = gridGeometry->isPeriodic();
+    periodic = gridGeometry->gridView().comm().max(periodic);
     if (!periodic)
         DUNE_THROW(Dune::GridError, "Your grid is not periodic. Maybe the grid manager doesn't support periodic boundaries.");
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
     problem->computePointSourceMap();
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs());
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
     // intialize the vtk output module
@@ -108,7 +108,7 @@ int main(int argc, char** argv) try
 
     // make assemble and attach linear system
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
@@ -128,7 +128,7 @@ int main(int argc, char** argv) try
     // solve the linear system
     Dune::Timer solverTimer;
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(fvGridGeometry->gridView(), fvGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
     if (mpiHelper.rank() == 0) std::cout << "Solving linear system using " + linearSolver->name() + "..." << std::flush;
     linearSolver->solve(*A, x, *r);

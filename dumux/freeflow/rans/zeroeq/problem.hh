@@ -72,11 +72,11 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::zeroeq> : public RANSProblemBase
 public:
     /*!
      * \brief The constructor
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    RANSProblemImpl(std::shared_ptr<const GridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
     {
         eddyViscosityModel_ = getParamFromGroup<std::string>(paramGroup, "RANS.EddyViscosityModel", "vanDriest");
     }

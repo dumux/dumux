@@ -281,8 +281,8 @@ public:
         elemVolVarsPtr_ = &elemVolVars;
 
         // prepare interaction volume and fill caches of all the scvfs connected to it
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
-        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
         {
             if (forceUpdateAll)
             {
@@ -290,7 +290,7 @@ public:
                 const auto ivIndexInContainer = ivDataStorage.secondaryInteractionVolumes.size();
 
                 // prepare the locally cached boundary interaction volume
-                const auto& indexSet = fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf);
+                const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf);
                 ivDataStorage.secondaryInteractionVolumes.emplace_back();
                 secondaryIv_ = &ivDataStorage.secondaryInteractionVolumes.back();
                 secondaryIv_->bind(indexSet, problem(), fvGeometry);
@@ -320,7 +320,7 @@ public:
                 const auto ivIndexInContainer = ivDataStorage.primaryInteractionVolumes.size();
 
                 // prepare the locally cached boundary interaction volume
-                const auto& indexSet = fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf);
+                const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf);
                 ivDataStorage.primaryInteractionVolumes.emplace_back();
                 primaryIv_ = &ivDataStorage.primaryInteractionVolumes.back();
                 primaryIv_->bind(indexSet, problem(), fvGeometry);

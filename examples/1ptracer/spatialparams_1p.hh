@@ -52,8 +52,8 @@ class OnePTestSpatialParams
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), K_(fvGridGeometry->gridView().size(0), 0.0)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), K_(gridGeometry->gridView().size(0), 0.0)
     {
         // ### Generation of the random permeability field
         // We get the permeability of the domain and the lens from the `params.input` file.
@@ -68,9 +68,9 @@ public:
         std::mt19937 rand(0);
         std::lognormal_distribution<Scalar> K(std::log(permeability_), std::log(permeability_)*0.1);
         std::lognormal_distribution<Scalar> KLens(std::log(permeabilityLens_), std::log(permeabilityLens_)*0.1);
-        for (const auto& element : elements(fvGridGeometry->gridView()))
+        for (const auto& element : elements(gridGeometry->gridView()))
         {
-            const auto eIdx = fvGridGeometry->elementMapper().index(element);
+            const auto eIdx = gridGeometry->elementMapper().index(element);
             const auto globalPos = element.geometry().center();
             K_[eIdx] = isInLens_(globalPos) ? KLens(rand) : K(rand);
         }

@@ -66,8 +66,8 @@ class OnePTestProblemInternalDirichlet : public OnePTestProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTestProblemInternalDirichlet(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTestProblemInternalDirichlet(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {}
 
     /*!

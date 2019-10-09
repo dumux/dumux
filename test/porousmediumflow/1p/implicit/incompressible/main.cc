@@ -59,14 +59,14 @@
 //! Function to write out the scv-wise velocities (overload for mpfa)
 template<class GridGeometry, class GridVariables, class Sol,
          std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::ccmpfa, int> = 0>
-void writeMpfaVelocities(const GridGeometry& fvGridGeometry,
+void writeMpfaVelocities(const GridGeometry& gridGeometry,
                          const GridVariables& gridVariables,
                          const Sol& x)
 {
     using Scalar = typename GridVariables::Scalar;
     using GlobalPos = typename GridGeometry::SubControlVolume::GlobalPosition;
 
-    const auto velocities = Dumux::CCMpfaScvGradients::computeVelocities(fvGridGeometry, gridVariables, x, /*phaseIdx*/0);
+    const auto velocities = Dumux::CCMpfaScvGradients::computeVelocities(gridGeometry, gridVariables, x, /*phaseIdx*/0);
     Dumux::PointCloudVtkWriter<Scalar, GlobalPos> writer(velocities.first);
     writer.addPointData(velocities.second, "velocity (m/s)");
     writer.write("mpfa_scv_velocities");
@@ -75,7 +75,7 @@ void writeMpfaVelocities(const GridGeometry& fvGridGeometry,
 //! Function to write out the scv-wise velocities (overload for NOT mpfa)
 template<class GridGeometry, class GridVariables, class Sol,
          std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::ccmpfa, int> = 0>
-void writeMpfaVelocities(const GridGeometry& fvGridGeometry,
+void writeMpfaVelocities(const GridGeometry& gridGeometry,
                          const GridVariables& gridVariables,
                          const Sol& x)
 {}
@@ -115,20 +115,20 @@ int main(int argc, char** argv) try
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs());
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
     // intialize the vtk output module
@@ -141,7 +141,7 @@ int main(int argc, char** argv) try
 
     // create assembler & linear solver
     using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     using LinearSolver = SSORCGBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -166,7 +166,7 @@ int main(int argc, char** argv) try
         constexpr bool isBox = GridGeometry::discMethod == Dumux::DiscretizationMethod::box;
         constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
         const auto numCells = leafGridView.size(0);
-        const auto numDofs = fvGridGeometry->numDofs();
+        const auto numDofs = gridGeometry->numDofs();
         auto numVelocities = (isBox && dimWorld == 1) ? numCells : numDofs;
 
         velocity.resize(numVelocities);
@@ -175,9 +175,9 @@ int main(int argc, char** argv) try
 
         for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
         {
-            const auto eIdx = fvGridGeometry->elementMapper().index(element);
+            const auto eIdx = gridGeometry->elementMapper().index(element);
 
-            auto fvGeometry = localView(*fvGridGeometry);
+            auto fvGeometry = localView(*gridGeometry);
             auto elemVolVars = localView(gridVariables->curGridVolVars());
             auto elemFluxVarsCache = localView(gridVariables->gridFluxVarsCache());
 
@@ -205,7 +205,7 @@ int main(int argc, char** argv) try
 
     // For the mpfa test, write out the gradients in the scv centers
     if (getParam<bool>("IO.WriteMpfaVelocities", false))
-        writeMpfaVelocities(*fvGridGeometry, *gridVariables, x);
+        writeMpfaVelocities(*gridGeometry, *gridVariables, x);
 
     if (mpiHelper.rank() == 0)
         Parameters::print();

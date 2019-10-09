@@ -123,9 +123,9 @@ class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    BloodFlowProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    BloodFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                      std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Vessel")
+    : ParentType(gridGeometry, "Vessel")
     , couplingManager_(couplingManager)
     {
         //read parameters from input file

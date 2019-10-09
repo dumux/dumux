@@ -133,9 +133,9 @@ class TissueProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    TissueProblem(std::shared_ptr<const GridGeometry> fvGridGeometry,
+    TissueProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                   std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Tissue")
+    : ParentType(gridGeometry, "Tissue")
     , couplingManager_(couplingManager)
     {
         // read parameters from input file

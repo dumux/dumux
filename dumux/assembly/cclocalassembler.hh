@@ -170,13 +170,13 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->assembler().gridGeometry();
+        const auto& gridGeometry = this->assembler().gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get stencil informations
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
+        const auto globalI = gridGeometry.elementMapper().index(element);
+        const auto& connectivityMap = gridGeometry.connectivityMap();
         const auto numNeighbors = connectivityMap[globalI].size();
 
         // container to store the neighboring elements
@@ -203,7 +203,7 @@ public:
         unsigned int j = 1;
         for (const auto& dataJ : connectivityMap[globalI])
         {
-            neighborElements[j-1] = fvGridGeometry.element(dataJ.globalJ);
+            neighborElements[j-1] = gridGeometry.element(dataJ.globalJ);
             for (const auto scvfIdx : dataJ.scvfsJ)
                 origResiduals[j] += evalNeighborFlux(neighborElements[j-1], fvGeometry.scvf(scvfIdx));
 
@@ -221,7 +221,7 @@ public:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        auto elemSol = elementSolution(element, curSol, fvGridGeometry);
+        auto elemSol = elementSolution(element, curSol, gridGeometry);
 
         // derivatives in the neighbors with repect to the current elements
         // in index 0 we save the derivative of the element residual with respect to it's own dofs
@@ -349,11 +349,11 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->assembler().gridGeometry();
+        const auto& gridGeometry = this->assembler().gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
 
         // reference to the element's scv (needed later) and corresponding vol vars
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto globalI = gridGeometry.elementMapper().index(element);
         const auto& scv = fvGeometry.scv(globalI);
         auto& curVolVars = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
 
@@ -364,7 +364,7 @@ public:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        auto elemSol = elementSolution(element, curSol, fvGridGeometry);
+        auto elemSol = elementSolution(element, curSol, gridGeometry);
 
         NumEqVector partialDeriv;
 

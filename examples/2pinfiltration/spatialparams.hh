@@ -54,8 +54,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         //we get the position of the lens from the params.input file. The lens is defined by the position of the lower left and the upper right corner
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");

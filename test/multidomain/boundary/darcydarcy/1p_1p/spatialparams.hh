@@ -72,8 +72,8 @@ class OnePTestSpatialParams
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     , lensLowerLeft_(std::numeric_limits<Scalar>::max())
     , lensUpperRight_(std::numeric_limits<Scalar>::lowest())
     {

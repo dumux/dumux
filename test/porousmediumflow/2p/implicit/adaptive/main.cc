@@ -124,34 +124,34 @@ int main(int argc, char** argv) try
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
     problem->computePointSourceMap(); // enable point sources
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
     // instantiate indicator & data transfer, read parameters for indicator
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const Scalar refineTol = getParam<Scalar>("Adaptive.RefineTolerance");
     const Scalar coarsenTol = getParam<Scalar>("Adaptive.CoarsenTolerance");
-    TwoPGridAdaptIndicator<TypeTag> indicator(fvGridGeometry);
-    TwoPGridDataTransfer<TypeTag> dataTransfer(problem, fvGridGeometry, gridVariables, x);
+    TwoPGridAdaptIndicator<TypeTag> indicator(gridGeometry);
+    TwoPGridDataTransfer<TypeTag> dataTransfer(problem, gridGeometry, gridVariables, x);
 
     // Do initial refinement around sources/BCs
-    GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, fvGridGeometry, gridVariables);
+    GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, gridGeometry, gridVariables);
 
     // refine up to the maximum level
     const auto maxLevel = getParam<std::size_t>("Adaptive.MaxLevel", 0);
@@ -207,11 +207,11 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop, xOld);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;

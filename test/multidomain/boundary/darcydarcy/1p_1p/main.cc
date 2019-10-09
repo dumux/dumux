@@ -299,8 +299,8 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////////////////////////
 
     const auto& gridView = gridManager.grid().leafGridView();
-    CCTpfaFVGridGeometry<typename FullDomainGrid::LeafGridView> fvGridGeometry(gridView);
-    const auto& bBoxTree = fvGridGeometry.boundingBoxTree();
+    CCTpfaFVGridGeometry<typename FullDomainGrid::LeafGridView> gridGeometry(gridView);
+    const auto& bBoxTree = gridGeometry.boundingBoxTree();
     // copy data from the subdomains to full domain data vectors
     std::vector<int> processRank(gridView.size(0), 0); // sequential simulation
     std::vector<int> pressure(gridView.size(0));
