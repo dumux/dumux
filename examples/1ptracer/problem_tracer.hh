@@ -163,8 +163,8 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     // This is the constructor of our problem class:
-    TracerTestProblem(std::shared_ptr<const GridGeometry> fvGridGeom)
-    : ParentType(fvGridGeom)
+    TracerTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // We print out whether mole or mass fractions are used
         if(useMoles)

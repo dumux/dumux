@@ -122,11 +122,11 @@ class TracerLowDimProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     using typename ParentType::SpatialParams;
 
-    TracerLowDimProblem(std::shared_ptr<const GridGeometry> fvGridGeom,
+    TracerLowDimProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<SpatialParams> spatialParams,
                       std::shared_ptr<CouplingManager> couplingManager,
                       const std::string& paramGroup = "")
-    : ParentType(fvGridGeom, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
     , aperture_(getParamFromGroup<Scalar>(paramGroup, "Problem.FractureAperture"))
     {
