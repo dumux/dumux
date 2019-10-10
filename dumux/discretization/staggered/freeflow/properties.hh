@@ -89,7 +89,7 @@ struct FVGridGeometry<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView, upwindSchemeOrder>;
 public:
