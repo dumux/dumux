@@ -131,8 +131,21 @@ struct [[deprecated("Use GridGeometry instead.")]] FVGridGeometry { using type =
 // and comment.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+template<class TypeTag, class T>
+struct GridGeometryHelper
+{ using type = GetPropType<TypeTag, Properties::FVGridGeometry>; };
+
+template<class TypeTag>
+struct GridGeometryHelper<TypeTag, UndefinedProperty>
+{ using type = UndefinedProperty; };
+
 template<class TypeTag, class MyTypeTag>
-struct GridGeometry { using type = GetPropType<TypeTag, Properties::FVGridGeometry>;  };       //!< The type of the global finite volume geometry
+struct GridGeometry
+{
+    using type = typename GridGeometryHelper<TypeTag, typename FVGridGeometry<TypeTag, MyTypeTag>::type>::type;
+};
+
 #pragma GCC diagnostic pop
 
 template<class TypeTag, class MyTypeTag>
