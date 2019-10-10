@@ -101,7 +101,7 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
 // We enable caching for the FV grid geometry
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
 //The cache stores values that were already calculated for later usage. This makes the simulation faster.
 // We leave the namespace Properties.
 }

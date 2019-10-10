@@ -81,7 +81,7 @@ public:
 // We enable caching for the FV grid geometry and the grid volume variables. The cache
 // stores values that were already calculated for later usage. This makes the simulation faster.
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::RoughChannel>
+struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = true; };
 
 template<class TypeTag>

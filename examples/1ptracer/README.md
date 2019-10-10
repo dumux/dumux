@@ -284,7 +284,7 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static 
 We enable caching for the FV grid geometry
 ```cpp
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
 ```
 The cache stores values that were already calculated for later usage. This makes the simulation faster.
 We leave the namespace Properties.
@@ -544,7 +544,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static conste
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
 ```
 We use the same grid as in the stationary one-phase model, a structured 2D grid:
 ```cpp
