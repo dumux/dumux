@@ -321,7 +321,7 @@ stores values that were already calculated for later usage. This makes the simul
   template<class TypeTag>
   struct EnableGridFluxVariablesCache<TypeTag, TTag::PointSourceExample> { static constexpr bool value = false; };
   template<class TypeTag>
-  struct EnableFVGridGeometryCache<TypeTag, TTag::PointSourceExample> { static constexpr bool value = false; };
+  struct EnableGridGeometryCache<TypeTag, TTag::PointSourceExample> { static constexpr bool value = false; };
 ```
 We leave the namespace Properties.
 ```cpp
