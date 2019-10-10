@@ -127,7 +127,6 @@ class FreeFlowStaggeredGeometryHelper
 {
     using Scalar = typename GridView::ctype;
     static constexpr auto dim = GridView::dimension;
-    static constexpr auto dimWorld = GridView::dimensionworld;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
@@ -138,10 +137,8 @@ class FreeFlowStaggeredGeometryHelper
 
     //TODO include assert that checks for quad geometry
     static constexpr auto codimIntersection =  1;
-    static constexpr auto codimCommonEntity = 2;
-    static constexpr auto numFacetSubEntities = (dim == 2) ? 2 : 4;
-    static constexpr auto numfacets = dimWorld * 2;
-    static constexpr auto numPairs = 2 * (dimWorld - 1);
+    static constexpr auto numfacets = dim * 2;
+    static constexpr auto numPairs = 2 * (dim - 1);
 
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
