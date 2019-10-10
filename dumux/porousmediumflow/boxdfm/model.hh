@@ -52,7 +52,7 @@ template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::BoxDfmModel>
 {
 private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:

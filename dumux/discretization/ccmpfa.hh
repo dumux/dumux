@@ -114,7 +114,7 @@ private:
     using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
     using Traits = CCMpfaFVGridGeometryTraits<GridView, NodalIndexSet, PrimaryIV, SecondaryIV>;
 public:
-    using type = CCMpfaFVGridGeometry<GridView, Traits, getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>()>;
+    using type = CCMpfaFVGridGeometry<GridView, Traits, getPropValue<TypeTag, Properties::EnableGridGeometryCache>()>;
 };
 #pragma GCC diagnostic pop
 

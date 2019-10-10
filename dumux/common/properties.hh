@@ -123,6 +123,10 @@ DONT_EMIT_CLANG_GRIDGEOMETRY_WARNING."
 template<class TypeTag, class MyTypeTag>
 struct [[deprecated("Use GridGeometry instead.")]] FVGridGeometry { using type = UndefinedProperty; }; //!< The type of the global finite volume geometry
 
+// TODO: Remove deprecated property EnableFVGridGeometryCache after 3.1
+template<class TypeTag, class MyTypeTag>
+struct [[deprecated("Use EnableGridGeometryCache instead.")]] EnableFVGridGeometryCache { using type = UndefinedProperty; };           //!< specifies if geometric data is saved (faster, but more memory consuming)
+
 // Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
 // For ensuring backward compatibility, it is necessary to set the default value
 // of the new property to the old one, see the discussion in MR 1647.
@@ -146,10 +150,24 @@ struct GridGeometry
     using type = typename GridGeometryHelper<TypeTag, typename FVGridGeometry<TypeTag, MyTypeTag>::type>::type;
 };
 
-#pragma GCC diagnostic pop
+template<class TypeTag, bool hasParentTypeTag>
+struct EnableGridGeometryCacheHelper
+{ using type = UndefinedProperty; };
 
-template<class TypeTag, class MyTypeTag>
-struct EnableFVGridGeometryCache { using type = UndefinedProperty; };           //!< specifies if geometric data is saved (faster, but more memory consuming)
+template<class TypeTag>
+struct EnableGridGeometryCacheHelper<TypeTag, false>
+{
+    // fallback
+    static constexpr bool value = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+};
+
+// only use the fallback (EnableFVGridGeometryCache) if none
+// of the TypeTags define EnableGridGeometryCache
+template <class TypeTag, class MyTypeTag>
+struct EnableGridGeometryCache : public EnableGridGeometryCacheHelper<TypeTag, Detail::hasParentTypeTag<MyTypeTag>(int{})>
+{};
+
+#pragma GCC diagnostic pop
 
 template<class TypeTag, class MyTypeTag>
 struct VolumeVariables { using type = UndefinedProperty; };                     //!< The secondary variables within a sub-control volume
