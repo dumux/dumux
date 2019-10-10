@@ -129,7 +129,7 @@ public:
     { return gridGeometry(); }
 
     const GridGeometry& gridGeometry() const
-    { return ParentType::gridGeometry(Dune::index_constant<0>()).actualfvGridGeometry(); }
+    { return ParentType::gridGeometry(Dune::index_constant<0>()).actualGridGeometry(); }
 
 };
 

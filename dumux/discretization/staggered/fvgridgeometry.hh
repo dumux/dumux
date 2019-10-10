@@ -36,18 +36,18 @@ namespace Dumux {
  * \brief Base class for cell center of face specific auxiliary FvGridGeometry classes.
  *        Provides a common interface and a pointer to the actual gridGeometry.
  */
-template<class ActualFVGridGeometry>
+template<class ActualGridGeometry>
 class GridGeometryView
 {
 public:
 
-    explicit GridGeometryView(const ActualFVGridGeometry* actualFVGridGeometry)
-    : gridGeometry_(actualFVGridGeometry) {}
+    explicit GridGeometryView(const ActualGridGeometry* actualGridGeometry)
+    : gridGeometry_(actualGridGeometry) {}
 
     //! export  the GridView type and the discretization method
-    using GridView = typename ActualFVGridGeometry::GridView;
+    using GridView = typename ActualGridGeometry::GridView;
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
-    using LocalView = typename ActualFVGridGeometry::LocalView;
+    using LocalView = typename ActualGridGeometry::LocalView;
 
     /*!
      * \brief Returns true if this view if related to cell centered dofs
@@ -63,13 +63,13 @@ public:
      * \brief Return an integral constant index for cell centered dofs
      */
     static constexpr auto cellCenterIdx()
-    { return typename ActualFVGridGeometry::DofTypeIndices::CellCenterIdx{}; }
+    { return typename ActualGridGeometry::DofTypeIndices::CellCenterIdx{}; }
 
     /*!
      * \brief Return an integral constant index for face dofs
      */
     static constexpr auto faceIdx()
-    { return typename ActualFVGridGeometry::DofTypeIndices::FaceIdx{}; }
+    { return typename ActualGridGeometry::DofTypeIndices::FaceIdx{}; }
 
     /*!
      * \brief Return the gridView this grid geometry object lives on
@@ -99,11 +99,18 @@ public:
     /*!
      * \brief Returns the actual gridGeometry we are a restriction of
      */
-    const ActualFVGridGeometry& actualfvGridGeometry() const
+    [[deprecated("Use actualGridGeometry instead")]]
+    const ActualGridGeometry& actualfvGridGeometry() const
+    { return actualGridGeometry(); }
+
+    /*!
+     * \brief Returns the actual gridGeometry we are a restriction of
+     */
+    const ActualGridGeometry& actualGridGeometry() const
     { return *gridGeometry_; }
 
 protected:
-    const ActualFVGridGeometry* gridGeometry_;
+    const ActualGridGeometry* gridGeometry_;
 
 };
 
@@ -112,10 +119,10 @@ protected:
  * \brief Cell center specific auxiliary FvGridGeometry classes.
  *        Required for the Dumux multi-domain framework.
  */
-template <class ActualFVGridGeometry>
-class CellCenterFVGridGeometry : public GridGeometryView<ActualFVGridGeometry>
+template <class ActualGridGeometry>
+class CellCenterFVGridGeometry : public GridGeometryView<ActualGridGeometry>
 {
-    using ParentType = GridGeometryView<ActualFVGridGeometry>;
+    using ParentType = GridGeometryView<ActualGridGeometry>;
 public:
 
     using ParentType::ParentType;
@@ -137,10 +144,10 @@ public:
  * \brief Face specific auxiliary FvGridGeometry classes.
  *        Required for the Dumux multi-domain framework.
  */
-template <class ActualFVGridGeometry>
-class FaceFVGridGeometry : public GridGeometryView<ActualFVGridGeometry>
+template <class ActualGridGeometry>
+class FaceFVGridGeometry : public GridGeometryView<ActualGridGeometry>
 {
-    using ParentType = GridGeometryView<ActualFVGridGeometry>;
+    using ParentType = GridGeometryView<ActualGridGeometry>;
 public:
 
     using ParentType::ParentType;
