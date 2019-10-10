@@ -69,7 +69,7 @@ public:
 };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::RoughChannel>
+struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = true; };
 
 template<class TypeTag>

@@ -66,7 +66,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::KovasznayTest> { using type = Dumux::KovasznayTestProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
 
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };

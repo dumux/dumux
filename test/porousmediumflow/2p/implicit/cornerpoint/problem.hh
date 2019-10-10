@@ -89,7 +89,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPCornerPoint> { static c
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
+struct EnableGridGeometryCache<TypeTag, TTag::TwoPCornerPoint> { static constexpr bool value = false; };
 } // end namespace Properties
 
 /*!

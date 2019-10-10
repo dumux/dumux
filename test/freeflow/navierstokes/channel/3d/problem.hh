@@ -75,7 +75,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::ThreeDChannelTest> { using type = ThreeDChannelTestProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
 template<class TypeTag>

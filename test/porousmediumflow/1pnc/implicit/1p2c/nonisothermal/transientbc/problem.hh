@@ -98,7 +98,7 @@ struct UseMoles<TypeTag, TTag::OnePTwoCNITransientBC> { static constexpr bool va
 
 // Switch on/off caching
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::OnePTwoCNITransientBC> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridGeometryCache<TypeTag, TTag::OnePTwoCNITransientBC> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePTwoCNITransientBC> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>

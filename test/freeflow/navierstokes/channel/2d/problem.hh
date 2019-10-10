@@ -70,7 +70,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::ChannelTest> { using type = Dumux::ChannelTestProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };
 
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::ChannelTest> { static constexpr bool value = true; };

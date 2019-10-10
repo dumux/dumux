@@ -96,7 +96,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressible> { stati
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
+struct EnableGridGeometryCache<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = false; };
 
 // Maybe enable the box-interface solver
 template<class TypeTag>

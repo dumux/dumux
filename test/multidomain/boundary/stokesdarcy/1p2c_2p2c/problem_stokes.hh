@@ -75,7 +75,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::StokesOnePTwoC> { using type = Dumux::StokesSubProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 template<class TypeTag>
