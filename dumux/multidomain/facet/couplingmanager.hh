@@ -355,19 +355,23 @@ public:
 
     //! Return a const reference to bulk or facet problem
     template<std::size_t id, std::enable_if_t<(id == bulkId || id == facetId), int> = 0>
-    const Problem<id>& problem() const { return BulkFacetManager::template problem<id>(); }
+    const Problem<id>& problem(Dune::index_constant<id> domainId) const
+    { return BulkFacetManager::template problem(domainId); }
 
     //! Return a reference to bulk or facet problem
     template<std::size_t id, std::enable_if_t<(id == bulkId || id == facetId), int> = 0>
-    Problem<id>& problem() { return BulkFacetManager::template problem<id>(); }
+    Problem<id>& problem(Dune::index_constant<id> domainId)
+    { return BulkFacetManager::template problem(domainId); }
 
     //! Return a const reference to edge problem
     template<std::size_t id, std::enable_if_t<(id == edgeId), int> = 0>
-    const Problem<id>& problem() const { return FacetEdgeManager::template problem<id>(); }
+    const Problem<id>& problem(Dune::index_constant<id> domainId) const
+    { return FacetEdgeManager::template problem<id>(); }
 
     //! Return a reference to edge problem
     template<std::size_t id, std::enable_if_t<(id == edgeId), int> = 0>
-    Problem<id>& problem() { return FacetEdgeManager::template problem<id>(); }
+    Problem<id>& problem(Dune::index_constant<id> domainId)
+    { return FacetEdgeManager::template problem(domainId); }
 };
 
 } // end namespace Dumux
