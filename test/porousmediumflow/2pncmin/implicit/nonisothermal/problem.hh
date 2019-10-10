@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -57,7 +58,12 @@ struct SalinizationCCTpfa { using InheritsFrom = std::tuple<Salinization, CCTpfa
 } // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(Salinization, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<double, 2> >);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Salinization>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<Scalar, 2>>;
+};
 
 // Set the problem property
 template<class TypeTag>
@@ -278,7 +284,7 @@ public:
         // default to Neumann
         bcTypes.setAllNeumann();
 
-         return bcTypes;
+        return bcTypes;
     }
 
     /*!
@@ -323,76 +329,68 @@ public:
 
         static const Scalar temperatureRef = getParam<Scalar>("FreeFlow.RefTemperature");
 
+        if (globalPos[1] > hmax - eps_)
+        {
+            // get free-flow properties:
+            static const Scalar moleFracRefH2O = getParam<Scalar>("FreeFlow.RefMoleFracH2O");
+            static const Scalar boundaryLayerThickness = getParam<Scalar>("FreeFlow.BoundaryLayerThickness");
+            static const Scalar massTransferCoefficient = getParam<Scalar>("FreeFlow.MassTransferCoefficient");
 
-            if(globalPos[1] > hmax - eps_)
+            // get porous medium values:
+            const Scalar moleFracH2OInside = volVars.moleFraction(gasPhaseIdx, H2OIdx);
+            static const Scalar referencePermeability = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
+
+            // calculate fluxes
+            // liquid phase
+            Scalar evaporationRateMole = 0;
+            if (moleFracH2OInside - moleFracRefH2O > 0)
             {
-                // get free-flow properties:
-                static const Scalar moleFracRefH2O = getParam<Scalar>("FreeFlow.RefMoleFracH2O");
-                static const Scalar boundaryLayerThickness = getParam<Scalar>("FreeFlow.BoundaryLayerThickness");
-                static const Scalar massTransferCoefficient = getParam<Scalar>("FreeFlow.MassTransferCoefficient");
-
-                // get porous medium values:
-                Scalar moleFracH2OInside = volVars.moleFraction(gasPhaseIdx, H2OIdx);
-                Scalar referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
-
-                // calculate fluxes
-                // liquid phase
-                Scalar evaporationRateMole = 0;
-                if(moleFracH2OInside - moleFracRefH2O > 0)
-                {
-                    evaporationRateMole = massTransferCoefficient
-                                            * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
-                                            * (moleFracH2OInside - moleFracRefH2O)
-                                            / boundaryLayerThickness
-                                            * volVars.molarDensity(gasPhaseIdx);
-                }
-                else
-                {
-                    evaporationRateMole = massTransferCoefficient
-                                            * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
-                                            * (moleFracH2OInside - moleFracRefH2O)
-                                            / boundaryLayerThickness
-                                            * 1.2;
-
-                }
-
-                values[conti0EqIdx] = evaporationRateMole;
-
-                // gas phase
-                // gas flows in
-                if (volVars.pressure(gasPhaseIdx) - 1e5 > 0) {
-                    values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
-                                          /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
-                                          *volVars.mobility(gasPhaseIdx)
-                                          *referencePermeability_
-                                          *volVars.molarDensity(gasPhaseIdx)
-                                          *volVars.moleFraction(gasPhaseIdx, AirIdx);
-                }
-                //gas flows out
-                else {
-                    values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
-                                          /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
-                                          *volVars.mobility(gasPhaseIdx)
-                                          *referencePermeability_
-                                          *volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O);
-                }
-
-
-                // energy fluxes
-                values[energyEqIdx] = FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, H2OIdx) * values[conti0EqIdx] * FluidSystem::molarMass(H2OIdx);
-
-                values[energyEqIdx] += FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, AirIdx)* values[conti1EqIdx] * FluidSystem::molarMass(AirIdx);
-
-                values[energyEqIdx] += FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx) * (volVars.temperature() - temperatureRef)/boundaryLayerThickness;
+                evaporationRateMole = massTransferCoefficient
+                                        * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
+                                        * (moleFracH2OInside - moleFracRefH2O)
+                                        / boundaryLayerThickness
+                                        * volVars.molarDensity(gasPhaseIdx);
+            }
+            else
+            {
+                evaporationRateMole = massTransferCoefficient
+                                        * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
+                                        * (moleFracH2OInside - moleFracRefH2O)
+                                        / boundaryLayerThickness
+                                        * 1.2;
 
             }
+
+            values[conti0EqIdx] = evaporationRateMole;
+
+            // gas phase
+            // gas flows in
+            if (volVars.pressure(gasPhaseIdx) - 1e5 > 0) {
+                values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
+                                      /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
+                                      *volVars.mobility(gasPhaseIdx)
+                                      *referencePermeability
+                                      *volVars.molarDensity(gasPhaseIdx)
+                                      *volVars.moleFraction(gasPhaseIdx, AirIdx);
+            }
+            //gas flows out
+            else {
+                values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
+                                      /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
+                                      *volVars.mobility(gasPhaseIdx)
+                                      *referencePermeability
+                                      *volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O);
+            }
+
+            // energy fluxes
+            values[energyEqIdx] = FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, H2OIdx) * values[conti0EqIdx] * FluidSystem::molarMass(H2OIdx);
+
+            values[energyEqIdx] += FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, AirIdx)* values[conti1EqIdx] * FluidSystem::molarMass(AirIdx);
+
+            values[energyEqIdx] += FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx) * (volVars.temperature() - temperatureRef)/boundaryLayerThickness;
+        }
         return values;
     }
-
-
-
-
-
 
     /*!
      * \brief Evaluates the initial value for a control volume.
@@ -435,15 +433,13 @@ public:
      * \param elemVolVars All volume variables for the element
      * \param scv The subcontrolvolume
      *
-     * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilated per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     NumEqVector source(const Element &element,
-                   const FVElementGeometry& fvGeometry,
-                   const ElementVolumeVariables& elemVolVars,
-                   const SubControlVolume &scv) const
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
     {
         NumEqVector source(0.0);
 
@@ -473,7 +469,6 @@ public:
         source[conti0EqIdx + NaClIdx] += -precipSalt;
         source[precipNaClEqIdx] += precipSalt;
         return source;
-
     }
 
     /*!
@@ -488,32 +483,28 @@ public:
     }
 
     void updateVtkOutput(const SolutionVector& curSol)
+    {
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            for (const auto& element : elements(this->gridGeometry().gridView()))
+            const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
+
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
             {
-                const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
-
-                auto fvGeometry = localView(this->gridGeometry());
-                fvGeometry.bindElement(element);
-
-                for (auto&& scv : scvs(fvGeometry))
-                {
-                    VolumeVariables volVars;
-                    volVars.update(elemSol, *this, element, scv);
-                    const auto dofIdxGlobal = scv.dofIndex();
-                    permeability_[dofIdxGlobal] = volVars.permeability();
-                }
+                VolumeVariables volVars;
+                volVars.update(elemSol, *this, element, scv);
+                const auto dofIdxGlobal = scv.dofIndex();
+                permeability_[dofIdxGlobal] = volVars.permeability();
             }
         }
-
-    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
-    {
-        // As a default, i.e. if the user's problem does not overload
-        // any extrusion factor method, return 1.0
-        return 0.054977871437821;
     }
 
-
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    {
+        return 0.054977871437821;
+    }
 
 private:
 
@@ -551,15 +542,13 @@ private:
     Scalar timeStepSize_ = 0.0;
     static constexpr Scalar eps_ = 1e-6;
 
-    std::vector<double> permeability_;
+    std::vector<Scalar> permeability_;
 
-    Dumux::GnuplotInterface<double> gnuplot_;
-    Dumux::GnuplotInterface<double> gnuplot2_;
-    std::vector<double> x_;
-    std::vector<double> y_;
-    std::vector<double> y2_;
-
-
+    Dumux::GnuplotInterface<Scalar> gnuplot_;
+    Dumux::GnuplotInterface<Scalar> gnuplot2_;
+    std::vector<Scalar> x_;
+    std::vector<Scalar> y_;
+    std::vector<Scalar> y2_;
 };
 
 } // end namespace Dumux
