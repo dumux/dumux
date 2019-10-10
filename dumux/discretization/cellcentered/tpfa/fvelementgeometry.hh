@@ -43,10 +43,10 @@ namespace Dumux {
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element in the local scope we are restricting to, e.g. stencil or element.
  * \tparam GG the finite volume grid geometry type
- * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
+ * \tparam enableGridGeometryCache if the grid geometry is cached or not
  * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
-template<class GG, bool enableFVGridGeometryCache>
+template<class GG, bool enableGridGeometryCache>
 class CCTpfaFVElementGeometry;
 
 /*!

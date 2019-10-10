@@ -74,7 +74,7 @@ struct CCTpfaDefaultGridGeometryTraits
  * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
 template<class GridView,
-         bool enableFVGridGeometryCache = false,
+         bool enableGridGeometryCache = false,
          class Traits = CCTpfaDefaultGridGeometryTraits<GridView> >
 class CCTpfaFVGridGeometry;
 
