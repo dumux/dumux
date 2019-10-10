@@ -111,6 +111,14 @@ struct BalanceEqOpts { using type = UndefinedProperty; };          //!< A class 
 template<class TypeTag, class MyTypeTag>
 struct ElementBoundaryTypes { using type = UndefinedProperty; };                //!< Stores the boundary types on an element
 
+#if defined(__clang__) && !defined(DONT_EMIT_CLANG_GRIDGEOMETRY_WARNING)
+#warning "The property `FVGridGeometry` is deprecated in favor of `GridGeometry` \
+and will be removed after release 3.1. \
+If clang is used, no deprecation warnings are emitted. \
+We recommend to use gcc for getting rid of the warnings. \
+You can suppress this message by defining the preprocessor variable \
+DONT_EMIT_CLANG_GRIDGEOMETRY_WARNING."
+#endif
 // TODO: Remove deprecated property FVGridGeometry after 3.1
 template<class TypeTag, class MyTypeTag>
 struct [[deprecated("Use GridGeometry instead.")]] FVGridGeometry { using type = UndefinedProperty; }; //!< The type of the global finite volume geometry

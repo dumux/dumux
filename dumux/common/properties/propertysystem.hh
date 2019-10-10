@@ -91,17 +91,19 @@ struct GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, std:
 template<class TypeTag, template<class,class> class Property, class LastTypeTag>
 struct GetDefined<TypeTag, Property, std::tuple<LastTypeTag>>
 {
-// As of clang 8, the following alias triggers compiler warnings if instantiated
+// For clang, the following alias triggers compiler warnings if instantiated
 // from something like `GetPropType<..., DeprecatedProperty>`, even if that is
 // contained in a diagnostic pragma construct that should prevent these warnings.
-// As a workaround, also add the pragmas around this line. The desired warnings
-// from instantiating `GetPropType<..., DeprecatedProperty>` without pragmas are
-// still issued both by gcc and clang.
+// As a workaround, also add the pragmas around this line.
 // See the discussion in MR 1647 for more details.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
      using LastType = Property<TypeTag, LastTypeTag>;
-#pragma GCC diagnostic pop
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
      using type = std::conditional_t<isDefinedProperty<LastType>(int{}), LastType,
                                      typename GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, void>::type>;
 };
@@ -110,10 +112,14 @@ template<class TypeTag, template<class,class> class Property, class FirstTypeTag
 struct GetDefined<TypeTag, Property, std::tuple<FirstTypeTag, Args...>>
 {
 // See the comment above.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
      using FirstType = Property<TypeTag, FirstTypeTag>;
-#pragma GCC diagnostic pop
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
      using type = std::conditional_t<isDefinedProperty<FirstType>(int{}), FirstType,
                                      typename GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, void>::type>;
 };
@@ -133,9 +139,17 @@ struct GetPropImpl
 template<class TypeTag, template<class,class> class Property>
 using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type;
 
+// See the comment above.
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 //! get the type alias defined in the property (equivalent to old macro GET_PROP_TYPE(...))
 template<class TypeTag, template<class,class> class Property>
 using GetPropType = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type::type;
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 //! get the value data member of a property
 template<class TypeTag, template<class,class> class Property>
