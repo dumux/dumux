@@ -5,7 +5,8 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 
 ### Improvements and Enhancements
 
-- Added a new porous medium model for the energy balance of a porous solid (general heat equation).
+- __Examples__: Three extensively documented examples were added which highlight interesting features and show to apply DuMuX to actual physical problems
+- __Porousmediumflow__: Added a new porous medium model for the energy balance of a porous solid (general heat equation).
 - __Multidomain__: It is now possible to use the facet coupling module together with the mpfa-o scheme in the bulk domain.
 - Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme.
 - The box scheme works now on grids with prism / wedge elements in 3D.
@@ -36,6 +37,9 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
   by reducing the code in the main file and streamlining the terminal output to look like the Newton output.
  - Added a `NetPBMReader` which allows to read simple raster images files (`*.pbm` and `*.pgm`). Can be used, e.g., with `dune-subgrid` in order to create a grid
    from an image file.
+- __Flux__: we revised the formulation of the diffusion laws to allow for changes between mass-averaged velocity reference systems and molar-averaged velocity 
+reference systems. The standard formulation is now set to mass-averaged velocity reference systems.
+
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
@@ -49,6 +53,8 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
   `virtual Scalar maxTimeStepSize()`, and `virtual bool finished()`, thus forcing the inheriting classes to implement those functions.
   `TimeLoop` is no longer a template argument in `NewtonSolver`'s `solve()` method, thereby increasing
   type safety and providing better compiler error messages.
+
+- __RANS__: The base problems for all turbulence models e.g. `ZeroEqProblem` have been been renamed to one generic `RANSProblem`
 
 ### Deprecated classes/files, to be removed after 3.1:
 
