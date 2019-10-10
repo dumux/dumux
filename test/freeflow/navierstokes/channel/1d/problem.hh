@@ -65,7 +65,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::NavierStokesAnalytic> { using type = Dumux::NavierStokesAnalyticProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
 
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };

@@ -61,7 +61,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::ClosedSystemTest> { using type = Dumux::ClosedSystemTestProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };
 
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::ClosedSystemTest> { static constexpr bool value = true; };

@@ -73,7 +73,7 @@ public:
 };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::DamBreakWet>
+struct EnableGridGeometryCache<TypeTag, TTag::DamBreakWet>
 { static constexpr bool value = true; };
 
 template<class TypeTag>

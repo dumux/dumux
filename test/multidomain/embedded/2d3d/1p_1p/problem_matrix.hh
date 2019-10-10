@@ -61,7 +61,7 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::Matrix> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::Matrix> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::Matrix> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::Matrix> { static constexpr bool value = true; };
 template<class TypeTag>

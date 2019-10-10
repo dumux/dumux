@@ -57,7 +57,7 @@ struct FractureCCMpfa { using InheritsFrom = std::tuple<Fracture, CCMpfaModel>; 
 
 //! Enable caching (more memory, but faster runtime)
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
 template<class TypeTag>

@@ -85,7 +85,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::IncompressibleTest> { stati
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
 } // end namespace Properties
 
 template<class TypeTag>

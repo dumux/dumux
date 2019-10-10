@@ -95,7 +95,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::RANSNCModel> { using type = Dumux::FlatPlateNCTestProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::RANSNCModel> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::RANSNCModel> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::RANSNCModel> { static constexpr bool value = true; };
 template<class TypeTag>
