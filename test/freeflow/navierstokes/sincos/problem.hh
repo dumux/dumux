@@ -86,17 +86,17 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using FVElementGeometry = typename GridGeometry::LocalView;
 
     static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -104,8 +104,8 @@ public:
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    SincosTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), time_(0.0), timeStepSize_(0.0)
+    SincosTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), time_(0.0), timeStepSize_(0.0)
     {
         isStationary_ = getParam<bool>("Problem.IsStationary");
         enableInertiaTerms_ = getParam<bool>("Problem.EnableInertiaTerms");

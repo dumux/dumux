@@ -33,23 +33,23 @@ namespace Dumux {
  * \ingroup EmbeddedTests
  * \brief Definition of the spatial parameters for the matrix and fracture problem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class MatrixFractureSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar, MatrixFractureSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar, MatrixFractureSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = MatrixFractureSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
+    using ThisType = MatrixFractureSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    MatrixFractureSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    MatrixFractureSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                                 const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");
         porosity_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Porosity", 1.0);

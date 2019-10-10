@@ -69,11 +69,11 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using Scalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using NumEqVector = GetPropType<SubDomainTypeTag<id>, Properties::NumEqVector>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
-    template<std::size_t id> using SubControlVolume = typename FVGridGeometry<id>::SubControlVolume;
-    template<std::size_t id> using SubControlVolumeFace = typename FVGridGeometry<id>::SubControlVolumeFace;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+    template<std::size_t id> using SubControlVolume = typename GridGeometry<id>::SubControlVolume;
+    template<std::size_t id> using SubControlVolumeFace = typename GridGeometry<id>::SubControlVolumeFace;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using GridIndexType = typename IndexTraits< GridView<id> >::GridIndex;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
@@ -88,7 +88,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     static constexpr auto bulkGridId = CouplingMapper::template gridId<bulkDim>();
     static constexpr auto lowDimGridId = CouplingMapper::template gridId<lowDimDim>();
 
-    static constexpr bool lowDimUsesBox = FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
+    static constexpr bool lowDimUsesBox = GridGeometry<lowDimId>::discMethod == DiscretizationMethod::box;
 
 public:
 

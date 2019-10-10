@@ -90,9 +90,9 @@ struct SolidSystem<TypeTag, TTag::ThermoChem>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::ThermoChem>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ThermoChemSpatialParams<FVGridGeometry, Scalar>;
+    using type = ThermoChemSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -134,7 +134,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ReactionRate = ThermoChemReaction;
@@ -164,8 +164,8 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    ThermoChemProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    ThermoChemProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         name_      = getParam<std::string>("Problem.Name");
         FluidSystem::init(/*tempMin=*/473.15,
@@ -181,9 +181,9 @@ public:
         boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
 
         unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
-        permeability_.resize(fvGridGeometry->gridView().size(codim));
-        porosity_.resize(fvGridGeometry->gridView().size(codim));
-        reactionRate_.resize(fvGridGeometry->gridView().size(codim));
+        permeability_.resize(gridGeometry->gridView().size(codim));
+        porosity_.resize(gridGeometry->gridView().size(codim));
+        reactionRate_.resize(gridGeometry->gridView().size(codim));
     }
 
     /*!

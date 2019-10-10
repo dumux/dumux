@@ -43,7 +43,7 @@ namespace Dumux {
 template<class TypeTag>
 class TwoPGridAdaptIndicator
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -56,18 +56,18 @@ public:
     /*!
      * \brief The Constructor
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      *
      *  Note: refineBound_, coarsenBound_ & maxSaturationDelta_ are chosen
      *        in a way such that the indicator returns false for all elements
      *        before having been calculated.
      */
-    TwoPGridAdaptIndicator(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : fvGridGeometry_(fvGridGeometry)
+    TwoPGridAdaptIndicator(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : gridGeometry_(gridGeometry)
     , refineBound_(std::numeric_limits<Scalar>::max())
     , coarsenBound_(std::numeric_limits<Scalar>::lowest())
-    , maxSaturationDelta_(fvGridGeometry_->gridView().size(0), 0.0)
+    , maxSaturationDelta_(gridGeometry_->gridView().size(0), 0.0)
     , minLevel_(getParamFromGroup<std::size_t>(paramGroup, "Adaptive.MinLevel", 0))
     , maxLevel_(getParamFromGroup<std::size_t>(paramGroup, "Adaptive.MaxLevel", 0))
     {}
@@ -120,7 +120,7 @@ public:
         //! Reset the indicator to a state that returns false for all elements
         refineBound_ = std::numeric_limits<Scalar>::max();
         coarsenBound_ = std::numeric_limits<Scalar>::lowest();
-        maxSaturationDelta_.assign(fvGridGeometry_->gridView().size(0), 0.0);
+        maxSaturationDelta_.assign(gridGeometry_->gridView().size(0), 0.0);
 
         //! maxLevel_ must be higher than minLevel_ to allow for refinement
         if (minLevel_ >= maxLevel_)
@@ -135,15 +135,15 @@ public:
         Scalar globalMin = std::numeric_limits<Scalar>::max();
 
         //! Calculate minimum and maximum saturation
-        for (const auto& element : elements(fvGridGeometry_->gridView()))
+        for (const auto& element : elements(gridGeometry_->gridView()))
         {
             //! Index of the current leaf-element
-            const auto globalIdxI = fvGridGeometry_->elementMapper().index(element);
+            const auto globalIdxI = gridGeometry_->elementMapper().index(element);
 
             //! Obtain the saturation at the center of the element
             const auto geometry = element.geometry();
-            const auto elemSol = elementSolution(element, sol, *fvGridGeometry_);
-            const Scalar satI = evalSolution(element, geometry, *fvGridGeometry_, elemSol, geometry.center())[saturationIdx];
+            const auto elemSol = elementSolution(element, sol, *gridGeometry_);
+            const Scalar satI = evalSolution(element, geometry, *gridGeometry_, elemSol, geometry.center())[saturationIdx];
 
             //! Maybe update the global minimum/maximum
             using std::min;
@@ -152,22 +152,22 @@ public:
             globalMax = max(satI, globalMax);
 
             //! Calculate maximum delta in saturation for this cell
-            for (const auto& intersection : intersections(fvGridGeometry_->gridView(), element))
+            for (const auto& intersection : intersections(gridGeometry_->gridView(), element))
             {
                 //! Only consider internal intersections
                 if (intersection.neighbor())
                 {
                     //! Access neighbor
                     const auto outside = intersection.outside();
-                    const auto globalIdxJ = fvGridGeometry_->elementMapper().index(outside);
+                    const auto globalIdxJ = gridGeometry_->elementMapper().index(outside);
 
                     //! Visit intersection only once
                     if (element.level() > outside.level() || (element.level() == outside.level() && globalIdxI < globalIdxJ))
                     {
                         //! Obtain saturation in the neighbor
                         const auto outsideGeometry = outside.geometry();
-                        const auto elemSolJ = elementSolution(outside, sol, *fvGridGeometry_);
-                        const Scalar satJ = evalSolution(outside, outsideGeometry, *fvGridGeometry_, elemSolJ, outsideGeometry.center())[saturationIdx];
+                        const auto elemSolJ = elementSolution(outside, sol, *gridGeometry_);
+                        const Scalar satJ = evalSolution(outside, outsideGeometry, *gridGeometry_, elemSolJ, outsideGeometry.center())[saturationIdx];
 
                         using std::abs;
                         Scalar localdelta = abs(satI - satJ);
@@ -201,7 +201,7 @@ public:
 //#endif
 
         //! check if neighbors have to be refined too
-        for (const auto& element : elements(fvGridGeometry_->gridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(gridGeometry_->gridView(), Dune::Partitions::interior))
             if (this->operator()(element) > 0)
                 checkNeighborsRefine_(element);
     }
@@ -218,12 +218,12 @@ public:
     int operator() (const Element& element) const
     {
         if (element.hasFather()
-            && maxSaturationDelta_[fvGridGeometry_->elementMapper().index(element)] < coarsenBound_)
+            && maxSaturationDelta_[gridGeometry_->elementMapper().index(element)] < coarsenBound_)
         {
             return -1;
         }
         else if (element.level() < maxLevel_
-                 && maxSaturationDelta_[fvGridGeometry_->elementMapper().index(element)] > refineBound_)
+                 && maxSaturationDelta_[gridGeometry_->elementMapper().index(element)] > refineBound_)
         {
             return 1;
         }
@@ -245,7 +245,7 @@ private:
      */
     bool checkNeighborsRefine_(const Element &element, std::size_t level = 1)
     {
-        for(const auto& intersection : intersections(fvGridGeometry_->gridView(), element))
+        for(const auto& intersection : intersections(gridGeometry_->gridView(), element))
         {
             if(!intersection.neighbor())
                 continue;
@@ -260,7 +260,7 @@ private:
             if (outside.level() < maxLevel_ && outside.level() < element.level())
             {
                 // ensure refinement for outside element
-                maxSaturationDelta_[fvGridGeometry_->elementMapper().index(outside)] = std::numeric_limits<Scalar>::max();
+                maxSaturationDelta_[gridGeometry_->elementMapper().index(outside)] = std::numeric_limits<Scalar>::max();
                 if(level < maxLevel_)
                     checkNeighborsRefine_(outside, ++level);
             }
@@ -269,7 +269,7 @@ private:
         return true;
     }
 
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const GridGeometry> gridGeometry_;
 
     Scalar refineBound_;
     Scalar coarsenBound_;

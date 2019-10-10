@@ -62,9 +62,9 @@ struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePBulk>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePSpatialParams<GridGeometry, Scalar>;
 };
 
 // the fluid system
@@ -94,9 +94,9 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
     using Scalar = typename GridVariables::Scalar;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -105,11 +105,11 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     //! The constructor
-    OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    OnePBulkProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                     std::shared_ptr<CouplingManager> couplingManagerPtr,
                     const std::string& paramGroup = "Bulk")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");

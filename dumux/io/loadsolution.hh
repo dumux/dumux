@@ -98,18 +98,18 @@ private:
  * \ingroup InputOutput
  * \brief read from a vtk file into a solution vector with primary variables without state
  */
-template <class SolutionVector, class PvNameFunc, class FVGridGeometry>
+template <class SolutionVector, class PvNameFunc, class GridGeometry>
 auto loadSolutionFromVtkFile(SolutionVector& sol,
                              const std::string fileName,
                              PvNameFunc&& pvNameFunc,
-                             const FVGridGeometry& fvGridGeometry,
+                             const GridGeometry& gridGeometry,
                              const VTKReader::DataType& dataType)
 -> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
     VTKReader vtu(fileName);
     using PrimaryVariables = typename SolutionVector::block_type;
     using Scalar = typename PrimaryVariables::field_type;
-    constexpr auto dim = FVGridGeometry::GridView::dimension;
+    constexpr auto dim = GridGeometry::GridView::dimension;
 
     for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
     {
@@ -119,14 +119,14 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
         if (dataType == VTKReader::DataType::cellData)
         {
             std::size_t i = 0;
-            for (const auto& element : elements(fvGridGeometry.gridView(), Dune::Partitions::interior))
+            for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
             {
-                const auto eIdx = fvGridGeometry.elementMapper().index(element);
+                const auto eIdx = gridGeometry.elementMapper().index(element);
                 sol[eIdx][pvIdx] = vec[i++];
             }
         }
         // for staggered face data (which is written out as VTK point data) we just read in the vector
-        else if (dataType == VTKReader::DataType::pointData && FVGridGeometry::discMethod == DiscretizationMethod::staggered)
+        else if (dataType == VTKReader::DataType::pointData && GridGeometry::discMethod == DiscretizationMethod::staggered)
         {
             if (sol.size() != vec.size())
                 DUNE_THROW(Dune::InvalidStateException, "Solution size (" << sol.size() << ") does not match input size (" << vec.size() << ")!");
@@ -137,12 +137,12 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
         else
         {
             std::size_t i = 0;
-            std::vector<bool> visited(fvGridGeometry.gridView().size(dim), false);
-            for (const auto& element : elements(fvGridGeometry.gridView(), Dune::Partitions::interior))
+            std::vector<bool> visited(gridGeometry.gridView().size(dim), false);
+            for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
             {
                 for (int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
                 {
-                    const auto vIdxGlobal = fvGridGeometry.vertexMapper().subIndex(element, vIdxLocal, dim);
+                    const auto vIdxGlobal = gridGeometry.vertexMapper().subIndex(element, vIdxLocal, dim);
                     if (!visited[vIdxGlobal])
                     {
                         sol[vIdxGlobal][pvIdx] = vec[i++];
@@ -158,11 +158,11 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
  * \ingroup InputOutput
  * \brief read from a sequential file into a solution vector with primary variables with state
  */
-template <class SolutionVector, class PvNameFunc, class FVGridGeometry>
+template <class SolutionVector, class PvNameFunc, class GridGeometry>
 auto loadSolutionFromVtkFile(SolutionVector& sol,
                              const std::string fileName,
                              PvNameFunc&& pvNameFunc,
-                             const FVGridGeometry& fvGridGeometry,
+                             const GridGeometry& gridGeometry,
                              const VTKReader::DataType& dataType)
 -> typename std::enable_if_t<decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
@@ -187,9 +187,9 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
         if (dataType == VTKReader::DataType::cellData)
         {
             std::size_t i = 0;
-            for (const auto& element : elements(fvGridGeometry.gridView(), Dune::Partitions::interior))
+            for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
             {
-                const auto eIdx = fvGridGeometry.elementMapper().index(element);
+                const auto eIdx = gridGeometry.elementMapper().index(element);
                 const auto state = stateAtDof[i];
                 sol[eIdx][pvIdx] = data[state][i++];
                 sol[eIdx].setState(state);
@@ -198,13 +198,13 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
         else
         {
             std::size_t i = 0;
-            constexpr int dim = FVGridGeometry::GridView::dimension;
-            std::vector<bool> visited(fvGridGeometry.gridView().size(dim), false);
-            for (const auto& element : elements(fvGridGeometry.gridView(), Dune::Partitions::interior))
+            constexpr int dim = GridGeometry::GridView::dimension;
+            std::vector<bool> visited(gridGeometry.gridView().size(dim), false);
+            for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
             {
                 for (int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
                 {
-                    const auto vIdxGlobal = fvGridGeometry.vertexMapper().subIndex(element, vIdxLocal, dim);
+                    const auto vIdxGlobal = gridGeometry.vertexMapper().subIndex(element, vIdxLocal, dim);
                     if (!visited[vIdxGlobal])
                     {
                         const auto state = stateAtDof[i];
@@ -272,52 +272,52 @@ auto createPVNameFunction(const std::string& paramGroup = "")
  * \param fileName the file name of the file to read from
  * \param pvNameFunc a function with the signature std::string(int pvIdx)
  *        in case the primary variables have a state the signature is std::string(int pvIdx, int state)
- * \param fvGridGeometry the grid geometry of the discretization method used
+ * \param gridGeometry the grid geometry of the discretization method used
  */
-template <class SolutionVector, class PvNameFunc, class FVGridGeometry>
+template <class SolutionVector, class PvNameFunc, class GridGeometry>
 void loadSolution(SolutionVector& sol,
                   const std::string& fileName,
                   PvNameFunc&& pvNameFunc,
-                  const FVGridGeometry& fvGridGeometry)
+                  const GridGeometry& gridGeometry)
 {
     const auto extension = fileName.substr(fileName.find_last_of(".") + 1);
-    auto dataType = FVGridGeometry::discMethod == DiscretizationMethod::box ?
+    auto dataType = GridGeometry::discMethod == DiscretizationMethod::box ?
                     VTKReader::DataType::pointData : VTKReader::DataType::cellData;
 
     if (extension == "vtu" || extension == "vtp")
     {
-        if (FVGridGeometry::discMethod == DiscretizationMethod::staggered && extension == "vtp")
+        if (GridGeometry::discMethod == DiscretizationMethod::staggered && extension == "vtp")
             dataType = VTKReader::DataType::pointData;
 
-        loadSolutionFromVtkFile(sol, fileName, pvNameFunc, fvGridGeometry, dataType);
+        loadSolutionFromVtkFile(sol, fileName, pvNameFunc, gridGeometry, dataType);
     }
     else if (extension == "pvtu" || extension == "pvtp")
     {
-        if (FVGridGeometry::discMethod == DiscretizationMethod::staggered)
+        if (GridGeometry::discMethod == DiscretizationMethod::staggered)
             DUNE_THROW(Dune::NotImplemented, "reading staggered solution from a parallel vtk file");
 
-        loadSolutionFromVtkFile(sol, fileName, pvNameFunc, fvGridGeometry, dataType);
+        loadSolutionFromVtkFile(sol, fileName, pvNameFunc, gridGeometry, dataType);
     }
     else
         DUNE_THROW(Dune::NotImplemented, "loadSolution for file with extension " << extension);
 
     // communicate solution on ghost and overlap dofs
-    if (fvGridGeometry.gridView().comm().size() > 1)
+    if (gridGeometry.gridView().comm().size() > 1)
     {
-        using GridView = typename FVGridGeometry::GridView;
+        using GridView = typename GridGeometry::GridView;
         if (dataType == VTKReader::DataType::cellData)
         {
-            LoadSolutionDataHandle<SolutionVector, typename FVGridGeometry::ElementMapper, 0>
-                dataHandle(sol, fvGridGeometry.elementMapper());
-            fvGridGeometry.gridView().communicate(dataHandle,
+            LoadSolutionDataHandle<SolutionVector, typename GridGeometry::ElementMapper, 0>
+                dataHandle(sol, gridGeometry.elementMapper());
+            gridGeometry.gridView().communicate(dataHandle,
                                                   Dune::InteriorBorder_All_Interface,
                                                   Dune::ForwardCommunication);
         }
         else
         {
-            LoadSolutionDataHandle<SolutionVector, typename FVGridGeometry::VertexMapper, GridView::dimension>
-                dataHandle(sol, fvGridGeometry.vertexMapper());
-            fvGridGeometry.gridView().communicate(dataHandle,
+            LoadSolutionDataHandle<SolutionVector, typename GridGeometry::VertexMapper, GridView::dimension>
+                dataHandle(sol, gridGeometry.vertexMapper());
+            gridGeometry.gridView().communicate(dataHandle,
                                                   Dune::InteriorBorder_All_Interface,
                                                   Dune::ForwardCommunication);
         }

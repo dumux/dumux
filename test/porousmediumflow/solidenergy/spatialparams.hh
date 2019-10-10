@@ -32,21 +32,21 @@ namespace Dumux {
  * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the solid energy test
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class SolidEnergySpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             SolidEnergySpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             SolidEnergySpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           SolidEnergySpatialParams<FVGridGeometry, Scalar>>;
+    using GridView = typename GridGeometry::GridView;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           SolidEnergySpatialParams<GridGeometry, Scalar>>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    SolidEnergySpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    SolidEnergySpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.

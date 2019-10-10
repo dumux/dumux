@@ -77,10 +77,10 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TwoPCornerPoint>
 {
 private:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = TwoPCornerPointTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = TwoPCornerPointTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Enable caching
@@ -104,10 +104,10 @@ class TwoPCornerPointTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -117,9 +117,9 @@ class TwoPCornerPointTestProblem : public PorousMediumFlowProblem<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
 
 public:
-    TwoPCornerPointTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    TwoPCornerPointTestProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                                std::shared_ptr<typename ParentType::SpatialParams> spatialParams)
-    : ParentType(fvGridGeometry, spatialParams)
+    : ParentType(gridGeometry, spatialParams)
     {
         gravity_ = {0, 0, 9.81};
         injectionElement_ = getParam<int>("Problem.InjectionElement");

@@ -68,11 +68,11 @@ struct canCommunicate<Dune::UGGrid<dim>, codim>
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
-template<class MType, class VType, class FVGridGeometry, DiscretizationMethod discMethod> struct AmgTraitsImpl;
+template<class MType, class VType, class GridGeometry, DiscretizationMethod discMethod> struct AmgTraitsImpl;
 
 //! The type traits required for using the AMG backend
-template<class MType, class VType, class FVGridGeometry>
-using AmgTraits = AmgTraitsImpl<MType, VType, FVGridGeometry, FVGridGeometry::discMethod>;
+template<class MType, class VType, class GridGeometry>
+using AmgTraits = AmgTraitsImpl<MType, VType, GridGeometry, GridGeometry::discMethod>;
 
 //! NonoverlappingSolverTraits used by discretization with non-overlapping parallel model
 template <class MType, class VType, bool isParallel>
@@ -98,10 +98,10 @@ public:
 #endif
 
 //! Box: use the non-overlapping AMG
-template<class Matrix, class Vector, class FVGridGeometry>
-struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::box>
+template<class Matrix, class Vector, class GridGeometry>
+struct AmgTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod::box>
 {
-    using Grid = typename FVGridGeometry::GridView::Traits::Grid;
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
     enum {
         dofCodim = Grid::dimension,
         isNonOverlapping = true,
@@ -117,7 +117,7 @@ struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::box>
     using ScalarProduct = typename SolverTraits::ScalarProduct;
     using Smoother = typename SolverTraits::Smoother;
 
-    using DofMapper = typename FVGridGeometry::VertexMapper;
+    using DofMapper = typename GridGeometry::VertexMapper;
 };
 
 //! OverlappingSolverTraits used by discretization with overlapping parallel model
@@ -144,10 +144,10 @@ public:
 #endif
 
 //! Cell-centered tpfa: use the overlapping AMG
-template<class Matrix, class Vector, class FVGridGeometry>
-struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::cctpfa>
+template<class Matrix, class Vector, class GridGeometry>
+struct AmgTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod::cctpfa>
 {
-    using Grid = typename FVGridGeometry::GridView::Traits::Grid;
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
     enum {
         dofCodim = 0,
         isNonOverlapping = false,
@@ -163,12 +163,12 @@ struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::cctpf
     using ScalarProduct = typename SolverTraits::ScalarProduct;
     using Smoother = typename SolverTraits::Smoother;
 
-    using DofMapper = typename FVGridGeometry::ElementMapper;
+    using DofMapper = typename GridGeometry::ElementMapper;
 };
 
-template<class Matrix, class Vector, class FVGridGeometry>
-struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::ccmpfa>
-: public AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::cctpfa> {};
+template<class Matrix, class Vector, class GridGeometry>
+struct AmgTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod::ccmpfa>
+: public AmgTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod::cctpfa> {};
 
 } // end namespace Dumux
 

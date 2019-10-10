@@ -63,9 +63,9 @@ struct UseMoles<TypeTag, TTag::DarcyTwoP> { static constexpr bool value = false;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyTwoP>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ConservationSpatialParams<FVGridGeometry, Scalar>;
+    using type = ConservationSpatialParams<GridGeometry, Scalar>;
 };
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
@@ -91,7 +91,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
@@ -110,9 +110,9 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    DarcySubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    DarcySubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                    std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
+    : ParentType(gridGeometry, "Darcy"), eps_(1e-7), couplingManager_(couplingManager)
     {
         pressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Pressure");
         saturation_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Saturation");

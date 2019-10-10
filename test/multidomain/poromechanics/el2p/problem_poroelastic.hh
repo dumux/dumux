@@ -89,9 +89,9 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -102,10 +102,10 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
-    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    PoroElasticSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                           std::shared_ptr<CouplingManager> couplingManagerPtr,
                           const std::string& paramGroup = "PoroElastic")
-    : ParentType(fvGridGeometry, paramGroup)
+    : ParentType(gridGeometry, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");

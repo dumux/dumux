@@ -67,10 +67,10 @@ struct Problem<TypeTag, TTag::OnePSub> { using type = OnePSubProblem<TypeTag> ; 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePSub>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using type = OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
+    using type = OnePSpatialParams<GridGeometry, Scalar, CouplingManager>;
 };
 } // end namespace Properties
 
@@ -94,13 +94,13 @@ class OnePSubProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
-    OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    OnePSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                    std::shared_ptr<GetPropType<TypeTag, Properties::SpatialParams>> spatialParams,
                    const std::string& paramGroup = "OneP")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }

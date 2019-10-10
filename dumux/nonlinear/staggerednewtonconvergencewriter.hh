@@ -43,13 +43,13 @@ namespace Dumux {
  *       to write out multiple Newton solves with a unique id, if you don't call use all
  *       Newton iterations just come after each other in the pvd file.
  */
-template <class FVGridGeometry, class SolutionVector>
+template <class GridGeometry, class SolutionVector>
 class StaggeredNewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector>
 {
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
 
-    using CellCenterSolutionVector = typename std::decay_t<decltype(std::declval<SolutionVector>()[FVGridGeometry::cellCenterIdx()])>;
-    using FaceSolutionVector = typename std::decay_t<decltype(std::declval<SolutionVector>()[FVGridGeometry::faceIdx()])>;
+    using CellCenterSolutionVector = typename std::decay_t<decltype(std::declval<SolutionVector>()[GridGeometry::cellCenterIdx()])>;
+    using FaceSolutionVector = typename std::decay_t<decltype(std::declval<SolutionVector>()[GridGeometry::faceIdx()])>;
 
     using Scalar = typename CellCenterSolutionVector::block_type::value_type;
 
@@ -59,22 +59,22 @@ class StaggeredNewtonConvergenceWriter : public ConvergenceWriterInterface<Solut
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static_assert(FVGridGeometry::discMethod == DiscretizationMethod::staggered,
+    static_assert(GridGeometry::discMethod == DiscretizationMethod::staggered,
                   "This convergence writer does only work for the staggered method, use the NewtonConvergenceWriter instead");
 public:
     /*!
      * \brief Constructor
-     * \param fvGridGeometry The finite volume geometry on the grid view
+     * \param gridGeometry The finite volume geometry on the grid view
      * \param name Base name of the vtk output
      */
-    StaggeredNewtonConvergenceWriter(const FVGridGeometry& fvGridGeometry,
+    StaggeredNewtonConvergenceWriter(const GridGeometry& gridGeometry,
                                      const std::string& name = "newton_convergence")
-    : fvGridGeometry_(fvGridGeometry)
-    , ccWriter_(fvGridGeometry.gridView(), name, "", "")
+    : gridGeometry_(gridGeometry)
+    , ccWriter_(gridGeometry.gridView(), name, "", "")
     , faceWriter_(std::make_shared<PointCloudVtkWriter<Scalar, GlobalPosition>>(coordinates_))
     , faceSequenceWriter_(faceWriter_, name + "-face", "","",
-                          fvGridGeometry.gridView().comm().rank(),
-                          fvGridGeometry.gridView().comm().size())
+                          gridGeometry.gridView().comm().rank(),
+                          gridGeometry.gridView().comm().size())
     {
         resize();
 
@@ -89,8 +89,8 @@ public:
     //! Resizes the output fields. This has to be called whenever the grid changes
     void resize()
     {
-        const auto numCellCenterDofs = fvGridGeometry_.numCellCenterDofs();
-        const auto numFaceDofs = fvGridGeometry_.numFaceDofs();
+        const auto numCellCenterDofs = gridGeometry_.numCellCenterDofs();
+        const auto numFaceDofs = gridGeometry_.numFaceDofs();
 
         // resize the cell center output fields
         for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
@@ -109,9 +109,9 @@ public:
         }
 
         coordinates_.resize(numFaceDofs);
-        for (auto&& facet : facets(fvGridGeometry_.gridView()))
+        for (auto&& facet : facets(gridGeometry_.gridView()))
         {
-            const auto dofIdxGlobal = fvGridGeometry_.gridView().indexSet().index(facet);
+            const auto dofIdxGlobal = gridGeometry_.gridView().indexSet().index(facet);
             coordinates_[dofIdxGlobal] = facet.geometry().center();
         }
     }
@@ -127,13 +127,13 @@ public:
     {
         assert(uLastIter.size() == deltaU.size() && uLastIter.size() == residual.size());
 
-        for (std::size_t dofIdxGlobal = 0; dofIdxGlobal < deltaU[FVGridGeometry::cellCenterIdx()].size(); ++dofIdxGlobal)
+        for (std::size_t dofIdxGlobal = 0; dofIdxGlobal < deltaU[GridGeometry::cellCenterIdx()].size(); ++dofIdxGlobal)
         {
             for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
             {
-                xCellCenter_[eqIdx][dofIdxGlobal] = uLastIter[FVGridGeometry::cellCenterIdx()][dofIdxGlobal][eqIdx];
-                deltaCellCenter_[eqIdx][dofIdxGlobal] = - deltaU[FVGridGeometry::cellCenterIdx()][dofIdxGlobal][eqIdx];
-                defCellCenter_[eqIdx][dofIdxGlobal] = residual[FVGridGeometry::cellCenterIdx()][dofIdxGlobal][eqIdx];
+                xCellCenter_[eqIdx][dofIdxGlobal] = uLastIter[GridGeometry::cellCenterIdx()][dofIdxGlobal][eqIdx];
+                deltaCellCenter_[eqIdx][dofIdxGlobal] = - deltaU[GridGeometry::cellCenterIdx()][dofIdxGlobal][eqIdx];
+                defCellCenter_[eqIdx][dofIdxGlobal] = residual[GridGeometry::cellCenterIdx()][dofIdxGlobal][eqIdx];
             }
         }
 
@@ -144,13 +144,13 @@ public:
             faceWriter_->addPointData(defFace_[eqIdx], "defect_" + std::to_string(eqIdx));
         }
 
-        for (std::size_t dofIdxGlobal = 0; dofIdxGlobal < deltaU[FVGridGeometry::faceIdx()].size(); ++dofIdxGlobal)
+        for (std::size_t dofIdxGlobal = 0; dofIdxGlobal < deltaU[GridGeometry::faceIdx()].size(); ++dofIdxGlobal)
         {
             for (int eqIdx = 0; eqIdx < numEqFace; ++eqIdx)
             {
-                xFace_[eqIdx][dofIdxGlobal] = uLastIter[FVGridGeometry::faceIdx()][dofIdxGlobal][eqIdx];
-                deltaFace_[eqIdx][dofIdxGlobal] = - deltaU[FVGridGeometry::faceIdx()][dofIdxGlobal][eqIdx];
-                defFace_[eqIdx][dofIdxGlobal] = residual[FVGridGeometry::faceIdx()][dofIdxGlobal][eqIdx];
+                xFace_[eqIdx][dofIdxGlobal] = uLastIter[GridGeometry::faceIdx()][dofIdxGlobal][eqIdx];
+                deltaFace_[eqIdx][dofIdxGlobal] = - deltaU[GridGeometry::faceIdx()][dofIdxGlobal][eqIdx];
+                defFace_[eqIdx][dofIdxGlobal] = residual[GridGeometry::faceIdx()][dofIdxGlobal][eqIdx];
             }
         }
 
@@ -163,7 +163,7 @@ private:
     std::size_t id_ = 0UL;
     std::size_t iteration_ = 0UL;
 
-    const FVGridGeometry& fvGridGeometry_;
+    const GridGeometry& gridGeometry_;
 
     Dune::VTKSequenceWriter<GridView> ccWriter_;
 

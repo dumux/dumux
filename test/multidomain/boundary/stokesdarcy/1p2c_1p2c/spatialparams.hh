@@ -34,14 +34,14 @@ namespace Dumux {
  * \brief The spatial parameters class for the test problem using the
  *        1p cc model.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             OnePSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           OnePSpatialParams<FVGridGeometry, Scalar>>;
+    using GridView = typename GridGeometry::GridView;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           OnePSpatialParams<GridGeometry, Scalar>>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -50,8 +50,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    OnePSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         porosity_ = getParam<Scalar>("SpatialParams.Porosity");

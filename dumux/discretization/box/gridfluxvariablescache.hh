@@ -78,8 +78,8 @@ public:
 
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& gridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false)
@@ -87,12 +87,12 @@ public:
         // Here, we do not do anything unless it is a forced update
         if (forceUpdate)
         {
-            fluxVarsCache_.resize(fvGridGeometry.gridView().size(0));
-            for (const auto& element : elements(fvGridGeometry.gridView()))
+            fluxVarsCache_.resize(gridGeometry.gridView().size(0));
+            for (const auto& element : elements(gridGeometry.gridView()))
             {
-                auto eIdx = fvGridGeometry.elementMapper().index(element);
+                auto eIdx = gridGeometry.elementMapper().index(element);
                 // bind the geometries and volume variables to the element (all the elements in stencil)
-                auto fvGeometry = localView(fvGridGeometry);
+                auto fvGeometry = localView(gridGeometry);
                 fvGeometry.bind(element);
 
                 auto elemVolVars = localView(gridVolVars);
@@ -144,8 +144,8 @@ public:
 
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& gridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}

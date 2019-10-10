@@ -49,11 +49,11 @@ class StaggeredVtkOutputModule
 : public VtkOutputModule<GridVariables, SolutionVector>
 {
     using ParentType = VtkOutputModule<GridVariables, SolutionVector>;
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using GridView = typename GridGeometry::GridView;
     using Scalar = typename GridVariables::Scalar;
     using FaceVariables = typename GridVariables::GridFaceVariables::FaceVariables;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -111,7 +111,7 @@ public:
     //! \param name The name of the vtk field
     void addFaceField(const std::vector<Scalar>& v, const std::string& name)
     {
-        if (v.size() == this->fvGridGeometry().gridView().size(1))
+        if (v.size() == this->gridGeometry().gridView().size(1))
             faceFieldScalarDataInfo_.emplace_back(v, name);
         else
             DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
@@ -122,7 +122,7 @@ public:
     //! \param name The name of the vtk field
     void addFaceField(const std::vector<GlobalPosition>& v, const std::string& name)
     {
-        if (v.size() == this->fvGridGeometry().gridView().size(1))
+        if (v.size() == this->gridGeometry().gridView().size(1))
             faceFieldVectorDataInfo_.emplace_back(v, name);
         else
             DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
@@ -160,10 +160,10 @@ private:
     //! Update the coordinates (the face centers)
     void updateCoordinates_()
     {
-        coordinates_.resize(this->fvGridGeometry().numFaceDofs());
-        for(auto&& facet : facets(this->fvGridGeometry().gridView()))
+        coordinates_.resize(this->gridGeometry().numFaceDofs());
+        for(auto&& facet : facets(this->gridGeometry().gridView()))
         {
-            const int dofIdxGlobal = this->fvGridGeometry().gridView().indexSet().index(facet);
+            const int dofIdxGlobal = this->gridGeometry().gridView().indexSet().index(facet);
             coordinates_[dofIdxGlobal] = facet.geometry().center();
         }
         coordinatesInitialized_ = true;
@@ -173,7 +173,7 @@ private:
      //! \param time The current time
     void getFaceDataAndWrite_(const Scalar time)
     {
-        const auto numPoints = this->fvGridGeometry().numFaceDofs();
+        const auto numPoints = this->gridGeometry().numFaceDofs();
 
         // make sure not to iterate over the same dofs twice
         std::vector<bool> dofVisited(numPoints, false);
@@ -192,9 +192,9 @@ private:
         if(!faceVarVectorDataInfo_.empty())
             faceVarVectorData.resize(faceVarVectorDataInfo_.size(), std::vector<GlobalPosition>(numPoints));
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(this->gridGeometry().gridView(), Dune::Partitions::interior))
         {
-            auto fvGeometry = localView(this->fvGridGeometry());
+            auto fvGeometry = localView(this->gridGeometry());
             auto elemFaceVars = localView(this->gridVariables().curGridFaceVars());
 
             if (!faceVarScalarDataInfo_.empty() || !faceVarVectorDataInfo_.empty())

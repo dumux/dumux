@@ -36,16 +36,16 @@ namespace Dumux {
  * \ingroup EmbeddedTests
  * \brief Definition of the spatial parameters for the root xylem flow.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class RootSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar, RootSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar, RootSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = RootSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
-    using Grid = typename FVGridGeometry::Grid;
-    using GridView = typename FVGridGeometry::GridView;
+    using ThisType = RootSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
+    using Grid = typename GridGeometry::Grid;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     //! Indices to access the parameters in the dgf file
@@ -61,15 +61,15 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RootSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    RootSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<const GridData<Grid>> gridData)
-    : ParentType(fvGridGeometry), gridData_(gridData)
+    : ParentType(gridGeometry), gridData_(gridData)
     {
         porosity_ = getParam<Scalar>("Root.SpatialParams.Porosity", 0.4);
         constantKx_ = getParam<Scalar>("Root.SpatialParams.Kx", 5.0968e-17);
         constantKr_ = getParam<Scalar>("Root.SpatialParams.Kr", 2.04e-13);
 
-        const auto& gv = fvGridGeometry->gridView();
+        const auto& gv = gridGeometry->gridView();
         radii_.resize(gv.size(0));
         for (const auto& element : elements(gv))
         {

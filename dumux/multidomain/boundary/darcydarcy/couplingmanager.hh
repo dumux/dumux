@@ -60,11 +60,11 @@ class DarcyDarcyBoundaryCouplingManager
     template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
     template<std::size_t i> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t i> using VolumeVariables = typename GetPropType<SubDomainTypeTag<i>, Properties::GridVolumeVariables>::VolumeVariables;
-    template<std::size_t i> using FVGridGeometry = typename MDTraits::template SubDomain<i>::GridGeometry;
-    template<std::size_t i> using FVElementGeometry = typename FVGridGeometry<i>::LocalView;
-    template<std::size_t i> using SubControlVolumeFace = typename FVGridGeometry<i>::SubControlVolumeFace;
-    template<std::size_t i> using SubControlVolume = typename FVGridGeometry<i>::SubControlVolume;
-    template<std::size_t i> using GridView = typename FVGridGeometry<i>::GridView;
+    template<std::size_t i> using GridGeometry = typename MDTraits::template SubDomain<i>::GridGeometry;
+    template<std::size_t i> using FVElementGeometry = typename GridGeometry<i>::LocalView;
+    template<std::size_t i> using SubControlVolumeFace = typename GridGeometry<i>::SubControlVolumeFace;
+    template<std::size_t i> using SubControlVolume = typename GridGeometry<i>::SubControlVolume;
+    template<std::size_t i> using GridView = typename GridGeometry<i>::GridView;
     template<std::size_t i> using Element = typename GridView<i>::template Codim<0>::Entity;
 
     template<std::size_t i>
@@ -73,7 +73,7 @@ class DarcyDarcyBoundaryCouplingManager
 
     template<std::size_t i>
     static constexpr bool isCCTpfa()
-    { return FVGridGeometry<i>::discMethod == DiscretizationMethod::cctpfa; }
+    { return GridGeometry<i>::discMethod == DiscretizationMethod::cctpfa; }
 
     using CouplingStencil = std::vector<std::size_t>;
 public:

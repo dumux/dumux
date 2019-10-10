@@ -124,8 +124,8 @@ public:
     {}
 
     //! When global caching is enabled, precompute transmissibilities for all scv faces
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& gridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false)
@@ -139,7 +139,7 @@ public:
             {
                 clear_();
 
-                const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+                const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
                 const auto numPrimaryIvs = gridIvIndexSets.numPrimaryInteractionVolumes();
                 const auto numSecondaryIVs = gridIvIndexSets.numSecondaryInteractionVolumes();
                 ivDataStorage_.primaryInteractionVolumes.reserve(numPrimaryIvs);
@@ -148,7 +148,7 @@ public:
                 ivDataStorage_.secondaryDataHandles.reserve(numSecondaryIVs);
 
                 // reserve memory estimate for caches, interaction volumes and corresponding data
-                fluxVarsCache_.resize(fvGridGeometry.numScvf());
+                fluxVarsCache_.resize(gridGeometry.numScvf());
             }
 
             // instantiate helper class to fill the caches
@@ -158,9 +158,9 @@ public:
             for (auto& cache : fluxVarsCache_)
                 cache.setUpdateStatus(false);
 
-            for (const auto& element : elements(fvGridGeometry.gridView()))
+            for (const auto& element : elements(gridGeometry.gridView()))
             {
-                auto fvGeometry = localView(fvGridGeometry);
+                auto fvGeometry = localView(gridGeometry);
                 fvGeometry.bind(element);
 
                 auto elemVolVars = localView(gridVolVars);
@@ -169,7 +169,7 @@ public:
                 // Prepare all caches of the scvfs inside the corresponding interaction volume. Skip
                 // those ivs that are touching a boundary, we only store the data on interior ivs here.
                 for (const auto& scvf : scvfs(fvGeometry))
-                    if (!isEmbeddedInBoundaryIV_(scvf, fvGridGeometry) && !fluxVarsCache_[scvf.index()].isUpdated())
+                    if (!isEmbeddedInBoundaryIV_(scvf, gridGeometry) && !fluxVarsCache_[scvf.index()].isUpdated())
                         filler.fill(*this, fluxVarsCache_[scvf.index()], ivDataStorage_, element, fvGeometry, elemVolVars, scvf, forceUpdate);
             }
         }
@@ -184,8 +184,8 @@ public:
         // solution-dependent stuff into the caches
         if (FluxVariablesCacheFiller::isSolDependent)
         {
-            const auto& fvGridGeometry = fvGeometry.gridGeometry();
-            const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
+            const auto& gridGeometry = fvGeometry.gridGeometry();
+            const auto& assemblyMapI = gridGeometry.connectivityMap()[gridGeometry.elementMapper().index(element)];
 
             // helper class to fill flux variables caches
             FluxVariablesCacheFiller filler(problem());
@@ -201,18 +201,18 @@ public:
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 auto& scvfCache = fluxVarsCache_[scvf.index()];
-                if (!isEmbeddedInBoundaryIV_(scvf, fvGridGeometry) && !scvfCache.isUpdated())
+                if (!isEmbeddedInBoundaryIV_(scvf, gridGeometry) && !scvfCache.isUpdated())
                     filler.fill(*this, scvfCache, ivDataStorage_, element, fvGeometry, elemVolVars, scvf);
             }
 
             for (const auto& dataJ : assemblyMapI)
             {
-                const auto elementJ = fvGridGeometry.element(dataJ.globalJ);
+                const auto elementJ = gridGeometry.element(dataJ.globalJ);
                 for (const auto scvfIdx : dataJ.scvfsJ)
                 {
                     auto& scvfCache = fluxVarsCache_[scvfIdx];
                     const auto& scvf = fvGeometry.scvf(scvfIdx);
-                    if (!isEmbeddedInBoundaryIV_(scvf, fvGridGeometry) && !scvfCache.isUpdated())
+                    if (!isEmbeddedInBoundaryIV_(scvf, gridGeometry) && !scvfCache.isUpdated())
                         filler.fill(*this, scvfCache, ivDataStorage_, elementJ, fvGeometry, elemVolVars, scvf);
                 }
             }
@@ -254,11 +254,11 @@ public:
 
 private:
     //! returns true if an scvf is contained in an interaction volume that touches the boundary
-    template<class SubControlVolumeFace, class FVGridGeometry>
-    bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf, const FVGridGeometry& fvGridGeometry) const
+    template<class SubControlVolumeFace, class GridGeometry>
+    bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf, const GridGeometry& gridGeometry) const
     {
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
-        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
+        if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
             return gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
         else
             return gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
@@ -322,8 +322,8 @@ public:
     CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     //! When global flux variables caching is disabled, we don't need to update the cache
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& gridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}

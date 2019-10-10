@@ -45,11 +45,11 @@ namespace Dumux {
 template<class GridVariables, class FluxVariables>
 class PorousMediumFlowVelocity
 {
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
@@ -60,7 +60,7 @@ class PorousMediumFlowVelocity
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -80,18 +80,18 @@ public:
      */
     PorousMediumFlowVelocity(const GridVariables& gridVariables)
     : problem_(gridVariables.curGridVolVars().problem())
-    , fvGridGeometry_(gridVariables.gridGeometry())
+    , gridGeometry_(gridVariables.gridGeometry())
     , gridVariables_(gridVariables)
     {
         // set the number of scvs the vertices are connected to
         if (isBox && dim > 1)
         {
             // resize to the number of vertices of the grid
-            cellNum_.assign(fvGridGeometry_.gridView().size(dim), 0);
+            cellNum_.assign(gridGeometry_.gridView().size(dim), 0);
 
-            for (const auto& element : elements(fvGridGeometry_.gridView()))
+            for (const auto& element : elements(gridGeometry_.gridView()))
                 for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-                    ++cellNum_[fvGridGeometry_.vertexMapper().subIndex(element, vIdx, dim)];
+                    ++cellNum_[gridGeometry_.vertexMapper().subIndex(element, vIdx, dim)];
         }
     }
 
@@ -135,7 +135,7 @@ public:
                 flux /= insideVolVars.extrusionFactor();
                 tmpVelocity *= flux;
 
-                const int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
+                const int eIdxGlobal = gridGeometry_.elementMapper().index(element);
                 velocity[eIdxGlobal] = tmpVelocity;
             }
             return;
@@ -205,7 +205,7 @@ public:
             // For the number of scvfs per facet (mpfa) we simply obtain the number of
             // corners of the first facet as prisms/pyramids are not supported here anyway
             // -> for prisms/pyramids the number of scvfs would differ from facet to facet
-            static constexpr bool isMpfa = FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa;
+            static constexpr bool isMpfa = GridGeometry::discMethod == DiscretizationMethod::ccmpfa;
             const int numScvfsPerFace = isMpfa ? element.template subEntity<1>(0).geometry().corners() : 1;
 
             if (fvGeometry.numScvf() != element.subEntities(1)*numScvfsPerFace)
@@ -225,7 +225,7 @@ public:
             // find the local face indices of the scvfs (for conforming meshes)
             std::vector<unsigned int> scvfIndexInInside(fvGeometry.numScvf());
             int localScvfIdx = 0;
-            for (const auto& intersection : intersections(fvGridGeometry_.gridView(), element))
+            for (const auto& intersection : intersections(gridGeometry_.gridView(), element))
             {
                 if (dim < dimWorld)
                     if (handledScvf[intersection.indexInInside()])
@@ -331,7 +331,7 @@ public:
 
             scvVelocity /= geometry.integrationElement(localPos);
 
-            int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
+            int eIdxGlobal = gridGeometry_.elementMapper().index(element);
 
             velocity[eIdxGlobal] = scvVelocity;
 
@@ -420,7 +420,7 @@ private:
     { return BoundaryTypes(); }
 
     const Problem& problem_;
-    const FVGridGeometry& fvGridGeometry_;
+    const GridGeometry& gridGeometry_;
     const GridVariables& gridVariables_;
 
     std::vector<int> cellNum_;

@@ -50,29 +50,29 @@ struct ConvergenceWriterInterface
  *       to write out multiple Newton solves with a unique id, if you don't call use all
  *       Newton iterations just come after each other in the pvd file.
  */
-template <class FVGridGeometry, class SolutionVector>
+template <class GridGeometry, class SolutionVector>
 class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector>
 {
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     static constexpr auto numEq = SolutionVector::block_type::dimension;
     using Scalar = typename SolutionVector::block_type::value_type;
 
-    static_assert(FVGridGeometry::discMethod != DiscretizationMethod::staggered,
+    static_assert(GridGeometry::discMethod != DiscretizationMethod::staggered,
                   "This convergence writer does not work for the staggered method, use the StaggeredNewtonConvergenceWriter instead");
 public:
     /*!
      * \brief Constructor
-     * \param fvGridGeometry The finite-volume grid geometry
+     * \param gridGeometry The finite-volume grid geometry
      * \param name Base name of the vtk output
      */
-    NewtonConvergenceWriter(const FVGridGeometry& fvGridGeometry,
+    NewtonConvergenceWriter(const GridGeometry& gridGeometry,
                             const std::string& name = "newton_convergence")
-    : fvGridGeometry_(fvGridGeometry)
-    , writer_(fvGridGeometry.gridView(), name, "", "")
+    : gridGeometry_(gridGeometry)
+    , writer_(gridGeometry.gridView(), name, "", "")
     {
         resize();
 
-        if (FVGridGeometry::discMethod == DiscretizationMethod::box)
+        if (GridGeometry::discMethod == DiscretizationMethod::box)
         {
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
@@ -95,7 +95,7 @@ public:
     //! Resizes the output fields. This has to be called whenever the grid changes
     void resize()
     {
-        const auto numDofs = fvGridGeometry_.numDofs();
+        const auto numDofs = gridGeometry_.numDofs();
 
         // resize the output fields
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -135,7 +135,7 @@ private:
     std::size_t id_ = 0UL;
     std::size_t iteration_ = 0UL;
 
-    const FVGridGeometry& fvGridGeometry_;
+    const GridGeometry& gridGeometry_;
 
     Dune::VTKSequenceWriter<GridView> writer_;
 

@@ -37,14 +37,14 @@ namespace Dumux {
  * \ingroup RichardsTests
  * \brief The spatial parameters for the RichardsLensProblem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class RichardsLensSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar, RichardsLensSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar, RichardsLensSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = RichardsLensSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using ThisType = RichardsLensSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -57,8 +57,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RichardsLensSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RichardsLensSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
 
         lensLowerLeft_ = {1.0, 2.0};

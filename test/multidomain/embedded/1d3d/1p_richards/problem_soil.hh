@@ -97,11 +97,11 @@ class SoilProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GlobalPosition = typename GridGeometry::GlobalCoordinate;
     using Element = typename GridView::template Codim<0>::Entity;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -112,9 +112,9 @@ class SoilProblem : public PorousMediumFlowProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    SoilProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    SoilProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Soil")
+    : ParentType(gridGeometry, "Soil")
     , couplingManager_(couplingManager)
     {
         // read parameters from input file

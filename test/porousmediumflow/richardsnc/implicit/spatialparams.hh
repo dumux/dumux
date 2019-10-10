@@ -41,14 +41,14 @@ namespace Dumux {
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the RichardsWellTracerProblem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class RichardsWellTracerSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         RichardsWellTracerSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>>;
+    using GridView = typename GridGeometry::GridView;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       RichardsWellTracerSpatialParams<GridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
     using Element = typename GridView::template Codim<0>::Entity;
@@ -62,8 +62,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RichardsWellTracerSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    RichardsWellTracerSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+        : ParentType(gridGeometry)
     {
 
         lensLowerLeft_ = getParam<GlobalPosition>("Problem.LensLowerLeft");

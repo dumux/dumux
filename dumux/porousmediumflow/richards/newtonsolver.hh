@@ -75,10 +75,10 @@ private:
         if (this->numSteps_ <= 4)
         {
             // clamp saturation change to at most 20% per iteration
-            const auto& fvGridGeometry = this->assembler().gridGeometry();
-            for (const auto& element : elements(fvGridGeometry.gridView()))
+            const auto& gridGeometry = this->assembler().gridGeometry();
+            for (const auto& element : elements(gridGeometry.gridView()))
             {
-                auto fvGeometry = localView(fvGridGeometry);
+                auto fvGeometry = localView(gridGeometry);
                 fvGeometry.bindElement(element);
 
                 for (auto&& scv : scvs(fvGeometry))
@@ -87,7 +87,7 @@ private:
 
                     // calculate the old wetting phase saturation
                     const auto& spatialParams = this->assembler().problem().spatialParams();
-                    const auto elemSol = elementSolution(element, uCurrentIter, fvGridGeometry);
+                    const auto elemSol = elementSolution(element, uCurrentIter, gridGeometry);
                     const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];

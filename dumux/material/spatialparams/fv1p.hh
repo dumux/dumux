@@ -72,13 +72,13 @@ struct hasPorosityAtPos
  * \brief The base class for spatial parameters of one-phase problems
  * using a fully implicit discretization method.
  */
-template<class FVGridGeometry, class Scalar, class Implementation>
+template<class GridGeometry, class Scalar, class Implementation>
 class FVSpatialParamsOneP
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
@@ -88,8 +88,8 @@ class FVSpatialParamsOneP
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    FVSpatialParamsOneP(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : fvGridGeometry_(fvGridGeometry)
+    FVSpatialParamsOneP(std::shared_ptr<const GridGeometry> gridGeometry)
+    : gridGeometry_(gridGeometry)
     , gravity_(0.0)
     {
         const bool enableGravity = getParam<bool>("Problem.EnableGravity");
@@ -326,13 +326,13 @@ public:
     }
 
     //! The finite volume grid geometry
-    [[deprecated("Use more general GridGeometry instead. FVGridGeometry will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
-    { return *fvGridGeometry_; }
+    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
+    const GridGeometry& fvGridGeometry() const
+    { return *gridGeometry_; }
 
     //! The finite volume grid geometry
-    const FVGridGeometry& gridGeometry() const
-    { return *fvGridGeometry_; }
+    const GridGeometry& gridGeometry() const
+    { return *gridGeometry_; }
 
 
 protected:
@@ -343,7 +343,7 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const GridGeometry> gridGeometry_;
     GlobalPosition gravity_; //!< The gravity vector
     Scalar forchCoeffDefault_;
 };

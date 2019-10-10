@@ -64,20 +64,20 @@ public:
 
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
-        const auto numScv = fvGridGeometry.numScv();
+        const auto numScv = gridGeometry.numScv();
         volumeVariables_.resize(numScv);
 
-        for (const auto& element : elements(fvGridGeometry.gridView()))
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                const auto elemSol = elementSolution(element, sol, fvGridGeometry);
+                const auto elemSol = elementSolution(element, sol, gridGeometry);
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
         }
@@ -136,8 +136,8 @@ public:
 
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol) {}
 
     //! The problem we are solving
     const Problem& problem() const

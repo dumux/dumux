@@ -37,8 +37,8 @@ namespace Dumux {
 template<class FVElementGeometry, class PV>
 class BoxElementSolution
 {
-    using FVGridGeometry = typename FVElementGeometry::GridGeometry;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
@@ -51,9 +51,9 @@ public:
     //! Constructor with element and solution and grid geometry
     template<class SolutionVector>
     BoxElementSolution(const Element& element, const SolutionVector& sol,
-                       const FVGridGeometry& fvGridGeometry)
+                       const GridGeometry& gridGeometry)
     {
-        update(element, sol, fvGridGeometry);
+        update(element, sol, gridGeometry);
     }
 
     //! Constructor with element and elemVolVars and fvGeometry
@@ -70,12 +70,12 @@ public:
     //! extract the element solution from the solution vector using a mapper
     template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
-                const FVGridGeometry& fvGridGeometry)
+                const GridGeometry& gridGeometry)
     {
         const auto numVert = element.subEntities(GridView::dimension);
         priVars_.resize(numVert);
         for (int vIdx = 0; vIdx < numVert; ++vIdx)
-            priVars_[vIdx] = sol[fvGridGeometry.vertexMapper().subIndex(element, vIdx, GridView::dimension)];
+            priVars_[vIdx] = sol[gridGeometry.vertexMapper().subIndex(element, vIdx, GridView::dimension)];
     }
 
     //! extract the element solution from the solution vector using a local fv geometry
@@ -111,15 +111,15 @@ private:
  * \ingroup BoxDiscretization
  * \brief  Make an element solution for box schemes
  */
-template<class Element, class SolutionVector, class FVGridGeometry>
-auto elementSolution(const Element& element, const SolutionVector& sol, const FVGridGeometry& gg)
--> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::box,
-                    BoxElementSolution<typename FVGridGeometry::LocalView,
+template<class Element, class SolutionVector, class GridGeometry>
+auto elementSolution(const Element& element, const SolutionVector& sol, const GridGeometry& gg)
+-> std::enable_if_t<GridGeometry::discMethod == DiscretizationMethod::box,
+                    BoxElementSolution<typename GridGeometry::LocalView,
                                       std::decay_t<decltype(std::declval<SolutionVector>()[0])>>
                     >
 {
     using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
-    return BoxElementSolution<typename FVGridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
+    return BoxElementSolution<typename GridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
 }
 
 /*!

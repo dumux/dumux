@@ -48,13 +48,13 @@ namespace CCMpfa {
     template<class FVElementGeometry>
     std::size_t maxNumBoundaryVolVars(const FVElementGeometry& fvGeometry)
     {
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
 
         std::size_t numBoundaryVolVars = 0;
         for (const auto& scvf : scvfs(fvGeometry))
         {
-            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            if (!gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 numBoundaryVolVars += gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
             else
                 numBoundaryVolVars += gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
@@ -138,12 +138,12 @@ namespace CCMpfa {
                             const typename FVElemGeom::GridGeometry::GridView::template Codim<0>::Entity& element,
                             const FVElemGeom& fvGeometry)
     {
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
 
         // treat the BCs inside the element
         if (fvGeometry.hasBoundaryScvf())
         {
-            const auto boundElemIdx = fvGridGeometry.elementMapper().index(element);
+            const auto boundElemIdx = gridGeometry.elementMapper().index(element);
             const auto& scvI = fvGeometry.scv(boundElemIdx);
 
             for (const auto& scvf : scvfs(fvGeometry))
@@ -168,10 +168,10 @@ namespace CCMpfa {
         }
 
         // Update boundary volume variables in the neighbors
-        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
         for (const auto& scvf : scvfs(fvGeometry))
         {
-            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            if (!gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
                                           gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet() );
             else
@@ -307,11 +307,11 @@ public:
         clear();
 
         const auto& problem = gridVolVars().problem();
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
 
         // stencil information
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& assemblyMapI = fvGridGeometry.connectivityMap()[globalI];
+        const auto globalI = gridGeometry.elementMapper().index(element);
+        const auto& assemblyMapI = gridGeometry.connectivityMap()[globalI];
         const auto numVolVars = assemblyMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
@@ -321,7 +321,7 @@ public:
 
         VolumeVariables volVars;
         const auto& scvI = fvGeometry.scv(globalI);
-        volVars.update(elementSolution(element, sol, fvGridGeometry),
+        volVars.update(elementSolution(element, sol, gridGeometry),
                        problem,
                        element,
                        scvI);
@@ -332,10 +332,10 @@ public:
         // Update the volume variables of the neighboring elements
         for (auto&& dataJ : assemblyMapI)
         {
-            const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
+            const auto& elementJ = gridGeometry.element(dataJ.globalJ);
             const auto& scvJ = fvGeometry.scv(dataJ.globalJ);
             VolumeVariables volVarsJ;
-            volVarsJ.update(elementSolution(elementJ, sol, fvGridGeometry),
+            volVarsJ.update(elementSolution(elementJ, sol, gridGeometry),
                             problem,
                             elementJ,
                             scvJ);
@@ -357,11 +357,11 @@ public:
         //     volVarIndices_.reserve(volVarIndices_.size() + additionalDofDependencies.size());
         //     for (auto globalJ : additionalDofDependencies)
         //     {
-        //         const auto& elementJ = fvGridGeometry.element(globalJ);
+        //         const auto& elementJ = gridGeometry.element(globalJ);
         //         const auto& scvJ = fvGeometry.scv(globalJ);
 
         //         VolumeVariables additionalVolVars;
-        //         additionalVolVars.update(elementSolution(elementJ, sol, fvGridGeometry),
+        //         additionalVolVars.update(elementSolution(elementJ, sol, gridGeometry),
         //                                  problem,
         //                                  elementJ,
         //                                  scvJ);
@@ -380,14 +380,14 @@ public:
     {
         clear();
 
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
-        auto eIdx = fvGridGeometry.elementMapper().index(element);
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        auto eIdx = gridGeometry.elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
         const auto& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(elementSolution(element, sol, fvGridGeometry),
+        volumeVariables_[0].update(elementSolution(element, sol, gridGeometry),
                                    gridVolVars().problem(),
                                    element,
                                    scv);

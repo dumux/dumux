@@ -84,9 +84,9 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCNIConvection>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCNIConvection>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePNCTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -130,7 +130,7 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
@@ -167,8 +167,8 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    OnePTwoCNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTwoCNIConvectionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -179,7 +179,7 @@ public:
         else
             std::cout<<"problem uses mass fractions"<<std::endl;
 
-        temperatureExact_.resize(fvGridGeometry->numDofs(), 290.0);
+        temperatureExact_.resize(gridGeometry->numDofs(), 290.0);
 
         darcyVelocity_ = getParam<Scalar>("Problem.DarcyVelocity");
 

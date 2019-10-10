@@ -64,12 +64,12 @@ namespace Dumux {
 template<class GridVariables, class SolutionVector>
 class VtkOutputModule
 {
-    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using GridGeometry = typename GridVariables::GridGeometry;
 
     using VV = typename GridVariables::VolumeVariables;
     using Scalar = typename GridVariables::Scalar;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
 
     enum {
         dim = GridView::dimension,
@@ -79,7 +79,7 @@ class VtkOutputModule
     using Element = typename GridView::template Codim<0>::Entity;
     using VolVarsVector = Dune::FieldVector<Scalar, dimWorld>;
 
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
@@ -163,8 +163,8 @@ public:
         // Deduce the number of components from the given vector type
         const auto nComp = getNumberOfComponents_(v);
 
-        const auto numElemDofs = fvGridGeometry().elementMapper().size();
-        const auto numVertexDofs = fvGridGeometry().vertexMapper().size();
+        const auto numElemDofs = gridGeometry().elementMapper().size();
+        const auto numVertexDofs = gridGeometry().vertexMapper().size();
 
         // Automatically deduce the field type ...
         if(fieldType == FieldType::automatic)
@@ -193,9 +193,9 @@ public:
 
         // add the appropriate field
         if (fieldType == FieldType::element)
-            fields_.emplace_back(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), v, name, nComp, 0);
+            fields_.emplace_back(gridGeometry().gridView(), gridGeometry().elementMapper(), v, name, nComp, 0);
         else
-            fields_.emplace_back(fvGridGeometry().gridView(), fvGridGeometry().vertexMapper(), v, name, nComp, dim);
+            fields_.emplace_back(gridGeometry().gridView(), gridGeometry().vertexMapper(), v, name, nComp, dim);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -230,7 +230,7 @@ public:
 protected:
     // some return functions for differing implementations to use
     const auto& problem() const { return gridVariables_.curGridVolVars().problem(); }
-    const FVGridGeometry& fvGridGeometry() const { return gridVariables_.gridGeometry(); }
+    const GridGeometry& gridGeometry() const { return gridVariables_.gridGeometry(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
     const SolutionVector& sol() const { return sol_; }
 
@@ -276,7 +276,7 @@ private:
             || velocityOutput_->enableOutput()
             || addProcessRank)
         {
-            const auto numCells = fvGridGeometry().gridView().size(0);
+            const auto numCells = gridGeometry().gridView().size(0);
             const auto numDofs = numDofs_();
 
             // get fields for all volume variables
@@ -299,11 +299,11 @@ private:
             // maybe allocate space for the process rank
             if (addProcessRank) rank.resize(numCells);
 
-            for (const auto& element : elements(fvGridGeometry().gridView(), Dune::Partitions::interior))
+            for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
-                const auto eIdxGlobal = fvGridGeometry().elementMapper().index(element);
+                const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
 
-                auto fvGeometry = localView(fvGridGeometry());
+                auto fvGeometry = localView(gridGeometry());
                 auto elemVolVars = localView(gridVariables_.curGridVolVars());
 
                 // If velocity output is enabled we need to bind to the whole stencil
@@ -349,7 +349,7 @@ private:
 
                 //! the rank
                 if (addProcessRank)
-                    rank[eIdxGlobal] = static_cast<double>(fvGridGeometry().gridView().comm().rank());
+                    rank[eIdxGlobal] = static_cast<double>(gridGeometry().gridView().comm().rank());
             }
 
             //////////////////////////////////////////////////////////////
@@ -360,19 +360,19 @@ private:
             if (isBox)
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    sequenceWriter_.addVertexData( Field(fvGridGeometry().gridView(), fvGridGeometry().vertexMapper(), volVarScalarData[i],
+                    sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarScalarData[i],
                                                          volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    sequenceWriter_.addVertexData( Field(fvGridGeometry().gridView(), fvGridGeometry().vertexMapper(), volVarVectorData[i],
+                    sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarVectorData[i],
                                                          volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim).get() );
             }
             else
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    sequenceWriter_.addCellData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), volVarScalarData[i],
+                    sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
                                                        volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    sequenceWriter_.addCellData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), volVarVectorData[i],
+                    sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
                                                        volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0).get() );
             }
 
@@ -382,7 +382,7 @@ private:
                 if (isBox && dim > 1)
                 {
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        sequenceWriter_.addVertexData( Field(fvGridGeometry().gridView(), fvGridGeometry().vertexMapper(), velocity[phaseIdx],
+                        sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
                 }
@@ -390,7 +390,7 @@ private:
                 else
                 {
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        sequenceWriter_.addCellData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), velocity[phaseIdx],
+                        sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
                                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
                 }
@@ -398,7 +398,7 @@ private:
 
             // the process rank
             if (addProcessRank)
-                sequenceWriter_.addCellData(Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), rank, "process rank", 1, 0).get());
+                sequenceWriter_.addCellData(Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get());
 
             // also register additional (non-standardized) user fields if any
             for (auto&& field : fields_)
@@ -460,7 +460,7 @@ private:
             || velocityOutput_->enableOutput()
             || addProcessRank)
         {
-            const auto numCells = fvGridGeometry().gridView().size(0);
+            const auto numCells = gridGeometry().gridView().size(0);
             const auto numDofs = numDofs_();
 
             // get fields for all volume variables
@@ -483,12 +483,12 @@ private:
             // maybe allocate space for the process rank
             if (addProcessRank) rank.resize(numCells);
 
-            for (const auto& element : elements(fvGridGeometry().gridView(), Dune::Partitions::interior))
+            for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
-                const auto eIdxGlobal = fvGridGeometry().elementMapper().index(element);
+                const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
                 const auto numCorners = element.subEntities(dim);
 
-                auto fvGeometry = localView(fvGridGeometry());
+                auto fvGeometry = localView(gridGeometry());
                 auto elemVolVars = localView(gridVariables_.curGridVolVars());
 
                 // resize element-local data containers
@@ -539,7 +539,7 @@ private:
 
                 //! the rank
                 if (addProcessRank)
-                    rank[eIdxGlobal] = static_cast<double>(fvGridGeometry().gridView().comm().rank());
+                    rank[eIdxGlobal] = static_cast<double>(gridGeometry().gridView().comm().rank());
             }
 
             //////////////////////////////////////////////////////////////
@@ -548,11 +548,11 @@ private:
 
             // volume variables if any
             for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                sequenceWriter_.addVertexData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), volVarScalarData[i],
+                sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
                                                      volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, /*nonconforming*/dm_).get() );
 
             for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                sequenceWriter_.addVertexData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), volVarVectorData[i],
+                sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
                                                      volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, /*nonconforming*/dm_).get() );
 
             // the velocity field
@@ -561,21 +561,21 @@ private:
                 // node-wise velocities
                 if (dim > 1)
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        sequenceWriter_.addVertexData( Field(fvGridGeometry().gridView(), fvGridGeometry().vertexMapper(), velocity[phaseIdx],
+                        sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
 
                 // cell-wise velocities
                 else
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        sequenceWriter_.addCellData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), velocity[phaseIdx],
+                        sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
                                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
             }
 
             // the process rank
             if (addProcessRank)
-                sequenceWriter_.addCellData( Field(fvGridGeometry().gridView(), fvGridGeometry().elementMapper(), rank, "process rank", 1, 0).get() );
+                sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get() );
 
             // also register additional (non-standardized) user fields if any
             for (auto&& field : fields_)
@@ -609,7 +609,7 @@ private:
     std::size_t getNumberOfComponents_(const Vector& v) { return 1; }
 
     //! return the number of dofs, we only support vertex and cell data
-    std::size_t numDofs_() const { return dofCodim == dim ? fvGridGeometry().vertexMapper().size() : fvGridGeometry().elementMapper().size(); }
+    std::size_t numDofs_() const { return dofCodim == dim ? gridGeometry().vertexMapper().size() : gridGeometry().elementMapper().size(); }
 
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;

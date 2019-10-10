@@ -54,7 +54,7 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::zeroeq> : public RANSProblemBase
     using Grid = typename GridView::Grid;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
@@ -72,11 +72,11 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::zeroeq> : public RANSProblemBase
 public:
     /*!
      * \brief The constructor
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    RANSProblemImpl(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
     {
         eddyViscosityModel_ = getParamFromGroup<std::string>(paramGroup, "RANS.EddyViscosityModel", "vanDriest");
     }
@@ -120,9 +120,9 @@ public:
                 const int dofIdx = scv.dofIndex();
 
                 // construct a privars object from the cell center solution vector
-                const auto& cellCenterPriVars = curSol[FVGridGeometry::cellCenterIdx()][dofIdx];
+                const auto& cellCenterPriVars = curSol[GridGeometry::cellCenterIdx()][dofIdx];
                 PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
-                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
+                auto elemSol = elementSolution<typename GridGeometry::LocalView>(std::move(priVars));
 
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);

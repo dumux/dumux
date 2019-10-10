@@ -205,18 +205,18 @@ protected:
     }
 
     //! Creates a container with the nodal dofs within an element
-    template< class FVGridGeometry>
-    std::vector< typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex >
-    extractNodalDofs_(const typename FVGridGeometry::GridView::template Codim<0>::Entity& element,
-                      const FVGridGeometry& fvGridGeometry)
+    template< class GridGeometry>
+    std::vector< typename IndexTraits<typename GridGeometry::GridView>::GridIndex >
+    extractNodalDofs_(const typename GridGeometry::GridView::template Codim<0>::Entity& element,
+                      const GridGeometry& gridGeometry)
     {
-        static constexpr int dim = FVGridGeometry::GridView::dimension;
-        using GridIndexType = typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex;
+        static constexpr int dim = GridGeometry::GridView::dimension;
+        using GridIndexType = typename IndexTraits<typename GridGeometry::GridView>::GridIndex;
 
         const auto numCorners = element.subEntities(dim);
         std::vector< GridIndexType > nodalDofs(numCorners);
         for (unsigned int i = 0; i < numCorners; ++i)
-            nodalDofs[i] = fvGridGeometry.vertexMapper().subIndex(element, i, dim);
+            nodalDofs[i] = gridGeometry.vertexMapper().subIndex(element, i, dim);
 
         return nodalDofs;
     }
@@ -232,15 +232,15 @@ protected:
 private:
 
     //! Creates the map from element insertion index to grid element index
-    template< class Embeddings, class FVGridGeometry>
-    std::unordered_map< typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex, typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex >
-    makeInsertionToGridIndexMap_(std::shared_ptr<const Embeddings> embeddings, const FVGridGeometry& fvGridGeometry) const
+    template< class Embeddings, class GridGeometry>
+    std::unordered_map< typename IndexTraits<typename GridGeometry::GridView>::GridIndex, typename IndexTraits<typename GridGeometry::GridView>::GridIndex >
+    makeInsertionToGridIndexMap_(std::shared_ptr<const Embeddings> embeddings, const GridGeometry& gridGeometry) const
     {
-        using GridIndexType = typename IndexTraits<typename FVGridGeometry::GridView>::GridIndex;
+        using GridIndexType = typename IndexTraits<typename GridGeometry::GridView>::GridIndex;
 
         std::unordered_map< GridIndexType, GridIndexType > map;
-        for (const auto& e : elements(fvGridGeometry.gridView()))
-            map.insert( std::make_pair( embeddings->template insertionIndex<bulkId>(e), fvGridGeometry.elementMapper().index(e) ) );
+        for (const auto& e : elements(gridGeometry.gridView()))
+            map.insert( std::make_pair( embeddings->template insertionIndex<bulkId>(e), gridGeometry.elementMapper().index(e) ) );
 
         return map;
     }

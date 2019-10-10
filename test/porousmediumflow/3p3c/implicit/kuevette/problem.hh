@@ -72,9 +72,9 @@ struct Problem<TypeTag, TTag::Kuevette> { using type = KuevetteProblem<TypeTag>;
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Kuevette>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = KuevetteSpatialParams<FVGridGeometry, Scalar>;
+    using type = KuevetteSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the fluid system
@@ -145,7 +145,7 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
@@ -155,8 +155,8 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    KuevetteProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    KuevetteProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         FluidSystem::init();
         name_ = getParam<std::string>("Problem.Name");

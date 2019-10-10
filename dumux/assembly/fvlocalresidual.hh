@@ -50,7 +50,7 @@ class FVLocalResidual
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -88,18 +88,18 @@ public:
      * \param problem The problem to solve
      * \param element The DUNE Codim<0> entity for which the storage
      *                term ought to be calculated
-     * \param fvGridGeometry The finite-volume grid geometry
+     * \param gridGeometry The finite-volume grid geometry
      * \param gridVariables The grid variables (volume and flux variables)
      * \param sol The solution vector
      */
     ElementResidualVector evalStorage(const Problem& problem,
                                       const Element &element,
-                                      const FVGridGeometry& fvGridGeometry,
+                                      const GridGeometry& gridGeometry,
                                       const GridVariables& gridVariables,
                                       const SolutionVector& sol) const
     {
         // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(fvGridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bind(element);
 
         auto elemVolVars = localView(gridVariables.curGridVolVars());

@@ -35,17 +35,17 @@ namespace Dumux {
  * \ingroup TwoPOneCTests
  * \brief Definition of the spatial parameters for various steam injection problems.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class InjectionProblemSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         InjectionProblemSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         InjectionProblemSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       InjectionProblemSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       InjectionProblemSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -60,8 +60,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
-    InjectionProblemSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    InjectionProblemSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         gasWetting_ = getParam<bool>("SpatialParams.GasWetting", false);
 

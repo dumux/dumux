@@ -101,12 +101,12 @@ public:
 
     //! The constructor for instationary problems
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
-                         std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                         std::shared_ptr<const GridGeometry> gridGeometry,
                          std::shared_ptr<GridVariables> gridVariables,
                          std::shared_ptr<const TimeLoop> timeLoop,
                          const SolutionVector& prevSol)
     : ParentType(std::make_tuple(problem, problem),
-                 std::make_tuple(fvGridGeometry->cellCenterFVGridGeometryPtr(), fvGridGeometry->faceFVGridGeometryPtr()),
+                 std::make_tuple(gridGeometry->cellCenterFVGridGeometryPtr(), gridGeometry->faceFVGridGeometryPtr()),
                  std::make_tuple(gridVariables->cellCenterGridVariablesPtr(), gridVariables->faceGridVariablesPtr()),
                  std::make_shared<CouplingManager>(),
                  timeLoop,
@@ -129,7 +129,7 @@ public:
     { return gridGeometry(); }
 
     const GridGeometry& gridGeometry() const
-    { return ParentType::gridGeometry(Dune::index_constant<0>()).actualfvGridGeometry(); }
+    { return ParentType::gridGeometry(Dune::index_constant<0>()).actualGridGeometry(); }
 
 };
 

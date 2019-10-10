@@ -37,17 +37,17 @@ namespace Dumux {
  * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class ThreePNISpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         ThreePNISpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         ThreePNISpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       ThreePNISpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       ThreePNISpatialParams<GridGeometry, Scalar>>;
 
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
@@ -60,8 +60,8 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    ThreePNISpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    ThreePNISpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;

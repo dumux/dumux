@@ -97,10 +97,10 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GridVariables::PrimaryVariables;
     using Scalar = typename GridVariables::Scalar;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -111,11 +111,11 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    OnePLowDimProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    OnePLowDimProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
                       std::shared_ptr<CouplingManager> couplingManager,
                       const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
     , aperture_(getParam<Scalar>("Problem.FractureAperture"))
     {

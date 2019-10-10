@@ -73,9 +73,9 @@ struct Problem<TypeTag, TTag::TracerTest> { using type = TracerTestProblem<TypeT
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TracerTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TracerTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = TracerTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // We define that mass fractions are used to define the concentrations
@@ -151,20 +151,20 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     //We create a bool saying whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
 public:
     // This is the constructor of our problem class:
-    TracerTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeom)
-    : ParentType(fvGridGeom)
+    TracerTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // We print out whether mole or mass fractions are used
         if(useMoles)

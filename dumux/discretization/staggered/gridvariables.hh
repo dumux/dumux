@@ -94,11 +94,11 @@ public:
 
     //! return the fv grid geometry
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
-    { return (*gridVariables_->fvGridGeometry_);    }
+    const GridGeometry& fvGridGeometry() const
+    { return (*gridVariables_->gridGeometry_);    }
     //! return the fv grid geometry
-    const FVGridGeometry& gridGeometry() const
-    { return (*gridVariables_->fvGridGeometry_);    }
+    const GridGeometry& gridGeometry() const
+    { return (*gridVariables_->gridGeometry_);    }
 
     // return the actual grid variables
     const ActualGridVariables& gridVariables() const
@@ -215,12 +215,11 @@ template<class GG, class GVV, class GFVC, class GFV>
 class StaggeredGridVariables : public FVGridVariables<GG, GVV, GFVC>
 {
     using ParentType = FVGridVariables<GG, GVV, GFVC>;
-    using FVGridGeometry = GG;
     using ThisType = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
     friend class StaggeredGridVariablesView<ThisType>;
 
-    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
-    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
+    static constexpr auto cellCenterIdx = GG::cellCenterIdx();
+    static constexpr auto faceIdx = GG::faceIdx();
 
 public:
     using CellCenterGridVariablesType = CellCenterGridVariablesView<ThisType>;
@@ -238,8 +237,8 @@ public:
     //! Constructor
     template<class Problem>
     StaggeredGridVariables(std::shared_ptr<Problem> problem,
-                           std::shared_ptr<GridGeometry> fvGridGeometry)
-    : ParentType(problem, fvGridGeometry)
+                           std::shared_ptr<GridGeometry> gridGeometry)
+    : ParentType(problem, gridGeometry)
     , curGridFaceVariables_(*problem)
     , prevGridFaceVariables_(*problem)
     {}
@@ -249,7 +248,7 @@ public:
     void update(const SolutionVector& curSol)
     {
         ParentType::update(curSol[cellCenterIdx]);
-        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
+        curGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
     }
 
     //! initialize all variables (stationary case)
@@ -257,8 +256,8 @@ public:
     void init(const SolutionVector& curSol)
     {
         ParentType::init(curSol[cellCenterIdx]);
-        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
-        prevGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
+        curGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
+        prevGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
     }
 
     //! initialize all variables (instationary case)

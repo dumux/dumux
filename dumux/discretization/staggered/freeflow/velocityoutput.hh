@@ -37,16 +37,16 @@ template<class GridVariables, class SolutionVector>
 class StaggeredFreeFlowVelocityOutput : public VelocityOutput<GridVariables>
 {
     using ParentType = VelocityOutput<GridVariables>;
-    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using GridGeometry = typename GridVariables::GridGeometry;
     using Scalar = typename GridVariables::Scalar;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using FluidSystem = typename VolumeVariables::FluidSystem;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     // TODO: should be possible to get this somehow
     using Problem = typename std::decay_t<decltype(std::declval<GridVolumeVariables>().problem())>;
     using Element = typename GridView::template Codim<0>::Entity;

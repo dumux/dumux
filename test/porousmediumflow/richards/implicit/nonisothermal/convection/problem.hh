@@ -74,9 +74,9 @@ struct FluidSystem<TypeTag, TTag::RichardsNIConvection> { using type = FluidSyst
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsNIConvection>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
+    using type = RichardsNISpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -111,7 +111,7 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -141,8 +141,8 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
-    RichardsNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RichardsNIConvectionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // initialize fluid system
         FluidSystem::init();
@@ -153,7 +153,7 @@ public:
         temperatureLow_ = 290.;
         pressureHigh_ = 2e5;
         pressureLow_ = 1e5;
-        temperatureExact_.resize(fvGridGeometry->numDofs());
+        temperatureExact_.resize(gridGeometry->numDofs());
     }
 
     //! Get the analytical temperature

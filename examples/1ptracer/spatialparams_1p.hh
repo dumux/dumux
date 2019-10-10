@@ -34,26 +34,26 @@ namespace Dumux {
 
 // In the `OnePTestSpatialParams` class, we define all functions needed to describe the porous matrix, e.g. porosity and permeability for the 1p_problem.
 
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             OnePTestSpatialParams<GridGeometry, Scalar>>
 {
     // We introduce `using` declarations that are derived from the property system, which we need in this class.
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           OnePTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           OnePTestSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), K_(fvGridGeometry->gridView().size(0), 0.0)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), K_(gridGeometry->gridView().size(0), 0.0)
     {
         // ### Generation of the random permeability field
         // We get the permeability of the domain and the lens from the `params.input` file.
@@ -68,9 +68,9 @@ public:
         std::mt19937 rand(0);
         std::lognormal_distribution<Scalar> K(std::log(permeability_), std::log(permeability_)*0.1);
         std::lognormal_distribution<Scalar> KLens(std::log(permeabilityLens_), std::log(permeabilityLens_)*0.1);
-        for (const auto& element : elements(fvGridGeometry->gridView()))
+        for (const auto& element : elements(gridGeometry->gridView()))
         {
-            const auto eIdx = fvGridGeometry->elementMapper().index(element);
+            const auto eIdx = gridGeometry->elementMapper().index(element);
             const auto globalPos = element.geometry().center();
             K_[eIdx] = isInLens_(globalPos) ? KLens(rand) : K(rand);
         }

@@ -62,9 +62,9 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -80,7 +80,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
 public:
-    using EnergyLocalResidual = FreeFlowEnergyLocalResidual<FVGridGeometry, FluxVariables, ModelTraits::enableEnergyBalance(), (ModelTraits::numFluidComponents() > 1)>;
+    using EnergyLocalResidual = FreeFlowEnergyLocalResidual<GridGeometry, FluxVariables, ModelTraits::enableEnergyBalance(), (ModelTraits::numFluidComponents() > 1)>;
 
     // account for the offset of the cell center privars within the PrimaryVariables container
     static constexpr auto cellCenterOffset = ModelTraits::numEq() - CellCenterPrimaryVariables::dimension;

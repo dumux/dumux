@@ -34,29 +34,29 @@ namespace Dumux {
  * \ingroup FacetTests
  * \brief Definition of the spatial parameters for the tracer problem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TracerSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             TracerSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             TracerSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           TracerSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           TracerSpatialParams<GridGeometry, Scalar>>;
 
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
-    TracerSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    TracerSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                         const std::vector< std::vector<Scalar> >& volumeFluxes,
                         const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry)
+    : ParentType(gridGeometry)
     , volumeFlux_(volumeFluxes)
     , porosity_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Porosity"))
     {}

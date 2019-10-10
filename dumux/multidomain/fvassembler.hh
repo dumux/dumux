@@ -96,7 +96,7 @@ public:
 private:
 
     using ProblemTuple = typename MDTraits::template TupleOfSharedPtrConst<Problem>;
-    using FVGridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<FVGridGeometry>;
+    using GridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<GridGeometry>;
     using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
 
     using TimeLoop = TimeLoopBase<Scalar>;
@@ -130,7 +130,7 @@ private:
     };
 
     template<std::size_t id>
-    using SubDomainAssembler = typename SubDomainAssemblerType<FVGridGeometry<id>::discMethod, id>::type;
+    using SubDomainAssembler = typename SubDomainAssemblerType<GridGeometry<id>::discMethod, id>::type;
 
 public:
 
@@ -141,12 +141,12 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     MultiDomainFVAssembler(ProblemTuple&& problem,
-                           FVGridGeometryTuple&& fvGridGeometry,
+                           GridGeometryTuple&& gridGeometry,
                            GridVariablesTuple&& gridVariables,
                            std::shared_ptr<CouplingManager> couplingManager)
     : couplingManager_(couplingManager)
     , problemTuple_(problem)
-    , fvGridGeometryTuple_(fvGridGeometry)
+    , gridGeometryTuple_(gridGeometry)
     , gridVariablesTuple_(gridVariables)
     , timeLoop_()
     , isStationaryProblem_(true)
@@ -161,13 +161,13 @@ public:
      */
     [[deprecated("Please use constructor taking the previous solution instead. Will be removed after release 3.2!")]]
     MultiDomainFVAssembler(ProblemTuple&& problem,
-                           FVGridGeometryTuple&& fvGridGeometry,
+                           GridGeometryTuple&& gridGeometry,
                            GridVariablesTuple&& gridVariables,
                            std::shared_ptr<CouplingManager> couplingManager,
                            std::shared_ptr<const TimeLoop> timeLoop)
     : couplingManager_(couplingManager)
     , problemTuple_(problem)
-    , fvGridGeometryTuple_(fvGridGeometry)
+    , gridGeometryTuple_(gridGeometry)
     , gridVariablesTuple_(gridVariables)
     , timeLoop_(timeLoop)
     , isStationaryProblem_(false)
@@ -181,14 +181,14 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     MultiDomainFVAssembler(ProblemTuple&& problem,
-                           FVGridGeometryTuple&& fvGridGeometry,
+                           GridGeometryTuple&& gridGeometry,
                            GridVariablesTuple&& gridVariables,
                            std::shared_ptr<CouplingManager> couplingManager,
                            std::shared_ptr<const TimeLoop> timeLoop,
                            const SolutionVector& prevSol)
     : couplingManager_(couplingManager)
     , problemTuple_(problem)
-    , fvGridGeometryTuple_(fvGridGeometry)
+    , gridGeometryTuple_(gridGeometry)
     , gridVariablesTuple_(gridVariables)
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
@@ -351,7 +351,7 @@ public:
     //! the number of dof locations of domain i
     template<std::size_t i>
     std::size_t numDofs(Dune::index_constant<i> domainId) const
-    { return std::get<domainId>(fvGridGeometryTuple_)->numDofs(); }
+    { return std::get<domainId>(gridGeometryTuple_)->numDofs(); }
 
     //! the problem of domain i
     template<std::size_t i>
@@ -367,7 +367,7 @@ public:
     //! the finite volume grid geometry of domain i
     template<std::size_t i>
     const auto& gridGeometry(Dune::index_constant<i> domainId) const
-    { return *std::get<domainId>(fvGridGeometryTuple_); }
+    { return *std::get<domainId>(gridGeometryTuple_); }
 
     //! the grid view of domain i
     template<std::size_t i>
@@ -529,7 +529,7 @@ private:
     ProblemTuple problemTuple_;
 
     //! the finite volume geometry of the grid
-    FVGridGeometryTuple fvGridGeometryTuple_;
+    GridGeometryTuple gridGeometryTuple_;
 
     //! the variables container for the grid
     GridVariablesTuple gridVariablesTuple_;

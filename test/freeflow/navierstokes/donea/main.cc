@@ -77,23 +77,23 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x;
-    x[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
-    x[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
+    x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
+    x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
     // intialize the vtk output module
@@ -107,7 +107,7 @@ int main(int argc, char** argv) try
 
     // use the staggered FV assembler
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -117,8 +117,8 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    using NewtonConvergenceWriter = StaggeredNewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
-    auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
+    using NewtonConvergenceWriter = StaggeredNewtonConvergenceWriter<GridGeometry, SolutionVector>;
+    auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*gridGeometry);
     nonLinearSolver.attachConvergenceWriter(convergenceWriter);
 
     // linearize & solve

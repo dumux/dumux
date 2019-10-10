@@ -205,7 +205,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -223,8 +223,8 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     template<class SpatialParams>
-    HeterogeneousProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<SpatialParams> spatialParams)
-    : ParentType(fvGridGeometry, spatialParams)
+    HeterogeneousProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
+    : ParentType(gridGeometry, spatialParams)
     , injectionTop_(1)
     , injectionBottom_(2)
     , dirichletBoundary_(3)

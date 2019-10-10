@@ -72,10 +72,10 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::IncompressibleTest>
 {
     // We define convenient shortcuts to the properties `GridGeometry` and `Scalar`:
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     // Finally, we set the spatial parameters:
-    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // The local residual contains analytic derivative methods for incompressible flow:
@@ -120,15 +120,15 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     // This is the constructor of our problem class:
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 
     // First, we define the type of boundary conditions depending on location. Two types of boundary  conditions
     // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the

@@ -56,8 +56,8 @@ struct BoxDefaultGridGeometryTraits
     using SubControlVolume = BoxSubControlVolume<GridView>;
     using SubControlVolumeFace = BoxSubControlVolumeFace<GridView>;
 
-    template<class FVGridGeometry, bool enableCache>
-    using LocalView = BoxFVElementGeometry<FVGridGeometry, enableCache>;
+    template<class GridGeometry, bool enableCache>
+    using LocalView = BoxFVElementGeometry<GridGeometry, enableCache>;
 };
 
 /*!

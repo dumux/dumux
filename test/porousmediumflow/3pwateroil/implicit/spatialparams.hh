@@ -40,13 +40,13 @@ namespace Dumux {
  * \ingroup ThreePWaterOilTests
  * \brief Definition of the spatial parameters for the SAGD problem
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class SagdSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         SagdSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         SagdSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     enum { dimWorld=GridView::dimensionworld };
@@ -54,8 +54,8 @@ class SagdSpatialParams
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       SagdSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       SagdSpatialParams<GridGeometry, Scalar>>;
 
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
@@ -64,8 +64,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    SagdSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    SagdSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         layerBottom_ = 35.0;
 

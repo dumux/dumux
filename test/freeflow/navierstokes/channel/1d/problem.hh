@@ -90,7 +90,7 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -99,14 +99,14 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using DimVector = GlobalPosition;
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
-    NavierStokesAnalyticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), eps_(1e-6)
+    NavierStokesAnalyticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         density_ = getParam<Scalar>("Component.LiquidDensity");
@@ -224,8 +224,8 @@ public:
      * \param pvIdx The primary variable index in the solution vector
      */
     bool isDirichletCell(const Element& element,
-                         const typename FVGridGeometry::LocalView& fvGeometry,
-                         const typename FVGridGeometry::SubControlVolume& scv,
+                         const typename GridGeometry::LocalView& fvGeometry,
+                         const typename GridGeometry::SubControlVolume& scv,
                          int pvIdx) const
     {
         // set a fixed pressure in all cells at the boundary

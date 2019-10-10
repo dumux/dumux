@@ -67,9 +67,9 @@ struct Problem<TypeTag, TTag::TracerTestLowDim> { using type = TracerLowDimProbl
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TracerTestLowDim>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TracerSpatialParams<FVGridGeometry, Scalar>;
+    using type = TracerSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -104,8 +104,8 @@ class TracerLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -116,17 +116,17 @@ class TracerLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     using typename ParentType::SpatialParams;
 
-    TracerLowDimProblem(std::shared_ptr<const FVGridGeometry> fvGridGeom,
+    TracerLowDimProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<SpatialParams> spatialParams,
                       std::shared_ptr<CouplingManager> couplingManager,
                       const std::string& paramGroup = "")
-    : ParentType(fvGridGeom, spatialParams, paramGroup)
+    : ParentType(gridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManager)
     , aperture_(getParamFromGroup<Scalar>(paramGroup, "Problem.FractureAperture"))
     {

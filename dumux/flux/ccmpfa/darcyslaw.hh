@@ -54,8 +54,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
@@ -94,7 +94,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 
         using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
-        static constexpr bool considerSecondaryIVs = FVGridGeometry::MpfaHelper::considerSecondaryIVs();
+        static constexpr bool considerSecondaryIVs = GridGeometry::MpfaHelper::considerSecondaryIVs();
         using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle::AdvectionHandle;
         using SecondaryDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle::AdvectionHandle;
 

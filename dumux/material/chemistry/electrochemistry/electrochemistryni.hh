@@ -37,10 +37,10 @@ namespace Dumux {
  * \todo TODO: Scalar type should be extracted from VolumeVariables!
  * \todo TODO: This shouldn't depend on discretization and grid!!
  */
-template <class Scalar, class Indices, class FluidSystem, class FVGridGeometry, ElectroChemistryModel electroChemistryModel>
-class ElectroChemistryNI : public ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, electroChemistryModel>
+template <class Scalar, class Indices, class FluidSystem, class GridGeometry, ElectroChemistryModel electroChemistryModel>
+class ElectroChemistryNI : public ElectroChemistry<Scalar, Indices, FluidSystem, GridGeometry, electroChemistryModel>
 {
-    using ParentType = ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, electroChemistryModel>;
+    using ParentType = ElectroChemistry<Scalar, Indices, FluidSystem, GridGeometry, electroChemistryModel>;
     using Constant = Constants<Scalar>;
 
     enum {
@@ -50,8 +50,8 @@ class ElectroChemistryNI : public ElectroChemistry<Scalar, Indices, FluidSystem,
         energyEqIdx = Indices::energyEqIdx, //energy equation
     };
 
-    using GridView = typename FVGridGeometry::GridView;
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    using GridView = typename GridGeometry::GridView;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
     using CellVector = typename Dune::FieldVector<typename GridView::ctype, GridView::dimension>;
 

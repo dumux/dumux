@@ -44,7 +44,7 @@ public:
      *       the displacements in the different grid directions are stored
      *       in the first entries of the primary variable vector.
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param element The finite element
      * \param elemSol The element solution
      * \param globalPos The global position (in the element)
@@ -62,7 +62,7 @@ public:
      *       \f$\phi = \frac{\phi_0 + \text{div} \mathbf{u}}{1 + \text{div} \mathbf{u}}\f$.
      */
     template< class FVGridGeom, class ElemSol >
-    static Scalar evaluatePorosity(const FVGridGeom& fvGridGeometry,
+    static Scalar evaluatePorosity(const FVGridGeom& gridGeometry,
                                    const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
                                    const typename FVGridGeom::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& globalPos,
                                    const ElemSol& elemSol,
@@ -72,7 +72,7 @@ public:
     {
         // compute divergence of displacement at the given position
         Scalar divU = 0.0;
-        const auto gradU = evalGradients(element, element.geometry(), fvGridGeometry, elemSol, globalPos);
+        const auto gradU = evalGradients(element, element.geometry(), gridGeometry, elemSol, globalPos);
         for (int dir = 0; dir < FVGridGeom::GridView::dimension; ++dir)
             divU += gradU[dir][dir];
 
@@ -88,7 +88,7 @@ public:
      *       in the first entries of the primary variable vector.
      *
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param element The finite element
      * \param elemSol The element solution
      * \param scv The sub-control volume
@@ -96,7 +96,7 @@ public:
      * \param minPoro A minimum porosity value
      */
     template< class FVGridGeom, class ElemSol >
-    static Scalar evaluatePorosity(const FVGridGeom& fvGridGeometry,
+    static Scalar evaluatePorosity(const FVGridGeom& gridGeometry,
                                    const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
                                    const typename FVGridGeom::SubControlVolume& scv,
                                    const ElemSol& elemSol,
@@ -104,7 +104,7 @@ public:
                                    Scalar minPoro = 0.0)
     {
         // evaluate the porosity at the scv center
-        return evaluatePorosity(fvGridGeometry, element, scv.center(), elemSol, refPoro, minPoro);
+        return evaluatePorosity(gridGeometry, element, scv.center(), elemSol, refPoro, minPoro);
     }
 };
 

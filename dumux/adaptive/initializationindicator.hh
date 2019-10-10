@@ -49,7 +49,7 @@ class GridAdaptInitializationIndicator
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
@@ -66,14 +66,14 @@ public:
      *       - Adaptive.RefineAtSource If to refine where source terms are specified (default: true)
      *       - Adaptive.BCRefinementThreshold The threshold above which fluxes are treated as non-zero (default: 1e-10)
      * \param problem The problem object
-     * \param fvGridGeometry The finite volume geometry of the grid
+     * \param gridGeometry The finite volume geometry of the grid
      * \param gridVariables The secondary variables on the grid
      */
     GridAdaptInitializationIndicator(std::shared_ptr<const Problem> problem,
-                                     std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                                     std::shared_ptr<const GridGeometry> gridGeometry,
                                      std::shared_ptr<const GridVariables> gridVariables)
     : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
     , minLevel_(getParamFromGroup<int>(problem->paramGroup(), "Adaptive.MinLevel"))
     , maxLevel_(getParamFromGroup<int>(problem->paramGroup(), "Adaptive.MaxLevel"))
@@ -141,11 +141,11 @@ public:
     void calculate(const SolutionVector& sol)
     {
         //! prepare an indicator for refinement
-        indicatorVector_.assign(fvGridGeometry_->gridView().size(0), false);
+        indicatorVector_.assign(gridGeometry_->gridView().size(0), false);
 
-        for (const auto& element : elements(fvGridGeometry_->gridView()))
+        for (const auto& element : elements(gridGeometry_->gridView()))
         {
-            const auto eIdx = fvGridGeometry_->elementMapper().index(element);
+            const auto eIdx = gridGeometry_->elementMapper().index(element);
 
             //! refine any element being below the minimum level
             if (element.level() < minLevel_)
@@ -163,7 +163,7 @@ public:
                 continue;
 
             // get the fvGeometry and elementVolVars needed for the bc and source interfaces
-            auto fvGeometry = localView(*fvGridGeometry_);
+            auto fvGeometry = localView(*gridGeometry_);
             fvGeometry.bind(element);
 
             auto elemVolVars = localView(gridVariables_->curGridVolVars());
@@ -274,14 +274,14 @@ public:
      */
     int operator() (const Element& element) const
     {
-        if (indicatorVector_[fvGridGeometry_->elementMapper().index(element)])
+        if (indicatorVector_[gridGeometry_->elementMapper().index(element)])
             return 1;
         return 0;
     }
 
 private:
     std::shared_ptr<const Problem> problem_;               //!< The problem to be solved
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_; //!< The finite volume grid geometry
+    std::shared_ptr<const GridGeometry> gridGeometry_; //!< The finite volume grid geometry
     std::shared_ptr<const GridVariables> gridVariables_;   //!< The secondary variables on the grid
     std::vector<bool> indicatorVector_;                    //!< Indicator for BCs/sources
 

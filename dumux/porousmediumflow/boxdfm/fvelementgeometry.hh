@@ -78,8 +78,8 @@ public:
     static constexpr std::size_t maxNumElementScvs = (1<<dim)*3;
 
     //! Constructor
-    BoxDfmFVElementGeometry(const GridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    BoxDfmFVElementGeometry(const GridGeometry& gridGeometry)
+    : gridGeometryPtr_(&gridGeometry) {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(std::size_t scvIdx) const
@@ -155,15 +155,15 @@ public:
     //! The global finite volume geometry we are a restriction of
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const GridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return *gridGeometryPtr_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return *gridGeometryPtr_; }
 
 private:
     Dune::GeometryType elemGeometryType_;
-    const GridGeometry* fvGridGeometryPtr_;
+    const GridGeometry* gridGeometryPtr_;
     GridIndexType eIdx_;
 };
 
@@ -200,8 +200,8 @@ public:
     static constexpr std::size_t maxNumElementScvs = (1<<dim)*3;
 
     //! Constructor
-    BoxDfmFVElementGeometry(const GridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    BoxDfmFVElementGeometry(const GridGeometry& gridGeometry)
+    : gridGeometryPtr_(&gridGeometry) {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(std::size_t scvIdx) const
@@ -275,11 +275,11 @@ public:
     //! The global finite volume geometry we are a restriction of
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
     const GridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return *gridGeometryPtr_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *fvGridGeometryPtr_; }
+    { return *gridGeometryPtr_; }
 
 private:
 
@@ -445,7 +445,7 @@ private:
     GridIndexType eIdx_;
 
     //! The global geometry this is a restriction of
-    const GridGeometry* fvGridGeometryPtr_;
+    const GridGeometry* gridGeometryPtr_;
 
     /*!
      * \brief Binding of an element, has to be called before using the fvgeometries

@@ -51,12 +51,12 @@ struct DefaultPointSourceTraits
 {
 private:
     template<std::size_t i> using SubDomainTypeTag = typename MDTraits::template SubDomain<i>::TypeTag;
-    template<std::size_t i> using FVGridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>;
+    template<std::size_t i> using GridGeometry = GetPropType<SubDomainTypeTag<i>, Properties::GridGeometry>;
     template<std::size_t i> using NumEqVector = GetPropType<SubDomainTypeTag<i>, Properties::NumEqVector>;
 public:
     //! export the point source type for domain i
     template<std::size_t i>
-    using PointSource = IntegrationPointSource<typename FVGridGeometry<i>::GlobalCoordinate, NumEqVector<i>>;
+    using PointSource = IntegrationPointSource<typename GridGeometry<i>::GlobalCoordinate, NumEqVector<i>>;
 
     //! export the point source helper type  for domain i
     template<std::size_t i>
@@ -87,9 +87,9 @@ class EmbeddedCouplingManagerBase
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
-    template<std::size_t id> using ElementMapper = typename FVGridGeometry<id>::ElementMapper;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
+    template<std::size_t id> using ElementMapper = typename GridGeometry<id>::ElementMapper;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     enum {
@@ -100,7 +100,7 @@ class EmbeddedCouplingManagerBase
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
     using CouplingStencil = std::vector<std::size_t>;
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
@@ -117,8 +117,8 @@ public:
     /*!
     * \brief call this after grid adaption
     */
-    void updateAfterGridAdaption(std::shared_ptr<const FVGridGeometry<bulkIdx>> bulkFvGridGeometry,
-                                 std::shared_ptr<const FVGridGeometry<lowDimIdx>> lowDimFvGridGeometry)
+    void updateAfterGridAdaption(std::shared_ptr<const GridGeometry<bulkIdx>> bulkFvGridGeometry,
+                                 std::shared_ptr<const GridGeometry<lowDimIdx>> lowDimFvGridGeometry)
     {
         glue_ = std::make_shared<GlueType>();
     }
@@ -126,8 +126,8 @@ public:
     /*!
      * \brief Constructor
      */
-    EmbeddedCouplingManagerBase(std::shared_ptr<const FVGridGeometry<bulkIdx>> bulkFvGridGeometry,
-                                std::shared_ptr<const FVGridGeometry<lowDimIdx>> lowDimFvGridGeometry)
+    EmbeddedCouplingManagerBase(std::shared_ptr<const GridGeometry<bulkIdx>> bulkFvGridGeometry,
+                                std::shared_ptr<const GridGeometry<lowDimIdx>> lowDimFvGridGeometry)
     {
         updateAfterGridAdaption(bulkFvGridGeometry, lowDimFvGridGeometry);
     }
@@ -446,7 +446,7 @@ protected:
 
     //! compute the shape function for a given point and geometry
     template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod == DiscretizationMethod::box, int> = 0>
-    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
+    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& gridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
         const auto ipLocal = geo.local(globalPos);
         const auto& localBasis = this->problem(domainI).gridGeometry().feCache().get(geo.type()).localBasis();
@@ -455,7 +455,7 @@ protected:
 
     //! compute the shape function for a given point and geometry
     template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod != DiscretizationMethod::box, int> = 0>
-    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
+    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& gridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
         DUNE_THROW(Dune::InvalidStateException, "Shape values requested for other discretization than box!");
     }

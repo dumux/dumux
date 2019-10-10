@@ -87,8 +87,8 @@ public:
     CCTpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& gridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false)
@@ -99,11 +99,11 @@ public:
             // instantiate helper class to fill the caches
             FluxVariablesCacheFiller filler(problem());
 
-            fluxVarsCache_.resize(fvGridGeometry.numScvf());
-            for (const auto& element : elements(fvGridGeometry.gridView()))
+            fluxVarsCache_.resize(gridGeometry.numScvf());
+            for (const auto& element : elements(gridGeometry.gridView()))
             {
                 // Prepare the geometries within the elements of the stencil
-                auto fvGeometry = localView(fvGridGeometry);
+                auto fvGeometry = localView(gridGeometry);
                 fvGeometry.bind(element);
 
                 auto elemVolVars = localView(gridVolVars);
@@ -194,8 +194,8 @@ public:
     CCTpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     //! When global flux variables caching is disabled, we don't need to update the cache
-    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& gridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}

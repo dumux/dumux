@@ -69,9 +69,9 @@ struct Problem<TypeTag, TTag::RichardsWellTracer> { using type = RichardsWellTra
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsWellTracer>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>;
+    using type = RichardsWellTracerSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the physical problem to be solved
@@ -121,7 +121,7 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     enum {
@@ -134,8 +134,8 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
-    RichardsWellTracerProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RichardsWellTracerProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
         contaminantMoleFraction_ = getParam<Scalar>("Problem.ContaminantMoleFraction");

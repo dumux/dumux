@@ -88,7 +88,7 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -97,15 +97,15 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 
     static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    AngeliTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    AngeliTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
     }
@@ -150,8 +150,8 @@ public:
      * \param pvIdx The primary variable index in the solution vector
      */
     bool isDirichletCell(const Element& element,
-                         const typename FVGridGeometry::LocalView& fvGeometry,
-                         const typename FVGridGeometry::SubControlVolume& scv,
+                         const typename GridGeometry::LocalView& fvGeometry,
+                         const typename GridGeometry::SubControlVolume& scv,
                          int pvIdx) const
     {
         // set a fixed pressure in all cells at the boundary

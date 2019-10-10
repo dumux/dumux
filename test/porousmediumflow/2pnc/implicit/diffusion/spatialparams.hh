@@ -39,14 +39,14 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the TwoPNCDiffusion
  *        problem which uses the isothermal 2p2c box model.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TwoPNCDiffusionSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         TwoPNCDiffusionSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>>;
+    using GridView = typename GridGeometry::GridView;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       TwoPNCDiffusionSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -63,8 +63,8 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    TwoPNCDiffusionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), K_(0)
+    TwoPNCDiffusionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), K_(0)
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;

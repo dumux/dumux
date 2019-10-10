@@ -47,7 +47,7 @@ class CCMpfaGridInteractionVolumeIndexSets
     using SecondaryIVIndexSet = typename SI::Traits::IndexSet;
 
 public:
-    using FVGridGeometry = FVG;
+    using GridGeometry = FVG;
     using PrimaryInteractionVolume = PI;
     using SecondaryInteractionVolume = SI;
 
@@ -57,10 +57,10 @@ public:
     /*!
      * \brief Construct all interaction volume index sets on the grid view
      *
-     * \param fvGridGeometry The finite volume geometry on the grid view
+     * \param gridGeometry The finite volume geometry on the grid view
      * \param dualGridIdSet The index sets of the dual grid on the grid view
      */
-    void update(FVGridGeometry& fvGridGeometry, DualGridIndexSet&& dualGridIdSet)
+    void update(GridGeometry& gridGeometry, DualGridIndexSet&& dualGridIdSet)
     {
         dualGridIndexSet_ = std::make_unique<DualGridIndexSet>(std::move(dualGridIdSet));
 
@@ -72,10 +72,10 @@ public:
         // find out how many primary & secondary interaction volumes are needed
         numPrimaryIV_ = 0;
         numSecondaryIV_ = 0;
-        for (const auto& vertex : vertices(fvGridGeometry.gridView()))
+        for (const auto& vertex : vertices(gridGeometry.gridView()))
         {
-            const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
-            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
+            const auto vIdxGlobal = gridGeometry.vertexMapper().index(vertex);
+            if (!gridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
                 numPrimaryIV_ += PrimaryInteractionVolume::numIVAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
             else
                 numSecondaryIV_ += SecondaryInteractionVolume::numIVAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
@@ -84,22 +84,22 @@ public:
         // reserve memory
         primaryIVIndexSets_.reserve(numPrimaryIV_);
         secondaryIVIndexSets_.reserve(numSecondaryIV_);
-        scvfIndexMap_.resize(fvGridGeometry.numScvf());
+        scvfIndexMap_.resize(gridGeometry.numScvf());
 
         // create interaction volume index sets around each vertex
-        for (const auto& vertex : vertices(fvGridGeometry.gridView()))
+        for (const auto& vertex : vertices(gridGeometry.gridView()))
         {
-            const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
-            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
+            const auto vIdxGlobal = gridGeometry.vertexMapper().index(vertex);
+            if (!gridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
                 PrimaryInteractionVolume::addIVIndexSets(primaryIVIndexSets_,
                                                          scvfIndexMap_,
                                                          (*dualGridIndexSet_)[vIdxGlobal],
-                                                         fvGridGeometry.flipScvfIndexSet());
+                                                         gridGeometry.flipScvfIndexSet());
             else
                 SecondaryInteractionVolume::addIVIndexSets(secondaryIVIndexSets_,
                                                            scvfIndexMap_,
                                                            (*dualGridIndexSet_)[vIdxGlobal],
-                                                           fvGridGeometry.flipScvfIndexSet());
+                                                           gridGeometry.flipScvfIndexSet());
         }
     }
 

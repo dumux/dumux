@@ -38,8 +38,8 @@ namespace Dumux {
 template<class FVElementGeometry, class PV>
 class CCElementSolution
 {
-    using FVGridGeometry = typename FVElementGeometry::GridGeometry;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
@@ -52,8 +52,8 @@ public:
     //! Constructor with element, solution vector and grid geometry
     template<class SolutionVector>
     CCElementSolution(const Element& element, const SolutionVector& sol,
-                      const FVGridGeometry& fvGridGeometry)
-    : CCElementSolution(sol[fvGridGeometry.elementMapper().index(element)])
+                      const GridGeometry& gridGeometry)
+    : CCElementSolution(sol[gridGeometry.elementMapper().index(element)])
     {}
 
     //! Constructor with element, element volume variables and fv element geometry
@@ -76,9 +76,9 @@ public:
     //! extract the element solution from the solution vector using a mapper
     template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
-                const FVGridGeometry& fvGridGeometry)
+                const GridGeometry& gridGeometry)
     {
-        priVars_ = sol[fvGridGeometry.elementMapper().index(element)];
+        priVars_ = sol[gridGeometry.elementMapper().index(element)];
     }
 
     //! return the size of the element solution
@@ -109,16 +109,16 @@ private:
  * \ingroup CCDiscretization
  * \brief  Make an element solution for cell-centered schemes
  */
-template<class Element, class SolutionVector, class FVGridGeometry>
-auto elementSolution(const Element& element, const SolutionVector& sol, const FVGridGeometry& gg)
--> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
-                    FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
-                    CCElementSolution<typename FVGridGeometry::LocalView,
+template<class Element, class SolutionVector, class GridGeometry>
+auto elementSolution(const Element& element, const SolutionVector& sol, const GridGeometry& gg)
+-> std::enable_if_t<GridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    GridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<typename GridGeometry::LocalView,
                                       std::decay_t<decltype(std::declval<SolutionVector>()[0])>>
                     >
 {
     using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
-    return CCElementSolution<typename FVGridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
+    return CCElementSolution<typename GridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
 }
 
 /*!

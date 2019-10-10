@@ -57,8 +57,8 @@
 template<class Scalar, class Problem>
 auto createAnalyticalSolution(const Scalar time, const Problem& problem)
 {
-    const auto& fvGridGeometry = problem.gridGeometry();
-    using GridView = typename std::decay_t<decltype(fvGridGeometry)>::GridView;
+    const auto& gridGeometry = problem.gridGeometry();
+    using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
 
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
@@ -69,14 +69,14 @@ auto createAnalyticalSolution(const Scalar time, const Problem& problem)
     std::vector<VelocityVector> analyticalVelocity;
     std::vector<VelocityVector> analyticalVelocityOnFace;
 
-    analyticalPressure.resize(fvGridGeometry.numCellCenterDofs());
-    analyticalVelocity.resize(fvGridGeometry.numCellCenterDofs());
-    analyticalVelocityOnFace.resize(fvGridGeometry.numFaceDofs());
+    analyticalPressure.resize(gridGeometry.numCellCenterDofs());
+    analyticalVelocity.resize(gridGeometry.numCellCenterDofs());
+    analyticalVelocityOnFace.resize(gridGeometry.numFaceDofs());
 
     using Indices = typename Problem::Indices;
-    for (const auto& element : elements(fvGridGeometry.gridView()))
+    for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(fvGridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
@@ -133,9 +133,9 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -149,20 +149,20 @@ int main(int argc, char** argv) try
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
     problem->updateTimeStepSize(timeLoop->timeStepSize());
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x;
-    x[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
-    x[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
+    x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
+    x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
     // initialize the vtk output module
@@ -178,7 +178,7 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop, xOld);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -207,8 +207,8 @@ int main(int argc, char** argv) try
 
             using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
             const auto l2error = L2Error::calculateL2Error(*problem, x);
-            const int numCellCenterDofs = fvGridGeometry->numCellCenterDofs();
-            const int numFaceDofs = fvGridGeometry->numFaceDofs();
+            const int numCellCenterDofs = gridGeometry->numCellCenterDofs();
+            const int numFaceDofs = gridGeometry->numFaceDofs();
             std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
                     << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
                     << std::scientific

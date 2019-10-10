@@ -39,18 +39,18 @@ namespace Dumux {
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class MPNCComparisonSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         MPNCComparisonSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         MPNCComparisonSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       MPNCComparisonSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       MPNCComparisonSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
@@ -60,7 +60,7 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    MPNCComparisonSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    MPNCComparisonSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;

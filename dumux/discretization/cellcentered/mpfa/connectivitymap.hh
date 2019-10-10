@@ -33,12 +33,12 @@
 namespace Dumux {
 
 //! Forward declaration of method specific implementation of the assembly map
-template<class FVGridGeometry, MpfaMethods method>
+template<class GridGeometry, MpfaMethods method>
 class CCMpfaConnectivityMap;
 
 //! The o-method can use the simple (symmetric) assembly map
-template<class FVGridGeometry>
-class CCMpfaConnectivityMap<FVGridGeometry, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<FVGridGeometry> {};
+template<class GridGeometry>
+class CCMpfaConnectivityMap<GridGeometry, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<GridGeometry> {};
 } // end namespace Dumux
 
 #endif

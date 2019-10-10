@@ -34,11 +34,11 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief Helper class for calculating the velocity gradients for the Navier-Stokes model using the staggered grid discretization.
  */
-template<class Scalar, class FVGridGeometry, class BoundaryTypes, class Indices>
+template<class Scalar, class GridGeometry, class BoundaryTypes, class Indices>
 class StaggeredVelocityGradients
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

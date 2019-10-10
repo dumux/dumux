@@ -36,17 +36,17 @@ namespace Dumux {
  * \ingroup OnePNCTests
  * \brief Definition of the spatial parameters for the 1pnc test problems.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePNCNonequilibriumTestSpatialParams
-: public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                       OnePNCNonequilibriumTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVNonEquilibriumSpatialParams<GridGeometry, Scalar,
+                                       OnePNCNonequilibriumTestSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                           OnePNCNonequilibriumTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVNonEquilibriumSpatialParams<GridGeometry, Scalar,
+                                           OnePNCNonequilibriumTestSpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
@@ -56,8 +56,8 @@ public:
     using PermeabilityType = Scalar;
     using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
 
-    OnePNCNonequilibriumTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePNCNonequilibriumTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = 1e-11;
         porosity_ = 0.4;

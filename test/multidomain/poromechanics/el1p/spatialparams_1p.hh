@@ -39,25 +39,25 @@ namespace Dumux {
  * \brief The spatial parameters class for the test problem using the
  *        1p box model.
  */
-template<class FVGridGeometry, class Scalar, class CouplingManager>
-class OnePSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                                     OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>>
+template<class GridGeometry, class Scalar, class CouplingManager>
+class OnePSpatialParams : public FVSpatialParamsOneP<GridGeometry, Scalar,
+                                                     OnePSpatialParams<GridGeometry, Scalar, CouplingManager>>
 {
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using ThisType = OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
+    using ThisType = OnePSpatialParams<GridGeometry, Scalar, CouplingManager>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar, ThisType>;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    OnePSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<CouplingManager> couplingManagerPtr)
-    : ParentType(fvGridGeometry)
+    : ParentType(gridGeometry)
     , couplingManagerPtr_(couplingManagerPtr)
     , permeability_(getParam<Scalar>("SpatialParams.Permeability"))
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))

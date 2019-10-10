@@ -49,8 +49,8 @@ class ExtendedSourceStencil
     using Scalar = typename MDTraits::Scalar;
 
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-    template<std::size_t id> using FVGridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
@@ -58,7 +58,7 @@ class ExtendedSourceStencil
 
     template<std::size_t id>
     static constexpr bool isBox()
-    { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
+    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
 public:
     /*!
      * \brief extend the jacobian pattern of the diagonal block of domain i

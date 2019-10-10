@@ -39,17 +39,17 @@ namespace Dumux {
  * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test.
  */
-template<class FVGridGeometry, class Scalar>
-class TwoPTestSpatialParams : public FVSpatialParams< FVGridGeometry, Scalar, TwoPTestSpatialParams<FVGridGeometry, Scalar> >
+template<class GridGeometry, class Scalar>
+class TwoPTestSpatialParams : public FVSpatialParams< GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar> >
 {
-    using ThisType = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using ThisType = TwoPTestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
 
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -59,7 +59,7 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    TwoPTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
         // residual saturations
         matrixMaterialParams_.setSwr(0.18);

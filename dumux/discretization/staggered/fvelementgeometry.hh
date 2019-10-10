@@ -66,7 +66,7 @@ public:
     //! Needed for the multi-domain framework.
     template<class CellCenterOrFaceFVGridGeometry>
     StaggeredFVElementGeometry(const CellCenterOrFaceFVGridGeometry& gridGeometry)
-    : ParentType(gridGeometry.actualfvGridGeometry()) {}
+    : ParentType(gridGeometry.actualGridGeometry()) {}
 
     //! Get a sub control volume face with an element index and a local scvf index
     using ParentType::scvf;
@@ -105,7 +105,7 @@ public:
     //! Needed for the multi-domain framework.
     template<class CellCenterOrFaceFVGridGeometry>
     StaggeredFVElementGeometry(const CellCenterOrFaceFVGridGeometry& gridGeometry)
-    : gridGeometryPtr_(&gridGeometry.actualfvGridGeometry()) {}
+    : gridGeometryPtr_(&gridGeometry.actualGridGeometry()) {}
 
     //! Constructor
     StaggeredFVElementGeometry(const GridGeometry& gridGeometry)

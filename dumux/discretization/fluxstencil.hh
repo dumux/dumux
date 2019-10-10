@@ -52,9 +52,9 @@ class FluxStencil;
 template<class FVElementGeometry>
 class FluxStencil<FVElementGeometry, DiscretizationMethod::cctpfa>
 {
-    using FVGridGeometry = typename FVElementGeometry::GridGeometry;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
@@ -92,14 +92,14 @@ public:
 template<class FVElementGeometry>
 class FluxStencil<FVElementGeometry, DiscretizationMethod::ccmpfa>
 {
-    using FVGridGeometry = typename FVElementGeometry::GridGeometry;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
     // Use the stencil type of the primary interaction volume
-    using NodalIndexSet = typename FVGridGeometry::GridIVIndexSets::DualGridIndexSet::NodalIndexSet;
+    using NodalIndexSet = typename GridGeometry::GridIVIndexSets::DualGridIndexSet::NodalIndexSet;
 
 public:
     //! We don't know yet how many faces couple to a neighboring element
@@ -113,13 +113,13 @@ public:
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)
     {
-        const auto& fvGridGeometry = fvGeometry.gridGeometry();
+        const auto& gridGeometry = fvGeometry.gridGeometry();
 
         // return the scv (element) indices in the interaction region
-        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-            return fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).gridScvIndices();
+        if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            return gridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).gridScvIndices();
         else
-            return fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).gridScvIndices();
+            return gridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).gridScvIndices();
     }
 };
 

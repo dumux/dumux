@@ -116,11 +116,11 @@ class SoilProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
-    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using GridView = typename GridGeometry::GridView;
+    using GlobalPosition = typename GridGeometry::GlobalCoordinate;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -147,9 +147,9 @@ public:
         liquidPhaseIdx = FluidSystem::liquidPhaseIdx
     };
 
-    SoilProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    SoilProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Soil")
+    : ParentType(gridGeometry, "Soil")
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
@@ -159,7 +159,7 @@ public:
         // for initial conditions
         const Scalar sw = getParam<Scalar>("Problem.InitTopSaturation", 0.3); // start with 30% saturation on top
         using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(fvGridGeometry->bBoxMax()), sw);
+        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(gridGeometry->bBoxMax()), sw);
     }
 
     /*!

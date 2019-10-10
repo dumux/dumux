@@ -38,18 +38,18 @@ namespace Dumux {
  * \ingroup TwoPTwoCTests
  * \brief The spatial parameters for the 2p2c mpnc comparison problem.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TwoPTwoCComparisonSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         TwoPTwoCComparisonSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         TwoPTwoCComparisonSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
-                                       TwoPTwoCComparisonSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar,
+                                       TwoPTwoCComparisonSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -65,7 +65,7 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
 
 
-    TwoPTwoCComparisonSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    TwoPTwoCComparisonSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;

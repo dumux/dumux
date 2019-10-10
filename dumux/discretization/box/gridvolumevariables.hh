@@ -74,19 +74,19 @@ public:
 
     BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
-        volumeVariables_.resize(fvGridGeometry.gridView().size(0));
-        for (const auto& element : elements(fvGridGeometry.gridView()))
+        volumeVariables_.resize(gridGeometry.gridView().size(0));
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
-            auto eIdx = fvGridGeometry.elementMapper().index(element);
+            auto eIdx = gridGeometry.elementMapper().index(element);
 
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             // get the element solution
-            auto elemSol = elementSolution(element, sol, fvGridGeometry);
+            auto elemSol = elementSolution(element, sol, gridGeometry);
 
             // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
@@ -139,8 +139,8 @@ public:
 
     BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const
     { return *problemPtr_;}

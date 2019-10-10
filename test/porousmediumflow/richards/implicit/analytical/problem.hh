@@ -79,9 +79,9 @@ struct Problem<TypeTag, TTag::RichardsAnalytical> { using type = RichardsAnalyti
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::RichardsAnalytical>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = RichardsAnalyticalSpatialParams<FVGridGeometry, Scalar>;
+    using type = RichardsAnalyticalSpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -110,7 +110,7 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     enum {
         // copy some indices for convenience
@@ -125,8 +125,8 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using Geometry = typename GridView::template Codim<0>::Entity::Geometry;
 
 public:
-    RichardsAnalyticalProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RichardsAnalyticalProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         pnRef_ = 1e5; // air pressure
         name_ = getParam<std::string>("Problem.Name");

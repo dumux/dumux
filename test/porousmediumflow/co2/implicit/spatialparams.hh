@@ -42,18 +42,18 @@ namespace Dumux {
  *        problem which uses the non-isothermal or isothermal CO2
  *        fully implicit model.
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class HeterogeneousSpatialParams
-: public FVSpatialParams<FVGridGeometry,
+: public FVSpatialParams<GridGeometry,
                          Scalar,
-                         HeterogeneousSpatialParams<FVGridGeometry, Scalar>>
+                         HeterogeneousSpatialParams<GridGeometry, Scalar>>
 {
-    using Grid = typename FVGridGeometry::Grid;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using Grid = typename GridGeometry::Grid;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, HeterogeneousSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, HeterogeneousSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
@@ -64,9 +64,9 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    HeterogeneousSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                                std::shared_ptr<const GridData<Grid>> gridData)
-    : ParentType(fvGridGeometry), gridData_(gridData)
+    : ParentType(gridGeometry), gridData_(gridData)
     {
 
         // Set the permeability for the layers

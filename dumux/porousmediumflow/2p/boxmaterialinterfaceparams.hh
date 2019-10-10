@@ -51,39 +51,39 @@ public:
     /*!
      * \brief Updates the scv -> dofparameter map
      *
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param spatialParams Class encapsulating the spatial parameters
      * \param x The current state of the solution vector
      */
-    template<class FVGridGeometry, class SolutionVector>
-    void update(const FVGridGeometry& fvGridGeometry,
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& gridGeometry,
                 const SpatialParams& spatialParams,
                 const SolutionVector& x)
     {
         using MaterialLaw = typename SpatialParams::MaterialLaw;
 
         // Make sure the spatial params return a const ref and no copy!
-        using Elem = typename FVGridGeometry::GridView::template Codim<0>::Entity;
-        using ElemSol = decltype( elementSolution(Elem(), x, fvGridGeometry) );
-        using Scv = typename FVGridGeometry::SubControlVolume;
+        using Elem = typename GridGeometry::GridView::template Codim<0>::Entity;
+        using ElemSol = decltype( elementSolution(Elem(), x, gridGeometry) );
+        using Scv = typename GridGeometry::SubControlVolume;
         using ReturnType = decltype(spatialParams.materialLawParams(Elem(), Scv(), ElemSol()));
         static_assert(std::is_lvalue_reference<ReturnType>::value,
                       "In order to use the box-interface solver please provide access "
                       "to the material law parameters via returning (const) references");
 
         // make sure this is only called for geometries of the box method!
-        if (FVGridGeometry::discMethod != DiscretizationMethod::box)
+        if (GridGeometry::discMethod != DiscretizationMethod::box)
             DUNE_THROW(Dune::InvalidStateException, "Determination of the interface material parameters with "
                                                     "this class only makes sense when using the box method!");
 
         isUpdated_ = true;
-        isOnMaterialInterface_.resize(fvGridGeometry.numDofs(), false);
-        dofParams_.resize(fvGridGeometry.numDofs(), nullptr);
-        for (const auto& element : elements(fvGridGeometry.gridView()))
+        isOnMaterialInterface_.resize(gridGeometry.numDofs(), false);
+        dofParams_.resize(gridGeometry.numDofs(), nullptr);
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
-            const auto elemSol = elementSolution(element, x, fvGridGeometry);
+            const auto elemSol = elementSolution(element, x, gridGeometry);
 
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bind(element);
             for (const auto& scv : scvs(fvGeometry))
             {

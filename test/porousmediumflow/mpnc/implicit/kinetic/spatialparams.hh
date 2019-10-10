@@ -46,17 +46,17 @@ namespace Dumux {
 /**
  * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
  */
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class EvaporationAtmosphereSpatialParams
-: public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                       EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>>
+: public FVNonEquilibriumSpatialParams<GridGeometry, Scalar,
+                                       EvaporationAtmosphereSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ThisType = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using ThisType = EvaporationAtmosphereSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVNonEquilibriumSpatialParams<GridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -81,8 +81,8 @@ public:
     using AwsSurfaceParams = typename AwsSurface::Params;
     using AnsSurfaceParams = typename AnsSurface::Params;
 
-    EvaporationAtmosphereSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    EvaporationAtmosphereSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         heightPM_               = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
         heightDomain_           = getParam<std::vector<Scalar>>("Grid.Positions1")[2];

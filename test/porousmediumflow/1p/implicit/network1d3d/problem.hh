@@ -112,9 +112,9 @@ struct Problem<TypeTag, TTag::TubesTest> { using type = TubesTestProblem<TypeTag
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TubesTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TubesTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = TubesTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // the fluid system
@@ -154,7 +154,7 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -163,14 +163,14 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     enum { isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box };
 
 public:
-    TubesTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TubesTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
 
         //get hMax_ of the grid
         hMax_ = 0.0;
-        for (const auto& element : elements(fvGridGeometry->gridView()))
+        for (const auto& element : elements(gridGeometry->gridView()))
            hMax_ = std::max(element.geometry().volume(), hMax_);
     }
 

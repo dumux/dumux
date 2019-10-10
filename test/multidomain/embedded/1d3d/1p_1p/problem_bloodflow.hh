@@ -112,20 +112,20 @@ class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using GlobalPosition = typename GridGeometry::GlobalCoordinate;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    BloodFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+    BloodFlowProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                      std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, "Vessel")
+    : ParentType(gridGeometry, "Vessel")
     , couplingManager_(couplingManager)
     {
         //read parameters from input file

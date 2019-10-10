@@ -34,20 +34,20 @@ namespace Dumux {
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Base class for cell center of face specific auxiliary FvGridGeometry classes.
- *        Provides a common interface and a pointer to the actual fvGridGeometry.
+ *        Provides a common interface and a pointer to the actual gridGeometry.
  */
-template<class ActualFVGridGeometry>
+template<class ActualGridGeometry>
 class GridGeometryView
 {
 public:
 
-    explicit GridGeometryView(const ActualFVGridGeometry* actualFVGridGeometry)
-    : fvGridGeometry_(actualFVGridGeometry) {}
+    explicit GridGeometryView(const ActualGridGeometry* actualGridGeometry)
+    : gridGeometry_(actualGridGeometry) {}
 
     //! export  the GridView type and the discretization method
-    using GridView = typename ActualFVGridGeometry::GridView;
+    using GridView = typename ActualGridGeometry::GridView;
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
-    using LocalView = typename ActualFVGridGeometry::LocalView;
+    using LocalView = typename ActualGridGeometry::LocalView;
 
     /*!
      * \brief Returns true if this view if related to cell centered dofs
@@ -63,47 +63,54 @@ public:
      * \brief Return an integral constant index for cell centered dofs
      */
     static constexpr auto cellCenterIdx()
-    { return typename ActualFVGridGeometry::DofTypeIndices::CellCenterIdx{}; }
+    { return typename ActualGridGeometry::DofTypeIndices::CellCenterIdx{}; }
 
     /*!
      * \brief Return an integral constant index for face dofs
      */
     static constexpr auto faceIdx()
-    { return typename ActualFVGridGeometry::DofTypeIndices::FaceIdx{}; }
+    { return typename ActualGridGeometry::DofTypeIndices::FaceIdx{}; }
 
     /*!
      * \brief Return the gridView this grid geometry object lives on
      */
     const auto& gridView() const
-    { return fvGridGeometry_->gridView(); }
+    { return gridGeometry_->gridView(); }
 
     /*!
      * \brief Returns the connectivity map of which dofs have derivatives with respect
      *        to a given dof.
      */
     const auto& connectivityMap() const // TODO return correct map
-    { return fvGridGeometry_->connectivityMap(); }
+    { return gridGeometry_->connectivityMap(); }
 
     /*!
      * \brief Returns the mapper for vertices to indices for possibly adaptive grids.
      */
     const auto& vertexMapper() const
-    { return fvGridGeometry_->vertexMapper(); }
+    { return gridGeometry_->vertexMapper(); }
 
     /*!
      * \brief Returns the mapper for elements to indices for constant grids.
      */
     const auto& elementMapper() const
-    { return fvGridGeometry_->elementMapper(); }
+    { return gridGeometry_->elementMapper(); }
 
     /*!
-     * \brief Returns the actual fvGridGeometry we are a restriction of
+     * \brief Returns the actual gridGeometry we are a restriction of
      */
-    const ActualFVGridGeometry& actualfvGridGeometry() const
-    { return *fvGridGeometry_; }
+    [[deprecated("Use actualGridGeometry instead")]]
+    const ActualGridGeometry& actualfvGridGeometry() const
+    { return actualGridGeometry(); }
+
+    /*!
+     * \brief Returns the actual gridGeometry we are a restriction of
+     */
+    const ActualGridGeometry& actualGridGeometry() const
+    { return *gridGeometry_; }
 
 protected:
-    const ActualFVGridGeometry* fvGridGeometry_;
+    const ActualGridGeometry* gridGeometry_;
 
 };
 
@@ -112,10 +119,10 @@ protected:
  * \brief Cell center specific auxiliary FvGridGeometry classes.
  *        Required for the Dumux multi-domain framework.
  */
-template <class ActualFVGridGeometry>
-class CellCenterFVGridGeometry : public GridGeometryView<ActualFVGridGeometry>
+template <class ActualGridGeometry>
+class CellCenterFVGridGeometry : public GridGeometryView<ActualGridGeometry>
 {
-    using ParentType = GridGeometryView<ActualFVGridGeometry>;
+    using ParentType = GridGeometryView<ActualGridGeometry>;
 public:
 
     using ParentType::ParentType;
@@ -129,7 +136,7 @@ public:
      * \brief The total number of cell centered dofs
      */
     std::size_t numDofs() const
-    { return this->fvGridGeometry_->numCellCenterDofs(); }
+    { return this->gridGeometry_->numCellCenterDofs(); }
 };
 
 /*!
@@ -137,10 +144,10 @@ public:
  * \brief Face specific auxiliary FvGridGeometry classes.
  *        Required for the Dumux multi-domain framework.
  */
-template <class ActualFVGridGeometry>
-class FaceFVGridGeometry : public GridGeometryView<ActualFVGridGeometry>
+template <class ActualGridGeometry>
+class FaceFVGridGeometry : public GridGeometryView<ActualGridGeometry>
 {
-    using ParentType = GridGeometryView<ActualFVGridGeometry>;
+    using ParentType = GridGeometryView<ActualGridGeometry>;
 public:
 
     using ParentType::ParentType;
@@ -154,7 +161,7 @@ public:
      * \brief The total number of cell centered dofs
      */
     std::size_t numDofs() const
-    { return this->fvGridGeometry_->numFaceDofs(); }
+    { return this->gridGeometry_->numFaceDofs(); }
 };
 
 /*!

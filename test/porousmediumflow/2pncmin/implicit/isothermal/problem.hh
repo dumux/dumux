@@ -86,9 +86,9 @@ struct SolidSystem<TypeTag, TTag::Dissolution>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Dissolution>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = DissolutionSpatialParams<FVGridGeometry, Scalar>;
+    using type = DissolutionSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set properties here to override the default property settings
@@ -178,15 +178,15 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
-    DissolutionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    DissolutionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         outerSalinity_          = getParam<Scalar>("Problem.OuterSalinity");
         temperature_            = getParam<Scalar>("Problem.Temperature");
@@ -210,7 +210,7 @@ public:
         name_                   = getParam<std::string>("Problem.Name");
 
         unsigned int codim = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box ? dim : 0;
-        permeability_.resize(fvGridGeometry->gridView().size(codim));
+        permeability_.resize(gridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,

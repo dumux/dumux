@@ -76,9 +76,9 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCThermalNonequilibrium>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCThermalNonequilibrium>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNCNonequilibriumTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePNCNonequilibriumTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -114,7 +114,7 @@ class OnePTwoCThermalNonequilibriumProblem : public PorousMediumFlowProblem<Type
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
@@ -152,8 +152,8 @@ class OnePTwoCThermalNonequilibriumProblem : public PorousMediumFlowProblem<Type
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTwoCThermalNonequilibriumProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePTwoCThermalNonequilibriumProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();

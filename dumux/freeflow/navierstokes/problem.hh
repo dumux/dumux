@@ -64,8 +64,8 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using ParentType = NavierStokesParentProblem<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -76,7 +76,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -93,11 +93,11 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
 public:
     /*!
      * \brief The constructor
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
+    NavierStokesProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
     , gravity_(0.0)
     {
         if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
@@ -141,13 +141,13 @@ public:
     { return enableInertiaTerms_; }
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
-    template <class SolutionVector, class G = FVGridGeometry>
+    template <class SolutionVector, class G = GridGeometry>
     typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, void>::type
     applyInitialFaceSolution(SolutionVector& sol,
                              const SubControlVolumeFace& scvf,
                              const PrimaryVariables& initSol) const
     {
-        sol[FVGridGeometry::faceIdx()][scvf.dofIndex()][0] = initSol[Indices::velocity(scvf.directionIndex())];
+        sol[GridGeometry::faceIdx()][scvf.dofIndex()][0] = initSol[Indices::velocity(scvf.directionIndex())];
     }
 
 
@@ -174,7 +174,7 @@ public:
     }
 
     //! Convenience function for staggered grid implementation.
-    template <class ElementVolumeVariables, class ElementFaceVariables, class G = FVGridGeometry>
+    template <class ElementVolumeVariables, class ElementFaceVariables, class G = GridGeometry>
     typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, Scalar>::type
     pseudo3DWallFriction(const SubControlVolumeFace& scvf,
                          const ElementVolumeVariables& elemVolVars,

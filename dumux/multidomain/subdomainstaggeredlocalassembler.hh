@@ -71,9 +71,9 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
     using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
     using FaceResidualValue = typename LocalResidual::FaceResidualValue;
 
-    using FVGridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -497,9 +497,9 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using GridFaceVariables = GetPropType<TypeTag, Properties::GridFaceVariables>;
     using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
     using FaceVariables = typename ElementFaceVariables::FaceVariables;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
@@ -543,10 +543,10 @@ public:
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
-        const auto& fvGridGeometry = this->problem().gridGeometry();
+        const auto& gridGeometry = this->problem().gridGeometry();
         const auto& curSol = this->curSol()[domainI];
 
-        const auto cellCenterGlobalI = fvGridGeometry.elementMapper().index(element);
+        const auto cellCenterGlobalI = gridGeometry.elementMapper().index(element);
         const auto origResidual = this->evalLocalResidualForCellCenter();
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -607,7 +607,7 @@ public:
         };
 
         // get the list of cell center dofs that have an influence on the cell center resdiual of the current element
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
+        const auto& connectivityMap = gridGeometry.connectivityMap();
 
         // evaluate derivatives w.r.t. own dof
         evaluateCellCenterDerivatives(cellCenterGlobalI);
@@ -634,7 +634,7 @@ public:
         const auto& problem = this->problem();
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->problem().gridGeometry();
+        const auto& gridGeometry = this->problem().gridGeometry();
         const auto& curSol = this->curSol()[domainI];
 
         using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>; // TODO: use reserved vector
@@ -659,7 +659,7 @@ public:
             const auto faceGlobalI = scvf.dofIndex();
 
             using FaceSolution = GetPropType<TypeTag, Properties::StaggeredFaceSolution>;
-            const auto origFaceSolution = FaceSolution(scvf, curSol, fvGridGeometry);
+            const auto origFaceSolution = FaceSolution(scvf, curSol, gridGeometry);
 
             // Lambda to evaluate the derivatives for faces
             auto evaluateFaceDerivatives = [&](const std::size_t globalJ)
@@ -708,7 +708,7 @@ public:
             evaluateFaceDerivatives(scvf.dofIndex());
 
             // get the list of face dofs that have an influence on the resdiual of the current face
-            const auto& connectivityMap = fvGridGeometry.connectivityMap();
+            const auto& connectivityMap = gridGeometry.connectivityMap();
 
             // evaluate derivatives w.r.t. all other related face dofs
             for (const auto& globalJ : connectivityMap(faceId, faceId, scvf.index()))
@@ -735,10 +735,10 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->problem().gridGeometry();
+        const auto& gridGeometry = this->problem().gridGeometry();
         const auto& curSol = this->curSol()[domainJ];
         // build derivatives with for cell center dofs w.r.t. cell center dofs
-        const auto cellCenterGlobalI = fvGridGeometry.elementMapper().index(element);
+        const auto cellCenterGlobalI = gridGeometry.elementMapper().index(element);
 
         for (const auto& scvfJ : scvfs(fvGeometry))
         {
@@ -857,8 +857,8 @@ public:
         // get some aliases for convenience
         const auto& problem = this->problem();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& fvGridGeometry = this->problem().gridGeometry();
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
+        const auto& gridGeometry = this->problem().gridGeometry();
+        const auto& connectivityMap = gridGeometry.connectivityMap();
         const auto& curSol = this->curSol()[domainJ];
 
         // build derivatives with for cell center dofs w.r.t. cell center dofs

@@ -34,51 +34,51 @@ namespace Dumux {
  * \brief Stores the dof indices corresponding to the neighboring cell centers and faces
  *        that contribute to the derivative calculation. Specialization for the staggered free flow model.
  */
-template<class FVGridGeometry>
+template<class GridGeometry>
 class StaggeredFreeFlowConnectivityMap
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
-    using CellCenterIdxType = typename FVGridGeometry::DofTypeIndices::CellCenterIdx;
-    using FaceIdxType = typename FVGridGeometry::DofTypeIndices::FaceIdx;
+    using CellCenterIdxType = typename GridGeometry::DofTypeIndices::CellCenterIdx;
+    using FaceIdxType = typename GridGeometry::DofTypeIndices::FaceIdx;
 
     using SmallLocalIndex = typename IndexTraits<GridView>::SmallLocalIndex;
 
     using Stencil = std::vector<GridIndexType>;
     using Map = std::vector<Stencil>;
 
-    static constexpr SmallLocalIndex upwindSchemeOrder = FVGridGeometry::upwindSchemeOrder;
+    static constexpr SmallLocalIndex upwindSchemeOrder = GridGeometry::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
 
     //! Update the map and prepare the stencils
-    void update(const FVGridGeometry& fvGridGeometry)
+    void update(const GridGeometry& gridGeometry)
     {
-        const auto numDofsCC = fvGridGeometry.gridView().size(0);
-        const auto numDofsFace = fvGridGeometry.gridView().size(1);
-        const auto numBoundaryFacets = fvGridGeometry.numBoundaryScvf();
+        const auto numDofsCC = gridGeometry.gridView().size(0);
+        const auto numDofsFace = gridGeometry.gridView().size(1);
+        const auto numBoundaryFacets = gridGeometry.numBoundaryScvf();
         cellCenterToCellCenterMap_.resize(numDofsCC);
         cellCenterToFaceMap_.resize(numDofsCC);
         faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
         faceToFaceMap_.resize(2*numDofsFace - numBoundaryFacets);
 
-        for(auto&& element: elements(fvGridGeometry.gridView()))
+        for(auto&& element: elements(gridGeometry.gridView()))
         {
             // restrict the FvGeometry locally and bind to the element
-            auto fvGeometry = localView(fvGridGeometry);
+            auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // handle the cell center dof stencils first
-                const auto dofIdxCellCenter = fvGridGeometry.elementMapper().index(element);
+                const auto dofIdxCellCenter = gridGeometry.elementMapper().index(element);
 
                 // the stencil for cell center dofs w.r.t. to other cell center dofs,
                 // includes all neighboring element indices

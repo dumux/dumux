@@ -42,10 +42,10 @@ class DarcysLawImplementation;
  * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
  * \note Darcy's law is specialized for network and surface grids (i.e. if grid dim < dimWorld)
  * \tparam Scalar the scalar type for scalar physical quantities
- * \tparam FVGridGeometry the grid geometry
+ * \tparam GridGeometry the grid geometry
  * \tparam isNetwork whether we are computing on a network grid embedded in a higher world dimension
  */
-template<class Scalar, class FVGridGeometry, bool isNetwork>
+template<class Scalar, class GridGeometry, bool isNetwork>
 class CCTpfaDarcysLaw;
 
 /*!
@@ -64,12 +64,12 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
  * \ingroup CCTpfaFlux
  * \brief Class that fills the cache corresponding to tpfa Darcy's Law
  */
-template<class FVGridGeometry>
+template<class GridGeometry>
 class TpfaDarcysLawCacheFiller
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
 
 public:
     //! Function to fill a TpfaDarcysLawCache of a given scvf
@@ -92,16 +92,16 @@ public:
  * \ingroup CCTpfaFlux
  * \brief The cache corresponding to tpfa Darcy's Law
  */
-template<class AdvectionType, class FVGridGeometry>
+template<class AdvectionType, class GridGeometry>
 class TpfaDarcysLawCache
 {
     using Scalar = typename AdvectionType::Scalar;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
 
 public:
-    using Filler = TpfaDarcysLawCacheFiller<FVGridGeometry>;
+    using Filler = TpfaDarcysLawCacheFiller<GridGeometry>;
 
     template<class Problem, class ElementVolumeVariables>
     void updateAdvection(const Problem& problem,
@@ -124,14 +124,14 @@ private:
  * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
  */
-template<class ScalarType, class FVGridGeometry>
-class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
+template<class ScalarType, class GridGeometry>
+class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
 {
-    using ThisType = CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using ThisType = CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static constexpr int dim = GridView::dimension;
@@ -147,7 +147,7 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
-    using Cache = TpfaDarcysLawCache<ThisType, FVGridGeometry>;
+    using Cache = TpfaDarcysLawCache<ThisType, GridGeometry>;
 
     //! Compute the advective flux
     template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
@@ -278,14 +278,14 @@ private:
  * \ingroup CCTpfaFlux
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim < dimWorld (network/surface grids)
  */
-template<class ScalarType, class FVGridGeometry>
-class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ true>
+template<class ScalarType, class GridGeometry>
+class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ true>
 {
-    using ThisType = CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ true>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridView = typename FVGridGeometry::GridView;
+    using ThisType = CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ true>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static constexpr int dim = GridView::dimension;
@@ -301,7 +301,7 @@ public:
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
-    using Cache = TpfaDarcysLawCache<ThisType, FVGridGeometry>;
+    using Cache = TpfaDarcysLawCache<ThisType, GridGeometry>;
 
     //! Compute the advective flux
     template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>

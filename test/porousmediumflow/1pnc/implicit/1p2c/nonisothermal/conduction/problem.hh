@@ -83,9 +83,9 @@ struct FluidSystem<TypeTag, TTag::OnePTwoCNIConduction>
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePTwoCNIConduction>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePNCTestSpatialParams<GridGeometry, Scalar>;
 };
 
 // Define whether mole(true) or mass (false) fractions are used
@@ -128,7 +128,7 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GridView::template Codim<0>::Entity;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
@@ -152,8 +152,8 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    OnePTwoCNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), temperatureHigh_(300.0)
+    OnePTwoCNIConductionProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), temperatureHigh_(300.0)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -164,7 +164,7 @@ public:
         else
             std::cout<<"problem uses mass fractions"<<std::endl;
 
-        temperatureExact_.resize(fvGridGeometry->numDofs(), 290.0);
+        temperatureExact_.resize(gridGeometry->numDofs(), 290.0);
     }
 
     //! Get the analytical temperature

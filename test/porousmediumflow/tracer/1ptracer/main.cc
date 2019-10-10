@@ -87,13 +87,13 @@ int main(int argc, char** argv) try
     Dune::Timer timer;
 
     //! create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<OnePTypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<OnePTypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     //! the problem (boundary conditions)
     using OnePProblem = GetPropType<OnePTypeTag, Properties::Problem>;
-    auto problemOneP = std::make_shared<OnePProblem>(fvGridGeometry);
+    auto problemOneP = std::make_shared<OnePProblem>(gridGeometry);
 
     //! the solution vector
     using SolutionVector = GetPropType<OnePTypeTag, Properties::SolutionVector>;
@@ -101,12 +101,12 @@ int main(int argc, char** argv) try
 
     //! the grid variables
     using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
-    auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, fvGridGeometry);
+    auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, gridGeometry);
     onePGridVariables->init(p);
 
     //! the assembler
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
-    auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, fvGridGeometry, onePGridVariables);
+    auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, gridGeometry, onePGridVariables);
 
     //! the linear solver
     using OnePLinearSolver = UMFPackBackend;
@@ -135,13 +135,13 @@ int main(int argc, char** argv) try
     // compute volume fluxes for the tracer model
     ////////////////////////////////////////////////////////////
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>;
-    std::vector<Scalar> volumeFlux(fvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> volumeFlux(gridGeometry->numScvf(), 0.0);
 
     using FluxVariables =  GetPropType<OnePTypeTag, Properties::FluxVariables>;
     auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
     for (const auto& element : elements(leafGridView))
     {
-        auto fvGeometry = localView(*fvGridGeometry);
+        auto fvGeometry = localView(*gridGeometry);
         fvGeometry.bind(element);
 
         auto elemVolVars = localView(onePGridVariables->curGridVolVars());
@@ -179,7 +179,7 @@ int main(int argc, char** argv) try
 
     //! the problem (initial and boundary conditions)
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
-    auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
+    auto tracerProblem = std::make_shared<TracerProblem>(gridGeometry);
 
     // set the flux from the 1p problem
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux);
@@ -191,7 +191,7 @@ int main(int argc, char** argv) try
 
     //! the grid variables
     using GridVariables = GetPropType<TracerTypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(tracerProblem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(tracerProblem, gridGeometry);
     gridVariables->init(x);
 
     //! intialize the vtk output module
@@ -213,7 +213,7 @@ int main(int argc, char** argv) try
 
     //! the assembler with time loop for instationary problem
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
-    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop, xOld);
+    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop, xOld);
 
     //! the linear solver
     using TracerLinearSolver = ExplicitDiagonalSolver;

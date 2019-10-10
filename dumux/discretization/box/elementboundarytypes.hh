@@ -52,8 +52,8 @@ public:
                 const Element &element,
                 const FVElementGeometry &fvGeometry)
     {
-        using FVGridGeometry = typename FVElementGeometry::GridGeometry;
-        using GridView = typename FVGridGeometry::GridView;
+        using GridGeometry = typename FVElementGeometry::GridGeometry;
+        using GridView = typename GridGeometry::GridView;
 
         vertexBCTypes_.resize( element.subEntities(GridView::dimension) );
 

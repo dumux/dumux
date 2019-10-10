@@ -50,9 +50,9 @@ class FVProblem
 {
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using GridView = typename FVGridGeometry::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -72,8 +72,8 @@ class FVProblem
 
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
-    static constexpr bool isStaggered = FVGridGeometry::discMethod == DiscretizationMethod::staggered;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethod::staggered;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -92,11 +92,11 @@ public:
 
     /*!
      * \brief Constructor
-     * \param fvGridGeometry The finite volume grid geometry
+     * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
-    : fvGridGeometry_(fvGridGeometry)
+    FVProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : gridGeometry_(gridGeometry)
     , paramGroup_(paramGroup)
     {
         // set a default name for the problem
@@ -439,7 +439,7 @@ public:
     {
         NumEqVector source(0);
         auto scvIdx = scv.indexInElement();
-        auto key = std::make_pair(fvGridGeometry_->elementMapper().index(element), scvIdx);
+        auto key = std::make_pair(gridGeometry_->elementMapper().index(element), scvIdx);
         if (pointSourceMap_.count(key))
         {
             // call the solDependent function. Herein the user might fill/add values to the point sources
@@ -493,7 +493,7 @@ public:
         if (!sources.empty())
         {
             // calculate point source locations and save them in a map
-            PointSourceHelper::computePointSourceMap(*fvGridGeometry_,
+            PointSourceHelper::computePointSourceMap(*gridGeometry_,
                                                      sources,
                                                      pointSourceMap_);
         }
@@ -581,12 +581,12 @@ public:
 
     //! The finite volume grid geometry
     [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const FVGridGeometry& fvGridGeometry() const
+    const GridGeometry& fvGridGeometry() const
     { return gridGeometry(); }
 
     //! The finite volume grid geometry
-    const FVGridGeometry& gridGeometry() const
-    { return *fvGridGeometry_; }
+    const GridGeometry& gridGeometry() const
+    { return *gridGeometry_; }
 
     //! The parameter group in which to retrieve runtime parameters
     const std::string& paramGroup() const
@@ -607,8 +607,8 @@ private:
      */
     void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::true_type) const
     {
-        const auto numDofs = fvGridGeometry_->vertexMapper().size();
-        const auto numVert = fvGridGeometry_->gridView().size(dim);
+        const auto numDofs = gridGeometry_->vertexMapper().size();
+        const auto numVert = gridGeometry_->gridView().size(dim);
         sol.resize(numDofs);
 
         // if there are more dofs than vertices (enriched nodal dofs), we have to
@@ -616,11 +616,11 @@ private:
         if (numDofs != numVert)
         {
             std::vector<bool> dofVisited(numDofs, false);
-            for (const auto& element : elements(fvGridGeometry_->gridView()))
+            for (const auto& element : elements(gridGeometry_->gridView()))
             {
                 for (int i = 0; i < element.subEntities(dim); ++i)
                 {
-                    const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().subIndex(element, i, dim);
+                    const auto dofIdxGlobal = gridGeometry_->vertexMapper().subIndex(element, i, dim);
 
                     // forward to implementation if value at dof is not set yet
                     if (!dofVisited[dofIdxGlobal])
@@ -635,9 +635,9 @@ private:
         // otherwise we directly loop over the vertices
         else
         {
-            for (const auto& vertex : vertices(fvGridGeometry_->gridView()))
+            for (const auto& vertex : vertices(gridGeometry_->gridView()))
             {
-                const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().index(vertex);
+                const auto dofIdxGlobal = gridGeometry_->vertexMapper().index(vertex);
                 sol[dofIdxGlobal] = asImp_().initial(vertex);
             }
         }
@@ -648,16 +648,16 @@ private:
      */
     void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::false_type) const
     {
-        sol.resize(fvGridGeometry_->numDofs());
-        for (const auto& element : elements(fvGridGeometry_->gridView()))
+        sol.resize(gridGeometry_->numDofs());
+        for (const auto& element : elements(gridGeometry_->gridView()))
         {
-            const auto dofIdxGlobal = fvGridGeometry_->elementMapper().index(element);
+            const auto dofIdxGlobal = gridGeometry_->elementMapper().index(element);
             sol[dofIdxGlobal] = asImp_().initial(element);
         }
     }
 
     //! The finite volume grid geometry
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const GridGeometry> gridGeometry_;
 
     //! The parameter group in which to retrieve runtime parameters
     std::string paramGroup_;

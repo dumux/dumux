@@ -31,7 +31,7 @@ namespace Dumux {
  * \ingroup Discretization
  * \brief Free function to get the local view of a grid cache object
  * \note A local object is only functional after calling its bind/bindElement method.
- * \tparam GridCache the grid caching type (such as FVGridGeometry)
+ * \tparam GridCache the grid caching type (such as GridGeometry)
  * \param gridCache the grid caching object we want to localView from
  */
 template<class GridCache>

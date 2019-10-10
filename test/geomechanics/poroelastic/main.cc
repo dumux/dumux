@@ -60,13 +60,13 @@ template< class StressType,
 void assembleElementStresses(SigmaStorage& sigmaStorage,
                              SigmaStorage& effSigmaStorage,
                              const Problem& problem,
-                             const typename GridVariables::GridGeometry& fvGridGeometry,
+                             const typename GridVariables::GridGeometry& gridGeometry,
                              const GridVariables& gridVariables,
                              const SolutionVector& x)
 {
-    for (const auto& element : elements(fvGridGeometry.gridView()))
+    for (const auto& element : elements(gridGeometry.gridView()))
     {
-        auto fvGeometry = localView(fvGridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         auto elemVolVars = localView(gridVariables.curGridVolVars());
 
         fvGeometry.bind(element);
@@ -82,10 +82,10 @@ void assembleElementStresses(SigmaStorage& sigmaStorage,
         const auto effSigma = StressType::effectiveStressTensor(problem, element, fvGeometry, elemVolVars, fluxVarsCache);
 
         // pass values into storage container
-        using FVGridGeometry = typename GridVariables::GridGeometry;
-        for (int dir = 0; dir < FVGridGeometry::GridView::dimension; ++dir)
+        using GridGeometry = typename GridVariables::GridGeometry;
+        for (int dir = 0; dir < GridGeometry::GridView::dimension; ++dir)
         {
-            const auto eIdx = fvGridGeometry.elementMapper().index(element);
+            const auto eIdx = gridGeometry.elementMapper().index(element);
             sigmaStorage[dir][eIdx] = sigma[dir];
             effSigmaStorage[dir][eIdx] = effSigma[dir];
         }
@@ -125,22 +125,22 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
     // intialize the vtk output module and output fields
@@ -150,14 +150,14 @@ int main(int argc, char** argv) try
     IOFields::initOutputModule(vtkWriter);
 
     // also, add exact solution to the output
-    SolutionVector xExact(fvGridGeometry->numDofs());
+    SolutionVector xExact(gridGeometry->numDofs());
     for (const auto& v : vertices(leafGridView))
-        xExact[ fvGridGeometry->vertexMapper().index(v) ] = problem->exactSolution(v.geometry().center());
+        xExact[ gridGeometry->vertexMapper().index(v) ] = problem->exactSolution(v.geometry().center());
     vtkWriter.addField(xExact, "u_exact");
 
     // Furthermore, write out element stress tensors
-    static constexpr int dim = FVGridGeometry::GridView::dimension;
-    static constexpr int dimWorld = FVGridGeometry::GridView::dimensionworld;
+    static constexpr int dim = GridGeometry::GridView::dimension;
+    static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ForceVector = Dune::FieldVector< Scalar, dimWorld >;
 
@@ -165,7 +165,7 @@ int main(int argc, char** argv) try
     std::array< std::vector<ForceVector>, dim > sigmaStorage;
     std::array< std::vector<ForceVector>, dim > effSigmaStorage;
 
-    const auto numCells = fvGridGeometry->gridView().size(0);
+    const auto numCells = gridGeometry->gridView().size(0);
     std::for_each(sigmaStorage.begin(), sigmaStorage.end(), [numCells] (auto& sigma) { sigma.resize(numCells); });
     std::for_each(effSigmaStorage.begin(), effSigmaStorage.end(), [numCells] (auto& effSigma) { effSigma.resize(numCells); });
 
@@ -177,18 +177,18 @@ int main(int argc, char** argv) try
 
     // use convenience function to compute stresses
     using StressType = GetPropType<TypeTag, Properties::StressType>;
-    assembleElementStresses<StressType>(sigmaStorage, effSigmaStorage, *problem, *fvGridGeometry, *gridVariables, x);
+    assembleElementStresses<StressType>(sigmaStorage, effSigmaStorage, *problem, *gridGeometry, *gridVariables, x);
 
     // write initial solution
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
@@ -201,7 +201,7 @@ int main(int argc, char** argv) try
     gridVariables->update(x);
 
     // write vtk output
-    assembleElementStresses<StressType>(sigmaStorage, effSigmaStorage, *problem, *fvGridGeometry, *gridVariables, x);
+    assembleElementStresses<StressType>(sigmaStorage, effSigmaStorage, *problem, *gridGeometry, *gridVariables, x);
     vtkWriter.write(1.0);
 
     // print time and say goodbye

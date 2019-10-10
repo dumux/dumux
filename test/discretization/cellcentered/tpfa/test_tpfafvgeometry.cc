@@ -59,8 +59,8 @@ int main (int argc, char *argv[]) try
 
     constexpr int dim = Grid::dimension;
 
-    using FVGridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, ENABLE_CACHING>;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, ENABLE_CACHING>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
@@ -71,17 +71,17 @@ int main (int argc, char *argv[]) try
     std::array<unsigned int, dim> els{{2, 2}};
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
 
-    // obtain leaf and make FVGridGeometry
+    // obtain leaf and make GridGeometry
     auto leafGridView = grid->leafGridView();
-    FVGridGeometry fvGridGeometry(leafGridView);
-    fvGridGeometry.update();
+    GridGeometry gridGeometry(leafGridView);
+    gridGeometry.update();
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
-        auto eIdx = fvGridGeometry.elementMapper().index(element);
+        auto eIdx = gridGeometry.elementMapper().index(element);
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = localView(fvGridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);

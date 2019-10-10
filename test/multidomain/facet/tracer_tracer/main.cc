@@ -119,31 +119,31 @@ struct CouplingManager<TypeTag, TTag::TracerLowDimMpfa> { using type = typename 
  * have to create additional faces on interior boundaries, which wouldn't be
  * created in the standard scheme.
  */
-template< class FVGridGeometry,
+template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
-          std::enable_if_t<FVGridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
+          std::enable_if_t<GridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
+void updateBulkFVGridGeometry(GridGeometry& gridGeometry,
                               const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {
     using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
     BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
-    fvGridGeometry.update(lowDimGridView, facetGridAdapter);
+    gridGeometry.update(lowDimGridView, facetGridAdapter);
 }
 
 /*!
  * \brief Updates the finite volume grid geometry for the cell centered schemes.
  */
- template< class FVGridGeometry,
+ template< class GridGeometry,
           class GridManager,
           class LowDimGridView,
-          std::enable_if_t<FVGridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
+          std::enable_if_t<GridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
+void updateBulkFVGridGeometry(GridGeometry& gridGeometry,
                               const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {
-    fvGridGeometry.update();
+    gridGeometry.update();
 }
 
 //! Computes the volume fluxes on all scvfs for a sub-domain.
@@ -152,7 +152,7 @@ void computeVolumeFluxes(Storage& volumeFluxes,
                          CM& couplingManager,
                          const Assembler& assembler,
                          const Prob& problem,
-                         const typename GV::GridGeometry& fvGridGeometry,
+                         const typename GV::GridGeometry& gridGeometry,
                          const GV& gridVariables,
                          const Sol& sol,
                          Dune::index_constant<id> domainId)
@@ -160,17 +160,17 @@ void computeVolumeFluxes(Storage& volumeFluxes,
     static constexpr bool isBox = GV::GridGeometry::discMethod == Dumux::DiscretizationMethod::box;
 
     // resize depending on the scheme
-    if (!isBox) volumeFluxes.assign(fvGridGeometry.numScvf(), {0.0});
-    else volumeFluxes.assign(fvGridGeometry.gridView().size(0), {0.0});
+    if (!isBox) volumeFluxes.assign(gridGeometry.numScvf(), {0.0});
+    else volumeFluxes.assign(gridGeometry.gridView().size(0), {0.0});
 
     auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
-    for (const auto& element : elements(fvGridGeometry.gridView()))
+    for (const auto& element : elements(gridGeometry.gridView()))
     {
-        const auto eIdx = fvGridGeometry.elementMapper().index(element);
+        const auto eIdx = gridGeometry.elementMapper().index(element);
 
         // bind local views
         couplingManager.bindCouplingContext(domainId, element, assembler);
-        auto fvGeometry = localView(fvGridGeometry);
+        auto fvGeometry = localView(gridGeometry);
         auto elemVolVars = localView(gridVariables.curGridVolVars());
         auto elemFluxVars = localView(gridVariables.gridFluxVarsCache());
         fvGeometry.bind(element);
@@ -194,10 +194,10 @@ void computeVolumeFluxes(Storage& volumeFluxes,
                      && problem.boundaryTypes(element, fvGeometry.scv(scvf.insideScvIdx())).hasOnlyDirichlet())
             {
                 // reconstruct flux
-                const auto elemSol = elementSolution(element, sol, fvGridGeometry);
+                const auto elemSol = elementSolution(element, sol, gridGeometry);
                 const auto gradP = evalGradients(element,
                                                  element.geometry(),
-                                                 fvGridGeometry,
+                                                 gridGeometry,
                                                  elemSol,
                                                  scvf.ipGlobal())[0];
                 const auto& insideVolVars = elemVolVars[fvGeometry.scv(scvf.insideScvIdx())];
