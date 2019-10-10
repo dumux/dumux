@@ -42,9 +42,9 @@ namespace Dumux {
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  * \tparam GG the finite volume grid geometry type
- * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
+ * \tparam enableGridGeometryCache if the grid geometry is cached or not
  */
-template<class GG, bool enableFVGridGeometryCache>
+template<class GG, bool enableGridGeometryCache>
 class BoxFVElementGeometry;
 
 //! specialization in case the FVElementGeometries are stored

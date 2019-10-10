@@ -79,7 +79,7 @@ struct BoxFacetCouplingDefaultGridGeometryTraits
  */
 template<class Scalar,
          class GridView,
-         bool enableFVGridGeometryCache = false,
+         bool enableGridGeometryCache = false,
          class Traits = BoxFacetCouplingDefaultGridGeometryTraits<GridView> >
 class BoxFacetCouplingFVGridGeometry;
 
