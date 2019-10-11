@@ -87,7 +87,7 @@ struct UseMoles<TypeTag, TTag::Injection> { static constexpr bool value = true; 
 
 // Enable caching or not (reference solutions created without caching)
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridGeometryCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>

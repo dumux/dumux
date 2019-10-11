@@ -65,7 +65,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static conste
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
 
 // Set the grid type
 template<class TypeTag>

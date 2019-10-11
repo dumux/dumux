@@ -96,7 +96,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePIncompressible> { stati
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
+struct EnableGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
 
 // define a TypeTag for a quad precision test
 #if HAVE_QUAD

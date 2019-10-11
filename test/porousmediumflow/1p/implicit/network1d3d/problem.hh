@@ -77,7 +77,7 @@ template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::TubesTestCCTpfa>
 {
 private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     using ElementMapper = ReorderingDofMapper<GridView>;
@@ -92,7 +92,7 @@ template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::TubesTestBox>
 {
 private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 

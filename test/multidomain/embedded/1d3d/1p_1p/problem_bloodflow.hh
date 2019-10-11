@@ -62,7 +62,7 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::BloodFlow> { using type = Dune::FoamGrid<1, 3>; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::BloodFlow> { static constexpr bool value = true; };
 template<class TypeTag>

@@ -68,7 +68,7 @@ struct BoxDefaultGridGeometryTraits
  */
 template<class Scalar,
          class GridView,
-         bool enableFVGridGeometryCache = false,
+         bool enableGridGeometryCache = false,
          class Traits = BoxDefaultGridGeometryTraits<GridView> >
 class BoxFVGridGeometry;
 

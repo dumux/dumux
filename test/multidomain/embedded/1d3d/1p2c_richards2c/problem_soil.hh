@@ -67,7 +67,7 @@ struct Grid<TypeTag, TTag::Soil> { using type = Dune::YaspGrid<3, Dune::Equidist
 #endif
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::Soil> { static constexpr bool value = true; };
 template<class TypeTag>

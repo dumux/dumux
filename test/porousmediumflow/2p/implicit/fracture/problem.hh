@@ -89,7 +89,7 @@ struct SpatialParams<TypeTag, TTag::Fracture>
 
 // Use global caching
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::Fracture> { static constexpr bool value = true; };
 template<class TypeTag>

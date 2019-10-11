@@ -69,7 +69,7 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::DensityDrivenFlow> { using type = Dumux::DensityDrivenFlowProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
 
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::DensityDrivenFlow> { static constexpr bool value = true; };
