@@ -147,13 +147,13 @@ using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::typ
 //! get the type alias defined in the property (equivalent to old macro GET_PROP_TYPE(...))
 template<class TypeTag, template<class,class> class Property>
 using GetPropType = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type::type;
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 
 //! get the value data member of a property
 template<class TypeTag, template<class,class> class Property>
 constexpr auto getPropValue() { return Properties::Detail::GetPropImpl<TypeTag, Property>::type::value; }
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 } // end namespace Dumux
 
