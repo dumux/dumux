@@ -471,6 +471,10 @@ public:
             bulkContext_.lowDimFvGeometries.reserve(elementStencil.size());
             bulkContext_.lowDimElemVolVars.reserve(elementStencil.size());
 
+            // local view on the bulk fv geometry
+            auto bulkFvGeometry = localView(this->problem(bulkId).gridGeometry());
+            bulkFvGeometry.bindElement(element);
+
             for (const auto lowDimElemIdx : elementStencil)
             {
                 const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
@@ -480,26 +484,9 @@ public:
                 auto fvGeom = localView(ldGridGeometry);
                 fvGeom.bindElement(elemJ);
 
-                auto elemSol = elementSolution(elemJ, ldSol, fvGeom.gridGeometry());
-                std::vector<VolumeVariables<lowDimId>> elemVolVars;
-
-                // for tpfa, make only one volume variables object for the element
-                // for the update, use the first (and only - for tpfa) scv of the element
-                if (!lowDimUsesBox)
-                {
-                    VolumeVariables<lowDimId> volVars;
-                    volVars.update(elemSol, this->problem(lowDimId), elemJ, *scvs(fvGeom).begin());
-                    elemVolVars.emplace_back( std::move(volVars) );
-                }
-                // for box, make interpolated vol vars in each scv center,
-                // which geometricallly coincides with the scvf integration point
-                else
-                {
-                    elemVolVars.resize(fvGeom.numScv());
-                    for (const auto& scv : scvs(fvGeom))
-                        FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
-                                                               ldSol, fvGeom, elemJ, elemJ.geometry(), scv.center());
-                }
+                std::vector<VolumeVariables<lowDimId>> elemVolVars(fvGeom.numScv());
+                const auto& coupledScvfIndices = it->second.elementToScvfMap.at(lowDimElemIdx);
+                makeCoupledLowDimElemVolVars_(element, bulkFvGeometry, elemJ, fvGeom, ldSol, coupledScvfIndices, elemVolVars);
 
                 bulkContext_.isSet = true;
                 bulkContext_.lowDimFvGeometries.emplace_back( std::move(fvGeom) );
@@ -594,7 +581,8 @@ public:
         if (bulkContext_.isSet)
         {
             const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-            const auto& couplingElemStencil = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
+            const auto& couplingEntry = map.at(bulkContext_.elementIdx);
+            const auto& couplingElemStencil = couplingEntry.couplingElementStencil;
             const auto& ldGridGeometry = this->problem(lowDimId).gridGeometry();
 
             // find the low-dim elements in coupling stencil, where this dof is contained in
@@ -631,14 +619,9 @@ public:
 
                 auto& elemVolVars = bulkContext_.lowDimElemVolVars[idxInContext];
                 const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
-                auto elemSol = elementSolution(element, this->curSol()[lowDimId], fvGeom.gridGeometry());
-
-                if (!lowDimUsesBox)
-                    elemVolVars[0].update(elemSol, this->problem(lowDimId), element, *scvs(fvGeom).begin());
-                else
-                    for (const auto& scv : scvs(fvGeom))
-                        FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
-                                                               this->curSol()[lowDimId], fvGeom, element, element.geometry(), scv.center());
+                const auto& coupledScvfIndices = couplingEntry.elementToScvfMap.at(eIdxGlobal);
+                makeCoupledLowDimElemVolVars_(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(),
+                                              element, fvGeom, this->curSol()[lowDimId], coupledScvfIndices, elemVolVars);
             }
         }
     }
@@ -748,22 +731,23 @@ public:
 
             // update the corresponding vol vars in the bulk context
             const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-            const auto& couplingElementStencil = bulkMap.find(bulkContext_.elementIdx)->second.couplingElementStencil;
+            const auto& bulkCouplingEntry = bulkMap.at(bulkContext_.elementIdx);
+            const auto& couplingElementStencil = bulkCouplingEntry.couplingElementStencil;
             auto it = std::find(couplingElementStencil.begin(), couplingElementStencil.end(), lowDimContext_.elementIdx);
             assert(it != couplingElementStencil.end());
             const auto idxInContext = std::distance(couplingElementStencil.begin(), it);
 
+            // get neighboring bulk element from the bulk context (is the same elemet as first entry in low dim context)
+            const auto& bulkElement = this->problem(bulkId).gridGeometry().element(bulkContext_.elementIdx);
+            const auto& bulkFvGeometry = *lowDimContext_.bulkFvGeometries[0];
+
             auto& elemVolVars = bulkContext_.lowDimElemVolVars[idxInContext];
             const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
             const auto& element = lowDimLocalAssembler.element();
-            auto elemSol = elementSolution(element, this->curSol()[lowDimId], fvGeom.gridGeometry());
+            const auto& scvfIndices = bulkCouplingEntry.elementToScvfMap.at(lowDimContext_.elementIdx);
 
-            if (!lowDimUsesBox)
-                elemVolVars[0].update(elemSol, this->problem(lowDimId), element, *scvs(fvGeom).begin());
-            else
-                for (const auto& scv : scvs(fvGeom))
-                    FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
-                                                           this->curSol()[lowDimId], fvGeom, element, element.geometry(), scv.center());
+            makeCoupledLowDimElemVolVars_(bulkElement, bulkFvGeometry, element, fvGeom,
+                                          this->curSol()[lowDimId], scvfIndices, elemVolVars);
         }
     }
 
@@ -774,6 +758,47 @@ public:
     { return std::get<(id == bulkId ? 0 : 1)>(emptyStencilTuple_); }
 
 private:
+
+    /*!
+     * \brief Prepares the volume variables in a lower-dimensional
+     *        element coupled to the given bulk element.
+     */
+    template<class LowDimSolution, class ScvfIdxStorage>
+    void makeCoupledLowDimElemVolVars_(const Element<bulkId>& bulkElement,
+                                       const FVElementGeometry<bulkId>& bulkFvGeometry,
+                                       const Element<lowDimId>& lowDimElement,
+                                       const FVElementGeometry<lowDimId>& lowDimFvGeometry,
+                                       const LowDimSolution& lowDimSol,
+                                       const ScvfIdxStorage& coupledBulkScvfIndices,
+                                       std::vector<VolumeVariables<lowDimId>>& elemVolVars)
+    {
+        const auto lowDimElemSol = elementSolution(lowDimElement, lowDimSol, lowDimFvGeometry.gridGeometry());
+
+        // for tpfa, make only one volume variables object for the element
+        // for the update, use the first (and only - for tpfa) scv of the element
+        if (!lowDimUsesBox)
+            elemVolVars[0].update(lowDimElemSol, this->problem(lowDimId), lowDimElement, *scvs(lowDimFvGeometry).begin());
+        // for box, make vol vars either:
+        // - in each scv center, which geometrically coincides with the scvf integration point (Neumann coupling)
+        // - at the vertex position (Dirichlet coupling)
+        else
+        {
+            // recall that the scvfs in the coupling map were ordered such
+            // that the i-th scvf in the map couples to the i-th lowdim scv
+            for (unsigned int i = 0; i < coupledBulkScvfIndices.size(); ++i)
+            {
+                const auto& scvf = bulkFvGeometry.scvf(coupledBulkScvfIndices[i]);
+                const auto bcTypes = this->problem(bulkId).interiorBoundaryTypes(bulkElement, scvf);
+                if (bcTypes.hasOnlyNeumann())
+                    FacetCoupling::makeInterpolatedVolVars(elemVolVars[i], this->problem(lowDimId), lowDimSol,
+                                                           lowDimFvGeometry, lowDimElement, lowDimElement.geometry(),
+                                                           scvf.ipGlobal());
+                else
+                    elemVolVars[i].update( lowDimElemSol, this->problem(lowDimId), lowDimElement, lowDimFvGeometry.scv(i) );
+            }
+        }
+    }
+
     //! evaluates the bulk-facet exchange fluxes for a given facet element
     template<class BulkScvfIndices>
     NumEqVector<bulkId> evalBulkFluxes_(const Element<bulkId>& elementI,
