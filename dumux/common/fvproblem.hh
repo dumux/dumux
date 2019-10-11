@@ -66,7 +66,7 @@ class FVProblem
                                      std::vector<PointSource> >;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
 
