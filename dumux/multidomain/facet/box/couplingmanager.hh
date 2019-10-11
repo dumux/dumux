@@ -471,6 +471,10 @@ public:
             bulkContext_.lowDimFvGeometries.reserve(elementStencil.size());
             bulkContext_.lowDimElemVolVars.reserve(elementStencil.size());
 
+            // local view on the bulk fv geometry
+            auto bulkFvGeometry = localView(this->problem(bulkId).fvGridGeometry());
+            bulkFvGeometry.bindElement(element);
+
             for (const auto lowDimElemIdx : elementStencil)
             {
                 const auto& ldGridGeometry = this->problem(lowDimId).fvGridGeometry();
@@ -491,14 +495,23 @@ public:
                     volVars.update(elemSol, this->problem(lowDimId), elemJ, *scvs(fvGeom).begin());
                     elemVolVars.emplace_back( std::move(volVars) );
                 }
-                // for box, make interpolated vol vars in each scv center,
-                // which geometricallly coincides with the scvf integration point
+                // for box, make interpolated vol vars either:
+                // - in each scv center, which geometrically coincides with the scvf integration point (Neumann coupling)
+                // - at the vertex position (Dirichlet coupling)
                 else
                 {
                     elemVolVars.resize(fvGeom.numScv());
-                    for (const auto& scv : scvs(fvGeom))
-                        FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
-                                                               ldSol, fvGeom, elemJ, elemJ.geometry(), scv.center());
+                    const auto& scvfIndices = it->second.elementToScvfMap.at(lowDimElemIdx);
+                    for (unsigned int i = 0; i < scvfIndices.size(); ++i)
+                    {
+                        const auto& scvf = bulkFvGeometry.scvf(scvfIndices[i]);
+                        const auto bcTypes = this->problem(bulkId).interiorBoundaryTypes(element, scvf);
+                        if (bcTypes.hasOnlyNeumann())
+                            FacetCoupling::makeInterpolatedVolVars(elemVolVars[i], this->problem(lowDimId), ldSol,
+                                                                   fvGeom, elemJ, elemJ.geometry(), scvf.ipGlobal());
+                        else
+                            elemVolVars[i].update( elemSol, this->problem(lowDimId), elemJ, fvGeom.scv(i) );
+                    }
                 }
 
                 bulkContext_.isSet = true;
@@ -594,7 +607,8 @@ public:
         if (bulkContext_.isSet)
         {
             const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-            const auto& couplingElemStencil = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
+            const auto& couplingEntry = map.at(bulkContext_.elementIdx);
+            const auto& couplingElemStencil = couplingEntry.couplingElementStencil;
             const auto& ldGridGeometry = this->problem(lowDimId).fvGridGeometry();
 
             // find the low-dim elements in coupling stencil, where this dof is contained in
@@ -636,9 +650,19 @@ public:
                 if (!lowDimUsesBox)
                     elemVolVars[0].update(elemSol, this->problem(lowDimId), element, *scvs(fvGeom).begin());
                 else
-                    for (const auto& scv : scvs(fvGeom))
-                        FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
-                                                               this->curSol()[lowDimId], fvGeom, element, element.geometry(), scv.center());
+                {
+                    const auto& scvfIndices = couplingEntry.elementToScvfMap.at(eIdxGlobal);
+                    for (unsigned int i = 0; i < scvfIndices.size(); ++i)
+                    {
+                        const auto& scvf = bulkLocalAssembler.fvGeometry().scvf(scvfIndices[i]);
+                        const auto bcTypes = this->problem(bulkId).interiorBoundaryTypes(bulkLocalAssembler.element(), scvf);
+                        if (bcTypes.hasOnlyNeumann())
+                            FacetCoupling::makeInterpolatedVolVars(elemVolVars[i], this->problem(lowDimId), this->curSol()[lowDimId],
+                                                                   fvGeom, element, element.geometry(), scvf.ipGlobal());
+                        else
+                            elemVolVars[i].update( elemSol, this->problem(lowDimId), element, fvGeom.scv(i) );
+                    }
+                }
             }
         }
     }
@@ -748,7 +772,8 @@ public:
 
             // update the corresponding vol vars in the bulk context
             const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-            const auto& couplingElementStencil = bulkMap.find(bulkContext_.elementIdx)->second.couplingElementStencil;
+            const auto& bulkCouplingEntry = bulkMap.at(bulkContext_.elementIdx);
+            const auto& couplingElementStencil = bulkCouplingEntry.couplingElementStencil;
             auto it = std::find(couplingElementStencil.begin(), couplingElementStencil.end(), lowDimContext_.elementIdx);
             assert(it != couplingElementStencil.end());
             const auto idxInContext = std::distance(couplingElementStencil.begin(), it);
@@ -761,9 +786,21 @@ public:
             if (!lowDimUsesBox)
                 elemVolVars[0].update(elemSol, this->problem(lowDimId), element, *scvs(fvGeom).begin());
             else
-                for (const auto& scv : scvs(fvGeom))
-                    FacetCoupling::makeInterpolatedVolVars(elemVolVars[scv.localDofIndex()], this->problem(lowDimId),
-                                                           this->curSol()[lowDimId], fvGeom, element, element.geometry(), scv.center());
+            {
+                const auto& scvfIndices = bulkCouplingEntry.elementToScvfMap.at(lowDimContext_.elementIdx);
+                for (unsigned int i = 0; i < scvfIndices.size(); ++i)
+                {
+                    // get scvf from first entry in context (this is equal to the bulk context element)
+                    const auto& scvf = lowDimContext_.bulkFvGeometries[0]->scvf(scvfIndices[i]);
+                    const auto& bulkElement = this->problem(bulkId).fvGridGeometry().element(bulkContext_.elementIdx);
+                    const auto bcTypes = this->problem(bulkId).interiorBoundaryTypes(bulkElement, scvf);
+                    if (bcTypes.hasOnlyNeumann())
+                        FacetCoupling::makeInterpolatedVolVars(elemVolVars[i], this->problem(lowDimId), this->curSol()[lowDimId],
+                                                               fvGeom, element, element.geometry(), scvf.ipGlobal());
+                    else
+                        elemVolVars[i].update( elemSol, this->problem(lowDimId), element, fvGeom.scv(i) );
+                }
+            }
         }
     }
 
