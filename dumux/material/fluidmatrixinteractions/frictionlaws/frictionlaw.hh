@@ -98,6 +98,8 @@ public:
         auto mobility = mobilityMax /(1 + (1.0-sw)*(1.0-sw));
         return roughnessHeight * (1.0 - mobility);
     }
+
+    virtual ~FrictionLaw() {}
 };
 
 } // end namespace Dumux
