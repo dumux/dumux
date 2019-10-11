@@ -1,44 +1,50 @@
 Differences Between DuMuX 3.1 and DuMuX 3.0
 =============================================
 
-### Important Notes
-
 ### Improvements and Enhancements
 
-- __Examples__: Three extensively documented examples were added which highlight interesting features and show to apply DuMuX to actual physical problems
+- __Examples__: Three extensively documented examples have been added which highlight interesting features and show how to apply DuMuX to interesting problems. They can be found in the new folder `examples`. To get an overview, point your browser to https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples.
+
 - __Porousmediumflow__: Added a new porous medium model for the energy balance of a porous solid (general heat equation).
+
 - __Multidomain__: It is now possible to use the facet coupling module together with the mpfa-o scheme in the bulk domain.
-- Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme.
-- The box scheme works now on grids with prism / wedge elements in 3D.
-- __GridManager__: Supports now reading unstructured grids and data from vtu/vtp files (ASCII, XML format) sequential.
-  For UGGrid and FoamGrid you can specify a grid in such a format in the input file:
-  `Grid.File = mygrid.vtu` / `Grid.File = mygrid.vtp`. The associated data is then available in the grid data object.
-- __Freeflow__: A second order approximation of the convective term of all navier-stokes based models is now available.
+
+- __Box__: The box scheme works now on grids with prism / wedge elements in 3D.
+
+- __Diffusive fluxes__: We revised the formulation of the diffusion laws to allow for changes between mass-averaged velocity reference systems and molar-averaged velocity reference systems. The standard formulation is now set to mass-averaged velocity reference systems.
+
+- __GridManager__:
+    * Supports now reading unstructured grids and data from vtu/vtp files (ASCII, XML format) sequential.
+      For UGGrid and FoamGrid you can specify a grid in such a format in the input file:
+      `Grid.File = mygrid.vtu` / `Grid.File = mygrid.vtp`. The associated data is then available in the grid data object.
+    * Instead of always including all grid manager specializations you can now only include the specialization that you need.
+      For example, if you only use YaspGrid in your code, you only need to include `dumux/io/grid/gridmanager_yasp.hh`. The
+      convenience header `dumux/io/grid/gridmanager.hh` still includes all specializations.
+    * Added a `NetPBMReader` which allows to read simple raster images files (`*.pbm` and `*.pgm`). Can be used, e.g., with
+      `dune-subgrid` in order to create a grid from an image file.
+
+- __Freeflow__: A second order approximation of the convective term of all Navier-Stokes based models is now available.
   This can be enabled using the property `UpwindSchemeOrder`. This property defaults to a first order upwinding approximation,
-  which is the method used for all models in release/3.0. If this property is set to `2`, a second order flux limiter method will be used.
+  which is the method used for all models in release 3.0. If this property is set to `2`, a second order flux limiter method will be used.
   Various flux limiter functions have been implemented to maintain the monotonicity of this discretization. Per default the
   `Minmod` flux limiter is used, but `Vanleer`, `Vanalbada`, `Superbee`, `Umist`, `Mclimiter`, and `Wahyd` based flux limiters
   are also available. These can be specified using the input file entry `Flux.DifferencingScheme`. These methods are also
   implemented for non-uniform structured grids (e.g. YaspGrid - TensorProductCoordinates). Per default, a scheme assuming a
   uniform grid is used, but two other methods, `Li` and `Hou`, are both available for adaptations to non-uniform grids.
   These can be specified using the input file entry `Flux.TVDApproach`.
+
 - __RANS__: The called RANS model, defined in the properties system, will specify, via the model traits,
   which RANS problem implementation should be used. In each problem file, the initial and boundary conditions can be
   set using templated functions based on the model type. Examples of these functions exist in the RANS based tests.
   No further preprocessor macros are required.
-- __ShallowWater__ Thanks to Leopold Stadler we now have a shallow water equations solver / model. Have a look at freeflow/shallowwater
-  and give it a try with the dam break test at test/freeflow/shallowwater.
-- __ShallowWater__ The are now some friction laws computing shear stresses (Manning, Nikuradse) to account for friction in a channel/river bed thanks to Martin Utz
-- __GridManager__ Instead of always including all gridmanager specializations you can now only include the specialization that you need.
-  For example, if you only use YaspGrid in your code, you only need to include `dumux/io/grid/gridmanager_yasp.hh`. The convenience header
-  `dumux/io/grid/gridmanager.hh` still includes all specializations.
-- __Solver__ There is a new abstract base class `PDESolver` that is a class that does linearize & assemble, solve and update.
+
+- __ShallowWater__: Thanks to Leopold Stadler we now have a shallow water equations solver / model. Have a look at freeflow/shallowwater and give it a try with the dam break test at test/freeflow/shallowwater. The are also some friction laws computing shear stresses (Manning, Nikuradse) to account for friction in a channel/river bed, thanks to Martin Utz.
+
+- __Staggered__: Added a `StaggeredNewtonConvergenceWriter` for the staggered grid discretization scheme.
+
+- __Solver__: There is a new abstract base class `PDESolver` that is a class that does linearize & assemble, solve and update.
   The NewtonSolver now derives from this class (interface is unchanged). A new class `LinearPDESolver` simplifies solving linear problems
   by reducing the code in the main file and streamlining the terminal output to look like the Newton output.
- - Added a `NetPBMReader` which allows to read simple raster images files (`*.pbm` and `*.pgm`). Can be used, e.g., with `dune-subgrid` in order to create a grid
-   from an image file.
-- __Flux__: we revised the formulation of the diffusion laws to allow for changes between mass-averaged velocity reference systems and molar-averaged velocity 
-reference systems. The standard formulation is now set to mass-averaged velocity reference systems.
 
 
 ### Immediate interface changes not allowing/requiring a deprecation period
@@ -49,12 +55,21 @@ reference systems. The standard formulation is now set to mass-averaged velocity
   using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<FVGridGeometry, SolutionVector>;
   auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*fvGridGeometry);
   ```
+
 - The interface of the abstract `TimeLoopBase` class has been extended by `virtual void advanceTimeStep()`, `virtual void setTimeStepSize(Scalar dt)`,
   `virtual Scalar maxTimeStepSize()`, and `virtual bool finished()`, thus forcing the inheriting classes to implement those functions.
   `TimeLoop` is no longer a template argument in `NewtonSolver`'s `solve()` method, thereby increasing
   type safety and providing better compiler error messages.
 
 - __RANS__: The base problems for all turbulence models e.g. `ZeroEqProblem` have been been renamed to one generic `RANSProblem`
+
+### Deprecated properties, to be removed after 3.1:
+
+- `FVGridGeometry` and `EnableFVGridGeometryCache` have been replaced by
+  `GridGeometry` and `EnableGridGeometryCache`.
+
+Unfortunately, clang doesn't emit deprecation warnings if an old property name is
+used. Consider employing gcc for detecting occurrences of the old name.
 
 ### Deprecated classes/files, to be removed after 3.1:
 
@@ -72,6 +87,8 @@ reference systems. The standard formulation is now set to mass-averaged velocity
 
 ### Deleted classes/files, property names, constants/enums
 
+- Deprecated classes and files for the 3.0 release listed below stay deprecated
+  for at least one more release cycle.
 
 Differences Between DuMuX 2.12 and DuMuX 3.0
 =============================================
