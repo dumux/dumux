@@ -1,8 +1,6 @@
 Differences Between DuMuX 3.1 and DuMuX 3.0
 =============================================
 
-### Important Notes
-
 ### Improvements and Enhancements
 
 - __Examples__: Three extensively documented examples have been added which highlight interesting features and show how to apply DuMuX to interesting problems. They can be found in the new folder `examples`. To get an overview, point your browser to https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples.
@@ -16,7 +14,6 @@ Differences Between DuMuX 3.1 and DuMuX 3.0
 - __Diffusive fluxes__: We revised the formulation of the diffusion laws to allow for changes between mass-averaged velocity reference systems and molar-averaged velocity reference systems. The standard formulation is now set to mass-averaged velocity reference systems.
 
 - __GridManager__:
-
     * Supports now reading unstructured grids and data from vtu/vtp files (ASCII, XML format) sequential.
       For UGGrid and FoamGrid you can specify a grid in such a format in the input file:
       `Grid.File = mygrid.vtu` / `Grid.File = mygrid.vtp`. The associated data is then available in the grid data object.
