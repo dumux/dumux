@@ -249,3 +249,9 @@ dune_add_test(NAME test_gmshboundaryflag_caching
               LABELS unit io
               CMAKE_GUARD "( dune-alugrid_FOUND )"
               )
+
+dune_add_test(NAME test_gridmanager_mmesh
+              SOURCES test_gridmanager_mmesh.cc
+              LABELS unit io
+              CMAKE_GUARD "( dune-mmesh_FOUND )"
+              )
