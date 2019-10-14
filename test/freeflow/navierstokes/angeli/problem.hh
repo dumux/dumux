@@ -174,7 +174,7 @@ public:
     }
 
     /*!
-     * \brief Returns the analytical solution of the problem at a given position.
+     * \brief Returns the analytical solution of the problem at a given time and position.
      *
      * \param globalPos The global position
      * \param time The current simulation time
@@ -193,6 +193,16 @@ public:
         values[Indices::velocityYIdx] = M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::sin(M_PI * x) * std::cos(2.0 * M_PI * y);
 
         return values;
+    }
+
+    /*!
+     * \brief Returns the analytical solution of the problem at a given position.
+     *
+     * \param globalPos The global position
+     */
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    {
+        return analyticalSolution(globalPos, time_+timeStepSize_);
     }
 
     // \}
