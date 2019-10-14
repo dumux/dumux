@@ -75,7 +75,33 @@ public:
         // Then look for the necessary keys to construct a structured grid from the input file
         else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
         {
-            ParentType::template makeStructuredGrid<dim, dim>(ParentType::CellType::Simplex, modelParamGroup);
+            using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dim>;
+            const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
+            const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.LowerLeft", GlobalPosition(0.0));
+
+            using CellArray = std::array<unsigned int, dim>;
+            CellArray numCells; numCells.fill(1);
+            numCells = getParamFromGroup<CellArray>(modelParamGroup, "Grid.Cells", numCells);
+
+            // Insert uniformly spaced vertices
+            std::array<unsigned int, dim> numVertices = numCells;
+            for (int i = 0; i < dim; ++i)
+              numVertices[i]++;
+
+            Dune::MMeshImplicitGridFactory<Grid> factory;
+
+            // Insert equally spaced vertices
+            Dune::FactoryUtilities::MultiIndex<dim> index(numVertices);
+            for (int i = 0; i < index.cycle(); ++i, ++index)
+            {
+              GlobalPosition pos(0);
+              for (int j=0; j<dim; j++)
+                pos[j] = lowerLeft[j] + index[j] * (upperRight[j]-lowerLeft[j])/(numVertices[j]-1);
+
+              factory.insertVertex(pos);
+            }
+
+            this->gridPtr() = std::unique_ptr<Grid>(factory.createGrid());
             ParentType::maybeRefineGrid(modelParamGroup);
             ParentType::loadBalance();
         }
