@@ -138,22 +138,20 @@ public:
         writeCoordinates_(file, coordinates_);
         writeDataInfo_(file);
 
-        for(auto&& data : scalarPointData_)
-        {
+        for (auto&& data : scalarPointData_)
             writeData_(file, data);
-        }
-        for(auto&& data :vectorPointData_)
-        {
-            writeData_(file, data);
-        }
 
-        file << "</PointData>\n";
+        for (auto&& data :vectorPointData_)
+            writeData_(file, data);
+
+        if (!scalarPointData_.empty() || !vectorPointData_.empty())
+            file << "</PointData>\n";
+
         file << "</Piece>\n";
         file << "</PolyData>\n";
         file << "</VTKFile>";
 
         clear();
-
         file.close();
     }
 
