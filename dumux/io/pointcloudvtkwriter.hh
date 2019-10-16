@@ -24,12 +24,11 @@
 #ifndef DUMUX_POINTCLOUD_VTK_WRITER_HH
 #define DUMUX_POINTCLOUD_VTK_WRITER_HH
 
+#include <string>
 #include <dune/common/fvector.hh>
-
-#include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dune/grid/io/file/vtk/common.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/path.hh>
+#include <dune/grid/io/file/vtk/common.hh>
 
 namespace Dumux {
 
@@ -402,7 +401,7 @@ private:
         if(g.size() < 3)
             file << g << " 0 ";
         else
-            file << g;
+            file << g << " ";
     }
 
     const std::vector<GlobalPosition>& coordinates_;
