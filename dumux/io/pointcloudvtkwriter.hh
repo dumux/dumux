@@ -24,12 +24,13 @@
 #ifndef DUMUX_POINTCLOUD_VTK_WRITER_HH
 #define DUMUX_POINTCLOUD_VTK_WRITER_HH
 
+#include <string>
+#include <vector>
+#include <list>
 #include <dune/common/fvector.hh>
-
-#include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dune/grid/io/file/vtk/common.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/path.hh>
+#include <dune/grid/io/file/vtk/common.hh>
 
 namespace Dumux {
 
@@ -45,7 +46,9 @@ namespace Dumux {
 template<class Scalar, class GlobalPosition>
 class PointCloudVtkWriter
 {
-    using DimVector = Dune::FieldVector<Scalar, GlobalPosition::size()>;
+    // GlobalPosition is used for the point coordinates, DimWorldVector for the actual data.
+    // GlobalPosition's ctype does not necessarily equal Scalar.
+    using DimWorldVector = Dune::FieldVector<Scalar, GlobalPosition::size()>;
 
     static constexpr unsigned int precision = 6;
     static constexpr unsigned int numBeforeLineBreak = 15;
@@ -117,7 +120,7 @@ class PointCloudVtkWriter
 
 public:
     using ScalarFunction = VTKFunction<std::vector<Scalar>>;
-    using VectorFunction = VTKFunction<std::vector<DimVector>>;
+    using VectorFunction = VTKFunction<std::vector<DimWorldVector>>;
 
 
     PointCloudVtkWriter(const std::vector<GlobalPosition>& coordinates) : coordinates_(coordinates)
@@ -139,22 +142,20 @@ public:
         writeCoordinates_(file, coordinates_);
         writeDataInfo_(file);
 
-        for(auto&& data : scalarPointData_)
-        {
+        for (auto&& data : scalarPointData_)
             writeData_(file, data);
-        }
-        for(auto&& data :vectorPointData_)
-        {
-            writeData_(file, data);
-        }
 
-        file << "</PointData>\n";
+        for (auto&& data :vectorPointData_)
+            writeData_(file, data);
+
+        if (!scalarPointData_.empty() || !vectorPointData_.empty())
+            file << "</PointData>\n";
+
         file << "</Piece>\n";
         file << "</PolyData>\n";
         file << "</VTKFile>";
 
         clear();
-
         file.close();
     }
 
@@ -197,7 +198,7 @@ public:
      * \param v The vector containing the data
      * \param name The name of the data set
      */
-    void addPointData(const std::vector<DimVector>& v, const std::string &name)
+    void addPointData(const std::vector<DimWorldVector>& v, const std::string &name)
     {
         assert(v.size() == coordinates_.size());
         vectorPointData_.push_back(VectorFunction(v, name, 3));
@@ -396,13 +397,13 @@ private:
      * \param file The output file
      * \param g The vector
      */
-    void writeToFile_(std::ostream& file, const DimVector& g)
+    void writeToFile_(std::ostream& file, const DimWorldVector& g)
     {
         assert(g.size() > 1 && g.size() < 4);
         if(g.size() < 3)
             file << g << " 0 ";
         else
-            file << g;
+            file << g << " ";
     }
 
     const std::vector<GlobalPosition>& coordinates_;
