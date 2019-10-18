@@ -2,7 +2,6 @@ add_subdirectory(staggered)
 
 install(FILES
 fluxvariables.hh
-fluxvariablescache.hh
 indices.hh
 iofields.hh
 localresidual.hh
