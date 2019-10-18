@@ -25,6 +25,8 @@
 #define DUMUX_POINTCLOUD_VTK_WRITER_HH
 
 #include <string>
+#include <vector>
+#include <list>
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/path.hh>
@@ -44,7 +46,9 @@ namespace Dumux {
 template<class Scalar, class GlobalPosition>
 class PointCloudVtkWriter
 {
-    using DimVector = Dune::FieldVector<Scalar, GlobalPosition::size()>;
+    // GlobalPosition is used for the point coordinates, DimWorldVector for the actual data.
+    // GlobalPosition's ctype does not necessarily equal Scalar.
+    using DimWorldVector = Dune::FieldVector<Scalar, GlobalPosition::size()>;
 
     static constexpr unsigned int precision = 6;
     static constexpr unsigned int numBeforeLineBreak = 15;
@@ -116,7 +120,7 @@ class PointCloudVtkWriter
 
 public:
     using ScalarFunction = VTKFunction<std::vector<Scalar>>;
-    using VectorFunction = VTKFunction<std::vector<DimVector>>;
+    using VectorFunction = VTKFunction<std::vector<DimWorldVector>>;
 
 
     PointCloudVtkWriter(const std::vector<GlobalPosition>& coordinates) : coordinates_(coordinates)
@@ -194,7 +198,7 @@ public:
      * \param v The vector containing the data
      * \param name The name of the data set
      */
-    void addPointData(const std::vector<DimVector>& v, const std::string &name)
+    void addPointData(const std::vector<DimWorldVector>& v, const std::string &name)
     {
         assert(v.size() == coordinates_.size());
         vectorPointData_.push_back(VectorFunction(v, name, 3));
@@ -393,7 +397,7 @@ private:
      * \param file The output file
      * \param g The vector
      */
-    void writeToFile_(std::ostream& file, const DimVector& g)
+    void writeToFile_(std::ostream& file, const DimWorldVector& g)
     {
         assert(g.size() > 1 && g.size() < 4);
         if(g.size() < 3)
