@@ -20,6 +20,7 @@ exceptions.hh
 fixedlengthspline_.hh
 fvproblem.hh
 indextraits.hh
+integrate.hh
 intersectionmapper.hh
 intrange.hh
 loggingparametertree.hh
