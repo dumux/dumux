@@ -1,6 +1,6 @@
 dune_symlink_to_source_files(FILES "params.input")
 
-dune_add_test(NAME example_shallowwaterfriction
+dumux_add_test(NAME example_shallowwaterfriction
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy

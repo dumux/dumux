@@ -1,4 +1,4 @@
-dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_half
+dumux_add_test(NAME test_md_boundary_darcy1p_darcy1p_half
               LABELS multidomain multidomain_boundary darcydarcy 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS DOMAINSPLIT=0
@@ -9,7 +9,7 @@ dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_half
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_darcy1p_half params.input \
                                    -Vtk.OutputName test_md_boundary_darcy1p_darcy1p_half")
 
-dune_add_test(NAME test_md_boundary_darcy1p_darcy1p_lens
+dumux_add_test(NAME test_md_boundary_darcy1p_darcy1p_lens
               LABELS multidomain multidomain_boundary darcydarcy 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS DOMAINSPLIT=1

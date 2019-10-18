@@ -3,7 +3,7 @@ dune_symlink_to_source_files(FILES "params_advection.input" "params_diffusion.in
 add_executable(test_ff_stokes2c_mass EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_stokes2c_mass PUBLIC "USE_MASS=1")
 
-dune_add_test(NAME test_ff_stokes2c_diffusion_mass
+dumux_add_test(NAME test_ff_stokes2c_diffusion_mass
               TARGET test_ff_stokes2c_mass
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -17,7 +17,7 @@ dune_add_test(NAME test_ff_stokes2c_diffusion_mass
 
 add_executable(test_ff_stokes2c EXCLUDE_FROM_ALL main.cc)
 
-dune_add_test(NAME test_ff_stokes2c_diffusion_mole
+dumux_add_test(NAME test_ff_stokes2c_diffusion_mole
               TARGET test_ff_stokes2c
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -29,7 +29,7 @@ dune_add_test(NAME test_ff_stokes2c_diffusion_mole
                              -Problem.Name test_ff_stokes2c_diffusion_mole"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-22})
 
-dune_add_test(NAME test_ff_stokes2c_advection
+dumux_add_test(NAME test_ff_stokes2c_advection
               TARGET test_ff_stokes2c
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -40,7 +40,7 @@ dune_add_test(NAME test_ff_stokes2c_advection
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c params_advection.input
                              -Problem.Name test_ff_stokes2c_advection")
 
-dune_add_test(NAME test_ff_stokes2c_advection_nocaching
+dumux_add_test(NAME test_ff_stokes2c_advection_nocaching
               SOURCES main.cc
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -55,7 +55,7 @@ dune_add_test(NAME test_ff_stokes2c_advection_nocaching
 add_executable(test_ff_stokes2cni EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_stokes2cni PUBLIC "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_ff_stokes2cni_advection
+dumux_add_test(NAME test_ff_stokes2cni_advection
               TARGET test_ff_stokes2cni
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -66,7 +66,7 @@ dune_add_test(NAME test_ff_stokes2cni_advection
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni params_advectionni.input
                              -Problem.Name test_ff_stokes2cni_advection")
 
-dune_add_test(NAME test_ff_stokes2cni_diffusion
+dumux_add_test(NAME test_ff_stokes2cni_diffusion
               TARGET test_ff_stokes2cni
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK

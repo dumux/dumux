@@ -1,4 +1,4 @@
-dune_add_test(NAME test_ff_stokes2c_maxwellstefan
+dumux_add_test(NAME test_ff_stokes2c_maxwellstefan
               LABELS freeflow navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK

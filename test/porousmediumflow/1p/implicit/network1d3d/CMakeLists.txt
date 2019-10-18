@@ -5,7 +5,7 @@ dune_symlink_to_source_files(FILES grids)
 dune_symlink_to_source_files(FILES "convergencetest.py")
 
 # dim < dimWorld tests with Dune::Foamgrid<1,3>
-dune_add_test(NAME test_1p_network1d3d_tpfa
+dumux_add_test(NAME test_1p_network1d3d_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TubesTestCCTpfa
@@ -13,7 +13,7 @@ dune_add_test(NAME test_1p_network1d3d_tpfa
               COMMAND ./convergencetest.py
               CMD_ARGS test_1p_network1d3d_tpfa params.input -Problem.Name test_1p_network1d3d_tpfa)
 
-dune_add_test(NAME test_1p_network1d3d_box
+dumux_add_test(NAME test_1p_network1d3d_box
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TubesTestBox

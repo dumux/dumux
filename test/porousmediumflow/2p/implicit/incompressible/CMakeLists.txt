@@ -4,7 +4,7 @@ dune_symlink_to_source_files(FILES "params.input")
 add_executable(test_2p_incompressible_tpfa EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_2p_incompressible_tpfa PUBLIC TYPETAG=TwoPIncompressibleTpfa)
 
-dune_add_test(NAME test_2p_incompressible_tpfa
+dumux_add_test(NAME test_2p_incompressible_tpfa
               TARGET test_2p_incompressible_tpfa
               LABELS porousmediumflow 2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -14,7 +14,7 @@ dune_add_test(NAME test_2p_incompressible_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa params.input -Problem.Name test_2p_incompressible_tpfa")
 
 # using tpfa
-dune_add_test(NAME test_2p_incompressible_tpfa_restart
+dumux_add_test(NAME test_2p_incompressible_tpfa_restart
               TARGET test_2p_incompressible_tpfa
               LABELS porousmediumflow 2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -27,7 +27,7 @@ dune_add_test(NAME test_2p_incompressible_tpfa_restart
 set_tests_properties(test_2p_incompressible_tpfa_restart PROPERTIES DEPENDS test_2p_incompressible_tpfa)
 
 # using box
-dune_add_test(NAME test_2p_incompressible_box
+dumux_add_test(NAME test_2p_incompressible_box
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
@@ -38,7 +38,7 @@ dune_add_test(NAME test_2p_incompressible_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box params.input -Problem.Name test_2p_incompressible_box")
 
 # using box with interface solver
-dune_add_test(NAME test_2p_incompressible_box_ifsolver
+dumux_add_test(NAME test_2p_incompressible_box_ifsolver
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
@@ -52,7 +52,7 @@ dune_add_test(NAME test_2p_incompressible_box_ifsolver
                                                                                                   -Problem.UseNonConformingOutput true")
 
 # using tpfa with an oil-wet lens
-dune_add_test(NAME test_2p_incompressible_tpfa_oilwet
+dumux_add_test(NAME test_2p_incompressible_tpfa_oilwet
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa
@@ -67,7 +67,7 @@ dune_add_test(NAME test_2p_incompressible_tpfa_oilwet
                                                                                                  -TimeLoop.DtInitial 130")
 
 # using mpfa
-dune_add_test(NAME test_2p_incompressible_mpfa
+dumux_add_test(NAME test_2p_incompressible_mpfa
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleMpfa

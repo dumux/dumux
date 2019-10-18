@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 # using box
-dune_add_test(NAME test_elastic_box
+dumux_add_test(NAME test_elastic_box
               LABELS geomechanics elastic
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

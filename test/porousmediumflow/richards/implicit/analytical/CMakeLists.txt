@@ -1,7 +1,7 @@
 add_input_file_links(FILES params.input)
 
 # comparison to analytical solution - only with tpfa
-dune_add_test(NAME test_richards_analytical_tpfa
+dumux_add_test(NAME test_richards_analytical_tpfa
               LABELS porousmediumflow richards
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsAnalyticalCC

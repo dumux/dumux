@@ -5,7 +5,7 @@ dune_symlink_to_source_files(FILES grids)
 # Ignore the porosity for all box models since it is defined element-wise in these test
 # but the default 2p2c implementation outputs porosity per vertex.
 # Depending on the order of the elements, the porosity would differ in these cases.
-dune_add_test(NAME test_co2_box
+dumux_add_test(NAME test_co2_box
               LABELS porousmediumflow co2
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousBox
@@ -17,7 +17,7 @@ dune_add_test(NAME test_co2_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2_box params.input -Problem.Name test_co2_box"
                        --zeroThreshold {"porosity":1})
 
-dune_add_test(NAME test_co2_tpfa
+dumux_add_test(NAME test_co2_tpfa
               LABELS porousmediumflow co2
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCTpfa
@@ -29,7 +29,7 @@ dune_add_test(NAME test_co2_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2_tpfa params.input -Problem.Name test_co2_tpfa")
 
 # build target for the CO2 non-isothermal test problem
-dune_add_test(NAME test_co2ni_box
+dumux_add_test(NAME test_co2ni_box
               LABELS porousmediumflow co2 co2ni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousNIBox
@@ -42,7 +42,7 @@ dune_add_test(NAME test_co2ni_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box paramsni.input -Problem.Name test_co2ni_box"
                        --zeroThreshold {"porosity":1})
 
-dune_add_test(NAME test_co2ni_tpfa
+dumux_add_test(NAME test_co2ni_tpfa
               LABELS porousmediumflow co2 co2ni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousNICCTpfa

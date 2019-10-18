@@ -1,7 +1,7 @@
 add_input_file_links(FILES params.input)
 
 # non-isothermal tests
-dune_add_test(NAME test_richardsni_conduction_box
+dumux_add_test(NAME test_richardsni_conduction_box
               LABELS porousmediumflow richards richardsni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionBox
@@ -11,7 +11,7 @@ dune_add_test(NAME test_richardsni_conduction_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_box-00024.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_box params.input -Problem.Name test_richardsni_conduction_box")
 
-dune_add_test(NAME test_richardsni_conduction_tpfa
+dumux_add_test(NAME test_richardsni_conduction_tpfa
               LABELS porousmediumflow richards richardsni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionCC

@@ -1,4 +1,4 @@
-dune_add_test(NAME test_ff_navierstokes_kovasznay
+dumux_add_test(NAME test_ff_navierstokes_kovasznay
               LABELS freeflow navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
@@ -10,7 +10,7 @@ dune_add_test(NAME test_ff_navierstokes_kovasznay
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_kovasznay params.input
                              -Problem.Name test_ff_navierstokes_kovasznay")
 
-dune_add_test(NAME test_ff_navierstokes_kovasznay_higherorder
+dumux_add_test(NAME test_ff_navierstokes_kovasznay_higherorder
               SOURCES main.cc
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
