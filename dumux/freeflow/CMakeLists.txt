@@ -6,7 +6,8 @@ add_subdirectory(shallowwater)
 
 install(FILES
 properties.hh
+staggeredupwindmethods.hh
+turbulencemodel.hh
 turbulenceproperties.hh
 volumevariables.hh
-staggeredupwindmethods.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow)
