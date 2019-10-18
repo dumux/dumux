@@ -26,8 +26,10 @@ add_subdirectory(tracer)
 install(FILES
 fluxvariables.hh
 fluxvariablescache.hh
+fluxvariablescachefiller.hh
 problem.hh
 properties.hh
+velocity.hh
 velocityoutput.hh
 volumevariables.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow)

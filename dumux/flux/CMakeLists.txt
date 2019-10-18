@@ -15,6 +15,7 @@ fourierslaw.hh
 fourierslawnonequilibrium.hh
 hookeslaw.hh
 maxwellstefanslaw.hh
+referencesystemformulation.hh
 shallowwaterflux.hh
 stationaryvelocityfield.hh
 upwindscheme.hh

@@ -1,11 +1,12 @@
 add_subdirectory(box)
 add_subdirectory(cellcentered)
 add_subdirectory(fem)
-add_subdirectory(staggered)
 add_subdirectory(projection)
+add_subdirectory(staggered)
 
 install(FILES
 basefvgridgeometry.hh
+basegridgeometry.hh
 box.hh
 ccmpfa.hh
 cctpfa.hh

@@ -1,5 +1,5 @@
 install(FILES
+frictionlaw.hh
 manning.hh
 nikuradse.hh
-frictionlaw.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/frictionslaws)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/frictionlaws)
