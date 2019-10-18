@@ -1,6 +1,6 @@
 add_input_file_links(FILES params.input)
 
-dune_add_test(NAME test_3pni_convection_box
+dumux_add_test(NAME test_3pni_convection_box
               LABELS porousmediumflow 3p 3pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ThreePNIConvectionBox
@@ -11,7 +11,7 @@ dune_add_test(NAME test_3pni_convection_box
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_3pni_convection_box params.input -Problem.Name test_3pni_convection_box"
                             --zeroThreshold {"velocity_aq \(m/s\)_1":1e-8})
 
-dune_add_test(NAME test_3pni_convection_tpfa
+dumux_add_test(NAME test_3pni_convection_tpfa
               LABELS porousmediumflow 3p 3pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ThreePNIConvectionCCTpfa

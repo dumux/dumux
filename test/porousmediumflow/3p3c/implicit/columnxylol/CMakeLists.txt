@@ -1,7 +1,7 @@
 add_input_file_links(FILES params.input)
 
 # non-isothermal tests
-dune_add_test(NAME test_3p3cni_columnxylol_box
+dumux_add_test(NAME test_3p3cni_columnxylol_box
               LABELS porousmediumflow 3p3c 3p3cni
               SOURCES main.cc
               TIMEOUT 1500
@@ -12,7 +12,7 @@ dune_add_test(NAME test_3p3cni_columnxylol_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_columnxylol_box-00061.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_columnxylol_box params.input -Problem.Name test_3p3cni_columnxylol_box")
 
-dune_add_test(NAME test_3p3cni_columnxylol_tpfa
+dumux_add_test(NAME test_3p3cni_columnxylol_tpfa
               LABELS porousmediumflow 3p3c 3p3cni
               SOURCES main.cc
               TIMEOUT 1500

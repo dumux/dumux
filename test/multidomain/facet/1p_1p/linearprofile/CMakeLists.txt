@@ -28,7 +28,7 @@ target_compile_definitions(test_md_facet_1p1p_linearprofile_surface_mpfa
                                    LOWDIMGRIDTYPE=Dune::FoamGrid<1,3>
                                    BULKGRIDTYPE=Dune::ALUGrid<2,3,Dune::cube,Dune::nonconforming>)
 
-dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_tpfa
+dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_tpfa
@@ -40,7 +40,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_xi1_tpfa_lowdim-00001.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_tpfa params.input")
 
-dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_tpfa
+dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_tpfa
@@ -54,7 +54,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_tpfa
                                                                -FacetCoupling.Xi 0.66 \
                                                                -Vtk.OutputName test_md_facet_1p1p_linearprofile_xi066_tpfa")
 
-dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_tpfa
+dumux_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_surface_tpfa
@@ -67,7 +67,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_surface_tpfa params.input \
                                                               -Vtk.OutputName test_md_facet_1p1p_linearprofile_surface_xi1_tpfa")
 
-dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_mpfa
+dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_mpfa
@@ -80,7 +80,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_mpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_mpfa params.input \
                                                               -Vtk.OutputName test_md_facet_1p1p_linearprofile_xi1_mpfa")
 
-dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_mpfa
+dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_mpfa
@@ -94,7 +94,7 @@ dune_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_mpfa
                                                             -FacetCoupling.Xi 0.66 \
                                                             -Vtk.OutputName test_md_facet_1p1p_linearprofile_xi066_mpfa")
 
-dune_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_mpfa
+dumux_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_surface_mpfa

@@ -1,6 +1,6 @@
 add_input_file_links(FILES params.input)
 
-dune_add_test(NAME test_3pwateroil_sagd_box
+dumux_add_test(NAME test_3pwateroil_sagd_box
               LABELS porousmediumflow 3pwateroil
               SOURCES main.cc
               TIMEOUT 1500

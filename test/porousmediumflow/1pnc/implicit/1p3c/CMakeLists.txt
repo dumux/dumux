@@ -1,7 +1,7 @@
 add_input_file_links()
 
 # 1pnc tests
-dune_add_test(NAME test_1pnc_maxwellstefan_tpfa
+dumux_add_test(NAME test_1pnc_maxwellstefan_tpfa
               LABELS porousmediumflow 1p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=MaxwellStefanOnePThreeCTestCCTpfa
@@ -11,7 +11,7 @@ dune_add_test(NAME test_1pnc_maxwellstefan_tpfa
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_maxwellstefan_tpfa-00019.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_maxwellstefan_tpfa params.input -Problem.Name test_1pnc_maxwellstefan_tpfa")
 
-dune_add_test(NAME test_1pnc_maxwellstefan_box
+dumux_add_test(NAME test_1pnc_maxwellstefan_box
               LABELS porousmediumflow 1p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=MaxwellStefanOnePThreeCTestBox

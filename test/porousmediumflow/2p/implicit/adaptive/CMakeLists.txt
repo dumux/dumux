@@ -3,7 +3,7 @@ dune_symlink_to_source_files(FILES "initialsolutioncc.txt")
 dune_symlink_to_source_files(FILES "initialsolutionbox.txt")
 
 # using tpfa
-dune_add_test(NAME test_2p_adaptive_tpfa
+dumux_add_test(NAME test_2p_adaptive_tpfa
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveTpfa
@@ -15,7 +15,7 @@ dune_add_test(NAME test_2p_adaptive_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_tpfa params.input -Problem.Name test_2p_adaptive_tpfa")
 
 # using tpfa and point source
-dune_add_test(NAME test_2p_pointsource_adaptive_tpfa
+dumux_add_test(NAME test_2p_pointsource_adaptive_tpfa
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPAdaptivePointSource
@@ -27,7 +27,7 @@ dune_add_test(NAME test_2p_pointsource_adaptive_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_pointsource_adaptive_tpfa params.input -Problem.Name test_2p_pointsource_adaptive_tpfa")
 
 # using mpfa
-dune_add_test(NAME test_2p_adaptive_mpfa
+dumux_add_test(NAME test_2p_adaptive_mpfa
               LABELS porousmediumflow 2p
              SOURCES main.cc
              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveMpfa
@@ -39,7 +39,7 @@ dune_add_test(NAME test_2p_adaptive_mpfa
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_mpfa params.input -Problem.Name test_2p_adaptive_mpfa")
 
 # using box
-dune_add_test(NAME test_2p_adaptive_box
+dumux_add_test(NAME test_2p_adaptive_box
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveBox

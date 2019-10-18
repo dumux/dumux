@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES "convergencetest.py")
 dune_symlink_to_source_files(FILES "params.input")
 
-dune_add_test(NAME test_ff_navierstokes_sincos
+dumux_add_test(NAME test_ff_navierstokes_sincos
               SOURCES main.cc
               LABELS freeflow
               TIMEOUT 1000
@@ -14,7 +14,7 @@ dune_add_test(NAME test_ff_navierstokes_sincos
               -Problem.IsStationary true
               -Component.LiquidKinematicViscosity 0.001)
 
-dune_add_test(NAME test_ff_navierstokes_sincos_instationary
+dumux_add_test(NAME test_ff_navierstokes_sincos_instationary
               TARGET test_ff_navierstokes_sincos
               LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
