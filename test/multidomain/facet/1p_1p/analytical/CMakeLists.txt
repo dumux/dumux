@@ -1,6 +1,6 @@
 dune_symlink_to_source_files(FILES "grids" "params.input" "convergencetest.py")
 
-dune_add_test(NAME test_md_facet_1p1p_tpfa_convergence
+dumux_add_test(NAME test_md_facet_1p1p_tpfa_convergence
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND )"
               SOURCES main.cc
@@ -8,7 +8,7 @@ dune_add_test(NAME test_md_facet_1p1p_tpfa_convergence
               COMMAND ./convergencetest.py
               CMD_ARGS test_md_facet_1p1p_tpfa_convergence 1e-4)
 
-dune_add_test(NAME test_md_facet_1p1p_box_convergence
+dumux_add_test(NAME test_md_facet_1p1p_box_convergence
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND )"
               SOURCES main.cc

@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 # explicit tracer tests (mass fractions)
-dune_add_test(NAME test_tracer_explicit_tpfa
+dumux_add_test(NAME test_tracer_explicit_tpfa
               LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=false USEMOLES=false
@@ -12,7 +12,7 @@ dune_add_test(NAME test_tracer_explicit_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa params.input -Problem.Name test_tracer_explicit_tpfa")
 
-dune_add_test(NAME test_tracer_explicit_box
+dumux_add_test(NAME test_tracer_explicit_box
               LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=false USEMOLES=false
@@ -24,7 +24,7 @@ dune_add_test(NAME test_tracer_explicit_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_box params.input -Problem.Name test_tracer_explicit_box")
 
 # explicit tracer tests (mole fractions, should yield same result)
-dune_add_test(NAME test_tracer_explicit_tpfa_mol
+dumux_add_test(NAME test_tracer_explicit_tpfa_mol
               LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=false USEMOLES=true
@@ -35,7 +35,7 @@ dune_add_test(NAME test_tracer_explicit_tpfa_mol
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa_mol-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa_mol params.input -Problem.Name test_tracer_explicit_tpfa_mol")
 
-dune_add_test(NAME test_tracer_explicit_box_mol
+dumux_add_test(NAME test_tracer_explicit_box_mol
               LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=false USEMOLES=true
@@ -47,7 +47,7 @@ dune_add_test(NAME test_tracer_explicit_box_mol
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_box_mol params.input -Problem.Name test_tracer_explicit_box_mol")
 
 # implicit tracer tests
-dune_add_test(NAME test_tracer_implicit_tpfa
+dumux_add_test(NAME test_tracer_implicit_tpfa
               LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=true USEMOLES=false
@@ -58,7 +58,7 @@ dune_add_test(NAME test_tracer_implicit_tpfa
                             ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_tpfa-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_tpfa params.input -Problem.Name test_tracer_implicit_tpfa")
 
-dune_add_test(NAME test_tracer_implicit_box
+dumux_add_test(NAME test_tracer_implicit_box
               LABELS porousmediumflow tracer
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=true USEMOLES=false

@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES "params.input" "grids")
 
 # tests without gravity
-dune_add_test(NAME test_2p_fracture_box
+dumux_add_test(NAME test_2p_fracture_box
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureBox
@@ -12,7 +12,7 @@ dune_add_test(NAME test_2p_fracture_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box params.input -Problem.Name test_2p_fracture_box")
 
-dune_add_test(NAME test_2p_fracture_tpfa
+dumux_add_test(NAME test_2p_fracture_tpfa
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureCCTpfa
@@ -23,7 +23,7 @@ dune_add_test(NAME test_2p_fracture_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa params.input -Problem.Name test_2p_fracture_tpfa")
 
-dune_add_test(NAME test_2p_fracture_mpfa
+dumux_add_test(NAME test_2p_fracture_mpfa
               LABELS porousmediumflow 2p
               SOURCES main.cc
               TIMEOUT 1500
@@ -36,7 +36,7 @@ dune_add_test(NAME test_2p_fracture_mpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa params.input -Problem.Name test_2p_fracture_mpfa")
 
 # tests with gravity
-dune_add_test(NAME test_2p_fracture_gravity_box
+dumux_add_test(NAME test_2p_fracture_gravity_box
               TARGET test_2p_fracture_box
               LABELS porousmediumflow 2p
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -46,7 +46,7 @@ dune_add_test(NAME test_2p_fracture_gravity_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_box-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box params.input -Problem.Name test_2p_fracture_gravity_box -Problem.EnableGravity true")
 
-dune_add_test(NAME test_2p_fracture_gravity_tpfa
+dumux_add_test(NAME test_2p_fracture_gravity_tpfa
               TARGET test_2p_fracture_tpfa
               LABELS porousmediumflow 2p
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -56,7 +56,7 @@ dune_add_test(NAME test_2p_fracture_gravity_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_tpfa-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa params.input -Problem.Name test_2p_fracture_gravity_tpfa -Problem.EnableGravity true")
 
-dune_add_test(NAME test_2p_fracture_gravity_mpfa
+dumux_add_test(NAME test_2p_fracture_gravity_mpfa
               TARGET test_2p_fracture_mpfa
               LABELS porousmediumflow 2p
               TIMEOUT 1500

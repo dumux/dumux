@@ -1,4 +1,4 @@
-dune_add_test(SOURCES test_thermalconductivityjohansen.cc
+dumux_add_test(SOURCES test_thermalconductivityjohansen.cc
               LABELS unit material
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzyData --delimiter " "
@@ -6,7 +6,7 @@ dune_add_test(SOURCES test_thermalconductivityjohansen.cc
                                ${CMAKE_CURRENT_BINARY_DIR}/johansen_lambda_eff.dat
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_thermalconductivityjohansen")
 
-dune_add_test(SOURCES test_thermalconductivitysomerton.cc
+dumux_add_test(SOURCES test_thermalconductivitysomerton.cc
               LABELS unit material
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzyData --delimiter " "

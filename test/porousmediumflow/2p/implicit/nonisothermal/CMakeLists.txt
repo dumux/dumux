@@ -1,6 +1,6 @@
 dune_symlink_to_source_files(FILES "params.input")
 
-dune_add_test(NAME test_2pni_box_simplex
+dumux_add_test(NAME test_2pni_box_simplex
               LABELS porousmediumflow 2p  2pni
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
@@ -12,7 +12,7 @@ dune_add_test(NAME test_2pni_box_simplex
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_simplex-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_simplex params.input -Problem.Name test_2pni_box_simplex -Grid.CellType Simplex")
 
-dune_add_test(NAME test_2pni_box_cube
+dumux_add_test(NAME test_2pni_box_cube
               LABELS porousmediumflow 2p  2pni
               SOURCES main.cc
               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
@@ -23,7 +23,7 @@ dune_add_test(NAME test_2pni_box_cube
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube params.input -Problem.Name test_2pni_box_cube")
 
-dune_add_test(NAME test_2pni_tpfa_simplex
+dumux_add_test(NAME test_2pni_tpfa_simplex
               LABELS porousmediumflow 2p  2pni
               SOURCES main.cc
               CMAKE_GUARD dune-alugrid_FOUND
@@ -35,7 +35,7 @@ dune_add_test(NAME test_2pni_tpfa_simplex
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa_simplex-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa_simplex params.input -Problem.Name test_2pni_tpfa_simplex -Grid.CellType Simplex")
 
-dune_add_test(NAME test_2pni_tpfa_cube
+dumux_add_test(NAME test_2pni_tpfa_cube
               LABELS porousmediumflow 2p  2pni
               SOURCES main.cc
               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>

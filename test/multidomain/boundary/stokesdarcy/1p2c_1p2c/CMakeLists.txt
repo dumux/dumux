@@ -4,7 +4,7 @@ add_input_file_links()
 
 add_executable(test_md_boundary_darcy1p2c_stokes1p2c EXCLUDE_FROM_ALL main.cc)
 
-dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_horizontal
+dumux_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_horizontal
               LABELS multidomain multidomain_boundary stokesdarcy 1pnc navierstokes
               TARGET test_md_boundary_darcy1p2c_stokes1p2c
               CMAKE_GUARD HAVE_UMFPACK
@@ -17,7 +17,7 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_horizontal
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c params_horizontalflow.input
                                   -Vtk.OutputName test_md_boundary_darcy1p2c_stokes1p2c_horizontal")
 
-dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion
+dumux_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion
               LABELS multidomain multidomain_boundary stokesdarcy 1pnc navierstokes
               TARGET test_md_boundary_darcy1p2c_stokes1p2c
               CMAKE_GUARD HAVE_UMFPACK
@@ -31,7 +31,7 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c params_verticalflow_diffusion.input
                                   -Vtk.OutputName test_md_boundary_darcy1p2c_stokes1p2c_vertical_diffusion")
 
-dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_advection
+dumux_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_vertical_advection
               LABELS multidomain multidomain_boundary stokesdarcy 1pnc navierstokes
               TARGET test_md_boundary_darcy1p2c_stokes1p2c
               CMAKE_GUARD HAVE_UMFPACK

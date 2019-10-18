@@ -1,7 +1,7 @@
 add_input_file_links(FILES params.input)
 
 # non-isothermal tests
-dune_add_test(NAME test_2p2cni_waterair_box
+dumux_add_test(NAME test_2p2cni_waterair_box
               LABELS porousmediumflow 2p2c  2p2cni
               SOURCES main.cc
               TIMEOUT 1500
@@ -12,7 +12,7 @@ dune_add_test(NAME test_2p2cni_waterair_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_box-00013.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_box params.input -Problem.Name test_2p2cni_waterair_box")
 
-dune_add_test(NAME test_2p2cni_waterair_buoyancy_box
+dumux_add_test(NAME test_2p2cni_waterair_buoyancy_box
               LABELS porousmediumflow 2p2c  2p2cni
               TARGET test_2p2cni_waterair_box
               TIMEOUT 1500
@@ -23,7 +23,7 @@ dune_add_test(NAME test_2p2cni_waterair_buoyancy_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_buoyancy_box-00015.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_box params.input -Problem.Name test_2p2cni_waterair_buoyancy_box -TimeLoop.DtInitial 150")
 
-dune_add_test(NAME test_2p2cni_waterair_tpfa
+dumux_add_test(NAME test_2p2cni_waterair_tpfa
               LABELS porousmediumflow 2p2c  2p2cni
               SOURCES main.cc
               TIMEOUT 1500
