@@ -1,13 +1,13 @@
 dune_symlink_to_source_files(FILES "params.input" "periodic.dgf")
 
 # test using periodic boundary conditions
-dune_add_test(NAME test_1p_periodic_tpfa
+dumux_add_test(NAME test_1p_periodic_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa FVGEOMCACHING=false
               CMAKE_GUARD dune-spgrid_FOUND
               COMPILE_ONLY)
 
-dune_add_test(NAME test_1p_periodic_tpfa_sequential
+dumux_add_test(NAME test_1p_periodic_tpfa_sequential
               TARGET test_1p_periodic_tpfa
               CMAKE_GUARD dune-spgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -16,7 +16,7 @@ dune_add_test(NAME test_1p_periodic_tpfa_sequential
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa_sequential-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa params.input -Problem.Name test_1p_periodic_tpfa_sequential")
 
-dune_add_test(NAME test_1p_periodic_tpfa_parallel
+dumux_add_test(NAME test_1p_periodic_tpfa_parallel
               TARGET test_1p_periodic_tpfa
               CMAKE_GUARD dune-spgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -26,7 +26,7 @@ dune_add_test(NAME test_1p_periodic_tpfa_parallel
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_1p_periodic_tpfa_parallel-00001.pvtu
                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa params.input -Problem.Name test_1p_periodic_tpfa_parallel")
 
-dune_add_test(NAME test_1p_periodic_tpfa_caching
+dumux_add_test(NAME test_1p_periodic_tpfa_caching
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa FVGEOMCACHING=true
               CMAKE_GUARD dune-spgrid_FOUND
@@ -36,7 +36,7 @@ dune_add_test(NAME test_1p_periodic_tpfa_caching
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa_caching-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa params.input -Problem.Name test_1p_periodic_tpfa_caching")
 
-dune_add_test(NAME test_1p_periodic_box
+dumux_add_test(NAME test_1p_periodic_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox
               CMAKE_GUARD dune-spgrid_FOUND

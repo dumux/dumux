@@ -1,7 +1,7 @@
 add_input_file_links(FILES params.input)
 
 # non-isothermal tests
-dune_add_test(NAME test_richardsni_evaporation_tpfa
+dumux_add_test(NAME test_richardsni_evaporation_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -10,7 +10,7 @@ dune_add_test(NAME test_richardsni_evaporation_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_tpfa-00043.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_tpfa params.input -Problem.Name test_richardsni_evaporation_tpfa")
 
-dune_add_test(NAME test_richardsni_evaporation_box
+dumux_add_test(NAME test_richardsni_evaporation_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

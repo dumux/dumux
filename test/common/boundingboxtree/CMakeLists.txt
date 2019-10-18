@@ -1,20 +1,20 @@
 # build the tests for the bounding box tree
-dune_add_test(NAME test_bboxtree_dim1
+dumux_add_test(NAME test_bboxtree_dim1
               SOURCES test_bboxtree.cc
               COMPILE_DEFINITIONS WORLD_DIMENSION=1
               LABELS unit)
 
-dune_add_test(NAME test_bboxtree_dim2
+dumux_add_test(NAME test_bboxtree_dim2
               SOURCES test_bboxtree.cc
               COMPILE_DEFINITIONS WORLD_DIMENSION=2
               LABELS unit)
 
-dune_add_test(NAME test_bboxtree_dim3
+dumux_add_test(NAME test_bboxtree_dim3
               SOURCES test_bboxtree.cc
               COMPILE_DEFINITIONS WORLD_DIMENSION=3
               LABELS unit)
 
-dune_add_test(NAME test_geometry_fracture
+dumux_add_test(NAME test_geometry_fracture
               SOURCES test_geometry_fracture.cc
               CMAKE_GUARD dune-foamgrid_FOUND
               LABELS unit)

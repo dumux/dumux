@@ -1,7 +1,7 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
-dune_add_test(NAME test_impes
+dumux_add_test(NAME test_impes
               SOURCES test_impes.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -9,7 +9,7 @@ dune_add_test(NAME test_impes
                                ${CMAKE_CURRENT_BINARY_DIR}/test_impes-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_impes")
 
-dune_add_test(NAME test_impesadaptive
+dumux_add_test(NAME test_impesadaptive
               SOURCES test_impesadaptive.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -17,7 +17,7 @@ dune_add_test(NAME test_impesadaptive
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2padaptive-00006.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_impesadaptive")
 
-dune_add_test(NAME test_impesadaptiverestart
+dumux_add_test(NAME test_impesadaptiverestart
               SOURCES test_impesadaptiverestart.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -29,7 +29,7 @@ dune_add_test(NAME test_impesadaptiverestart
 set_tests_properties(test_impesadaptiverestart PROPERTIES DEPENDS test_impesadaptive)
 
 if(MPI_FOUND)
-  dune_add_test(NAME test_impeswithamg
+  dumux_add_test(NAME test_impeswithamg
                 SOURCES test_impeswithamg.cc
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS --script fuzzy
@@ -37,7 +37,7 @@ if(MPI_FOUND)
                                  ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-test_impeswithamg-00093.vtu
                          --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impeswithamg.input -TimeManager.TEnd 7e7")
 else()
-  dune_add_test(NAME test_impeswithamg
+  dumux_add_test(NAME test_impeswithamg
                 SOURCES test_impeswithamg.cc
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS --script fuzzy
@@ -46,7 +46,7 @@ else()
                          --command "${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg")
 endif()
 
-dune_add_test(NAME test_transport
+dumux_add_test(NAME test_transport
               SOURCES test_transport.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -56,7 +56,7 @@ dune_add_test(NAME test_transport
 
 # mpfa tests
 add_executable(test_mpfa2p test_mpfa2p.cc)
-dune_add_test(NAME test_mpfao2p
+dumux_add_test(NAME test_mpfao2p
               TARGET test_mpfa2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -64,7 +64,7 @@ dune_add_test(NAME test_mpfao2p
                                ${CMAKE_CURRENT_BINARY_DIR}/test_mpfao2p-00006.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -Problem.Name test_mpfao2p -ModelType MPFAO")
 
-dune_add_test(NAME test_mpfal2p
+dumux_add_test(NAME test_mpfal2p
               TARGET test_mpfa2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -72,7 +72,7 @@ dune_add_test(NAME test_mpfal2p
                                ${CMAKE_CURRENT_BINARY_DIR}/test_mpfal2p-00006.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -Problem.Name test_mpfal2p -ModelType MPFAL")
 
-dune_add_test(NAME test_mpfal2padaptive
+dumux_add_test(NAME test_mpfal2padaptive
               TARGET test_mpfa2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -81,7 +81,7 @@ dune_add_test(NAME test_mpfal2padaptive
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -Problem.Name test_mpfal2padaptive -ModelType MPFALAdaptive")
 
 # 3d tests
-dune_add_test(NAME test_3d2pfv
+dumux_add_test(NAME test_3d2pfv
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -89,7 +89,7 @@ dune_add_test(NAME test_3d2pfv
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfv-00011.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfv -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pfv -ModelType FV")
 
-dune_add_test(NAME test_3d2pfvadaptive
+dumux_add_test(NAME test_3d2pfvadaptive
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -97,7 +97,7 @@ dune_add_test(NAME test_3d2pfvadaptive
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfvadaptive-00011.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfvadaptive -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pfvadaptive -ModelType FVAdaptive")
 
-dune_add_test(NAME test_3d2pmimetic
+dumux_add_test(NAME test_3d2pmimetic
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -105,7 +105,7 @@ dune_add_test(NAME test_3d2pmimetic
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimetic-00011.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimetic -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmimetic -ModelType Mimetic")
 
-dune_add_test(NAME test_3d2pmimeticadaptive
+dumux_add_test(NAME test_3d2pmimeticadaptive
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -113,7 +113,7 @@ dune_add_test(NAME test_3d2pmimeticadaptive
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimeticadaptive-00011.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimeticadaptive -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmimeticadaptive -ModelType MimeticAdaptive")
 
-dune_add_test(NAME test_3d2pmpfal
+dumux_add_test(NAME test_3d2pmpfal
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -121,7 +121,7 @@ dune_add_test(NAME test_3d2pmpfal
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfal-00011.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfal -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmpfal -ModelType MPFAL")
 
-dune_add_test(NAME test_3d2pmpfaladaptive
+dumux_add_test(NAME test_3d2pmpfaladaptive
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy

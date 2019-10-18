@@ -4,7 +4,7 @@ dune_symlink_to_source_files(FILES laufer_re50000.csv laufer_re50000_u+y+.csv)
 add_executable(test_ff_rans_lauferpipe_kepsilon EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_rans_lauferpipe_kepsilon PUBLIC "KEPSILON=1")
 
-dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_twolayers
+dumux_add_test(NAME test_ff_rans_lauferpipe_kepsilon_twolayers
               TARGET test_ff_rans_lauferpipe_kepsilon
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -14,7 +14,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_twolayers
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_kepsilon params.input
                         -Problem.Name test_ff_rans_lauferpipe_kepsilon_twolayers")
 
-dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_wallfunction
+dumux_add_test(NAME test_ff_rans_lauferpipe_kepsilon_wallfunction
               TARGET test_ff_rans_lauferpipe_kepsilon
               CMAKE_GUARD HAVE_UMFPACK
               LABELS freeflow rans
@@ -25,7 +25,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_kepsilon_wallfunction
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_kepsilon params_wallfunction.input
                         -Problem.Name test_ff_rans_lauferpipe_kepsilon_wallfunction")
 
-dune_add_test(NAME test_ff_rans_lauferpipe_lowrekepsilon
+dumux_add_test(NAME test_ff_rans_lauferpipe_lowrekepsilon
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -37,7 +37,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_lowrekepsilon
                         -Problem.Name test_ff_rans_lauferpipe_lowrekepsilon")
 target_compile_definitions(test_ff_rans_lauferpipe_lowrekepsilon PUBLIC "LOWREKEPSILON=1")
 
-dune_add_test(NAME test_ff_rans_lauferpipe_komega
+dumux_add_test(NAME test_ff_rans_lauferpipe_komega
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -49,7 +49,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_komega
                         -Problem.Name test_ff_rans_lauferpipe_komega")
 target_compile_definitions(test_ff_rans_lauferpipe_komega PUBLIC "KOMEGA=1")
 
-dune_add_test(NAME test_ff_rans_lauferpipe_oneeq
+dumux_add_test(NAME test_ff_rans_lauferpipe_oneeq
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -61,7 +61,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_oneeq
                         -Problem.Name test_ff_rans_lauferpipe_oneeq")
 target_compile_definitions(test_ff_rans_lauferpipe_oneeq PUBLIC "ONEEQ=1")
 
-dune_add_test(NAME test_ff_rans_lauferpipe_zeroeq
+dumux_add_test(NAME test_ff_rans_lauferpipe_zeroeq
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -72,7 +72,7 @@ dune_add_test(NAME test_ff_rans_lauferpipe_zeroeq
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_zeroeq params.input
                         -Problem.Name test_ff_rans_lauferpipe_zeroeq")
 
-dune_add_test(NAME test_ff_ransni_zeroeq
+dumux_add_test(NAME test_ff_ransni_zeroeq
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK

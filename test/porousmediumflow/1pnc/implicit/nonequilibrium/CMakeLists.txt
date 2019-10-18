@@ -2,7 +2,7 @@ add_input_file_links()
 
 # non-isothermal tests
 # conduction
-dune_add_test(NAME test_1p2c_nonequilibrium_box
+dumux_add_test(NAME test_1p2c_nonequilibrium_box
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumBox
@@ -13,7 +13,7 @@ dune_add_test(NAME test_1p2c_nonequilibrium_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_nonequilibrium_box params.input -Problem.Name test_1p2c_nonequilibrium_box"
                         --zeroThreshold {"velocity_liq \(m/s\)_1":1e-15})
 
-dune_add_test(NAME test_1p2c_nonequilibrium_tpfa
+dumux_add_test(NAME test_1p2c_nonequilibrium_tpfa
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumCCTpfa

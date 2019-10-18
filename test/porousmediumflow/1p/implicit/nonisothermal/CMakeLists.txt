@@ -1,7 +1,7 @@
 add_input_file_links()
 
 # non-isothermal tests
-dune_add_test(NAME test_1pni_conduction_box
+dumux_add_test(NAME test_1pni_conduction_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -14,7 +14,7 @@ dune_add_test(NAME test_1pni_conduction_box
 add_executable(test_1pni_convection_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_1pni_convection_box PUBLIC TYPETAG=OnePNIConvectionBox)
 
-dune_add_test(NAME test_1pni_convection_box
+dumux_add_test(NAME test_1pni_convection_box
               TARGET test_1pni_convection_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -23,7 +23,7 @@ dune_add_test(NAME test_1pni_convection_box
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pni_convection_box params_convection.input -Problem.Name test_1pni_convection_box"
                        --zeroThreshold {"velocity":1e-15})
 
-dune_add_test(NAME test_1pni_convection_box_restart
+dumux_add_test(NAME test_1pni_convection_box_restart
               TARGET test_1pni_convection_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -35,7 +35,7 @@ dune_add_test(NAME test_1pni_convection_box_restart
 # the restart test has to run after the test that produces the corresponding vtu file
 set_tests_properties(test_1pni_convection_box_restart PROPERTIES DEPENDS test_1pni_convection_box)
 
-dune_add_test(NAME test_1pni_conduction_tpfa
+dumux_add_test(NAME test_1pni_conduction_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -45,7 +45,7 @@ dune_add_test(NAME test_1pni_conduction_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pni_conduction_tpfa params_conduction.input -Problem.Name test_1pni_conduction_tpfa"
                        --zeroThreshold {"velocity":1e-8})
 
-dune_add_test(NAME test_1pni_convection_tpfa
+dumux_add_test(NAME test_1pni_convection_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -54,7 +54,7 @@ dune_add_test(NAME test_1pni_convection_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_convection_tpfa-00009.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pni_convection_tpfa params_convection.input -Problem.Name test_1pni_convection_tpfa")
 
-dune_add_test(NAME test_1pni_conduction_mpfa
+dumux_add_test(NAME test_1pni_conduction_mpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
