@@ -1,5 +1,5 @@
 
-dune_add_test(NAME test_ff_stokes2c_densitydrivenflow
+dumux_add_test(NAME test_ff_stokes2c_densitydrivenflow
               SOURCES main.cc
               LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK

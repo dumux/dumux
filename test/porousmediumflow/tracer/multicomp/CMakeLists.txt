@@ -1,7 +1,7 @@
 add_input_file_links()
 
 # tracer tests
-dune_add_test(NAME test_tracer_maxwellstefan_tpfa
+dumux_add_test(NAME test_tracer_maxwellstefan_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=MaxwellStefanTestCC
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -10,7 +10,7 @@ dune_add_test(NAME test_tracer_maxwellstefan_tpfa
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_maxwellstefan_tpfa-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_maxwellstefan_tpfa params.input -Problem.Name test_tracer_maxwellstefan_tpfa")
 
-dune_add_test(NAME test_tracer_maxwellstefan_box
+dumux_add_test(NAME test_tracer_maxwellstefan_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=MaxwellStefanTestBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

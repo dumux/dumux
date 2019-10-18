@@ -1,4 +1,4 @@
-dune_add_test(NAME test_ff_stokes_donea_nocaching
+dumux_add_test(NAME test_ff_stokes_donea_nocaching
               SOURCES main.cc
               LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK
@@ -10,7 +10,7 @@ dune_add_test(NAME test_ff_stokes_donea_nocaching
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_nocaching params.input
                              -Problem.Name test_ff_stokes_donea_nocaching")
 
-dune_add_test(NAME test_ff_stokes_donea
+dumux_add_test(NAME test_ff_stokes_donea
               SOURCES main.cc
               LABELS freeflow
               CMAKE_GUARD HAVE_UMFPACK

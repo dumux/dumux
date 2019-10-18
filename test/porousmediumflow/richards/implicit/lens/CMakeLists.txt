@@ -7,21 +7,21 @@ target_compile_definitions(test_richards_lens_tpfa PUBLIC TYPETAG=RichardsLensCC
 add_executable(test_richards_lens_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox)
 
-dune_add_test(TARGET test_richards_lens_box
+dumux_add_test(TARGET test_richards_lens_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box")
 
-dune_add_test(TARGET test_richards_lens_tpfa
+dumux_add_test(TARGET test_richards_lens_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa")
 
-dune_add_test(NAME test_richards_lens_box_parallel_yasp
+dumux_add_test(NAME test_richards_lens_box_parallel_yasp
               TARGET test_richards_lens_box
               CMAKE_GUARD MPI_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -32,7 +32,7 @@ dune_add_test(NAME test_richards_lens_box_parallel_yasp
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_yasp-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box_parallel_yasp -Grid.Overlap 0")
 
-dune_add_test(NAME test_richards_lens_tpfa_parallel_yasp
+dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp
               TARGET test_richards_lens_tpfa
               CMAKE_GUARD MPI_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -45,7 +45,7 @@ dune_add_test(NAME test_richards_lens_tpfa_parallel_yasp
 
 # TODO: there is a small difference because of the precision loss when writing and reading to and from vtk with single precision
 # This is why we need a bit higher saturation threshold since pc-sw is very sensitive to pressure for saturations close to 0
-dune_add_test(NAME test_richards_lens_tpfa_parallel_yasp_restart
+dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp_restart
               TARGET test_richards_lens_tpfa
               CMAKE_GUARD MPI_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -59,7 +59,7 @@ dune_add_test(NAME test_richards_lens_tpfa_parallel_yasp_restart
 # the restart test has to run after the test that produces the corresponding vtu file
 set_tests_properties(test_richards_lens_tpfa_parallel_yasp_restart PROPERTIES DEPENDS test_richards_lens_tpfa_parallel_yasp)
 
-dune_add_test(NAME test_richards_lens_box_parallel_ug
+dumux_add_test(NAME test_richards_lens_box_parallel_ug
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::UGGrid<2>
@@ -69,7 +69,7 @@ dune_add_test(NAME test_richards_lens_box_parallel_ug
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_ug-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_parallel_ug params.input -Problem.Name test_richards_lens_box_parallel_ug")
 
-dune_add_test(NAME test_richards_lens_tpfa_parallel_ug
+dumux_add_test(NAME test_richards_lens_tpfa_parallel_ug
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::UGGrid<2>
@@ -79,7 +79,7 @@ dune_add_test(NAME test_richards_lens_tpfa_parallel_ug
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_ug-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_ug params.input -Problem.Name test_richards_lens_tpfa_parallel_ug")
 
-dune_add_test(NAME test_richards_lens_box_parallel_alu
+dumux_add_test(NAME test_richards_lens_box_parallel_alu
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
@@ -89,7 +89,7 @@ dune_add_test(NAME test_richards_lens_box_parallel_alu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_alu-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_parallel_alu params.input -Problem.Name test_richards_lens_box_parallel_alu")
 
-dune_add_test(NAME test_richards_lens_tpfa_parallel_alu
+dumux_add_test(NAME test_richards_lens_tpfa_parallel_alu
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>

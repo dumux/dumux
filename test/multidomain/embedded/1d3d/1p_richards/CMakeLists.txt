@@ -1,4 +1,4 @@
-dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfatpfa
+dumux_add_test(NAME test_md_embedded1d3d_1p_richards_tpfatpfa
               LABELS multidomain
               SOURCES main.cc
               COMPILE_DEFINITIONS SOILTYPETAG=SoilCC
@@ -12,7 +12,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfatpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p_richards_tpfatpfa params.input \
                                    -Vtk.OutputName test_md_embedded1d3d_1p_richards_tpfatpfa")
 
-dune_add_test(NAME test_md_embedded1d3d_1p_richards_tpfabox
+dumux_add_test(NAME test_md_embedded1d3d_1p_richards_tpfabox
               LABELS multidomain
               SOURCES main.cc
               COMPILE_DEFINITIONS SOILTYPETAG=SoilBox

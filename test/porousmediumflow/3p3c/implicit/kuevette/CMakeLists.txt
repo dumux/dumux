@@ -1,6 +1,6 @@
 add_input_file_links(FILES params.input)
 
-dune_add_test(NAME test_3p3cni_kuevette_box
+dumux_add_test(NAME test_3p3cni_kuevette_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=KuevetteBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -9,7 +9,7 @@ dune_add_test(NAME test_3p3cni_kuevette_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_kuevette_box-00004.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_kuevette_box params.input -Problem.Name test_3p3cni_kuevette_box")
 
-dune_add_test(NAME test_3p3cni_kuevette_tpfa
+dumux_add_test(NAME test_3p3cni_kuevette_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=KuevetteCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
