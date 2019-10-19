@@ -695,13 +695,13 @@ public:
 
                     const Scalar mu = this->curElemVolVars()[scvf.insideScvIdx()].effectiveViscosity();
 
-                    if (scvf.dofIndexOpposingFace() == globalJ && !(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(scvf.directionIndex())))
+                    if (scvf.dofIndexOpposingFace() == globalJ && !(scvf.boundary() && (problem.boundaryTypes(element, scvf).isDirichlet(scvf.directionIndex())) || problem.boundaryTypes(element, scvf).isNeumann(scvf.directionIndex())))
                     {
                         partialDeriv = -scvf.area() / scvf.selfToOppositeDistance() * 2 * mu ;
                     }
 
                     Scalar ownDeriv = 0.0;
-                    if (scvf.dofIndex() == globalJ && !(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(scvf.directionIndex())))
+                    if (scvf.dofIndex() == globalJ && !(scvf.boundary() && (problem.boundaryTypes(element, scvf).isDirichlet(scvf.directionIndex())) || problem.boundaryTypes(element, scvf).isNeumann(scvf.directionIndex())))
                     {
                         ownDeriv += scvf.area() / scvf.selfToOppositeDistance() * 2 * mu ;
                     }
@@ -719,19 +719,22 @@ public:
 
                         if (globalJ == scvf.dofIndex()) //TODO check for dirichlet / BJS
                         {
-                            ownDeriv += 0.5*lateralFace.area()  / scvf.parallelDofsDistance(localSubFaceIdx, 0) * mu;
+                            if (!lateralFace.boundary() || !problem.boundaryTypes(element, lateralFace).isDirichlet(3))
+                                ownDeriv += 0.5*lateralFace.area()  / scvf.parallelDofsDistance(localSubFaceIdx, 0) * mu;
                         }
 
                         if (!scvf.boundary() && globalJ == data.lateralPair.second)
                         {
-                            auto neu = -0.5*scvf.area() / data.lateralDistance * lateralFace.directionSign() * scvf.directionSign() * mu;
+                            auto neu = -0.5*lateralFace.area() / data.lateralDistance * lateralFace.directionSign() * scvf.directionSign() * mu;
                             partialDeriv = neu;
                         }
 
-                        if (!scvf.boundary() && globalJ == data.lateralPair.first)
+                        if (!scvf.boundary() && globalJ == data.lateralPair.first /*&& !lateralFace.boundary()*/)
                         {
-                            auto neu = 0.5*scvf.area() / data.lateralDistance * lateralFace.directionSign() * scvf.directionSign() * mu;
+                            auto neu = 0.5*lateralFace.area() / data.lateralDistance * lateralFace.directionSign() * scvf.directionSign() * mu;
+
                             partialDeriv = neu;
+                            // std::cout << "alt " << partialDeriv << "; neu " << neu << " dofidx self "  << scvf.dofIndex() << " globalJ " << globalJ << "area " << scvf.area() << ", dist " << data.lateralDistance << ", mu" << mu << std::endl;
                         }
 
                         // std::cout << "alt " << partialDeriv << "; neu " << neu << std::endl;
@@ -751,9 +754,20 @@ public:
                     {
                         if (scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(scvf.directionIndex()))
                             partialDeriv = 1.0;
-                        else
+
+
+                        // if (!scvf.boundary() || (!problem.boundaryTypes(element, scvf).isNeumann(scvf.directionIndex()) && ! problem.boundaryTypes(element, scvf).isDirichlet(2)))
+                        if (!scvf.boundary())
+                        {
+                            if (std::abs(partialDeriv[0] - ownDeriv) > 1e-9)
+                                std::cout << "alt " << partialDeriv << "; neu " << ownDeriv << " dofidx self "  << scvf.dofIndex() << " globalJ " << globalJ /*<< "area " << scvf.area() << ", dist " << data.lateralDistance << ", mu" << mu*/ << std::endl;
+
                             partialDeriv = ownDeriv;
+                        }
                     }
+
+                    if (scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(scvf.directionIndex()))
+                        partialDeriv = 1.0;
 
                     // update the global jacobian matrix with the current partial derivatives
                     updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
@@ -829,6 +843,8 @@ public:
                 //
                 // // create the vector storing the partial derivatives
                 CellCenterResidualValue partialDeriv(0.0);
+
+                const Scalar rho = this->curElemVolVars()[scvfJ.insideScvIdx()].density();
                 //
                 // // derive the residuals numerically
                 // const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
@@ -838,7 +854,7 @@ public:
                 //                                           epsCoupl(facePriVars[pvIdx], pvIdx), numDiffMethod);
 
                 // update the global jacobian matrix with the current partial derivatives
-                partialDeriv = scvfJ.area() * scvfJ.directionSign();
+                partialDeriv = scvfJ.area() * scvfJ.directionSign() * rho;
                 updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, 0, partialDeriv);
                 //
                 // // restore the original faceVars
