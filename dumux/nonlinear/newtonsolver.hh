@@ -902,7 +902,21 @@ private:
                 if (convergenceWriter_)
                 {
                     this->assembler().assembleResidual(uCurrentIter);
-                    convergenceWriter_->write(uCurrentIter, deltaU, this->assembler().residual());
+
+
+                    convergenceWriter_->write(uCurrentIter,deltaU, this->assembler().residual());
+
+                    // static const bool print = getParam<bool>("Newton.PrintLowdimStuff", false);
+                    //
+                    // if (print)
+                    // {
+                    //     for (auto&& i : uCurrentIter[Dune::index_constant<2>()])
+                    //     std::cout << "uCurr " << i << std::endl;
+                    //     for (auto&& i : deltaU[Dune::index_constant<2>()])
+                    //     std::cout << "deltaU " << i << std::endl;
+                    //     for (auto&& i : this->assembler().residual()[Dune::index_constant<2>()])
+                    //     std::cout << "this->assembler().residual() " << i << std::endl;
+                    // }
                 }
 
                 // detect if the method has converged
@@ -1145,6 +1159,60 @@ private:
         // get the new matrix sizes
         const std::size_t numRows = M.N();
         assert(numRows == M.M());
+
+        static int counter = 0;
+
+        // Dune::printmatrix(std::cout, A[Dune::index_constant<1>()][Dune::index_constant<0>()], "", "");
+        //
+        //
+        // std::ofstream logfile00;
+        // logfile00.open("matrix_00_" + std::to_string(counter) + ".txt");
+        std::ofstream logfile11;
+        logfile11.open("matrix_11_" + std::to_string(counter) + ".txt");
+        std::ofstream logfile22;
+        // logfile22.open("matrix_22_" + std::to_string(counter) + ".txt");
+        //
+        // std::ofstream logfile01;
+        // logfile01.open("matrix_01_" + std::to_string(counter) + ".txt");
+        // std::ofstream logfile02;
+        // logfile02.open("matrix_02_" + std::to_string(counter) + ".txt");
+        //
+        // std::ofstream logfile10;
+        // logfile10.open("matrix_10_" + std::to_string(counter) + ".txt");
+        // std::ofstream logfile12;
+        // logfile12.open("matrix_12_" + std::to_string(counter) + ".txt");
+        //
+        // std::ofstream logfile20;
+        // logfile20.open("matrix_20_" + std::to_string(counter) + ".txt");
+        // std::ofstream logfile21;
+        // logfile21.open("matrix_21_" + std::to_string(counter) + ".txt");
+        //
+        // std::ofstream logfile;
+        // logfile.open("matrix_complete_" + std::to_string(counter) + ".txt");
+
+        ++counter;
+        //
+        // static const bool printFullMatrix = getParam<bool>("Newton.PrintFullMatrix", false);
+        static const bool printMatrices = getParam<bool>("Newton.PrintFullMatrices", false);
+        //
+        // if (printFullMatrix)
+        //     Dune::printmatrix(logfile, M, "", "", 10, 10);
+        //
+        if (printMatrices)
+            Dune::printmatrix(logfile11, A[Dune::index_constant<1>()][Dune::index_constant<1>()], "", "", 10, 10);
+        // {
+        //     Dune::printmatrix(logfile00, A[Dune::index_constant<0>()][Dune::index_constant<0>()], "", "", 10, 10);
+        //     Dune::printmatrix(logfile22, A[Dune::index_constant<2>()][Dune::index_constant<2>()], "", "", 10, 10);
+        //
+        //     Dune::printmatrix(logfile01, A[Dune::index_constant<0>()][Dune::index_constant<1>()], "", "", 10, 3);
+        //     Dune::printmatrix(logfile02, A[Dune::index_constant<0>()][Dune::index_constant<2>()], "", "", 10, 10);
+        //
+            // Dune::printmatrix(logfile10, A[Dune::index_constant<1>()][Dune::index_constant<0>()], "", "", 10, 10);
+        //     Dune::printmatrix(logfile12, A[Dune::index_constant<1>()][Dune::index_constant<2>()], "", "", 10, 10);
+        //
+        //     Dune::printmatrix(logfile20, A[Dune::index_constant<2>()][Dune::index_constant<0>()], "", "", 10, 10);
+        //     Dune::printmatrix(logfile21, A[Dune::index_constant<2>()][Dune::index_constant<1>()], "", "", 10, 10);
+        // }
 
         // create the vector the IterativeSolver backend can handle
         const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
