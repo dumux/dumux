@@ -6,6 +6,7 @@ geometricentityset.hh
 geometryintersection.hh
 grahamconvexhull.hh
 intersectingentities.hh
+intersectionentityset.hh
 intersectspointgeometry.hh
 intersectspointsimplex.hh
 makegeometry.hh
