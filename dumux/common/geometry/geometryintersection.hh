@@ -1381,10 +1381,10 @@ public:
             swap(tp, tq);
 
         using std::min; using std::max;
-        const auto t0 = min(abnorm2, max(0.0, tp));
-        const auto t1 = max(0.0, min(abnorm2, tq));
+        tp = min(abnorm2, max(0.0, tp));
+        tq = max(0.0, min(abnorm2, tq));
 
-        if (abs(t0-t1) < eps2)
+        if (abs(tp-tq) < eps2)
             return false;
 
         intersection = Intersection({geo1.global(tp/abnorm2), geo1.global(tq/abnorm2)});
