@@ -23,6 +23,8 @@
 #ifndef DUMUX_GEOMETRY_INTERSECTION_HH
 #define DUMUX_GEOMETRY_INTERSECTION_HH
 
+#include <tuple>
+
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -74,19 +76,37 @@ struct PolygonPolicy
     using Intersection = Polygon;
 };
 
+//! Policy structure for polyhedron-like intersections
+template<class ct, int dw>
+struct PolyhedronPolicy
+{
+    using ctype = ct;
+    using Point = Dune::FieldVector<ctype, dw>;
+    using Polyhedron = std::vector<Point>;
+
+    static constexpr int dimWorld = dw;
+    static constexpr int dimIntersection = 3;
+    using Intersection = Polyhedron;
+};
+
 //! default policy chooser class
-template<class Geometry1, class Geometry2, int dim2 = Geometry2::mydimension>
+template<class Geometry1, class Geometry2>
 class DefaultPolicyChooser
 {
     static constexpr int dimworld = Geometry1::coorddimension;
     static constexpr int isDim = std::min( int(Geometry1::mydimension), int(Geometry2::mydimension) );
-    static_assert(dimworld == int(Geometry2::coorddimension), "Geometries must have the same coordinate dimension!");
-    static_assert(isDim == 1 || isDim == 2, "No chooser class specialization available for given dimensions");
+    static_assert(dimworld == int(Geometry2::coorddimension),
+                  "Geometries must have the same coordinate dimension!");
+    static_assert(int(Geometry1::mydimension) <= 3 && int(Geometry2::mydimension) <= 3,
+                  "Geometries must have dimension 3 or less.");
     using ctype = typename Dune::PromotionTraits<typename Geometry1::ctype, typename Geometry2::ctype>::PromotedType;
+
+    using DefaultPolicies = std::tuple<PointPolicy<ctype, dimworld>,
+                                       SegmentPolicy<ctype, dimworld>,
+                                       PolygonPolicy<ctype, dimworld>,
+                                       PolyhedronPolicy<ctype, dimworld>>;
 public:
-    using type = std::conditional_t< isDim == 2,
-                                     PolygonPolicy<ctype, Geometry1::coorddimension>,
-                                     SegmentPolicy<ctype, Geometry1::coorddimension> >;
+    using type = std::tuple_element_t<isDim, DefaultPolicies>;
 };
 
 //! Helper alias to define the default intersection policy
