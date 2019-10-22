@@ -344,7 +344,7 @@ public:
                             neighborIdx = neighborIdx_[elementIdx][normalNormDim][1];
 
                         const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-                        bjsVelocityAverage[normalNormDim] += ParentType::bjsVelocity(element, scv, lateralFace, velocity_[elementIdx][velIdx]);
+                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, lateralFace, velocity_[elementIdx][velIdx], 0.0);
                         if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
                             DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
                         bjsNeighbor[normalNormDim] = neighborIdx;
