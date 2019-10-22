@@ -670,7 +670,7 @@ private:
         else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
         {
             const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-            return problem.bjsVelocity(boundaryElement, scv, lateralScvf, parallelVelocity);
+            return problem.beaversJosephVelocity(boundaryElement, scv, lateralScvf, parallelVelocity, 0.0);
         }
         else
         {
