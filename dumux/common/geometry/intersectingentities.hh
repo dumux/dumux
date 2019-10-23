@@ -150,6 +150,111 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
 
 /*!
  * \ingroup Geometry
+ * \brief Compute all intersections between a geometry and a bounding box tree
+ */
+template<class Geometry, class EntitySet>
+inline std::vector<IntersectionInfo<Geometry::coorddimension, typename Geometry::ctype, typename EntitySet::ctype>>
+intersectingEntities(const Geometry& geometry,
+                     const BoundingBoxTree<EntitySet>& tree)
+{
+    // check if the world dimensions match
+    static_assert(int(Geometry::coorddimension) == int(EntitySet::dimensionworld),
+        "Can only intersect geometry and bounding box tree of same world dimension");
+
+    // Create data structure for return type
+    std::vector<IntersectionInfo<Geometry::coorddimension, typename Geometry::ctype, typename EntitySet::ctype>> intersections;
+    using ctype = typename IntersectionInfo<Geometry::coorddimension, typename Geometry::ctype, typename EntitySet::ctype>::ctype;
+    static constexpr int dimworld = Geometry::coorddimension;
+
+    // compute the bounding box of the given geometry
+    std::array<ctype, 2*Geometry::coorddimension> bBox;
+    ctype* xMin = bBox.data(); ctype* xMax = xMin + Geometry::coorddimension;
+
+    // Get coordinates of first vertex
+    auto corner = geometry.corner(0);
+    for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
+        xMin[dimIdx] = xMax[dimIdx] = corner[dimIdx];
+
+    // Compute the min and max over the remaining vertices
+    for (std::size_t cornerIdx = 1; cornerIdx < geometry.corners(); ++cornerIdx)
+    {
+        corner = geometry.corner(cornerIdx);
+        for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
+        {
+            using std::max;
+            using std::min;
+            xMin[dimIdx] = min(xMin[dimIdx], corner[dimIdx]);
+            xMax[dimIdx] = max(xMax[dimIdx], corner[dimIdx]);
+        }
+    }
+
+    // Call the recursive find function to find candidates
+    intersectingEntities(geometry, tree,
+                         bBox, tree.numBoundingBoxes() - 1,
+                         intersections);
+
+    return intersections;
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute intersections with point for all nodes of the bounding box tree recursively
+ */
+template<class Geometry, class EntitySet>
+void intersectingEntities(const Geometry& geometry,
+                          const BoundingBoxTree<EntitySet>& tree,
+                          const std::array<typename Geometry::ctype, 2*Geometry::coorddimension>& bBox,
+                          std::size_t nodeIdx,
+                          std::vector<IntersectionInfo<Geometry::coorddimension,
+                                                       typename Geometry::ctype,
+                                                       typename EntitySet::ctype>>& intersections)
+{
+    // if the two bounding boxes don't intersect we can stop searching
+    static constexpr int dimworld = Geometry::coorddimension;
+    if (!intersectsBoundingBoxBoundingBox<dimworld>(bBox.data(), tree.getBoundingBoxCoordinates(nodeIdx)))
+        return;
+
+    // get node info for current bounding box node
+    const auto& bBoxNode = tree.getBoundingBoxNode(nodeIdx);
+
+    // if the box is a leaf do the primitive test.
+    if (tree.isLeaf(bBoxNode, nodeIdx))
+    {
+        // eIdxA is always 0 since we intersect with exactly one geometry
+        const auto eIdxA = 0;
+        const auto eIdxB = bBoxNode.child1;
+
+        const auto geometryTree = tree.entitySet().entity(eIdxB).geometry();
+        using GeometryTree = std::decay_t<decltype(geometryTree)>;
+        using Policy = IntersectionPolicy::DefaultPolicy<Geometry, GeometryTree>;
+        using IntersectionAlgorithm = GeometryIntersection<Geometry, GeometryTree, Policy>;
+        using Intersection = typename IntersectionAlgorithm::Intersection;
+        Intersection intersection;
+
+        if (IntersectionAlgorithm::intersection(geometry, geometryTree, intersection))
+        {
+            static constexpr int dimIntersection = Policy::dimIntersection;
+            if (dimIntersection >= 2)
+            {
+                const auto triangulation = triangulate<dimIntersection, dimworld>(intersection);
+                for (unsigned int i = 0; i < triangulation.size(); ++i)
+                    intersections.emplace_back(eIdxA, eIdxB, std::move(triangulation[i]));
+            }
+            else
+                intersections.emplace_back(eIdxA, eIdxB, intersection);
+        }
+    }
+
+    // No leaf. Check both children nodes.
+    else
+    {
+        intersectingEntities(geometry, tree, bBox, bBoxNode.child0, intersections);
+        intersectingEntities(geometry, tree, bBox, bBoxNode.child1, intersections);
+    }
+}
+
+/*!
+ * \ingroup Geometry
  * \brief Compute all intersections between two bounding box trees
  */
 template<class EntitySet0, class EntitySet1>
