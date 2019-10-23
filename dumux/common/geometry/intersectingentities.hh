@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <type_traits>
+#include <vector>
 
 #include <dune/common/fvector.hh>
 
@@ -31,10 +32,63 @@
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/intersectspointgeometry.hh>
 #include <dumux/common/geometry/geometryintersection.hh>
-#include <dumux/common/geometry/boundingboxtreeintersection.hh>
 #include <dumux/common/geometry/triangulation.hh>
 
 namespace Dumux {
+
+/*!
+ * \ingroup Geometry
+ * \brief An intersection object resulting from the intersection of two primitives in an entity set
+ * \note this is used as return type for some of the intersectingEntities overloads below
+ */
+template<int dimworld, class CoordTypeA, class CoordTypeB = CoordTypeA>
+class IntersectionInfo
+{
+public:
+    using ctype = typename Dune::PromotionTraits<CoordTypeA, CoordTypeB>::PromotedType;
+    static constexpr int dimensionworld = dimworld;
+    using GlobalPosition = Dune::FieldVector<ctype, dimworld>;
+
+    template<class Corners>
+    explicit IntersectionInfo(std::size_t a, std::size_t b, Corners&& c)
+    : a_(a)
+    , b_(b)
+    , corners_(c.begin(), c.end())
+    {}
+
+    //! Get the index of the intersecting entity belonging to this grid
+    std::size_t first() const
+    { return a_; }
+
+    //! Get the index of the intersecting entity belonging to the other grid
+    std::size_t second() const
+    { return b_; }
+
+    //! Get the corners of the intersection geometry
+    std::vector<GlobalPosition> corners() const
+    { return corners_; }
+
+    /*!
+     * \brief Check if the corners of this intersection match with the given corners
+     * \note This is useful to check if the intersection geometry of two intersections coincide.
+     */
+    bool cornersMatch(const std::vector<GlobalPosition>& otherCorners) const
+    {
+        if (otherCorners.size() != corners_.size())
+            return false;
+
+        const auto eps = 1.5e-7*(corners_[1] - corners_[0]).two_norm();
+        for (int i = 0; i < corners_.size(); ++i)
+            if ((corners_[i] - otherCorners[i]).two_norm() > eps)
+                return false;
+
+        return true;
+    }
+
+private:
+    std::size_t a_, b_; //!< Indices of the intersection elements
+    std::vector<GlobalPosition> corners_; //!< the corner points of the intersection geometry
+};
 
 /*!
  * \ingroup Geometry
@@ -99,7 +153,7 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
  * \brief Compute all intersections between two bounding box trees
  */
 template<class EntitySet0, class EntitySet1>
-inline std::vector<BoundingBoxTreeIntersection<EntitySet0, EntitySet1>>
+inline std::vector<IntersectionInfo<EntitySet0::dimensionworld, typename EntitySet0::ctype, typename EntitySet1::ctype>>
 intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
                      const BoundingBoxTree<EntitySet1>& treeB)
 {
@@ -108,7 +162,7 @@ intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
         "Can only intersect bounding box trees of same world dimension");
 
     // Create data structure for return type
-    std::vector<BoundingBoxTreeIntersection<EntitySet0, EntitySet1>> intersections;
+    std::vector<IntersectionInfo<EntitySet0::dimensionworld, typename EntitySet0::ctype, typename EntitySet1::ctype>> intersections;
 
     // Call the recursive find function to find candidates
     intersectingEntities(treeA, treeB,
@@ -127,7 +181,9 @@ template<class EntitySet0, class EntitySet1>
 void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
                           const BoundingBoxTree<EntitySet1>& treeB,
                           std::size_t nodeA, std::size_t nodeB,
-                          std::vector<BoundingBoxTreeIntersection<EntitySet0, EntitySet1>>& intersections)
+                          std::vector<IntersectionInfo<EntitySet0::dimensionworld,
+                                                       typename EntitySet0::ctype,
+                                                       typename EntitySet1::ctype>>& intersections)
 {
     // Get the bounding box for the current node
     const auto& bBoxA = treeA.getBoundingBoxNode(nodeA);
