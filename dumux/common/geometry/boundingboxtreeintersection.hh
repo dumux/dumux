@@ -22,6 +22,7 @@
 #ifndef DUMUX_BOUNDING_BOX_TREE_INTERSECTION_HH
 #define DUMUX_BOUNDING_BOX_TREE_INTERSECTION_HH
 
+#warning "This header is deprecated and will be removed after 3.2. Use more general class IntersectionInfo from header intersectingentities.hh"
 #include <dune/common/fvector.hh>
 #include <dune/common/promotiontraits.hh>
 
@@ -37,7 +38,7 @@ namespace Dumux {
  * intersecting entities and the corners of the intersection object.
  */
 template<class EntitySet0, class EntitySet1>
-class BoundingBoxTreeIntersection
+class [[deprecated("Will be removed after 3.2. Use more general class IntersectionInfo from header intersectingentities.hh")]] BoundingBoxTreeIntersection
 {
     enum { dimworld = EntitySet0::dimensionworld };
     using ctype = typename Dune::PromotionTraits<typename EntitySet0::ctype, typename EntitySet1::ctype>::PromotedType;

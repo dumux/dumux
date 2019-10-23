@@ -8,6 +8,7 @@
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/common/timer.hh>
+#include <dune/geometry/affinegeometry.hh>
 
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
@@ -54,6 +55,27 @@ public:
         if (entities.size() != expectedCollisions)
         {
             std::cerr << "Point intersection failed: Expected "
+                      << expectedCollisions << " and got "
+                      << entities.size() << "!\n";
+            return 1;
+        }
+        return 0;
+    }
+
+    template<class Geometry>
+    int intersectGeometry(const Geometry& g, std::size_t expectedCollisions)
+    {
+        std::cout << "Intersect with geometry type ("<< g.type() <<") ";
+
+        Dune::Timer timer;
+        const auto entities = intersectingEntities(g, *tree_);
+
+        std::cout << " --> " << entities.size() << " intersection(s) found ("
+                  << expectedCollisions << " expected) in " << timer.elapsed() << " seconds.\n";
+
+        if (entities.size() != expectedCollisions)
+        {
+            std::cerr << "Geometry intersection failed: Expected "
                       << expectedCollisions << " and got "
                       << entities.size() << "!\n";
             return 1;
@@ -162,12 +184,20 @@ int main (int argc, char *argv[]) try
             // Dune::VTKWriter<Grid::LeafGridView> vtkWriter(grid->leafGridView());
             // vtkWriter.write("grid_dim" + std::to_string(dimworld), Dune::VTK::ascii);
 
-            // bboxtree tests using one bboxtree
+            // bboxtree tests using one bboxtree and a point
             returns.push_back(test.build(grid->leafGridView()));
             returns.push_back(test.intersectPoint(GlobalPosition(0.0*scaling), 1));
             returns.push_back(test.intersectPoint(GlobalPosition(1e-3*scaling), 1));
             returns.push_back(test.intersectPoint(GlobalPosition(1.0*scaling/numCellsX), 1<<dimworld));
             returns.push_back(test.intersectPoint(GlobalPosition(1.0*scaling), 1));
+
+            // bboxtree tests using one bboxtree and a geometry
+            // TODO add more such tests
+#if WORLD_DIMENSION == 3
+            std::array<GlobalPosition, 3> corners{{{0.0, 0.0, 0.0}, {0.0, 1.0*scaling, 0.0}, {1.0*scaling, 1.0*scaling, 0.0}}};
+            Dune::AffineGeometry<double, 2, WORLD_DIMENSION> geometry(Dune::GeometryTypes::simplex(2), corners);
+            returns.push_back(test.intersectGeometry(geometry, 2145)); // (33*33/2 - 33/2)*4 + 33
+#endif
         }
 
 #if HAVE_DUNE_FOAMGRID && WORLD_DIMENSION == 3
