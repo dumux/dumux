@@ -105,13 +105,13 @@ public:
         // Then look for the necessary keys to construct from the input file
         else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
         {
-            // make a structured grid
             if (elType == Dune::cube)
-                ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Cube, modelParamGroup);
+                makeStructuredGrid<dim, dimworld>(ParentType::CellType::Cube, modelParamGroup);
             else if (elType == Dune::simplex)
-                ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex, modelParamGroup);
+                makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex, modelParamGroup);
             else
                 DUNE_THROW(Dune::IOError, "ALUGrid only supports Dune::cube or Dune::simplex as cell type!");
+
             ParentType::maybeRefineGrid(modelParamGroup);
             ParentType::loadBalance();
         }
@@ -202,6 +202,32 @@ public:
                 ParentType::gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
             }
         }
+    }
+
+    /*!
+     * \brief Makes a structured cube grid using the structured grid factory
+     */
+    template <int dimension, int dimensionworld, std::enable_if_t<dimension != dimensionworld, int> = 0>
+    void makeStructuredGrid(typename ParentType::CellType cellType,
+                            const std::string& modelParamGroup)
+    {
+        DUNE_THROW(Dune::IOError, "ALUGrid currently only supports the creation of structured grids with dimension == dimensionworld. Consider reading in a grid file instead.");
+    }
+
+    /*!
+     * \brief Makes a structured cube grid using the structured grid factory
+     */
+    template <int dimension, int dimensionworld, std::enable_if_t<dimension == dimensionworld, int> = 0>
+    void makeStructuredGrid(typename ParentType::CellType cellType,
+                            const std::string& modelParamGroup)
+    {
+        // make a structured grid
+        if (elType == Dune::cube)
+            ParentType::template makeStructuredGrid<dimension, dimensionworld>(ParentType::CellType::Cube, modelParamGroup);
+        else if (elType == Dune::simplex)
+            ParentType::template makeStructuredGrid<dimension, dimensionworld>(ParentType::CellType::Simplex, modelParamGroup);
+        else
+            DUNE_THROW(Dune::IOError, "ALUGrid only supports Dune::cube or Dune::simplex as cell type!");
     }
 };
 
