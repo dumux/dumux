@@ -67,11 +67,12 @@ class MPNCVolumeVariablesImplementation<Traits, false>
     static constexpr bool enableChemicalNonEquilibrium = ModelTraits::enableChemicalNonEquilibrium();
     static constexpr bool enableDiffusion = ModelTraits::enableMolecularDiffusion();
 
-    using Indices = typename ModelTraits::Indices;
     using ComponentVector = Dune::FieldVector<Scalar, ModelTraits::numFluidComponents()>;
     using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
 
 public:
+    //! Export the type encapsulating primary variable indices
+    using Indices = typename Traits::ModelTraits::Indices;
     //! Export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
     //! Export the fluid state type
