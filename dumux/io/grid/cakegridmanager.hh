@@ -39,7 +39,7 @@ namespace Dumux {
 /*!
  * \ingroup InputOutput
  * \brief Provides a grid manager with a method for creating creating vectors
- *        with polar Coordinates and one for creating a cartesian grid from
+ *        with polar Coordinates and one for creating a Cartesian grid from
  *        these polar coordinates.
  */
 template <class Grid>
@@ -64,7 +64,7 @@ public:
         const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
 
         std::array<std::vector<Scalar>, dim> polarCoordinates;
-        // Indices specifing in which direction the piece of cake is oriented
+        // Indices specifying in which direction the piece of cake is oriented
         Dune::FieldVector<int, dim> indices(-1);
         createVectors(polarCoordinates, indices, modelParamGroup, verbose);
 
@@ -111,19 +111,19 @@ public:
             if (hasRadial)
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Radial" + std::to_string(i));
-                indices[0] = i; // Index specifing radial direction
+                indices[0] = i; // Index specifying radial direction
             }
 
             else if (hasAngular)
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Angular" + std::to_string(i));
-                indices[1] = i; // Index specifing angular direction
+                indices[1] = i; // Index specifying angular direction
             }
 
             else // hasAxial
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Axial" + std::to_string(i));
-                indices[2] = i; // Index specifing axial direction
+                indices[2] = i; // Index specifying axial direction
             }
 
             if (!std::is_sorted(positions[i].begin(), positions[i].end()))
@@ -260,10 +260,10 @@ public:
     }
 
     /*!
-     * \brief Creates cartesian grid from polar coordinates.
+     * \brief Creates Cartesian grid from polar coordinates.
      *
      * \param polarCoordinates Vector containing radial, angular and axial coordinates (in this order)
-     * \param indices Indices specifing the radial, angular and axial direction (in this order)
+     * \param indices Indices specifying the radial, angular and axial direction (in this order)
      * \param modelParamGroup name of the model parameter group
      * \param verbose if the output should be verbose
      */
@@ -301,7 +301,7 @@ public:
                         // Get radius for the well (= a hole) in the center
                         const auto wellRadius = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
 
-                        // transform into cartesian Coordinates
+                        // transform into Cartesian coordinates
                         using std::cos;
                         using std::sin;
                         Dune::FieldVector <double, dim> v(0.0);
@@ -324,6 +324,8 @@ public:
             // assign nodes
             unsigned int z = 0;
             unsigned int t = 0;
+            unsigned int rSize = dR.size();
+            unsigned int zSize = dZ.size();
             for (int j = 0; j < dA.size() - 1; ++j)
             {
                 for (int l = 0; l < dZ.size() - 1; ++l)
@@ -332,8 +334,6 @@ public:
                     {
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
-                            unsigned int rSize = dR.size();
-                            unsigned int zSize = dZ.size();
                             std::vector<unsigned int> vid({z, z+1, z+rSize*zSize,
                                                            z+rSize*zSize+1, z+rSize, z+rSize+1,
                                                            z+rSize*zSize+rSize, z+rSize*zSize+rSize+1});
@@ -348,17 +348,15 @@ public:
 
                             gridFactory.insertElement(type, vid);
 
-                            z = z+1;
+                            z++;
                         }
-                        z = z+1;
+                        z++;
                     }
                     else
                     {
                         // assign nodes for 360°-cake
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
-                            // z = z + 1;
-                            unsigned int rSize = dR.size();
                             std::vector<unsigned int> vid({z, z+1, t,
                                                            t+1, z+rSize, z+rSize+1,
                                                            t+rSize, t+rSize+1});
@@ -372,21 +370,19 @@ public:
                             }
 
                             gridFactory.insertElement(type, vid);
-                            t = t + 1;
-                            z = z+1;
+                            t++;
+                            z++;
                         }
-                        t = t + 1;
-                        z = z+1;
+                        t++;
+                        z++;
 
                         if (verbose)
                             std::cout << "assign nodes 360° ends..." << std::endl;
                     }
                 }
-
-                z = z + dR.size();
+                z += dR.size();
             }
         }
-
         // for dim = 2
         else
         {
@@ -397,12 +393,13 @@ public:
                     // Get radius for the well (= a hole) in the center
                     const Scalar wellRadius = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
 
-                    // transform into cartesian Coordinates
+                    // transform into Cartesian coordinates
                     Dune::FieldVector <double, dim> v(0.0);
 
                     v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
                     v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
-                    if(verbose) std::cout << "Coordinates of : " << v[0] << " " << v[1] << std::endl;
+                    if(verbose)
+                        std::cout << "Coordinates of : " << v[0] << " " << v[1] << std::endl;
                     gridFactory.insertVertex(v);
                 }
             }
@@ -411,13 +408,13 @@ public:
             // assign nodes
             unsigned int z = 0;
             unsigned int t = 0;
+            unsigned int rSize = dR.size();
             for (int j = 0; j < dA.size() - 1; ++j)
             {
                 if (j < maxdA)
                 {
                     for (int i = 0; i < dR.size() - 1; ++i)
                     {
-                        unsigned int rSize = dR.size();
                         std::vector<unsigned int> vid({z, z+1, z+rSize, z+rSize+1});
 
                         if (verbose)
@@ -429,16 +426,15 @@ public:
                         }
 
                         gridFactory.insertElement(type, vid);
-                        z = z+1;
+                        z++;
                     }
-                    z = z+1;
+                    z++;
                 }
                 else
                 {
                     // assign nodes for 360°-cake
                     for (int i = 0; i < dR.size() - 1; ++i)
                     {
-                        // z = z + 1;
                         std::vector<unsigned int> vid({z, z+1, t, t+1});
 
                         if (verbose)
@@ -450,11 +446,11 @@ public:
                         }
 
                         gridFactory.insertElement(type, vid);
-                        t = t + 1;
-                        z = z+1;
+                        t++;
+                        z++;
                     }
-                    t = t + 1;
-                    z = z+1;
+                    t++;
+                    z++;
 
                     if (verbose)
                         std::cout << "assign nodes 360 ends..." << std::endl;
