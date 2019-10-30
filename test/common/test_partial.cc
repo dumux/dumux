@@ -12,6 +12,7 @@
 #include <dune/istl/multitypeblockvector.hh>
 
 #include <dumux/common/partial.hh>
+#include <dune/common/version.hh>
 
 namespace Dumux {
 
@@ -41,8 +42,14 @@ void runTest()
     auto p = partial(m, _0, _2);
     p = partial(m, std::make_tuple(_0, _2));
 
+#if DUNE_VERSION_GT_REV(DUNE_ISTL,2,6,0)
     if (!std::is_same<T<Block1&, Block2&>, std::decay_t<decltype(p)>>::value)
         DUNE_THROW(Dune::Exception, "Dumux::partial() returned wrong type: " << Dune::className(p));
+#else
+    // for dune less or equal than v2.6.0, partial returns a std::tuple
+    if (!(std::is_same<T<Block1&, Block2&>, std::decay_t<decltype(p)>>::value || std::is_same<MultiTypeBlockVectorProxy<Block1&, Block2&>, std::decay_t<decltype(p)>>::value))
+       DUNE_THROW(Dune::Exception, "Dumux::partial() returned wrong type: " << Dune::className(p));
+#endif
 
     std::get<1>(p)[0][0] = 5.0;
 
