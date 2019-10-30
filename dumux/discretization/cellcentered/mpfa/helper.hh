@@ -541,8 +541,12 @@ public:
         return ip;
     }
 
-    // returns a vector which maps true to each vertex on processor boundaries and false otherwise
-    // TODO: Does this really NOT work with ghosts? Adjust to make it work with ghosts or rename the function!
+    /*!
+     * \brief Returns a vector which maps true to each vertex on processor boundaries and false otherwise
+     * \todo TODO: The name of this function is not so good, as these are not ghost vertices according
+     *             to the Dune definition of ghost entities. Moreover, it should be tried to make MPFA work
+     *             also with ghost entities.
+     */
     static std::vector<bool> findGhostVertices(const GridView& gridView, const VertexMapper& vertexMapper)
     {
         std::vector<bool> ghostVertices(gridView.size(dim), false);
