@@ -160,9 +160,10 @@ public:
         using std::pow;
         for (int dimIdx = 0; dimIdx < dim; dimIdx++)
         {
-            std::size_t numGlobalPositions = 0;
+            // Each grid direction is subdivided into (numCells + 1) points
+            std::size_t numGlobalPositions = 1;
             for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
-                numGlobalPositions += cells[dimIdx][zoneIdx] + 1;
+                numGlobalPositions += cells[dimIdx][zoneIdx];
 
             globalPositions[dimIdx].resize(numGlobalPositions);
             std::size_t posIdx = 0;
