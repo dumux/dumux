@@ -280,7 +280,7 @@ public:
         // is applied for all elements until the last one  (= dA.size() - 1) and the 360° case,
         // where it is only applied until the second to last element (dA.size() - 2).
         int maxdA = dA.size() - 1;
-        if (Dune::FloatCmp::eq(polarCoordinates[1][polarCoordinates[1].size()-1], 360.0))
+        if (Dune::FloatCmp::eq(dA[dA.size()-1], 2*M_PI))
         {
             maxdA = dA.size() - 2;
         }
@@ -292,7 +292,7 @@ public:
         if (dim == 3)
         {
             std::vector<Scalar> dZ = polarCoordinates[2];
-            for (int j = 0; j <= dA.size() - 1; ++j)
+            for (int j = 0; j <= maxdA; ++j)
             {
                 for (int l = 0; l <= dZ.size() - 1; ++l)
                 {
@@ -377,9 +377,10 @@ public:
                         }
                         t = t + 1;
                         z = z+1;
+
+                        if (verbose)
+                            std::cout << "assign nodes 360° ends..." << std::endl;
                     }
-                    if (verbose)
-                        std::cout << "assign nodes 360° ends..." << std::endl;
                 }
 
                 z = z + dR.size();
@@ -389,7 +390,7 @@ public:
         // for dim = 2
         else
         {
-            for (int j = 0; j <= dA.size() - 1; ++j)
+            for (int j = 0; j <= maxdA; ++j)
             {
                 for (int i = 0; i <= dR.size()- 1; ++i)
                 {
@@ -454,8 +455,10 @@ public:
                     }
                     t = t + 1;
                     z = z+1;
+
+                    if (verbose)
+                        std::cout << "assign nodes 360 ends..." << std::endl;
                 }
-                std::cout << "assign nodes 360 ends..." << std::endl;
             }
         }
         // return the grid pointer
