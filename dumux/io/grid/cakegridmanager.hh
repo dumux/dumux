@@ -112,6 +112,9 @@ public:
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Radial" + std::to_string(i));
                 indices[0] = i; // Index specifying radial direction
+
+                if(positions[i][0] < 1.0e-8)
+                    DUNE_THROW(Dune::GridError, "Make sure that the first radial entry corresponds to the well radius (>1e-8)");
             }
 
             else if (hasAngular)
@@ -129,6 +132,8 @@ public:
             if (!std::is_sorted(positions[i].begin(), positions[i].end()))
                 DUNE_THROW(Dune::GridError, "Make sure to specify a monotone increasing \"Positions\" array");
         }
+
+
 
         // check that all indices are specified i.e. > 0
         for (int i = 0; i < dim; ++i)
@@ -207,7 +212,6 @@ public:
                     if (verbose)
                         std::cout << " -> h "  << height * length << std::endl;
                 }
-
                 // if grading factor is not 1.0, do power law spacing
                 else
                 {
@@ -298,16 +302,13 @@ public:
                 {
                     for (int i = 0; i <= dR.size()- 1; ++i)
                     {
-                        // Get radius for the well (= a hole) in the center
-                        const auto wellRadius = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
-
                         // transform into Cartesian coordinates
                         using std::cos;
                         using std::sin;
                         Dune::FieldVector <double, dim> v(0.0);
                         v[indices[2]] = dZ[l];
-                        v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
-                        v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
+                        v[indices[0]] = cos(dA[j])*dR[i];
+                        v[indices[1]] = sin(dA[j])*dR[i];
                         if (verbose)
                         {
                             std::cout << "Coordinates of : "
@@ -390,14 +391,11 @@ public:
             {
                 for (int i = 0; i <= dR.size()- 1; ++i)
                 {
-                    // Get radius for the well (= a hole) in the center
-                    const Scalar wellRadius = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
-
                     // transform into Cartesian coordinates
                     Dune::FieldVector <double, dim> v(0.0);
 
-                    v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
-                    v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
+                    v[indices[0]] = cos(dA[j])*dR[i];
+                    v[indices[1]] = sin(dA[j])*dR[i];
                     if(verbose)
                         std::cout << "Coordinates of : " << v[0] << " " << v[1] << std::endl;
                     gridFactory.insertVertex(v);
