@@ -28,9 +28,11 @@
 #include <type_traits>
 
 #include <dune/istl/multitypeblockvector.hh>
+#include <dune/common/version.hh>
 
 namespace Dumux {
 
+#if DUNE_VERSION_GT_REV(DUNE_ISTL,2,6,0)
 /*!
  * \brief a function to get a MultiTypeBlockVector with references to some entries of another MultiTypeBlockVector
  * \param v a MultiTypeBlockVector
@@ -41,6 +43,58 @@ auto partial(Dune::MultiTypeBlockVector<Args...>& v, Dune::index_constant<i>... 
 {
     return Dune::MultiTypeBlockVector<std::add_lvalue_reference_t<std::decay_t<std::tuple_element_t<indices, std::tuple<Args...>>>>...>(v[indices]...);
 }
+
+#else
+
+// for backwards-compatibility of partial with v2.6.0
+template<typename ... Args>
+class MultiTypeBlockVectorProxy : public std::tuple<Args...>
+{
+    typedef std::tuple<Args...> ParentType;
+public:
+    using ParentType::ParentType;
+
+    typedef MultiTypeBlockVectorProxy<Args...> type;
+    typedef double field_type;
+
+    /** \brief Random-access operator
+     */
+    template< std::size_t index >
+    typename std::tuple_element<index, ParentType>::type&
+    operator[] ( const std::integral_constant< std::size_t, index > indexVariable )
+    {
+      DUNE_UNUSED_PARAMETER(indexVariable);
+      return std::get<index>(*this);
+    }
+
+    /** \brief Const random-access operator
+     */
+    template< std::size_t index >
+    const typename std::tuple_element<index, ParentType>::type&
+    operator[] ( const std::integral_constant< std::size_t, index > indexVariable ) const
+    {
+      DUNE_UNUSED_PARAMETER(indexVariable);
+      return std::get<index>(*this);
+    }
+};
+
+template<class T> struct isMultiTypeBlockVector;
+
+template<class... T>
+struct isMultiTypeBlockVector<MultiTypeBlockVectorProxy<T...> > : public std::true_type {};
+
+/*!
+ * \brief a function to get a MultiTypeBlockVector with references to some entries of another MultiTypeBlockVector
+ * \param v a MultiTypeBlockVector
+ * \param indices the indices of the entries that should be referenced
+ */
+template<class ...Args, std::size_t ...i>
+auto partial(Dune::MultiTypeBlockVector<Args...>& v, Dune::index_constant<i>... indices)
+{
+    return MultiTypeBlockVectorProxy<std::add_lvalue_reference_t<std::decay_t<std::tuple_element_t<indices, std::tuple<Args...>>>>...>(v[indices]...);
+}
+
+#endif
 
 /*!
  * \brief a function to get a tuple with references to some entries of another tuple
