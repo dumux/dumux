@@ -475,6 +475,14 @@ private:
             // make the scv faces belonging to each corner of the intersection
             for (int c = 0; c < numCorners; ++c)
             {
+                // get the global vertex index the scv face is connected to
+                auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
+                auto vIdxGlobal = gridGeometry().vertexMapper().subIndex(e, vIdxLocal, dim);
+
+                // do not build scvfs connected to a processor boundary
+                if (gridGeometry().isGhostVertex(vIdxGlobal))
+                    continue;
+
                 // only build the scvf if it is in the list of necessary indices
                 if (!MpfaHelper::vectorContainsValue(scvfIndices, scvFaceIndices[scvfCounter])
                     && !MpfaHelper::vectorContainsValue(additionalScvfs, scvFaceIndices[scvfCounter]))
@@ -483,14 +491,6 @@ private:
                     scvfCounter++;
                     continue;
                 }
-
-                // get the global vertex index the scv face is connected to
-                auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
-                auto vIdxGlobal = gridGeometry().vertexMapper().subIndex(e, vIdxLocal, dim);
-
-                // do not build scvfs connected to a processor boundary
-                if (gridGeometry().isGhostVertex(vIdxGlobal))
-                    continue;
 
                 // build scvf
                 neighborScvfs_.emplace_back(MpfaHelper(),
