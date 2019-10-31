@@ -26,6 +26,7 @@
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITY_HH
 
 #include <vector>
+#include <dumux/flux/traits.hh>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
@@ -57,11 +58,14 @@ class PorousMediumFlowVelocity
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using FluidSystem = typename VolumeVariables::FluidSystem;
     using Scalar = typename GridVariables::Scalar;
+    using FluxTraits = typename Dumux::FluxTraits<FluxVariables>;
+    using AdvectionType = typename FluxVariables::AdvectionType;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
+    static constexpr bool stationaryVelocityField = FluxTraits::hasStationaryVelocityField();
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using ReferenceElements = Dune::ReferenceElements<typename GridView::ctype, dim>;
@@ -282,27 +286,43 @@ public:
                     auto bcTypes = problemBoundaryTypes_(element, scvf);
                     if (bcTypes.hasNeumann())
                     {
-                        // check if we have Neumann no flow, we can just use 0
-                        const auto neumannFlux = Deprecated::neumann(problem_, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                        using NumEqVector = std::decay_t<decltype(neumannFlux)>;
-                        if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
-                            scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
-                        // cubes
-                        else if (dim == 1 || geomType.isCube())
+                        // for stationary velocity fields we can easily compute the correct velocity
+                        // this special treatment makes sure that the velocity field is also correct on Neumann boundaries
+                        // of tracer problems where the velocity field is given.
+                        // (For Dirichlet boundaries no special treatment is necessary.)
+                        if (stationaryVelocityField)
                         {
-                            const auto fIdx = scvfIndexInInside[localScvfIdx];
-                            const auto fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
-                            scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
+                            const auto flux = AdvectionType::flux(problem_, element, fvGeometry, elemVolVars,
+                                                                  scvf, phaseIdx, elemFluxVarsCache);
+
+                            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+                            scvfFluxes[scvfIndexInInside[localScvfIdx]] += flux / insideVolVars.extrusionFactor();
                         }
-                        // simplices
-                        else if (geomType.isSimplex())
-                            scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
+                        else
+                        {
+                            // check if we have Neumann no flow, we can just use 0
+                            const auto neumannFlux = Deprecated::neumann(problem_, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                            using NumEqVector = std::decay_t<decltype(neumannFlux)>;
+                            if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
+                                scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
+                            // cubes
+                            else if (dim == 1 || geomType.isCube())
+                            {
+                                const auto fIdx = scvfIndexInInside[localScvfIdx];
+                                const auto fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
+                                scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
+                            }
+                            // simplices
+                            else if (geomType.isSimplex())
+                                scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
+                        }
                     }
                 }
 
                 // increment scvf counter
                 localScvfIdx++;
             }
+
 
             Velocity refVelocity;
             // cubes: On the reference element simply average over opposite fluxes
