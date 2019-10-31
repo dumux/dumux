@@ -127,8 +127,8 @@ public:
             if (!std::is_sorted(positions[i].begin(), positions[i].end()))
                 DUNE_THROW(Dune::GridError, "Make sure to specify a monotone increasing \"Positions\" array");
 
-            if(positions[i].size() == 0)
-                DUNE_THROW(Dune::GridError, "Make sure to specify non-empty position arrays.");
+            if(positions[i].size() < 2)
+                DUNE_THROW(Dune::GridError, "Make sure to specify position arrays with at least two entries (min and max value).");
         }
 
         // check that all indices are specified i.e. > 0
@@ -144,7 +144,7 @@ public:
             positions[indices[0]][0] = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
         }
 
-        if(positions[indices[0]][0] < 1.0e-8)
+        if(positions[indices[0]][0] < 1.0e-8 * positions[indices[0]][1])
             DUNE_THROW(Dune::GridError, "Make sure that the first radial entry corresponds to the well radius (>1e-8)");
 
         // the number of cells (has a default)
@@ -212,8 +212,10 @@ public:
                         increasingCellSize = true;
                 }
 
+                const bool useGrading = Dune::FloatCmp::eq(gradingFactor, 1.0) ? false : true;
+
                 // if the grading factor is exactly 1.0 do equal spacing
-                if (gradingFactor > 1.0 - 1e-7 && gradingFactor < 1.0 + 1e-7)
+                if (!useGrading)
                 {
                     height = 1.0 / numCells;
                     if (verbose)
@@ -238,7 +240,7 @@ public:
                 for (int i = 1; i < numCells; i++)
                 {
                     Scalar hI = height;
-                    if (!(gradingFactor < 1.0 + 1e-7 && gradingFactor > 1.0 - 1e-7))
+                    if (useGrading)
                     {
                         if (increasingCellSize)
                             hI *= pow(gradingFactor, i-1);
@@ -342,8 +344,9 @@ public:
                     {
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
-                            std::vector<unsigned int> vid({z, z+1, z+rSize*zSize,
-                                                           z+rSize*zSize+1, z+rSize, z+rSize+1,
+                            std::vector<unsigned int> vid({z, z+1,
+                                                           z+rSize*zSize, z+rSize*zSize+1,
+                                                           z+rSize, z+rSize+1,
                                                            z+rSize*zSize+rSize, z+rSize*zSize+rSize+1});
 
                             if (verbose)
@@ -365,8 +368,9 @@ public:
                         // assign nodes for 360°-cake
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
-                            std::vector<unsigned int> vid({z, z+1, t,
-                                                           t+1, z+rSize, z+rSize+1,
+                            std::vector<unsigned int> vid({z, z+1,
+                                                           t, t+1,
+                                                           z+rSize, z+rSize+1,
                                                            t+rSize, t+rSize+1});
 
                             if (verbose)
