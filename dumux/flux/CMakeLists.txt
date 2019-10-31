@@ -18,5 +18,6 @@ maxwellstefanslaw.hh
 referencesystemformulation.hh
 shallowwaterflux.hh
 stationaryvelocityfield.hh
+traits.hh
 upwindscheme.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/flux)

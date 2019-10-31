@@ -27,6 +27,9 @@
 #ifndef DUMUX_DISCRETIZATION_STATIONARY_VELOCITY_FIELD_HH
 #define DUMUX_DISCRETIZATION_STATIONARY_VELOCITY_FIELD_HH
 
+#include <type_traits>
+#include <dumux/flux/traits.hh>
+
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -63,6 +66,11 @@ public:
         return problem.spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf);
     }
 };
+
+//! Set stationary velocity field to true in the FluxTraits
+template<class Scalar>
+struct HasStationaryVelocityField<StationaryVelocityField<Scalar>>
+: public std::true_type {};
 
 } // end namespace Dumux
 
