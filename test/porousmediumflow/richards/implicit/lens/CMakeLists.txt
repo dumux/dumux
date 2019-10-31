@@ -4,6 +4,9 @@ add_input_file_links(FILES params.input)
 add_executable(test_richards_lens_tpfa EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_richards_lens_tpfa PUBLIC TYPETAG=RichardsLensCC PUBLIC DIFFMETHOD=DiffMethod::numeric)
 
+add_executable(test_richards_lens_mpfa EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_richards_lens_mpfa PUBLIC TYPETAG=RichardsLensCCMpfa PUBLIC DIFFMETHOD=DiffMethod::numeric)
+
 add_executable(test_richards_lens_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric)
 
@@ -68,6 +71,18 @@ dune_add_test(NAME test_richards_lens_tpfa_parallel_yasp
                               ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_yasp-00007.pvtu
                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa_parallel_yasp -Grid.Overlap 1")
+
+dune_add_test(NAME test_richards_lens_mpfa_parallel_yasp
+              TARGET test_richards_lens_mpfa
+              LABELS porousmediumflow richards parallel
+              CMAKE_GUARD MPI_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                      --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_mpfa_parallel_yasp-00007.vtu
+                              ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_mpfa_parallel_yasp-00007.pvtu
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_mpfa params.input -Problem.Name test_richards_lens_mpfa_parallel_yasp -Grid.Overlap 1")
 
 # TODO: there is a small difference because of the precision loss when writing and reading to and from vtk with single precision
 # This is why we need a bit higher saturation threshold since pc-sw is very sensitive to pressure for saturations close to 0

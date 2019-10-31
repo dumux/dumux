@@ -36,6 +36,7 @@
 #endif
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -57,6 +58,7 @@ namespace TTag {
 struct RichardsLens { using InheritsFrom = std::tuple<Richards>; };
 struct RichardsLensBox { using InheritsFrom = std::tuple<RichardsLens, BoxModel>; };
 struct RichardsLensCC { using InheritsFrom = std::tuple<RichardsLens, CCTpfaModel>; };
+struct RichardsLensCCMpfa { using InheritsFrom = std::tuple<RichardsLens, CCMpfaModel>; };
 } // end namespace TTag
 
 #ifndef GRIDTYPE
