@@ -40,15 +40,17 @@
 #include <dune/alugrid/grid.hh>
 #endif
 
-
+#ifndef USEUG
+#define USEUG false
+#endif
 
 // The grid type
-#if HAVE_DUNE_ALUGRID
-template<int dim>
-using Grid = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>;
-#elif HAVE_UG
+#if HAVE_UG && USEUG==1
 template<int dim>
 using Grid = Dune::UGGrid<dim>;
+#elif HAVE_DUNE_ALUGRID
+template<int dim>
+using Grid = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>;
 #endif
 
 template<int dim>
