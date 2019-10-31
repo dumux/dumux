@@ -1,31 +1,77 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
-add_executable(test_gridmanager_cake EXCLUDE_FROM_ALL test_gridmanager_cake.cc)
+add_executable(test_gridmanager_cake_ug EXCLUDE_FROM_ALL test_gridmanager_cake.cc)
+target_compile_definitions(test_gridmanager_cake_ug PUBLIC "USEUG=1")
 
-dune_add_test(NAME test_gridmanager_cake_360
-              TARGET test_gridmanager_cake
+add_executable(test_gridmanager_cake_alu EXCLUDE_FROM_ALL test_gridmanager_cake.cc)
+
+dune_add_test(NAME test_gridmanager_cake_360_ug
+              TARGET test_gridmanager_cake_ug
               LABELS unit io
-              CMAKE_GUARD "( dune-uggrid_FOUND OR dune-alugrid_FOUND )"
+              CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake -Grid.Name 360"
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name ug-360"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-360.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-ug-360.vtu
                                ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-360.vtu)
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-ug-360.vtu
+                       --relative 1e-6)
 
-dune_add_test(NAME test_gridmanager_cake_210
-              TARGET test_gridmanager_cake
+# the compare script does not work when alu does an element reoerdering, which is why this test fails
+dune_add_test(NAME test_gridmanager_cake_360_alu
+              TARGET test_gridmanager_cake_alu
               LABELS unit io
-              CMAKE_GUARD "( dune-uggrid_FOUND OR dune-alugrid_FOUND )"
+              CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake -Grid.Name 210 -Grid.Angular1 '0.0 210.0'"
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_360_alu -Grid.Name alu-360"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-alu-360.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-alu-360.vtu
+                       --relative 1e-6)
+
+dune_add_test(NAME test_gridmanager_cake_210_ug
+              TARGET test_gridmanager_cake_ug
+              LABELS unit io
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name ug-210 -Grid.Angular1 '0.0 210.0'"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_210-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-210.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-ug-210.vtu
                                ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_210-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-210.vtu)
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-ug-210.vtu
+                       --relative 1e-6)
+
+# the compare script does not work when alu does an element reoerdering, which is why this test fails
+dune_add_test(NAME test_gridmanager_cake_210_alu
+              TARGET test_gridmanager_cake_alu
+              LABELS unit io
+              CMAKE_GUARD dune-alugrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_alu -Grid.Name alu-210 -Grid.Angular1 '0.0 210.0'"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_210-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-alu-210.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_210-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-alu-210.vtu
+                       --relative 1e-6)
+
+dune_add_test(NAME test_gridmanager_cake_360_nowell
+              TARGET test_gridmanager_cake_ug
+              LABELS unit io
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name nowell-360"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-nowell-360.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-nowell-360.vtu
+                       --relative 1e-6)
 
 dune_add_test(NAME test_gridmanager_subgrid
               SOURCES test_gridmanager_subgrid.cc
