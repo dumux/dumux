@@ -112,17 +112,12 @@ public:
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Radial" + std::to_string(i));
                 indices[0] = i; // Index specifying radial direction
-
-                if(positions[i][0] < 1.0e-8)
-                    DUNE_THROW(Dune::GridError, "Make sure that the first radial entry corresponds to the well radius (>1e-8)");
             }
-
             else if (hasAngular)
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Angular" + std::to_string(i));
                 indices[1] = i; // Index specifying angular direction
             }
-
             else // hasAxial
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Axial" + std::to_string(i));
@@ -131,14 +126,26 @@ public:
 
             if (!std::is_sorted(positions[i].begin(), positions[i].end()))
                 DUNE_THROW(Dune::GridError, "Make sure to specify a monotone increasing \"Positions\" array");
+
+            if(positions[i].size() == 0)
+                DUNE_THROW(Dune::GridError, "Make sure to specify non-empty position arrays.");
         }
-
-
 
         // check that all indices are specified i.e. > 0
         for (int i = 0; i < dim; ++i)
             if (indices[i] < 0)
                 DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial and Axial correctly and unambiguously!" << std::endl);
+
+        if(hasParam("Grid.WellRadius"))
+        {
+            std::cerr << "Deprecation warning: parameter Grid.WellRadius is deprecated. "
+                      << "Specify the WellRadius as the first radial coordinate." << std::endl;
+
+            positions[indices[0]][0] = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
+        }
+
+        if(positions[indices[0]][0] < 1.0e-8)
+            DUNE_THROW(Dune::GridError, "Make sure that the first radial entry corresponds to the well radius (>1e-8)");
 
         // the number of cells (has a default)
         std::array<std::vector<int>, dim> cells;
