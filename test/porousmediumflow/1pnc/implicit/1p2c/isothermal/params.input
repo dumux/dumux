@@ -12,5 +12,8 @@ Name = outflowtest # name passed to the output routines
 EnableGravity = 0 # disable gravity
 UseNitscheTypeBc = true
 
+[Newton]
+UseLineSearch = true
+
 [Vtk]
 AddVelocity = 1 # enable velocity output
