@@ -105,7 +105,6 @@ public:
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
 
         auto darcyFvGeometry = localView(darcyFvGridGeometry);
-        auto stokesFvGeometry = localView(stokesFvGridGeometry);
 
         for(const auto& dataHandle : stokesElementToDarcyElementMap_)
         {
@@ -115,13 +114,11 @@ public:
             const auto& data = dataHandle.second[0];
             const auto stokesElementIdx = dataHandle.first;
             const auto darcyIdx = data.eIdx;
-            const auto darcyScvfIdx = data.scvfIdx;
             const auto stokesScvfIdx = data.flipScvfIdx;
             const auto& stokesScvf = stokesFvGridGeometry.scvf(stokesScvfIdx);
 
             const auto& darcyElement = darcyFvGridGeometry.element(darcyIdx);
             darcyFvGeometry.bind(darcyElement);
-            const auto& darcyScvf = darcyFvGeometry.scvf(darcyScvfIdx);
 
             darcyToStokesCellCenterStencils[darcyIdx].push_back(stokesElementIdx);
             darcyToStokesFaceStencils[darcyIdx].first.push_back(stokesScvf.dofIndex());

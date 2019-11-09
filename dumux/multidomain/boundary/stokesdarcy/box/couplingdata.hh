@@ -303,8 +303,6 @@ public:
                                      const ElementFaceVariables& stokesElemFaceVars,
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
-
         Scalar momentumFlux(0.0);
         const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
         const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
