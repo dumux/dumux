@@ -22,8 +22,8 @@
  * \copydoc Dumux::StokesDarcyCouplingMapper
  */
 
-#ifndef DUMUX_STOKES_DARCY_COUPLINGMAPPER_HH
-#define DUMUX_STOKES_DARCY_COUPLINGMAPPER_HH
+#ifndef DUMUX_STOKES_DARCY_COUPLINGMAPPER_TPFA_HH
+#define DUMUX_STOKES_DARCY_COUPLINGMAPPER_TPFA_HH
 
 #include <type_traits>
 #include <unordered_map>
@@ -38,7 +38,8 @@ namespace Dumux {
  * \ingroup StokesDarcyCoupling
  * \brief Coupling mapper for Stokes and Darcy domains with equal dimension.
  */
-class StokesDarcyCouplingMapper
+template<class MDTraits>
+class StokesDarcyCouplingMapperTpfa
 {
     struct ElementMapInfo
     {
@@ -48,7 +49,6 @@ class StokesDarcyCouplingMapper
     };
 
 public:
-
     /*!
      * \brief Main update routine
      */
@@ -59,8 +59,8 @@ public:
                                         Stencils& stokesCellCenterToDarcyStencils,
                                         Stencils& stokesFaceToDarcyStencils)
     {
-        const auto& stokesFvGridGeometry = couplingManager.problem(CouplingManager::stokesIdx).gridGeometry();
-        const auto& darcyFvGridGeometry = couplingManager.problem(CouplingManager::darcyIdx).gridGeometry();
+        const auto& stokesFvGridGeometry = couplingManager.problem(CouplingManager::freeFlowIdx).gridGeometry();
+        const auto& darcyFvGridGeometry = couplingManager.problem(CouplingManager::porousMediumIdx).gridGeometry();
 
         static_assert(std::decay_t<decltype(stokesFvGridGeometry)>::discMethod == DiscretizationMethod::staggered,
                       "The free flow domain must use the staggered discretization");
