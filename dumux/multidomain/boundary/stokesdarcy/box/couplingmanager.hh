@@ -232,12 +232,6 @@ public:
      */
     template<class Assembler>
     void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element, const Assembler& assembler) const
-    { bindCouplingContext(domainI, element); }
-
-    /*!
-     * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Stokes information)
-     */
-    void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element) const
     {
         darcyCouplingContext_.clear();
 
@@ -391,8 +385,7 @@ public:
     const auto& stokesCouplingContext(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
         if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
-            std::cout << "SHIIIITTTTTT!!!!!!" << std::endl;
-            //bindCouplingContext(stokesIdx, element);
+            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
 
         for(const auto& context : stokesCouplingContext_)
         {
@@ -408,8 +401,8 @@ public:
      */
     const auto& darcyCouplingContext(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
     {
-        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != scvf.insideScvIdx())
-            bindCouplingContext(darcyIdx, element);
+        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != this->problem(darcyIdx).gridGeometry().elementMapper().index(element))
+            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
 
         for(const auto& context : darcyCouplingContext_)
         {
