@@ -22,8 +22,8 @@
  * \copydoc Dumux::StokesDarcyCouplingMapper
  */
 
-#ifndef DUMUX_STOKES_DARCY_COUPLINGMAPPER_HH
-#define DUMUX_STOKES_DARCY_COUPLINGMAPPER_HH
+#ifndef DUMUX_STOKES_DARCY_COUPLINGMAPPER_TPFA_HH
+#define DUMUX_STOKES_DARCY_COUPLINGMAPPER_TPFA_HH
 
 #include <type_traits>
 #include <unordered_map>
@@ -39,7 +39,7 @@ namespace Dumux {
  * \brief Coupling mapper for Stokes and Darcy domains with equal dimension.
  */
 template<class MDTraits>
-class StokesDarcyCouplingMapper
+class StokesDarcyCouplingMapperTpfa
 {
     using Scalar = typename MDTraits::Scalar;
 
@@ -60,6 +60,11 @@ private:
     };
 
 public:
+
+    /*!
+     * \brief Constructor
+     */
+    StokesDarcyCouplingMapperTpfa(const CouplingManager& couplingManager) : couplingManager_(couplingManager) {}
 
     /*!
      * \brief Main update routine

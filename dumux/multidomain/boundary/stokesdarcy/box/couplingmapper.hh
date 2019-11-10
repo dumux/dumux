@@ -45,7 +45,7 @@ namespace Dumux {
  * \brief Coupling mapper for Stokes and Darcy domains with equal dimension.
  */
 template<class MDTraits>
-class StokesDarcyCouplingMapper
+class StokesDarcyCouplingMapperBox
 {
     using Scalar = typename MDTraits::Scalar;
 
@@ -85,7 +85,7 @@ public:
     /*!
      * \brief Constructor
      */
-    StokesDarcyCouplingMapper(const CouplingManager& couplingManager) : couplingManager_(couplingManager) {}
+    StokesDarcyCouplingMapperBox(const CouplingManager& couplingManager) : couplingManager_(couplingManager) {}
 
     /*!
      * \brief Main update routine

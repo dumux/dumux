@@ -22,8 +22,8 @@
  * \copydoc Dumux::StokesDarcyCouplingManager
  */
 
-#ifndef DUMUX_STOKES_DARCY_BOX_COUPLINGMANAGER_HH
-#define DUMUX_STOKES_DARCY_BOX_COUPLINGMANAGER_HH
+#ifndef DUMUX_STOKES_DARCY_COUPLINGMANAGER_TPFA_HH
+#define DUMUX_STOKES_DARCY_COUPLINGMANAGER_TPFA_HH
 
 #include <utility>
 #include <memory>
@@ -34,7 +34,8 @@
 #include <dumux/multidomain/staggeredcouplingmanager.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
 
-#include "couplingdata.hh"
+#include "../../couplingmanager.hh"
+#include "../../couplingdata.hh"
 #include "couplingmapper.hh"
 
 namespace Dumux {
@@ -44,7 +45,7 @@ namespace Dumux {
  * \brief Coupling manager for Stokes and Darcy domains with equal dimension.
  */
 template<class MDTraits>
-class StokesDarcyCouplingManagerImplementation<MDTraits, DiscretizationMethod::box>
+class StokesDarcyCouplingManagerImplementation<MDTraits, DiscretizationMethod::cctpfa>
 : public virtual StaggeredCouplingManager<MDTraits>
 {
     using Scalar = typename MDTraits::Scalar;
@@ -94,7 +95,7 @@ private:
 
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
 
-    using CouplingMapper = StokesDarcyCouplingMapperBox<MDTraits>;
+    using CouplingMapper = StokesDarcyCouplingMapperTpfa<MDTraits>;
 
     struct StationaryStokesCouplingContext
     {
@@ -103,8 +104,6 @@ private:
         std::size_t darcyScvfIdx;
         std::size_t stokesScvfIdx;
         VolumeVariables<darcyIdx> volVars;
-        std::unique_ptr< ElementVolumeVariables<darcyIdx> > elementVolVars;
-        std::unique_ptr< ElementFluxVariablesCache<darcyIdx> > elementFluxVarsCache;
     };
 
     struct StationaryDarcyCouplingContext
@@ -167,10 +166,7 @@ public:
         for(auto&& stencil : darcyToStokesCellCenterCouplingStencils_)
             removeDuplicates_(stencil.second);
         for(auto&& stencil : darcyToStokesFaceCouplingStencils_)
-        {
-            removeDuplicates_(stencil.second.first);
-            removeDuplicates_(stencil.second.second);
-        }
+            removeDuplicates_(stencil.second);
         for(auto&& stencil : stokesCellCenterCouplingStencils_)
             removeDuplicates_(stencil.second);
         for(auto&& stencil : stokesFaceCouplingStencils_)
@@ -189,6 +185,13 @@ public:
      */
     template<std::size_t i, class Assembler, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
     void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element, const Assembler& assembler) const
+    { bindCouplingContext(domainI, element); }
+
+    /*!
+     * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Darcy information)
+     */
+    template<std::size_t i, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
+    void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element) const
     {
         stokesCouplingContext_.clear();
 
@@ -206,24 +209,15 @@ public:
         for(auto&& indices : darcyIndices)
         {
             const auto& darcyElement = this->problem(darcyIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
-            darcyFvGeometry.bind(darcyElement);
-            const auto& scvf = darcyFvGeometry.scvf(indices.scvfIdx);
-            const auto& scv = darcyFvGeometry.scv(scvf.insideScvIdx());
-
-            auto darcyElemVolVars = localView(assembler.gridVariables(darcyIdx).curGridVolVars());
-            auto darcyElemFluxVarsCache = localView(assembler.gridVariables(darcyIdx).gridFluxVarsCache());
-
-            darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[darcyIdx]);
-            darcyElemFluxVarsCache.bind(darcyElement, darcyFvGeometry, darcyElemVolVars);
+            darcyFvGeometry.bindElement(darcyElement);
+            const auto& scv = (*scvs(darcyFvGeometry).begin());
 
             const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
             VolumeVariables<darcyIdx> darcyVolVars;
             darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), darcyElement, scv);
 
             // add the context
-            stokesCouplingContext_.push_back({darcyElement, darcyFvGeometry, indices.scvfIdx, indices.flipScvfIdx, darcyVolVars,
-                                              std::make_unique< ElementVolumeVariables<darcyIdx> >( std::move(darcyElemVolVars)),
-                                              std::make_unique< ElementFluxVariablesCache<darcyIdx> >( std::move(darcyElemFluxVarsCache))});
+            stokesCouplingContext_.push_back({darcyElement, darcyFvGeometry, indices.scvfIdx, indices.flipScvfIdx, darcyVolVars});
         }
     }
 
@@ -232,6 +226,12 @@ public:
      */
     template<class Assembler>
     void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element, const Assembler& assembler) const
+    { bindCouplingContext(domainI, element); }
+
+    /*!
+     * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Stokes information)
+     */
+    void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element) const
     {
         darcyCouplingContext_.clear();
 
@@ -352,20 +352,15 @@ public:
 
         for (auto& data : stokesCouplingContext_)
         {
-            //Derivatives are assumed to be always calculated with respect to unknowns associated with its own element
+            const auto darcyElemIdx = this->problem(darcyIdx).gridGeometry().elementMapper().index(data.element);
+
+            if(darcyElemIdx != dofIdxGlobalJ)
+                continue;
+
             const auto darcyElemSol = elementSolution(data.element, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
 
-            const auto& scvf = data.fvGeometry.scvf(data.darcyScvfIdx);
-            const auto& scv = data.fvGeometry.scv(scvf.insideScvIdx());
-
-            auto& volVars = (*data.elementVolVars)[scv];
-            volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
-            if(scv.dofIndex() == dofIdxGlobalJ)
-            {
+            for(const auto& scv : scvs(data.fvGeometry))
                 data.volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
-            }
-
-            //data.elementFluxVarsCache->update(data.element, data.fvGeometry, *data.elementVolVars);
         }
     }
 
@@ -385,7 +380,7 @@ public:
     const auto& stokesCouplingContext(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
         if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
-            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+            bindCouplingContext(stokesIdx, element);
 
         for(const auto& context : stokesCouplingContext_)
         {
@@ -401,8 +396,8 @@ public:
      */
     const auto& darcyCouplingContext(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
     {
-        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != this->problem(darcyIdx).gridGeometry().elementMapper().index(element))
-            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != scvf.insideScvIdx())
+            bindCouplingContext(darcyIdx, element);
 
         for(const auto& context : darcyCouplingContext_)
         {
@@ -467,7 +462,7 @@ public:
     {
         const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         if (darcyToStokesFaceCouplingStencils_.count(eIdx))
-            return darcyToStokesFaceCouplingStencils_.at(eIdx).first;
+            return darcyToStokesFaceCouplingStencils_.at(eIdx);
         else
             return emptyStencil_;
     }
@@ -523,9 +518,9 @@ public:
     /*!
      * \brief Returns whether a given free flow scvf is coupled to the other domain
      */
-    bool isCoupledEntity(Dune::index_constant<darcyIdx>, std::size_t scvIdx, std::size_t scvfLocalIdx) const
+    bool isCoupledEntity(Dune::index_constant<darcyIdx>, const SubControlVolumeFace<darcyIdx>& scvf) const
     {
-        return couplingMapper_.isCoupledDarcyScvf(scvIdx, scvfLocalIdx);
+        return couplingMapper_.isCoupledDarcyScvf(scvf.index());
     }
 
 protected:
@@ -548,7 +543,7 @@ private:
     std::unordered_map<std::size_t, std::vector<std::size_t> > stokesCellCenterCouplingStencils_;
     std::unordered_map<std::size_t, std::vector<std::size_t> > stokesFaceCouplingStencils_;
     std::unordered_map<std::size_t, std::vector<std::size_t> > darcyToStokesCellCenterCouplingStencils_;
-    std::unordered_map<std::size_t, std::pair<std::vector<std::size_t>,std::vector<std::size_t>> > darcyToStokesFaceCouplingStencils_;
+    std::unordered_map<std::size_t, std::vector<std::size_t> > darcyToStokesFaceCouplingStencils_;
     std::vector<std::size_t> emptyStencil_;
 
     ////////////////////////////////////////////////////////////////////////////

@@ -22,8 +22,8 @@
  * \copydoc Dumux::StokesDarcyCouplingData
  */
 
-#ifndef DUMUX_STOKES_DARCY_BOX_COUPLINGDATA_HH
-#define DUMUX_STOKES_DARCY_BOX_COUPLINGDATA_HH
+#ifndef DUMUX_STOKES_DARCY_COUPLINGDATA_TPFA_HH
+#define DUMUX_STOKES_DARCY_COUPLINGDATA_TPFA_HH
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/multidomain/couplingmanager.hh>
@@ -34,7 +34,7 @@ namespace Dumux {
  * \brief A base class which provides some common methods used for Stokes-Darcy coupling.
  */
 template<class MDTraits, class CouplingManager>
-class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>
+class StokesDarcyCouplingDataTpfaBase : public StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>
 {
     using ParentType = StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>;
 
@@ -56,50 +56,132 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
+    using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
+    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
+    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
+
 public:
-    StokesDarcyCouplingDataBoxBase(const CouplingManager& couplingmanager): ParentType(couplingmanager) {}
+    StokesDarcyCouplingDataTpfaBase(const CouplingManager& couplingmanager): ParentType(couplingmanager) {}
 
     using ParentType::couplingPhaseIdx;
+    using ParentType::darcyPermeability;
+
+    * \brief Returns the momentum flux across the coupling boundary.
+    *
+    * For the normal momentum coupling, the porous medium side of the coupling condition
+    * is evaluated, i.e. -[p n]^pm.
+    *
+    */
+   template<class ElementFaceVariables>
+   Scalar momentumCouplingCondition(const Element<stokesIdx>& element,
+                                    const FVElementGeometry<stokesIdx>& fvGeometry,
+                                    const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
+                                    const ElementFaceVariables& stokesElemFaceVars,
+                                    const SubControlVolumeFace<stokesIdx>& scvf) const
+   {
+       static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
+
+       Scalar momentumFlux(0.0);
+       const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
+       const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+
+       // - p_pm * n_pm = p_pm * n_ff
+       const Scalar darcyPressure = stokesContext.volVars.pressure(darcyPhaseIdx);
+
+       if(numPhasesDarcy > 1)
+           momentumFlux = darcyPressure;
+       else // use pressure reconstruction for single phase models
+           momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext);
+       // TODO: generalize for permeability tensors
+
+       // normalize pressure
+       if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
+           momentumFlux -= couplingManager_.problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
+
+       momentumFlux *= scvf.directionSign();
+
+       return momentumFlux;
+   }
+
+private:
+    /*!
+     * \brief Returns the pressure at the interface
+     */
+    template<class ElementFaceVariables, class CouplingContext>
+    Scalar pressureAtInterface_(const Element<stokesIdx>& element,
+                                const SubControlVolumeFace<stokesIdx>& scvf,
+                                const ElementFaceVariables& elemFaceVars,
+                                const CouplingContext& context) const
+    {
+        GlobalPosition<stokesIdx> velocity(0.0);
+        velocity[scvf.directionIndex()] = elemFaceVars[scvf].velocitySelf();
+        const auto& darcyScvf = context.fvGeometry.scvf(context.darcyScvfIdx);
+        return computeCouplingPhasePressureAtInterface_(context.element, context.fvGeometry, darcyScvf, context.volVars, velocity, AdvectionType());
+    }
 
     /*!
-     * \brief Returns the momentum flux across the coupling boundary.
-     *
-     * For the normal momentum coupling, the porous medium side of the coupling condition
-     * is evaluated, i.e. -[p n]^pm.
-     *
+     * \brief Returns the pressure at the interface using Forchheimers's law for reconstruction
      */
-    template<class ElementFaceVariables>
-    Scalar momentumCouplingCondition(const Element<stokesIdx>& element,
-                                     const FVElementGeometry<stokesIdx>& fvGeometry,
-                                     const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
-                                     const ElementFaceVariables& stokesElemFaceVars,
-                                     const SubControlVolumeFace<stokesIdx>& scvf) const
+     Scalar computeCouplingPhasePressureAtInterface_(const Element<darcyIdx>& element,
+                                                     const FVElementGeometry<darcyIdx>& fvGeometry,
+                                                     const SubControlVolumeFace<darcyIdx>& scvf,
+                                                     const VolumeVariables<darcyIdx>& volVars,
+                                                     const typename Element<stokesIdx>::Geometry::GlobalCoordinate& couplingPhaseVelocity,
+                                                     ForchheimersLaw) const
     {
-        Scalar momentumFlux(0.0);
-        const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
         const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const Scalar cellCenterPressure = volVars.pressure(darcyPhaseIdx);
+        using std::sqrt;
 
-        const auto& elemVolVars = *(stokesContext.elementVolVars);
-        const auto& elemFluxVarsCache = *(stokesContext.elementFluxVarsCache);
+        // v + (cF*sqrt(K)*rho/mu*|v|) * v  = - K/mu grad(p - rho g)
+        // multiplying with n and using a tpfa for the right-hand side yields
+        // v*n + (cF*sqrt(K)*rho/mu*|v|) * (v*n) =  1/mu * (ti*(p_center - p_interface) + rho*n^TKg)
+        // --> p_interface = (-mu*v*n + (cF*sqrt(K)*rho*|v|) * (-v*n) + rho*n^TKg)/ti + p_center
+        const auto velocity = couplingPhaseVelocity;
+        const Scalar mu = volVars.viscosity(darcyPhaseIdx);
+        const Scalar rho = volVars.density(darcyPhaseIdx);
+        const auto K = volVars.permeability();
+        const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center()));
 
-        const auto& darcyScvf = stokesContext.fvGeometry.scvf(stokesContext.darcyScvfIdx);
-        const auto& fluxVarCache = elemFluxVarsCache[darcyScvf];
-        const auto& shapeValues = fluxVarCache.shapeValues();
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto ti = computeTpfaTransmissibility(scvf, insideScv, K, 1.0);
 
-        // - p_pm * n_pm = p_pm * n_ff
-        for (auto&& scv : scvs(stokesContext.fvGeometry))
-        {
-            const auto& volVars = elemVolVars[scv];
-            momentumFlux += volVars.pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
-        }
+        // get the Forchheimer coefficient
+        Scalar cF = couplingManager_.problem(darcyIdx).spatialParams().forchCoeff(scvf);
 
-        // normalize pressure
-        if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
-            momentumFlux -= this->couplingManager().problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
+        const Scalar interfacePressure = ((-mu*(scvf.unitOuterNormal() * velocity))
+                                        + (-(scvf.unitOuterNormal() * velocity) * velocity.two_norm() * rho * sqrt(darcyPermeability(element, scvf)) * cF)
+                                        +  rho * alpha)/ti + cellCenterPressure;
+        return interfacePressure;
+    }
 
-        momentumFlux *= scvf.directionSign();
+    /*!
+     * \brief Returns the pressure at the interface using Darcy's law for reconstruction
+     */
+    Scalar computeCouplingPhasePressureAtInterface_(const Element<darcyIdx>& element,
+                                                    const FVElementGeometry<darcyIdx>& fvGeometry,
+                                                    const SubControlVolumeFace<darcyIdx>& scvf,
+                                                    const VolumeVariables<darcyIdx>& volVars,
+                                                    const typename Element<stokesIdx>::Geometry::GlobalCoordinate& couplingPhaseVelocity,
+                                                    DarcysLaw) const
+    {
+        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const Scalar couplingPhaseCellCenterPressure = volVars.pressure(darcyPhaseIdx);
+        const Scalar couplingPhaseMobility = volVars.mobility(darcyPhaseIdx);
+        const Scalar couplingPhaseDensity = volVars.density(darcyPhaseIdx);
+        const auto K = volVars.permeability();
 
-        return momentumFlux;
+        // A tpfa approximation yields (works if mobility != 0)
+        // v*n = -kr/mu*K * (gradP - rho*g)*n = mobility*(ti*(p_center - p_interface) + rho*n^TKg)
+        // -> p_interface = (1/mobility * (-v*n) + rho*n^TKg)/ti + p_center
+        // where v is the free-flow velocity (couplingPhaseVelocity)
+        const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center()));
+
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto ti = computeTpfaTransmissibility(scvf, insideScv, K, 1.0);
+
+        return (-1/couplingPhaseMobility * (scvf.unitOuterNormal() * couplingPhaseVelocity) + couplingPhaseDensity * alpha)/ti
+               + couplingPhaseCellCenterPressure;
     }
 };
 
@@ -108,10 +190,10 @@ public:
  * \brief Coupling data specialization for non-compositional models.
  */
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance>
-class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEnergyBalance, false, DiscretizationMethod::box>
-: public StokesDarcyCouplingDataBoxBase<MDTraits, CouplingManager>
+class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEnergyBalance, false, DiscretizationMethod::cctpfa>
+: public StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager>
 {
-    using ParentType = StokesDarcyCouplingDataBoxBase<MDTraits, CouplingManager>;
+    using ParentType = StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager>;
     using Scalar = typename MDTraits::Scalar;
     static constexpr auto stokesIdx = typename MDTraits::template SubDomain<0>::Index();
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
@@ -270,10 +352,10 @@ private:
  * \brief Coupling data specialization for compositional models.
  */
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance>
-class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEnergyBalance, true, DiscretizationMethod::box>
-: public StokesDarcyCouplingDataBoxBase<MDTraits, CouplingManager>
+class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEnergyBalance, true, DiscretizationMethod::cctpfa>
+: public StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager>
 {
-    using ParentType = StokesDarcyCouplingDataBoxBase<MDTraits, CouplingManager>;
+    using ParentType = StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager>;
     using Scalar = typename MDTraits::Scalar;
     static constexpr auto stokesIdx = typename MDTraits::template SubDomain<0>::Index();
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
