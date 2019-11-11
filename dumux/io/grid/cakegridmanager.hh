@@ -39,7 +39,7 @@ namespace Dumux {
 /*!
  * \ingroup InputOutput
  * \brief Provides a grid manager with a method for creating creating vectors
- *        with polar Coordinates and one for creating a cartesian grid from
+ *        with polar Coordinates and one for creating a Cartesian grid from
  *        these polar coordinates.
  */
 template <class Grid>
@@ -64,7 +64,7 @@ public:
         const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
 
         std::array<std::vector<Scalar>, dim> polarCoordinates;
-        // Indices specifing in which direction the piece of cake is oriented
+        // Indices specifying in which direction the piece of cake is oriented
         Dune::FieldVector<int, dim> indices(-1);
         createVectors(polarCoordinates, indices, modelParamGroup, verbose);
 
@@ -111,29 +111,38 @@ public:
             if (hasRadial)
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Radial" + std::to_string(i));
-                indices[0] = i; // Index specifing radial direction
+                indices[0] = i; // Index specifying radial direction
             }
-
             else if (hasAngular)
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Angular" + std::to_string(i));
-                indices[1] = i; // Index specifing angular direction
+                indices[1] = i; // Index specifying angular direction
             }
-
             else // hasAxial
             {
                 positions[i] = getParamFromGroup<std::vector<Scalar>>(modelParamGroup, "Grid.Axial" + std::to_string(i));
-                indices[2] = i; // Index specifing axial direction
+                indices[2] = i; // Index specifying axial direction
             }
 
             if (!std::is_sorted(positions[i].begin(), positions[i].end()))
                 DUNE_THROW(Dune::GridError, "Make sure to specify a monotone increasing \"Positions\" array");
+
+            if(positions[i].size() < 2)
+                DUNE_THROW(Dune::GridError, "Make sure to specify position arrays with at least two entries (min and max value).");
         }
 
         // check that all indices are specified i.e. > 0
         for (int i = 0; i < dim; ++i)
             if (indices[i] < 0)
                 DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial and Axial correctly and unambiguously!" << std::endl);
+
+        if(hasParam("Grid.WellRadius"))
+        {
+            std::cerr << "Deprecation warning: parameter Grid.WellRadius is deprecated. "
+                      << "Specify the WellRadius as the first radial coordinate." << std::endl;
+
+            positions[indices[0]][0] = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
+        }
 
         // the number of cells (has a default)
         std::array<std::vector<int>, dim> cells;
@@ -160,9 +169,10 @@ public:
         using std::pow;
         for (int dimIdx = 0; dimIdx < dim; dimIdx++)
         {
-            std::size_t numGlobalPositions = 0;
+            // Each grid direction is subdivided into (numCells + 1) points
+            std::size_t numGlobalPositions = 1;
             for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
-                numGlobalPositions += cells[dimIdx][zoneIdx] + 1;
+                numGlobalPositions += cells[dimIdx][zoneIdx];
 
             globalPositions[dimIdx].resize(numGlobalPositions);
             std::size_t posIdx = 0;
@@ -199,14 +209,15 @@ public:
                         increasingCellSize = true;
                 }
 
+                const bool useGrading = Dune::FloatCmp::eq(gradingFactor, 1.0) ? false : true;
+
                 // if the grading factor is exactly 1.0 do equal spacing
-                if (gradingFactor > 1.0 - 1e-7 && gradingFactor < 1.0 + 1e-7)
+                if (!useGrading)
                 {
                     height = 1.0 / numCells;
                     if (verbose)
                         std::cout << " -> h "  << height * length << std::endl;
                 }
-
                 // if grading factor is not 1.0, do power law spacing
                 else
                 {
@@ -226,7 +237,7 @@ public:
                 for (int i = 1; i < numCells; i++)
                 {
                     Scalar hI = height;
-                    if (!(gradingFactor < 1.0 + 1e-7 && gradingFactor > 1.0 - 1e-7))
+                    if (useGrading)
                     {
                         if (increasingCellSize)
                             hI *= pow(gradingFactor, i-1);
@@ -259,10 +270,10 @@ public:
     }
 
     /*!
-     * \brief Creates cartesian grid from polar coordinates.
+     * \brief Creates Cartesian grid from polar coordinates.
      *
      * \param polarCoordinates Vector containing radial, angular and axial coordinates (in this order)
-     * \param indices Indices specifing the radial, angular and axial direction (in this order)
+     * \param indices Indices specifying the radial, angular and axial direction (in this order)
      * \param modelParamGroup name of the model parameter group
      * \param verbose if the output should be verbose
      */
@@ -274,12 +285,12 @@ public:
         std::vector<Scalar> dR = polarCoordinates[0];
         std::vector<Scalar> dA = polarCoordinates[1];
 
-        // For the special case of 36o°, the last element is connected with the first one.
+        // For the special case of 360°, the last element is connected with the first one.
         // Thus, one needs to distinguish here between all other cases, were the normal procedure
         // is applied for all elements until the last one  (= dA.size() - 1) and the 360° case,
         // where it is only applied until the second to last element (dA.size() - 2).
         int maxdA = dA.size() - 1;
-        if (Dune::FloatCmp::eq(polarCoordinates[1][polarCoordinates[1].size()-1], 360.0))
+        if (Dune::FloatCmp::eq(dA[dA.size()-1], 2*M_PI))
         {
             maxdA = dA.size() - 2;
         }
@@ -287,33 +298,49 @@ public:
         GridFactory gridFactory;
         constexpr auto type = Dune::GeometryTypes::cube(dim);
 
+        bool hasHole = true;
+        if(dR[0] < 1.0e-8*dR.back())
+            hasHole = false;
+
         // create nodes
         if (dim == 3)
         {
+            constexpr auto prismType = Dune::GeometryTypes::prism;
             std::vector<Scalar> dZ = polarCoordinates[2];
-            for (int j = 0; j <= dA.size() - 1; ++j)
+            for (int j = 0; j <= maxdA; ++j)
             {
                 for (int l = 0; l <= dZ.size() - 1; ++l)
                 {
-                    for (int i = 0; i <= dR.size()- 1; ++i)
+                    for (int i = hasHole ? 0 : 1; i <= dR.size()- 1; ++i)
                     {
-                        // Get radius for the well (= a hole) in the center
-                        const auto wellRadius = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
-
-                        // transform into cartesian Coordinates
+                        // transform into Cartesian coordinates
                         using std::cos;
                         using std::sin;
                         Dune::FieldVector <double, dim> v(0.0);
                         v[indices[2]] = dZ[l];
-                        v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
-                        v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
+                        v[indices[0]] = cos(dA[j])*dR[i];
+                        v[indices[1]] = sin(dA[j])*dR[i];
                         if (verbose)
-                        {
-                            std::cout << "Coordinates of : "
-                                      << v[0] << " " << v[1] << " " << v[2] << std::endl;
-                        }
+                            printCoordinate(v);
                         gridFactory.insertVertex(v);
                     }
+                }
+            }
+
+            // if the well is not considered, we have to add the points lying on the center-line
+            // this has to be done separately, otherwise these points would occur multiple times
+            if(!hasHole)
+            {
+                for (int l = 0; l <= dZ.size() - 1; ++l)
+                {
+                    Dune::FieldVector <double, dim> v(0.0);
+                    v[indices[2]] = dZ[l];
+                    v[indices[0]] = 0.0;
+                    v[indices[1]] = 0.0;
+
+                    if (verbose)
+                        printCoordinate(v);
+                    gridFactory.insertVertex(v);
                 }
             }
 
@@ -323,6 +350,8 @@ public:
             // assign nodes
             unsigned int z = 0;
             unsigned int t = 0;
+            unsigned int rSize = hasHole ? dR.size() : dR.size()-1;
+            unsigned int zSize = dZ.size();
             for (int j = 0; j < dA.size() - 1; ++j)
             {
                 for (int l = 0; l < dZ.size() - 1; ++l)
@@ -331,130 +360,171 @@ public:
                     {
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
-                            unsigned int rSize = dR.size();
-                            unsigned int zSize = dZ.size();
-                            std::vector<unsigned int> vid({z, z+1, z+rSize*zSize,
-                                                           z+rSize*zSize+1, z+rSize, z+rSize+1,
-                                                           z+rSize*zSize+rSize, z+rSize*zSize+rSize+1});
-
-                            if (verbose)
+                            if(!hasHole && i==0)
                             {
-                                std::cout << "element vertex ids: ";
-                                for (int k = 0; k < vid.size(); ++k)
-                                    std::cout << vid[k] << " ";
-                                std::cout << std::endl;
+                                std::vector<unsigned int> vid({rSize*zSize*(maxdA+1) + l, z, z+rSize*zSize,
+                                                               rSize*zSize*(maxdA+1) + l+1, z+rSize, z+rSize*zSize+rSize});
+
+                                if (verbose)
+                                    printIndices(vid);
+
+                                gridFactory.insertElement(prismType, vid);
                             }
+                            else
+                            {
+                                std::vector<unsigned int> vid({z, z+1,
+                                                               z+rSize*zSize, z+rSize*zSize+1,
+                                                               z+rSize, z+rSize+1,
+                                                               z+rSize*zSize+rSize, z+rSize*zSize+rSize+1});
 
-                            gridFactory.insertElement(type, vid);
+                                if (verbose)
+                                    printIndices(vid);
 
-                            z = z+1;
+                                gridFactory.insertElement(type, vid);
+
+                                z++;
+                            }
                         }
-                        z = z+1;
+                        z++;
                     }
                     else
                     {
                         // assign nodes for 360°-cake
                         for (int i = 0; i < dR.size() - 1; ++i)
                         {
-                            // z = z + 1;
-                            unsigned int rSize = dR.size();
-                            std::vector<unsigned int> vid({z, z+1, t,
-                                                           t+1, z+rSize, z+rSize+1,
-                                                           t+rSize, t+rSize+1});
-
-                            if (verbose)
+                            if(!hasHole && i==0)
                             {
-                                std::cout << "element vertex ids: ";
-                                for (int k = 0; k < vid.size(); ++k)
-                                    std::cout << vid[k] << " ";
-                                std::cout << std::endl;
+                                std::vector<unsigned int> vid({rSize*zSize*(maxdA+1) + l, z, t,
+                                                               rSize*zSize*(maxdA+1) + l+1, z+rSize, t+rSize});
+
+                                if (verbose)
+                                    printIndices(vid);
+
+                                gridFactory.insertElement(prismType, vid);
                             }
+                            else
+                            {
+                                std::vector<unsigned int> vid({z, z+1,
+                                                               t, t+1,
+                                                               z+rSize, z+rSize+1,
+                                                               t+rSize, t+rSize+1});
 
-                            gridFactory.insertElement(type, vid);
-                            t = t + 1;
-                            z = z+1;
+                                if (verbose)
+                                    printIndices(vid);
+
+                                gridFactory.insertElement(type, vid);
+                                t++;
+                                z++;
+                            }
                         }
-                        t = t + 1;
-                        z = z+1;
-                    }
-                    if (verbose)
-                        std::cout << "assign nodes 360° ends..." << std::endl;
-                }
+                        t++;
+                        z++;
 
-                z = z + dR.size();
+                        if (verbose)
+                            std::cout << "assign nodes 360° ends..." << std::endl;
+                    }
+                }
+                z += rSize;
             }
         }
-
         // for dim = 2
         else
         {
-            for (int j = 0; j <= dA.size() - 1; ++j)
+            constexpr auto triangleType = Dune::GeometryTypes::simplex(dim);
+            for (int j = 0; j <= maxdA; ++j)
             {
-                for (int i = 0; i <= dR.size()- 1; ++i)
+                for (int i = hasHole ? 0 : 1; i <= dR.size()- 1; ++i)
                 {
-                    // Get radius for the well (= a hole) in the center
-                    const Scalar wellRadius = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
-
-                    // transform into cartesian Coordinates
+                    // transform into Cartesian coordinates
                     Dune::FieldVector <double, dim> v(0.0);
 
-                    v[indices[0]] = cos(dA[j])*wellRadius + cos(dA[j])*dR[i];
-                    v[indices[1]] = sin(dA[j])*wellRadius + sin(dA[j])*dR[i];
-                    if(verbose) std::cout << "Coordinates of : " << v[0] << " " << v[1] << std::endl;
+                    v[indices[0]] = cos(dA[j])*dR[i];
+                    v[indices[1]] = sin(dA[j])*dR[i];
+                    if(verbose)
+                        printCoordinate(v);
                     gridFactory.insertVertex(v);
                 }
             }
+
+            // if the well is not considered, we have to add the point located at the center
+            // this has to be done separately, otherwise this point would occur multiple times
+            if(!hasHole)
+            {
+                Dune::FieldVector <double, dim> v(0.0);
+                v[indices[0]] = 0.0;
+                v[indices[1]] = 0.0;
+
+                if(verbose)
+                    printCoordinate(v);
+                gridFactory.insertVertex(v);
+            }
+
             std::cout << "Filled node vector" << std::endl;
 
             // assign nodes
             unsigned int z = 0;
             unsigned int t = 0;
+            unsigned int rSize = hasHole ? dR.size() : dR.size()-1;
             for (int j = 0; j < dA.size() - 1; ++j)
             {
                 if (j < maxdA)
                 {
                     for (int i = 0; i < dR.size() - 1; ++i)
                     {
-                        unsigned int rSize = dR.size();
-                        std::vector<unsigned int> vid({z, z+1, z+rSize, z+rSize+1});
-
-                        if (verbose)
+                        if(!hasHole && i==0)
                         {
-                            std::cout << "element vertex ids: ";
-                            for (int k = 0; k < vid.size(); ++k)
-                                std::cout << vid[k] << " ";
-                            std::cout << std::endl;
-                        }
+                            std::vector<unsigned int> vid({rSize*(maxdA+1), z, z+rSize});
 
-                        gridFactory.insertElement(type, vid);
-                        z = z+1;
+                            if (verbose)
+                                printIndices(vid);
+
+                            gridFactory.insertElement(triangleType, vid);
+                        }
+                        else
+                        {
+                            std::vector<unsigned int> vid({z, z+1, z+rSize, z+rSize+1});
+
+                            if (verbose)
+                                printIndices(vid);
+
+                            gridFactory.insertElement(type, vid);
+                            z++;
+                        }
                     }
-                    z = z+1;
+                    z++;
                 }
                 else
                 {
                     // assign nodes for 360°-cake
                     for (int i = 0; i < dR.size() - 1; ++i)
                     {
-                        // z = z + 1;
-                        std::vector<unsigned int> vid({z, z+1, t, t+1});
-
-                        if (verbose)
+                        if(!hasHole && i==0)
                         {
-                            std::cout << "element vertex ids: ";
-                            for (int k = 0; k < vid.size(); ++k)
-                                std::cout << vid[k] << " ";
-                            std::cout << std::endl;
-                        }
+                            std::vector<unsigned int> vid({rSize*(maxdA+1), z, t});
 
-                        gridFactory.insertElement(type, vid);
-                        t = t + 1;
-                        z = z+1;
+                            if (verbose)
+                                printIndices(vid);
+
+                            gridFactory.insertElement(triangleType, vid);
+                        }
+                        else
+                        {
+                            std::vector<unsigned int> vid({z, z+1, t, t+1});
+
+                            if (verbose)
+                                printIndices(vid);
+
+                            gridFactory.insertElement(type, vid);
+                            t++;
+                            z++;
+                        }
                     }
-                    t = t + 1;
-                    z = z+1;
+                    t++;
+                    z++;
+
+                    if (verbose)
+                        std::cout << "assign nodes 360 ends..." << std::endl;
                 }
-                std::cout << "assign nodes 360 ends..." << std::endl;
             }
         }
         // return the grid pointer
@@ -479,6 +549,21 @@ public:
     }
 
 protected:
+    static void printCoordinate(const Dune::FieldVector <double, dim>& v)
+    {
+        std::cout << "Coordinates of : ";
+        for (int k = 0; k < v.size(); ++k)
+            std::cout << v[k] << " ";
+        std::cout << std::endl;
+    }
+
+    static void printIndices(const std::vector<unsigned int>& vid)
+    {
+        std::cout << "element vertex indices: ";
+        for (int k = 0; k < vid.size(); ++k)
+            std::cout << vid[k] << " ";
+        std::cout << std::endl;
+    }
 
     /*!
      * \brief Returns a reference to the shared pointer to the grid.
