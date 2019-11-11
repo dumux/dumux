@@ -454,7 +454,8 @@ public:
         using std::abs;
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(liquidPhaseIdx)
                                                * volVars.saturation(liquidPhaseIdx)
-                                               * abs(moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase);
+                                               * abs(moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase)
+                                               / timeStepSize_;
         if (moleFracNaCl_wPhase < moleFracNaCl_Max_wPhase)
             precipSalt *= -1;
 
