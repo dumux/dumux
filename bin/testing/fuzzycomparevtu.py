@@ -18,6 +18,7 @@ from six.moves import zip
 import os
 import re
 import glob
+import functools
 
 # fuzzy compare VTK tree from VTK strings
 def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={}, verbose=True):
@@ -75,8 +76,10 @@ def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={
 
     # do the fuzzy compare
     if is_fuzzy_equal_node(sortedroot1, sortedroot2, absolute, relative, zeroValueThreshold, verbose, convertedFromParallelVtu):
+        print("Fuzzy comparison done (equal)")
         return 0
     else:
+        print("Fuzzy comparison done (not equal)")
         return 1
 
 # convert a parallel vtu file into sequential one by glueing the pieces together
@@ -365,7 +368,7 @@ def sort_vtk(root):
 
 # sorts the data by point coordinates so that it is independent of index numbering
 def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=False):
-    if not is_fuzzy_equal_node(root1.find(".//Points/DataArray"), root2.find(".//Points/DataArray"), absolute=1e-2, relative=1.5e-7, zeroValueThreshold=dict(), verbose=True, convertedFromParallelVtu=False):
+    if not is_fuzzy_equal_node(root1.find(".//Points/DataArray"), root2.find(".//Points/DataArray"), absolute=1e-2, relative=1.5e-7, zeroValueThreshold=dict(), verbose=False, convertedFromParallelVtu=False):
         if verbose:
             print("Sorting vtu by coordinates...")
         for root in [root1, root2]:
@@ -431,6 +434,40 @@ def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=Fals
                 for vertexIndex in cell:
                     largestCellMidPointForVertex[vertexIndex] = max(largestCellMidPointForVertex[vertexIndex], midpoint)
 
+            # floating point comparison operator for scalars
+            def float_cmp(a, b, eps):
+                if math.fabs(a-b) < eps:
+                    return 0
+                elif a > b:
+                    return 1
+                else:
+                    return -1
+
+            # floating point comparison operator for vectors
+            def floatvec_cmp(a, b, eps):
+                for i, j in zip(a, b):
+                    res = float_cmp(i, j, eps)
+                    if res != 0:
+                        return res
+                return 0
+
+            # compute an epsilon and a comparison operator for floating point comparisons
+            bBoxMax = max(vertexArray)
+            bBoxMin = min(vertexArray)
+            epsilon = math.sqrt(sum([(a-b)**2 for a, b in zip(bBoxMax, bBoxMin)]))*1e-7
+            # first compare by coordinates, if the same compare largestCellMidPointForVertex
+            # TODO: is there a more pythonic way?
+            def vertex_cmp(a, b):
+                res = floatvec_cmp(a[1], b[1], epsilon)
+                if res != 0:
+                    return res
+
+                res2 = floatvec_cmp(largestCellMidPointForVertex[a[0]], largestCellMidPointForVertex[b[0]], epsilon)
+                if res2 != 0:
+                    return res2
+
+                return 0
+
             # obtain a vertex index map
             vMap = []
             for idx, coords in enumerate(vertexArray):
@@ -439,7 +476,7 @@ def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=Fals
             vertexIndexMap = [0]*len(vMap)
             vertexIndexMapInverse = [0]*len(vMap)
             # first sort by coordinates, if the same by largestCellMidPointForVertex
-            for idxNew, idxOld in enumerate(sorted(vMap, key=lambda x: (x[1], largestCellMidPointForVertex[x[0]]))):
+            for idxNew, idxOld in enumerate(sorted(vMap, key=functools.cmp_to_key(vertex_cmp))):
                 vertexIndexMap[idxOld[0]] = idxNew
                 vertexIndexMapInverse[idxNew] = idxOld[0]
 
