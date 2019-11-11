@@ -214,6 +214,7 @@ public:
             auto darcyElemFluxVarsCache = localView(assembler.gridVariables(darcyIdx).gridFluxVarsCache());
 
             darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[darcyIdx]);
+            darcyElemVolVars.bindElement(darcyElement, darcyFvGeometry, this->curSol()[darcyIdx]);
             darcyElemFluxVarsCache.bind(darcyElement, darcyFvGeometry, darcyElemVolVars);
 
             const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
@@ -357,15 +358,17 @@ public:
 
             const auto& scvf = data.fvGeometry.scvf(data.darcyScvfIdx);
             const auto& scv = data.fvGeometry.scv(scvf.insideScvIdx());
-
-            auto& volVars = (*data.elementVolVars)[scv];
-            volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
             if(scv.dofIndex() == dofIdxGlobalJ)
-            {
                 data.volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
-            }
 
-            //data.elementFluxVarsCache->update(data.element, data.fvGeometry, *data.elementVolVars);
+            for (auto&& scv : scvs(data.fvGeometry))
+            {
+                if(scv.dofIndex() == dofIdxGlobalJ)
+                {
+                    auto& volVars = (*data.elementVolVars)[scv];
+                    volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
+                }
+            }
         }
     }
 
