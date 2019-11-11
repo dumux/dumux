@@ -19,14 +19,13 @@ dune_add_test(NAME test_gridmanager_cake_360_ug
                                ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-ug-360.vtu
                        --relative 1e-6)
 
-# the compare script does not work when alu does an element reoerdering, which is why this test fails
 dune_add_test(NAME test_gridmanager_cake_360_alu
               TARGET test_gridmanager_cake_alu
               LABELS unit io
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_360_alu -Grid.Name alu-360"
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_alu -Grid.Name alu-360"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-alu-360.vtu
                                ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
@@ -46,7 +45,6 @@ dune_add_test(NAME test_gridmanager_cake_210_ug
                                ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-ug-210.vtu
                        --relative 1e-6)
 
-# the compare script does not work when alu does an element reoerdering, which is why this test fails
 dune_add_test(NAME test_gridmanager_cake_210_alu
               TARGET test_gridmanager_cake_alu
               LABELS unit io
@@ -66,10 +64,10 @@ dune_add_test(NAME test_gridmanager_cake_360_nowell
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name nowell-360"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name nowell-360 -Grid.Radial0 '0.0 0.3 1.0'"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360_nowell-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/cake-3d-nowell-360.vtu
-                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360-reference.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_2d_360_nowell-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/cake-2d-nowell-360.vtu
                        --relative 1e-6)
 
