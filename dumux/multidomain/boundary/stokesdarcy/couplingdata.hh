@@ -285,10 +285,28 @@ public:
     /*!
      * \brief Returns the intrinsic permeability of the coupled Darcy element.
      */
+    template<bool scalarPerm = std::is_same<typename Problem<darcyIdx>::SpatialParams::PermeabilityType, Scalar>::value,
+             std::enable_if_t<scalarPerm, int> = 0>
     Scalar darcyPermeability(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
-        return stokesContext.volVars.permeability();
+        const auto perm = stokesContext.volVars.permeability();
+
+        return perm;
+    }
+
+    /*!
+     * \brief Returns the intrinsic permeability of the coupled Darcy element.
+     */
+    template<bool scalarPerm = std::is_same<typename Problem<darcyIdx>::SpatialParams::PermeabilityType, Scalar>::value,
+             std::enable_if_t<!scalarPerm, int> = 0>
+    Scalar darcyPermeability(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
+        const auto perm = stokesContext.volVars.permeability();
+        const auto dirIdx = 1 - scvf.directionIndex();
+
+        return perm[dirIdx][dirIdx];
     }
 
     /*!
