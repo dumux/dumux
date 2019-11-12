@@ -9,9 +9,9 @@ dune_add_test(NAME test_ff_stokes_channel_outflow
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel-00002.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_outflow-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition Outflow
-                             -Problem.Name test_ff_stokes_channel")
+                             -Problem.Name test_ff_stokes_channel_outflow")
 
 dune_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
               TARGET test_ff_channel
@@ -20,9 +20,9 @@ dune_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel-00002.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxdy-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition NeumannX_DirichletY
-                             -Problem.Name test_ff_stokes_channel")
+                             -Problem.Name test_ff_stokes_channel_nxdy")
 
 dune_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
               TARGET test_ff_channel
@@ -31,9 +31,9 @@ dune_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_neumann-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_neumann-00002.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxny-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Grid.UpperRight \"2 1\" -Grid.Cells \"50 25\"
-                         -Problem.Name test_ff_stokes_channel_neumann -Problem.OutletCondition NeumannX_NeumannY -Problem.UseVelocityProfile true -Problem.OutletPressure 0")
+                         -Problem.Name test_ff_stokes_channel_nxny -Problem.OutletCondition NeumannX_NeumannY -Problem.UseVelocityProfile true -Problem.OutletPressure 0")
 
 dune_add_test(NAME test_ff_stokes_channel_do_nothing
               TARGET test_ff_channel
