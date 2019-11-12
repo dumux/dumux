@@ -85,10 +85,10 @@ public:
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
-    template<class FVElementGeometry, class ...Args>
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const Dune::MultiTypeBlockVector<Args...>& sol)
+              const SolutionVector& sol)
     {
         // forward to the actual method
         bind(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
@@ -96,7 +96,7 @@ public:
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
-    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -190,10 +190,10 @@ public:
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
-    template<class FVElementGeometry, class ...Args>
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
-              const Dune::MultiTypeBlockVector<Args...>& sol)
+              const SolutionVector& sol)
     {
         // forward to the actual method
         bind(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
@@ -201,7 +201,7 @@ public:
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
-    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -270,10 +270,10 @@ public:
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
-    template<class FVElementGeometry, class ...Args>
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
-                     const Dune::MultiTypeBlockVector<Args...>& sol)
+                     const SolutionVector& sol)
     {
         // forward to the actual method
         bindElement(element, fvGeometry, sol[FVElementGeometry::GridGeometry::cellCenterIdx()]);
@@ -281,7 +281,7 @@ public:
 
     //! Binding of an element, prepares only the volume variables of the element.
     //! Specialization for Staggered models
-    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>::value, int> = 0>
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
