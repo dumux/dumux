@@ -238,6 +238,8 @@ struct Formulation { using type = UndefinedProperty; };                         
 // TODO: is this useful? -> everything is a constraint solver just a different type
 template<class TypeTag, class MyTypeTag>
 struct UseConstraintSolver { using type = UndefinedProperty; };                 //!< Whether to use a contraint solver for computing the secondary variables
+template<class TypeTag, class MyTypeTag>
+struct UseSimpleCompositionalFlash { using type = UndefinedProperty; };         //!< Whether to use a simple compositional flash for computing the secondary variables
 
 // When using the box method in a multi-phase context, an interface solver might be necessary
 template<class TypeTag, class MyTypeTag>

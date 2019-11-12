@@ -9,7 +9,7 @@ dune_add_test(NAME test_2p2cni_superheatedsteam_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2cni_superheatedsteam_box-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_superheatedsteam_box-00039.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_superheatedsteam_box-00022.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_superheatedsteam_box params.input -Problem.Name test_2p2cni_superheatedsteam_box")
 
 dune_add_test(NAME test_2p2cni_superheatedsteam_tpfa
@@ -20,5 +20,5 @@ dune_add_test(NAME test_2p2cni_superheatedsteam_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2cni_superheatedsteam_tpfa-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_superheatedsteam_tpfa-00039.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_superheatedsteam_tpfa-00015.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_superheatedsteam_tpfa params.input -Problem.Name test_2p2cni_superheatedsteam_tpfa")

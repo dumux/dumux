@@ -62,6 +62,16 @@ class MiscibleMultiPhaseComposition
     static constexpr int numComponents = FluidSystem::numComponents;
     static const int numMajorComponents = FluidSystem::numPhases;
 
+    // component and phase indices
+    enum
+    {
+        comp0Idx = FluidSystem::comp0Idx,
+        comp1Idx = FluidSystem::comp1Idx,
+        phase0Idx = FluidSystem::phase0Idx,
+        phase1Idx = FluidSystem::phase1Idx
+    };
+
+
 public:
     /*!
      * \brief @copybrief Dumux::MiscibleMultiPhaseComposition
@@ -94,14 +104,6 @@ public:
         }
 #endif
 
-        //get the known mole fractions from the fluidState
-        //in a 2pnc system the n>2 mole fractions are primary variables and are already set in the fluidstate
-        Dune::FieldVector<Scalar, numComponents-numMajorComponents> xKnown(0.0);
-        for (int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
-        {
-            xKnown[knownCompIdx] = fluidState.moleFraction(knownPhaseIdx, knownCompIdx + numMajorComponents);
-        }
-
         // compute all fugacity coefficients
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             paramCache.updatePhase(fluidState, phaseIdx);
@@ -115,6 +117,19 @@ public:
             }
         }
 
+        // use explicit version of the same flash for two-phase, two-component and three-phase, three-component systems
+        if ((numPhases == 2 && numComponents == 2) || (numPhases == 3 && numComponents == 3)) {
+            solveExplicit_(fluidState, paramCache);
+            return;
+        }
+
+        //get the known mole fractions from the fluidState
+        //in a 2pnc system the n>2 mole fractions are primary variables and are already set in the fluidstate
+        Dune::FieldVector<Scalar, numComponents-numMajorComponents> xKnown(0.0);
+        for (int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
+        {
+            xKnown[knownCompIdx] = fluidState.moleFraction(knownPhaseIdx, knownCompIdx + numMajorComponents);
+        }
 
         // create the linear system of equations which defines the
         // mole fractions
@@ -191,6 +206,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
                 int rowIdx = phaseIdx*numComponents + compIdx;
+                x[rowIdx] = std::min(1.0, std::max(0.0, x[rowIdx])); // regularization
                 fluidState.setMoleFraction(phaseIdx, compIdx, x[rowIdx]);
             }
             paramCache.updateComposition(fluidState, phaseIdx);
@@ -200,6 +216,50 @@ public:
 
             value = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             fluidState.setMolarDensity(phaseIdx, value);
+        }
+    }
+
+
+protected:
+    /*!
+     * \brief @copybrief Dumux::MiscibleMultiPhaseComposition
+     *
+     * \param fluidState A container with the current (physical) state of the fluid
+     * \param paramCache A container for iterative calculation of fluid composition
+     */
+    template <class FluidState, class ParameterCache>
+    static void solveExplicit_(FluidState &fluidState,
+                      ParameterCache &paramCache)
+    {
+        if(numPhases == 2)
+        {
+            // we define mole equilibrium ratios to make the following
+            // calculations more readable
+            Scalar k10 = fluidState.fugacityCoefficient(phase0Idx, comp0Idx)*fluidState.pressure(phase0Idx)/
+            (fluidState.fugacityCoefficient(phase1Idx, comp0Idx)*fluidState.pressure(phase1Idx));
+            Scalar k11 = fluidState.fugacityCoefficient(phase0Idx, comp1Idx)*fluidState.pressure(phase0Idx)/
+            (fluidState.fugacityCoefficient(phase1Idx, comp1Idx)*fluidState.pressure(phase1Idx));
+
+            // using the assumptions above, the equilibrium mole fractions are calculated
+            Scalar x00 = std::min(1.0, std::max(0.0, (1 - k11)/(k10 - k11))); // regularization
+            Scalar x10 = std::min(1.0, std::max(0.0, x00 * k10)); // regularization
+            fluidState.setMoleFraction(phase0Idx, comp0Idx, x00);
+            fluidState.setMoleFraction(phase1Idx, comp0Idx, x10);
+            fluidState.setMoleFraction(phase0Idx, comp1Idx, 1.0 - fluidState.moleFraction(phase0Idx,comp0Idx));
+            fluidState.setMoleFraction(phase1Idx, comp1Idx, 1.0 - fluidState.moleFraction(phase1Idx,comp0Idx));
+
+
+            // set the additional quantities in the fluid state
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+                paramCache.updateComposition(fluidState, phaseIdx);
+
+                fluidState.setDensity(phaseIdx, FluidSystem::density(fluidState, paramCache, phaseIdx));
+                fluidState.setMolarDensity(phaseIdx, FluidSystem::molarDensity(fluidState, paramCache, phaseIdx));
+            }
+        }
+        else if(numPhases == 3)
+        {
+            DUNE_THROW(Dune::NotImplemented, "3p3c not yet implemented");
         }
     }
 };

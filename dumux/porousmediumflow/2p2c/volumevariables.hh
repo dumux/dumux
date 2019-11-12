@@ -28,7 +28,9 @@
 
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/constraintsolvers/2p2c/misciblemultiphasecomposition.hh>
+#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephasesimple.hh>
+#include <dumux/material/constraintsolvers/misciblemultiphasecompositionsimple.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
@@ -40,7 +42,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class Traits,  bool enableChemicalNonEquilibrium>
+template <class Traits,  bool enableChemicalNonEquilibrium, bool useSimpleCompositionalFlash>
 class TwoPTwoCVolumeVariablesImplementation;
 
 
@@ -49,8 +51,8 @@ class TwoPTwoCVolumeVariablesImplementation;
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase two-component model.
  */
-template <class Traits>
-using TwoPTwoCVolumeVariables =  TwoPTwoCVolumeVariablesImplementation<Traits,  Traits::ModelTraits::enableChemicalNonEquilibrium()>;
+template <class Traits, bool useSimpleCompositionalFlash = false>
+using TwoPTwoCVolumeVariables =  TwoPTwoCVolumeVariablesImplementation<Traits,  Traits::ModelTraits::enableChemicalNonEquilibrium(), useSimpleCompositionalFlash>;
 
 /*!
  * \ingroup TwoPTwoCModel
@@ -400,11 +402,11 @@ protected:
  *        finite volume in the two-phase two-component model.
  *        Specialization for chemical equilibrium
  */
-template <class Traits>
-class TwoPTwoCVolumeVariablesImplementation<Traits, false>
-: public TwoPTwoCVolumeVariablesBase<Traits, TwoPTwoCVolumeVariablesImplementation<Traits, false>>
+template <class Traits, bool useSimpleCompositionalFlash>
+class TwoPTwoCVolumeVariablesImplementation<Traits, false, useSimpleCompositionalFlash>
+: public TwoPTwoCVolumeVariablesBase<Traits, TwoPTwoCVolumeVariablesImplementation<Traits, false, useSimpleCompositionalFlash>>
 {
-    using ParentType = TwoPTwoCVolumeVariablesBase< Traits, TwoPTwoCVolumeVariablesImplementation<Traits, false>>;
+    using ParentType = TwoPTwoCVolumeVariablesBase< Traits, TwoPTwoCVolumeVariablesImplementation<Traits, false, useSimpleCompositionalFlash>>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPTwoCVolumeVariables<Traits> >;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
@@ -439,7 +441,9 @@ class TwoPTwoCVolumeVariablesImplementation<Traits, false>
     static constexpr auto formulation = ModelTraits::priVarFormulation();
 
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, typename Traits::FluidSystem>;
-    using MiscibleMultiPhaseComposition = Dumux::TwoPTwoCMiscibleMultiPhaseComposition< Scalar, typename Traits::FluidSystem >;
+    using ComputeFromReferencePhaseSimple = Dumux::ComputeFromReferencePhaseSimple<Scalar, typename Traits::FluidSystem>;
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition< Scalar, typename Traits::FluidSystem >;
+    using MiscibleMultiPhaseCompositionSimple = Dumux::MiscibleMultiPhaseCompositionSimple< Scalar, typename Traits::FluidSystem >;
 public:
     //! The type of the object returned by the fluidState() method
     using FluidState = typename Traits::FluidState;
@@ -491,9 +495,11 @@ public:
         {
             // both phases are present, phase compositions are a result
             // of the equilibrium between the phases. This is the job
-            // of the "MiscibleMultiPhaseComposition" constraint solver
-            MiscibleMultiPhaseComposition::solve(fluidState,
-                                                     paramCache);
+            // of the "MiscibleMultiPhaseComposition" flashs
+            if(useSimpleCompositionalFlash)
+                MiscibleMultiPhaseCompositionSimple::solve(fluidState, paramCache);
+            else
+                MiscibleMultiPhaseComposition::solve(fluidState, paramCache);
         }
         else if (phasePresence == secondPhaseOnly)
         {
@@ -509,10 +515,11 @@ public:
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). This is the job
-            // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState,
-                                             paramCache,
-                                             phase1Idx);
+            // of the "ComputeFromReferencePhase" flashs
+            if (useSimpleCompositionalFlash)
+                ComputeFromReferencePhaseSimple::solve(fluidState, paramCache, phase1Idx);
+            else
+                ComputeFromReferencePhase::solve(fluidState, paramCache, phase1Idx);
         }
         else if (phasePresence == firstPhaseOnly)
         {
@@ -529,10 +536,11 @@ public:
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). This is the job
-            // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState,
-                                             paramCache,
-                                             phase0Idx);
+            // of the "ComputeFromReferencePhase" flashs
+            if (useSimpleCompositionalFlash)
+                ComputeFromReferencePhaseSimple::solve(fluidState, paramCache, phase0Idx);
+            else
+                ComputeFromReferencePhase::solve(fluidState, paramCache, phase0Idx);
         }
 
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
@@ -553,11 +561,11 @@ public:
  *        Specialization for chemical non-equilibrium.
  *        The equilibrium mole fraction is calculated using Henry's and Raoult's law
  */
-template <class Traits>
-class TwoPTwoCVolumeVariablesImplementation<Traits, true>
-: public TwoPTwoCVolumeVariablesBase<Traits, TwoPTwoCVolumeVariablesImplementation<Traits, true>>
+template <class Traits, bool useSimpleCompositionalFlash>
+class TwoPTwoCVolumeVariablesImplementation<Traits, true, useSimpleCompositionalFlash>
+: public TwoPTwoCVolumeVariablesBase<Traits, TwoPTwoCVolumeVariablesImplementation<Traits, true, useSimpleCompositionalFlash>>
 {
-    using ParentType = TwoPTwoCVolumeVariablesBase< Traits, TwoPTwoCVolumeVariablesImplementation<Traits, true>>;
+    using ParentType = TwoPTwoCVolumeVariablesBase< Traits, TwoPTwoCVolumeVariablesImplementation<Traits, true, useSimpleCompositionalFlash>>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPTwoCVolumeVariables<Traits> >;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
@@ -592,7 +600,8 @@ class TwoPTwoCVolumeVariablesImplementation<Traits, true>
     static constexpr auto formulation = ModelTraits::priVarFormulation();
 
     using PermeabilityType = typename Traits::PermeabilityType;
-    using MiscibleMultiPhaseComposition = Dumux::TwoPTwoCMiscibleMultiPhaseComposition< Scalar, typename Traits::FluidSystem >;
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition< Scalar, typename Traits::FluidSystem >;
+    using MiscibleMultiPhaseCompositionSimple = Dumux::MiscibleMultiPhaseCompositionSimple< Scalar, typename Traits::FluidSystem >;
 
 public:
     //! The type of the object returned by the fluidState() method
@@ -714,9 +723,11 @@ public:
             // now comes the tricky part: calculate phase compositions
             // both phases are present, phase compositions are a result
             // of the equilibrium between the phases. This is the job
-            // of the "MiscibleMultiPhaseComposition" constraint solver
-            MiscibleMultiPhaseComposition::solve(equilFluidState,
-                                                 paramCache);
+            // of the "MiscibleMultiPhaseComposition" flashs
+            if(useSimpleCompositionalFlash)
+                MiscibleMultiPhaseCompositionSimple::solve(equilFluidState, paramCache);
+            else
+                MiscibleMultiPhaseComposition::solve(equilFluidState, paramCache);
 
             // Setting the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
             for(int phaseIdx=0; phaseIdx<ModelTraits::numFluidPhases(); ++phaseIdx){

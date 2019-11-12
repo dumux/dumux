@@ -149,10 +149,16 @@ private:
     static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
 
+    static constexpr bool useSimpleCompositionalFlash = getPropValue<TypeTag, Properties::UseSimpleCompositionalFlash>();
+
     using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
-    using type = TwoPTwoCVolumeVariables<Traits>;
+    using type = TwoPTwoCVolumeVariables<Traits, useSimpleCompositionalFlash>;
 };
+
+//! Determines whether the simple compositional flash is used
+template<class TypeTag>
+struct UseSimpleCompositionalFlash<TypeTag, TTag::TwoPTwoC> { static constexpr bool value = false; };
 
 //////////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2p2c model (inherited from 2pnc)
@@ -254,8 +260,10 @@ private:
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
+    static constexpr bool useSimpleCompositionalFlash = getPropValue<TypeTag, Properties::UseSimpleCompositionalFlash>();
+
     using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
-    using EquilibriumVolVars = TwoPTwoCVolumeVariables<Traits>;
+    using EquilibriumVolVars = TwoPTwoCVolumeVariables<Traits, useSimpleCompositionalFlash>;
 public:
     using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
 };
