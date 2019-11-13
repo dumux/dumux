@@ -291,6 +291,10 @@ public:
                 }
             }
         }
+
+        // error check: periodic boundaries currently don't work for box in parallel
+        if (this->isPeriodic() && this->gridView().comm().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for box method for parallel simulations!");
     }
 
     //! The finite element cache for creating local FE bases
@@ -495,6 +499,10 @@ public:
                 }
             }
         }
+
+        // error check: periodic boundaries currently don't work for box in parallel
+        if (this->isPeriodic() && this->gridView().comm().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for box method for parallel simulations!");
     }
 
     //! The finite element cache for creating local FE bases
