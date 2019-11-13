@@ -203,7 +203,8 @@ int main(int argc, char** argv) try
     } while (!timeLoop->finished());
 
     // output some Newton statistics
-    nonLinearSolver.report();
+    if (mpiHelper.rank() == 0)
+        nonLinearSolver.report();
 
     timeLoop->finalize(leafGridView.comm());
 
