@@ -32,7 +32,7 @@ namespace Dumux {
  * \ingroup ConstraintSolvers
  * \brief Computes the equilibrium composition of all phases
  *
- * This simple, explicit compositional flash can only handle ideal mixtures
+ * This 'simple', explicit compositional flash can only handle ideal mixtures
  * and only works for two-phase, two-component and three-phase,
  * three-component systems.
  * It assumes the following quantities to be set:
@@ -41,11 +41,15 @@ namespace Dumux {
  * - pressures of *all* phases \f$p_\alpha\f$
  * - saturations of *all* phases (i.e., all are present)
  *
- * It also assumes that the mole fractions of all phases sum up
- * to 1. After calling the solve() method the following quantities
+ * It also assumes that the mole or mass fractions of all phases sum up
+ * to 1. After calling the solve() method, the following quantities
  * are calculated:
  *
- * - fugacity coefficients of *all* components in *all* phases
+ * - 'fugacity coefficients' of *all* components in *all* phases
+ * (Note that 'fugacity coefficients' represents here a term that is used
+ * for the sake of harmonisation with the other constraintsolvers.
+ * It is here actually: the partial pressures in the gas and the Henry
+ * coefficients for the components in the liquids)
  *   \f$\Phi^\kappa_\alpha\f$
  * - composition in mole fractions of *all* components in *all* phases \f$x^\kappa_\alpha\f$
  * - density and molar density of *all* phases
