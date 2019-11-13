@@ -406,11 +406,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
             /****** interior face   *****************/
             if (intersection.neighbor())
-                getFlux(entries, timestepFlux, intersection, cellDataI);
+                asImp_().getFlux(entries, timestepFlux, intersection, cellDataI);
 
             /******  Boundary Face   *****************/
             if (intersection.boundary())
-                getFluxOnBoundary(entries, timestepFlux, intersection, cellDataI);
+                asImp_().getFluxOnBoundary(entries, timestepFlux, intersection, cellDataI);
 
 
             if (localTimeStepping_)
