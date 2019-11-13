@@ -291,6 +291,10 @@ public:
                 }
             }
         }
+
+        // error check: periodic boundaries currently don't work for box in parallel
+        if (this->isPeriodic() && this->gridView().comm().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for box method for parallel simulations!");
     }
 
     //! The finite element cache for creating local FE bases
@@ -389,9 +393,9 @@ public:
     : ParentType(gridView)
     {
         // Check if the overlap size is what we expect
-        // if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
-        //     DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
-        //                                              << " Set the parameter \"Grid.Overlap\" in the input file.");
+        if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
 
     //! the vertex mapper is the dofMapper
@@ -495,6 +499,10 @@ public:
                 }
             }
         }
+
+        // error check: periodic boundaries currently don't work for box in parallel
+        if (this->isPeriodic() && this->gridView().comm().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for box method for parallel simulations!");
     }
 
     //! The finite element cache for creating local FE bases
