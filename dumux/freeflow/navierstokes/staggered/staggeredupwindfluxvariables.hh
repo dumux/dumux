@@ -412,9 +412,9 @@ private:
             if (ownScvf.hasParallelNeighbor(oppositeSubFaceIdx, 0))
                 momenta[2] = faceVars.velocityParallel(oppositeSubFaceIdx, 0) * insideVolVars.density();
             else
-                momenta[2] = getParallelVelocityFromOtherBoundary_(problem, fvGeometry, ownScvf,
-                                                                   oppositeSubFaceIdx, element,
-                                                                   (momenta[1]/insideVolVars.density())) * insideVolVars.density();
+                momenta[2] = getParallelVelocityFromOppositeBoundary_(problem, element, fvGeometry, ownScvf,
+                                                                      faceVars, currentScvfBoundaryTypes,
+                                                                      oppositeSubFaceIdx) * insideVolVars.density();
         }
         else
         {
@@ -428,9 +428,10 @@ private:
             {
                 const Element& elementParallel = fvGeometry.gridGeometry().element(lateralFace.outsideScvIdx());
                 const SubControlVolumeFace& firstParallelScvf = fvGeometry.scvf(lateralFace.outsideScvIdx(), ownScvf.localFaceIdx());
-                momenta[2] = getParallelVelocityFromOtherBoundary_(problem, fvGeometry, firstParallelScvf,
-                                                                   localSubFaceIdx, elementParallel,
-                                                                   (momenta[1]/outsideVolVars.density())) * outsideVolVars.density();
+
+                momenta[2] = getParallelVelocityFromOppositeBoundary_(problem, elementParallel, fvGeometry, firstParallelScvf,
+                                                                      faceVars, problem.boundaryTypes(elementParallel, firstParallelScvf),
+                                                                      localSubFaceIdx) * outsideVolVars.density();
             }
         }
 
@@ -579,26 +580,22 @@ private:
                                                    const int localSubFaceIdx)
     {
         // Find out what boundary type is set on the lateral face
-        const bool lateralFaceHasDirichletPressure = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx);
+        const bool useZeroGradient = lateralFaceBoundaryTypes && (lateralFaceBoundaryTypes->isSymmetry()
+                                                                  || lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
         const bool lateralFaceHasBJS = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex()));
+        const bool lateralFaceHasDirichletVelocity = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex()));
         const Scalar velocitySelf = faceVars.velocitySelf();
 
         // If there is a Dirichlet condition for the pressure we assume zero gradient for the velocity,
         // so the velocity at the boundary equal to that on the scvf.
-        if (lateralFaceHasDirichletPressure)
+        if (useZeroGradient)
             return velocitySelf;
 
         if (lateralFaceHasBJS)
-        {
-            const auto eIdx = scvf.insideScvIdx();
-            const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-            const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, fvGeometry, scvf, faceVars,
-                                                                             currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            return VelocityGradients::beaversJosephVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
+                                                                         currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
-            const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-            return problem.beaversJosephVelocity(element, scv, lateralFace, velocitySelf, velocityGrad_ji);
-        }
-        else
+        else if(lateralFaceHasDirichletVelocity)
         {
             //     ________________
             //     ---------------o                 || frontal face of staggered half-control-volume
@@ -612,6 +609,11 @@ private:
             const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         }
+        else
+        {
+            // Neumann conditions are not well implemented
+            DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations at global position " << fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localSubFaceIdx).localLateralFaceIdx).center());
+        }
     }
 
     /*!
@@ -623,60 +625,36 @@ private:
      * \param boundaryElement The element that is on the boundary
      * \param parallelVelocity The velocity over scvf
      */
-    static Scalar getParallelVelocityFromOtherBoundary_(const Problem& problem,
-                                                        const FVElementGeometry& fvGeometry,
-                                                        const SubControlVolumeFace& scvf,
-                                                        const int localIdx,
-                                                        const Element& boundaryElement,
-                                                        const Scalar parallelVelocity)
+    static Scalar getParallelVelocityFromOppositeBoundary_(const Problem& problem,
+                                                           const Element& element,
+                                                           const FVElementGeometry& fvGeometry,
+                                                           const SubControlVolumeFace& scvf,
+                                                           const FaceVariables& faceVars,
+                                                           const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                           const int localOppositeSubFaceIdx)
     {
         // A ghost subface at the boundary is created, featuring the location of the sub face's center
-        const SubControlVolumeFace& lateralScvf = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localIdx).localLateralFaceIdx);
-        GlobalPosition lateralBoundaryFaceCenter = scvf.pairData(localIdx).lateralStaggeredFaceCenter + lateralScvf.center();
-        lateralBoundaryFaceCenter *= 0.5;
+        const SubControlVolumeFace& lateralOppositeScvf = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData(localOppositeSubFaceIdx).localLateralFaceIdx);
+        GlobalPosition center = scvf.pairData(localOppositeSubFaceIdx).lateralStaggeredFaceCenter + lateralOppositeScvf.center();
+        center *= 0.5;
 
-        //    ________________
-        //    --------####o###                 || frontal face of staggered half-control-volume
-        //    |      ||      | current scvf    #  lateralBoundaryFace of interest, lies on lateral boundary
+        //          lateral face               #  lateralFace currently being assembled
+        //    --------########                 || frontal face of staggered half-control-volume
+        //    |      ||      | current scvf    %  lateralOppositeBoundaryFace of interest, lies on boundary
         //    |      ||      |                 x  dof position
         //    |      ||      x~~~~> vel.Self   -- element boundaries
         //    |      ||      |                 __ domain boundary
         //    |      ||      |                 o  position at which the boundary conditions will be evaluated
-        //    ----------------                    (lateralBoundaryFaceCenter)
+        //    --------%%%c%%%o
+        //    ________________                 c  center of opposite boundary face
 
-        const SubControlVolumeFace lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralBoundaryFaceCenter);
 
-        // The boundary condition is checked, in case of symmetry or Dirichlet for the pressure
-        // a gradient of zero is assumed in the direction normal to the bounadry, while if there is
-        // Dirichlet of BJS for the velocity the related values are exploited.
-        const auto bcTypes = problem.boundaryTypes(boundaryElement, lateralBoundaryFace);
+        // Get the boundary types of the lateral opposite boundary face
+        const auto lateralOppositeFaceBoundaryTypes = problem.boundaryTypes(element, lateralOppositeScvf.makeBoundaryFace(center));
 
-        if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
-        {
-            //    ________________
-            //    --------#######o                 || frontal face of staggered half-control-volume
-            //    |      ||      | current scvf    #  lateralBoundaryFace of interest, lies on lateral boundary
-            //    |      ||      |                 x  dof position
-            //    |      ||      x~~~~> vel.Self   -- element boundaries
-            //    |      ||      |                 __ domain boundary
-            //    |      ||      |                 o  position at which the boundary conditions will be evaluated
-            //    ----------------
-
-            const SubControlVolumeFace ghostFace = makeParallelGhostFace_(scvf, localIdx);
-            return problem.dirichlet(boundaryElement, ghostFace)[Indices::velocity(scvf.directionIndex())];
-        }
-        else if (bcTypes.isSymmetry() || bcTypes.isDirichlet(Indices::pressureIdx))
-            return parallelVelocity;
-        else if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-        {
-            const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-            return problem.beaversJosephVelocity(boundaryElement, scv, lateralScvf, parallelVelocity, 0.0);
-        }
-        else
-        {
-            // Neumann conditions are not well implemented
-            DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations at global position " << lateralBoundaryFaceCenter);
-        }
+        return getParallelVelocityFromBoundary_(problem, element, fvGeometry, scvf,
+                                                faceVars, currentScvfBoundaryTypes, lateralOppositeFaceBoundaryTypes,
+                                                localOppositeSubFaceIdx);
     }
 
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
