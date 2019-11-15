@@ -30,6 +30,7 @@
 #include <memory>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
@@ -518,7 +519,7 @@ private:
     template<int dim, std::enable_if_t<(dim == 3), int> = 0>
     std::vector<Dune::FieldVector<double, dim>>
     adaptPointDimension_(std::vector<Dune::FieldVector<double, 3>>&& points3D) const
-    { return points3D; }
+    { return std::move(points3D); }
 
     std::string fileName_; //!< the vtk file name
     tinyxml2::XMLDocument doc_; //!< the xml document created from file with name fileName_
