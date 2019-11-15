@@ -365,7 +365,6 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     // get values of cell I
     Scalar pressI = problem().pressureModel().pressure(globalIdxI);
     Scalar pcI = cellDataI.capillaryPressure();
-    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(elementI));
 
     PhaseVector SmobI(0.);
     using std::max;
