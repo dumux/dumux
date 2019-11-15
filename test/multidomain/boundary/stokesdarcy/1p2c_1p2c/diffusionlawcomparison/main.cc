@@ -157,7 +157,7 @@ int main(int argc, char** argv) try
     if(injectionBegin > 0.0)
         timeLoop->setCheckPoint({injectionBegin, injectionEnd});
     else
-        timeLoop->setCheckPoint({injectionEnd});
+        timeLoop->setCheckPoint(injectionEnd);
 
     // the solution vector
     Traits::SolutionVector sol;
