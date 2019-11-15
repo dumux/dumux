@@ -1134,10 +1134,6 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                     innerBoundaryVolumeFaces_[eIdxGlobal1][intersection14.indexInInside()] = true;
                                     innerBoundaryVolumeFaces_[eIdxGlobal4][intersection14.indexInOutside()] = true;
 
-                                    // get absolute permeability of neighbor cell 2
-                                    DimMatrix K4(
-                                            problem_.spatialParams().intrinsicPermeability(element4));
-
                                     finished = true;
 
                                     break;
