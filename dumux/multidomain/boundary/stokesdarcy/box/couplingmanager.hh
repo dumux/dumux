@@ -526,9 +526,10 @@ public:
     /*!
      * \brief Returns whether a given free flow scvf is coupled to the other domain
      */
-    bool isCoupledEntity(Dune::index_constant<darcyIdx>, std::size_t scvIdx, std::size_t scvfLocalIdx) const
+    bool isCoupledEntity(Dune::index_constant<darcyIdx>, const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
     {
-        return couplingMapper_.isCoupledDarcyScvf(scvIdx, scvfLocalIdx);
+        return couplingMapper_.isCoupledDarcyScvf(this->problem(darcyIdx).gridGeometry().elementMapper().index(element),
+                                                  scvf.index());
     }
 
 protected:

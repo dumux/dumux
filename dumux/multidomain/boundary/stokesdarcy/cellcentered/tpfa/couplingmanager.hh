@@ -523,6 +523,14 @@ public:
         return couplingMapper_.isCoupledDarcyScvf(scvf.index());
     }
 
+    /*!
+     * \brief Returns whether a given free flow scvf is coupled to the other domain
+     */
+    bool isCoupledEntity(Dune::index_constant<darcyIdx>, const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
+    {
+        return couplingMapper_.isCoupledDarcyScvf(scvf.index());
+    }
+
 protected:
 
     //! Return a reference to an empty stencil

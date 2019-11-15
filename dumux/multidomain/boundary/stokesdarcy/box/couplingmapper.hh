@@ -175,6 +175,7 @@ public:
 
                 const auto& darcyElement = darcyFvGridGeometry.element(darcyIdx);
                 darcyFvGeometry.bindElement(darcyElement);
+                isCoupledDarcyScvf_[darcyIdx].resize(darcyFvGeometry.numScvf());
 
                 // find the corresponding Darcy sub control volume face
                 for(const auto& darcyScvf : scvfs(darcyFvGeometry))
@@ -183,8 +184,7 @@ public:
 
                     if(distance < eps)
                     {
-                        isCoupledDarcyScvf_[darcyFvGeometry.scv(darcyScvf.insideScvIdx()).dofIndex()].resize(darcyFvGeometry.numScvf());
-                        isCoupledDarcyScvf_[darcyFvGeometry.scv(darcyScvf.insideScvIdx()).dofIndex()][darcyScvf.index()] = true;
+                        isCoupledDarcyScvf_[darcyIdx][darcyScvf.index()] = true;
                         darcyElementToStokesElementMap_[darcyIdx].push_back({stokesElementIdx, scvf.index(), darcyScvf.index()});
                         stokesElementToDarcyElementMap_[stokesElementIdx].push_back({darcyIdx, darcyScvf.index(), scvf.index()});
                     }
@@ -196,10 +196,10 @@ public:
     /*!
      * \brief Returns whether a Darcy scvf is coupled to the other domain
      */
-    bool isCoupledDarcyScvf(std::size_t scvIdx, std::size_t scvfLocalIdx) const
+    bool isCoupledDarcyScvf(std::size_t eIdx, std::size_t scvfLocalIdx) const
     {
-        if(isCoupledDarcyScvf_[scvIdx].size() > 0)
-            return isCoupledDarcyScvf_[scvIdx][scvfLocalIdx];
+        if(isCoupledDarcyScvf_[eIdx].size() > 0)
+            return isCoupledDarcyScvf_[eIdx][scvfLocalIdx];
 
         return false;
     }
