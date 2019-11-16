@@ -606,10 +606,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
             }
 
             DimVector edgeCoord1(interactionVolume.getEdgePosition(0));
-            DimVector edgeCoord2(interactionVolume.getEdgePosition(1));
             DimVector edgeCoord3(interactionVolume.getEdgePosition(2));
             DimVector edgeCoord4(interactionVolume.getEdgePosition(3));
-            DimVector edgeCoord5(interactionVolume.getEdgePosition(4));
             DimVector edgeCoord6(interactionVolume.getEdgePosition(5));
 
             DimVector crossProductVector1(0);
@@ -810,7 +808,6 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 auto element = interactionVolume.getSubVolumeElement(0);
 
                 DimVector edgeCoord1(interactionVolume.getEdgePosition(0));
-                DimVector edgeCoord2(interactionVolume.getEdgePosition(1));
                 DimVector edgeCoord3(interactionVolume.getEdgePosition(2));
                 DimVector edgeCoord4(interactionVolume.getEdgePosition(3));
                 DimVector edgeCoord5(interactionVolume.getEdgePosition(4));
