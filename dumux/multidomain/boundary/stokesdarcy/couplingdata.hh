@@ -368,36 +368,6 @@ protected:
     }
 
     /*!
-     * \brief Returns the conductive energy flux acorss the interface.
-     */
-    template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
-    Scalar conductiveEnergyFlux_(Dune::index_constant<i> domainI,
-                                 Dune::index_constant<j> domainJ,
-                                 const FVElementGeometry<i>& fvGeometryI,
-                                 const FVElementGeometry<j>& fvGeometryJ,
-                                 const SubControlVolumeFace<i>& scvfI,
-                                 const SubControlVolume<i>& scvI,
-                                 const SubControlVolume<j>& scvJ,
-                                 const VolumeVariables<i>& volVarsI,
-                                 const VolumeVariables<j>& volVarsJ,
-                                 const DiffusionCoefficientAveragingType diffCoeffAvgType) const
-    {
-        const Scalar insideDistance = getDistance_(scvI, scvfI);
-        const Scalar outsideDistance = getDistance_(scvJ, scvfI);
-
-        const Scalar deltaT = volVarsJ.temperature() - volVarsI.temperature();
-        const Scalar tij = transmissibility_(domainI,
-                                             domainJ,
-                                             insideDistance,
-                                             outsideDistance,
-                                             thermalConductivity_(volVarsI, fvGeometryI, scvI),
-                                             thermalConductivity_(volVarsJ, fvGeometryJ, scvJ),
-                                             diffCoeffAvgType);
-
-        return -tij * deltaT;
-    }
-
-    /*!
      * \brief Returns the effective thermal conductivity (lumped parameter) within the porous medium.
      */
     template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
