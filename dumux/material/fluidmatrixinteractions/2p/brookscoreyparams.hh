@@ -35,7 +35,7 @@ namespace Dumux {
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material parameters
- *       for the Brooks Corey constitutive relations.
+ *        for the Brooks Corey constitutive relations.
  * \see BrooksCorey
  */
 template <class ScalarT>

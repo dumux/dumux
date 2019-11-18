@@ -42,7 +42,7 @@ class PermeabilityKozenyCarman
 {
 public:
     /*!
-     * \brief calculates the permeability for a given sub-control volume
+     * \brief Calculates the permeability for a given sub-control volume
      * \param refPerm Reference permeability before porosity changes
      * \param refPoro The poro corresponding to the reference permeability
      * \param poro The porosity for which permeability is to be evaluated

@@ -71,7 +71,7 @@ public:
      *        curve.
      *
      * regularized part:
-     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *    - low saturation: extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
      *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                       by a straight line (yes, there is a kink :-( ).
      *
@@ -395,7 +395,7 @@ public:
     /*!
      * \brief The relative permeability for a phase.
      * \param params Array of parameters.
-     * \param phaseIdx indicator, The saturation of all phases.
+     * \param phaseIdx Indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
      * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
