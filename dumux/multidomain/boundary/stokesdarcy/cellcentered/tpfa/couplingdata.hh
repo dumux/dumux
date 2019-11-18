@@ -33,7 +33,7 @@ namespace Dumux {
  * \ingroup StokesDarcyCoupling
  * \brief A base class which provides some common methods used for Stokes-Darcy coupling.
  */
-template<class MDTraits, class CouplingManager>
+template<class MDTraits, class CouplingManager, bool enableEnergyBalance>
 class StokesDarcyCouplingDataTpfaBase : public StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>
 {
     using ParentType = StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>;
@@ -59,6 +59,8 @@ class StokesDarcyCouplingDataTpfaBase : public StokesDarcyCouplingDataImplementa
     using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
     using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
     using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
+
+    using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
 public:
     StokesDarcyCouplingDataTpfaBase(const CouplingManager& couplingmanager): ParentType(couplingmanager) {}
@@ -103,7 +105,7 @@ public:
        return momentumFlux;
    }
 
-private:
+protected:
     /*!
      * \brief Returns the pressure at the interface
      */
@@ -183,6 +185,37 @@ private:
         return (-1/couplingPhaseMobility * (scvf.unitOuterNormal() * couplingPhaseVelocity) + couplingPhaseDensity * alpha)/ti
                + couplingPhaseCellCenterPressure;
     }
+
+    /*!
+     * \brief Returns the conductive energy flux across the interface.
+     */
+    template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    Scalar conductiveEnergyFlux_(Dune::index_constant<i> domainI,
+                                 Dune::index_constant<j> domainJ,
+                                 const FVElementGeometry<i>& fvGeometryI,
+                                 const FVElementGeometry<j>& fvGeometryJ,
+                                 const SubControlVolumeFace<i>& scvfI,
+                                 const SubControlVolume<i>& scvI,
+                                 const SubControlVolume<j>& scvJ,
+                                 const VolumeVariables<i>& volVarsI,
+                                 const VolumeVariables<j>& volVarsJ,
+                                 const DiffusionCoefficientAveragingType diffCoeffAvgType) const
+    {
+        const Scalar insideDistance = this->getDistance_(scvI, scvfI);
+        const Scalar outsideDistance = this->getDistance_(scvJ, scvfI);
+
+        const Scalar deltaT = volVarsJ.temperature() - volVarsI.temperature();
+
+        const Scalar tij = this->transmissibility_(domainI,
+                                                   domainJ,
+                                                   insideDistance,
+                                                   outsideDistance,
+                                                   this->thermalConductivity_(volVarsI, fvGeometryI, scvI),
+                                                   this->thermalConductivity_(volVarsJ, fvGeometryJ, scvJ),
+                                                   diffCoeffAvgType);
+
+        return -tij * deltaT;
+    }
 };
 
 /*!
@@ -191,9 +224,9 @@ private:
  */
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance>
 class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEnergyBalance, false, DiscretizationMethod::cctpfa>
-: public StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager>
+: public StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager, enableEnergyBalance>
 {
-    using ParentType = StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager>;
+    using ParentType = StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager, enableEnergyBalance>;
     using Scalar = typename MDTraits::Scalar;
     static constexpr auto stokesIdx = typename MDTraits::template SubDomain<0>::Index();
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
@@ -210,6 +243,7 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id> using SubControlVolumeFace = typename GridGeometry<id>::LocalView::SubControlVolumeFace;
     template<std::size_t id> using SubControlVolume = typename GridGeometry<id>::LocalView::SubControlVolume;
     template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
+    template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t id> using ElementFaceVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>::LocalView;
     template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
@@ -226,9 +260,28 @@ public:
     /*!
      * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
      */
+    [[deprecated("Use massCouplingCondition with elementFluxVarsCache as additional function argument. This function will be removed after 3.2!")]]
     Scalar massCouplingCondition(const Element<darcyIdx>& element,
                                  const FVElementGeometry<darcyIdx>& fvGeometry,
                                  const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                 const SubControlVolumeFace<darcyIdx>& scvf) const
+    {
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
+        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(darcyIdx));
+        const Scalar stokesDensity = darcyContext.volVars.density();
+        const bool insideIsUpstream = velocity > 0.0;
+
+        return massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream);
+    }
+
+    /*!
+     * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
+     */
+    Scalar massCouplingCondition(const Element<darcyIdx>& element,
+                                 const FVElementGeometry<darcyIdx>& fvGeometry,
+                                 const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                 const ElementFluxVariablesCache<darcyIdx>& elementFluxVarsCache,
                                  const SubControlVolumeFace<darcyIdx>& scvf) const
     {
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
@@ -262,9 +315,32 @@ public:
      * \brief Returns the energy flux across the coupling boundary as seen from the Darcy domain.
      */
     template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    [[deprecated("Use energyCouplingCondition with elementFluxVarsCache as additional function argument. This function will be removed after 3.2!")]]
     Scalar energyCouplingCondition(const Element<darcyIdx>& element,
                                    const FVElementGeometry<darcyIdx>& fvGeometry,
                                    const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                   const SubControlVolumeFace<darcyIdx>& scvf,
+                                   const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
+    {
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
+        const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
+        const auto& stokesVolVars = darcyContext.volVars;
+
+        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const bool insideIsUpstream = velocity > 0.0;
+
+        return energyFlux_(darcyIdx, stokesIdx, fvGeometry, darcyContext.fvGeometry, scvf,
+                           darcyVolVars, stokesVolVars, velocity, insideIsUpstream, diffCoeffAvgType);
+    }
+
+    /*!
+     * \brief Returns the energy flux across the coupling boundary as seen from the Darcy domain.
+     */
+    template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    Scalar energyCouplingCondition(const Element<darcyIdx>& element,
+                                   const FVElementGeometry<darcyIdx>& fvGeometry,
+                                   const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                   const ElementFluxVariablesCache<darcyIdx>& elementFluxVarsCache,
                                    const SubControlVolumeFace<darcyIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
@@ -353,9 +429,9 @@ private:
  */
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance>
 class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEnergyBalance, true, DiscretizationMethod::cctpfa>
-: public StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager>
+: public StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager, enableEnergyBalance>
 {
-    using ParentType = StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager>;
+    using ParentType = StokesDarcyCouplingDataTpfaBase<MDTraits, CouplingManager, enableEnergyBalance>;
     using Scalar = typename MDTraits::Scalar;
     static constexpr auto stokesIdx = typename MDTraits::template SubDomain<0>::Index();
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
@@ -372,6 +448,7 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id> using SubControlVolumeFace = typename FVElementGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using SubControlVolume = typename GridGeometry<id>::LocalView::SubControlVolume;
     template<std::size_t id> using Indices = typename GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>::Indices;
+    template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t id> using ElementFaceVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>::LocalView;
     template<std::size_t id> using VolumeVariables  = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
@@ -409,9 +486,36 @@ public:
     /*!
      * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
      */
+    [[deprecated("Use massCouplingCondition with elementFluxVarsCache as additional function argument. This function will be removed after 3.2!")]]
     NumEqVector massCouplingCondition(const Element<darcyIdx>& element,
                                       const FVElementGeometry<darcyIdx>& fvGeometry,
                                       const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                      const SubControlVolumeFace<darcyIdx>& scvf,
+                                      const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
+    {
+        NumEqVector flux(0.0);
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
+        const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
+        const auto& stokesVolVars = darcyContext.volVars;
+        const auto& outsideScv = (*scvs(darcyContext.fvGeometry).begin());
+
+        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const bool insideIsUpstream = velocity > 0.0;
+
+        return massFlux_(darcyIdx, stokesIdx, fvGeometry,
+                         scvf, darcyVolVars, stokesVolVars,
+                         outsideScv, velocity, insideIsUpstream,
+                         diffCoeffAvgType);
+    }
+
+
+    /*!
+     * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
+     */
+    NumEqVector massCouplingCondition(const Element<darcyIdx>& element,
+                                      const FVElementGeometry<darcyIdx>& fvGeometry,
+                                      const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                      const ElementFluxVariablesCache<darcyIdx>& elementFluxVarsCache,
                                       const SubControlVolumeFace<darcyIdx>& scvf,
                                       const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
@@ -459,9 +563,32 @@ public:
      * \brief Returns the energy flux across the coupling boundary as seen from the Darcy domain.
      */
     template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    [[deprecated("Use energyCouplingCondition with elementFluxVarsCache as additional function argument. This function will be removed after 3.2!")]]
     Scalar energyCouplingCondition(const Element<darcyIdx>& element,
                                    const FVElementGeometry<darcyIdx>& fvGeometry,
                                    const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                   const SubControlVolumeFace<darcyIdx>& scvf,
+                                   const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
+    {
+        const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
+        const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
+        const auto& stokesVolVars = darcyContext.volVars;
+
+        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const bool insideIsUpstream = velocity > 0.0;
+
+        return energyFlux_(darcyIdx, stokesIdx, fvGeometry, darcyContext.fvGeometry, scvf,
+                           darcyVolVars, stokesVolVars, velocity, insideIsUpstream, diffCoeffAvgType);
+    }
+
+    /*!
+     * \brief Returns the energy flux across the coupling boundary as seen from the Darcy domain.
+     */
+    template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    Scalar energyCouplingCondition(const Element<darcyIdx>& element,
+                                   const FVElementGeometry<darcyIdx>& fvGeometry,
+                                   const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
+                                   const ElementFluxVariablesCache<darcyIdx>& elementFluxVarsCache,
                                    const SubControlVolumeFace<darcyIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
