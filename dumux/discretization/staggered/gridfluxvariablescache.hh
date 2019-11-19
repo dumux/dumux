@@ -91,6 +91,12 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
+    [[deprecated("Will be removed after 3.2. Use StaggeredGridFluxVariablesCache(problem) instead.")]]
+    StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup)
+    : problemPtr_(&problem)
+    , staggeredUpwindMethods_(paramGroup)
+    {}
+
     StaggeredGridFluxVariablesCache(const Problem& problem)
     : problemPtr_(&problem)
     , staggeredUpwindMethods_(problem.paramGroup())
