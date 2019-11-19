@@ -111,10 +111,10 @@ public:
      *
      * \param sw The saturation of the wetting phase
      * \param sn The saturation of the non-wetting phase
-     * \param lambdaW the thermal conductivity of the water phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaN the thermal conductivity of the NAPL phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaG the thermal conductivity of the gas phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaSolid the thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaW The thermal conductivity of the water phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaN The thermal conductivity of the NAPL phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaG The thermal conductivity of the gas phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
      * \param porosity The porosity
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
@@ -133,9 +133,6 @@ public:
         const Scalar satW = max<Scalar>(0.0, sw);
         const Scalar satN = max<Scalar>(0.0, sn);
 
-//        const Scalar lSw = 1.8; //pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaW, porosity);
-//        const Scalar lSn = 0.65; //pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaN, porosity);
-//        const Scalar lSg = 0.35; //pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaG, porosity);
         // porosity weighted geometric mean
         const Scalar lSw = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaW, porosity);
         const Scalar lSn = pow(lambdaSolid, (1.0 - porosity)) * pow(lambdaN, porosity);

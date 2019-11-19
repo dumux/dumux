@@ -46,7 +46,7 @@ namespace Dumux {
  *
  *        This approach makes sure that in the "material laws" only effective saturations are considered, which makes sense,
  *        as these laws only deal with effective saturations. This also allows for changing the calculation of the effective
- *        saturations easily, as this is subject of discussion / may be problem specific.
+ *        saturations easily, as this is subject of discussion may be problem specific.
  *
  *        Additionally, handing over effective saturations to the "material laws" in stead of them calculating effective
  *        saturations prevents accidently "converting twice".
@@ -91,7 +91,7 @@ protected:
      *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{{S}_w}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Effective saturation of the wetting phase.
      */
