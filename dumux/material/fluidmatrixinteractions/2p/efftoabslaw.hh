@@ -84,7 +84,7 @@ public:
      *
      * \param pc Capillary pressure \f$\mathrm{[p_c]}\f$ in \f$\mathrm{[Pa]}\f$.
      * \param params  A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Absolute wetting phase saturation \f$\mathrm{[S_w]}\f$ calculated as inverse of
      *                  (EffLaw e.g. Brooks & Corey, van Genuchten, linear...) constitutive relation.
@@ -98,7 +98,7 @@ public:
      * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
      *
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
     static Scalar endPointPc(const Params &params)
@@ -115,7 +115,7 @@ public:
      }\f$
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
                         and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to
                         EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
@@ -138,7 +138,7 @@ public:
      *
      * \param pc Capillary pressure \f$\mathrm{[p_c]}\f$ in \f$\mathrm{[Pa]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
                         and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Partial derivative of effective saturation w.r.t. \f$\mathrm{[p_c]}\f$ according to
                         EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
@@ -154,7 +154,7 @@ public:
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$. It is converted to effective saturation
      *                  and then handed over to the material law actually used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Relative permeability of the wetting phase calculated as implied by
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
@@ -183,7 +183,7 @@ public:
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[{S}_w]}\f$. It is converted to effective saturation
      *                  and then handed over to the material law actually used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return          Relative permeability of the non-wetting phase calculated as implied by
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
@@ -211,7 +211,7 @@ public:
      *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[{S}_w]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Effective saturation of the wetting phase.
      */
@@ -225,7 +225,7 @@ public:
      *
      * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Effective saturation of the non-wetting phase.
      */
@@ -234,13 +234,12 @@ public:
         return (sn - params.snr())/(1. - params.swr() - params.snr());
     }
 
-//private:
     /*!
      * \brief Convert an effective wetting saturation to an absolute one.
      *
      * \param swe Effective saturation of the non-wetting phase \f$\mathrm{[\overline{S}_n]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Absolute saturation of the non-wetting phase.
      */
@@ -253,7 +252,7 @@ public:
      * \brief Derivative of the effective saturation w.r.t. the absolute saturation.
      *
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Derivative of the effective saturation w.r.t. the absolute saturation.
      */
@@ -264,7 +263,7 @@ public:
      * \brief Derivative of the absolute saturation w.r.t. the effective saturation.
      *
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Derivative of the absolute saturation w.r.t. the effective saturation.
      */

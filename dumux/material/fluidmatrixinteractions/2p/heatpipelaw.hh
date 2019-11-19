@@ -82,7 +82,7 @@ public:
      *
      * \return The effective saturaion of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
      * \param params Array of parameters
-     * \param pC  capillary pressure \f$\mathrm{[p_C]}\f$ in \f$\mathrm{[Pa]}\f$.
+     * \param pC Capillary pressure \f$\mathrm{[p_C]}\f$ in \f$\mathrm{[Pa]}\f$.
      */
     static Scalar Sw(const Params &params, Scalar pC)
     {
@@ -114,7 +114,7 @@ public:
      * \brief Returns the partial derivative of the effective
      *        saturation to the capillary pressure.
      * \param params Array of parameters
-     * \param pC  capillary pressure \f$\mathrm{[p_C]}\f$ in \f$\mathrm{[Pa]}\f$.
+     * \param pC Capillary pressure \f$\mathrm{[p_C]}\f$ in \f$\mathrm{[Pa]}\f$.
      */
     static Scalar dSw_dpC(const Params &params, Scalar pC)
     {

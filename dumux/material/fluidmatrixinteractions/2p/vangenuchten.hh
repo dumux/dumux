@@ -61,7 +61,7 @@ public:
      }\f$
      * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \note Instead of undefined behaviour if swe is not in the valid range, we return a valid number,
      *       by clamping the input. Note that for pc(swe = 0.0) = inf, have a look at RegularizedVanGenuchten if this is a problem.
@@ -88,7 +88,7 @@ public:
      *
      * \param pc Capillary pressure \f$\mathrm{p_C}\f$ in \f$\mathrm{[Pa]}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          The effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
@@ -109,7 +109,8 @@ public:
      * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
      *
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters first,
+     *                  the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
     static Scalar endPointPc(const Params &params)
@@ -128,7 +129,8 @@ public:
      *
      * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters
+     *                  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      *
      * \note Instead of undefined behaviour if swe is not in the valid range, we return a valid number,
@@ -153,7 +155,8 @@ public:
      *
      * \param pc Capillary pressure \f$\mathrm{p_C}\f$ in \f$\mathrm{[Pa]}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters
+     *                  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
@@ -177,7 +180,8 @@ public:
      *
      * \param swe The mobile saturation of the wetting phase.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters
+     *                  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
@@ -203,7 +207,8 @@ public:
      *
      * \param swe The mobile saturation of the wetting phase.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters
+     *                  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
@@ -230,7 +235,8 @@ public:
      *
      * \param swe The mobile saturation of the wetting phase.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters
+     *                  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
@@ -255,7 +261,8 @@ public:
      *
      * \param swe The mobile saturation of the wetting phase.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters
+     *                  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,

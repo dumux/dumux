@@ -42,9 +42,9 @@ class PorosityPrecipitation
 public:
     /*!
      * \brief Calculates the porosity in a sub-control volume
-     * \param element element
-     * \param elemSol the element solution
-     * \param scv sub control volume
+     * \param element Element
+     * \param elemSol The element solution
+     * \param scv Sub control volume
      * \param refPoro The solid matrix porosity without precipitates
      * \param minPoro A minimum porosity value
      */
