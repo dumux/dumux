@@ -45,7 +45,7 @@ namespace Dumux {
  *
  *        This approach makes sure that in the "material laws" only effective saturations are considered, which makes sense,
  *        as these laws only deal with effective saturations. This also allows for changing the calculation of the effective
- *        saturations easily, as this is subject of discussion may be problem specific.
+ *        saturations easily, as this is subject of discussion / may be problem specific.
  *
  *        Additionally, handing over effective saturations to the "material laws" in stead of them calculating effective
  *        saturations prevents accidently "converting twice".
