@@ -245,7 +245,7 @@ public:
             krn *= sqrt(resIncluded );
         }
         else
-            krn *= sqrt(sn / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
+            krn *= sqrt(sn / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Swr)
 
         return krn;
     }
@@ -278,7 +278,7 @@ public:
      *
      * \param ste The mobile total liquid saturation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
     static Scalar dkrg_dste(const Params &params, Scalar ste)
@@ -296,7 +296,7 @@ public:
     /*!
      * \brief The relative permeability for a phase.
      * \param params Array of parameters.
-     * \param phaseIdx indicator, The saturation of all phases.
+     * \param phaseIdx Indicator, The saturation of all phases.
      * \param swe Effective wetting phase saturation
      * \param sn Absolute non-wetting liquid saturation
      * \param ste Effective total liquid (wetting + non-wetting) saturation
@@ -331,7 +331,7 @@ private:
      * \brief The standard van Genuchten two-phase pc-S relation either with respect to
      *        the effective wetting phase saturation Swe or the effective total liquid saturation Ste.
      * \param params Array of parameters.
-     * \param Se Effective wetting phase ortotal liquid  saturation
+     * \param Se Effective wetting phase ortotal liquid saturation
      */
     const static Scalar pc_(const Params &params, const Scalar se)
     {

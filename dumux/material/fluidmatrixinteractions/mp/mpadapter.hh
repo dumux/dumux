@@ -74,7 +74,7 @@ public:
      * \param values Container for the return values
      * \param params Array of parameters
      * \param state Fluidstate
-     * \param wPhaseIdx the phase index of the wetting phase
+     * \param wPhaseIdx The phase index of the wetting phase
      */
     template <class ContainerT, class FluidState>
     static void relativePermeabilities(ContainerT &values,

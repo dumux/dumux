@@ -54,7 +54,7 @@ public:
      * \brief Relation for a simple effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      *
      * \param volVars volume variables
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
     template<class VolumeVariables>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)

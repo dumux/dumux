@@ -67,7 +67,7 @@ public:
     /*!
      * \brief Set the capillary pressure in \f$\mathrm{[Pa]}\f$ for a phase \f$\mathrm{\alpha}\f$ at \f$\mathrm{S_\alpha=0}\f$.
      * \param phaseIdx Index of the phase
-     * \param val value of the capillary pressure
+     * \param val Value of the capillary pressure
      */
     void setPcMinSat(int phaseIdx, Scalar val)
     { pcMinSat_[phaseIdx] = val; }
@@ -82,7 +82,7 @@ public:
     /*!
      * \brief Set the capillary pressure in \f$\mathrm{[Pa]}\f$ for a phase \f$\mathrm{\alpha}\f$ at \f$\mathrm{S_\alpha=1}\f$.
      * \param phaseIdx Index of the phase
-     * \param val value of the capillary pressure
+     * \param val Value of the capillary pressure
      */
     void setPcMaxSat(int phaseIdx, Scalar val)
     { pcMaxSat_[phaseIdx] = val; }
