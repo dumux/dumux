@@ -37,7 +37,7 @@ namespace Dumux {
  *
  * This makes it possible to specify just one phase and let the
  * composition of the remaining ones be calculated by the constraint solver.
- * This explicit compositional flash can only handle ideal mixtures
+ * This 'simple', explicit compositional flash can only handle ideal mixtures
  * and only works for two-phase, two-component and three-phase,
  * three-component systems.
  * It assumes the following quantities to be set:
@@ -48,10 +48,23 @@ namespace Dumux {
  * - saturations of *all* phases (i.e., all are present)
  * - pressures of *all* phases \f$p_\alpha\f$, \f$p_\beta\f$
  *
- * After calling the solve() method the following quantities are
+ * Dalton's law is used to calculate equilibrium mole fractions in the gas phase:
+ * \f$ x_g^{\kappa} = p_g^{\kappa} p_g \f$.
+ * The partial pressure of the *liquid component in the gas phase is calculated using Raoult's law:
+ * \f$ p^g_l = p_{vap}^l x_l^l \f$.
+ * The partial pressure of the gas component in the gas phase is calculated using Henry's law:
+ * \f$ x_l^g = p_g^g / H^g \f$.
+ *
+ * Raoult's law is used to calculate the equilibrium mole fraction of the liquid component in the liquid phase.
+ * Henry's law is used to calculate the equilibrium mole fraction of the gas component in the liquid phase.
+ * Dalton's law is used to calculate the partial pressures in the gas phase.
+ *
+ * After calling the solve() method, the following quantities are
  * calculated:
  *
- * - fugacity coefficients of *all* components in *all* phases
+ * - 'fugacity coefficients' of *all* components in *all* phases
+ *   (Note that this is done for the sake of harmonisation
+ *   with the other flashs. This flash does not use fugacity coefficients.)
  *   \f$\Phi^\kappa_\alpha\f$, \f$\Phi^\kappa_\beta\f$
  * - composition in mole fractions of *all* components in *all* phases \f$x^\kappa_\alpha\f$
  * - density and molar density of *all* phases
@@ -77,8 +90,6 @@ class ComputeFromReferencePhaseSimple
     // component and phase indices
     enum
     {
-        comp0Idx = FluidSystem::comp0Idx,
-        comp1Idx = FluidSystem::comp1Idx,
         phase0Idx = FluidSystem::phase0Idx,
         phase1Idx = FluidSystem::phase1Idx
     };
@@ -135,9 +146,11 @@ public:
             {
                 DUNE_THROW(Dune::InvalidStateException, "The simple compositional flash assumes one gas and one liquid phase");
             }
+            static const int liquidCompIdx = FluidSystem::getMainComponent(liquidPhaseIdx);
+            static const int gasCompIdx = FluidSystem::getMainComponent(gasPhaseIdx);
 
-            const Scalar xref0 = fluidState.moleFraction(refPhaseIdx, comp0Idx);
-            const Scalar xref1 = fluidState.moleFraction(refPhaseIdx, comp1Idx);
+            const Scalar xrefl = fluidState.moleFraction(refPhaseIdx, liquidCompIdx);
+            const Scalar xrefg = fluidState.moleFraction(refPhaseIdx, gasCompIdx);
 
             // get phase pressures
             const Scalar pl = fluidState.pressure(liquidPhaseIdx);
@@ -149,28 +162,28 @@ public:
             {
                 // Dalton's law is used to calculate equilibrium mole fractions in the gas phase:
                 // \f$ x_g^{\kappa} = p_g^{\kappa} / p_g \f$.
-                // The partial pressure of the liquid component in the gas phase is calculated using Henry's law:
-                // \f$ x_l^l = p_g^l / H^l \f$.
-                // The partial pressure of the gas component in the gas phase is calculated using Raoult's law:
-                // \f$ p^g_g = p_{vap}^g x_l^g \f$.
+                // The partial pressure of the liquid component in the gas phase is calculated using Raoult's law:
+                // \f$ p^g_l = p_{vap}^l x_l^l \f$.
+                // The partial pressure of the gas component in the gas phase is calculated using Henry's law:
+                // \f$ x_l^g = p_g^g / H^g \f$.
 
-                const Scalar xg0 = xref0*( FluidSystem::fugacityCoefficient(fluidState, liquidPhaseIdx, comp0Idx)*pl )/pg;
-                const Scalar xg1 = xref1*( FluidSystem::fugacityCoefficient(fluidState, liquidPhaseIdx, comp1Idx)*pl )/pg;
+                const Scalar xgl = xrefl * FluidSystem::vaporPressure(fluidState, liquidCompIdx) / pg;
+                const Scalar xgg = xrefg * FluidSystem::henry(fluidState, liquidPhaseIdx, gasCompIdx) / pg;
 
-                fluidState.setMoleFraction(gasPhaseIdx, comp0Idx, xg0);
-                fluidState.setMoleFraction(gasPhaseIdx, comp1Idx, xg1);
+                fluidState.setMoleFraction(gasPhaseIdx, liquidCompIdx, xgl);
+                fluidState.setMoleFraction(gasPhaseIdx, gasCompIdx, xgg);
             }
-            else if(refPhaseIdx == phase1Idx)
+            else if(refPhaseIdx == gasPhaseIdx)
             {
-                // Henry's law is used to calculate equilibrium mole fraction of the liquid component in the liquid phase.
-                // Raoult's law is used to calculate equilibrium mole fraction of the gas component in the liquid phase.
+                // Raoult's law is used to calculate the equilibrium mole fraction of the liquid component in the liquid phase.
+                // Henry's law is used to calculate the equilibrium mole fraction of the gas component in the liquid phase.
                 // Dalton's law is used to calculate the partial pressures in the gas phase.
 
-                const Scalar xl0 = xref0*pg/( FluidSystem::fugacityCoefficient(fluidState, liquidPhaseIdx, comp0Idx)*pl );
-                const Scalar xl1 = xref1*pg/( FluidSystem::fugacityCoefficient(fluidState, liquidPhaseIdx, comp1Idx)*pl );
+                const Scalar xll = xrefl * pg / FluidSystem::vaporPressure(fluidState, liquidCompIdx);
+                const Scalar xlg = xrefg * pg / FluidSystem::henry(fluidState, liquidPhaseIdx, gasCompIdx);
 
-                fluidState.setMoleFraction(liquidPhaseIdx, comp0Idx, xl0);
-                fluidState.setMoleFraction(liquidPhaseIdx, comp1Idx, xl1);
+                fluidState.setMoleFraction(liquidPhaseIdx, liquidCompIdx, xll);
+                fluidState.setMoleFraction(liquidPhaseIdx, gasCompIdx, xlg);
             }
         }
         else if(numPhases == 3)

@@ -41,15 +41,22 @@ namespace Dumux {
  * - pressures of *all* phases \f$p_\alpha\f$
  * - saturations of *all* phases (i.e., all are present)
  *
- * It also assumes that the mole or mass fractions of all phases sum up
- * to 1. After calling the solve() method, the following quantities
+ * It also assumes that the mole/mass fractions of all phases sum up
+ * to 1. Henry's law is used to calculate the composition of the liquid phase:
+ * \f$ x_l^{\kappa} = p_g^{\kappa} / H^g \f$.
+ * Dalton's law is used to calculate the composition of the gas phase:
+ * \f$ x_g^{\kappa} = p_g^{\kappa} / p_g \f$.
+ * Here, the unknown partial pressures
+ * are approximated using the vapor pressure of the liquid component
+ * \f$ p_g^l \approx p_{vap}^l\f$ (Raoult's law) and substituting
+ * \f$ p_g^g = p_g - p_g^l\f$.
+ *
+ * After calling the solve() method, the following quantities
  * are calculated:
  *
  * - 'fugacity coefficients' of *all* components in *all* phases
- * (Note that 'fugacity coefficients' represents here a term that is used
- * for the sake of harmonisation with the other constraintsolvers.
- * It is here actually: the partial pressures in the gas and the Henry
- * coefficients for the components in the liquids)
+ *   (Note that this is done for the sake of harmonisation
+ *   with the other flashs. This flash does not use fugacity coefficients.)
  *   \f$\Phi^\kappa_\alpha\f$
  * - composition in mole fractions of *all* components in *all* phases \f$x^\kappa_\alpha\f$
  * - density and molar density of *all* phases
@@ -127,8 +134,8 @@ public:
             {
                 DUNE_THROW(Dune::InvalidStateException, "The simple compositional flash assumes one gas and one liquid phase");
             }
-            int liquidCompIdx = FluidSystem::getMainComponent(liquidPhaseIdx);
-            int gasCompIdx = FluidSystem::getMainComponent(gasPhaseIdx);
+            static const int liquidCompIdx = FluidSystem::getMainComponent(liquidPhaseIdx);
+            static const int gasCompIdx = FluidSystem::getMainComponent(gasPhaseIdx);
 
             // get phase pressures
             const Scalar pl = fluidState.pressure(liquidPhaseIdx);
@@ -139,7 +146,7 @@ public:
             // We assume that the partial pressure of the liquid component in the gas phase can be
             // approximated with the vapor pressure of the liquid component.
             // This neglects the influence of other components in the gas phase.
-            Scalar partPressLiquidCompInGas = FluidSystem::fugacityCoefficient(fluidState, liquidPhaseIdx, liquidCompIdx)*pl; //returns vapor pressure
+            const Scalar partPressLiquidCompInGas = FluidSystem::vaporPressure(fluidState, liquidCompIdx);
 
             // get the partial pressure of the gas component in the gas phase
             const Scalar partPressGasCompInGas = pg - partPressLiquidCompInGas;
@@ -153,7 +160,7 @@ public:
 
             // use Henry's law to determine mole fraction of the gas component in the liquid phase
             // \f$ x_l^g = p_g^g / H^g \f$.
-            Scalar xlg = partPressGasCompInGas / (FluidSystem::fugacityCoefficient(fluidState, liquidPhaseIdx, gasCompIdx)*pl);
+            Scalar xlg = partPressGasCompInGas / FluidSystem::henry(fluidState, liquidPhaseIdx, gasCompIdx);
             xlg = std::min(1.0, std::max(0.0, xlg)); // regularization
 
             // calculate the mole fraction of the liquid component in the liquid phase:
