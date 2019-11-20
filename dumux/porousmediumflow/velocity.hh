@@ -305,16 +305,22 @@ public:
                             using NumEqVector = std::decay_t<decltype(neumannFlux)>;
                             if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
                                 scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
-                            // cubes
+
+                            // otherwise, we try some reconstruction (TODO: Can this be improved?)
+                            // for cubes
                             else if (dim == 1 || geomType.isCube())
                             {
                                 const auto fIdx = scvfIndexInInside[localScvfIdx];
                                 const auto fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
                                 scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
                             }
-                            // simplices
+
+                            // for simplices
                             else if (geomType.isSimplex())
                                 scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
+
+                            else
+                                DUNE_THROW(Dune::NotImplemented, "Velocity computation at Neumann boundaries for cell-centered and prism/pyramid");
                         }
                     }
                 }
@@ -344,7 +350,7 @@ public:
             }
             // 3D prism and pyramids
             else
-                DUNE_THROW(Dune::NotImplemented, "velocity output for cell-centered and prism/pyramid");
+                DUNE_THROW(Dune::NotImplemented, "Velocity computation for cell-centered and prism/pyramid");
 
             Velocity scvVelocity(0);
             jacobianT2.mtv(refVelocity, scvVelocity);
