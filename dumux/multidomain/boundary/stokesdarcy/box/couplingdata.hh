@@ -176,12 +176,12 @@ public:
                                  const SubControlVolumeFace<stokesIdx>& scvf) const
     {
         const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
-        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
+        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
         const Scalar stokesDensity = stokesElemVolVars[scvf.insideScvIdx()].density();
         const Scalar darcyDensity = stokesContext.volVars.density(couplingPhaseIdx(darcyIdx));
-        const bool insideIsUpstream = sign(velocity) == scvf.directionSign();
+        const bool insideIsUpstream = velocity > 0.0;
 
-        return massFlux_(velocity * scvf.directionSign(), stokesDensity, darcyDensity, insideIsUpstream);
+        return massFlux_(velocity, stokesDensity, darcyDensity, insideIsUpstream);
     }
 
     /*!
@@ -233,8 +233,8 @@ public:
 
         const auto& darcyScvf = stokesContext.fvGeometry.scvf(stokesContext.darcyScvfIdx);
 
-        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
-        const bool insideIsUpstream = sign(velocity) == scvf.directionSign();
+        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
+        const bool insideIsUpstream = velocity > 0.0;
 
         return energyFlux_(fvGeometry,
                            stokesContext.fvGeometry,
@@ -242,7 +242,7 @@ public:
                            darcyScvf,
                            elemVolVars,
                            elemFluxVarsCache,
-                           velocity * scvf.directionSign(),
+                           velocity,
                            insideIsUpstream,
                            diffCoeffAvgType);
     }
@@ -291,7 +291,7 @@ private:
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
 
         const Scalar stokesTerm = stokesVolVars.density(couplingPhaseIdx(stokesIdx)) * stokesVolVars.enthalpy(couplingPhaseIdx(stokesIdx));
-        // ToDO interpolate enthalpy also using box basis functions
+        // ToDO interpolate using box basis functions
         const Scalar darcyTerm = darcyVolVars.density(couplingPhaseIdx(darcyIdx)) * darcyVolVars.enthalpy(couplingPhaseIdx(darcyIdx));
 
         flux += this->advectiveFlux(stokesTerm, darcyTerm, velocity, insideIsUpstream);
@@ -387,7 +387,9 @@ public:
         const Scalar velocity = -1*darcyContext.velocity * scvf.unitOuterNormal();
         const bool insideIsUpstream = velocity > 0.0;
 
-        return -1*massFlux_(darcyContext.fvGeometry,
+        return -1*massFlux_(darcyIdx,
+                            stokesIdx,
+                            darcyContext.fvGeometry,
                             fvGeometry,
                             stokesVolVars,
                             scvf,
@@ -416,16 +418,18 @@ public:
 
         const auto& darcyScvf = stokesContext.fvGeometry.scvf(stokesContext.darcyScvfIdx);
 
-        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
-        const bool insideIsUpstream = sign(velocity) == scvf.directionSign();
+        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
+        const bool insideIsUpstream = velocity > 0.0;
 
-        return massFlux_(fvGeometry,
+        return massFlux_(stokesIdx,
+                         darcyIdx,
+                         fvGeometry,
                          stokesContext.fvGeometry,
                          stokesVolVars,
                          darcyScvf,
                          elemVolVars,
                          elemFluxVarsCache,
-                         velocity * scvf.directionSign(),
+                         velocity,
                          insideIsUpstream,
                          diffCoeffAvgType);
     }
@@ -447,8 +451,9 @@ public:
         const Scalar velocity = -1*darcyContext.velocity * scvf.unitOuterNormal();
         const bool insideIsUpstream = velocity > 0.0;
 
-        // ToDO Check if the sign is correct!
-        return -1*energyFlux_(darcyContext.fvGeometry,
+        return -1*energyFlux_(darcyIdx,
+                              stokesIdx,
+                              darcyContext.fvGeometry,
                               fvGeometry,
                               stokesVolVars,
                               scvf,
@@ -478,16 +483,18 @@ public:
 
         const auto& darcyScvf = stokesContext.fvGeometry.scvf(stokesContext.darcyScvfIdx);
 
-        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
-        const bool insideIsUpstream = sign(velocity) == scvf.directionSign();
+        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
+        const bool insideIsUpstream = velocity > 0.0;
 
-        return energyFlux_(fvGeometry,
+        return energyFlux_(stokesIdx,
+                           darcyIdx,
+                           fvGeometry,
                            stokesContext.fvGeometry,
                            stokesVolVars,
                            darcyScvf,
                            elemVolVars,
                            elemFluxVarsCache,
-                           velocity * scvf.directionSign(),
+                           velocity,
                            insideIsUpstream,
                            diffCoeffAvgType);
     }
@@ -497,7 +504,10 @@ protected:
     /*!
      * \brief Evaluate the compositional mole/mass flux across the interface.
      */
-    NumEqVector massFlux_(const FVElementGeometry<stokesIdx>& stokesFvGeometry,
+    template<std::size_t i, std::size_t j>
+    NumEqVector massFlux_(Dune::index_constant<i> domainI,
+                          Dune::index_constant<j> domainJ,
+                          const FVElementGeometry<stokesIdx>& stokesFvGeometry,
                           const FVElementGeometry<darcyIdx>& darcyFvGeometry,
                           const VolumeVariables<stokesIdx>& stokesVolVars,
                           const SubControlVolumeFace<darcyIdx>& scvf,
@@ -522,19 +532,21 @@ protected:
         auto insideTerm = [&](int compIdx)
         { return moleOrMassFraction(stokesVolVars, couplingPhaseIdx(stokesIdx), compIdx) * moleOrMassDensity(stokesVolVars, couplingPhaseIdx(stokesIdx)); };
 
+        // ToDO interpolate using box basis functions
         auto outsideTerm = [&](int compIdx)
         { return moleOrMassFraction(darcyVolVars, couplingPhaseIdx(darcyIdx), compIdx) * moleOrMassDensity(darcyVolVars, couplingPhaseIdx(darcyIdx)); };
-
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             const int domainICompIdx = couplingCompIdx(stokesIdx, compIdx);
             const int domainJCompIdx = couplingCompIdx(darcyIdx, compIdx);
-            flux[domainICompIdx] += this->advectiveFlux(insideTerm(domainICompIdx), outsideTerm(domainJCompIdx), velocity, insideIsUpstream);
+            flux[couplingCompIdx(domainI, compIdx)] += this->advectiveFlux(insideTerm(domainICompIdx), outsideTerm(domainJCompIdx), velocity, insideIsUpstream);
         }
 
         // treat the diffusive fluxes
-        diffusiveFlux += diffusiveMolecularFluxFicksLaw_(stokesFvGeometry,
+        diffusiveFlux += diffusiveMolecularFluxFicksLaw_(domainI,
+                                                         domainJ,
+                                                         stokesFvGeometry,
                                                          darcyFvGeometry,
                                                          stokesVolVars,
                                                          scvf,
@@ -548,16 +560,16 @@ protected:
         {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                const int domainICompIdx = couplingCompIdx(stokesIdx, compIdx);
-                diffusiveFlux[domainICompIdx] *= 1/FluidSystem<stokesIdx>::molarMass(domainICompIdx);
+                const int domainICompIdx = couplingCompIdx(domainI, compIdx);
+                diffusiveFlux[domainICompIdx] *= 1/FluidSystem<domainI>::molarMass(domainICompIdx);
             }
         }
         if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged && !useMoles)
         {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                const int domainICompIdx = couplingCompIdx(stokesIdx, compIdx);
-                diffusiveFlux[domainICompIdx] *= FluidSystem<stokesIdx>::molarMass(domainICompIdx);
+                const int domainICompIdx = couplingCompIdx(domainI, compIdx);
+                diffusiveFlux[domainICompIdx] *= FluidSystem<domainI>::molarMass(domainICompIdx);
             }
         }
 
@@ -598,7 +610,10 @@ protected:
         return FluidSystem<darcyIdx>::componentEnthalpy(volVars.fluidState(), phaseIdx, compIdx);
     }
 
-    NumEqVector diffusiveMolecularFluxFicksLaw_(const FVElementGeometry<stokesIdx>& stokesFvGeometry,
+    template<std::size_t i, std::size_t j>
+    NumEqVector diffusiveMolecularFluxFicksLaw_(Dune::index_constant<i> domainI,
+                                                Dune::index_constant<j> domainJ,
+                                                const FVElementGeometry<stokesIdx>& stokesFvGeometry,
                                                 const FVElementGeometry<darcyIdx>& darcyFvGeometry,
                                                 const VolumeVariables<stokesIdx>& stokesVolVars,
                                                 const SubControlVolumeFace<darcyIdx>& scvf,
@@ -620,7 +635,7 @@ protected:
             rhoDarcy += massOrMolarDensity(volVars, referenceSystemFormulation, couplingPhaseIdx(darcyIdx))
                                            *shapeValues[scv.indexInElement()][0];
         }
-        const Scalar avgDensity = 0.5 * rhoStokes + 0.5 * rhoDarcy;
+        const Scalar avgDensity = 0.5 * (rhoStokes + rhoDarcy);
 
         for (int compIdx = 1; compIdx < numComponents; ++compIdx)
         {
@@ -636,21 +651,21 @@ protected:
             {
                 const auto& volVars = darcyElemVolVars[scv];
                 massOrMoleFractionInterface += massOrMoleFraction(volVars, referenceSystemFormulation, couplingPhaseIdx(darcyIdx), darcyCompIdx)
-                                                *shapeValues[scv.indexInElement()][0];
+                                                * shapeValues[scv.indexInElement()][0];
             }
 
             const Scalar deltaMassOrMoleFrac = massOrMoleFractionInterface - massOrMoleFractionStokes;
             const auto& stokesScv = (*scvs(stokesFvGeometry).begin());
             const Scalar dist = (stokesScv.center() - scvf.ipGlobal()).two_norm();
             if(diffCoeffAvgType == DiffusionCoefficientAveragingType::ffOnly)
-                diffusiveFlux[stokesCompIdx] += -avgDensity * diffusionCoefficient_(stokesVolVars, couplingPhaseIdx(stokesIdx), stokesCompIdx)
-                                                  * deltaMassOrMoleFrac / dist;
+                diffusiveFlux[couplingCompIdx(domainI, compIdx)] += -avgDensity * diffusionCoefficient_(stokesVolVars, couplingPhaseIdx(stokesIdx), stokesCompIdx)
+                                                                     * deltaMassOrMoleFrac / dist;
             else
                 DUNE_THROW(Dune::NotImplemented, "Multidomain staggered box coupling only works for DiffusionCoefficientAveragingType = ffOnly");
         }
 
         const Scalar cumulativeFlux = std::accumulate(diffusiveFlux.begin(), diffusiveFlux.end(), 0.0);
-        diffusiveFlux[couplingCompIdx(stokesIdx, 0)] = -cumulativeFlux;
+        diffusiveFlux[couplingCompIdx(domainI, 0)] = -cumulativeFlux;
 
         return diffusiveFlux;
     }
@@ -658,8 +673,10 @@ protected:
     /*!
      * \brief Evaluate the energy flux across the interface.
      */
-    template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
-    Scalar energyFlux_(const FVElementGeometry<stokesIdx>& stokesFvGeometry,
+    template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    Scalar energyFlux_(Dune::index_constant<i> domainI,
+                       Dune::index_constant<j> domainJ,
+                       const FVElementGeometry<stokesIdx>& stokesFvGeometry,
                        const FVElementGeometry<darcyIdx>& darcyFvGeometry,
                        const VolumeVariables<stokesIdx>& stokesVolVars,
                        const SubControlVolumeFace<darcyIdx>& scvf,
@@ -686,6 +703,7 @@ protected:
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
 
         const Scalar stokesTerm = stokesVolVars.density(couplingPhaseIdx(stokesIdx)) * stokesVolVars.enthalpy(couplingPhaseIdx(stokesIdx));
+        // ToDO interpolate using box basis functions
         const Scalar darcyTerm = darcyVolVars.density(couplingPhaseIdx(darcyIdx)) * darcyVolVars.enthalpy(couplingPhaseIdx(darcyIdx));
 
         flux += this->advectiveFlux(stokesTerm, darcyTerm, velocity, insideIsUpstream);
@@ -699,7 +717,9 @@ protected:
         else
             DUNE_THROW(Dune::NotImplemented, "Multidomain staggered box coupling only works for DiffusionCoefficientAveragingType = ffOnly");
 
-        auto diffusiveFlux = diffusiveMolecularFluxFicksLaw_(stokesFvGeometry,
+        auto diffusiveFlux = diffusiveMolecularFluxFicksLaw_(domainI,
+                                                             domainJ,
+                                                             stokesFvGeometry,
                                                              darcyFvGeometry,
                                                              stokesVolVars,
                                                              scvf,
@@ -712,16 +732,16 @@ protected:
         {
             const int stokesCompIdx = couplingCompIdx(stokesIdx, compIdx);
             const int darcyCompIdx = couplingCompIdx(darcyIdx, compIdx);
+            const int domainCompIdx = couplingCompIdx(domainI, compIdx);
 
-            const bool insideDiffFluxIsUpstream = diffusiveFlux[stokesCompIdx] > 0;
-            const Scalar componentEnthalpy = insideDiffFluxIsUpstream ?
+            const Scalar componentEnthalpy = diffusiveFlux[domainCompIdx] > 0 ?
                                              getComponentEnthalpy(stokesVolVars, couplingPhaseIdx(stokesIdx), stokesCompIdx)
                                            : getComponentEnthalpy(darcyVolVars, couplingPhaseIdx(darcyIdx), darcyCompIdx);
 
             if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                flux += diffusiveFlux[stokesCompIdx] * componentEnthalpy;
+                flux += diffusiveFlux[domainCompIdx] * componentEnthalpy;
             else
-                flux += diffusiveFlux[stokesCompIdx] * FluidSystem<stokesIdx>::molarMass(stokesCompIdx) * componentEnthalpy;
+                flux += diffusiveFlux[domainCompIdx] * FluidSystem<domainI>::molarMass(domainCompIdx) * componentEnthalpy;
         }
 
         return flux;
