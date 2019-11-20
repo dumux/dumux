@@ -198,19 +198,20 @@ public:
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& stokesVolVars = darcyContext.volVars;
 
-        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
-        const bool insideIsUpstream = velocity < 0.0;
+        // always calculate the flux from stokes to darcy
+        const Scalar velocity = -1*darcyContext.velocity * scvf.unitOuterNormal();
+        const bool insideIsUpstream = velocity > 0.0;
 
-        // ToDO Check if the sign is correct!
+        // the darcy flux is then multiplied by -1 (darcy flux = -stokes flux)
         return -1*energyFlux_(darcyContext.fvGeometry,
-                           fvGeometry,
-                           stokesVolVars,
-                           scvf,
-                           darcyElemVolVars,
-                           elementFluxVarsCache,
-                           velocity,
-                           insideIsUpstream,
-                           diffCoeffAvgType);
+                              fvGeometry,
+                              stokesVolVars,
+                              scvf,
+                              darcyElemVolVars,
+                              elementFluxVarsCache,
+                              velocity,
+                              insideIsUpstream,
+                              diffCoeffAvgType);
     }
 
     /*!
@@ -226,7 +227,6 @@ public:
     {
         const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
         const auto& stokesVolVars = stokesElemVolVars[scvf.insideScvIdx()];
-        const auto& darcyVolVars = stokesContext.volVars;
 
         const auto& elemVolVars = *(stokesContext.elementVolVars);
         const auto& elemFluxVarsCache = *(stokesContext.elementFluxVarsCache);
@@ -277,7 +277,6 @@ private:
         Scalar flux(0.0);
 
         const auto& stokesScv = (*scvs(stokesFvGeometry).begin());
-        const auto& darcyScv = (*scvs(darcyFvGeometry).begin());
 
         const auto& fluxVarCache = elementFluxVarsCache[scvf];
         const auto& shapeValues = fluxVarCache.shapeValues();
@@ -292,6 +291,7 @@ private:
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
 
         const Scalar stokesTerm = stokesVolVars.density(couplingPhaseIdx(stokesIdx)) * stokesVolVars.enthalpy(couplingPhaseIdx(stokesIdx));
+        // ToDO interpolate enthalpy also using box basis functions
         const Scalar darcyTerm = darcyVolVars.density(couplingPhaseIdx(darcyIdx)) * darcyVolVars.enthalpy(couplingPhaseIdx(darcyIdx));
 
         flux += this->advectiveFlux(stokesTerm, darcyTerm, velocity, insideIsUpstream);
@@ -384,19 +384,18 @@ public:
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& stokesVolVars = darcyContext.volVars;
 
-        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar velocity = -1*darcyContext.velocity * scvf.unitOuterNormal();
         const bool insideIsUpstream = velocity > 0.0;
 
-        // ToDO Check if the sign is correct!
-        return massFlux_(darcyContext.fvGeometry,
-                           fvGeometry,
-                           stokesVolVars,
-                           scvf,
-                           darcyElemVolVars,
-                           elementFluxVarsCache,
-                           velocity,
-                           insideIsUpstream,
-                           diffCoeffAvgType);
+        return -1*massFlux_(darcyContext.fvGeometry,
+                            fvGeometry,
+                            stokesVolVars,
+                            scvf,
+                            darcyElemVolVars,
+                            elementFluxVarsCache,
+                            velocity,
+                            insideIsUpstream,
+                            diffCoeffAvgType);
     }
 
     /*!
@@ -445,19 +444,19 @@ public:
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& stokesVolVars = darcyContext.volVars;
 
-        const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
-        const bool insideIsUpstream = velocity < 0.0;
+        const Scalar velocity = -1*darcyContext.velocity * scvf.unitOuterNormal();
+        const bool insideIsUpstream = velocity > 0.0;
 
         // ToDO Check if the sign is correct!
-        return energyFlux_(darcyContext.fvGeometry,
-                           fvGeometry,
-                           stokesVolVars,
-                           scvf,
-                           darcyElemVolVars,
-                           elementFluxVarsCache,
-                           velocity,
-                           insideIsUpstream,
-                           diffCoeffAvgType);
+        return -1*energyFlux_(darcyContext.fvGeometry,
+                              fvGeometry,
+                              stokesVolVars,
+                              scvf,
+                              darcyElemVolVars,
+                              elementFluxVarsCache,
+                              velocity,
+                              insideIsUpstream,
+                              diffCoeffAvgType);
     }
 
     /*!
