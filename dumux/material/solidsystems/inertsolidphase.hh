@@ -33,7 +33,7 @@ namespace SolidSystems {
 /*!
  * \ingroup SolidSystems
  * \brief A solid phase consisting of a single inert solid component.
- * \note a solid is considered inert if it can't dissolve in a liquid and
+ * \note A solid is considered inert if it can't dissolve in a liquid and
  *       and can't increase its mass by precipitation from a fluid phase.
  */
 template <class Scalar, class ComponentT>

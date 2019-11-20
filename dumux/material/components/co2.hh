@@ -128,7 +128,7 @@ public:
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure CO2
      *        at a given temperature.
-     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
      * See:
      *
      * R. Span and W. Wagner (1996, pp. 1509-1596) \cite span1996
@@ -155,8 +155,8 @@ public:
 
     /*!
      * \brief Specific enthalpy of gaseous CO2 \f$\mathrm{[J/kg]}\f$.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasEnthalpy(Scalar temperature,
                               Scalar pressure)
@@ -173,8 +173,8 @@ public:
 
     /*!
      * \brief Specific enthalpy of liquid CO2 \f$\mathrm{[J/kg]}\f$.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidEnthalpy(Scalar temperature,
                                  Scalar pressure)
@@ -191,8 +191,8 @@ public:
 
     /*!
      * \brief Specific internal energy of CO2 \f$\mathrm{[J/kg]}\f$.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasInternalEnergy(Scalar temperature,
                                     Scalar pressure)
@@ -205,8 +205,8 @@ public:
 
     /*!
      * \brief Specific internal energy of liquid CO2 \f$\mathrm{[J/kg]}\f$.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidInternalEnergy(Scalar temperature,
                                        Scalar pressure)
@@ -219,8 +219,8 @@ public:
 
     /*!
      * \brief The density of CO2 at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
@@ -236,8 +236,8 @@ public:
     /*!
      *  \brief The molar density of CO2 gas in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      *
      */
     static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
@@ -245,8 +245,8 @@ public:
 
     /*!
      * \brief The density of pure CO2 at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
@@ -262,8 +262,8 @@ public:
     /*!
      * \brief The molar density of CO2 in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      *
      */
     static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
@@ -272,8 +272,8 @@ public:
     /*!
      * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param density Density of component in \f$\mathrm{[kg/m^3]}\f$
      */
     static Scalar gasPressure(Scalar temperature, Scalar density)
     {
@@ -284,8 +284,8 @@ public:
      * \brief The pressure of liquid water in \f$\mathrm{[Pa]}\f$ at a given density and
      *        temperature.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param density Density of component in \f$\mathrm{[kg/m^3]}\f$
      */
     static Scalar liquidPressure(Scalar temperature, Scalar density)
     {

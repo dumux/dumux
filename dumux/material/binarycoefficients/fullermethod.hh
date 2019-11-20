@@ -33,10 +33,10 @@ namespace BinaryCoeff {
  * \brief Estimate binary diffusion coefficients \f$\mathrm{[m^2/s]}\f$ in gases according to
  *        the method by Fuller.
  *
- * \param M molar masses \f$\mathrm{[g/mol]}\f$
- * \param SigmaNu atomic diffusion volume
+ * \param M Molar masses \f$\mathrm{[g/mol]}\f$
+ * \param SigmaNu Atomic diffusion volume
  * \param temperature The temperature \f$\mathrm{[K]}\f$
- * \param pressure phase pressure \f$\mathrm{[Pa]}\f$
+ * \param pressure Phase pressure \f$\mathrm{[Pa]}\f$
  *
  * This function estimates the diffusion coefficients in binary gases
  * using to the method proposed by Fuller. This method and is only

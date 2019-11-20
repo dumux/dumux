@@ -42,7 +42,7 @@ class H2O_O2
 public:
   /*!
      * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for molecular oxygen in liquid water.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)
@@ -59,8 +59,8 @@ public:
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and oxygen.
      *
      * Uses fullerMethod to determine the diffusion of water in nitrogen.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The phase pressure \f$\mathrm{[Pa]}\f$
      */
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
@@ -78,8 +78,8 @@ public:
 
     /*!
      * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid water.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The phase pressure \f$\mathrm{[Pa]}\f$
      *
      * The empirical equations for estimating the diffusion coefficient in
      * infinite solution which are presented in Reid, 1987 all show a

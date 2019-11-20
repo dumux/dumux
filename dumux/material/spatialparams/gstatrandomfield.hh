@@ -61,7 +61,7 @@ public:
     /*!
      * \brief Constructor
      *
-     * \param gridView the used gridView
+     * \param gridView The used gridView
      * \param elementMapper	Maps elements of the given grid view
      */
     GstatRandomField(const GridView& gridView, const ElementMapper& elementMapper)
@@ -80,11 +80,12 @@ public:
      * gstat can perform its random realization. The filename must be same as in the gstatControlFile.
      * A \a gstatOutputFile in which gstat writes the random values to this file.
      * The filename must be the same as in the gstatControlFile.
-     * \param fieldType
-     * \param gstatControlFile name of control file for gstat
-     * \param gstatInputFile name of input file for gstat
-     * \param gstatOutputFile name of the gstat output file
-     * \param createNew set true to create a new field
+     *
+     * \param fieldType // TODO: Add explanation
+     * \param gstatControlFile Name of control file for gstat
+     * \param gstatInputFile Name of input file for gstat
+     * \param gstatOutputFile Name of the gstat output file
+     * \param createNew Set true to create a new field
      */
     void create(const std::string& gstatControlFile,
                 const std::string& gstatInputFile = "gstatInput.txt",

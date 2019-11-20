@@ -74,7 +74,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the material parameters object
+     * \return The material parameters object
      */
     template<class ElementSolution>
     decltype(auto) materialLawParams(const Element& element,
@@ -99,7 +99,7 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the wetting phase index
+     * \return The wetting phase index
      */
     template<class FluidSystem, class ElementSolution>
     int wettingPhase(const Element& element,
@@ -112,7 +112,7 @@ public:
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
-     * \return the wetting phase index
+     * \return The wetting phase index
      * \param globalPos The global position
      */
     template<class FluidSystem>

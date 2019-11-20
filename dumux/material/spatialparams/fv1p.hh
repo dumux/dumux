@@ -113,7 +113,7 @@ public:
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      *
-     * \param pos the spatial position at which to evaulate the gravity vector
+     * \param pos The spatial position at which to evaulate the gravity vector
      */
     const GlobalPosition& gravity(const GlobalPosition &pos) const
     { return gravity_; }
@@ -122,8 +122,8 @@ public:
      * \brief Harmonic average of a discontinuous scalar field at discontinuity interface
      *        (for compatibility reasons with the function below)
      * \return the averaged scalar
-     * \param T1 first scalar parameter
-     * \param T2 second scalar parameter
+     * \param T1 First scalar parameter
+     * \param T2 Second scalar parameter
      * \param normal The unit normal vector of the interface
      */
     Scalar harmonicMean(const Scalar T1,
@@ -136,8 +136,8 @@ public:
      * \note We do a harmonic average of the part normal to the interface (alpha*I) and
      *       an arithmetic average of the tangential part (T - alpha*I).
      * \return the averaged tensor
-     * \param T1 first tensor
-     * \param T2 second tensor
+     * \param T1 First tensor
+     * \param T2 Second tensor
      * \param normal The unit normal vector of the interface
      */
     DimWorldMatrix harmonicMean(const DimWorldMatrix& T1,

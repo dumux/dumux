@@ -39,7 +39,7 @@ class H2O_Mesitylene
 public:
     /*!
      * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for mesitylene in liquid water.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
      * See:
      * R. Sander (1999) \cite sander1999
      */
@@ -48,7 +48,7 @@ public:
     {
         // after Sanders
         Scalar sanderH = 1.7e-1; // [M/atm]
-        //conversion to our Henry definition
+        // conversion to our Henry definition
         Scalar dumuxH = sanderH / 101.325; // has now [(mol/m^3)/Pa]
         dumuxH *= 18.02e-6; // multiplied by molar volume of reference phase = water
         return 1.0/dumuxH; // [Pa]
@@ -56,8 +56,8 @@ public:
 
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and mesitylene.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      */
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
@@ -100,13 +100,13 @@ public:
         const Scalar D_wm = (B_*pow(temperature, 1.6)*sqrt(Mr))
                             /(1e-5*pressure*pow(sigma_wm, 2)*Omega); // [cm^2/s]
 
-        return D_wm*1e-4;   //  [m^2/s]
+        return D_wm*1e-4;   // [m^2/s]
     }
 
     /*!
      * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for mesitylene in liquid water.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      *
      * \note Returns just an order of magnitude.
      */

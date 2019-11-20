@@ -33,9 +33,9 @@ namespace SolidSystems {
 /*!
  * \ingroup SolidSystems
  * \brief A solid phase consisting of multiple inert solid components.
- * \note a solid is considered inert if it cannot dissolve in a liquid and
+ * \note A solid is considered inert if it cannot dissolve in a liquid and
  *       and cannot increase its mass by precipitation from a fluid phase.
- * \note inert components have to come after all non-inert components
+ * \note Inert components have to come after all non-inert components.
  */
 template <class Scalar, class Component1, class Component2, int numInert = 0>
 class CompositionalSolidPhase

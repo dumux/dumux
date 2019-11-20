@@ -49,14 +49,14 @@ public:
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of water in the CO2 phase.
      *
      * According to B. Xu et al. (2002) \cite xu2003 <BR>
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
         if(!hasParam("BinaryCoefficients.GasDiffCoeff")) //in case one might set that user-specific as e.g. in dumux-lecture/mm/convectivemixing
         {
-            //Diffusion coefficient of water in the CO2 phase
+            // Diffusion coefficient of water in the CO2 phase
             Scalar const PI=3.141593;
             Scalar const k = 1.3806504e-23; // Boltzmann constant
             Scalar const c = 4; // slip parameter, can vary between 4 (slip condition) and 6 (stick condition)
@@ -64,22 +64,26 @@ public:
             Scalar mu = CO2::gasViscosity(temperature, pressure); // CO2 viscosity
             Scalar D = k / (c * PI * R_h) * (temperature / mu);
             return D;
-        } else return getParam<Scalar>("BinaryCoefficients.GasDiffCoeff");
+        }
+        else
+            return getParam<Scalar>("BinaryCoefficients.GasDiffCoeff");
     }
 
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of CO2 in the brine phase.
      *
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        //Diffusion coefficient of CO2 in the brine phase
+        // Diffusion coefficient of CO2 in the brine phase
         if(!hasParam("BinaryCoefficients.LiquidDiffCoeff")) //in case one might set that user-specific as e.g. in dumux-lecture/mm/convectivemixing
         {
             return 2e-9;
-        } else return getParam<Scalar>("BinaryCoefficients.LiquidDiffCoeff");
+        }
+        else
+            return getParam<Scalar>("BinaryCoefficients.LiquidDiffCoeff");
     }
 
     /*!
@@ -92,12 +96,12 @@ public:
      *        applying the activity coefficient expression of Duan and Sun (2003) \cite duan2003 <BR>
      *        and the correlations for pure water given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
-     * \param salinity the salinity \f$\mathrm{[kg \ NaCl / kg \ solution]}\f$
-     * \param knownPhaseIdx indicates which phases are present
-     * \param xlCO2 mole fraction of CO2 in brine \f$\mathrm{[mol/mol]}\f$
-     * \param ygH2O mole fraction of water in the gas phase \f$\mathrm{[mol/mol]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param salinity The salinity \f$\mathrm{[kg \ NaCl / kg \ solution]}\f$
+     * \param knownPhaseIdx Indicates which phases are present
+     * \param xlCO2 Mole fraction of CO2 in brine \f$\mathrm{[mol/mol]}\f$
+     * \param ygH2O Mole fraction of water in the gas phase \f$\mathrm{[mol/mol]}\f$
      */
     static void calculateMoleFractions(const Scalar temperature,
                                        const Scalar pg,
@@ -140,8 +144,8 @@ public:
      * \brief Returns the fugacity coefficient of the CO2 component in a water-CO2 mixture
      * (given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 )
      *
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar fugacityCoefficientCO2(Scalar T, Scalar pg)
     {
@@ -168,8 +172,8 @@ public:
      * \brief Returns the fugacity coefficient of the H2O component in a water-CO2 mixture
      * (given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 )
      *
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar fugacityCoefficientH2O(Scalar T, Scalar pg)
     {
@@ -197,7 +201,7 @@ public:
 private:
     /*!
      * \brief Returns the molality of NaCl \f$\mathrm{[mol \ NaCl / kg \ water]}\f$  for a given mole fraction
-     * \param salinity the salinity \f$\mathrm{[kg \ NaCl / kg \ solution]}\f$
+     * \param salinity The salinity \f$\mathrm{[kg \ NaCl / kg \ solution]}\f$
      */
     static Scalar salinityToMoleFrac_(Scalar salinity)
     {
@@ -214,7 +218,7 @@ private:
      * \brief Returns the molality of NaCl \f$\mathrm{(mol \ NaCl / kg \ water)}\f$
      *        for a given mole fraction \f$\mathrm{(mol \ NaCl / mol\  solution)}\f$
      *
-     * \param x_NaCl mole fraction of NaCL in brine \f$\mathrm{[mol/mol]}\f$
+     * \param x_NaCl Mole fraction of NaCL in brine \f$\mathrm{[mol/mol]}\f$
      */
     static Scalar molFracToMolality_(Scalar x_NaCl)
     {
@@ -225,10 +229,10 @@ private:
 
     /*!
      * \brief Returns the equilibrium molality of CO2 \f$\mathrm{(mol \ CO2 / kg \ water)}\f$ for a
-     * CO2-water mixture at a given pressure and temperature
+     *          CO2-water mixture at a given pressure and temperature
      *
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar molalityCO2inPureWater_(Scalar temperature, Scalar pg)
     {
@@ -245,9 +249,9 @@ private:
      *           molal description. According to Duan and Sun (2003) \cite duan2003 <BR>
      *           given in Spycher and Pruess (2005) \cite spycher2005 <BR>
      *
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
-     * \param molalityNaCl molality of NaCl \f$\mathrm{(mol \ NaCl / kg \ water)}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param molalityNaCl Molality of NaCl \f$\mathrm{(mol \ NaCl / kg \ water)}\f$
      */
     static Scalar activityCoefficient_(Scalar temperature, Scalar pg, Scalar molalityNaCl)
     {
@@ -265,8 +269,8 @@ private:
      * them mutual solubility in the water-CO2 system.
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeA_(Scalar T, Scalar pg)
     {
@@ -286,8 +290,8 @@ private:
      * the mutual solubility in the water-CO2 system.
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      *
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeB_(Scalar T, Scalar pg)
     {
@@ -307,8 +311,8 @@ private:
      * \brief Returns the parameter lambda, which is needed for the
      * calculation of the CO2 activity coefficient in the brine-CO2 system.
      * Given in Spycher and Pruess (2005) \cite spycher2005 <BR>
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeLambda_(Scalar T, Scalar pg)
     {
@@ -328,8 +332,8 @@ private:
      * \brief Returns the parameter xi, which is needed for the
      * calculation of the CO2 activity coefficient in the brine-CO2 system.
      * Given in Spycher and Pruess (2005) \cite spycer2005 <BR>
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeXi_(Scalar T, Scalar pg)
     {
@@ -347,7 +351,7 @@ private:
      * \brief Returns the equilibrium constant for CO2, which is needed for the
      * calculation of the mutual solubility in the water-CO2 system
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
-     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
      */
     static Scalar equilibriumConstantCO2_(Scalar T)
     {
@@ -363,7 +367,7 @@ private:
      * \brief Returns the equilibrium constant for H2O, which is needed for the
      * calculation of the mutual solubility in the water-CO2 system
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
-     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
      */
     static Scalar equilibriumConstantH2O_(Scalar T)
     {
@@ -396,9 +400,9 @@ public:
      * \brief Returns the _mole_ (!) fraction of CO2 in the liquid
      *        phase at a given temperature, pressure and density of
      *        CO2.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
-     * \param rhoCO2 density of CO2
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param rhoCO2 Density of CO2
      */
     static Scalar moleFracCO2InBrine(Scalar temperature, Scalar pg, Scalar rhoCO2)
     {
@@ -447,9 +451,9 @@ public:
 
 private:
     /*!
-     * \brief computation of \f$\mathrm{[mu_{CO2}^{l(0)}/RT]}\f$
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \brief Computation of \f$\mathrm{[mu_{CO2}^{l(0)}/RT]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeA_(Scalar T, Scalar pg)
     {
@@ -484,10 +488,10 @@ private:
     }
 
     /*!
-     * \brief computation of B
+     * \brief Computation of B
      *
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeB_(Scalar T, Scalar pg)
     {
@@ -511,10 +515,10 @@ private:
     }
 
     /*!
-     * \brief computation of C
+     * \brief Computation of C
      *
-     * \param T the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param T The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeC_(Scalar T, Scalar pg)
     {
@@ -533,14 +537,14 @@ private:
     }
 
     /*!
-     * \brief computation of partial pressure CO2
+     * \brief Computation of partial pressure CO2
      *
      * We assume that the partial pressure of brine is its vapor pressure.
      * \warning: Strictly this is assumption is invalid for CO2 because the
      *           mole fraction of CO2 in brine can be considerable
      *
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar partialPressureCO2_(Scalar temperature, Scalar pg)
     {
@@ -550,9 +554,9 @@ private:
     /*!
      * \brief The fugacity coefficient of CO2 for a CO2-H2O mixture.
      *
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
-     * \param rhoCO2 the density of CO2 for the critical volume \f$\mathrm{[kg/m^3]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pg The gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param rhoCO2 The density of CO2 for the critical volume \f$\mathrm{[kg/m^3]}\f$
      */
     static Scalar fugacityCoeffCO2_(Scalar temperature,
                                     Scalar pg,

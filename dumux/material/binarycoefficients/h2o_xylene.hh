@@ -39,7 +39,7 @@ class H2O_Xylene
 public:
     /*!
      * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for xylene in liquid water.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
      *
      * See:
      *
@@ -50,16 +50,16 @@ public:
     {
         // after Sander
         Scalar sanderH = 1.5e-1;    //[M/atm]
-        //conversion to our Henry definition
+        // conversion to our Henry definition
         Scalar dumuxH = sanderH / 101.325; // has now [(mol/m^3)/Pa]
-        dumuxH *= 18.02e-6;  //multiplied by molar volume of reference phase = water
+        dumuxH *= 18.02e-6;  // multiplied by molar volume of reference phase = water
         return 1.0/dumuxH; // [Pa]
     }
 
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and xylene.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      *
      */
     template <class Scalar>
@@ -106,8 +106,8 @@ public:
 
     /*!
      * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for xylene in liquid water.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
      *
      * \note Returns just an order of magnitude.
      */

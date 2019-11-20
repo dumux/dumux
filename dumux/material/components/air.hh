@@ -78,8 +78,8 @@ public:
      *
      * Ideal gas is assumed.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of phase in \f$\mathrm{[Pa]}\f$
     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
@@ -113,8 +113,8 @@ public:
      *
      * Ideal gas is assumed.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param density Density of component in \f$\mathrm{[kg/m^3]}\f$
      */
     static Scalar gasPressure(Scalar temperature, Scalar density)
     {
@@ -133,17 +133,16 @@ public:
      * Accentric factor taken from: <BR>
      * Adebiyi (2003) \cite adebiyi2003
      *
-     * air is a non-polar substance,
-     * thus dipole moment mu is zero, as well the dimensionless dipole moment mu_r
-     * therefore not considered below
-     * the same holds for the correction value kappa for highly polar substances
+     * Air is a non-polar substance, thus dipole moment mu is zero as well as the dimensionless dipole moment mu_r.
+     * Therefore they are not considered below.
+     * The same holds for the correction value kappa for highly polar substances.
      *
      * This calculation was introduced into Dumux in 2012 although the method here
      * is designed for general polar substances. Air, however, is (a) non-polar,
      * and (b) there are more precise methods available
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar oldGasViscosity(Scalar temperature, Scalar pressure)
     {
@@ -180,8 +179,8 @@ public:
      * It shows very reasonable results throughout realistic pressure and
      * temperature ranges up to several hundred Kelvin and up to 500 bar
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
@@ -204,8 +203,8 @@ public:
      * Gas viscosity is not very dependent on pressure. Thus, for
      * low pressures one might switch the pressure correction off
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar simpleGasViscosity(Scalar temperature, Scalar pressure)
     {
@@ -223,8 +222,8 @@ public:
      * Since they use ''eta'' for dyn. viscosity, we do it as well for easier
      * comparison with the paper
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar exactGasViscosity(Scalar temperature, Scalar pressure)
     {
@@ -260,8 +259,8 @@ public:
      * \brief Specific enthalpy of Air \f$\mathrm{[J/kg]}\f$
      *        with 273.15 \f$ K \f$ as basis.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * Kays et al. (2005, 431ff) \cite kays2005 <BR>
      */
@@ -278,8 +277,8 @@ public:
      * Exploiting the Ideal Gas assumption
      * (\f$pv = R_{\textnormal{specific}} T\f$) gives: \f$u = h - R / M T \f$.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static const Scalar gasInternalEnergy(Scalar temperature,
                                           Scalar pressure)
@@ -296,8 +295,8 @@ public:
      *  This methods uses the formula for "zero-pressure" heat capacity that
      *  is only dependent on temperature, because the pressure dependence is rather small.
      *  This one should be accurate for a pressure of 1 atm.
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      *
      *  Values taken from Hollis (1996) \cite hollis1996 <BR>
      *  "Tables of Thermal Properties of Gases"
@@ -336,8 +335,8 @@ public:
      * Oxygen: 0.026105 <BR>
      * lambda_air is approximately 0.78*lambda_N2+0.22*lambda_O2
      *
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     * \param temperature Absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of the phase in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
     {

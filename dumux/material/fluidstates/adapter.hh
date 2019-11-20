@@ -31,7 +31,7 @@ namespace Dumux {
 /*!
  * \ingroup FluidStates
  * \tparam FluidState the fluid state that is adapted to another fluid state's index set
- * \tparam AdapterPolicy
+ * \tparam AdapterPolicy // TODO : has to be explained
  * \brief Adapter class for fluid states with different indices
  * \note This is useful when writing a fluid system that has another fluid system as an ingredient
  *       To forward to the other fluid system (which variables to be sorted according to its own indices)

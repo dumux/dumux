@@ -39,7 +39,7 @@ class Air_Xylene
 public:
     /*!
      * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for mesitylene in air.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)
@@ -51,8 +51,8 @@ public:
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for air and xylene.
      * method according to Wilke and Lee
      * see W.J. Lyman, W.F. Reehl, D.H. Rosenblatt (1990) \cite lyman1990 <BR>
-     * \param temperature temperature in \f$\mathrm{[K]}\f$
-     * \param pressure pressure in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure in \f$\mathrm{[Pa]}\f$
      *
      */
     template <class Scalar>
@@ -92,13 +92,13 @@ public:
         const Scalar D_ax = (B_*pow(temperature,1.5)*sqrt(Mr))
                            /(1e-5*pressure*pow(sigma_ax, 2.0)*Omega); // [cm^2/s]
 
-        return D_ax*1e-4;   //  [m^2/s]
+        return D_ax*1e-4;   // [m^2/s]
     }
 
     /*!
      * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for air and xylene in liquid water.
-     * \param temperature temperature in \f$\mathrm{[K]}\f$
-     * \param pressure pressure in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure in \f$\mathrm{[Pa]}\f$
      *
      * \note Returns just an order of magnitude.
      */

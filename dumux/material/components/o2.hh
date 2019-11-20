@@ -126,8 +126,8 @@ public:
     /*!
      * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of pure \f$O_2\f$ at a given pressure and temperature.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * \todo: density liquid oxygen
      */
@@ -140,8 +140,8 @@ public:
     /*!
      * \brief The molar density of pure \f$O_2\f$ in \f$\mathrm{[mol/m^3]}\f$,
      *   depending on pressure and temperature.
-     * \param temperature The temperature of the gas
-     * \param pressure The pressure of the gas
+     * \param temperature The temperature of the gas in \f$\mathrm{[K]}\f$
+     * \param pressure The pressure of the gas in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
     { return IdealGas::molarDensity(temperature, pressure); }
@@ -155,8 +155,8 @@ public:
     /*!
      * \brief The pressure of gaseous \f$O_2\f$ in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param density Density of component in \f$\mathrm{[kg/m^3]}\f$
      */
     static constexpr Scalar gasPressure(Scalar temperature, Scalar density)
     {
@@ -167,8 +167,8 @@ public:
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure oxygen gas.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasEnthalpy(Scalar temperature,
                               Scalar pressure)
@@ -182,8 +182,8 @@ public:
      *
      * This is equivalent to the partial derivative of the specific
      * enthalpy to the temperature.
-     * \param T absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     * \param T Absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of the phase in \f$\mathrm{[Pa]}\f$
      *
      * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
@@ -207,8 +207,8 @@ public:
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$O_2\f$ at a given pressure and temperature.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param temperature Temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:
      *
@@ -250,8 +250,8 @@ public:
      * W.G. Mallard evaluated at p=.1 MPa, does not
      * change dramatically with p and can be interpolated linearly with temperature
      *
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
+     * \param temperature Absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure Pressure of the phase in \f$\mathrm{[Pa]}\f$
      */
     static constexpr Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
     {

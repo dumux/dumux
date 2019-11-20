@@ -93,8 +93,8 @@ public:
      * The molar fraction \f$x^\kappa_\alpha\f$ is defined as the ratio of the number of molecules
      * of component \f$\kappa\f$ and the total number of molecules of the phase \f$\alpha\f$.
      *
-     * \param phaseIdx the index of the phase
-     * \param compIdx the index of the component
+     * \param phaseIdx The index of the phase
+     * \param compIdx The index of the component
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     { return moleFraction_[phaseIdx][compIdx]; }
@@ -111,8 +111,8 @@ public:
      * \f$\overline M_\alpha\f$ is the mean molar mass of a molecule of phase
      * \f$\alpha\f$.
      *
-     * \param phaseIdx the index of the phase
-     * \param compIdx the index of the component
+     * \param phaseIdx The index of the phase
+     * \param compIdx The index of the component
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {

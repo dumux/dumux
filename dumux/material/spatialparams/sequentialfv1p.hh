@@ -61,8 +61,8 @@ public:
     }
     /*!
      * \brief Averages the intrinsic permeability (Scalar).
-     * \param K1 intrinsic permeability of the first element
-     * \param K2 intrinsic permeability of the second element
+     * \param K1 Intrinsic permeability of the first element
+     * \param K2 Intrinsic permeability of the second element
      */
     Scalar meanK(Scalar K1, Scalar K2) const
     {
@@ -72,9 +72,9 @@ public:
 
     /*!
      * \brief Averages the intrinsic permeability (Scalar).
-     * \param result averaged intrinsic permeability
-     * \param K1 intrinsic permeability of the first element
-     * \param K2 intrinsic permeability of the second element
+     * \param result Averaged intrinsic permeability
+     * \param K1 Intrinsic permeability of the first element
+     * \param K2 Intrinsic permeability of the second element
      */
     void meanK(DimWorldMatrix &result, Scalar K1, Scalar K2) const
     {
@@ -89,9 +89,9 @@ public:
 
     /*!
      * \brief Averages the intrinsic permeability (Tensor).
-     * \param result averaged intrinsic permeability
-     * \param K1 intrinsic permeability of the first element
-     * \param K2 intrinsic permeability of the second element
+     * \param result Averaged intrinsic permeability
+     * \param K1 Intrinsic permeability of the first element
+     * \param K2 Intrinsic permeability of the second element
      */
     void meanK(DimWorldMatrix &result, const DimWorldMatrix &K1, const DimWorldMatrix &K2) const
     {
@@ -111,8 +111,8 @@ public:
 
     /*!
      * \brief Dummy function that can be used if only one value exist (boundaries).
-     * \param result intrinsic permeability
-     * \param K intrinsic permeability of the element
+     * \param result Intrinsic permeability
+     * \param K Intrinsic permeability of the element
      */
     void meanK(DimWorldMatrix &result, Scalar K) const
     {
@@ -126,8 +126,8 @@ public:
 
     /*!
      * \brief Dummy function that can be used if only one value exist (boundaries).
-     * \param result intrinsic permeability
-     * \param K intrinsic permeability of the element
+     * \param result Intrinsic permeability
+     * \param K Intrinsic permeability of the element
      */
     void meanK(DimWorldMatrix &result, const DimWorldMatrix &K) const
     {
