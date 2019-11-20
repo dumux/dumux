@@ -239,7 +239,9 @@ struct Formulation { using type = UndefinedProperty; };                         
 template<class TypeTag, class MyTypeTag>
 struct UseConstraintSolver { using type = UndefinedProperty; };                 //!< Whether to use a contraint solver for computing the secondary variables
 template<class TypeTag, class MyTypeTag>
-struct UseSimpleCompositionalFlash { using type = UndefinedProperty; };         //!< Whether to use a simple compositional flash for computing the secondary variables
+struct CompositionalMultiPhaseFlash { using type = UndefinedProperty; };         //!< Specifies the compositional flash for computing the secondary variables in a multi-phase scenario
+template<class TypeTag, class MyTypeTag>
+struct CompositionalSinglePhaseFlash { using type = UndefinedProperty; };         //!< Specifies the compositional flash for computing the secondary variables of non-existing phases
 
 // When using the box method in a multi-phase context, an interface solver might be necessary
 template<class TypeTag, class MyTypeTag>

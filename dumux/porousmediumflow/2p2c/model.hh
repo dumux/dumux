@@ -91,6 +91,8 @@
 #include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 
 #include "volumevariables.hh"
@@ -133,6 +135,23 @@ public:
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::TwoPTwoC> { using type = GetPropType<TypeTag, Properties::BaseModelTraits>; };
 
+/*!
+ * \ingroup TwoPNCModel
+ * \brief Traits class for the volume variables of the 2p2c model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class CMPF, class CSPF>
+struct TwoPTwoCVolumeVariablesTraits : public TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>
+{
+    using CompositionalMultiPhaseFlash = CMPF;
+    using CompositionalSinglePhaseFlash = CSPF;
+};
+
 //! Use the 2p2c VolumeVariables
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::TwoPTwoC>
@@ -149,16 +168,35 @@ private:
     static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
 
-    static constexpr bool useSimpleCompositionalFlash = getPropValue<TypeTag, Properties::UseSimpleCompositionalFlash>();
+    using CMPF = GetPropType<TypeTag, Properties::CompositionalMultiPhaseFlash>;
+    using CSPF = GetPropType<TypeTag, Properties::CompositionalSinglePhaseFlash>;
 
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using Traits = TwoPTwoCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, CMPF, CSPF>;
 public:
-    using type = TwoPTwoCVolumeVariables<Traits, useSimpleCompositionalFlash>;
+    using type = TwoPTwoCVolumeVariables<Traits>;
 };
 
-//! Determines whether the simple compositional flash is used
+//! The flash based on equality of fugacities is used as default model to compute equilibrium compositions
 template<class TypeTag>
-struct UseSimpleCompositionalFlash<TypeTag, TTag::TwoPTwoC> { static constexpr bool value = false; };
+struct CompositionalMultiPhaseFlash<TypeTag, TTag::TwoPTwoC>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+public:
+    using type = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
+};
+
+//! The flash based on equality of fugacities is used as default model to compute compositions of non-existing phases
+template<class TypeTag>
+struct CompositionalSinglePhaseFlash<TypeTag, TTag::TwoPTwoC>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+public:
+    using type = ComputeFromReferencePhase<Scalar, FluidSystem>;
+};
 
 //////////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2p2c model (inherited from 2pnc)
@@ -260,10 +298,11 @@ private:
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
 
-    static constexpr bool useSimpleCompositionalFlash = getPropValue<TypeTag, Properties::UseSimpleCompositionalFlash>();
+    using CMPF = GetPropType<TypeTag, Properties::CompositionalMultiPhaseFlash>;
+    using CSPF = GetPropType<TypeTag, Properties::CompositionalSinglePhaseFlash>;
 
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
-    using EquilibriumVolVars = TwoPTwoCVolumeVariables<Traits, useSimpleCompositionalFlash>;
+    using Traits = TwoPTwoCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, CMPF, CSPF>;
+    using EquilibriumVolVars = TwoPTwoCVolumeVariables<Traits>;
 public:
     using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
 };
