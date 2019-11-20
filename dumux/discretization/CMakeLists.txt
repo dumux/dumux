@@ -20,6 +20,9 @@ fvgridvariables.hh
 fvproperties.hh
 localview.hh
 method.hh
+rotationpolicy.hh
+rotationsymmetricscv.hh
+rotationsymmetricscvf.hh
 scvandscvfiterators.hh
 staggered.hh
 subcontrolvolumebase.hh
