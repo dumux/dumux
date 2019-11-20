@@ -1158,9 +1158,15 @@ private:
                 for (auto& subGeometry : subGeometries)
                 {
                     const auto curSubSegmentIdx = segment.numSubSegments();
-                    segment.addSubSegment( ContactSurfaceSubSegment(std::move(subGeometry),
-                                                                    mechElementIdx1,
-                                                                    mechElementIdx2) );
+                    const auto d = mechElement2.geometry().center() - mechElement1.geometry().center();
+                    if (d*segment.getBasisVector(dimWorld-1) > 0.0)
+                        segment.addSubSegment( ContactSurfaceSubSegment(std::move(subGeometry),
+                                                                        mechElementIdx1,
+                                                                        mechElementIdx2) );
+                    else
+                        segment.addSubSegment( ContactSurfaceSubSegment(std::move(subGeometry),
+                                                                        mechElementIdx2,
+                                                                        mechElementIdx1) );
 
                     // update maps
                     mechContactSegmentsMap_[mechElementIdx1][pair.first].push_back(std::make_pair(lagrangeElemIdx, curSubSegmentIdx));
