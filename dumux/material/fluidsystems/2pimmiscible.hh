@@ -407,6 +407,25 @@ public:
         return std::numeric_limits<Scalar>::infinity();
     }
 
+    using Base::vaporPressure;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        assert(0 <= compIdx  && compIdx < numComponents);
+
+        Scalar temperature = fluidState.temperature(phase0Idx);
+        if (compIdx == comp0Idx)
+            return Fluid0::vaporPressure(temperature);
+        return Fluid1::vaporPressure(temperature);
+    }
+
     using Base::diffusionCoefficient;
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for

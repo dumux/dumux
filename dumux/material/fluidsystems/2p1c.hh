@@ -409,6 +409,22 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
+    using Base::vaporPressure;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        assert(0 <= compIdx  && compIdx < numComponents);
+
+        Scalar temperature = fluidState.temperature(liquidPhaseIdx);
+        return Component::vaporPressure(temperature);
+    }
 
     /*!
      * \brief Calculate the molecular diffusion coefficient for a

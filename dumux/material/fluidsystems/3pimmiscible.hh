@@ -84,6 +84,10 @@ public:
     //! Index of the gas phase
     static constexpr int gPhaseIdx = 2;
 
+    static constexpr int comp0Idx = 0; //!< index of the frist component
+    static constexpr int comp1Idx = 1; //!< index of the second component
+    static constexpr int comp2Idx = 2; //!< index of the third component
+
     /*!
      * \brief Return the human readable name of a fluid phase
      * \param phaseIdx The index of the fluid phase to consider
@@ -456,6 +460,27 @@ public:
             // component is infinite anyway...
             return 1.0;
         return std::numeric_limits<Scalar>::infinity();
+    }
+
+    using Base::vaporPressure;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        assert(0 <= compIdx  && compIdx < numComponents);
+
+        Scalar temperature = fluidState.temperature(wPhaseIdx);
+        if (compIdx == comp0Idx)
+            return WettingFluid::vaporPressure(temperature);
+        if (compIdx == comp1Idx)
+            return NonwettingFluid::vaporPressure(temperature);
+        return Gas::vaporPressure(temperature);
     }
 
     using Base::diffusionCoefficient;

@@ -122,9 +122,9 @@ private:
         static constexpr int phaseIdx(int brinePhaseIdx) { return liquidPhaseIdx; }
         static constexpr int compIdx(int brineCompIdx)
         {
+            assert(brineCompIdx == Brine::H2OIdx || brineCompIdx == Brine::NaClIdx);
             switch (brineCompIdx)
             {
-                assert(brineCompIdx == Brine::H2OIdx || brineCompIdx == Brine::NaClIdx);
                 case Brine::H2OIdx: return H2OIdx;
                 case Brine::NaClIdx: return NaClIdx;
                 default: return 0; // this will never be reached, only needed to suppress compiler warning
@@ -285,14 +285,38 @@ public:
     template <class FluidState>
     static Scalar vaporPressure(const FluidState& fluidState, int compIdx)
     {
+        assert(0 <= compIdx  && compIdx < numComponents);
+
+        Scalar temperature = fluidState.temperature(liquidPhaseIdx);
         // The vapor pressure of the water is affected by the
         // salinity, thus, we forward to the interface of Brine here
-        if (compIdx == H2OIdx)
-            return Brine::vaporPressure(BrineAdapter<FluidState>(fluidState), Brine::H2OIdx);
-        else if (compIdx == NaClIdx)
-            DUNE_THROW(Dune::NotImplemented, "NaCl::vaporPressure(t)");
-        else
-            DUNE_THROW(Dune::NotImplemented, "Invalid component index " << compIdx);
+        switch (compIdx)
+        {
+            case H2OIdx: return Brine::vaporPressure(BrineAdapter<FluidState>(fluidState), Brine::H2OIdx);
+            case AirIdx: return Air::vaporPressure(temperature);
+            case NaClIdx: DUNE_THROW(Dune::NotImplemented, "Vapor pressure of NaCl");
+        }
+    }
+
+    using Base::henry;
+    /*!
+     * \copybrief Base::henry
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar henry(const FluidState &fluidState,
+                        int phaseIdx,
+                        int compIdx)
+    {
+        assert(!isGas(phaseIdx) && (Base::getMainComponent(phaseIdx) != compIdx));
+
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        if(compIdx == AirIdx)
+            return BinaryCoeff::H2O_Air::henry(temperature);
+        DUNE_THROW(Dune::NotImplemented, "Henry coefficient of NaCl");
     }
 
     /****************************************

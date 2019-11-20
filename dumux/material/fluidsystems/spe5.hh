@@ -471,7 +471,6 @@ public:
         }
     }
 
-
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for
      *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$

@@ -568,6 +568,44 @@ public:
         return 1.0;
     }
 
+    using Base::vaporPressure;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        assert(0 <= compIdx  && compIdx < numComponents);
+
+        Scalar temperature = fluidState.temperature(liquidPhaseIdx);
+        if (compIdx == H2OIdx)
+            return H2O::vaporPressure(temperature);
+        return N2::vaporPressure(temperature);
+    }
+
+    using Base::henry;
+    /*!
+     * \copybrief Base::henry
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar henry(const FluidState &fluidState,
+                        int phaseIdx,
+                        int compIdx)
+    {
+        assert(!isGas(phaseIdx) && (Base::getMainComponent(phaseIdx) != compIdx));
+
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        return BinaryCoeff::H2O_N2::henry(temperature);
+    }
+
     using Base::diffusionCoefficient;
     /*!
      * \brief Calculate the molecular diffusion coefficient for a

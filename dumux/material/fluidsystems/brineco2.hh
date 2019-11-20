@@ -176,9 +176,9 @@ private:
         static constexpr int phaseIdx(int brinePhaseIdx) { return liquidPhaseIdx; }
         static constexpr int compIdx(int brineCompIdx)
         {
+            assert(brineCompIdx == VariableSalinityBrine::H2OIdx || brineCompIdx == VariableSalinityBrine::NaClIdx);
             switch (brineCompIdx)
             {
-                assert(brineCompIdx == VariableSalinityBrine::H2OIdx || brineCompIdx == VariableSalinityBrine::NaClIdx);
                 case VariableSalinityBrine::H2OIdx: return BrineOrH2OIdx;
                 case VariableSalinityBrine::NaClIdx: return NaClIdx;
                 default: return 0; // this will never be reached, only needed to suppress compiler warning
@@ -512,6 +512,27 @@ public:
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
+    }
+
+    using Base::vaporPressure;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        assert(0 <= compIdx  && compIdx < numComponents);
+
+        Scalar temperature = fluidState.temperature(liquidPhaseIdx);
+        if (compIdx == BrineOrH2OIdx)
+            return H2O::vaporPressure(temperature);
+        else if (compIdx == CO2Idx)
+            return CO2::vaporPressure(temperature);
+        DUNE_THROW(Dune::NotImplemented, "Vapor pressure of NaCl");
     }
 
     /*!

@@ -283,6 +283,26 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Invalid component index " << compIdx);
     }
 
+    using Base::henry;
+    /*!
+     * \copybrief Base::henry
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar henry(const FluidState &fluidState,
+                        int phaseIdx,
+                        int compIdx)
+    {
+        assert(!isGas(phaseIdx) && (Base::getMainComponent(phaseIdx) != compIdx));
+
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        if (compIdx == AirIdx)
+            return BinaryCoeff::H2O_Air::henry(temperature);
+    }
+
     /*!
      * \brief Molar volume of a component at the critical point \f$\mathrm{[m^3/mol]}\f$.
      *

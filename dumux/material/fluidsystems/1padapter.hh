@@ -267,6 +267,38 @@ public:
                                                           AdapterPolicy::compIdx(compIdx));
     }
 
+    using Base::vaporPressure;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        return MultiPhaseFluidSystem::vaporPressure(adaptFluidState(fluidState),
+                                                    AdapterPolicy::compIdx(compIdx));
+    }
+
+    using Base::henry;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar henry(const FluidState &fluidState,
+                        int phaseIdx,
+                        int compIIdx)
+    {
+        return MultiPhaseFluidSystem::henry(adaptFluidState(fluidState), phase,
+                                                    AdapterPolicy::compIdx(compIdx));
+    }
+
     using Base::diffusionCoefficient;
     /*!
      * \copybrief Base::diffusionCoefficient

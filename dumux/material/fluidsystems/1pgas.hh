@@ -169,6 +169,23 @@ public:
     static Scalar vaporPressure(Scalar T)
     { return Component::vaporPressure(T); }
 
+    using Base::vaporPressure;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        assert(0 <= compIdx  && compIdx < numComponents);
+
+        Scalar temperature = fluidState.temperature(phase0Idx/*=only phase*/);
+        return Component::vaporPressure(temperature);
+    }
+
     /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
      * \param temperature The given temperature \f$\mathrm{[K]}\f$

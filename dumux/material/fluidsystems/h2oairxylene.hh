@@ -515,6 +515,53 @@ public:
         return 1.0;
     }
 
+    using Base::vaporPressure;
+    /*!
+     * \copybrief Base::vaporPressure
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        assert(0 <= compIdx  && compIdx < numComponents);
+
+        Scalar temperature = fluidState.temperature(wPhaseIdx);
+        if (compIdx == NAPLIdx)
+            return NAPL::vaporPressure(temperature);
+        else if (compIdx == AirIdx)
+            return Air::vaporPressure(temperature);
+        else if (compIdx == H2OIdx)
+            return H2O::vaporPressure(temperature);
+    }
+
+    using Base::henry;
+    /*!
+     * \copybrief Base::henry
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar henry(const FluidState &fluidState,
+                        int phaseIdx,
+                        int compIdx)
+    {
+        assert(!isGas(phaseIdx) && (Base::getMainComponent(phaseIdx) != compIdx));
+
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
+            if (compIdx == AirIdx)
+                return BinaryCoeff::H2O_Air::henry(temperature);
+            return BinaryCoeff::H2O_Xylene::henry(temperature);
+        }
+        DUNE_THROW(Dune::NotImplemented, "Henry coefficient for components in the NAPL phase");
+    }
+
     template <class FluidState>
     static Scalar kelvinVaporPressure(const FluidState &fluidState,
                                       const int phaseIdx,

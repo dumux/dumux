@@ -228,6 +228,66 @@ public:
     }
 
     /*!
+     * \brief Return the vapor pressure \f$\mathrm{[Pa]}\f$ of a pure component
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        DUNE_THROW(Dune::NotImplemented, "vaporPressure() method not implemented by the fluid system.");
+    }
+
+    /*!
+     * \brief Return the vapor pressure \f$\mathrm{[Pa]}\f$ of a pure component
+     *
+     * \param fluidState The fluid state
+     * \param paramCache mutable parameters
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                const ParameterCache &paramCache,
+                                int compIdx)
+    {
+        return Implementation::fugacityCoefficient(fluidState, compIdx);
+    }
+
+    /*!
+     * \brief Return the henry coefficient \f$\mathrm{[Pa]}\f$ of the fluid system
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar henry(const FluidState &fluidState,
+                        int phaseIdx,
+                        int compIdx)
+    {
+        DUNE_THROW(Dune::NotImplemented, "henry() method not implemented by the fluid system.");
+    }
+
+    /*!
+     * \brief Return the henry coefficient \f$\mathrm{[Pa]}\f$ of the fluid system
+     *
+     * \param fluidState The fluid state
+     * \param paramCache mutable parameters
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar henry(const FluidState &fluidState,
+                        const ParameterCache &paramCache,
+                        int phaseIdx,
+                        int compIdx)
+    {
+        return Implementation::henry(fluidState, phaseIdx, compIdx);
+    }
+
+    /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      * \param fluidState The fluid state
      * \param phaseIdx Index of the fluid phase
