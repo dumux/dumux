@@ -3,6 +3,8 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 
 ### Improvements and Enhancements
 
+- __Radially symmetric problems__: We now have support for radially symmetric problems (disc, ball, toroid). The support comes in form of wrappers for sub control volumes and faces that overload the respective `volume()` and `area()` function turning a 1d or 2d problem into a 2d or 3d radially symmetric problem.
+
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 ### Deprecated properties, to be removed after 3.2:
