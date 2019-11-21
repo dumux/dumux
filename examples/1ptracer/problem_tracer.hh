@@ -158,8 +158,17 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     //We create a bool saying whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
+    //We create additional int to make dimWorld and numComponents available in the problem
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static const int numComponents = FluidSystem::numComponents;
 
 public:
     // This is the constructor of our problem class:
@@ -198,7 +207,32 @@ public:
         return initialValues;
     }
 
+        //We implement an outflow boundary on the top of the domain and prescribe zero-flux Neumann boundary conditions on all other boundaries.
+        NumEqVector neumann(const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                            const SubControlVolumeFace& scvf) const
+        {
+            NumEqVector values(0.0);
+            const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+            const auto& globalPos = scvf.center();
 
+            // This is the outflow boundary, where tracer is transported by advection
+            // with the given flux field and diffusive flux is enforced to be zero
+            if (globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps_)
+            {
+                values = this->spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf)
+                         * volVars.massFraction(0, 0) * volVars.density(0)
+                         / scvf.area();
+                assert(values>=0.0 && "Volume flux at outflow boundary is expected to have a positive sign");
+            }
+            //prescribe zero-flux Neumann boundary conditions elsewhere
+            else
+                values = 0.0;
+
+            return values;
+        }
 
 private:
 // We assign a private global variable for the epsilon:
