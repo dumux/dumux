@@ -34,15 +34,9 @@
 #include <dumux/discretization/rotationpolicy.hh>
 #include <dumux/discretization/rotationsymmetricscv.hh>
 #include <dumux/discretization/rotationsymmetricscvf.hh>
+#include <dumux/discretization/rotationsymmetricgridgeometrytraits.hh>
 
 namespace Dumux {
-
-template<class BaseTraits, RotationPolicy rotPolicy>
-struct GGRotSymTraits : public BaseTraits
-{
-    using SubControlVolume = RotationSymmetricSubControlVolume<typename BaseTraits::SubControlVolume, rotPolicy>;
-    using SubControlVolumeFace = RotationSymmetricSubControlVolumeFace<typename BaseTraits::SubControlVolumeFace, rotPolicy>;
-};
 
 template<class GG>
 void runTest(const GG& gg, const double refVolume, const double refSurface)
@@ -81,7 +75,7 @@ int main (int argc, char *argv[]) try
     // test the disc policy
     {
         using Grid = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<double, 1>>;
-        using GGTraits = GGRotSymTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::disc>;
+        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::disc>;
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
@@ -110,7 +104,7 @@ int main (int argc, char *argv[]) try
     // test the ball policy
     {
         using Grid = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<double, 1>>;
-        using GGTraits = GGRotSymTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::ball>;
+        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::ball>;
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
@@ -139,7 +133,7 @@ int main (int argc, char *argv[]) try
     // test the toroid policy
     {
         using Grid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-        using GGTraits = GGRotSymTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::toroid>;
+        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::toroid>;
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
@@ -170,7 +164,7 @@ int main (int argc, char *argv[]) try
     // test the toroid policy for perfect cylinder
     {
         using Grid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-        using GGTraits = GGRotSymTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::toroid>;
+        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::toroid>;
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
