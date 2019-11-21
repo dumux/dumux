@@ -346,6 +346,7 @@ public:
      * \param scv The (d-1)-dimensional scv for which the aperture is to be evaluated.
      * \param initialAperture The initial aperture of the scv
      * \param u The displacement field to compute with
+     * \todo TODO: Make this independent of scv but accept global pos in element
      */
     template<class DisplacementField>
     Scalar<facetFlowId> computeAperture(const Element<facetFlowId>& element,
@@ -367,10 +368,10 @@ public:
             {
                 const auto& segment = contactSurfaceSegments_[subSegmentIdxPairs.first];
                 const auto& subSegment = segment.getSubSegment(subSegmentIdxPairs.second);
-                if (intersectsPointGeometry(scv.center(), subSegment.geometry()))
+                if (intersectsPointGeometry(element.geometry().center(), subSegment.geometry()))
                 {
                     const auto lagrangeElem = problem(lagrangeId).gridGeometry().element(subSegmentIdxPairs.first);
-                    return computeAperture(lagrangeElem, scv.center(), initialAperture, u);
+                    return computeAperture(lagrangeElem, element.geometry().center(), initialAperture, u);
                 }
             }
 
