@@ -442,17 +442,16 @@ public:
         auto key = std::make_pair(gridGeometry_->elementMapper().index(element), scvIdx);
         if (pointSourceMap_.count(key))
         {
-            // call the solDependent function. Herein the user might fill/add values to the point sources
-            // we make a copy of the local point sources here
-            auto pointSources = pointSourceMap_.at(key);
-
             // Add the contributions to the dof source values
             // We divide by the volume. In the local residual this will be multiplied with the same
             // factor again. That's because the user specifies absolute values in kg/s.
             const auto volume = scv.volume()*elemVolVars[scv].extrusionFactor();
 
-            for (auto&& pointSource : pointSources)
+            for (const auto& ps : pointSourceMap_.at(key))
             {
+                // we make a copy of the local point source here
+                auto pointSource = ps;
+
                 // Note: two concepts are implemented here. The PointSource property can be set to a
                 // customized point source function achieving variable point sources,
                 // see TimeDependentPointSource for an example. The second imitated the standard
