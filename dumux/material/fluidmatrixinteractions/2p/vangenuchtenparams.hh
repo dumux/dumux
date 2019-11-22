@@ -22,8 +22,8 @@
  * \brief Specification of the material parameters
  *       for the van Genuchten-Mualem constitutive relations.
  */
-#ifndef VAN_GENUCHTEN_PARAMS_HH
-#define VAN_GENUCHTEN_PARAMS_HH
+#ifndef DUMUX_VAN_GENUCHTEN_PARAMS_HH
+#define DUMUX_VAN_GENUCHTEN_PARAMS_HH
 
 #include <dune/common/float_cmp.hh>
 
