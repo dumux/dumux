@@ -199,7 +199,7 @@ public:
         const auto& stokesVolVars = darcyContext.volVars;
 
         // always calculate the flux from stokes to darcy
-        const Scalar velocity = -1*darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar velocity = -1*(darcyContext.velocity * scvf.unitOuterNormal());
         const bool insideIsUpstream = velocity > 0.0;
 
         // the darcy flux is then multiplied by -1 (darcy flux = -stokes flux)
@@ -384,7 +384,7 @@ public:
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& stokesVolVars = darcyContext.volVars;
 
-        const Scalar velocity = -1*darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar velocity = -1*(darcyContext.velocity * scvf.unitOuterNormal());
         const bool insideIsUpstream = velocity > 0.0;
 
         return -1*massFlux_(darcyIdx,
@@ -448,7 +448,7 @@ public:
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& stokesVolVars = darcyContext.volVars;
 
-        const Scalar velocity = -1*darcyContext.velocity * scvf.unitOuterNormal();
+        const Scalar velocity = -1*(darcyContext.velocity * scvf.unitOuterNormal());
         const bool insideIsUpstream = velocity > 0.0;
 
         return -1*energyFlux_(darcyIdx,

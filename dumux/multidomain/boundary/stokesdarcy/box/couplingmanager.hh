@@ -532,6 +532,15 @@ public:
                                                   scvf.index());
     }
 
+    //! compute the shape function for a given point and geometry
+    template<class FVGG, class Geometry, class GlobalPosition, class ShapeValues>
+    void getShapeValues(const FVGG& gridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues) const
+    {
+        const auto ipLocal = geo.local(globalPos);
+        const auto& localBasis = gridGeometry.feCache().get(geo.type()).localBasis();
+        localBasis.evaluateFunction(ipLocal, shapeValues);
+    }
+
 protected:
 
     //! Return a reference to an empty stencil

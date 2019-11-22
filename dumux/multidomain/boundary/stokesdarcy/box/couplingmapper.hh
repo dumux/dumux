@@ -78,8 +78,8 @@ private:
     static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::staggered,
                   "The free flow domain must use the staggered discretization");
 
-    //static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::cctpfa,
-    //              "The Darcy domain must use the CCTpfa discretization");
+    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::box,
+                  "The Darcy domain must use the Box discretization");
 public:
 
     /*!
@@ -113,16 +113,16 @@ public:
 
             const auto& data = dataHandle.second[0];
             const auto stokesElementIdx = dataHandle.first;
-            const auto darcyIdx = data.eIdx;
+            const auto darcyEIdx = data.eIdx;
             const auto stokesScvfIdx = data.flipScvfIdx;
             const auto& stokesScvf = stokesFvGridGeometry.scvf(stokesScvfIdx);
 
-            const auto& darcyElement = darcyFvGridGeometry.element(darcyIdx);
+            const auto& darcyElement = darcyFvGridGeometry.element(darcyEIdx);
             darcyFvGeometry.bind(darcyElement);
 
-            darcyToStokesCellCenterStencils[darcyIdx].push_back(stokesElementIdx);
-            darcyToStokesFaceStencils[darcyIdx].first.push_back(stokesScvf.dofIndex());
-            darcyToStokesFaceStencils[darcyIdx].second.push_back(stokesScvf.index());
+            darcyToStokesCellCenterStencils[darcyEIdx].push_back(stokesElementIdx);
+            darcyToStokesFaceStencils[darcyEIdx].first.push_back(stokesScvf.dofIndex());
+            darcyToStokesFaceStencils[darcyEIdx].second.push_back(stokesScvf.index());
 
             for (auto&& scv : scvs(darcyFvGeometry))
             {
@@ -160,33 +160,34 @@ public:
                 // for robustness, add epsilon in unit outer normal direction
                 const auto eps = (scvf.center() - stokesElement.geometry().center()).two_norm()*1e-8;
                 auto globalPos = scvf.center(); globalPos.axpy(eps, scvf.unitOuterNormal());
-                const auto darcyDofIdx = intersectingEntities(globalPos, darcyFvGridGeometry.boundingBoxTree());
+                const auto darcyElementIndices = intersectingEntities(globalPos, darcyFvGridGeometry.boundingBoxTree());
 
                 // skip if no intersection was found
-                if(darcyDofIdx.empty())
+                if(darcyElementIndices.empty())
                     continue;
 
                 // sanity check
-                if(darcyDofIdx.size() > 1)
+                if(darcyElementIndices.size() > 1)
                     DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one Darcy element");
 
                 const auto stokesElementIdx = stokesFvGridGeometry.elementMapper().index(stokesElement);
-                const auto darcyIdx = darcyDofIdx[0];
+                const auto darcyEIdx = darcyElementIndices[0];
 
-                const auto& darcyElement = darcyFvGridGeometry.element(darcyIdx);
+                const auto& darcyElement = darcyFvGridGeometry.element(darcyEIdx);
                 darcyFvGeometry.bindElement(darcyElement);
-                isCoupledDarcyScvf_[darcyIdx].resize(darcyFvGeometry.numScvf());
+                isCoupledDarcyScvf_[darcyEIdx].resize(darcyFvGeometry.numScvf());
 
                 // find the corresponding Darcy sub control volume face
                 for(const auto& darcyScvf : scvfs(darcyFvGeometry))
                 {
-                    const Scalar distance = (darcyScvf.center() - scvf.center()).two_norm();
+                    if(!darcyScvf.boundary())
+                        continue;
 
-                    if(distance < eps)
+                    if(intersectsPointGeometry(scvf.center(), darcyScvf.geometry()))
                     {
-                        isCoupledDarcyScvf_[darcyIdx][darcyScvf.index()] = true;
-                        darcyElementToStokesElementMap_[darcyIdx].push_back({stokesElementIdx, scvf.index(), darcyScvf.index()});
-                        stokesElementToDarcyElementMap_[stokesElementIdx].push_back({darcyIdx, darcyScvf.index(), scvf.index()});
+                        isCoupledDarcyScvf_[darcyEIdx][darcyScvf.index()] = true;
+                        darcyElementToStokesElementMap_[darcyEIdx].push_back({stokesElementIdx, scvf.index(), darcyScvf.index()});
+                        stokesElementToDarcyElementMap_[stokesElementIdx].push_back({darcyEIdx, darcyScvf.index(), scvf.index()});
                     }
                 }
             }
