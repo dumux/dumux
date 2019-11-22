@@ -63,19 +63,19 @@ namespace Dumux {
 In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability
 ```cpp
 
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TwoPTestSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar, TwoPTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar>>
 {
 ```
 we introduce using declarations that are derived from the property system which we need in this class
 ```cpp
-    using GridView = typename FVGridGeometry::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ThisType = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using ThisType = TwoPTestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -87,8 +87,8 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    TwoPTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
 ```
 we get the position of the lens from the params.input file. The lens is defined by the position of the lower left and the upper right corner
@@ -301,16 +301,16 @@ We define the spatial parameters for our simulation:
   struct SpatialParams<TypeTag, TTag::PointSourceExample>
   {
 ```
-We define convenient shortcuts to the properties FVGridGeometry and Scalar:
+We define convenient shortcuts to the properties GridGeometry and Scalar:
 ```cpp
   private:
-      using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+      using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 ```
 Finally we set the spatial parameters:
 ```cpp
   public:
-      using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
+      using type = TwoPTestSpatialParams<GridGeometry, Scalar>;
   };
 ```
 We enable caching for the grid volume variables, the grid flux variables and the FV grid geometry. The cache
@@ -344,7 +344,7 @@ We use convenient declarations that we derive from the property system.
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PointSource =  GetPropType<TypeTag, Properties::PointSource>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -365,8 +365,8 @@ public:
 ```
 This is the constructor of our problem class:
 ```cpp
-    PointSourceProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-  : ParentType(fvGridGeometry)
+    PointSourceProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+  : ParentType(gridGeometry)
   {
 ```
 We read in the values for the initial condition of our simulation:
@@ -416,10 +416,10 @@ The density is then calculated by the fluid system:
 ```
 The water phase pressure is the hydrostatic pressure, scaled with a factor:
 ```cpp
-          Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
-          Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
+          Scalar height = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
+          Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
           Scalar alpha = 1 + 1.5/height;
-          Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
+          Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
           Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
           values[pressureH2OIdx] = 1e5 - factor*densityW*this->spatialParams().gravity(globalPos)[1]*depth;
@@ -462,7 +462,7 @@ Accordingly, we need to find the index of our cells, depending on the x and y co
 that corresponds to the indices of the input data set.
 ```cpp
       const auto delta = 0.0625;
-      unsigned int cellsX = this->fvGridGeometry().bBoxMax()[0]/delta;
+      unsigned int cellsX = this->gridGeometry().bBoxMax()[0]/delta;
       const auto globalPos = element.geometry().center();
 
       unsigned int dataIdx = std::trunc(globalPos[1]/delta) * cellsX + std::trunc(globalPos[0]/delta);
@@ -493,23 +493,23 @@ at the inlet.
   private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
+        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
+        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
-        Scalar lambda = (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])/width;
+        Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
+        Scalar lambda = (this->gridGeometry().bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 ```
@@ -650,14 +650,14 @@ We create and initialize the finite volume grid geometry, the problem, the linea
 
 We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
 ```cpp
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 ```
 In the problem, we define the boundary and initial conditions.
 ```cpp
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 ```
 We call the `computePointSourceMap` method to compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the `dumux/common/fvproblem.hh`. It calls the `addPointSources` method specified in the `problem.hh` file.
 ```cpp
@@ -666,14 +666,14 @@ We call the `computePointSourceMap` method to compute the point sources. The `co
 We initialize the solution vector,
 ```cpp
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 ```
 and then use the solution vector to intialize the `gridVariables`.
 ```cpp
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 ```
 We instantiate the indicator for grid adaption & the data transfer, we read some parameters for indicator from the input file.
@@ -684,15 +684,15 @@ We instantiate the indicator for grid adaption & the data transfer, we read some
 ```
 We use an indicator for a two-phase flow problem that is saturation-dependent and defined in the file `dumux/porousmediumflow/2p/gridadaptindicator.hh.` It allows to set the minimum and maximum allowed refinement levels via the input parameters.
 ```cpp
-    TwoPGridAdaptIndicator<TypeTag> indicator(fvGridGeometry);
+    TwoPGridAdaptIndicator<TypeTag> indicator(gridGeometry);
 ```
 The data transfer performs the transfer of data on a grid from before to after adaptation and is defined in the file `dumux/porousmediumflow/2p/griddatatransfer.hh`. Its main functions are to store and reconstruct the primary variables.
 ```cpp
-    TwoPGridDataTransfer<TypeTag> dataTransfer(problem, fvGridGeometry, gridVariables, x);
+    TwoPGridDataTransfer<TypeTag> dataTransfer(problem, gridGeometry, gridVariables, x);
 ```
 We do an initial refinement around sources/BCs. We use the `GridAdaptInitializationIndicator` defined in `dumux/adaptive/initializationindicator.hh` for that.
 ```cpp
-    GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, fvGridGeometry, gridVariables);
+    GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, gridGeometry, gridVariables);
 ```
 We refine up to the maximum level. For every level, the indicator used for the refinement/coarsening is calculated. If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
 ```cpp
@@ -781,12 +781,12 @@ we instantiate the time loop
 we set the assembler with the time loop because we have an instationary problem
 ```cpp
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop);
 ```
 we set the linear solver
 ```cpp
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 ```
 additionally we set the non-linear solver.
 ```cpp
