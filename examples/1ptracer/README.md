@@ -71,28 +71,28 @@ namespace Dumux {
 In the `OnePTestSpatialParams` class, we define all functions needed to describe the porous matrix, e.g. porosity and permeability for the 1p_problem.
 ```cpp
 
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             OnePTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             OnePTestSpatialParams<GridGeometry, Scalar>>
 {
 ```
 We introduce `using` declarations that are derived from the property system, which we need in this class.
 ```cpp
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           OnePTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           OnePTestSpatialParams<GridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), K_(fvGridGeometry->gridView().size(0), 0.0)
+    OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry), K_(gridGeometry->gridView().size(0), 0.0)
     {
 ```
 ### Generation of the random permeability field
@@ -111,9 +111,9 @@ We generate random fields for the permeability using a lognormal distribution, w
         std::mt19937 rand(0);
         std::lognormal_distribution<Scalar> K(std::log(permeability_), std::log(permeability_)*0.1);
         std::lognormal_distribution<Scalar> KLens(std::log(permeabilityLens_), std::log(permeabilityLens_)*0.1);
-        for (const auto& element : elements(fvGridGeometry->gridView()))
+        for (const auto& element : elements(gridGeometry->gridView()))
         {
-            const auto eIdx = fvGridGeometry->elementMapper().index(element);
+            const auto eIdx = gridGeometry->elementMapper().index(element);
             const auto globalPos = element.geometry().center();
             K_[eIdx] = isInLens_(globalPos) ? KLens(rand) : K(rand);
         }
@@ -240,14 +240,14 @@ template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::IncompressibleTest>
 {
 ```
-We define convenient shortcuts to the properties `FVGridGeometry` and `Scalar`:
+We define convenient shortcuts to the properties `GridGeometry` and `Scalar`:
 ```cpp
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 ```
 Finally, we set the spatial parameters:
 ```cpp
-    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
 };
 ```
 The local residual contains analytic derivative methods for incompressible flow:
@@ -306,9 +306,9 @@ We use convenient declarations that we derive from the property system.
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -317,8 +317,8 @@ public:
 ```
 This is the constructor of our problem class:
 ```cpp
-    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 ```
 First, we define the type of boundary conditions depending on location. Two types of boundary conditions
 can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
@@ -341,7 +341,7 @@ we define a small epsilon value
 ```
 We specify Dirichlet boundaries on the top and bottom of our domain:
 ```cpp
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
         else
 ```
@@ -407,26 +407,26 @@ namespace Dumux {
 In the `TracerTestSpatialParams` class, we define all functions needed to describe spatially dependent parameters for the `tracer_problem`.
 ```cpp
 
-template<class FVGridGeometry, class Scalar>
+template<class GridGeometry, class Scalar>
 class TracerTestSpatialParams
-: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                             TracerTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParamsOneP<GridGeometry, Scalar,
+                             TracerTestSpatialParams<GridGeometry, Scalar>>
 {
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
-                                           TracerTestSpatialParams<FVGridGeometry, Scalar>>;
+    using ParentType = FVSpatialParamsOneP<GridGeometry, Scalar,
+                                           TracerTestSpatialParams<GridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
-    TracerTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry) {}
+    TracerTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry) {}
 ```
 ### Properties of the porous matrix
 We define the same porosity for the whole domain as in the 1p spatialparams.
@@ -561,9 +561,9 @@ We define the spatial parameters for our tracer simulation:
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TracerTest>
 {
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = TracerTestSpatialParams<FVGridGeometry, Scalar>;
+    using type = TracerTestSpatialParams<GridGeometry, Scalar>;
 };
 ```
 We define that mass fractions are used to define the concentrations
@@ -590,7 +590,7 @@ We define convenient shortcuts to the properties `Scalar`, `Problem`, `GridView`
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
@@ -658,12 +658,12 @@ We use convenient declarations that we derive from the property system.
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 ```
 We create a bool saying whether mole or mass fractions are used
@@ -674,8 +674,8 @@ public:
 ```
 This is the constructor of our problem class:
 ```cpp
-    TracerTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeom)
-    : ParentType(fvGridGeom)
+    TracerTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
 ```
 We print out whether mole or mass fractions are used
@@ -837,14 +837,14 @@ In the following section, we set up and solve the 1p problem. As the result of t
 We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
 We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
 ```cpp
-    using FVGridGeometry = GetPropType<OnePTypeTag, Properties::FVGridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<OnePTypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 ```
 In the problem, we define the boundary and initial conditions.
 ```cpp
     using OnePProblem = GetPropType<OnePTypeTag, Properties::Problem>;
-    auto problemOneP = std::make_shared<OnePProblem>(fvGridGeometry);
+    auto problemOneP = std::make_shared<OnePProblem>(gridGeometry);
 ```
 The jacobian matrix (`A`), the solution vector (`p`) and the residual (`r`) are parts of the linear system.
 ```cpp
@@ -858,14 +858,14 @@ The jacobian matrix (`A`), the solution vector (`p`) and the residual (`r`) are 
 The grid variables store variables on scv and scvf (volume and flux variables).
 ```cpp
     using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
-    auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, fvGridGeometry);
+    auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, gridGeometry);
     onePGridVariables->init(p);
 ```
 #### Assembling the linear system
 We created and inizialize the assembler.
 ```cpp
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
-    auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, fvGridGeometry, onePGridVariables);
+    auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, gridGeometry, onePGridVariables);
     assemblerOneP->setLinearSystem(A, r);
 ```
 We assemble the local jacobian and the residual and stop the time needed, which is displayed in the terminal output, using the `assemblyTimer`. Further, we start the timer to evaluate the total time of the assembly, solving and updating.
@@ -920,7 +920,7 @@ We use the results of the 1p problem to calculate the volume fluxes in the model
 ```cpp
 
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>;
-    std::vector<Scalar> volumeFlux(fvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> volumeFlux(gridGeometry->numScvf(), 0.0);
 
     using FluxVariables =  GetPropType<OnePTypeTag, Properties::FluxVariables>;
     auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
@@ -929,7 +929,7 @@ We iterate over all elements.
 ```cpp
     for (const auto& element : elements(leafGridView))
     {
-        auto fvGeometry = localView(*fvGridGeometry);
+        auto fvGeometry = localView(*gridGeometry);
         fvGeometry.bind(element);
 
         auto elemVolVars = localView(onePGridVariables->curGridVolVars());
@@ -970,7 +970,7 @@ We calculate the volume flux for every subcontrolvolume face, which is not on a 
 Similar to the 1p problem, we first create and initialize the problem.
 ```cpp
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
-    auto tracerProblem = std::make_shared<TracerProblem>(fvGridGeometry);
+    auto tracerProblem = std::make_shared<TracerProblem>(gridGeometry);
 ```
 We use the volume fluxes calculated in the previous section as input for the tracer model.
 ```cpp
@@ -985,7 +985,7 @@ We create and initialize the solution vector. As the tracer problem is transient
 We create and initialize the grid variables.
 ```cpp
     using GridVariables = GetPropType<TracerTypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(tracerProblem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(tracerProblem, gridGeometry);
     gridVariables->init(x);
 ```
 We read in some time loop parameters from the input file. The parameter `tEnd` defines the duration of the simulation, dt the initial time step size and `maxDt` the maximal time step size.
@@ -1002,7 +1002,7 @@ We instantiate the time loop.
 We create and inizialize the assembler with time loop for the instationary problem.
 ```cpp
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
-    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop);
     assembler->setLinearSystem(A, r);
 ```
 We initialize the vtk output module and add a velocity output.
