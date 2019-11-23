@@ -92,18 +92,18 @@ namespace Dumux {
 ```
 In the RoughChannelSpatialParams class we define all functions needed to describe the spatial distributed parameters.
 ```cpp
-template<class FVGridGeometry, class Scalar, class VolumeVariables>
+template<class GridGeometry, class Scalar, class VolumeVariables>
 class RoughChannelSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>>
+: public FVSpatialParams<GridGeometry, Scalar,
+                         RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
 ```
 We introduce using declarations that are derived from the property system which we need in this class
 ```cpp
-    using ThisType = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -112,8 +112,8 @@ public:
 ```
 In the constructor be read some values from the `params.input` and initialize the friciton law.
 ```cpp
-    RoughChannelSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         gravity_ = getParam<Scalar>("Problem.Gravity");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
@@ -130,7 +130,7 @@ We initialize the friction law based on the law specified in `params.input`.
           Scalar manningN = getParam<Scalar>("Problem.ManningN");
           frictionLaw_ = std::make_unique<FrictionLawManning<VolumeVariables>>(gravity_, manningN);
       }
-      if (frictionLawType_ == "Nikuradse")
+      else if (frictionLawType_ == "Nikuradse")
       {
           Scalar ks = getParam<Scalar>("Problem.Ks");
           frictionLaw_ = std::make_unique<FrictionLawNikuradse<VolumeVariables>>(ks);
@@ -252,9 +252,9 @@ struct SpatialParams<TypeTag, TTag::RoughChannel>
 {
 private:
 ```
-We define convenient shortcuts to the properties FVGridGeometry, Scalar, ElementVolumeVariables and VolumeVariables:
+We define convenient shortcuts to the properties GridGeometry, Scalar, ElementVolumeVariables and VolumeVariables:
 ```cpp
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
@@ -262,7 +262,7 @@ We define convenient shortcuts to the properties FVGridGeometry, Scalar, Element
 Finally we set the spatial parameters:
 ```cpp
 public:
-    using type = RoughChannelSpatialParams<FVGridGeometry, Scalar, VolumeVariables>;
+    using type = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
 };
 ```
 We enable caching for the FV grid geometry and the grid volume variables. The cache
@@ -295,13 +295,13 @@ We use convenient declarations that we derive from the property system.
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -313,8 +313,8 @@ public:
 ```
 This is the constructor of our problem class.
 ```cpp
-    RoughChannelProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    RoughChannelProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
 ```
 We read the parameters from the params.input file.
@@ -330,8 +330,8 @@ We calculate the outflow boundary condition using the Gauckler-Manning-Strickler
 ```
 We initialize the analytic solution to a verctor of the appropriate size filled with zeros.
 ```cpp
-        exactWaterDepth_.resize(fvGridGeometry->numDofs(), 0.0);
-        exactVelocityX_.resize(fvGridGeometry->numDofs(), 0.0);
+        exactWaterDepth_.resize(gridGeometry->numDofs(), 0.0);
+        exactVelocityX_.resize(gridGeometry->numDofs(), 0.0);
     }
 ```
 Get the analytical water depth
@@ -365,12 +365,12 @@ Get the analytical solution
     {
         using std::abs;
 
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             const Scalar h = this->gauklerManningStrickler(discharge_,constManningN_,bedSlope_);
             const Scalar u = abs(discharge_)/h;
 
-            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
             exactWaterDepth_[eIdx] = h;
             exactVelocityX_[eIdx] = u;
         }
@@ -664,26 +664,26 @@ We compute on the leaf grid view
 We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
 We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
 ```cpp
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 ```
 In the problem, we define the boundary and initial conditions.
 ```cpp
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 ```
 We initialize the solution vector
 ```cpp
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 ```
 And then use the solutionvector to intialize the gridVariables.
 ```cpp
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 ```
 We get some time loop parameters from the input file.
@@ -717,12 +717,12 @@ We instantiate time loop.
 we set the assembler with the time loop because we have an instationary problem.
 ```cpp
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop);
 ```
 We set the linear solver.
 ```cpp
     using LinearSolver = Dumux::AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 ```
 Additionaly, we set the non-linear solver.
 ```cpp
