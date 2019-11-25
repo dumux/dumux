@@ -30,7 +30,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/common/deprecated.hh>
@@ -238,7 +237,7 @@ class StokesDarcyCouplingDataImplementationBase
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using FluidSystem = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
     template<std::size_t id> using ModelTraits = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
-    template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
+
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 

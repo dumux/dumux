@@ -52,6 +52,7 @@ class StokesDarcyCouplingDataTpfaBase : public StokesDarcyCouplingDataImplementa
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using FluidSystem = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
     template<std::size_t id> using ModelTraits = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
+    template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
 
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
@@ -68,6 +69,7 @@ public:
     using ParentType::couplingPhaseIdx;
     using ParentType::darcyPermeability;
 
+    /*
     * \brief Returns the momentum flux across the coupling boundary.
     *
     * For the normal momentum coupling, the porous medium side of the coupling condition
@@ -84,7 +86,7 @@ public:
        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ModelTraits>::numFluidPhases();
 
        Scalar momentumFlux(0.0);
-       const auto& stokesContext = couplingManager_.stokesCouplingContext(element, scvf);
+       const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
 
        // - p_pm * n_pm = p_pm * n_ff
@@ -98,7 +100,7 @@ public:
 
        // normalize pressure
        if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
-           momentumFlux -= couplingManager_.problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
+           momentumFlux -= this->couplingManager().problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
 
        momentumFlux *= scvf.directionSign();
 
@@ -143,13 +145,13 @@ protected:
         const Scalar mu = volVars.viscosity(darcyPhaseIdx);
         const Scalar rho = volVars.density(darcyPhaseIdx);
         const auto K = volVars.permeability();
-        const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center()));
+        const auto alpha = vtmv(scvf.unitOuterNormal(), K, this->couplingManager().problem(darcyIdx).spatialParams().gravity(scvf.center()));
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto ti = computeTpfaTransmissibility(scvf, insideScv, K, 1.0);
 
         // get the Forchheimer coefficient
-        Scalar cF = couplingManager_.problem(darcyIdx).spatialParams().forchCoeff(scvf);
+        Scalar cF = this->couplingManager().problem(darcyIdx).spatialParams().forchCoeff(scvf);
 
         const Scalar interfacePressure = ((-mu*(scvf.unitOuterNormal() * velocity))
                                         + (-(scvf.unitOuterNormal() * velocity) * velocity.two_norm() * rho * sqrt(darcyPermeability(element, scvf)) * cF)
@@ -177,7 +179,7 @@ protected:
         // v*n = -kr/mu*K * (gradP - rho*g)*n = mobility*(ti*(p_center - p_interface) + rho*n^TKg)
         // -> p_interface = (1/mobility * (-v*n) + rho*n^TKg)/ti + p_center
         // where v is the free-flow velocity (couplingPhaseVelocity)
-        const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center()));
+        const auto alpha = vtmv(scvf.unitOuterNormal(), K, this->couplingManager().problem(darcyIdx).spatialParams().gravity(scvf.center()));
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto ti = computeTpfaTransmissibility(scvf, insideScv, K, 1.0);
