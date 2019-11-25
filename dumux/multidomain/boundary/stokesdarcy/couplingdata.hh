@@ -30,6 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/common/deprecated.hh>
@@ -236,7 +237,7 @@ class StokesDarcyCouplingDataImplementationBase
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using FluidSystem = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
     template<std::size_t id> using ModelTraits = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
-
+    template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
@@ -449,8 +450,8 @@ protected:
                                 const ElementFaceVariables& elemFaceVars,
                                 const CouplingContext& context) const
     {
-        auto  velocity = scvf.unitOuterNormal();
-        velocity *= elemFaceVars[scvf].velocitySelf();
+        GlobalPosition<stokesIdx> velocity(0.0);
+        velocity[scvf.directionIndex()] = elemFaceVars[scvf].velocitySelf();
         const auto& darcyScvf = context.fvGeometry.scvf(context.darcyScvfIdx);
         return computeCouplingPhasePressureAtInterface_(context.element, context.fvGeometry, darcyScvf, context.volVars, velocity, AdvectionType());
     }
@@ -469,19 +470,25 @@ protected:
         const Scalar cellCenterPressure = volVars.pressure(darcyPhaseIdx);
         using std::sqrt;
 
-        // v + cF * sqrt(K) * rho/mu * v * abs(v) + K/mu grad(p + rho z) = 0
+        // v + (cF*sqrt(K)*rho/mu*|v|) * v  = - K/mu grad(p - rho g)
+        // multiplying with n and using a tpfa for the right-hand side yields
+        // v*n + (cF*sqrt(K)*rho/mu*|v|) * (v*n) =  1/mu * (ti*(p_center - p_interface) + rho*n^TKg)
+        // --> p_interface = (-mu*v*n + (cF*sqrt(K)*rho*|v|) * (-v*n) + rho*n^TKg)/ti + p_center
         const auto velocity = couplingPhaseVelocity;
         const Scalar mu = volVars.viscosity(darcyPhaseIdx);
         const Scalar rho = volVars.density(darcyPhaseIdx);
-        const Scalar distance = (element.geometry().center() - scvf.center()).two_norm();
-        const Scalar g = scvf.unitOuterNormal() * couplingManager_.problem(darcyIdx).gravity();
+        const auto K = volVars.permeability();
+        const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center()));
+
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto ti = computeTpfaTransmissibility(scvf, insideScv, K, 1.0);
 
         // get the Forchheimer coefficient
         Scalar cF = couplingManager_.problem(darcyIdx).spatialParams().forchCoeff(scvf);
 
-        const Scalar interfacePressure = ((-(scvf.unitOuterNormal() * velocity) * (mu/darcyPermeability(element, scvf)))
-                                        + (-(scvf.unitOuterNormal() * velocity) * velocity.two_norm() * rho * 1.0/sqrt(darcyPermeability(element, scvf)) * cF)
-                                        +  rho * g) * distance + cellCenterPressure;
+        const Scalar interfacePressure = ((-mu*(scvf.unitOuterNormal() * velocity))
+                                        + (-(scvf.unitOuterNormal() * velocity) * velocity.two_norm() * rho * sqrt(darcyPermeability(element, scvf)) * cF)
+                                        +  rho * alpha)/ti + cellCenterPressure;
         return interfacePressure;
     }
 
@@ -501,15 +508,16 @@ protected:
         const Scalar couplingPhaseDensity = volVars.density(darcyPhaseIdx);
         const auto K = volVars.permeability();
 
-        // v = -kr/mu*K * (gradP + rho*g) = -mobility*K * (gradP + rho*g)
-        // TODO docu
-        const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).gravity());
+        // A tpfa approximation yields (works if mobility != 0)
+        // v*n = -kr/mu*K * (gradP - rho*g)*n = mobility*(ti*(p_center - p_interface) + rho*n^TKg)
+        // -> p_interface = (1/mobility * (-v*n) + rho*n^TKg)/ti + p_center
+        // where v is the free-flow velocity (couplingPhaseVelocity)
+        const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center()));
 
-        auto distanceVector = scvf.center() - element.geometry().center();
-        distanceVector /= distanceVector.two_norm2();
-        const Scalar ti = vtmv(distanceVector, K, scvf.unitOuterNormal());
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto ti = computeTpfaTransmissibility(scvf, insideScv, K, 1.0);
 
-        return (1/couplingPhaseMobility * (scvf.unitOuterNormal() * couplingPhaseVelocity) + couplingPhaseDensity * alpha)/ti
+        return (-1/couplingPhaseMobility * (scvf.unitOuterNormal() * couplingPhaseVelocity) + couplingPhaseDensity * alpha)/ti
                + couplingPhaseCellCenterPressure;
     }
 
