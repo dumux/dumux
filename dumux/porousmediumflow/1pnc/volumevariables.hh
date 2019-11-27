@@ -110,22 +110,22 @@ public:
 
         paramCache.updatePhase(fluidState_, 0);
 
-        for (unsigned int compIIdx = 0; compIIdx < numFluidComps; ++compIIdx)
+        auto mylambda = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
-            {
-                if(compIIdx != compJIdx && compIIdx < compJIdx)
-                {
-                    diffCoeff_(0, compIIdx, compJIdx) = FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                                paramCache,
-                                                                                                0,
-                                                                                                compIIdx,
-                                                                                                compJIdx);
+            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                            paramCache,
+                                                            0,
+                                                            compIIdx,
+                                                            compJIdx);
+        };
 
-                    effectiveDiffCoeff_(0, compIIdx, compJIdx) = EffDiffModel::effectiveDiffusivity(*this, 0, compIIdx, compJIdx);
-                }
-            }
-        }
+        auto myEfflambda = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusivity(*this, phaseIdx, compIIdx, compJIdx);
+        };
+
+        diffCoeff_.update(mylambda);
+        effectiveDiffCoeff_.update(myEfflambda);
     }
 
     /*!
