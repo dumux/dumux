@@ -1,0 +1,20 @@
+[Grid]
+UpperRight = 10 1 # [m]
+Cells = 100 50 # [m]
+
+[Problem]
+Name = example_ff_channel # name passed to the output routines
+InletVelocity = 1 # [m/s]
+EnableGravity = false
+EnableInertiaTerms = false # Stokes, not Navier Stokes, in this example
+
+[Component]
+LiquidDensity = 1.0 # [kg/m^3]
+LiquidKinematicViscosity = 1.0 # [m^2/s]
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+WriteFaceData = false

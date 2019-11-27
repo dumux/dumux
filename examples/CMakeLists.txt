@@ -1,3 +1,4 @@
 add_subdirectory(2pinfiltration)
 add_subdirectory(1ptracer)
 add_subdirectory(shallowwaterfriction)
+add_subdirectory(freeflowchannel)
