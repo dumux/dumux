@@ -105,8 +105,7 @@ public:
         nTemp_ = nTemp;
         pressMin_ = pressMin;
         pressMax_ = pressMax;
-        nPress_ = nPress;
-        nDensity_ = nPress_;
+        deltaPressTarget_ =  (pressMax_ - pressMin_)/(nPress - 1);
 
         std::cout << "-------------------------------------------------------------------------\n"
                   << "Initializing tables for the " << RawComponent::name()
@@ -127,7 +126,7 @@ public:
         minLiquidDensity_.resize(nTemp_, NaN);
         maxLiquidDensity_.resize(nTemp_, NaN);
 
-        const std::size_t numEntriesTp = nTemp_*nPress_; // = nTemp_*nDensity_
+        const std::size_t numEntriesTp = nTemp_*nPress; // = nTemp_*nDensity
         gasEnthalpy_.resize(numEntriesTp, NaN);
         liquidEnthalpy_.resize(numEntriesTp, NaN);
         gasHeatCapacity_.resize(numEntriesTp, NaN);
@@ -375,14 +374,15 @@ public:
             minMaxGasDensityInitialized_ = true;
         }
 
-        Scalar result = interpolateTRho_(gasPressure_, temperature, density, densityGasIdx_);
+        Scalar result = interpolateTRho_(gasPressure_, temperature, density, densityGasIdx_, minGasPressure_, maxGasPressure_);
         using std::isnan;
         if (isnan(result))
         {
             if (!gasPressureInitialized_)
             {
                 auto gasPFunc = [] (auto T, auto rho) { return RawComponent::gasPressure(T, rho); };
-                initPressureArray_(gasPressure_, gasPFunc, minGasDensity_, maxGasDensity_);
+                initPressureArray_(gasPressure_, gasPFunc, minGasPressure_, maxGasPressure_,
+                                   minGasDensity_, maxGasDensity_);
                 gasPressureInitialized_ = true;
                 return gasPressure(temperature, density);
             }
@@ -409,14 +409,15 @@ public:
             minMaxLiquidDensityInitialized_ = true;
         }
 
-        Scalar result = interpolateTRho_(liquidPressure_, temperature, density, densityLiquidIdx_);
+        Scalar result = interpolateTRho_(liquidPressure_, temperature, density, densityLiquidIdx_, minGasPressure_, maxGasPressure_);
         using std::isnan;
         if (isnan(result))
         {
             if (!liquidPressureInitialized_)
             {
                 auto liqPFunc = [] (auto T, auto rho) { return RawComponent::liquidPressure(T, rho); };
-                initPressureArray_(liquidPressure_, liqPFunc, minLiquidDensity_, maxLiquidDensity_);
+                initPressureArray_(liquidPressure_, liqPFunc, minLiquidPressure_, maxLiquidPressure_,
+                                   minLiquidDensity_, maxLiquidDensity_);
                 liquidPressureInitialized_ = true;
                 return liquidPressure(temperature, density);
             }
@@ -698,9 +699,11 @@ private:
 
             Scalar pMax = maxP(iT);
             Scalar pMin = minP(iT);
-            for (unsigned iP = 0; iP < nPress_; ++ iP)
+            int nPress = std::ceil((pMax - pMin)/(deltaPressTarget_) + 1);
+
+            for (unsigned iP = 0; iP < nPress; ++ iP)
             {
-                Scalar pressure = iP * (pMax - pMin)/(nPress_ - 1) + pMin;
+                Scalar pressure = iP * (pMax - pMin)/(nPress - 1) + pMin;
                 values[iT + iP*nTemp_] = f(temperature, pressure);
             }
         }
@@ -750,18 +753,21 @@ private:
      * \param rhoMin container with minimum density values
      * \param rhoMax container with maximum density values
      */
-    template<class PFunc>
+    template<class PFunc, class MinPFunc, class MaxPFunc>
     static void initPressureArray_(std::vector<typename RawComponent::Scalar>& pressure, PFunc&& p,
+                                   MinPFunc&& minP,
+                                   MaxPFunc&& maxP,
                                    const std::vector<typename RawComponent::Scalar>& rhoMin,
                                    const std::vector<typename RawComponent::Scalar>& rhoMax)
     {
         for (unsigned iT = 0; iT < nTemp_; ++ iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
+            int nDensity = std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1); // same number as for pressure
 
-            for (unsigned iRho = 0; iRho < nDensity_; ++ iRho)
+            for (unsigned iRho = 0; iRho < nDensity; ++ iRho)
             {
-                Scalar density = Scalar(iRho)/(nDensity_ - 1)
+                Scalar density = Scalar(iRho)/(nDensity - 1)
                                  * (rhoMax[iT] - rhoMin[iT])
                                  +  rhoMin[iT];
                 pressure[iT + iRho*nTemp_] = p(temperature, density);
@@ -801,8 +807,11 @@ private:
         Scalar alphaP1 = getPIdx(p, iT);
         Scalar alphaP2 = getPIdx(p, iT + 1);
 
-        unsigned iP1 = max<int>(0, min<int>(nPress_ - 2, (int) alphaP1));
-        unsigned iP2 = max<int>(0, min<int>(nPress_ - 2, (int) alphaP2));
+        int nPress1 = std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1);
+        int nPress2 = std::ceil((maxP(iT + 1) - minP(iT + 1))/(deltaPressTarget_) + 1);
+
+        unsigned iP1 = max<int>(0, min<int>(nPress1 - 2, (int) alphaP1));
+        unsigned iP2 = max<int>(0, min<int>(nPress2 - 2, (int) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -825,8 +834,9 @@ private:
     }
 
     //! returns an interpolated value for gas depending on temperature and density
-    template<class GetRhoIdx>
-    static Scalar interpolateTRho_(const std::vector<typename RawComponent::Scalar>& values, Scalar T, Scalar rho, GetRhoIdx&& rhoIdx)
+    template<class GetRhoIdx, class MinPFunc, class MaxPFunc>
+    static Scalar interpolateTRho_(const std::vector<typename RawComponent::Scalar>& values, Scalar T, Scalar rho, GetRhoIdx&& rhoIdx,
+                                   MinPFunc&& minP, MaxPFunc&& maxP)
     {
         using std::min;
         using std::max;
@@ -836,8 +846,12 @@ private:
 
         Scalar alphaP1 = rhoIdx(rho, iT);
         Scalar alphaP2 = rhoIdx(rho, iT + 1);
-        unsigned iP1 = max<int>(0, min<int>(nDensity_ - 2, (int) alphaP1));
-        unsigned iP2 = max<int>(0, min<int>(nDensity_ - 2, (int) alphaP2));
+
+        int nDensity1 = std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1); // same number as for pressure
+        int nDensity2 = std::ceil((maxP(iT + 1) - minP(iT + 1))/(deltaPressTarget_) + 1); // same number as for pressure
+
+        unsigned iP1 = max<int>(0, min<int>(nDensity1 - 2, (int) alphaP1));
+        unsigned iP2 = max<int>(0, min<int>(nDensity2 - 2, (int) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -858,8 +872,9 @@ private:
     {
         Scalar plMin = minLiquidPressure_(tempIdx);
         Scalar plMax = maxLiquidPressure_(tempIdx);
+        int nPress = std::ceil((plMax - plMin)/(deltaPressTarget_) + 1);
 
-        return (nPress_ - 1)*(pressure - plMin)/(plMax - plMin);
+        return (nPress - 1)*(pressure - plMin)/(plMax - plMin);
     }
 
     //! returns the index of an entry in a temperature field
@@ -867,24 +882,33 @@ private:
     {
         Scalar pgMin = minGasPressure_(tempIdx);
         Scalar pgMax = maxGasPressure_(tempIdx);
+        int nPress = std::ceil((pgMax - pgMin)/(deltaPressTarget_) + 1);
 
-        return (nPress_ - 1)*(pressure - pgMin)/(pgMax - pgMin);
+        return (nPress - 1)*(pressure - pgMin)/(pgMax - pgMin);
     }
 
     //! returns the index of an entry in a density field
     static Scalar densityLiquidIdx_(Scalar density, unsigned tempIdx)
     {
+        Scalar plMin = minLiquidPressure_(tempIdx);
+        Scalar plMax = maxLiquidPressure_(tempIdx);
+        int nDensity = std::ceil((plMax - plMin)/(deltaPressTarget_) + 1); // same number as for pressure
+
         Scalar densityMin = minLiquidDensity_[tempIdx];
         Scalar densityMax = maxLiquidDensity_[tempIdx];
-        return (nDensity_ - 1) * (density - densityMin)/(densityMax - densityMin);
+        return (nDensity - 1) * (density - densityMin)/(densityMax - densityMin);
     }
 
     //! returns the index of an entry in a density field
     static Scalar densityGasIdx_(Scalar density, unsigned tempIdx)
     {
+        Scalar pgMin = minGasPressure_(tempIdx);
+        Scalar pgMax = maxGasPressure_(tempIdx);
+        int nDensity = std::ceil((pgMax - pgMin)/(deltaPressTarget_) + 1); // same number as for pressure
+
         Scalar densityMin = minGasDensity_[tempIdx];
         Scalar densityMax = maxGasDensity_[tempIdx];
-        return (nDensity_ - 1) * (density - densityMin)/(densityMax - densityMin);
+        return (nDensity - 1) * (density - densityMin)/(densityMax - densityMin);
     }
 
     //! returns the minimum tabulized liquid pressure at a given temperature index
@@ -984,11 +1008,10 @@ private:
 
     static Scalar pressMin_;
     static Scalar pressMax_;
-    static unsigned nPress_;
+    static Scalar deltaPressTarget_;
 
     static Scalar densityMin_;
     static Scalar densityMax_;
-    static unsigned nDensity_;
 };
 
 #ifndef NDEBUG
@@ -1073,13 +1096,11 @@ typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::pressMax_;
 template <class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<RawComponent, useVaporPressure>::nPress_;
+typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::deltaPressTarget_;
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::densityMin_;
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::densityMax_;
-template <class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<RawComponent, useVaporPressure>::nDensity_;
 
 // forward declaration
 template <class Component>
