@@ -31,6 +31,8 @@
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
+#include <dune/common/exceptions.hh>
+
 bool success;
 
 template <class Scalar>
@@ -55,7 +57,7 @@ int main()
 
     Scalar pMin = 10.00;
     Scalar pMax = IapwsH2O::vaporPressure(tempMax*1.1);
-    int nPress = 200;
+    int nPress = 400;
 
     std::cout << "Creating tabulation with " << nTemp*nPress << " entries per quantity\n";
     TabulatedH2O::init(tempMin, tempMax, nTemp,
@@ -80,12 +82,10 @@ int main()
         for (int j = 0; j < n; ++j) {
             Scalar p = pMin + (pMax - pMin)*Scalar(j)/n;
             if (p < IapwsH2O::vaporPressure(T) * 1.001) {
-                Scalar tol = 1e-3;
-                if (p > IapwsH2O::vaporPressure(T))
-                    tol = 1e-2;
+                Scalar tol = 1e-2;
                 Scalar rho = IapwsH2O::gasDensity(T,p);
-                //isSame("Iapws::gasPressure", IapwsH2O::gasPressure(T,rho), p, 1e-6);
-                //isSame("gasPressure", TabulatedH2O::gasPressure(T,rho), p, 2e-2);
+//                 isSame("Iapws::gasPressure", IapwsH2O::gasPressure(T,rho), p, 1e-6);
+//                 isSame("gasPressure", TabulatedH2O::gasPressure(T,rho), p, 4e-1);
                 isSame("gasEnthalpy", TabulatedH2O::gasEnthalpy(T,p), IapwsH2O::gasEnthalpy(T,p), tol);
                 isSame("gasInternalEnergy", TabulatedH2O::gasInternalEnergy(T,p), IapwsH2O::gasInternalEnergy(T,p), tol);
                 isSame("gasDensity", TabulatedH2O::gasDensity(T,p), rho, tol);
@@ -93,12 +93,10 @@ int main()
             }
 
             if (p > IapwsH2O::vaporPressure(T) / 1.001) {
-                Scalar tol = 1e-3;
-                if (p < IapwsH2O::vaporPressure(T))
-                    tol = 1e-2;
+                Scalar tol = 1e-2;
                 Scalar rho = IapwsH2O::liquidDensity(T,p);
-                //isSame("Iapws::liquidPressure", IapwsH2O::liquidPressure(T,rho), p, 1e-6);
-                //isSame("liquidPressure", TabulatedH2O::liquidPressure(T,rho), p, 2e-2);
+//                 isSame("Iapws::liquidPressure", IapwsH2O::liquidPressure(T,rho), p, 1e-6);
+//                 isSame("liquidPressure", TabulatedH2O::liquidPressure(T,rho), p, 4e-1);
                 isSame("liquidEnthalpy", TabulatedH2O::liquidEnthalpy(T,p), IapwsH2O::liquidEnthalpy(T,p), tol);
                 isSame("liquidInternalEnergy", TabulatedH2O::liquidInternalEnergy(T,p), IapwsH2O::liquidInternalEnergy(T,p), tol);
                 isSame("liquidDensity", TabulatedH2O::liquidDensity(T,p), rho, tol);
@@ -110,5 +108,7 @@ int main()
 
     if (success)
         std::cout << "\nsuccess\n";
+    else
+        DUNE_THROW(Dune::Exception, "Mismatch to non-tabulated reference value larger than tolerance.");
     return 0;
 }
