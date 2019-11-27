@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES "params.input" "params_navierstokes.input" "p
 
 add_executable(test_ff_channel EXCLUDE_FROM_ALL main.cc)
 
-dune_add_test(NAME test_ff_stokes_channel_outflow
+dumux_add_test(NAME test_ff_stokes_channel_outflow
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -13,7 +13,7 @@ dune_add_test(NAME test_ff_stokes_channel_outflow
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition Outflow
                              -Problem.Name test_ff_stokes_channel_outflow")
 
-dune_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
+dumux_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -24,7 +24,7 @@ dune_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition NeumannX_DirichletY
                              -Problem.Name test_ff_stokes_channel_nxdy")
 
-dune_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
+dumux_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -35,7 +35,7 @@ dune_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Grid.UpperRight \"2 1\" -Grid.Cells \"50 25\"
                          -Problem.Name test_ff_stokes_channel_nxny -Problem.OutletCondition NeumannX_NeumannY -Problem.UseVelocityProfile true -Problem.OutletPressure 0")
 
-dune_add_test(NAME test_ff_stokes_channel_do_nothing
+dumux_add_test(NAME test_ff_stokes_channel_do_nothing
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -46,7 +46,7 @@ dune_add_test(NAME test_ff_stokes_channel_do_nothing
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition DoNothing -Grid.UpperRight \"2 1\" -Grid.Cells \"50 25\"
                          -Problem.Name test_ff_stokes_channel_do_nothing -Problem.OutletCondition DoNothing -Problem.UseVelocityProfile true -Problem.OutletPressure 0")
 
-dune_add_test(NAME test_ff_navierstokes_channel
+dumux_add_test(NAME test_ff_navierstokes_channel
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -61,7 +61,7 @@ dune_add_test(NAME test_ff_navierstokes_channel
 add_executable(test_ff_stokesni_channel EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_stokesni_channel PUBLIC "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_ff_stokesni_channel_convection
+dumux_add_test(NAME test_ff_stokesni_channel_convection
               TARGET test_ff_stokesni_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -72,7 +72,7 @@ dune_add_test(NAME test_ff_stokesni_channel_convection
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel params_convection.input
                              -Problem.Name test_ff_stokesni_channel_convection")
 
-dune_add_test(NAME test_ff_stokesni_channel_conduction
+dumux_add_test(NAME test_ff_stokesni_channel_conduction
               TARGET test_ff_stokesni_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK

@@ -2,7 +2,7 @@ add_input_file_links()
 
 add_executable(test_md_boundary_darcy1p_stokes1p EXCLUDE_FROM_ALL main.cc)
 
-dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_horizontal
+dumux_add_test(NAME test_md_boundary_darcy1p_stokes1p_horizontal
               LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
               TARGET test_md_boundary_darcy1p_stokes1p
               CMAKE_GUARD HAVE_UMFPACK
@@ -15,7 +15,7 @@ dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_horizontal
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_stokes1p params_horizontalflow.input
                                    -Vtk.OutputName test_md_boundary_darcy1p_stokes1p_horizontal")
 
-dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_vertical
+dumux_add_test(NAME test_md_boundary_darcy1p_stokes1p_vertical
               LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
               TARGET test_md_boundary_darcy1p_stokes1p
               CMAKE_GUARD HAVE_UMFPACK

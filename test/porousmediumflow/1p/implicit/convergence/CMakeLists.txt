@@ -9,7 +9,7 @@ add_executable(test_1p_convergence_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_1p_convergence_box PUBLIC "TYPETAG=OnePIncompressibleBox")
 
 # using tpfa and conforming refinement
-dune_add_test(NAME test_1p_convergence_tpfa_conforming
+dumux_add_test(NAME test_1p_convergence_tpfa_conforming
               TARGET test_1p_convergence_tpfa
               CMAKE_GUARD "( dune-functions_FOUND )"
               LABELS porousmediumflow 1p
@@ -17,7 +17,7 @@ dune_add_test(NAME test_1p_convergence_tpfa_conforming
               CMD_ARGS params.input -Problem.Name test_1p_convergence_tpfa_conforming)
 
 # using tpfa and nonconforming refinement
-dune_add_test(NAME test_1p_convergence_tpfa_nonconforming
+dumux_add_test(NAME test_1p_convergence_tpfa_nonconforming
               TARGET test_1p_convergence_tpfa
               CMAKE_GUARD "( dune-functions_FOUND )"
               LABELS porousmediumflow 1p
@@ -25,7 +25,7 @@ dune_add_test(NAME test_1p_convergence_tpfa_nonconforming
               CMD_ARGS params.input -Problem.Name test_1p_convergence_tpfa_conforming)
 
 # using box and conforming refinement
-dune_add_test(NAME test_1p_convergence_box_conforming
+dumux_add_test(NAME test_1p_convergence_box_conforming
               TARGET test_1p_convergence_box
               CMAKE_GUARD "( dune-functions_FOUND )"
               LABELS porousmediumflow 1p
@@ -33,7 +33,7 @@ dune_add_test(NAME test_1p_convergence_box_conforming
               CMD_ARGS params.input -Problem.Name test_1p_convergence_box_conforming)
 
 # using box and nonconforming refinement
-dune_add_test(NAME test_1p_convergence_box_nonconforming
+dumux_add_test(NAME test_1p_convergence_box_nonconforming
               TARGET test_1p_convergence_box
               CMAKE_GUARD "( dune-functions_FOUND )"
               LABELS porousmediumflow 1p

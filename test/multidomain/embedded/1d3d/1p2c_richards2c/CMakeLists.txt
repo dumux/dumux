@@ -1,4 +1,4 @@
-dune_add_test(NAME test_md_embedded1d3d_1p2c_richards2c
+dumux_add_test(NAME test_md_embedded1d3d_1p2c_richards2c
               LABELS multidomain multidomain_embedded 1pnc richardsnc
               SOURCES main.cc
               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UG )"
