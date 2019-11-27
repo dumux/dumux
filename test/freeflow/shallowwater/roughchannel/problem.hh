@@ -81,7 +81,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::RoughChannel>
  * \ingroup ShallowWaterTests
  * \brief A simple flow in a rough channel with friction law after Manning.
  *
- * The domain is 1000 meters long and 10 meters wide. At the left border a discharge
+ * The domain is 500 meters long and 5 meters wide. At the left border a discharge
  * boundary condition is applied and at the right border a water depth boundary condition.
  * All other boundaries are set to no-flow. Normal flow is assumed, therefor the water depth
  * at the right border can be calculated with the formular of Gaukler-Manning-Strickler.
@@ -301,7 +301,7 @@ public:
         std::array<Scalar, 3> boundaryStateVariables;
 
         // impose discharge at the left side
-        if (scvf.center()[0] < 0.0 + eps_)
+        if (scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
         {
             boundaryStateVariables = ShallowWater::fixedDischargeBoundary(discharge_,
                                                                           insideVolVars.waterDepth(),
@@ -311,7 +311,7 @@ public:
                                                                           nxy);
         }
         // impose water depth at the right side
-        else if (scvf.center()[0] > 100.0 - eps_)
+        else if (scvf.center()[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
             boundaryStateVariables =  ShallowWater::fixedWaterDepthBoundary(hBoundary_,
                                                                             insideVolVars.waterDepth(),
