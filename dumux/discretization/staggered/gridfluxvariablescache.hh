@@ -91,9 +91,15 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
+    [[deprecated("Will be removed after 3.2. Use StaggeredGridFluxVariablesCache(problem) instead.")]]
+    StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup)
     : problemPtr_(&problem)
     , staggeredUpwindMethods_(paramGroup)
+    {}
+
+    StaggeredGridFluxVariablesCache(const Problem& problem)
+    : problemPtr_(&problem)
+    , staggeredUpwindMethods_(problem.paramGroup())
     {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
@@ -181,9 +187,9 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    StaggeredGridFluxVariablesCache(const Problem& problem, const std::string& paramGroup = "")
+    StaggeredGridFluxVariablesCache(const Problem& problem)
     : problemPtr_(&problem)
-    , staggeredUpwindMethods_(paramGroup)
+    , staggeredUpwindMethods_(problem.paramGroup())
       {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
