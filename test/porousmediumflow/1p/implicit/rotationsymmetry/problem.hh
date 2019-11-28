@@ -172,7 +172,6 @@ public:
      *
      * \param globalPos The center of the finite volume which ought to be set.
      *
-     * For this method, the \a values parameter stores primary variables.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -201,10 +200,11 @@ public:
     }
 
     /*!
-     * \brief Calculate the L2 error between the exact and numerical solution
+     * \brief Calculate the L2 error between the exact and numerical solution.
+     *
      * For the tpfa scheme the L2 error is calculated for the primary cells.
      * For the box scheme it is calculated on the dual mesh using a discrete L2-norm.
-     * A second-order convergence rate is expected with respect to this norm
+     * A second-order convergence rate is expected with respect to this norm.
      *
      * \param curSol The current solution vector
      *
@@ -229,7 +229,7 @@ public:
     }
 
     /*!
-     * \brief Writes to l2 error
+     * \brief Writes the L2 error
      */
     template<class SolutionVector>
     void writeOutput(const SolutionVector& curSol)
@@ -250,7 +250,7 @@ public:
 private:
     /*!
      * \brief The exact solution
-     * The exact solution is calculated such that the mass flux over the surface of circular disc with radius rW is q
+     * The exact solution is calculated such that the mass flux over the surface of a circular disc with radius rW is q
      * and the pressure at this surface is given by pW.
      */
     PrimaryVariables exactSolution(const GlobalPosition &globalPos) const
