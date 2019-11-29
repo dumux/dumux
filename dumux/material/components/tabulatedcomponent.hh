@@ -106,6 +106,7 @@ public:
         pressMin_ = pressMin;
         pressMax_ = pressMax;
         deltaPressTarget_ =  (pressMax_ - pressMin_)/(nPress - 1);
+        nPressMin_ = std::min<int>(10, nPress); // = nDensityMin
 
         std::cout << "-------------------------------------------------------------------------\n"
                   << "Initializing tables for the " << RawComponent::name()
@@ -699,7 +700,7 @@ private:
 
             Scalar pMax = maxP(iT);
             Scalar pMin = minP(iT);
-            int nPress = std::ceil((pMax - pMin)/(deltaPressTarget_) + 1);
+            int nPress = std::max<int>(nPressMin_, std::ceil((pMax - pMin)/(deltaPressTarget_) + 1));
 
             for (unsigned iP = 0; iP < nPress; ++ iP)
             {
@@ -763,7 +764,7 @@ private:
         for (unsigned iT = 0; iT < nTemp_; ++ iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
-            int nDensity = std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1); // same number as for pressure
+            int nDensity = std::max<int>(nPressMin_, std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1)); // same number as for pressure
 
             for (unsigned iRho = 0; iRho < nDensity; ++ iRho)
             {
@@ -807,8 +808,8 @@ private:
         Scalar alphaP1 = getPIdx(p, iT);
         Scalar alphaP2 = getPIdx(p, iT + 1);
 
-        int nPress1 = std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1);
-        int nPress2 = std::ceil((maxP(iT + 1) - minP(iT + 1))/(deltaPressTarget_) + 1);
+        int nPress1 = std::max<int>(nPressMin_, std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1));
+        int nPress2 = std::max<int>(nPressMin_, std::ceil((maxP(iT + 1) - minP(iT + 1))/(deltaPressTarget_) + 1));
 
         unsigned iP1 = max<int>(0, min<int>(nPress1 - 2, (int) alphaP1));
         unsigned iP2 = max<int>(0, min<int>(nPress2 - 2, (int) alphaP2));
@@ -847,8 +848,8 @@ private:
         Scalar alphaP1 = rhoIdx(rho, iT);
         Scalar alphaP2 = rhoIdx(rho, iT + 1);
 
-        int nDensity1 = std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1); // same number as for pressure
-        int nDensity2 = std::ceil((maxP(iT + 1) - minP(iT + 1))/(deltaPressTarget_) + 1); // same number as for pressure
+        int nDensity1 = std::max<int>(nPressMin_, std::ceil((maxP(iT) - minP(iT))/(deltaPressTarget_) + 1)); // same number as for pressure
+        int nDensity2 = std::max<int>(nPressMin_, std::ceil((maxP(iT + 1) - minP(iT + 1))/(deltaPressTarget_) + 1)); // same number as for pressure
 
         unsigned iP1 = max<int>(0, min<int>(nDensity1 - 2, (int) alphaP1));
         unsigned iP2 = max<int>(0, min<int>(nDensity2 - 2, (int) alphaP2));
@@ -872,7 +873,7 @@ private:
     {
         Scalar plMin = minLiquidPressure_(tempIdx);
         Scalar plMax = maxLiquidPressure_(tempIdx);
-        int nPress = std::ceil((plMax - plMin)/(deltaPressTarget_) + 1);
+        int nPress = std::max<int>(nPressMin_, std::ceil((plMax - plMin)/(deltaPressTarget_) + 1));
 
         return (nPress - 1)*(pressure - plMin)/(plMax - plMin);
     }
@@ -882,7 +883,7 @@ private:
     {
         Scalar pgMin = minGasPressure_(tempIdx);
         Scalar pgMax = maxGasPressure_(tempIdx);
-        int nPress = std::ceil((pgMax - pgMin)/(deltaPressTarget_) + 1);
+        int nPress = std::max<int>(nPressMin_, std::ceil((pgMax - pgMin)/(deltaPressTarget_) + 1));
 
         return (nPress - 1)*(pressure - pgMin)/(pgMax - pgMin);
     }
@@ -892,7 +893,7 @@ private:
     {
         Scalar plMin = minLiquidPressure_(tempIdx);
         Scalar plMax = maxLiquidPressure_(tempIdx);
-        int nDensity = std::ceil((plMax - plMin)/(deltaPressTarget_) + 1); // same number as for pressure
+        int nDensity = std::max<int>(nPressMin_, std::ceil((plMax - plMin)/(deltaPressTarget_) + 1)); // same number as for pressure
 
         Scalar densityMin = minLiquidDensity_[tempIdx];
         Scalar densityMax = maxLiquidDensity_[tempIdx];
@@ -904,7 +905,7 @@ private:
     {
         Scalar pgMin = minGasPressure_(tempIdx);
         Scalar pgMax = maxGasPressure_(tempIdx);
-        int nDensity = std::ceil((pgMax - pgMin)/(deltaPressTarget_) + 1); // same number as for pressure
+        int nDensity = std::max<int>(nPressMin_, std::ceil((pgMax - pgMin)/(deltaPressTarget_) + 1)); // same number as for pressure
 
         Scalar densityMin = minGasDensity_[tempIdx];
         Scalar densityMax = maxGasDensity_[tempIdx];
@@ -1009,6 +1010,7 @@ private:
     static Scalar pressMin_;
     static Scalar pressMax_;
     static Scalar deltaPressTarget_;
+    static unsigned nPressMin_;
 
     static Scalar densityMin_;
     static Scalar densityMax_;
@@ -1097,6 +1099,8 @@ template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::pressMax_;
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::deltaPressTarget_;
+template <class RawComponent, bool useVaporPressure>
+unsigned TabulatedComponent<RawComponent, useVaporPressure>::nPressMin_;
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::densityMin_;
 template <class RawComponent, bool useVaporPressure>
