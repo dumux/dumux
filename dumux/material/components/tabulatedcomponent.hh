@@ -41,13 +41,13 @@
 namespace Dumux {
 namespace Components {
 // forward declaration
-template<class RawComponent, bool useVaporPressure>
+    template<class RawComponent, bool useVaporPressure, int nPressMin>
 class TabulatedComponent;
 } // end namespace Components
 
 //! component traits for tabulated component
-template<class RawComponent, bool useVaporPressure>
-struct ComponentTraits<Components::TabulatedComponent<RawComponent, useVaporPressure>>
+template<class RawComponent, bool useVaporPressure, int nPressMin>
+struct ComponentTraits<Components::TabulatedComponent<RawComponent, useVaporPressure, nPressMin>>
 {
     using Scalar = typename RawComponent::Scalar;
 
@@ -77,7 +77,7 @@ namespace Components {
  *                          values for gas&liquid phase will be set
  *                          depending on the vapor pressure.
  */
-template <class RawComponent, bool useVaporPressure=true>
+template <class RawComponent, bool useVaporPressure=true, int nPressMin=10>
 class TabulatedComponent
 {
 public:
@@ -106,7 +106,7 @@ public:
         pressMin_ = pressMin;
         pressMax_ = pressMax;
         deltaPressTarget_ =  (pressMax_ - pressMin_)/(nPress - 1);
-        nPressMin_ = std::min<int>(10, nPress); // = nDensityMin
+        nPressMin_ = std::min<int>(nPressMin, nPress); // = nDensityMin
 
         std::cout << "-------------------------------------------------------------------------\n"
                   << "Initializing tables for the " << RawComponent::name()
@@ -1017,102 +1017,102 @@ private:
 };
 
 #ifndef NDEBUG
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::initialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::initialized_ = false;
 
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::warningPrinted_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::warningPrinted_ = false;
 #endif
 
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::minMaxLiquidDensityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::minMaxGasDensityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::gasEnthalpyInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::liquidEnthalpyInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::gasHeatCapacityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::liquidHeatCapacityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::gasDensityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::liquidDensityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::gasViscosityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::liquidViscosityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::gasThermalConductivityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::liquidThermalConductivityInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::gasPressureInitialized_ = false;
-template <class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<RawComponent, useVaporPressure>::liquidPressureInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::minMaxLiquidDensityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::minMaxGasDensityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasEnthalpyInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidEnthalpyInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasHeatCapacityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidHeatCapacityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasDensityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidDensityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasViscosityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidViscosityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasThermalConductivityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidThermalConductivityInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasPressureInitialized_ = false;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+bool TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidPressureInitialized_ = false;
 
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::vaporPressure_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::minLiquidDensity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::maxLiquidDensity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::minGasDensity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::maxGasDensity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::gasEnthalpy_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::liquidEnthalpy_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::gasHeatCapacity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::liquidHeatCapacity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::gasDensity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::liquidDensity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::gasViscosity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::liquidViscosity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::gasThermalConductivity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::liquidThermalConductivity_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::gasPressure_;
-template <class RawComponent, bool useVaporPressure>
-std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure>::liquidPressure_;
-template <class RawComponent, bool useVaporPressure>
-typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::tempMin_;
-template <class RawComponent, bool useVaporPressure>
-typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::tempMax_;
-template <class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<RawComponent, useVaporPressure>::nTemp_;
-template <class RawComponent, bool useVaporPressure>
-typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::pressMin_;
-template <class RawComponent, bool useVaporPressure>
-typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::pressMax_;
-template <class RawComponent, bool useVaporPressure>
-typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::deltaPressTarget_;
-template <class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<RawComponent, useVaporPressure>::nPressMin_;
-template <class RawComponent, bool useVaporPressure>
-typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::densityMin_;
-template <class RawComponent, bool useVaporPressure>
-typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::densityMax_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::vaporPressure_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::minLiquidDensity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::maxLiquidDensity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::minGasDensity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::maxGasDensity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasEnthalpy_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidEnthalpy_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasHeatCapacity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidHeatCapacity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasDensity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidDensity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasViscosity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidViscosity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasThermalConductivity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidThermalConductivity_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::gasPressure_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+std::vector<typename RawComponent::Scalar> TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::liquidPressure_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::tempMin_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::tempMax_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+unsigned TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::nTemp_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::pressMin_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::pressMax_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::deltaPressTarget_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+unsigned TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::nPressMin_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::densityMin_;
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure, nPressMin>::densityMax_;
 
 // forward declaration
 template <class Component>
 struct IsAqueous;
 
 // we are aqueous if the raw compont is so
-template <class RawComponent, bool useVaporPressure>
-struct IsAqueous<TabulatedComponent<RawComponent, useVaporPressure>> : public IsAqueous<RawComponent> {};
+template <class RawComponent, bool useVaporPressure, int nPressMin>
+struct IsAqueous<TabulatedComponent<RawComponent, useVaporPressure, nPressMin>> : public IsAqueous<RawComponent> {};
 
 } // end namespace Components
 
