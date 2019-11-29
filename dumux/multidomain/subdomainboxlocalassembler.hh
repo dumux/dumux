@@ -553,15 +553,15 @@ public:
                 // restore the undeflected state of the coupling context
                 this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
             }
-        }
 
-        // restore original state of the flux vars cache and/or vol vars in case of global caching.
-        // This has to be done in order to guarantee that everything is in an undeflected
-        // state before the assembly of another element is called. In the case of local caching
-        // this is obsolete because the local views used here go out of scope after this.
-        // We only have to do this for the last primary variable, for all others the flux var cache
-        // is updated with the correct element volume variables before residual evaluations
-        updateSelf();
+            // restore original state of the flux vars cache and/or vol vars in case of global caching.
+            // This has to be done in order to guarantee that everything is in an undeflected
+            // state before the assembly of another element is called. In the case of local caching
+            // this is obsolete because the local views used here go out of scope after this.
+            // We only have to do this for the last primary variable, for all others the flux var cache
+            // is updated with the correct element volume variables before residual evaluations
+            updateSelf();
+        }
     }
 };
 
