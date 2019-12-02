@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES params.input)
 
 # isothermal tests
-dune_add_test(NAME test_2pnc_fuelcell_box
+dumux_add_test(NAME test_2pnc_fuelcell_box
               LABELS porousmediumflow 2pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellBox
@@ -11,7 +11,7 @@ dune_add_test(NAME test_2pnc_fuelcell_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_box-00015.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_box -ParameterFile params.input -Problem.Name test_2pnc_fuelcell_box")
 
-dune_add_test(NAME test_2pnc_fuelcell_tpfa
+dumux_add_test(NAME test_2pnc_fuelcell_tpfa
               LABELS porousmediumflow 2pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellCCTpfa
@@ -22,7 +22,7 @@ dune_add_test(NAME test_2pnc_fuelcell_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_tpfa -ParameterFile params.input -Problem.Name test_2pnc_fuelcell_tpfa")
 
 
-dune_add_test(NAME test_2pncni_fuelcell_box
+dumux_add_test(NAME test_2pncni_fuelcell_box
               LABELS porousmediumflow 2pnc  2pncni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellNIBox NONISOTHERMAL=1

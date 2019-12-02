@@ -2,7 +2,7 @@ add_subdirectory(saltwaterintrusion)
 
 add_input_file_links()
 
-dune_add_test(NAME test_1p2c_transport_box
+dumux_add_test(NAME test_1p2c_transport_box
               LABELS porousmediumflow 1p2c 1pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestBox
@@ -13,7 +13,7 @@ dune_add_test(NAME test_1p2c_transport_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_transport_box params.input -Problem.Name test_1p2c_transport_box"
                         --zeroThreshold {"velocity_liq \(m/s\)_1":1e-15})
 
-dune_add_test(NAME test_1p2c_transport_tpfa
+dumux_add_test(NAME test_1p2c_transport_tpfa
               LABELS porousmediumflow 1p2c 1pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCTpfa
@@ -24,7 +24,7 @@ dune_add_test(NAME test_1p2c_transport_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_transport_tpfa params.input -Problem.Name test_1p2c_transport_tpfa"
                         --zeroThreshold {"velocity_liq \(m/s\)_1":1e-15})
 
-dune_add_test(NAME test_1p2c_transport_mpfa
+dumux_add_test(NAME test_1p2c_transport_mpfa
               LABELS porousmediumflow 1p2c 1pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCMpfa

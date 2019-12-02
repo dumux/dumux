@@ -1,6 +1,6 @@
 add_input_file_links()
 
-dune_add_test(NAME test_2p2c_nonequilibrium_box
+dumux_add_test(NAME test_2p2c_nonequilibrium_box
               LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPTwoCChemicalNonequilibriumBox
@@ -10,7 +10,7 @@ dune_add_test(NAME test_2p2c_nonequilibrium_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_nonequilibrium_box-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_nonequilibrium_box params.input -Problem.Name test_2p2c_nonequilibrium_box")
 
-dune_add_test(NAME test_2p2c_nonequilibrium_tpfa
+dumux_add_test(NAME test_2p2c_nonequilibrium_tpfa
               LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPTwoCChemicalNonequilibriumCC

@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES "params.input" "grids")
 
 # quadrilaterals alu grid
-dune_add_test(NAME test_2p_boxdfm_quads_alu
+dumux_add_test(NAME test_2p_boxdfm_quads_alu
               LABELS porousmediumflow 2p
               SOURCES main.cc
               CMAKE_GUARD dune-alugrid_FOUND
@@ -15,7 +15,7 @@ dune_add_test(NAME test_2p_boxdfm_quads_alu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_alu params.input -Problem.Name test_2p_boxdfm_quads_alu -Grid.File grids/quads_2d.msh")
 
 # quadrilaterals ug grid
-dune_add_test(NAME test_2p_boxdfm_quads_ug
+dumux_add_test(NAME test_2p_boxdfm_quads_ug
               LABELS porousmediumflow 2p
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
@@ -29,7 +29,7 @@ dune_add_test(NAME test_2p_boxdfm_quads_ug
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug params.input -Problem.Name test_2p_boxdfm_quads_ug -Grid.File grids/quads_2d.msh")
 
 # triangles alu
-dune_add_test(NAME test_2p_boxdfm_trias_alu
+dumux_add_test(NAME test_2p_boxdfm_trias_alu
               LABELS porousmediumflow 2p
               TIMEOUT 1500
              SOURCES main.cc
@@ -44,7 +44,7 @@ dune_add_test(NAME test_2p_boxdfm_trias_alu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu params.input -Problem.Name test_2p_boxdfm_trias_alu -Grid.File grids/durlofsky.msh")
 
 # triangles ug
-dune_add_test(NAME test_2p_boxdfm_trias_ug
+dumux_add_test(NAME test_2p_boxdfm_trias_ug
               LABELS porousmediumflow 2p
               TIMEOUT 1500
              SOURCES main.cc
@@ -59,7 +59,7 @@ dune_add_test(NAME test_2p_boxdfm_trias_ug
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug params.input -Problem.Name test_2p_boxdfm_trias_ug -Grid.File grids/durlofsky.msh")
 
 # tetrahedra alu
-dune_add_test(NAME test_2p_boxdfm_tets_alu
+dumux_add_test(NAME test_2p_boxdfm_tets_alu
               LABELS porousmediumflow 2p
               SOURCES main.cc
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -73,7 +73,7 @@ dune_add_test(NAME test_2p_boxdfm_tets_alu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_tets_alu params.input -Problem.Name test_2p_boxdfm_tets_alu -Grid.File grids/tets_3d.msh -TimeLoop.TEnd 450")
 
 # tetrahedra ug
-dune_add_test(NAME test_2p_boxdfm_tets_ug
+dumux_add_test(NAME test_2p_boxdfm_tets_ug
               LABELS porousmediumflow 2p
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND

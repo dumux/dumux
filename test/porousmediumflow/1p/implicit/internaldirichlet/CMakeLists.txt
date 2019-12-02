@@ -4,7 +4,7 @@
 # Once its implemented replace OnePInternalDirichletBox by OnePInternalDirichletTpfa (and uncomment OnePInternalDirichletTpfa in the problem.hh)
 #    and remove the EXPECT_COMPILE_FAIL flag
 
-# dune_add_test(NAME test_1p_internaldirichlet_tpfa
+# dumux_add_test(NAME test_1p_internaldirichlet_tpfa
 #               EXPECT_COMPILE_FAIL
 #               SOURCES ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/implicit/incompressible/main.cc
 #               LABELS porousmediumflow 1p
@@ -16,7 +16,7 @@
 #                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa-00001.vtu
 #                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/implicit/incompressible/params.input -Problem.Name test_1p_internaldirichlet_tpfa -Problem.EnableGravity false")
 
-dune_add_test(NAME test_1p_internaldirichlet_box
+dumux_add_test(NAME test_1p_internaldirichlet_box
               SOURCES ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/implicit/incompressible/main.cc
               LABELS porousmediumflow 1p
               COMPILE_DEFINITIONS TYPETAG=OnePInternalDirichletBox

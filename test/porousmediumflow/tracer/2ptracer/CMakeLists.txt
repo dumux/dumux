@@ -1,6 +1,6 @@
 dune_symlink_to_source_files(FILES "params.input")
 
-dune_add_test(NAME test_2ptracer_lens_tpfa
+dumux_add_test(NAME test_2ptracer_lens_tpfa
               LABELS porousmediumflow tracer
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK

@@ -1,6 +1,6 @@
 add_input_file_links()
 
-dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan
+dumux_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan
               LABELS multidomain multidomain_boundary freeflow 1pnc
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
@@ -15,7 +15,7 @@ dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p2c_stokes1p2c_maxwellstefan params.input
                                         -Problem.Name test_md_boundary_darcy1p2c_stokes1p2c_comparison_ms")
 
-dune_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_fickslaw
+dumux_add_test(NAME test_md_boundary_darcy1p2c_stokes1p2c_fickslaw
               LABELS multidomain multidomain_boundary freeflow 1pnc
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK

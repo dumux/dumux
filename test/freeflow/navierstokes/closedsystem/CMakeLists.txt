@@ -1,6 +1,6 @@
 add_executable(test_ff_navierstokes_closedsystem EXCLUDE_FROM_ALL main.cc)
 
-dune_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1
+dumux_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1
               TARGET test_ff_navierstokes_closedsystem
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -11,7 +11,7 @@ dune_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_closedsystem params_re1.input
                              -Problem.Name test_ff_navierstokes_closedsystem_ldc_re1")
 
-dune_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1000
+dumux_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1000
               TARGET test_ff_navierstokes_closedsystem
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -22,7 +22,7 @@ dune_add_test(NAME test_ff_navierstokes_closedsystem_ldc_re1000
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_closedsystem params_re1000.input
                              -Problem.Name test_ff_navierstokes_closedsystem_ldc_re1000")
 
-dune_add_test(NAME test_ff_navierstokes_closedsystem_hydrostaticpressure
+dumux_add_test(NAME test_ff_navierstokes_closedsystem_hydrostaticpressure
               TARGET test_ff_navierstokes_closedsystem
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK

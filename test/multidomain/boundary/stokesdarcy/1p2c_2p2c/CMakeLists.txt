@@ -1,6 +1,6 @@
 add_input_file_links()
 
-dune_add_test(NAME test_md_boundary_darcy2p2c_stokes1p2c_horizontal
+dumux_add_test(NAME test_md_boundary_darcy2p2c_stokes1p2c_horizontal
               LABELS multidomain multidomain_boundary stokesdarcy 2p2c navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
@@ -14,7 +14,7 @@ dune_add_test(NAME test_md_boundary_darcy2p2c_stokes1p2c_horizontal
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p2c_stokes1p2c_horizontal params.input
                              -Vtk.OutputName test_md_boundary_darcy2p2c_stokes1p2c_horizontal")
 
-dune_add_test(NAME test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
+dumux_add_test(NAME test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
               LABELS multidomain multidomain_boundary stokesdarcy 2p2c navierstokes
               SOURCES main.cc
               COMPILE_DEFINITIONS NONISOTHERMAL=1

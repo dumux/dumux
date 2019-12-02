@@ -8,4 +8,4 @@ add_subdirectory(spline)
 add_subdirectory(timeloop)
 add_subdirectory(typetraits)
 
-dune_add_test(SOURCES test_partial.cc)
+dumux_add_test(SOURCES test_partial.cc)

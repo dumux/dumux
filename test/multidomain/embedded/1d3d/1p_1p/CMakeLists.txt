@@ -1,4 +1,4 @@
-dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_average
+dumux_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=EmbeddedCouplingMode::average
@@ -12,7 +12,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_average
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_tpfatpfa_average params.input \
                                    -Vtk.OutputName test_md_embedded1d3d_1p1p_tpfatpfa_average")
 
-dune_add_test(NAME test_md_embedded1d3d_1p1p_boxtpfa_average
+dumux_add_test(NAME test_md_embedded1d3d_1p1p_boxtpfa_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=EmbeddedCouplingMode::average
@@ -26,7 +26,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_boxtpfa_average
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_boxtpfa_average params.input \
                                    -Vtk.OutputName test_md_embedded1d3d_1p1p_boxtpfa_average -Tissue.Grid.Cells \"19 19 19\"")
 
-dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfabox_average
+dumux_add_test(NAME test_md_embedded1d3d_1p1p_tpfabox_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=EmbeddedCouplingMode::average
@@ -40,7 +40,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfabox_average
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded1d3d_1p1p_tpfabox_average params.input \
                                    -Vtk.OutputName test_md_embedded1d3d_1p1p_tpfabox_average")
 
-dune_add_test(NAME test_md_embedded1d3d_1p1p_boxbox_average
+dumux_add_test(NAME test_md_embedded1d3d_1p1p_boxbox_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=EmbeddedCouplingMode::average
@@ -55,7 +55,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_boxbox_average
                                    -Vtk.OutputName test_md_embedded1d3d_1p1p_boxbox_average -Tissue.Grid.Cells \"19 19 19\"")
 
 # make sure these configurations compile and run too
-dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_cylindersources
+dumux_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_cylindersources
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=EmbeddedCouplingMode::cylindersources
@@ -63,7 +63,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_cylindersources
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input)
 
-dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_line
+dumux_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_line
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=EmbeddedCouplingMode::line
@@ -71,7 +71,7 @@ dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_line
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input)
 
-dune_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_kernel
+dumux_add_test(NAME test_md_embedded1d3d_1p1p_tpfatpfa_kernel
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=EmbeddedCouplingMode::kernel

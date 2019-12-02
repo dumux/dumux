@@ -3,7 +3,7 @@ add_input_file_links()
 add_gstat_file_links()
 
 # isothermal tests
-dune_add_test(NAME test_1p_tpfa
+dumux_add_test(NAME test_1p_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa
@@ -13,7 +13,7 @@ dune_add_test(NAME test_1p_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa params.input -Problem.Name test_1p_tpfa")
 
-dune_add_test(NAME test_1p_mpfa
+dumux_add_test(NAME test_1p_mpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCMpfa
@@ -23,7 +23,7 @@ dune_add_test(NAME test_1p_mpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_mpfa-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_mpfa params.input -Problem.Name test_1p_mpfa")
 
-dune_add_test(NAME test_1p_box
+dumux_add_test(NAME test_1p_box
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestBox
@@ -33,7 +33,7 @@ dune_add_test(NAME test_1p_box
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_box params.input -Problem.Name test_1p_box")
 
-dune_add_test(NAME test_1p_forchheimer_tpfa
+dumux_add_test(NAME test_1p_forchheimer_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa FORCHHEIMER=1
@@ -45,7 +45,7 @@ dune_add_test(NAME test_1p_forchheimer_tpfa
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
 
 # a gstat test (becaue it's a random permeability field we can't test against a reference solution)
-dune_add_test(NAME test_1p_gstat
+dumux_add_test(NAME test_1p_gstat
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa

@@ -15,7 +15,7 @@ target_compile_definitions(test_md_facet_1p1p_gravity_mpfa
                                   LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
                                   BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
 
-dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_tpfa
+dumux_add_test(NAME test_md_facet_1p1p_gravity_xi1_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_tpfa
@@ -29,7 +29,7 @@ dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_tpfa
                                                               -Vtk.OutputName test_md_facet_1p1p_gravity_xi1_tpfa")
 
 
-dune_add_test(NAME test_md_facet_1p1p_gravity_xi066_tpfa
+dumux_add_test(NAME test_md_facet_1p1p_gravity_xi066_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_tpfa
@@ -44,7 +44,7 @@ dune_add_test(NAME test_md_facet_1p1p_gravity_xi066_tpfa
 
 
 
-dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_mpfa
+dumux_add_test(NAME test_md_facet_1p1p_gravity_xi1_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_mpfa
@@ -57,7 +57,7 @@ dune_add_test(NAME test_md_facet_1p1p_gravity_xi1_mpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_mpfa params.input \
                                                               -Vtk.OutputName test_md_facet_1p1p_gravity_xi1_mpfa")
 
-dune_add_test(NAME test_md_facet_1p1p_gravity_xi066_mpfa
+dumux_add_test(NAME test_md_facet_1p1p_gravity_xi066_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_mpfa

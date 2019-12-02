@@ -1,6 +1,6 @@
 add_input_file_links()
 
-dune_add_test(NAME test_md_boundary_darcy1p3c_stokes1p3c_horizontal
+dumux_add_test(NAME test_md_boundary_darcy1p3c_stokes1p3c_horizontal
               LABELS multidomain multidomain_boundary stokesdarcy 1pnc navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK

@@ -1,7 +1,7 @@
 add_input_file_links("params.input")
 dune_symlink_to_source_files(FILES grids)
 
-dune_add_test(NAME test_1p_pointsources_timeindependent_tpfa
+dumux_add_test(NAME test_1p_pointsources_timeindependent_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -11,7 +11,7 @@ dune_add_test(NAME test_1p_pointsources_timeindependent_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_pointsources_timeindependent_tpfa-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_pointsources_timeindependent_tpfa params.input -Problem.Name test_1p_pointsources_timeindependent_tpfa")
 
-dune_add_test(NAME test_1p_pointsources_timeindependent_box
+dumux_add_test(NAME test_1p_pointsources_timeindependent_box
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -21,7 +21,7 @@ dune_add_test(NAME test_1p_pointsources_timeindependent_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_pointsources_timeindependent_box-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_pointsources_timeindependent_box params.input -Problem.Name test_1p_pointsources_timeindependent_box")
 
-dune_add_test(NAME test_1p_pointsources_timeindependent_tpfa_prism
+dumux_add_test(NAME test_1p_pointsources_timeindependent_tpfa_prism
               LABELS porousmediumflow 1p
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
@@ -35,7 +35,7 @@ dune_add_test(NAME test_1p_pointsources_timeindependent_tpfa_prism
                                                                             -Problem.Name test_1p_pointsources_timeindependent_tpfa_prism
                                                                             -Grid.File ./grids/well_prism.msh")
 
-dune_add_test(NAME test_1p_pointsources_timeindependent_box_prism
+dumux_add_test(NAME test_1p_pointsources_timeindependent_box_prism
               LABELS porousmediumflow 1p
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
