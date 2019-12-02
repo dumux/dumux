@@ -175,24 +175,33 @@ public:
         static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
         Scalar jNW = diffusionFluxesWPhase[nCompIdx];
+        Scalar jWW = -jNW;
         // check for the reference system and adapt units of the diffusive flux accordingly.
         if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+        {
             jNW /=  FluidSystem::molarMass(nCompIdx);
-        const Scalar jWW = -jNW;
+            jWW /=  FluidSystem::molarMass(wCompIdx);
+        }
 
         const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(gPhaseIdx);
         Scalar jWG = diffusionFluxesGPhase[wCompIdx];
+        Scalar jNG = -jWG;
         // check for the reference system and adapt units of the diffusive flux accordingly.
         if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+        {
             jWG /= FluidSystem::molarMass(wCompIdx);
-        const Scalar jNG = -jWG;
+            jNG /= FluidSystem::molarMass(nCompIdx);
+        }
 
         const auto diffusionFluxesNPhase = fluxVars.molecularDiffusionFlux(nPhaseIdx);
         Scalar jWN = diffusionFluxesNPhase[wCompIdx];
+        Scalar jNN = -jWN;
         // check for the reference system and adapt units of the diffusive flux accordingly.
         if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+        {
             jWN /= FluidSystem::molarMass(wCompIdx);
-        const Scalar jNN = -jWN;
+            jNN /= FluidSystem::molarMass(nCompIdx);
+        }
 
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;
