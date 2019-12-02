@@ -1,6 +1,6 @@
 dune_symlink_to_source_files(FILES "grids" "params.input")
 
-dune_add_test(NAME test_md_facet_tracertracer_tpfa
+dumux_add_test(NAME test_md_facet_tracertracer_tpfa
               LABELS multidomain
               SOURCES main.cc
               COMPILE_DEFINITIONS ONEPBULKTYPETAG=OnePBulkTpfa
@@ -21,7 +21,7 @@ dune_add_test(NAME test_md_facet_tracertracer_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_tpfa params.input \
                                                               -Vtk.OutputName test_md_facet_tracertracer_tpfa")
 
-dune_add_test(NAME test_md_facet_tracertracer_box
+dumux_add_test(NAME test_md_facet_tracertracer_box
               LABELS multidomain
               SOURCES main.cc
               COMPILE_DEFINITIONS ONEPBULKTYPETAG=OnePBulkBox

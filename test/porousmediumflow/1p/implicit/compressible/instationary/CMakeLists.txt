@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 # compressible instationary
-dune_add_test(NAME test_1p_compressible_instationary_tpfa
+dumux_add_test(NAME test_1p_compressible_instationary_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -10,7 +10,7 @@ dune_add_test(NAME test_1p_compressible_instationary_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_tpfa-00010.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_tpfa params.input -Problem.Name test_1p_compressible_instationary_tpfa")
 
-dune_add_test(NAME test_1p_compressible_instationary_mpfa
+dumux_add_test(NAME test_1p_compressible_instationary_mpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleMpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -19,7 +19,7 @@ dune_add_test(NAME test_1p_compressible_instationary_mpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_mpfa-00010.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_mpfa params.input -Problem.Name test_1p_compressible_instationary_mpfa")
 
-dune_add_test(NAME test_1p_compressible_instationary_box
+dumux_add_test(NAME test_1p_compressible_instationary_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

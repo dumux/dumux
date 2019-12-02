@@ -1,7 +1,7 @@
 add_input_file_links(FILES params.input)
 
 # non-isothermal tests
-dune_add_test(NAME test_3p3cni_columnxylol_box
+dumux_add_test(NAME test_3p3cni_columnxylol_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ColumnBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -10,7 +10,7 @@ dune_add_test(NAME test_3p3cni_columnxylol_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_columnxylol_box-00062.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_columnxylol_box params.input -Problem.Name test_3p3cni_columnxylol_box")
 
-dune_add_test(NAME test_3p3cni_columnxylol_tpfa
+dumux_add_test(NAME test_3p3cni_columnxylol_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ColumnCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

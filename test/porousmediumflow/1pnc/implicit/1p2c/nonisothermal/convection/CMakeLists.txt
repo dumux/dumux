@@ -2,7 +2,7 @@ add_input_file_links()
 
 # non-isothermal tests
 # convection
-dune_add_test(NAME test_1p2cni_convection_box
+dumux_add_test(NAME test_1p2cni_convection_box
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionBox
@@ -13,7 +13,7 @@ dune_add_test(NAME test_1p2cni_convection_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_box params.input -Problem.Name test_1p2cni_convection_box"
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-9})
 
-dune_add_test(NAME test_1p2cni_convection_tpfa
+dumux_add_test(NAME test_1p2cni_convection_tpfa
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCTpfa
@@ -24,7 +24,7 @@ dune_add_test(NAME test_1p2cni_convection_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_tpfa params.input -Problem.Name test_1p2cni_convection_tpfa"
                         --zeroThreshold {"velocity_liq \(m/s\)_0":1e-9})
 
-dune_add_test(NAME test_1p2cni_convection_mpfa
+dumux_add_test(NAME test_1p2cni_convection_mpfa
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCMpfa

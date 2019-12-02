@@ -3,7 +3,7 @@ dune_symlink_to_source_files(FILES "initialsolutioncc.txt")
 dune_symlink_to_source_files(FILES "initialsolutionbox.txt")
 
 # using tpfa
-dune_add_test(NAME test_2p_adaptive_tpfa
+dumux_add_test(NAME test_2p_adaptive_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveTpfa
               CMAKE_GUARD dune-alugrid_FOUND
@@ -14,7 +14,7 @@ dune_add_test(NAME test_2p_adaptive_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_tpfa params.input -Problem.Name test_2p_adaptive_tpfa")
 
 # using tpfa and point source
-dune_add_test(NAME test_2p_pointsource_adaptive_tpfa
+dumux_add_test(NAME test_2p_pointsource_adaptive_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPAdaptivePointSource
               CMAKE_GUARD dune-alugrid_FOUND
@@ -25,7 +25,7 @@ dune_add_test(NAME test_2p_pointsource_adaptive_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_pointsource_adaptive_tpfa params.input -Problem.Name test_2p_pointsource_adaptive_tpfa")
 
 # using mpfa
-dune_add_test(NAME test_2p_adaptive_mpfa
+dumux_add_test(NAME test_2p_adaptive_mpfa
              SOURCES main.cc
              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveMpfa
              CMAKE_GUARD dune-alugrid_FOUND
@@ -36,7 +36,7 @@ dune_add_test(NAME test_2p_adaptive_mpfa
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_mpfa params.input -Problem.Name test_2p_adaptive_mpfa")
 
 # using box
-dune_add_test(NAME test_2p_adaptive_box
+dumux_add_test(NAME test_2p_adaptive_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveBox
               CMAKE_GUARD dune-uggrid_FOUND

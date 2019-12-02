@@ -1,6 +1,6 @@
 add_input_file_links()
 
-dune_add_test(NAME test_ff_rans2c_kepsilon
+dumux_add_test(NAME test_ff_rans2c_kepsilon
               SOURCES main.cc
               LABELS freeflow rans
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
@@ -9,7 +9,7 @@ target_compile_definitions(test_ff_rans2c_kepsilon PUBLIC "KEPSILON=1")
 add_executable(test_ff_rans2cni_kepsilon EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_rans2cni_kepsilon PUBLIC "KEPSILON=1" "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
+dumux_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
               TARGET test_ff_rans2cni_kepsilon
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -20,7 +20,7 @@ dune_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon params_nonisothermal.input
                              -Problem.Name test_ff_rans2cni_kepsilon_twolayer")
 
-dune_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
+dumux_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
               TARGET test_ff_rans2cni_kepsilon
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -31,13 +31,13 @@ dune_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon params_niwallfunction.input
                              -Problem.Name test_ff_rans2cni_kepsilon_wallfunction")
 
-dune_add_test(NAME test_ff_rans2c_komega
+dumux_add_test(NAME test_ff_rans2c_komega
               SOURCES main.cc
               LABELS freeflow rans
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_ff_rans2c_komega PUBLIC "KOMEGA=1")
 
-dune_add_test(NAME test_ff_rans2cni_komega
+dumux_add_test(NAME test_ff_rans2cni_komega
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -50,13 +50,13 @@ dune_add_test(NAME test_ff_rans2cni_komega
                                        -Newton.TargetSteps 12")
 target_compile_definitions(test_ff_rans2cni_komega PUBLIC "KOMEGA=1" "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_ff_rans2c_lowrekepsilon
+dumux_add_test(NAME test_ff_rans2c_lowrekepsilon
               SOURCES main.cc
               LABELS freeflow rans
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_ff_rans2c_lowrekepsilon PUBLIC "LOWREKEPSILON=1")
 
-dune_add_test(NAME test_ff_rans2cni_lowrekepsilon
+dumux_add_test(NAME test_ff_rans2cni_lowrekepsilon
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -68,13 +68,13 @@ dune_add_test(NAME test_ff_rans2cni_lowrekepsilon
                              -Problem.Name test_ff_rans2cni_lowrekepsilon")
 target_compile_definitions(test_ff_rans2cni_lowrekepsilon PUBLIC "LOWREKEPSILON=1" "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_ff_rans2c_oneeq
+dumux_add_test(NAME test_ff_rans2c_oneeq
               SOURCES main.cc
               LABELS freeflow rans
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_ff_rans2c_oneeq PUBLIC "ONEEQ=1")
 
-dune_add_test(NAME test_ff_rans2cni_oneeq
+dumux_add_test(NAME test_ff_rans2cni_oneeq
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -86,7 +86,7 @@ dune_add_test(NAME test_ff_rans2cni_oneeq
                              -Problem.Name test_ff_rans2cni_oneeq")
 target_compile_definitions(test_ff_rans2cni_oneeq PUBLIC "ONEEQ=1" "NONISOTHERMAL=1")
 
-dune_add_test(NAME test_ff_rans2c_zeroeq
+dumux_add_test(NAME test_ff_rans2c_zeroeq
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
@@ -97,7 +97,7 @@ dune_add_test(NAME test_ff_rans2c_zeroeq
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq params.input
                              -Problem.Name test_ff_rans2c_zeroeq")
 
-dune_add_test(NAME test_ff_rans2cni_zeroeq
+dumux_add_test(NAME test_ff_rans2cni_zeroeq
               SOURCES main.cc
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK

@@ -1,6 +1,6 @@
 add_input_file_links()
 
-dune_add_test(NAME test_1pncni_transientbc_box_caching
+dumux_add_test(NAME test_1pncni_transientbc_box_caching
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCBox ENABLECACHING=1
               LABELS caching
@@ -11,7 +11,7 @@ dune_add_test(NAME test_1pncni_transientbc_box_caching
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_box_caching-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_box_caching params.input -Problem.Name test_1p2cni_transientbc_box_caching")
 
-dune_add_test(NAME test_1pncni_transientbc_box
+dumux_add_test(NAME test_1pncni_transientbc_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCBox ENABLECACHING=0
               LABELS caching
@@ -22,7 +22,7 @@ dune_add_test(NAME test_1pncni_transientbc_box
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_box-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_box params.input -Problem.Name test_1p2cni_transientbc_box")
 
-dune_add_test(NAME test_1pncni_transientbc_tpfa_caching
+dumux_add_test(NAME test_1pncni_transientbc_tpfa_caching
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCCCTpfa ENABLECACHING=1
               LABELS caching
@@ -33,7 +33,7 @@ dune_add_test(NAME test_1pncni_transientbc_tpfa_caching
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_tpfa_caching-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_tpfa_caching params.input -Problem.Name test_1p2cni_transientbc_tpfa_caching")
 
-dune_add_test(NAME test_1pncni_transientbc_tpfa
+dumux_add_test(NAME test_1pncni_transientbc_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCCCTpfa ENABLECACHING=0
               LABELS caching
@@ -44,7 +44,7 @@ dune_add_test(NAME test_1pncni_transientbc_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_tpfa-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_tpfa params.input -Problem.Name test_1p2cni_transientbc_tpfa")
 
-dune_add_test(NAME test_1pncni_transientbc_mpfa_caching
+dumux_add_test(NAME test_1pncni_transientbc_mpfa_caching
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCCCMpfa ENABLECACHING=1
               LABELS caching
@@ -55,7 +55,7 @@ dune_add_test(NAME test_1pncni_transientbc_mpfa_caching
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_mpfa_caching-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_mpfa_caching params.input -Problem.Name test_1p2cni_transientbc_mpfa_caching")
 
-dune_add_test(NAME test_1pncni_transientbc_mpfa
+dumux_add_test(NAME test_1pncni_transientbc_mpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCCCMpfa ENABLECACHING=0
               LABELS caching
