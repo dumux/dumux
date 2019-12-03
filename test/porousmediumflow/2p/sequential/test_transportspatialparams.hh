@@ -24,6 +24,7 @@
 #ifndef TEST_TRANSPORT_SPATIALPARAMS_HH
 #define TEST_TRANSPORT_SPATIALPARAMS_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
@@ -42,17 +43,20 @@ class TestTransportSpatialParams;
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TestTransportSpatialParams);
+namespace TTag {
+struct TestTransportSpatialParams {};
+}
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestTransportSpatialParams, SpatialParams, TestTransportSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TestTransportSpatialParams> { using type = TestTransportSpatialParams<TypeTag>; };
 
 // Set the material law
 template<class TypeTag>
 struct MaterialLaw<TypeTag, TTag::TestTransportSpatialParams>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using RawMaterialLaw = LinearMaterial<Scalar>;
 public:
     using type = EffToAbsLaw<RawMaterialLaw>;
@@ -67,15 +71,15 @@ template<class TypeTag>
 class TestTransportSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename Grid::Traits::template Codim<0>::Entity;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     Scalar intrinsicPermeability (const Element& element) const

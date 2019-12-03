@@ -26,6 +26,7 @@
 
 #include <iostream>
 
+#include <dumux/common/properties.hh>
 #include "test_transportproblem.hh"
 #include <dumux/common/start.hh>
 
@@ -60,6 +61,6 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    using ProblemTypeTag = TTAG(TransportTest);
+    using ProblemTypeTag = Dumux::Properties::TTag::TransportTest;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

@@ -24,6 +24,7 @@
  */
 #include <config.h>
 
+#include <dumux/common/properties.hh>
 #include "test_impesproblem.hh"
 #include <dumux/common/start.hh>
 
@@ -58,6 +59,7 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    using ProblemTypeTag = TTAG(IMPESTest);
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+    using namespace Dumux;
+    using ProblemTypeTag = Properties::TTag::IMPESTest;
+    return start<ProblemTypeTag>(argc, argv, usage);
 }

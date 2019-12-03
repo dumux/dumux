@@ -28,6 +28,7 @@
 #include <dune/alugrid/grid.hh>
 #endif
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
@@ -50,22 +51,27 @@ class TestIMPESAdaptiveProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TestIMPESAdaptive, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, TestIMPESAdaptiveSpatialParams));
-NEW_TYPE_TAG(TestIMPESAdaptiveRestart, INHERITS_FROM(TestIMPESAdaptive));
+// Create new type tags
+namespace TTag {
+struct TestIMPESAdaptive { using InheritsFrom = std::tuple<TestIMPESAdaptiveSpatialParams, IMPESTwoPAdaptive, FVTransportTwoP, FVPressureTwoPAdaptive>; };
+struct TestIMPESAdaptiveRestart { using InheritsFrom = std::tuple<TestIMPESAdaptive>; };
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(TestIMPESAdaptive, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TestIMPESAdaptive> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(TestIMPESAdaptive, Problem, TestIMPESAdaptiveProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TestIMPESAdaptive> { using type = TestIMPESAdaptiveProblem<TypeTag>; };
 
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TestIMPESAdaptive>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
@@ -88,14 +94,14 @@ template<class TypeTag>
 class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
 {
     using ParentType = IMPESProblem2P<TypeTag>;
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
+    using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
 
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
     enum
     {
@@ -111,13 +117,13 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
         eqIdxSat = Indices::satEqIdx
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
 public:

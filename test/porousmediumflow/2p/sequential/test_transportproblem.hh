@@ -27,6 +27,7 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
@@ -49,25 +50,31 @@ class TestTransportProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TransportTest, INHERITS_FROM(FVTransportTwoP, TestTransportSpatialParams));
+// Create new type tags
+namespace TTag {
+struct TransportTest { using InheritsFrom = std::tuple<TestTransportSpatialParams, FVTransportTwoP>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TransportTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TransportTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(TransportTest, Problem, TestTransportProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TransportTest> { using type = TestTransportProblem<TypeTag>; };
 
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TransportTest>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
-SET_INT_PROP(TransportTest, VelocityFormulation, SequentialTwoPCommonIndices::velocityTotal);
+template<class TypeTag>
+struct VelocityFormulation<TypeTag, TTag::TransportTest> { static constexpr int value = SequentialTwoPCommonIndices::velocityTotal; };
 }
 
 /*!
@@ -90,17 +97,17 @@ template<class TypeTag>
 class TestTransportProblem: public TransportProblem2P<TypeTag>
 {
     using ParentType = TransportProblem2P<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     enum
     {
@@ -112,7 +119,7 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

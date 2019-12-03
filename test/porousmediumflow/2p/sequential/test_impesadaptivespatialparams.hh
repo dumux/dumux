@@ -24,6 +24,7 @@
 #ifndef TEST_IMPES_ADAPTIVE_SPATIALPARAMS_HH
 #define TEST_IMPES_ADAPTIVE_SPATIALPARAMS_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
@@ -39,17 +40,20 @@ class TestIMPESAdaptiveSpatialParams;
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TestIMPESAdaptiveSpatialParams);
+namespace TTag {
+struct TestIMPESAdaptiveSpatialParams {};
+}
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestIMPESAdaptiveSpatialParams, SpatialParams, TestIMPESAdaptiveSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TestIMPESAdaptiveSpatialParams> { using type = TestIMPESAdaptiveSpatialParams<TypeTag>; };
 
 // Set the material law
 template<class TypeTag>
 struct MaterialLaw<TypeTag, TTag::TestIMPESAdaptiveSpatialParams>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using RawMaterialLaw = RegularizedBrooksCorey<Scalar>;
 public:
     using type = EffToAbsLaw<RawMaterialLaw>;
@@ -63,10 +67,10 @@ public:
 template<class TypeTag>
 class TestIMPESAdaptiveSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ParentType = SequentialFVSpatialParams<TypeTag>;
     using CoordScalar = typename Grid::ctype;
 
@@ -77,7 +81,7 @@ class TestIMPESAdaptiveSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
 

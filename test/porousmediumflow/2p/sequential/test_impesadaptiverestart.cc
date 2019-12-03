@@ -26,6 +26,7 @@
 
 #if HAVE_DUNE_ALUGRID
 
+#include <dumux/common/properties.hh>
 #include "test_impesadaptiveproblem.hh"
 #include <dumux/common/start.hh>
 
@@ -51,7 +52,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-        using ProblemTypeTag = TTAG(TestIMPESAdaptiveRestart);
+        using ProblemTypeTag = Dumux::Properties::TTag::TestIMPESAdaptiveRestart;
         return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 #else

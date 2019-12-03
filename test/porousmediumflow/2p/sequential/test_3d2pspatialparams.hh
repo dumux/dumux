@@ -41,17 +41,20 @@ class Test3d2pSpatialParams;
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(Test3d2pSpatialParams);
+namespace TTag {
+struct Test3d2pSpatialParams {};
+}
 
 // Set the spatial parameters
-SET_TYPE_PROP(Test3d2pSpatialParams, SpatialParams, Test3d2pSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Test3d2pSpatialParams> { using type = Test3d2pSpatialParams<TypeTag>; };
 
 // Set the material law
 template<class TypeTag>
 struct MaterialLaw<TypeTag, TTag::Test3d2pSpatialParams>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using RawMaterialLaw = RegularizedBrooksCorey<Scalar>;
 //    using RawMaterialLaw = LinearMaterial<Scalar>;
 public:
@@ -68,10 +71,10 @@ template<class TypeTag>
 class Test3d2pSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CoordScalar = typename Grid::ctype;
 
     enum
@@ -83,7 +86,7 @@ class Test3d2pSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     void update (Scalar saturationW, const Element& element)
