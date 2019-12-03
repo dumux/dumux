@@ -51,52 +51,68 @@ class TestDiffusionProblem;
 namespace Properties
 {
 //// set the types for the 2PFA FV method
-NEW_TYPE_TAG(FVVelocity2PTestTypeTag, INHERITS_FROM(FVPressureTwoP, TestDiffusionSpatialParams));
-SET_TYPE_PROP(FVVelocity2PTestTypeTag, Problem, TestDiffusionProblem<TypeTag>);
+// Create new type tags
+namespace TTag {
+
+struct FVVelocity2PTestTypeTag { using InheritsFrom = std::tuple<TestDiffusionSpatialParams, FVPressureTwoP>; };
+
+// set the types for the MPFA-O FV method
+struct FVMPFAOVelocity2PTestTypeTag { using InheritsFrom = std::tuple<TestDiffusionSpatialParams, FvMpfaO2dPressureTwoP>; };
+
+// set the types for the mimetic FD method
+struct MimeticPressure2PTestTypeTag { using InheritsFrom = std::tuple<TestDiffusionSpatialParams, MimeticPressureTwoP>; };
+} // end namespace TTag
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FVVelocity2PTestTypeTag> { using type = TestDiffusionProblem<TypeTag>; };
 
 // Set the grid type
-SET_TYPE_PROP(FVVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::FVVelocity2PTestTypeTag> { using type = Dune::YaspGrid<2>; };
 
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::FVVelocity2PTestTypeTag>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
-// set the types for the MPFA-O FV method
-NEW_TYPE_TAG(FVMPFAOVelocity2PTestTypeTag, INHERITS_FROM(FvMpfaO2dPressureTwoP, TestDiffusionSpatialParams));
-//SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, LinearSolver, ILUnBiCGSTABBackend);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, LinearSolver, SSORBiCGSTABBackend);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, Problem, TestDiffusionProblem<TypeTag>);
+//template<class TypeTag>
+// struct LinearSolver<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag> { using type = ILUnBiCGSTABBackend; };
+template<class TypeTag>
+struct LinearSolver<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag> { using type = SSORBiCGSTABBackend; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag> { using type = TestDiffusionProblem<TypeTag>; };
 // Set the grid type
-SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag> { using type = Dune::YaspGrid<2>; };
 
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::FVMPFAOVelocity2PTestTypeTag>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
-// set the types for the mimetic FD method
-NEW_TYPE_TAG(MimeticPressure2PTestTypeTag, INHERITS_FROM(MimeticPressureTwoP, TestDiffusionSpatialParams));
-SET_TYPE_PROP(MimeticPressure2PTestTypeTag, Problem, TestDiffusionProblem<TypeTag>);
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::MimeticPressure2PTestTypeTag> { using type = TestDiffusionProblem<TypeTag>; };
 
 // Set the grid type
-SET_TYPE_PROP(MimeticPressure2PTestTypeTag, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::MimeticPressure2PTestTypeTag> { using type = Dune::YaspGrid<2>; };
 
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::MimeticPressure2PTestTypeTag>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
@@ -116,14 +132,14 @@ template<class TypeTag>
 class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 {
     using ParentType = DiffusionProblem2P<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
+    using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     enum
     {
@@ -137,14 +153,14 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
         swIdx = Indices::swIdx
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using ScalarSolution = typename SolutionTypes::ScalarSolution;
 
@@ -330,7 +346,7 @@ private:
     }
 
     Scalar delta_;
-    FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
+    FVVelocity<TypeTag, GetPropType<TypeTag, Properties::Velocity> > velocity_;
 };
 } //end namespace
 

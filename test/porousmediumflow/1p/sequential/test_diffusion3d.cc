@@ -70,9 +70,9 @@ int start(int argc,
     // parse the command line arguments and input file
     ////////////////////////////////////////////////////////////
 
-    using TypeTag = TTAG(DiffusionTest);
+    using TypeTag = Properties::TTag::DiffusionTest;
 
-    auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+    auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
     Parameters::init(argc, argv, defaultParams, usage);
 
     ////////////////////////////////////////////////////////////
@@ -88,7 +88,7 @@ int start(int argc,
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     try { gridManager.init(); }
     catch (...) {
         std::string usageMessage = "\n\t -> Creation of the grid failed! <- \n\n";
@@ -112,9 +112,9 @@ int start(int argc,
     // finite volume TPFA test problem
     /////////////////////////////////////////////////////////////////////
 
-    using FVTypeTag = TTAG(FVTest);
-    using FVProblem = GET_PROP_TYPE(FVTypeTag, Problem);
-    auto fvDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(FVTypeTag, ModelDefaultParameters)::defaultParams(p);};
+    using FVTypeTag = Properties::TTag::FVTest;
+    using FVProblem = GetPropType<FVTypeTag, Properties::Problem>;
+    auto fvDefaultParams = [] (Dune::ParameterTree& p) {GetProp<FVTypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, fvDefaultParams, usage);
 
     std::shared_ptr<FVProblem> fvProblem = std::make_shared<FVProblem>(grid);
@@ -140,9 +140,9 @@ int start(int argc,
     // finite volume MPFA-L test problem
     /////////////////////////////////////////////////////////////////////
 
-    using MPFALTypeTag = TTAG(FVMPFAL3DTestTypeTag);
-    using MPFALProblem = GET_PROP_TYPE(MPFALTypeTag, Problem);
-    auto mpfalDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(MPFALTypeTag, ModelDefaultParameters)::defaultParams(p);};
+    using MPFALTypeTag = Properties::TTag::FVMPFAL3DTestTypeTag;
+    using MPFALProblem = GetPropType<MPFALTypeTag, Properties::Problem>;
+    auto mpfalDefaultParams = [] (Dune::ParameterTree& p) {GetProp<MPFALTypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, mpfalDefaultParams, usage);
 
     std::shared_ptr<MPFALProblem> mpfaProblem = std::make_shared<MPFALProblem>(grid);
@@ -168,9 +168,9 @@ int start(int argc,
     // mimetic finite difference test problem
     /////////////////////////////////////////////////////////////////////
 
-    using MimeticTypeTag = TTAG(MimeticTest);
-    using MimeticProblem = GET_PROP_TYPE(MimeticTypeTag, Problem);
-    auto mimeticDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(MimeticTypeTag, ModelDefaultParameters)::defaultParams(p);};
+    using MimeticTypeTag = Properties::TTag::MimeticTest;
+    using MimeticProblem = GetPropType<MimeticTypeTag, Properties::Problem>;
+    auto mimeticDefaultParams = [] (Dune::ParameterTree& p) {GetProp<MimeticTypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, mimeticDefaultParams, usage);
 
     std::shared_ptr<MimeticProblem> mimeticProblem = std::make_shared<MimeticProblem>(grid);
