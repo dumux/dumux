@@ -39,17 +39,17 @@ namespace Dumux {
 template<class TypeTag>
 class IMPESProblem2P : public IMPETProblem<TypeTag>
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using ParentType = IMPETProblem<TypeTag>;
 
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     // material properties
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
 
     enum {

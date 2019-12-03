@@ -51,15 +51,21 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(Pressure, INHERITS_FROM(SequentialModel));
+// Create new type tags
+namespace TTag {
+struct Pressure { using InheritsFrom = std::tuple<SequentialModel>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 //Properties for linear solvers
-NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
-NEW_PROP_TAG(PressureSolutionVector);//!Type of solution vector or pressure system
-NEW_PROP_TAG(VisitFacesOnlyOnce); //!< Indicates if faces are only regarded from one side
+template<class TypeTag, class MyTypeTag>
+struct PressureRHSVector { using type = UndefinedProperty; };//!< Type of the right hand side vector given to the linear solver
+template<class TypeTag, class MyTypeTag>
+struct PressureSolutionVector { using type = UndefinedProperty; };//!Type of solution vector or pressure system
+template<class TypeTag, class MyTypeTag>
+struct VisitFacesOnlyOnce { using type = UndefinedProperty; }; //!< Indicates if faces are only regarded from one side
 }
 }
 
@@ -70,14 +76,15 @@ namespace Dumux
 namespace Properties
 {
 //! Faces are only regarded from one side and not from both cells
-SET_BOOL_PROP(Pressure, VisitFacesOnlyOnce, false);
+template<class TypeTag>
+struct VisitFacesOnlyOnce<TypeTag, TTag::Pressure> { static constexpr bool value = false; };
 
 //Set defaults
 template<class TypeTag>
 struct PressureCoefficientMatrix<TypeTag, TTag::Pressure>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using MB = Dune::FieldMatrix<Scalar, 1, 1>;
 
 public:
@@ -87,18 +94,21 @@ template<class TypeTag>
 struct PressureRHSVector<TypeTag, TTag::Pressure>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
 public:
     using type = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
 };
 
-SET_TYPE_PROP(Pressure, PressureSolutionVector, typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution);
+template<class TypeTag>
+struct PressureSolutionVector<TypeTag, TTag::Pressure> { using type = typename GetProp<TypeTag, SolutionTypes>::ScalarSolution; };
 
 // use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(Pressure, LinearSolver, ILU0BiCGSTABBackend );
+template<class TypeTag>
+struct LinearSolver<TypeTag, TTag::Pressure> { using type = ILU0BiCGSTABBackend ; };
 
-SET_TYPE_PROP( Pressure, Velocity, FVVelocityDefault<TypeTag>);
+template<class TypeTag>
+struct Velocity<TypeTag, TTag:: Pressure> { using type = FVVelocityDefault<TypeTag>; };
 
 }
 }

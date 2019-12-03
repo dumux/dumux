@@ -43,8 +43,10 @@
 
 namespace Dumux {
 namespace Properties {
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolume, FvMpfaL3dInteractionVolumeAdaptive<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, MPFAInteractionVolumeContainer, FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>);
+template<class TypeTag>
+struct MPFAInteractionVolume<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { using type = FvMpfaL3dInteractionVolumeAdaptive<TypeTag>; };
+template<class TypeTag>
+struct MPFAInteractionVolumeContainer<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { using type = FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>; };
 } // end namespace Properties
 
 /*!
@@ -77,29 +79,29 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
 : public FVPressure2P2CMultiPhysics<TypeTag>
 {
     //the model implementation
-    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using Implementation = GetPropType<TypeTag, Properties::PressureModel>;
     using ParentType = FVPressure2P2CMultiPhysics<TypeTag>;
     using BaseType = FVPressure<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld,
-        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases), NumComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+        NumPhases = getPropValue<TypeTag, Properties::NumPhases>(), NumComponents = getPropValue<TypeTag, Properties::NumComponents>()
     };
     enum
     {
@@ -133,16 +135,16 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using TransmissivityMatrix = Dune::FieldVector<Scalar,dim+1>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
-    using PhaseVector = Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)>;
-    using ComponentVector = Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumComponents)>;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PhaseVector = Dune::FieldVector<Scalar, getPropValue<TypeTag, Properties::NumPhases>()>;
+    using ComponentVector = Dune::FieldVector<Scalar, getPropValue<TypeTag, Properties::NumComponents>()>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     // the typenames used for the stiffness matrix and solution vector
-    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
-    using RHSVector = typename GET_PROP_TYPE(TypeTag, PressureRHSVector);
+    using Matrix = GetPropType<TypeTag, Properties::PressureCoefficientMatrix>;
+    using RHSVector = GetPropType<TypeTag, Properties::PressureRHSVector>;
 
     // Dumux MPFA types
-    using InteractionVolumeContainer = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer);
+    using InteractionVolumeContainer = GetPropType<TypeTag, Properties::MPFAInteractionVolumeContainer>;
     using InteractionVolume = typename InteractionVolumeContainer::InteractionVolume;
 
 protected:
@@ -228,9 +230,9 @@ public:
         }
 #if HAVE_MPI
     // communicate updated values
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
-    using PressureSolution = typename GET_PROP_TYPE(TypeTag, PressureSolutionVector);
+    using PressureSolution = GetPropType<TypeTag, Properties::PressureSolutionVector>;
     using DataHandle = VectorExchange<ElementMapper, PressureSolution>;
 
         DataHandle dataHandle(problem().variables().elementMapper(), this->pressure());
@@ -692,7 +694,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                     // calculate only from one side, but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
+                    if (getPropValue<TypeTag, Properties::VisitFacesOnlyOnce>()
                         && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
                         && neighbor.partitionType() == Dune::InteriorEntity)
                         continue;
@@ -734,7 +736,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                         this->A_[eIdxGlobalI][eIdxGlobalJ] -= entries[matrix];
 
                         // The second condition is needed to not spoil the ghost element entries
-                        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
+                        if (getPropValue<TypeTag, Properties::VisitFacesOnlyOnce>()
                             && neighbor.partitionType() == Dune::InteriorEntity)
                         {
                             this->f_[eIdxGlobalJ] += entries[rhs];

@@ -41,13 +41,18 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(Transport, INHERITS_FROM(SequentialModel));
+// Create new type tags
+namespace TTag {
+struct Transport { using InheritsFrom = std::tuple<SequentialModel>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(TransportSolutionType);
-NEW_PROP_TAG(EvalCflFluxFunction); //!< Type of the evaluation of the CFL-condition
+template<class TypeTag, class MyTypeTag>
+struct TransportSolutionType { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct EvalCflFluxFunction { using type = UndefinedProperty; }; //!< Type of the evaluation of the CFL-condition
 
 /*!
  * \brief Default implementation for the Vector of the transportet quantity
@@ -60,7 +65,7 @@ template<class TypeTag>
 struct TransportSolutionType<TypeTag, TTag::Transport>
 {
  private:
-    using SolutionType = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionType = GetProp<TypeTag, Properties::SolutionTypes>;
 
  public:
     using type = typename SolutionType::ScalarSolution;//!<type for vector of scalar properties

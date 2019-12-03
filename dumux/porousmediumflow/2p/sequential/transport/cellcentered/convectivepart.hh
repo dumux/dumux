@@ -38,9 +38,9 @@ template<class TypeTag>
 class ConvectivePart
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-      using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+      using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+      using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     enum{dimWorld = GridView::dimensionworld};
     using Intersection = typename GridView::Intersection;

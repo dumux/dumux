@@ -40,15 +40,15 @@ template<class TypeTag>
 class FluxData2P
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum
     {
         dim = GridView::dimension
     };
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
@@ -57,7 +57,7 @@ private:
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
     using DimVector = Dune::FieldVector<Scalar, dim>;

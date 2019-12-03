@@ -47,12 +47,12 @@ namespace Dumux
  */
 template<class TypeTag> class IMPET
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
-    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
+    using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
 
     enum IterationType
         {

@@ -46,29 +46,29 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2p: public FvMpfaL2dPress
 {
     using ParentType = FvMpfaL2dPressure2p<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
     using IndexSet = typename GridView::IndexSet;
     using Intersection = typename GridView::Intersection;
@@ -87,7 +87,7 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2p: public FvMpfaL2dPress
         saturationIdx = Indices::saturationIdx,
         pressEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -205,9 +205,9 @@ private:
     bool calcVelocityInTransport_;
 
     //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int pressureType_ = getPropValue<TypeTag, Properties::PressureFormulation>();
     //! gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
 };
 // end of template
 

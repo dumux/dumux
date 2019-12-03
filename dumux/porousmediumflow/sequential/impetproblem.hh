@@ -45,26 +45,26 @@ template<class TypeTag>
 class IMPETProblem
 {
 private:
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
 
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
     using VtkMultiWriter = Dumux::VtkMultiWriter<GridView>;
 
-    using Variables = typename GET_PROP_TYPE(TypeTag, Variables);
+    using Variables = GetPropType<TypeTag, Properties::Variables>;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using VertexMapper = typename SolutionTypes::VertexMapper;
     using ElementMapper = typename SolutionTypes::ElementMapper;
 
-    using IMPETModel = typename GET_PROP_TYPE(TypeTag, Model);
-    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
-    using PressureModel = typename GET_PROP_TYPE(TypeTag, PressureModel);
-    using TransportModel = typename GET_PROP_TYPE(TypeTag, TransportModel);
+    using IMPETModel = GetPropType<TypeTag, Properties::Model>;
+    using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
+    using PressureModel = GetPropType<TypeTag, Properties::PressureModel>;
+    using TransportModel = GetPropType<TypeTag, Properties::TransportModel>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     enum
         {
@@ -74,17 +74,17 @@ private:
     enum
         {
             wetting = 0, nonwetting = 1,
-            adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid)
+            adaptiveGrid = getPropValue<TypeTag, Properties::AdaptiveGrid>()
         };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
     // The module to adapt grid. If adaptiveGrid is false, this model does nothing.
-    using GridAdaptModel = typename GET_PROP_TYPE(TypeTag, GridAdaptModel);
+    using GridAdaptModel = GetPropType<TypeTag, Properties::GridAdaptModel>;
 
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     //private!! copy constructor
     IMPETProblem(const IMPETProblem&)

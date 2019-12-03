@@ -44,18 +44,18 @@ template<class TypeTag>
 class CellData2P2CAdaptive: public CellData2P2CMultiPhysics<TypeTag>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
     enum
     {
         dim = GridView::dimension
     };
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
@@ -64,12 +64,12 @@ private:
     };
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static constexpr int pressureType = getPropValue<TypeTag, Properties::PressureFormulation>();
     int upwindError_[numPhases];
 
 public:

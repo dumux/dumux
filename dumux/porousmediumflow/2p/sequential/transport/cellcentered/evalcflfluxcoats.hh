@@ -39,21 +39,21 @@ template<class TypeTag>
 class EvalCflFluxCoats: public EvalCflFlux<TypeTag>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     enum
         {
@@ -64,7 +64,7 @@ private:
             wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
             eqIdxPress = Indices::pressureEqIdx,
             eqIdxSat = Indices::satEqIdx,
-            numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+            numPhases = getPropValue<TypeTag, Properties::NumPhases>()
         };
 
     enum
@@ -255,9 +255,9 @@ private:
     Scalar fluxIn_;
     bool rejectForTimeStepping_;
     Scalar density_[numPhases];
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int pressureType_ = getPropValue<TypeTag, Properties::PressureFormulation>();
+    static const int velocityType_ = getPropValue<TypeTag, Properties::VelocityFormulation>();
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
     const Scalar epsDerivative_;
     const Scalar threshold_;
     Scalar porosityThreshold_;

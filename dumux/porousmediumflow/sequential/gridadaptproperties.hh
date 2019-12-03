@@ -43,38 +43,50 @@ class GridAdapt;
 namespace Properties
 {
 //! Grid adaption type tag for all sequential models.
-NEW_TYPE_TAG(GridAdapt);
+namespace TTag {
+struct GridAdapt {};
+}
 
 //! Defines if the grid is h-adaptive
-NEW_PROP_TAG( AdaptiveGrid);
+template<class TypeTag, class MyTypeTag>
+struct  AdaptiveGrid { using type = UndefinedProperty; };
 
 //! The type of grid adaptation
-NEW_PROP_TAG( GridAdaptModel );
+template<class TypeTag, class MyTypeTag>
+struct  GridAdaptModel  { using type = UndefinedProperty; };
 
 //! Class defining the refinement/coarsening indicator
-NEW_PROP_TAG(AdaptionIndicator);
+template<class TypeTag, class MyTypeTag>
+struct AdaptionIndicator { using type = UndefinedProperty; };
 
 //! Class defining the refinement/coarsening indicator for grid initialization
-NEW_PROP_TAG(AdaptionInitializationIndicator);
+template<class TypeTag, class MyTypeTag>
+struct AdaptionInitializationIndicator { using type = UndefinedProperty; };
 
 //! Tolerance for refinement
-NEW_PROP_TAG(GridAdaptRefineThreshold);
+template<class TypeTag, class MyTypeTag>
+struct GridAdaptRefineThreshold { using type = UndefinedProperty; };
 
 //! Tolerance for coarsening
-NEW_PROP_TAG(GridAdaptCoarsenThreshold);
+template<class TypeTag, class MyTypeTag>
+struct GridAdaptCoarsenThreshold { using type = UndefinedProperty; };
 
 //no adaptive grid
-SET_BOOL_PROP(GridAdapt, AdaptiveGrid, false);
+template<class TypeTag>
+struct AdaptiveGrid<TypeTag, TTag::GridAdapt> { static constexpr bool value = false; };
 
 //Set default class for adaptation initialization indicator
-SET_TYPE_PROP(GridAdapt,  AdaptionInitializationIndicator, GridAdaptInitializationIndicatorDefault<TypeTag>);
+template<class TypeTag>
+struct AdaptionInitializationIndicator<TypeTag, TTag::GridAdapt> { using type = GridAdaptInitializationIndicatorDefault<TypeTag>; };
 //Set default class for adaptation
-SET_TYPE_PROP(GridAdapt,  GridAdaptModel, GridAdapt<TypeTag, GET_PROP_VALUE(TypeTag, AdaptiveGrid)>);
-
+template<class TypeTag>
+struct GridAdaptModel<TypeTag, TTag::GridAdapt> { using type = GridAdapt<TypeTag, getPropValue<TypeTag, Properties::AdaptiveGrid>()>; };
 
 //standard setting
-SET_SCALAR_PROP(GridAdapt, GridAdaptRefineThreshold, 0.0);
-SET_SCALAR_PROP(GridAdapt, GridAdaptCoarsenThreshold, 0.0);
+template<class TypeTag>
+struct GridAdaptRefineThreshold<TypeTag, TTag::GridAdapt> { static constexpr auto value  = 0.0; };
+template<class TypeTag>
+struct GridAdaptCoarsenThreshold<TypeTag, TTag::GridAdapt> { static constexpr auto value  = 0.0; };
 } // namespace Properties
 } // namespace Dumux
 

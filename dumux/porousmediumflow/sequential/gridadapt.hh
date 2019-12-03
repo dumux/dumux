@@ -45,17 +45,17 @@ namespace Dumux
 template<class TypeTag, bool adaptive>
 class GridAdapt
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     using Grid = typename GridView::Grid;
     using LeafGridView = typename Grid::LeafGridView;
     using Element = typename Grid::template Codim<0>::Entity;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
-    using AdaptionIndicator = typename GET_PROP_TYPE(TypeTag, AdaptionIndicator);
-    using AdaptionInitializationIndicator = typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
+    using AdaptionIndicator = GetPropType<TypeTag, Properties::AdaptionIndicator>;
+    using AdaptionInitializationIndicator = GetPropType<TypeTag, Properties::AdaptionInitializationIndicator>;
 
     using IdSet = typename Grid::Traits::LocalIdSet;
     using IdType = typename IdSet::IdType;
@@ -458,9 +458,9 @@ private:
 template<class TypeTag>
 class GridAdapt<TypeTag, false>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
 
 public:

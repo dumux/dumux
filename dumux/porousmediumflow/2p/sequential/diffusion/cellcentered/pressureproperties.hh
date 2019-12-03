@@ -25,7 +25,7 @@
 #define DUMUX_FVPRESSUREPORPERTIES2P_SEQUENTIAL_HH
 
 //Dumux-includes
-#include <dumux/common/properties/propertysystemmacros.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 
 namespace Dumux {
@@ -43,7 +43,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for two-phase problems using a standard finite volume model
-NEW_TYPE_TAG(FVPressureTwoP, INHERITS_FROM(PressureTwoP));
+// Create new type tags
+namespace TTag {
+struct FVPressureTwoP { using InheritsFrom = std::tuple<PressureTwoP>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -61,11 +64,14 @@ namespace Properties {
 // Properties
 //////////////////////////////////////////////////////////////////
 //! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
-SET_TYPE_PROP( FVPressureTwoP, Velocity, FVVelocity2P<TypeTag> );
+template<class TypeTag>
+struct Velocity<TypeTag, TTag:: FVPressureTwoP> { using type = FVVelocity2P<TypeTag> ; };
 //! Set finite volume implementation of the two-phase pressure equation as default pressure model
-SET_TYPE_PROP(FVPressureTwoP, PressureModel, FVPressure2P<TypeTag>);
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::FVPressureTwoP> { using type = FVPressure2P<TypeTag>; };
 //! Allow assembling algorithm for the pressure matrix to assemble only from one side of a cell-cell interface
-SET_BOOL_PROP(FVPressureTwoP, VisitFacesOnlyOnce, true);
+template<class TypeTag>
+struct VisitFacesOnlyOnce<TypeTag, TTag::FVPressureTwoP> { static constexpr bool value = true; };
 
 } // end namespace Properties
 } // end namespace Dumux

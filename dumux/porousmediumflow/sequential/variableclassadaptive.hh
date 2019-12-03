@@ -48,9 +48,9 @@ class VariableClassAdaptive: public VariableClass<TypeTag>
 private:
     using ParentType = VariableClass<TypeTag>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
     using AdaptedValues = typename CellData::AdaptedValues;
 
     using Grid = typename GridView::Grid;
@@ -198,7 +198,7 @@ public:
 
 #if HAVE_MPI
         // communicate ghost data
-        using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+        using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
         using ElementMapper = typename SolutionTypes::ElementMapper;
         using DataHandle = VectorExchange<ElementMapper, std::vector<CellData> >;
         DataHandle dataHandle(problem.elementMapper(), this->cellDataGlobal());

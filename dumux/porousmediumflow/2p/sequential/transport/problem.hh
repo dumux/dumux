@@ -34,10 +34,11 @@ namespace Properties {
 template<class TypeTag>
 struct Model<TypeTag, TTag::TransportTwoP>
 {
-    using type = typename GET_PROP_TYPE(TypeTag, TransportModel);
+    using type = GetPropType<TypeTag, Properties::TransportModel>;
 };
 //this Property should be set by the pressure model, only for a pure transport it is set here for the transportproblem!
-SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>);
+template<class TypeTag>
+struct Velocity<TypeTag, TTag::TransportTwoP> { using type = FVVelocityDefault<TypeTag>; };
 } // end namespace Properties
 
 /*!
@@ -49,24 +50,24 @@ SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>);
 template<class TypeTag>
 class TransportProblem2P : public OneModelProblem<TypeTag>
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using ParentType = OneModelProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
     // material properties
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using Solution = typename SolutionTypes::ScalarSolution;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum {
         dim = Grid::dimension,

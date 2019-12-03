@@ -36,7 +36,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(PressureTwoP, INHERITS_FROM(Pressure, SequentialTwoP));
+// Create new type tags
+namespace TTag {
+struct PressureTwoP { using InheritsFrom = std::tuple<SequentialTwoP, Pressure>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -49,7 +52,8 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(PressureTwoP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel));
+template<class TypeTag>
+struct Model<TypeTag, TTag::PressureTwoP> { using type = GetPropType<TypeTag, Properties::PressureModel>; };
 } // end namespace Properties
 } // end namespace Dumux
 
