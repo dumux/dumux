@@ -28,6 +28,7 @@
 #include <dune/alugrid/grid.hh>
 #endif
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -61,39 +62,46 @@ class Test3D2PProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(ThreeDTwoPTest, INHERITS_FROM(Test3d2pSpatialParams));
+// Create new type tags
+namespace TTag {
+struct ThreeDTwoPTest { using InheritsFrom = std::tuple<Test3d2pSpatialParams>; };
+struct FVTwoPTest { using InheritsFrom = std::tuple<ThreeDTwoPTest, IMPESTwoP, FVTransportTwoP, FVPressureTwoP>; };
+struct FVAdaptiveTwoPTest { using InheritsFrom = std::tuple<ThreeDTwoPTest, IMPESTwoPAdaptive, FVTransportTwoP, FVPressureTwoPAdaptive>; };
+struct MPFALTwoPTest { using InheritsFrom = std::tuple<ThreeDTwoPTest, IMPESTwoP, FVTransportTwoP, FvMpfaL3dPressureTwoP>; };
+struct MPFALAdaptiveTwoPTest { using InheritsFrom = std::tuple<ThreeDTwoPTest, IMPESTwoPAdaptive, FVTransportTwoP, FvMpfaL3dPressureTwoPAdaptive>; };
+struct MimeticTwoPTest { using InheritsFrom = std::tuple<ThreeDTwoPTest, IMPESTwoP, FVTransportTwoP, MimeticPressureTwoP>; };
+struct MimeticAdaptiveTwoPTest { using InheritsFrom = std::tuple<ThreeDTwoPTest, IMPESTwoPAdaptive, FVTransportTwoP, MimeticPressureTwoPAdaptive>; };
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(ThreeDTwoPTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ThreeDTwoPTest> { using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(ThreeDTwoPTest, Problem, Test3D2PProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ThreeDTwoPTest> { using type = Test3D2PProblem<TypeTag>; };
 
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::ThreeDTwoPTest>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 #if PROBLEM == 1
-SET_INT_PROP(ThreeDTwoPTest, Formulation, SequentialTwoPCommonIndices::pnSw);
-SET_TYPE_PROP(ThreeDTwoPTest, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::ThreeDTwoPTest> { static constexpr int value = SequentialTwoPCommonIndices::pnSw; };
+template<class TypeTag>
+struct EvalCflFluxFunction<TypeTag, TTag::ThreeDTwoPTest> { using type = EvalCflFluxCoats<TypeTag>; };
 #endif
 
-SET_TYPE_PROP(ThreeDTwoPTest, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
-
-NEW_TYPE_TAG(FVTwoPTest, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTest));
-NEW_TYPE_TAG(FVAdaptiveTwoPTest, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTest));
-NEW_TYPE_TAG(MPFALTwoPTest, INHERITS_FROM(FvMpfaL3dPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTest));
-NEW_TYPE_TAG(MPFALAdaptiveTwoPTest, INHERITS_FROM(FvMpfaL3dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTest));
-NEW_TYPE_TAG(MimeticTwoPTest, INHERITS_FROM(MimeticPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTest));
-NEW_TYPE_TAG(MimeticAdaptiveTwoPTest, INHERITS_FROM(MimeticPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTest));
+template<class TypeTag>
+struct AdaptionIndicator<TypeTag, TTag::ThreeDTwoPTest> { using type = GridAdaptionIndicator2PLocal<TypeTag>; };
 }
 
 /*!
@@ -112,18 +120,18 @@ class Test3D2PProblem: public IMPESProblem2P<TypeTag>
 {
 using ThisType = Test3D2PProblem<TypeTag>;
 using ParentType = IMPESProblem2P<TypeTag>;
-using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using GridView = GetPropType<TypeTag, Properties::GridView>;
 using Grid = typename GridView::Grid;
 
-using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-using PrimaryVariables = typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables;
+using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using PrimaryVariables = typename GetProp<TypeTag, Properties::SolutionTypes>::PrimaryVariables;
 
 enum
 {
@@ -144,7 +152,7 @@ enum
     satEqIdx = Indices::satEqIdx
 };
 
-using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using Intersection = typename GridView::Intersection;
@@ -157,7 +165,7 @@ Test3D2PProblem(TimeManager& timeManager, Grid& grid) :
 ParentType(timeManager, grid), inflowEdge_(0), outflowEdge_(0)
 {
     int refinementFactor = 0;
-    if (hasParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
+    if (hasParam("Grid.RefinementFactor") && !getPropValue<TypeTag, Properties::AdaptiveGrid>())
     {
         refinementFactor = getParam<Scalar>("Grid.RefinementFactor");
         grid.globalRefine(refinementFactor);

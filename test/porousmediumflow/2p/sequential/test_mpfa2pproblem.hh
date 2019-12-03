@@ -29,6 +29,7 @@
 #endif
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -62,23 +63,41 @@ class MPFATwoPTestProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(MPFATwoPTest, INHERITS_FROM(Test2PSpatialParams));
+// Create new type tags
+namespace TTag {
+struct MPFATwoPTest { using InheritsFrom = std::tuple<Test2PSpatialParams>; };
+struct FVTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoP, FVTransportTwoP, FVPressureTwoP>; };
+struct FVAdaptiveTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoPAdaptive, FVTransportTwoP, FVPressureTwoPAdaptive>; };
+struct MPFAOTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoP, FVTransportTwoP, FvMpfaO2dPressureTwoP>; };
+struct MPFALTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoP, FVTransportTwoP, FvMpfaL2dPressureTwoP>; };
+struct MPFALAdaptiveTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoPAdaptive, FVTransportTwoP, FvMpfaL2dPressureTwoPAdaptive>; };
+// NEW_TYPE_TAG(FVTwoPTest, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
+// NEW_TYPE_TAG(FVAdaptiveTwoPTest, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTest));
+// NEW_TYPE_TAG(MPFAOTwoPTest, INHERITS_FROM(FvMpfaO2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
+// NEW_TYPE_TAG(MPFALTwoPTest, INHERITS_FROM(FvMpfaL2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
+// NEW_TYPE_TAG(MPFALAdaptiveTwoPTest, INHERITS_FROM(FvMpfaL2dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTest));
+
+
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(MPFATwoPTest, Grid, Dune::UGGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::MPFATwoPTest> { using type = Dune::UGGrid<2>; };
 #else
-SET_TYPE_PROP(MPFATwoPTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::MPFATwoPTest> { using type = Dune::YaspGrid<2>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(MPFATwoPTest, Problem, MPFATwoPTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::MPFATwoPTest> { using type = MPFATwoPTestProblem<TypeTag>; };
 
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::MPFATwoPTest>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #if PROBLEM == 2
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
@@ -89,18 +108,14 @@ struct FluidSystem<TypeTag, TTag::MPFATwoPTest>
 };
 
 #if PROBLEM == 1
-SET_INT_PROP(MPFATwoPTest, Formulation, SequentialTwoPCommonIndices::pnsw);
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::MPFATwoPTest> { static constexpr int value = SequentialTwoPCommonIndices::pnsw; };
 #endif
 
-SET_TYPE_PROP(MPFATwoPTest, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
-SET_TYPE_PROP(MPFATwoPTest, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
-
-NEW_TYPE_TAG(FVTwoPTest, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
-NEW_TYPE_TAG(FVAdaptiveTwoPTest, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTest));
-NEW_TYPE_TAG(MPFAOTwoPTest, INHERITS_FROM(FvMpfaO2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
-NEW_TYPE_TAG(MPFALTwoPTest, INHERITS_FROM(FvMpfaL2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
-NEW_TYPE_TAG(MPFALAdaptiveTwoPTest, INHERITS_FROM(FvMpfaL2dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTest));
-
+template<class TypeTag>
+struct EvalCflFluxFunction<TypeTag, TTag::MPFATwoPTest> { using type = EvalCflFluxCoats<TypeTag>; };
+template<class TypeTag>
+struct AdaptionIndicator<TypeTag, TTag::MPFATwoPTest> { using type = GridAdaptionIndicator2PLocal<TypeTag>; };
 }
 
 /*!
@@ -130,17 +145,17 @@ template<class TypeTag>
 class MPFATwoPTestProblem: public IMPESProblem2P<TypeTag>
 {
 using ParentType = IMPESProblem2P<TypeTag>;
-using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using GridView = GetPropType<TypeTag, Properties::GridView>;
 using Grid = typename GridView::Grid;
 
-using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
+using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
 
-using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
 using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
 enum
@@ -161,7 +176,7 @@ enum
     eqIdxSat = Indices::satEqIdx
 };
 
-using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
