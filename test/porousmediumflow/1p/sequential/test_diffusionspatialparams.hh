@@ -24,6 +24,7 @@
 #ifndef TEST_DIFFUSION_SPATIALPARAMS_HH
 #define TEST_DIFFUSION_SPATIALPARAMS_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -39,17 +40,20 @@ class TestDiffusionSpatialParams;
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TestDiffusionSpatialParams);
+namespace TTag {
+struct TestDiffusionSpatialParams {};
+}
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestDiffusionSpatialParams, SpatialParams, TestDiffusionSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TestDiffusionSpatialParams> { using type = TestDiffusionSpatialParams<TypeTag>; };
 
 // Set the material law
 template<class TypeTag>
 struct MaterialLaw<TypeTag, TTag::TestDiffusionSpatialParams>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using RawMaterialLaw = LinearMaterial<Scalar>;
 public:
     using type = EffToAbsLaw<RawMaterialLaw>;
@@ -64,14 +68,14 @@ template<class TypeTag>
 class TestDiffusionSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using IndexSet = typename GridView::IndexSet;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CoordScalar = typename Grid::ctype;
     ///@cond false
-    using ScalarSolution = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
+    using ScalarSolution = typename GetProp<TypeTag, Properties::SolutionTypes>::ScalarSolution;
     ///@endcond
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
@@ -81,7 +85,7 @@ class TestDiffusionSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     const FieldMatrix& intrinsicPermeability (const Element& element) const

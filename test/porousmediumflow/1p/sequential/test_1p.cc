@@ -25,6 +25,7 @@
 #include <config.h>
 
 #include "test_1pproblem.hh"
+#include <dumux/common/properties.hh>
 #include <dumux/common/start.hh>
 
 /*!
@@ -60,7 +61,9 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    using ProblemTypeTag = TTAG(TestOneP);
+    using namespace Dumux;
+
+    using ProblemTypeTag = Properties::TTag::TestOneP;
 
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

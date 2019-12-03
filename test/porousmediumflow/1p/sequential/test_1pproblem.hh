@@ -46,24 +46,30 @@ class TestProblemOneP;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TestOneP, INHERITS_FROM(FVPressureOneP));
+// Create new type tags
+namespace TTag {
+struct TestOneP { using InheritsFrom = std::tuple<FVPressureOneP>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TestOneP, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TestOneP> { using type = Dune::YaspGrid<2>; };
 
 // the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TestOneP>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestOneP, SpatialParams, TestOnePSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TestOneP> { using type = TestOnePSpatialParams<TypeTag>; };
 
 //Set the problem
-SET_TYPE_PROP(TestOneP, Problem, TestProblemOneP<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TestOneP> { using type = TestProblemOneP<TypeTag>; };
 }
 
 /*!
@@ -75,22 +81,22 @@ template<class TypeTag>
 class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 {
     using ParentType = DiffusionProblem1P<TypeTag>;
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
@@ -256,7 +262,7 @@ private:
     }
 
     double delta_;
-    FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
+    FVVelocity<TypeTag, GetPropType<TypeTag, Properties::Velocity> > velocity_;
 };
 } //end namespace
 
