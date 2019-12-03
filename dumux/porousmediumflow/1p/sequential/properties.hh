@@ -47,12 +47,16 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the single-phase problem
-NEW_TYPE_TAG(SequentialOneP, INHERITS_FROM(SequentialModel));
+// Create new type tags
+namespace TTag {
+struct SequentialOneP { using InheritsFrom = std::tuple<SequentialModel>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( Fluid );          // The fluid for one-phase models
+template<class TypeTag, class MyTypeTag>
+struct  Fluid  { using type = UndefinedProperty; };          // The fluid for one-phase models
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -68,25 +72,32 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! Set number of equations to 1 for isothermal one-phase models
-SET_INT_PROP(SequentialOneP, NumEq, 1);
+template<class TypeTag>
+struct NumEq<TypeTag, TTag::SequentialOneP> { static constexpr int value = 1; };
 
 //! Set number of phases to 1 for one-phase models
-SET_INT_PROP(SequentialOneP, NumPhases, 1);
+template<class TypeTag>
+struct NumPhases<TypeTag, TTag::SequentialOneP> { static constexpr int value = 1; };
 
 //! Each phase consists of 1 pure component
-SET_INT_PROP(SequentialOneP, NumComponents, 1);
+template<class TypeTag>
+struct NumComponents<TypeTag, TTag::SequentialOneP> { static constexpr int value = 1; };
 
 //! Chose the set of indices for the one-phase formulation
-SET_TYPE_PROP(SequentialOneP, Indices, SequentialOnePCommonIndices);
+template<class TypeTag>
+struct Indices<TypeTag, TTag::SequentialOneP> { using type = SequentialOnePCommonIndices; };
 
 //! Set general sequential VariableClass as default
-SET_TYPE_PROP(SequentialOneP, Variables, VariableClass<TypeTag>);
+template<class TypeTag>
+struct Variables<TypeTag, TTag::SequentialOneP> { using type = VariableClass<TypeTag>; };
 
 //! Set standart CellData of immiscible one-phase models as default
-SET_TYPE_PROP(SequentialOneP, CellData, CellData1P<TypeTag>);
+template<class TypeTag>
+struct CellData<TypeTag, TTag::SequentialOneP> { using type = CellData1P<TypeTag>; };
 
 //! The spatial parameters to be employed. Use BoxSpatialParams by default.
-SET_TYPE_PROP(SequentialOneP, SpatialParams, SequentialFVSpatialParamsOneP<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::SequentialOneP> { using type = SequentialFVSpatialParamsOneP<TypeTag>; };
 } // end namespace Properties
 } // end namespace Dumux
 #endif

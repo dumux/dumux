@@ -66,23 +66,23 @@ template<class TypeTag> class FVPressureCompositional
 : public FVPressure<TypeTag>
 {
     //the model implementation
-    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using Implementation = GetPropType<TypeTag, Properties::PressureModel>;
     using ParentType = FVPressure<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     ///@cond false
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
     ///@endcond
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -100,8 +100,8 @@ template<class TypeTag> class FVPressureCompositional
     };
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>(),
+        numComponents = getPropValue<TypeTag, Properties::NumComponents>()
     };
 
     // using declarations to abbreviate a dune class...
@@ -171,7 +171,7 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        using ScalarSolutionType = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
+        using ScalarSolutionType = typename GetProp<TypeTag, Properties::SolutionTypes>::ScalarSolution;
         int size = problem_.gridView().size(0);
         ScalarSolutionType *pressureW = writer.allocateManagedBuffer(size);
         ScalarSolutionType *pressureN = writer.allocateManagedBuffer(size);
@@ -375,8 +375,8 @@ public:
         problem_(problem), initializationOutputWriter_(problem.gridView(),"initOutput2p2c"),
         maxError_(0.0), incp_(1.0e1)
     {
-        updateEstimate_.resize(GET_PROP_VALUE(TypeTag, NumPhases));
-        for  (int i=0; i<GET_PROP_VALUE(TypeTag, NumPhases); i++)
+        updateEstimate_.resize(getPropValue<TypeTag, Properties::NumPhases>());
+        for  (int i=0; i<getPropValue<TypeTag, Properties::NumPhases>(); i++)
             updateEstimate_[i].resize(problem.gridView().size(0));
 
         ErrorTermFactor_ = getParam<Scalar>("Impet.ErrorTermFactor");
@@ -401,7 +401,7 @@ protected:
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
     //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static constexpr int pressureType = getPropValue<TypeTag, Properties::PressureFormulation>();
 
 private:
     Problem& problem()
@@ -578,7 +578,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 //get saturation, determine pc
                 sat_0 = problem_.initSat(element);
                 Scalar pc=0.;
-                if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+                if(getPropValue<TypeTag, Properties::EnableCapillarity>())
                 {
                     pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),
                                     sat_0);
@@ -612,7 +612,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 // This may affect pc and hence p_alpha and hence again saturation -> iteration.
 
                 // iterations in case of enabled capillary pressure
-                if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+                if(getPropValue<TypeTag, Properties::EnableCapillarity>())
                 {
                     //start with pc from last TS
                     Scalar pc(cellData.capillaryPressure());

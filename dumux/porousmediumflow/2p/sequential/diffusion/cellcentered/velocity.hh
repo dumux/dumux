@@ -59,22 +59,22 @@ namespace Dumux {
 template<class TypeTag>
 class FVVelocity2P
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
@@ -106,7 +106,7 @@ class FVVelocity2P
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -121,7 +121,7 @@ public:
     FVVelocity2P(Problem& problem) :
     problem_(problem), gravity_(problem.gravity())
     {
-        if (GET_PROP_VALUE(TypeTag, EnableCompressibility) && velocityType_ == vt)
+        if (getPropValue<TypeTag, Properties::EnableCompressibility>() && velocityType_ == vt)
         {
             DUNE_THROW(Dune::NotImplemented,
                     "Total velocity - global pressure - model cannot be used with compressible fluids!");
@@ -314,12 +314,12 @@ private:
     int vtkOutputLevel_;
 
     //! Gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
-    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
+    static const int velocityType_ = getPropValue<TypeTag, Properties::VelocityFormulation>();
+    static const bool compressibility_ = getPropValue<TypeTag, Properties::EnableCompressibility>();
     //! Gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int pressureType_ = getPropValue<TypeTag, Properties::PressureFormulation>();
     //! Gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
 };
 
 /*!

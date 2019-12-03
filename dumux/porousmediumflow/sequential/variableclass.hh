@@ -48,9 +48,9 @@ template<class TypeTag>
 class VariableClass
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     enum
     {

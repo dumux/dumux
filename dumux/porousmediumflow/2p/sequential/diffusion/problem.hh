@@ -38,18 +38,18 @@ namespace Dumux {
 template<class TypeTag>
 class DiffusionProblem2P: public OneModelProblem<TypeTag>
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using ParentType = OneModelProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    using PressureModel = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
+    using PressureModel = GetPropType<TypeTag, Properties::PressureModel>;
 
     // material properties
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 

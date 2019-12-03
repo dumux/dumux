@@ -45,18 +45,18 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 {
     using ParentType = FVPressure2P<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     enum
     {
@@ -72,7 +72,7 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
     using Intersection = typename GridView::Intersection;
@@ -231,17 +231,17 @@ public:
 
 private:
     Problem& problem_;
-    FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity)> velocity_;
+    FVVelocity<TypeTag, GetPropType<TypeTag, Properties::Velocity>> velocity_;
     const GravityVector& gravity_; //!< vector including the gravity constant
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
 
-    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
+    static const bool compressibility_ = getPropValue<TypeTag, Properties::EnableCompressibility>();
     //! gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int pressureType_ = getPropValue<TypeTag, Properties::PressureFormulation>();
     //! gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
 };
 
 /*!
@@ -264,7 +264,7 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         ParentType::getFlux(entry, intersection, cellData, first);
 
         // add the entry only once in case the VisitFacesOnlyOnce option is enabled!!!
-        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && elementI.level() < elementJ.level())
+        if (getPropValue<TypeTag, Properties::VisitFacesOnlyOnce>() && elementI.level() < elementJ.level())
         {
             entry = 0.;
         }

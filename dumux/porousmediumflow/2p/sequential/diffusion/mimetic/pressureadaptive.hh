@@ -60,17 +60,17 @@ namespace Dumux {
  */
 template<class TypeTag> class MimeticPressure2PAdaptive
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
     enum
     {
@@ -86,15 +86,15 @@ template<class TypeTag> class MimeticPressure2PAdaptive
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
         //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-        pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation),
+        pressureType = getPropValue<TypeTag, Properties::PressureFormulation>(),
         //! gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
-        saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation),
+        saturationType = getPropValue<TypeTag, Properties::SaturationFormulation>(),
     };
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
@@ -105,16 +105,16 @@ template<class TypeTag> class MimeticPressure2PAdaptive
 
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    using LocalStiffness = typename GET_PROP_TYPE(TypeTag, LocalStiffness);
+    using LocalStiffness = GetPropType<TypeTag, Properties::LocalStiffness>;
     using TraceType = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
     using OperatorAssembler = MimeticOperatorAssemblerTwoPAdaptive<TypeTag>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
 
-    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
-    using Vector = typename GET_PROP_TYPE(TypeTag, PressureRHSVector);
+    using Matrix = GetPropType<TypeTag, Properties::PressureCoefficientMatrix>;
+    using Vector = GetPropType<TypeTag, Properties::PressureRHSVector>;
 
     //! Initializes the matrix to store the system of equations
     void initializeMatrix();
@@ -472,7 +472,7 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
-        if (GET_PROP_VALUE(TypeTag, EnableCompressibility))
+        if (getPropValue<TypeTag, Properties::EnableCompressibility>())
         {
             DUNE_THROW(Dune::NotImplemented, "Compressibility not supported!");
         }
@@ -502,7 +502,7 @@ private:
 template<class TypeTag>
 void MimeticPressure2PAdaptive<TypeTag>::solve()
 {
-    using Solver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
+    using Solver = GetPropType<TypeTag, Properties::LinearSolver>;
 
     int verboseLevelSolver = getParam<int>("LinearSolver.Verbosity");
 

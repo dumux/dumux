@@ -35,7 +35,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! TypeTag for the two-phase IMPES scheme
-NEW_TYPE_TAG(IMPESTwoP, INHERITS_FROM(IMPET, SequentialTwoP));
+// Create new type tags
+namespace TTag {
+struct IMPESTwoP { using InheritsFrom = std::tuple<SequentialTwoP, IMPET>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags

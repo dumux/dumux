@@ -47,26 +47,26 @@ namespace Dumux
 template<class TypeTag> class FVPressure
 {
     //the model implementation
-    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using Implementation = GetPropType<TypeTag, Properties::PressureModel>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     // using declarations to abbreviate several dune classes...
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
 
     // the typenames used for the stiffness matrix and solution vector
-    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
-    using RHSVector = typename GET_PROP_TYPE(TypeTag, PressureRHSVector);
-    using PressureSolution = typename GET_PROP_TYPE(TypeTag, PressureSolutionVector);
+    using Matrix = GetPropType<TypeTag, Properties::PressureCoefficientMatrix>;
+    using RHSVector = GetPropType<TypeTag, Properties::PressureRHSVector>;
+    using PressureSolution = GetPropType<TypeTag, Properties::PressureSolutionVector>;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
 protected:
 
@@ -436,7 +436,7 @@ void FVPressure<TypeTag>::assemble(bool first)
                     // calculate only from one side (except for hanging nodes), but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
+                    if (getPropValue<TypeTag, Properties::VisitFacesOnlyOnce>()
                         && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
                         && elementNeighbor.partitionType() == Dune::InteriorEntity)
                         continue;
@@ -454,7 +454,7 @@ void FVPressure<TypeTag>::assemble(bool first)
                     A_[eIdxGlobalI][eIdxGlobalJ] -= entries[matrix];
 
                     // The second condition is needed to not spoil the ghost element entries
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
+                    if (getPropValue<TypeTag, Properties::VisitFacesOnlyOnce>()
                         && elementNeighbor.partitionType() == Dune::InteriorEntity)
                     {
                         f_[eIdxGlobalJ] += entries[rhs];
@@ -525,7 +525,7 @@ getSolver(const Problem& problem)
 template<class TypeTag>
 void FVPressure<TypeTag>::solve()
 {
-    using Solver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
+    using Solver = GetPropType<TypeTag, Properties::LinearSolver>;
 
     int verboseLevelSolver = getParam<int>("LinearSolver.Verbosity");
 

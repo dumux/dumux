@@ -43,11 +43,11 @@ template<class TypeTag>
 class CellData2P2C
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluxData = FluxData2P2C<TypeTag>;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
@@ -57,8 +57,8 @@ private:
     };
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>(),
+        numComponents = getPropValue<TypeTag, Properties::NumComponents>()
     };
 protected:
     // primary variable (phase pressure has to be stored in fluidstate)

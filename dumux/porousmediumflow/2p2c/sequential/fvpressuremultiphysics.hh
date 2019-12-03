@@ -69,21 +69,21 @@ template<class TypeTag>
 class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
 {
     using ParentType = FVPressure2P2C<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -107,8 +107,8 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     // convenience shortcuts for Vectors/Matrices
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
-    using PhaseVector = Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)>;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PhaseVector = Dune::FieldVector<Scalar, getPropValue<TypeTag, Properties::NumPhases>()>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     //! @copydoc FVPressure::EntryType
     using EntryType = Dune::FieldVector<Scalar, 2>;
@@ -230,7 +230,7 @@ protected:
     Dune::BlockVector<Dune::FieldVector<int,1> > nextSubdomain;  //!< vector holding next subdomain
     const GlobalPosition& gravity_; //!< vector including the gravity constant
     //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static constexpr int pressureType = getPropValue<TypeTag, Properties::PressureFormulation>();
     Dune::Timer timer_; //!< A timer for the time spent on the multiphysics framework.
 
     /*!
@@ -464,7 +464,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         if (isnan(compress_term) ||isinf(compress_term))
             DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << eIdxGlobalI);
 
-        if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
+        if(!getPropValue<TypeTag, Properties::EnableCompressibility>())
             DUNE_THROW(Dune::NotImplemented, "Compressibility is switched off???");
     }
 
@@ -698,7 +698,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
 
                         // mobility at the boundary
                         Scalar lambdaBound = 0.;
-                        switch (GET_PROP_VALUE(TypeTag, BoundaryMobility))
+                        switch (getPropValue<TypeTag, Properties::BoundaryMobility>())
                         {
                         case Indices::satDependent:
                             {
@@ -936,7 +936,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     // the next 2p subdomain
     PhaseVector pressure(0.);
     Scalar pc = 0;
-    if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+    if(getPropValue<TypeTag, Properties::EnableCapillarity>())
         pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
             ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign sw = 1 if wPhase present, else 0
     if(pressureType == wPhaseIdx)

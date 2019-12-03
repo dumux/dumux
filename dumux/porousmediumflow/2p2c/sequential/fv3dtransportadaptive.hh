@@ -52,27 +52,27 @@ namespace Dumux {
 template<class TypeTag>
 class FV3dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
-    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
+    using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld,
-        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        NumPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
     enum
     {
@@ -97,7 +97,7 @@ class FV3dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
     using PhaseVector = Dune::FieldVector<Scalar, NumPhases>;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     //! Acess function for the current problem
     Problem& problem()
@@ -135,7 +135,7 @@ protected:
     bool enableMPFA; //!> Specifies if the MPFA is used on hanging nodes
 
     //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int pressureType = getPropValue<TypeTag, Properties::PressureFormulation>();
 };
 
 /*!
@@ -170,7 +170,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
 
     // resize update vector and set to zero
     int size_ = problem_.gridView().size(0);
-    updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
+    updateVec.resize(getPropValue<TypeTag, Properties::NumComponents>());
     updateVec[wCompIdx].resize(size_);
     updateVec[nCompIdx].resize(size_);
     updateVec[wCompIdx] = 0;
@@ -185,7 +185,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
         for (int i = 0; i< problem().gridView().size(0); i++)
         {
             CellData& cellDataI = problem().variables().cellData(i);
-            for(int compIdx = 0; compIdx < GET_PROP_VALUE(TypeTag, NumComponents); compIdx++)
+            for(int compIdx = 0; compIdx < getPropValue<TypeTag, Properties::NumComponents>(); compIdx++)
             {
                 this->totalConcentration_[compIdx][i]
                         = cellDataI.totalConcentration(compIdx);
@@ -301,7 +301,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
 
 #if HAVE_MPI
     // communicate updated values
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
     using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     for (int i = 0; i < updateVec.size(); i++)

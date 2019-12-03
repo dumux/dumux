@@ -72,8 +72,8 @@ class CROperatorAssemblerTwoP
             return gt.dim() == dim-1;
         }
     };
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     enum {dim=GridView::dimension};
     using IS = typename GridView::IndexSet;
     using BlockType = Dune::FieldMatrix<Scalar, 1, 1>;
@@ -85,7 +85,7 @@ class CROperatorAssemblerTwoP
     using SatType = Dune::BlockVector< Dune::FieldVector<double, 1> >;
     using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum
     {
         pressureEqIdx = Indices::pressureEqIdx,

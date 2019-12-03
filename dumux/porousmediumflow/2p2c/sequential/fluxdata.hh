@@ -42,9 +42,9 @@ template<class TypeTag>
 class FluxData2P2C
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
@@ -53,7 +53,7 @@ private:
 
     enum
     {
-        numEquations = GET_PROP_VALUE(TypeTag, NumEq)
+        numEquations = getPropValue<TypeTag, Properties::NumEq>()
     };
 
     enum
@@ -64,7 +64,7 @@ private:
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
     typename Dune::BlockVector<typename Dune::FieldVector<bool, numEquations>> isUpwindCell_;

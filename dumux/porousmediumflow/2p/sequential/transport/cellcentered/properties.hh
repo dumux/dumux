@@ -24,7 +24,7 @@
 #ifndef DUMUX_FV_TRANSPORT_PROPERTIES_2P_HH
 #define DUMUX_FV_TRANSPORT_PROPERTIES_2P_HH
 
-#include <dumux/common/properties/propertysystemmacros.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 
 namespace Dumux {
@@ -36,14 +36,18 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for two-phase problems using a standard finite volume model
-NEW_TYPE_TAG(FVTransportTwoP, INHERITS_FROM(TransportTwoP));
+// Create new type tags
+namespace TTag {
+struct FVTransportTwoP { using InheritsFrom = std::tuple<TransportTwoP>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 //! Bool property which tells the transport model if it should use constitutive relations which
 //! are precomputed at the begin of the time step or if it should recompute the relations
-NEW_PROP_TAG( PrecomputedConstRels );
+template<class TypeTag, class MyTypeTag>
+struct  PrecomputedConstRels  { using type = UndefinedProperty; };
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -55,15 +59,20 @@ NEW_PROP_TAG( PrecomputedConstRels );
 namespace Dumux {
 namespace Properties {
 //! Set the default implementation of the cfl-condition
-SET_TYPE_PROP(FVTransportTwoP, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
+template<class TypeTag>
+struct EvalCflFluxFunction<TypeTag, TTag::FVTransportTwoP> { using type = EvalCflFluxDefault<TypeTag>; };
 //! Set the default implementation of a diffusive flux -> diffusive flux dissabled
-SET_TYPE_PROP(FVTransportTwoP, CapillaryFlux, DiffusivePart<TypeTag>);
+template<class TypeTag>
+struct CapillaryFlux<TypeTag, TTag::FVTransportTwoP> { using type = DiffusivePart<TypeTag>; };
 //! Set the default implementation of an additional convective flux -> additional convective flux dissabled
-SET_TYPE_PROP(FVTransportTwoP, GravityFlux, ConvectivePart<TypeTag>);
+template<class TypeTag>
+struct GravityFlux<TypeTag, TTag::FVTransportTwoP> { using type = ConvectivePart<TypeTag>; };
 //! Set PrecomputedConstRels flag <tt>true</tt> as default
-SET_BOOL_PROP( FVTransportTwoP, PrecomputedConstRels, true);
+template<class TypeTag>
+struct PrecomputedConstRels<TypeTag, TTag:: FVTransportTwoP> { static constexpr bool value = true; };
 //! Set finite volume implementation of the two-phase saturation equation as default saturation model
-SET_TYPE_PROP(FVTransportTwoP, TransportModel, FVSaturation2P<TypeTag>);
+template<class TypeTag>
+struct TransportModel<TypeTag, TTag::FVTransportTwoP> { using type = FVSaturation2P<TypeTag>; };
 } // end namespace Properties
 } // end namespace Dumux
 

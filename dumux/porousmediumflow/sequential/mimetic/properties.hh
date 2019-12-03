@@ -30,6 +30,7 @@
 #define DUMUX_MIMETICPROPERTIES_SEQUENTIAL_HH
 
 //Dumux-includes
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 namespace Dumux
 {
@@ -49,13 +50,16 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models using a mimetic method
-NEW_TYPE_TAG(Mimetic)
-;
+namespace TTag {
+struct Mimetic {};
+}
+
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( LocalStiffness); //!< The local mimetic operator
+template<class TypeTag, class MyTypeTag>
+struct LocalStiffness { using type = UndefinedProperty; };
 
 }
 }

@@ -192,10 +192,10 @@ class FvMpfaL3dInteractionVolumeAdaptive:public FvMpfaL3dInteractionVolume<TypeT
 {
 private:
     using ParentType = FvMpfaL3dInteractionVolume<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     enum
     {
@@ -206,8 +206,8 @@ private:
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementSeed = typename Grid::template Codim<0>::EntitySeed;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
     using DimVector = Dune::FieldVector<Scalar, dim>;

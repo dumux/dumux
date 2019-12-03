@@ -75,36 +75,36 @@ template<class TypeTag>
 class FVSaturation2P: public FVTransport<TypeTag>
 {
     using ParentType = FVTransport<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, TransportModel);
+    using Implementation = GetPropType<TypeTag, Properties::TransportModel>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using Velocity = typename GET_PROP_TYPE(TypeTag, Velocity);
-    using CapillaryFlux = typename GET_PROP_TYPE(TypeTag, CapillaryFlux);
-    using GravityFlux = typename GET_PROP_TYPE(TypeTag, GravityFlux);
+    using Velocity = GetPropType<TypeTag, Properties::Velocity>;
+    using CapillaryFlux = GetPropType<TypeTag, Properties::CapillaryFlux>;
+    using GravityFlux = GetPropType<TypeTag, Properties::GravityFlux>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     enum
     {
@@ -123,10 +123,10 @@ class FVSaturation2P: public FVTransport<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx,
         saturationIdx = Indices::saturationIdx,
         satEqIdx = Indices::satEqIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
-    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
+    using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
@@ -514,10 +514,10 @@ private:
     int vtkOutputLevel_;
     Scalar porosityThreshold_;
 
-    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const bool compressibility_ = getPropValue<TypeTag, Properties::EnableCompressibility>();
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
+    static const int velocityType_ = getPropValue<TypeTag, Properties::VelocityFormulation>();
+    static const int pressureType_ = getPropValue<TypeTag, Properties::PressureFormulation>();
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];

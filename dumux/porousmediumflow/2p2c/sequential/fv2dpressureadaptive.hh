@@ -77,16 +77,16 @@ template<class TypeTag> class FV2dPressure2P2CAdaptive
 : public FVPressure2P2C<TypeTag>
 {
     //the model implementation
-    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using Implementation = GetPropType<TypeTag, Properties::PressureModel>;
     using BaseType = FVPressure<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -114,10 +114,10 @@ template<class TypeTag> class FV2dPressure2P2CAdaptive
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using TransmissivityMatrix = Dune::FieldVector<Scalar,dim+1>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
-    using PhaseVector = Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)>;
+    using PhaseVector = Dune::FieldVector<Scalar, getPropValue<TypeTag, Properties::NumPhases>()>;
 
     // the typenames used for the stiffness matrix and solution vector
-    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
+    using Matrix = GetPropType<TypeTag, Properties::PressureCoefficientMatrix>;
 
     using TransmissibilityCalculator = FvMpfaL2dTransmissibilityCalculator<TypeTag>;
 protected:
@@ -411,7 +411,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                     // calculate only from one side, but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
+                    if (getPropValue<TypeTag, Properties::VisitFacesOnlyOnce>()
                         && (globalIdxI > globalIdxJ) && haveSameLevel
                         && elementNeighbor.partitionType() == Dune::InteriorEntity)
                         continue;
@@ -436,7 +436,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                         this->A_[globalIdxI][globalIdxJ] -= entries[matrix];
 
                         // The second condition is needed to not spoil the ghost element entries
-                        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
+                        if (getPropValue<TypeTag, Properties::VisitFacesOnlyOnce>()
                             && elementNeighbor.partitionType() == Dune::InteriorEntity)
                         {
                             this->f_[globalIdxJ] += entries[rhs];

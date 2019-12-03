@@ -51,11 +51,11 @@ namespace Dumux {
 template<class TypeTag>
 class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     // grid types
     enum
@@ -70,7 +70,7 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
         saturationIdx = Indices::saturationIdx,
         pressureEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
     enum
     {
@@ -82,21 +82,21 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
         //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-        pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation),
+        pressureType = getPropValue<TypeTag, Properties::PressureFormulation>(),
         //! gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
-        saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation)
+        saturationType = getPropValue<TypeTag, Properties::SaturationFormulation>()
     };
 
     using Grid = typename GridView::Grid;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
 
 public:
     // define the number of components of your system, this is used outside

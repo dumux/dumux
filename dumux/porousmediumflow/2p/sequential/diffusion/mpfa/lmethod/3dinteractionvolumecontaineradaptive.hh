@@ -47,19 +47,19 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
 {
     friend class FvMpfaL3dInteractionVolumeContainer<TypeTag>;
     using ParentType = FvMpfaL3dInteractionVolumeContainer<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld
         };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
@@ -81,7 +81,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
 public:
     //! Type for storing an MPFA-interaction-volume.
     //! (Usually of type FvMpfaL3dInteractionVolume or FvMpfaL3dInteractionVolumeAdaptive)
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
+    using InteractionVolume = GetPropType<TypeTag, Properties::MPFAInteractionVolume>;
 
 private:
 
@@ -120,7 +120,7 @@ public:
     }
 
 private:
-    using Implementation = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer);
+    using Implementation = GetPropType<TypeTag, Properties::MPFAInteractionVolumeContainer>;
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()

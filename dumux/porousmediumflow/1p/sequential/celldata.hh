@@ -47,7 +47,7 @@ template<class TypeTag>
 class CellData1P
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluxData = FluxData1P<TypeTag>;
 
 private:

@@ -21,7 +21,7 @@
 #define DUMUX_ONE_MODEL_PROBLEM_HH
 
 #include <dune/common/shared_ptr.hh>
-#include <dumux/common/properties/propertysystemmacros.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
@@ -45,21 +45,21 @@ template<class TypeTag>
 class OneModelProblem
 {
 private:
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
 
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
     using VtkMultiWriter = Dumux::VtkMultiWriter<GridView>;
 
-    using Variables = typename GET_PROP_TYPE(TypeTag, Variables);
+    using Variables = GetPropType<TypeTag, Properties::Variables>;
 
-    using Model = typename GET_PROP_TYPE(TypeTag, Model);
+    using Model = GetPropType<TypeTag, Properties::Model>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using VertexMapper = typename SolutionTypes::VertexMapper;
     using ElementMapper = typename SolutionTypes::ElementMapper;
 
@@ -78,7 +78,7 @@ private:
     using Intersection = typename GridView::Intersection;
 
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     // private!! copy constructor
     OneModelProblem(const OneModelProblem&)

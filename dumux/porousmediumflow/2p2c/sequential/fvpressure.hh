@@ -72,22 +72,22 @@ template<class TypeTag> class FVPressure2P2C
 : public FVPressureCompositional<TypeTag>
 {
     //the model implementation
-    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using Implementation = GetPropType<TypeTag, Properties::PressureModel>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -125,11 +125,11 @@ template<class TypeTag> class FVPressure2P2C
     // convenience shortcuts for Vectors/Matrices
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
-    using PhaseVector = Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)>;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PhaseVector = Dune::FieldVector<Scalar, getPropValue<TypeTag, Properties::NumPhases>()>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     // the typenames used for the stiffness matrix and solution vector
-    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
+    using Matrix = GetPropType<TypeTag, Properties::PressureCoefficientMatrix>;
 
 protected:
     //! @copydoc FVPressure::EntryType
@@ -169,7 +169,7 @@ public:
         ErrorTermUpperBound_ = getParam<Scalar>("Impet.ErrorTermUpperBound");
 
         enableVolumeIntegral = getParam<bool>("Impet.EnableVolumeIntegral");
-        regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
+        regulateBoundaryPermeability = getPropValue<TypeTag, Properties::RegulateBoundaryPermeability>();
         if(regulateBoundaryPermeability)
         {
             minimalBoundaryPermeability = getParam<Scalar>("SpatialParams.MinBoundaryPermeability");
@@ -187,7 +187,7 @@ protected:
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
     //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static constexpr int pressureType = getPropValue<TypeTag, Properties::PressureFormulation>();
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -288,7 +288,7 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
         if (isnan(compress_term) || isinf(compress_term))
             DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << eIdxGlobalI);
 
-        if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
+        if(!getPropValue<TypeTag, Properties::EnableCompressibility>())
             DUNE_THROW(Dune::NotImplemented, "Compressibility is switched off???");
     }
 
@@ -744,14 +744,14 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
                 FluidSystem::viscosity(BCfluidState, nPhaseIdx);
 
             // mobility at the boundary
-            if(GET_PROP_VALUE(TypeTag, BoundaryMobility) == Indices::satDependent)
+            if(getPropValue<TypeTag, Properties::BoundaryMobility>() == Indices::satDependent)
             {
                 lambdaWBound = BCfluidState.saturation(wPhaseIdx)
                         / viscosityWBound;
                 lambdaNWBound = BCfluidState.saturation(nPhaseIdx)
                         / viscosityNWBound;
             }
-            else if(GET_PROP_VALUE(TypeTag, BoundaryMobility) == Indices::permDependent)
+            else if(getPropValue<TypeTag, Properties::BoundaryMobility>() == Indices::permDependent)
             {
                 lambdaWBound
                     = MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI),
@@ -953,7 +953,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
 
     PhaseVector pressure;
     CompositionalFlash<Scalar, FluidSystem> flashSolver;
-    if(GET_PROP_VALUE(TypeTag, EnableCapillarity)) // iterate capillary pressure and saturation
+    if(getPropValue<TypeTag, Properties::EnableCapillarity>()) // iterate capillary pressure and saturation
     {
         unsigned int maxiter = 6;
         Scalar pc = cellData.capillaryPressure(); // initial guess for pc from last TS

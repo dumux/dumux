@@ -44,12 +44,12 @@ template<class TypeTag>
 class CellData2P2CMultiPhysics : public CellData2P2C<TypeTag>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SimpleFluidState = PseudoOnePTwoCFluidState<Scalar, FluidSystem>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {

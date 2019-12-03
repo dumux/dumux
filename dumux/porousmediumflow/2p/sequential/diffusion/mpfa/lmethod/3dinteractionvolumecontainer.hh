@@ -44,22 +44,23 @@ namespace Dumux {
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeContainer
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Implementation = GetPropType<TypeTag, Properties::MPFAInteractionVolumeContainer>;
 
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld
         };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
@@ -90,7 +91,7 @@ class FvMpfaL3dInteractionVolumeContainer
 
 public:
     //! Type for storing an MPFA-interaction-volume. (Usually of type FvMpfaL3dInteractionVolume or FvMpfaL3dInteractionVolumeAdaptive)
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
+    using InteractionVolume = GetPropType<TypeTag, Properties::MPFAInteractionVolume>;
 
 private:
     using GlobalInteractionVolumeVector = std::vector<InteractionVolume>;

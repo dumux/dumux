@@ -54,15 +54,15 @@ namespace Dumux {
 template<class TypeTag>
 class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
-    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
+    using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
 
     enum
     {
@@ -75,7 +75,7 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
     };
 
     using PhaseVector = Dune::FieldVector<Scalar, 2>;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     //! Acess function for the current problem
     Problem& problem()
@@ -132,7 +132,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     this->averagedFaces_ = 0.;
 
     // resize update vector and set to zero
-    updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
+    updateVec.resize(getPropValue<TypeTag, Properties::NumComponents>());
     updateVec[wCompIdx].resize(problem().gridView().size(0));
     updateVec[nCompIdx].resize(problem().gridView().size(0));
     updateVec[wCompIdx] = 0;
@@ -234,7 +234,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 
 #if HAVE_MPI
     // communicate updated values
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
     using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     for (int i = 0; i < updateVec.size(); i++)

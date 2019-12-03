@@ -50,22 +50,22 @@ namespace Dumux
 template<class TypeTag>
 class FVTransport
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, TransportModel);
+    using Implementation = GetPropType<TypeTag, Properties::TransportModel>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld
         };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
-    using EvalCflFluxFunction = typename GET_PROP_TYPE(TypeTag, EvalCflFluxFunction);
+    using EvalCflFluxFunction = GetPropType<TypeTag, Properties::EvalCflFluxFunction>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
@@ -414,7 +414,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
 
 #if HAVE_MPI
     // communicate updated values
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
     using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     DataHandle dataHandle(problem_.elementMapper(), updateVec);
@@ -547,7 +547,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
 
 #if HAVE_MPI
     // communicate updated values
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
     using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
 

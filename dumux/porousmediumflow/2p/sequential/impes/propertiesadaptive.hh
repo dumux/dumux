@@ -39,7 +39,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //!  TypeTag for grid-adaptive two-phase IMPES scheme
-NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, SequentialTwoP));
+// Create new type tags
+namespace TTag {
+struct IMPESTwoPAdaptive { using InheritsFrom = std::tuple<SequentialTwoP, IMPET>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -56,15 +59,20 @@ NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, SequentialTwoP));
 namespace Dumux {
 namespace Properties {
 //! Enable adaptive grid
-SET_BOOL_PROP(IMPESTwoPAdaptive, AdaptiveGrid, true);
+template<class TypeTag>
+struct AdaptiveGrid<TypeTag, TTag::IMPESTwoPAdaptive> { static constexpr bool value = true; };
 //! Set variable class for adaptive impet schemes
-SET_TYPE_PROP(IMPESTwoPAdaptive, Variables, VariableClassAdaptive<TypeTag>);
+template<class TypeTag>
+struct Variables<TypeTag, TTag::IMPESTwoPAdaptive> { using type = VariableClassAdaptive<TypeTag>; };
 //! Set cell data class for adaptive two-phase IMPES schemes
-SET_TYPE_PROP(IMPESTwoPAdaptive, CellData, CellData2PAdaptive<TypeTag>);
+template<class TypeTag>
+struct CellData<TypeTag, TTag::IMPESTwoPAdaptive> { using type = CellData2PAdaptive<TypeTag>; };
 //! Set the standard indicator class of two-phase models for adaption or coarsening
-SET_TYPE_PROP(IMPESTwoPAdaptive, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
+template<class TypeTag>
+struct AdaptionIndicator<TypeTag, TTag::IMPESTwoPAdaptive> { using type = GridAdaptionIndicator2P<TypeTag>; };
 //! Set default class for adaptation initialization indicator
-SET_TYPE_PROP(IMPESTwoPAdaptive,  AdaptionInitializationIndicator, GridAdaptInitializationIndicator<TypeTag>);
+template<class TypeTag>
+struct AdaptionInitializationIndicator<TypeTag, TTag::IMPESTwoPAdaptive> { using type = GridAdaptInitializationIndicator<TypeTag>; };
 } // end namespace Properties
 } // end namespace Dumux
 

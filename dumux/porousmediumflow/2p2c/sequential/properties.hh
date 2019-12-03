@@ -52,15 +52,21 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 //! The type tag for the compositional two-phase problems
-NEW_TYPE_TAG(SequentialTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
+// Create new type tags
+namespace TTag {
+struct SequentialTwoPTwoC { using InheritsFrom = std::tuple<Transport, IMPET, Pressure>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( EnableCapillarity); //!< Returns whether capillarity is regarded
-NEW_PROP_TAG( BoundaryMobility ); //!< Returns whether mobility or saturation is used for Dirichlet B.C.
+template<class TypeTag, class MyTypeTag>
+struct  EnableCapillarity { using type = UndefinedProperty; }; //!< Returns whether capillarity is regarded
+template<class TypeTag, class MyTypeTag>
+struct  BoundaryMobility  { using type = UndefinedProperty; }; //!< Returns whether mobility or saturation is used for Dirichlet B.C.
 //! A minimum permeability can be assigned via the runtime-Parameter SpatialParams.minBoundaryPermeability
-NEW_PROP_TAG( RegulateBoundaryPermeability );
+template<class TypeTag, class MyTypeTag>
+struct  RegulateBoundaryPermeability  { using type = UndefinedProperty; };
 }}
 
 //DUMUX includes
@@ -73,9 +79,11 @@ namespace Properties {
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_TYPE_PROP(SequentialTwoPTwoC, Indices,SequentialTwoPTwoCIndices<TypeTag>);
+template<class TypeTag>
+struct Indices<TypeTag, TTag::SequentialTwoPTwoC> { using type = SequentialTwoPTwoCIndices<TypeTag>; };
 
-SET_INT_PROP(SequentialTwoPTwoC, NumEq, 3);
+template<class TypeTag>
+struct NumEq<TypeTag, TTag::SequentialTwoPTwoC> { static constexpr int value = 3; };
 
 // set fluid/component information
 template<class TypeTag>
@@ -83,7 +91,7 @@ struct NumPhases<TypeTag, TTag::SequentialTwoPTwoC> //!< The number of phases in
 {
     // the property is declared in dumux/porousmediumflow/sequential/properties.hh
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
 public:
     static const int value = FluidSystem::numPhases;
@@ -95,7 +103,7 @@ template<class TypeTag>
 struct NumComponents<TypeTag, TTag::SequentialTwoPTwoC> //!< The number of components in the 2p2c model is 2
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
 public:
     static const int value = FluidSystem::numComponents;
@@ -104,44 +112,49 @@ public:
 };
 
 //! Set the default formulation
-SET_INT_PROP(SequentialTwoPTwoC,
-        PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureN);
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::SequentialTwoPTwoC> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::pressureN; }; //!< Compositional models are very likely compressible
 
-SET_INT_PROP(SequentialTwoPTwoC,
-        SaturationFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::saturationW);
+template<class TypeTag>
+struct SaturationFormulation<TypeTag, TTag::SequentialTwoPTwoC> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::saturationW; }; //!< Compositional models are very likely compressible
 
-SET_INT_PROP(SequentialTwoPTwoC,
-        VelocityFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::velocityW);
+template<class TypeTag>
+struct VelocityFormulation<TypeTag, TTag::SequentialTwoPTwoC> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::velocityW; }; //!< Compositional models are very likely compressible
 
 template<class TypeTag>
 struct TransportSolutionType<TypeTag, TTag::SequentialTwoPTwoC>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     //! type for vector of vector (of scalars)
     using type = Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> > >;
 
 };
 
-SET_BOOL_PROP(SequentialTwoPTwoC, EnableCompressibility, true); //!< Compositional models are very likely compressible
-SET_BOOL_PROP(SequentialTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
-SET_BOOL_PROP(SequentialTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
+template<class TypeTag>
+struct EnableCompressibility<TypeTag, TTag::SequentialTwoPTwoC> { static constexpr bool value = true; }; //!< Compositional models are very likely compressible
+template<class TypeTag>
+struct VisitFacesOnlyOnce<TypeTag, TTag::SequentialTwoPTwoC> { static constexpr bool value = false; }; //!< Faces are regarded from both sides
+template<class TypeTag>
+struct EnableCapillarity<TypeTag, TTag::SequentialTwoPTwoC> { static constexpr bool value = false; }; //!< Capillarity is enabled
 
 template<class TypeTag>
 struct BoundaryMobility<TypeTag, TTag::SequentialTwoPTwoC> //!< Saturation scales flux on Dirichlet B.C.
 {    static const int value = SequentialTwoPTwoCIndices<TypeTag>::satDependent;};
 
-SET_TYPE_PROP(SequentialTwoPTwoC, Variables, VariableClass<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoC, CellData, CellData2P2C<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, CompositionalFluidState<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FluidSystem)>);
+template<class TypeTag>
+struct Variables<TypeTag, TTag::SequentialTwoPTwoC> { using type = VariableClass<TypeTag>; };
+template<class TypeTag>
+struct CellData<TypeTag, TTag::SequentialTwoPTwoC> { using type = CellData2P2C<TypeTag>; };
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::SequentialTwoPTwoC> { using type = CompositionalFluidState<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::FluidSystem>>; };
 
 
 //! The spatial parameters to be employed.
-SET_TYPE_PROP(SequentialTwoPTwoC, SpatialParams, SequentialFVSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::SequentialTwoPTwoC> { using type = SequentialFVSpatialParams<TypeTag>; };
 //! Switch off permeability regularization at Dirichlet boundaries by default.
-SET_BOOL_PROP(SequentialTwoPTwoC, RegulateBoundaryPermeability, false);
+template<class TypeTag>
+struct RegulateBoundaryPermeability<TypeTag, TTag::SequentialTwoPTwoC> { static constexpr bool value = false; };
 }
 
 /*!
@@ -156,7 +169,7 @@ template <class TypeTag>
 struct SequentialTwoPTwoCIndices : public SequentialTwoPCommonIndices
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
 public:
     // Component indices

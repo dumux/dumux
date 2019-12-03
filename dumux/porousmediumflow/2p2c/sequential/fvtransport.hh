@@ -58,23 +58,23 @@ namespace Dumux {
 template<class TypeTag>
 class FVTransport2P2C
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, TransportModel);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Implementation = GetPropType<TypeTag, Properties::TransportModel>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
-    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
+    using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
 
     enum
     {
@@ -90,8 +90,8 @@ class FVTransport2P2C
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
         contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx,
-        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        NumComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+        NumPhases = getPropValue<TypeTag, Properties::NumPhases>(),
+        NumComponents = getPropValue<TypeTag, Properties::NumComponents>()
     };
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
@@ -101,7 +101,7 @@ class FVTransport2P2C
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
     using PhaseVector = Dune::FieldVector<Scalar, NumPhases>;
     using ComponentVector = Dune::FieldVector<Scalar, NumComponents>;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
 public:
     //! @copydoc FVPressure::EntryType
@@ -154,7 +154,7 @@ public:
     void initialize()
     {
         // resize update vector and set to zero
-        int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
+        int transportedQuantities = getPropValue<TypeTag, Properties::NumEq>() - 1; // NumEq - 1 pressure Eq
         totalConcentration_.resize(transportedQuantities);
         for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
         {
@@ -172,7 +172,7 @@ public:
     {
         if(problem().vtkOutputLevel()>3)
         {
-            using ScalarSolutionType = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
+            using ScalarSolutionType = typename GetProp<TypeTag, Properties::SolutionTypes>::ScalarSolution;
             int size = problem_.gridView().size(0);
             ScalarSolutionType *totalC1PV = writer.allocateManagedBuffer(size);
             ScalarSolutionType *totalC2PV = writer.allocateManagedBuffer(size);
@@ -212,8 +212,8 @@ public:
     void getTransportedQuantity(TransportSolutionType& transportedQuantity)
     {
         // resize update vector and set to zero
-        transportedQuantity.resize((GET_PROP_VALUE(TypeTag, NumEq) - 1));
-        for(int compIdx = 0; compIdx < (GET_PROP_VALUE(TypeTag, NumEq) - 1); compIdx++)
+        transportedQuantity.resize((getPropValue<TypeTag, Properties::NumEq>() - 1));
+        for(int compIdx = 0; compIdx < (getPropValue<TypeTag, Properties::NumEq>() - 1); compIdx++)
             transportedQuantity[compIdx].resize(problem_.gridView().size(0));
 
         transportedQuantity = totalConcentration_;
@@ -245,7 +245,7 @@ public:
     template<class DataEntry>
     bool inPhysicalRange(DataEntry& entry)
     {
-        int numComp = GET_PROP_VALUE(TypeTag, NumEq) - 1;
+        int numComp = getPropValue<TypeTag, Properties::NumEq>() - 1;
         for(int compIdx = 0; compIdx < numComp; compIdx++)
         {
             if (entry[compIdx] < -1.0e-6)
@@ -276,7 +276,7 @@ public:
         dtThreshold_(1e-6), subCFLFactor_(1.0)
     {
         restrictFluxInTransport_ = getParam<int>("Impet.RestrictFluxInTransport", 0);
-        regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
+        regulateBoundaryPermeability = getPropValue<TypeTag, Properties::RegulateBoundaryPermeability>();
         if(regulateBoundaryPermeability)
             minimalBoundaryPermeability = getParam<Scalar>("SpatialParams.MinBoundaryPermeability");
 
@@ -303,7 +303,7 @@ protected:
     int averagedFaces_; //!< number of faces were flux was restricted
 
     //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int pressureType = getPropValue<TypeTag, Properties::PressureFormulation>();
     //! Restriction of flux on new pressure field if direction reverses from the pressure equation
     int restrictFluxInTransport_;
     //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
@@ -377,7 +377,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     averagedFaces_ = 0;
 
     // resize update vector and set to zero
-    updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
+    updateVec.resize(getPropValue<TypeTag, Properties::NumComponents>());
     updateVec[wCompIdx].resize(problem_.gridView().size(0));
     updateVec[nCompIdx].resize(problem_.gridView().size(0));
     updateVec[wCompIdx] = 0;
@@ -477,7 +477,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
 #if HAVE_MPI
     // communicate updated values
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
     using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     for (int i = 0; i < updateVec.size(); i++)
@@ -551,7 +551,7 @@ void FVTransport2P2C<TypeTag>::updateConcentrations(TransportSolutionType& updat
     for (int i = 0; i< problem().gridView().size(0); i++)
     {
         CellData& cellDataI = problem().variables().cellData(i);
-        for(int compIdx = 0; compIdx < GET_PROP_VALUE(TypeTag, NumComponents); compIdx++)
+        for(int compIdx = 0; compIdx < getPropValue<TypeTag, Properties::NumComponents>(); compIdx++)
         {
             totalConcentration_[compIdx][i] += (updateVector[compIdx][i]*=dt);
             cellDataI.setMassConcentration(compIdx, totalConcentration_[compIdx][i]);
@@ -967,7 +967,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
         Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
         Scalar viscosityWBound = FluidSystem::viscosity(BCfluidState, wPhaseIdx);
         Scalar viscosityNWBound = FluidSystem::viscosity(BCfluidState, nPhaseIdx);
-        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+        if(getPropValue<TypeTag, Properties::EnableCapillarity>())
             pcBound = (BCfluidState.pressure(nPhaseIdx) - BCfluidState.pressure(wPhaseIdx));
         // average
         double densityW_mean = (densityWI + densityWBound) / 2;
@@ -1007,7 +1007,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
             lambda[wPhaseIdx] = cellDataI.mobility(wPhaseIdx);
         else
             {
-            if(GET_PROP_VALUE(TypeTag, BoundaryMobility)==Indices::satDependent)
+            if(getPropValue<TypeTag, Properties::BoundaryMobility>()==Indices::satDependent)
                 lambda[wPhaseIdx] = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
             else
                 lambda[wPhaseIdx] = MaterialLaw::krw(
@@ -1018,7 +1018,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
             lambda[nPhaseIdx] = cellDataI.mobility(nPhaseIdx);
         else
             {
-            if(GET_PROP_VALUE(TypeTag, BoundaryMobility)==Indices::satDependent)
+            if(getPropValue<TypeTag, Properties::BoundaryMobility>()==Indices::satDependent)
                 lambda[nPhaseIdx] = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
             else
                 lambda[nPhaseIdx] = MaterialLaw::krn(
@@ -1123,7 +1123,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     if (bcType == Indices::saturation)
     {
         Scalar satBound = primaryVariablesOnBoundary[contiWEqIdx];
-        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+        if(getPropValue<TypeTag, Properties::EnableCapillarity>())
         {
             Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
                     satBound);
@@ -1157,7 +1157,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         flashSolver.concentrationFlash2p2c(BCfluidState, Z0Bound, pressBound,
             problem().spatialParams().porosity(element), problem().temperatureAtPos(globalPosFace));
 
-        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+        if(getPropValue<TypeTag, Properties::EnableCapillarity>())
         {
             Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
                     BCfluidState.saturation(wPhaseIdx));
@@ -1316,7 +1316,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
 
 #if HAVE_MPI
     // communicate updated values
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
     using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
 
@@ -1361,7 +1361,7 @@ void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
                 for (int i = 0; i < size; i++)
                 {
                     EntryType newVal(0);
-                    int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
+                    int transportedQuantities = getPropValue<TypeTag, Properties::NumEq>() - 1; // NumEq - 1 pressure Eq
                     for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
                     {
                         newVal[eqNumber] = totalConcentration_[eqNumber][i];

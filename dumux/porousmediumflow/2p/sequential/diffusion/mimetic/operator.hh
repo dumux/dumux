@@ -45,32 +45,32 @@ class MimeticOperatorAssemblerTwoP: public CROperatorAssemblerTwoP<TypeTag>
 {
     using ParentType = CROperatorAssemblerTwoP<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld,
     };
-    using LocalStiffness = typename GET_PROP_TYPE(TypeTag, LocalStiffness);
+    using LocalStiffness = GetPropType<TypeTag, Properties::LocalStiffness>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation),
+        pressureType = getPropValue<TypeTag, Properties::PressureFormulation>(),
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
         saturationIdx = Indices::saturationIdx,

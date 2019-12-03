@@ -19,7 +19,7 @@
 #ifndef DUMUX_IMPET_PROPERTIES_HH
 #define DUMUX_IMPET_PROPERTIES_HH
 
-#include <dumux/common/properties/propertysystemmacros.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/transportproperties.hh>
@@ -52,7 +52,10 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(IMPET, INHERITS_FROM(SequentialModel));
+// Create new type tags
+namespace TTag {
+struct IMPET { using InheritsFrom = std::tuple<SequentialModel>; };
+} // end namespace TTag
 }
 }
 
@@ -63,7 +66,8 @@ namespace Dumux
 namespace Properties
 {
 //set impet model
-SET_TYPE_PROP(IMPET, Model, IMPET<TypeTag>);
+template<class TypeTag>
+struct Model<TypeTag, TTag::IMPET> { using type = IMPET<TypeTag>; };
 }
 }
 
