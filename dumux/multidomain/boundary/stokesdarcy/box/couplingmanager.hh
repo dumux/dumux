@@ -203,6 +203,9 @@ public:
         const auto& darcyIndices = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
         auto darcyFvGeometry = localView(this->problem(darcyIdx).gridGeometry());
 
+        if(darcyIndices.size() > 1)
+            DUNE_THROW(Dune::InvalidStateException, "Stokes dofs should only intersect with one Darcy element");
+
         for(auto&& indices : darcyIndices)
         {
             const auto& darcyElement = this->problem(darcyIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
@@ -387,7 +390,7 @@ public:
      */
     const auto& stokesCouplingContext(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
+        if (stokesCouplingContext_.size() != 1 || boundStokesElemIdx_ != scvf.insideScvIdx())
             DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
 
         for(const auto& context : stokesCouplingContext_)
@@ -414,6 +417,17 @@ public:
         }
 
         DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+    }
+
+    /*!
+     * \brief Access the coupling context needed for the Darcy domain
+     */
+    const auto& darcyCouplingContextVector(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
+    {
+        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != this->problem(darcyIdx).gridGeometry().elementMapper().index(element))
+            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+
+        return darcyCouplingContext_;
     }
 
     /*!
