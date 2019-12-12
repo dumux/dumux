@@ -44,6 +44,17 @@ dumux_add_test(NAME test_1p_forchheimer_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_forchheimer_tpfa params_forchheimer.input -Problem.Name test_1p_forchheimer_tpfa"
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
 
+dumux_add_test(NAME test_1p_forchheimer_box
+              LABELS porousmediumflow 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTestBox FORCHHEIMER=1
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_forchheimer_box-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_forchheimer_box-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_forchheimer_box params_forchheimer.input -Problem.Name test_1p_forchheimer_box"
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
+
 # a gstat test (becaue it's a random permeability field we can't test against a reference solution)
 dumux_add_test(NAME test_1p_gstat
               LABELS porousmediumflow 1p
