@@ -394,7 +394,7 @@ public:
      */
     const auto& stokesCouplingContext(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        if (stokesCouplingContext_.size() != 1 || boundStokesElemIdx_ != scvf.insideScvIdx())
+        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
             DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
 
         for(const auto& context : stokesCouplingContext_)
@@ -432,6 +432,16 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
 
         return darcyCouplingContext_;
+    }
+
+    /*!
+     * \brief Access the coupling context needed for the Stokes domain
+     */
+    const auto& stokesCouplingContextVector(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
+            DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
+        return stokesCouplingContext_;
     }
 
     /*!
