@@ -190,25 +190,33 @@ public:
                                  const ElementFaceVariables<stokesIdx>& stokesElemFaceVars,
                                  const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
-        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
-        const Scalar stokesDensity = stokesElemVolVars[scvf.insideScvIdx()].density();
-        //const Scalar darcyDensity = stokesContext.volVars.density(couplingPhaseIdx(darcyIdx));
-        Scalar darcyDensity = 0.0;
-        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
-        const auto& elemVolVars = *(stokesContext.elementVolVars);
-        const auto& elemFluxVarsCache = *(stokesContext.elementFluxVarsCache);
-        const auto& darcyScvf = stokesContext.fvGeometry.scvf(stokesContext.darcyScvfIdx);
-        const auto& fluxVarCache = elemFluxVarsCache[darcyScvf];
-        const auto& shapeValues = fluxVarCache.shapeValues();
-        for (auto&& scv : scvs(stokesContext.fvGeometry))
-        {
-            const auto& volVars = elemVolVars[scv];
-            darcyDensity += volVars.density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
-        }
-        const bool insideIsUpstream = velocity > 0.0;
+        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
-        return massFlux_(velocity, stokesDensity, darcyDensity, insideIsUpstream);
+        Scalar flux = 0.0;
+        for (const auto& data : stokesContext)
+        {
+            if (scvf.index() == data.stokesScvfIdx)
+            {
+                const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
+                const Scalar stokesDensity = stokesElemVolVars[scvf.insideScvIdx()].density();
+
+                const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+                const auto& elemVolVars = *(data.elementVolVars);
+                const auto& elemFluxVarsCache = *(data.elementFluxVarsCache);
+                const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
+                const auto& fluxVarCache = elemFluxVarsCache[darcyScvf];
+                const auto& shapeValues = fluxVarCache.shapeValues();
+
+                Scalar darcyDensity = 0.0;
+                for (auto&& scv : scvs(data.fvGeometry))
+                    darcyDensity += elemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+
+                const bool insideIsUpstream = velocity > 0.0;
+                flux += massFlux_(velocity, stokesDensity, darcyDensity, insideIsUpstream)*data.segmentGeometry.volume()/scvf.area();
+            }
+        }
+
+        return flux;
     }
 
     /*!
