@@ -128,26 +128,26 @@ public:
 
         for(const auto& dataHandle : stokesElementToDarcyElementMap_)
         {
-            if(dataHandle.second.size() > 1)
-                DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one Darcy element");
-
-            const auto& data = dataHandle.second[0];
             const auto stokesElementIdx = dataHandle.first;
-            const auto darcyEIdx = data.eIdx;
-            const auto stokesScvfIdx = data.flipScvfIdx;
-            const auto& stokesScvf = stokesFvGridGeometry.scvf(stokesScvfIdx);
 
-            const auto& darcyElement = darcyFvGridGeometry.element(darcyEIdx);
-            darcyFvGeometry.bind(darcyElement);
-
-            darcyToStokesCellCenterStencils[darcyEIdx].push_back(stokesElementIdx);
-            darcyToStokesFaceStencils[darcyEIdx].first.push_back(stokesScvf.dofIndex());
-            darcyToStokesFaceStencils[darcyEIdx].second.push_back(stokesScvf.index());
-
-            for (auto&& scv : scvs(darcyFvGeometry))
+            for (const auto& darcyData : dataHandle.second)
             {
-                stokesCellCenterToDarcyStencils[stokesElementIdx].push_back(scv.dofIndex());
-                stokesFaceToDarcyStencils[stokesScvf.dofIndex()].push_back(scv.dofIndex());
+                const auto darcyEIdx = darcyData.eIdx;
+                const auto stokesScvfIdx = darcyData.flipScvfIdx;
+                const auto& stokesScvf = stokesFvGridGeometry.scvf(stokesScvfIdx);
+
+                const auto& darcyElement = darcyFvGridGeometry.element(darcyEIdx);
+                darcyFvGeometry.bind(darcyElement);
+
+                darcyToStokesCellCenterStencils[darcyEIdx].push_back(stokesElementIdx);
+                darcyToStokesFaceStencils[darcyEIdx].first.push_back(stokesScvf.dofIndex());
+                darcyToStokesFaceStencils[darcyEIdx].second.push_back(stokesScvf.index());
+
+                for (auto&& scv : scvs(darcyFvGeometry))
+                {
+                    stokesCellCenterToDarcyStencils[stokesElementIdx].push_back(scv.dofIndex());
+                    stokesFaceToDarcyStencils[stokesScvf.dofIndex()].push_back(scv.dofIndex());
+                }
             }
         }
     }
