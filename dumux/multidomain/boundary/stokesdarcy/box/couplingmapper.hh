@@ -35,6 +35,8 @@
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/promotiontraits.hh>
+#include <dune/geometry/affinegeometry.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/geometry/geometryintersection.hh>
@@ -61,7 +63,6 @@ public:
     static constexpr auto stokesIdx = stokesCellCenterIdx;
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
 
-
 private:
     // obtain the type tags of the sub problems
     using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
@@ -73,11 +74,19 @@ private:
     using StokesScvfGeometry = typename StokesGG::SubControlVolumeFace::Traits::Geometry;
     using DarcyScvfGeometry = typename DarcyGG::SubControlVolumeFace::Traits::Geometry;
 
-    struct ElementMapInfo
+    static constexpr int dim = DarcyGG::GridView::dimension;
+    static constexpr int dimWorld = DarcyGG::GridView::dimensionworld;
+
+    // each intersection segment is described by a simplex geometry
+    using ctype = typename Dune::PromotionTraits<typename StokesGG::GridView::ctype, typename DarcyGG::GridView::ctype>::PromotedType;
+    using CodimOneSimplex = Dune::AffineGeometry<ctype, dim-1, dimWorld>;
+
+    struct CouplingSegment
     {
         std::size_t eIdx;
         std::size_t scvfIdx;
         std::size_t flipScvfIdx;
+        CodimOneSimplex geometry;
     };
 
     // the sub domain type tags
@@ -85,6 +94,8 @@ private:
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
 
+    static_assert(StokesGG::GridView::dimension == dim, "The grids must have the same dimension");
+    static_assert(StokesGG::GridView::dimensionworld == dimWorld, "The grids must have the same world dimension");
     static_assert(StokesGG::discMethod == DiscretizationMethod::staggered, "The free flow domain must use the staggered discretization");
     static_assert(DarcyGG::discMethod == DiscretizationMethod::box, "The Darcy domain must use the Box discretization");
 public:
@@ -183,12 +194,13 @@ public:
 
                         // intersect the geometries
                         using IntersectionAlgorithm = GeometryIntersection<DarcyScvfGeometry, StokesScvfGeometry>;
-                        typename IntersectionAlgorithm::Intersection is;
-                        if(IntersectionAlgorithm::intersection(darcyScvfGeometry, stokesScvf.geometry(), is))
+                        typename IntersectionAlgorithm::Intersection rawIs;
+                        if(IntersectionAlgorithm::intersection(darcyScvfGeometry, stokesScvf.geometry(), rawIs))
                         {
+                            const auto is = CodimOneSimplex(Dune::GeometryTypes::simplex(dim), rawIs);
                             isCoupledDarcyScvf_[darcyEIdx][darcyScvf.index()] = true;
-                            darcyElementToStokesElementMap_[darcyEIdx].push_back({stokesEIdx, stokesScvf.index(), darcyScvf.index()});
-                            stokesElementToDarcyElementMap_[stokesEIdx].push_back({darcyEIdx, darcyScvf.index(), stokesScvf.index()});
+                            darcyElementToStokesElementMap_[darcyEIdx].push_back({stokesEIdx, stokesScvf.index(), darcyScvf.index(), is});
+                            stokesElementToDarcyElementMap_[stokesEIdx].push_back({darcyEIdx, darcyScvf.index(), stokesScvf.index(), is});
                         }
                     }
                 }
@@ -225,8 +237,8 @@ public:
     }
 
 private:
-    std::unordered_map<std::size_t, std::vector<ElementMapInfo>> darcyElementToStokesElementMap_;
-    std::unordered_map<std::size_t, std::vector<ElementMapInfo>> stokesElementToDarcyElementMap_;
+    std::unordered_map<std::size_t, std::vector<CouplingSegment>> darcyElementToStokesElementMap_;
+    std::unordered_map<std::size_t, std::vector<CouplingSegment>> stokesElementToDarcyElementMap_;
 
     std::vector<std::vector<bool>> isCoupledDarcyScvf_;
 
