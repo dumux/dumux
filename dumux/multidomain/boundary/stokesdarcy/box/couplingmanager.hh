@@ -203,9 +203,6 @@ public:
         const auto& darcyIndices = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
         auto darcyFvGeometry = localView(this->problem(darcyIdx).gridGeometry());
 
-        if(darcyIndices.size() > 1)
-            DUNE_THROW(Dune::InvalidStateException, "Stokes dofs should only intersect with one Darcy element");
-
         for(auto&& indices : darcyIndices)
         {
             const auto& darcyElement = this->problem(darcyIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
