@@ -37,7 +37,7 @@ namespace Dumux {
 template <class TypeTag, class VelocityLaw, DiscretizationMethod discMethod>
 class ForchheimersLawImplementation
 {
-    static_assert(discMethod == DiscretizationMethod::cctpfa, "Forchheimer only implemented for cctpfa!");
+    static_assert(discMethod == DiscretizationMethod::cctpfa || discMethod == DiscretizationMethod::box, "Forchheimer only implemented for cctpfa or box!");
 };
 
 /*!
@@ -55,5 +55,6 @@ using ForchheimersLaw = ForchheimersLawImplementation<TypeTag,
 } // end namespace Dumux
 
 #include <dumux/flux/cctpfa/forchheimerslaw.hh>
+#include <dumux/flux/box/forchheimerslaw.hh>
 
 #endif
