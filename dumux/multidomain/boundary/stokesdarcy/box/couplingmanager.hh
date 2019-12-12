@@ -96,6 +96,7 @@ private:
 
     using CouplingMapper = StokesDarcyCouplingMapperBox<MDTraits>;
 
+    // Each context object contains the data related to one coupling segment
     struct StationaryStokesCouplingContext
     {
         Element<darcyIdx> element;
@@ -105,8 +106,10 @@ private:
         VolumeVariables<darcyIdx> volVars;
         std::unique_ptr< ElementVolumeVariables<darcyIdx> > elementVolVars;
         std::unique_ptr< ElementFluxVariablesCache<darcyIdx> > elementFluxVarsCache;
+        typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
     };
 
+    // Each context object contains the data related to one coupling segment
     struct StationaryDarcyCouplingContext
     {
         Element<stokesIdx> element;
@@ -115,6 +118,7 @@ private:
         std::size_t darcyScvfIdx;
         VelocityVector velocity;
         VolumeVariables<stokesIdx> volVars;
+        typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
     };
 public:
 
@@ -200,14 +204,14 @@ public:
             return;
 
         // prepare the coupling context
-        const auto& darcyIndices = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
+        const auto& couplingSegments = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
         auto darcyFvGeometry = localView(this->problem(darcyIdx).gridGeometry());
 
-        for(auto&& indices : darcyIndices)
+        for(const auto& couplingSegment : couplingSegments)
         {
-            const auto& darcyElement = this->problem(darcyIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
+            const auto& darcyElement = this->problem(darcyIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
             darcyFvGeometry.bind(darcyElement);
-            const auto& scvf = darcyFvGeometry.scvf(indices.scvfIdx);
+            const auto& scvf = darcyFvGeometry.scvf(couplingSegment.scvfIdx);
             const auto& scv = darcyFvGeometry.scv(scvf.insideScvIdx());
 
             auto darcyElemVolVars = localView(assembler.gridVariables(darcyIdx).curGridVolVars());
@@ -222,9 +226,10 @@ public:
             darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), darcyElement, scv);
 
             // add the context
-            stokesCouplingContext_.push_back({darcyElement, darcyFvGeometry, indices.scvfIdx, indices.flipScvfIdx, darcyVolVars,
+            stokesCouplingContext_.push_back({darcyElement, darcyFvGeometry, couplingSegment.scvfIdx, couplingSegment.flipScvfIdx, darcyVolVars,
                                               std::make_unique< ElementVolumeVariables<darcyIdx> >( std::move(darcyElemVolVars)),
-                                              std::make_unique< ElementFluxVariablesCache<darcyIdx> >( std::move(darcyElemFluxVarsCache))});
+                                              std::make_unique< ElementFluxVariablesCache<darcyIdx> >( std::move(darcyElemFluxVarsCache)),
+                                              couplingSegment.geometry});
         }
     }
 
@@ -244,24 +249,24 @@ public:
             return;
 
         // prepare the coupling context
-        const auto& stokesElementIndices = couplingMapper_.darcyElementToStokesElementMap().at(darcyElementIdx);
+        const auto& couplingSegments = couplingMapper_.darcyElementToStokesElementMap().at(darcyElementIdx);
         auto stokesFvGeometry = localView(this->problem(stokesIdx).gridGeometry());
 
-        for(auto&& indices : stokesElementIndices)
+        for(const auto& couplingSegment : couplingSegments)
         {
-            const auto& stokesElement = this->problem(stokesIdx).gridGeometry().boundingBoxTree().entitySet().entity(indices.eIdx);
+            const auto& stokesElement = this->problem(stokesIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
             stokesFvGeometry.bindElement(stokesElement);
 
             VelocityVector faceVelocity(0.0);
 
             for(const auto& scvf : scvfs(stokesFvGeometry))
             {
-                if(scvf.index() == indices.scvfIdx)
+                if(scvf.index() == couplingSegment.scvfIdx)
                     faceVelocity[scvf.directionIndex()] = this->curSol()[stokesFaceIdx][scvf.dofIndex()];
             }
 
             using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
-            const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][indices.eIdx];
+            const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][couplingSegment.eIdx];
             const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
 
             VolumeVariables<stokesIdx> stokesVolVars;
@@ -269,7 +274,9 @@ public:
                 stokesVolVars.update(elemSol, this->problem(stokesIdx), stokesElement, scv);
 
             // add the context
-            darcyCouplingContext_.push_back({stokesElement, stokesFvGeometry, indices.scvfIdx, indices.flipScvfIdx, faceVelocity, stokesVolVars});
+            darcyCouplingContext_.push_back({stokesElement, stokesFvGeometry,
+                                             couplingSegment.scvfIdx, couplingSegment.flipScvfIdx,
+                                             faceVelocity, stokesVolVars, couplingSegment.geometry});
         }
     }
 
