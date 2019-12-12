@@ -35,7 +35,11 @@
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
+#include <dumux/common/geometry/geometryintersection.hh>
+#include <dumux/common/geometry/intersectingentities.hh>
+
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -63,6 +67,12 @@ private:
     using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
     using DarcyTypeTag = typename MDTraits::template SubDomain<2>::TypeTag;
 
+    // sub domain grid geometries & scvf geometries
+    using StokesGG = GetPropType<StokesTypeTag, Properties::GridGeometry>;
+    using DarcyGG = GetPropType<DarcyTypeTag, Properties::GridGeometry>;
+    using StokesScvfGeometry = typename StokesGG::SubControlVolumeFace::Traits::Geometry;
+    using DarcyScvfGeometry = typename DarcyGG::SubControlVolumeFace::Traits::Geometry;
+
     struct ElementMapInfo
     {
         std::size_t eIdx;
@@ -75,17 +85,16 @@ private:
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
 
-    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::staggered,
-                  "The free flow domain must use the staggered discretization");
-
-    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::box,
-                  "The Darcy domain must use the Box discretization");
+    static_assert(StokesGG::discMethod == DiscretizationMethod::staggered, "The free flow domain must use the staggered discretization");
+    static_assert(DarcyGG::discMethod == DiscretizationMethod::box, "The Darcy domain must use the Box discretization");
 public:
 
     /*!
      * \brief Constructor
      */
-    StokesDarcyCouplingMapperBox(const CouplingManager& couplingManager) : couplingManager_(couplingManager) {}
+    StokesDarcyCouplingMapperBox(const CouplingManager& couplingManager)
+    : couplingManager_(couplingManager)
+    {}
 
     /*!
      * \brief Main update routine
@@ -140,54 +149,47 @@ public:
         const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
 
-        isCoupledDarcyScvf_.resize(darcyFvGridGeometry.numScvf());
-
-        auto darcyFvGeometry = localView(darcyFvGridGeometry);
-        auto stokesFvGeometry = localView(stokesFvGridGeometry);
-        const auto& stokesGridView = stokesFvGridGeometry.gridView();
-
-        for(const auto& stokesElement : elements(stokesGridView))
+        // find all darcy faces coupling to stokes
+        isCoupledDarcyScvf_.resize(darcyFvGridGeometry.gridView().size(0));
+        for (const auto& darcyElement : elements(darcyFvGridGeometry.gridView()))
         {
-            stokesFvGeometry.bindElement(stokesElement);
+            const auto darcyEIdx = darcyFvGridGeometry.elementMapper().index(darcyElement);
+            auto darcyFvGeometry = localView(darcyFvGridGeometry);
+            darcyFvGeometry.bindElement(darcyElement);
 
-            for(const auto& scvf : scvfs(stokesFvGeometry))
+            for (const auto& darcyScvf : scvfs(darcyFvGeometry))
             {
-                // skip the DOF if it is not on the boundary
-                if(!scvf.boundary())
+                if (!darcyScvf.boundary())
                     continue;
 
-                // get element intersecting with the scvf center
-                // for robustness, add epsilon in unit outer normal direction
-                const auto eps = (scvf.center() - stokesElement.geometry().center()).two_norm()*1e-8;
-                auto globalPos = scvf.center(); globalPos.axpy(eps, scvf.unitOuterNormal());
-                const auto darcyElementIndices = intersectingEntities(globalPos, darcyFvGridGeometry.boundingBoxTree());
-
-                // skip if no intersection was found
-                if(darcyElementIndices.empty())
+                // find all stokes elements that intersect with the face
+                const auto& darcyScvfGeometry = darcyScvf.geometry();
+                const auto rawIntersections = intersectingEntities(darcyScvfGeometry, stokesFvGridGeometry.boundingBoxTree());
+                if (rawIntersections.empty())
                     continue;
 
-                // sanity check
-                if(darcyElementIndices.size() > 1)
-                    DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one Darcy element");
-
-                const auto stokesElementIdx = stokesFvGridGeometry.elementMapper().index(stokesElement);
-                const auto darcyEIdx = darcyElementIndices[0];
-
-                const auto& darcyElement = darcyFvGridGeometry.element(darcyEIdx);
-                darcyFvGeometry.bindElement(darcyElement);
-                isCoupledDarcyScvf_[darcyEIdx].resize(darcyFvGeometry.numScvf());
-
-                // find the corresponding Darcy sub control volume face
-                for(const auto& darcyScvf : scvfs(darcyFvGeometry))
+                isCoupledDarcyScvf_[darcyEIdx].assign(darcyFvGeometry.numScvf(), false);
+                for (const auto& rawIntersection : rawIntersections)
                 {
-                    if(!darcyScvf.boundary())
-                        continue;
+                    const auto stokesEIdx = rawIntersection.second();
+                    const auto stokesElement = stokesFvGridGeometry.element(stokesEIdx);
+                    auto stokesFvGeometry = localView(stokesFvGridGeometry);
+                    stokesFvGeometry.bindElement(stokesElement);
 
-                    if(intersectsPointGeometry(scvf.center(), darcyScvf.geometry()))
+                    for(const auto& stokesScvf : scvfs(stokesFvGeometry))
                     {
-                        isCoupledDarcyScvf_[darcyEIdx][darcyScvf.index()] = true;
-                        darcyElementToStokesElementMap_[darcyEIdx].push_back({stokesElementIdx, scvf.index(), darcyScvf.index()});
-                        stokesElementToDarcyElementMap_[stokesElementIdx].push_back({darcyEIdx, darcyScvf.index(), scvf.index()});
+                        if(!stokesScvf.boundary())
+                            continue;
+
+                        // intersect the geometries
+                        using IntersectionAlgorithm = GeometryIntersection<DarcyScvfGeometry, StokesScvfGeometry>;
+                        typename IntersectionAlgorithm::Intersection is;
+                        if(IntersectionAlgorithm::intersection(darcyScvfGeometry, stokesScvf.geometry(), is))
+                        {
+                            isCoupledDarcyScvf_[darcyEIdx][darcyScvf.index()] = true;
+                            darcyElementToStokesElementMap_[darcyEIdx].push_back({stokesEIdx, stokesScvf.index(), darcyScvf.index()});
+                            stokesElementToDarcyElementMap_[stokesEIdx].push_back({darcyEIdx, darcyScvf.index(), stokesScvf.index()});
+                        }
                     }
                 }
             }
