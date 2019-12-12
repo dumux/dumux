@@ -51,5 +51,6 @@ using ForchheimersLaw = ForchheimersLawImplementation<TypeTag, GetPropType<TypeT
 } // end namespace Dumux
 
 #include <dumux/flux/cctpfa/forchheimerslaw.hh>
+#include <dumux/flux/box/forchheimerslaw.hh>
 
 #endif

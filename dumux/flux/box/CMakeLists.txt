@@ -2,6 +2,7 @@ install(FILES
 darcyslaw.hh
 effectivestresslaw.hh
 fickslaw.hh
+forchheimerslaw.hh
 fourierslaw.hh
 fourierslawnonequilibrium.hh
 hookeslaw.hh
