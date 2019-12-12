@@ -73,32 +73,35 @@ private:
     using DarcyGG = GetPropType<DarcyTypeTag, Properties::GridGeometry>;
     using StokesScvfGeometry = typename StokesGG::SubControlVolumeFace::Traits::Geometry;
     using DarcyScvfGeometry = typename DarcyGG::SubControlVolumeFace::Traits::Geometry;
+    using ctype = typename Dune::PromotionTraits<typename StokesGG::GridView::ctype,
+                                                 typename DarcyGG::GridView::ctype>::PromotedType;
 
     static constexpr int dim = DarcyGG::GridView::dimension;
     static constexpr int dimWorld = DarcyGG::GridView::dimensionworld;
 
-    // each intersection segment is described by a simplex geometry
-    using ctype = typename Dune::PromotionTraits<typename StokesGG::GridView::ctype, typename DarcyGG::GridView::ctype>::PromotedType;
-    using CodimOneSimplex = Dune::AffineGeometry<ctype, dim-1, dimWorld>;
-
-    struct CouplingSegment
-    {
-        std::size_t eIdx;
-        std::size_t scvfIdx;
-        std::size_t flipScvfIdx;
-        CodimOneSimplex geometry;
-    };
+    static_assert(StokesGG::GridView::dimension == dim, "The grids must have the same dimension");
+    static_assert(StokesGG::GridView::dimensionworld == dimWorld, "The grids must have the same world dimension");
+    static_assert(StokesGG::discMethod == DiscretizationMethod::staggered, "The free flow domain must use the staggered discretization");
+    static_assert(DarcyGG::discMethod == DiscretizationMethod::box, "The Darcy domain must use the Box discretization");
 
     // the sub domain type tags
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
 
-    static_assert(StokesGG::GridView::dimension == dim, "The grids must have the same dimension");
-    static_assert(StokesGG::GridView::dimensionworld == dimWorld, "The grids must have the same world dimension");
-    static_assert(StokesGG::discMethod == DiscretizationMethod::staggered, "The free flow domain must use the staggered discretization");
-    static_assert(DarcyGG::discMethod == DiscretizationMethod::box, "The Darcy domain must use the Box discretization");
 public:
+
+    // export the type describing a coupling segment
+    struct CouplingSegment
+    {
+        // each intersection segment is described by a simplex geometry of codimension one
+        using Geometry = Dune::AffineGeometry<ctype, dim-1, dimWorld>;
+
+        std::size_t eIdx;
+        std::size_t scvfIdx;
+        std::size_t flipScvfIdx;
+        Geometry geometry;
+    };
 
     /*!
      * \brief Constructor
@@ -197,7 +200,7 @@ public:
                         typename IntersectionAlgorithm::Intersection rawIs;
                         if(IntersectionAlgorithm::intersection(darcyScvfGeometry, stokesScvf.geometry(), rawIs))
                         {
-                            const auto is = CodimOneSimplex(Dune::GeometryTypes::simplex(dim), rawIs);
+                            const auto is = typename CouplingSegment::Geometry(Dune::GeometryTypes::simplex(dim), rawIs);
                             isCoupledDarcyScvf_[darcyEIdx][darcyScvf.index()] = true;
                             darcyElementToStokesElementMap_[darcyEIdx].push_back({stokesEIdx, stokesScvf.index(), darcyScvf.index(), is});
                             stokesElementToDarcyElementMap_[stokesEIdx].push_back({darcyEIdx, darcyScvf.index(), stokesScvf.index(), is});
