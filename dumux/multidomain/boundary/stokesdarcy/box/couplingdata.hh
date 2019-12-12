@@ -25,6 +25,8 @@
 #ifndef DUMUX_STOKES_DARCY_BOX_COUPLINGDATA_HH
 #define DUMUX_STOKES_DARCY_BOX_COUPLINGDATA_HH
 
+#include <dune/geometry/quadraturerules.hh>
+
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 
@@ -82,22 +84,40 @@ public:
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
         Scalar momentumFlux(0.0);
-        const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
-        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
-        const auto& elemVolVars = *(stokesContext.elementVolVars);
-        const auto& elemFluxVarsCache = *(stokesContext.elementFluxVarsCache);
-
-        const auto& darcyScvf = stokesContext.fvGeometry.scvf(stokesContext.darcyScvfIdx);
-        const auto& fluxVarCache = elemFluxVarsCache[darcyScvf];
-        const auto& shapeValues = fluxVarCache.shapeValues();
-
-        // - p_pm * n_pm = p_pm * n_ff
-        for (auto&& scv : scvs(stokesContext.fvGeometry))
+        // integrate darcy pressure over each coupling segment and average
+        for (const auto& data : stokesContext)
         {
-            const auto& volVars = elemVolVars[scv];
-            momentumFlux += volVars.pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+            if (scvf.index() == data.stokesScvfIdx)
+            {
+                const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+                const auto& elemVolVars = *(data.elementVolVars);
+                const auto& darcyFvGeometry = data.fvGeometry;
+                const auto& localBasis = darcyFvGeometry.feLocalBasis();
+
+                // do second order integration as box provides linear functions
+                static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
+                const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
+                for (const auto& qp : rule)
+                {
+                    const auto& ipLocal = qp.position();
+                    const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
+                    const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
+
+                    std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+                    localBasis.evaluateFunction(ipElementLocal, shapeValues);
+
+                    Scalar pressure = 0.0;
+                    for (const auto& scv : scvs(data.fvGeometry))
+                        pressure += elemVolVars[scv].pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+
+                    momentumFlux += pressure*data.segmentGeometry.integrationElement(qp.position())*qp.weight();
+                }
+            }
         }
+
+        momentumFlux /= scvf.area();
 
         // normalize pressure
         if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
