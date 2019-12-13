@@ -36,14 +36,13 @@
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup Common
  * \brief Newton's root finding algorithm for scalar functions (secant method)
  * \param xOld initial guess
  * \param residual Residual function
  * \param derivative Derivative of the residual
- * \param maxIter Maximum number of iterations
  * \param tol Relative shift tolerance
+ * \param maxIter Maximum number of iterations
  * \todo replace std::result_of by std::invoke_result for C++17
  */
 template<class Scalar, class ResFunc, class DerivFunc,
@@ -68,7 +67,8 @@ Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual, const DerivFun
         n--;
     }
 
-    if (!std::isfinite(r))
+    using std::isfinite;
+    if (!isfinite(r))
         DUNE_THROW(NumericalProblem, "Residual is not finite: " << r << " after " << maxIter - n << " iterations!");
 
     if (relativeShift > tol)
@@ -78,14 +78,13 @@ Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual, const DerivFun
 }
 
 /*!
- * \file
  * \ingroup Common
  * \brief Newton's root finding algorithm for scalar functions (secant method)
  * \note The derivative is numerically computed. If the derivative is know use signature with derivative function.
  * \param xOld initial guess
  * \param residual Residual function
- * \param maxIter Maximum number of iterations
  * \param tol Relative shift tolerance
+ * \param maxIter Maximum number of iterations
  */
 template<class Scalar, class ResFunc,
           typename std::enable_if_t<Dune::Std::is_invocable<ResFunc, Scalar>::value>...>
@@ -98,7 +97,6 @@ Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual,
 }
 
 /*!
- * \file
  * \ingroup Common
  * \brief Brent's root finding algorithm for scalar functions
  * \note Modified from pseudo-code on wikipedia: https://en.wikipedia.org/wiki/Brent%27s_method
@@ -107,8 +105,8 @@ Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual,
  * \param a Lower bound
  * \param b Upper bound
  * \param residual Residual function
- * \param maxIter Maximum number of iterations
  * \param tol Relative shift tolerance
+ * \param maxIter Maximum number of iterations
  */
 template<class Scalar, class ResFunc,
          typename std::enable_if_t<Dune::Std::is_invocable<ResFunc, Scalar>::value>...>
@@ -123,7 +121,7 @@ Scalar findScalarRootBrent(Scalar a, Scalar b, const ResFunc& residual,
     // check if the root is inside the given interval
     using std::signbit;
     if (!signbit(fa*fb))
-        DUNE_THROW(NumericalProblem, "Brent's algorithm failed: [a,b] does not contain the root!");
+        DUNE_THROW(NumericalProblem, "Brent's algorithm failed: [a,b] does not contain any, or no uniquely defined root!");
 
     // sort bounds
     using std::abs; using std::swap;
