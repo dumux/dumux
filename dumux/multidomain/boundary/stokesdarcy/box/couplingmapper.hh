@@ -190,9 +190,9 @@ public:
                     auto stokesFvGeometry = localView(stokesFvGridGeometry);
                     stokesFvGeometry.bindElement(stokesElement);
 
-                    for(const auto& stokesScvf : scvfs(stokesFvGeometry))
+                    for (const auto& stokesScvf : scvfs(stokesFvGeometry))
                     {
-                        if(!stokesScvf.boundary())
+                        if (!stokesScvf.boundary())
                             continue;
 
                         // intersect the geometries
