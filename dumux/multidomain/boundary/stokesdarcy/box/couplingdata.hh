@@ -198,6 +198,7 @@ public:
                 flux += massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream)*data.segmentGeometry.volume()/scvf.area();
             }
         }
+
         return flux;
     }
 
