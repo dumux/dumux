@@ -29,11 +29,13 @@
 
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/common/concept.hh>
+#include <dune/common/std/type_traits.hh>
 
 #if HAVE_DUNE_FUNCTIONS
 #include <dune/functions/gridfunctions/gridfunction.hh>
 #endif
 
+#include <dumux/common/doubleexpintegrator.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/common/typetraits/typetraits.hh>
@@ -250,6 +252,24 @@ auto integrateL2Error(const GridView& gv,
     return sqrt(l2norm);
 }
 #endif
+
+/*!
+ * \brief Integrate a scalar function
+ * \param f the integrand (invocable with a single scalar)
+ * \param a lower integral bound
+ * \param b upper integral bound
+ * \param targetAbsoluteError desired absolute error in the result
+ * \return The value of the integral
+ */
+template<class Scalar, class Function,
+          typename std::enable_if_t<Dune::Std::is_invocable<Function, Scalar>::value>...>
+Scalar integrateScalarFunction(const Function& f,
+                               const Scalar lowerBound,
+                               const Scalar upperBound,
+                               const Scalar targetAbsoluteError = 1e-13)
+{
+    return DoubleExponentialIntegrator<Scalar>::integrate(f, lowerBound, upperBound, targetAbsoluteError);
+}
 
 } // end namespace Dumux
 
