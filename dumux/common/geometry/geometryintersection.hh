@@ -74,18 +74,37 @@ struct PolygonPolicy
     using Intersection = Polygon;
 };
 
+//! Policy structure for polyhedron-like intersections
+template<class ct, int dw>
+struct PolyhedronPolicy
+{
+    using ctype = ct;
+    using Point = Dune::FieldVector<ctype, dw>;
+    using Polyhedron = std::vector<Point>;
+
+    static constexpr int dimWorld = dw;
+    static constexpr int dimIntersection = 3;
+    using Intersection = Polyhedron;
+};
+
 //! default policy chooser class
-template<class Geometry1, class Geometry2, int dim2 = Geometry2::mydimension>
+template<class Geometry1, class Geometry2>
 class DefaultPolicyChooser
 {
     static constexpr int dimworld = Geometry1::coorddimension;
-    static_assert(dimworld == int(Geometry2::coorddimension), "Geometries must have the same coordinate dimension!");
-    static_assert(dim2 == 1 || dim2 == 2, "No chooser class specialization available for given dimensions");
+    static constexpr int isDim = std::min( int(Geometry1::mydimension), int(Geometry2::mydimension) );
+    static_assert(dimworld == int(Geometry2::coorddimension),
+                  "Geometries must have the same coordinate dimension!");
+    static_assert(int(Geometry1::mydimension) <= 3 && int(Geometry2::mydimension) <= 3,
+                  "Geometries must have dimension 3 or less.");
     using ctype = typename Dune::PromotionTraits<typename Geometry1::ctype, typename Geometry2::ctype>::PromotedType;
+
+    using DefaultPolicies = std::tuple<PointPolicy<ctype, dimworld>,
+                                       SegmentPolicy<ctype, dimworld>,
+                                       PolygonPolicy<ctype, dimworld>,
+                                       PolyhedronPolicy<ctype, dimworld>>;
 public:
-    using type = std::conditional_t< dim2 == 2,
-                                     PolygonPolicy<ctype, Geometry1::coorddimension>,
-                                     SegmentPolicy<ctype, Geometry1::coorddimension> >;
+    using type = std::tuple_element_t<isDim, DefaultPolicies>;
 };
 
 //! Helper alias to define the default intersection policy
@@ -904,6 +923,103 @@ private:
         ip.axpy(v, b);
         ip.axpy(w, c);
         is = ip;
+        return true;
+    }
+};
+
+/*!
+ * \ingroup Geometry
+ * \brief A class for segment--segment intersection in 3d space
+ */
+template <class Geometry1, class Geometry2, class Policy>
+class GeometryIntersection<Geometry1, Geometry2, Policy, 3, 1, 1>
+{
+    enum { dimworld = 3 };
+    enum { dim1 = 1 };
+    enum { dim2 = 1 };
+
+public:
+    using ctype = typename Policy::ctype;
+    using Point = typename Policy::Point;
+    using Intersection = typename Policy::Intersection;
+
+private:
+    static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
+    using ReferenceElements = typename Dune::ReferenceElements<ctype, dim1>;
+
+public:
+    /*!
+     * \brief Colliding two segments
+     * \param geo1/geo2 The geometries to intersect
+     * \param intersection Container to store corners of intersection segment
+     * \note this overload is used when segment-like intersections are seeked
+     * \todo implement this query
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+        DUNE_THROW(Dune::NotImplemented, "segment-segment intersection detection for point-like intersections");
+    }
+
+    /*!
+     *  \brief Colliding two segments in 3D
+     * \param geo1/geo2 The geometries to intersect
+     * \param is If the geometries collide, is holds the corner points of
+     *        the intersection object in global coordinates.
+     * \note This overload is used when segment-like intersections are seeked
+     */
+    template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
+    static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
+    {
+        static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
+
+        const auto& a = geo1.corner(0);
+        const auto& b = geo1.corner(1);
+        const auto& p = geo2.corner(0);
+        const auto& q = geo2.corner(1);
+
+        const auto ab = b-a;
+        const auto pq = q-p;
+        const auto abNorm = ab.two_norm();
+        const auto pqNorm = pq.two_norm();
+
+        using std::max;
+        const auto maxNorm = max(abNorm, pqNorm);
+        const auto eps2 = eps_*maxNorm*maxNorm;
+
+        // if the segment are not parallel there is no segment intersection
+        using std::abs;
+        if (!(abs(abs(ab*pq) - abNorm*pqNorm) < eps2))
+            return false;
+
+        const auto ap = (p-a);
+        const auto aq = (q-a);
+
+        // points have to be colinear
+        if (!(crossProduct(ap, aq).two_norm() < eps2))
+            return false;
+
+        // scaled local coordinates
+        // we save the division for the normalization for now
+        // and do it in the very end if we find an intersection
+        auto tp = ap*ab;
+        auto tq = aq*ab;
+        const auto abnorm2 = abNorm*abNorm;
+
+        // make sure they are sorted
+        using std::swap;
+        if (tp > tq)
+            swap(tp, tq);
+
+        using std::min; using std::max;
+        tp = min(abnorm2, max(0.0, tp));
+        tq = max(0.0, min(abnorm2, tq));
+
+        if (abs(tp-tq) < eps2)
+            return false;
+
+        intersection = Intersection({geo1.global(tp/abnorm2), geo1.global(tq/abnorm2)});
         return true;
     }
 };

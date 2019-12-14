@@ -124,7 +124,7 @@ public:
             row[scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
         };
 
-        this->asImp_().enforceDirichletConstraints(applyDirichlet);
+        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
 
     /*!
@@ -144,7 +144,7 @@ public:
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
         };
 
-        this->asImp_().enforceDirichletConstraints(applyDirichlet);
+        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
     }
 
     /*!
