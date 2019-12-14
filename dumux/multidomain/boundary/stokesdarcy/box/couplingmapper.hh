@@ -182,7 +182,9 @@ public:
                 if (rawIntersections.empty())
                     continue;
 
-                isCoupledDarcyScvf_[darcyEIdx].assign(darcyFvGeometry.numScvf(), false);
+                if (isCoupledDarcyScvf_[darcyEIdx].empty())
+                    isCoupledDarcyScvf_[darcyEIdx].assign(darcyFvGeometry.numScvf(), false);
+
                 for (const auto& rawIntersection : rawIntersections)
                 {
                     const auto stokesEIdx = rawIntersection.second();
