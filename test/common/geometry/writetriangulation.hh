@@ -79,6 +79,48 @@ void writeVTKPolyDataTriangle(const TriangleVector& triangles,
          << "</VTKFile>\n";
 }
 
+template<class LineVector>
+void writeVTKPolyDataLines(const LineVector& lines,
+                           const std::string& filename)
+{
+    std::ofstream fout(filename + ".vtp");
+    fout << "<?xml version=\"1.0\"?>\n"
+         << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+         << "  <PolyData>\n"
+         << "    <Piece NumberOfPoints=\"" << lines.size()*2 << "\" NumberOfLines=\"" << lines.size() << "\">\n"
+         << "      <Points>\n"
+         << "        <DataArray type=\"Float32\" Name=\"Coordinates\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+
+    for (const auto& l : lines)
+        for (const auto& p : l)
+            fout << p << " ";
+    fout << '\n';
+
+    fout << "        </DataArray>\n"
+         << "      </Points>\n"
+         << "      <Lines>\n"
+         << "        <DataArray type=\"Int32\" Name=\"connectivity\" NumberOfComponents=\"1\" format=\"ascii\">\n";
+
+    int offset = 0;
+    for (int i = 0; i < lines.size(); ++i)
+    {
+        fout << offset*2 << " " << offset*2 + 1 << "\n";
+        ++offset;
+    }
+
+    fout << "        </DataArray>\n";
+    fout << "        <DataArray type=\"Int32\" Name=\"offsets\" NumberOfComponents=\"1\" format=\"ascii\">\n";
+
+    for (int i = 0; i < lines.size(); ++i)
+        fout << (i+1)*2 << "\n";
+
+    fout << "        </DataArray>\n"
+         << "      </Lines>\n"
+         << "    </Piece>\n"
+         << "</PolyData>\n"
+         << "</VTKFile>\n";
+}
+
 } // end namespace Dumux
 
 # endif
