@@ -24,8 +24,8 @@ include(DuneMacros)
 dune_project()
 dune_enable_all_packages()
 
-# enforce C++-14
-dune_require_cxx_standard(MODULE "DuMuX" VERSION 14)
+# enforce C++-17
+dune_require_cxx_standard(MODULE "DuMuX" VERSION 17)
 
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
