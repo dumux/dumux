@@ -28,6 +28,7 @@
 
 #include <random>
 #include <vector>
+#include <unordered_map>
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
@@ -365,10 +366,11 @@ public:
                 std::vector<Scalar> circleIpWeight; circleIpWeight.reserve(circlePoints.size());
                 std::vector<GridIndex<bulkIdx>> circleStencil; circleStencil.reserve(circlePoints.size());
                 // for box
-                std::unordered_map<GridIndex<bulkIdx>, std::vector<GridIndex<bulkIdx>> > circleCornerIndices;
+                std::vector<const std::vector<GridIndex<bulkIdx>>*> circleCornerIndices;
                 using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                std::unordered_map<GridIndex<bulkIdx>, ShapeValues> circleShapeValues;
+                std::vector<ShapeValues> circleShapeValues;
 
+                // go over all points of the average operator
                 int insideCirclePoints = 0;
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
@@ -386,15 +388,14 @@ public:
                         // precompute interpolation data for box scheme for each cut bulk element
                         if (isBox<bulkIdx>())
                         {
-                            if (!static_cast<bool>(circleCornerIndices.count(bulkElementIdx)))
-                            {
-                                const auto bulkElement = bulkFvGridGeometry.element(bulkElementIdx);
-                                circleCornerIndices[bulkElementIdx] = this->vertexIndices(bulkIdx, bulkElementIdx);
+                            const auto bulkElement = bulkFvGridGeometry.element(bulkElementIdx);
+                            circleCornerIndices.push_back(&(this->vertexIndices(bulkIdx, bulkElementIdx)));
 
-                                // evaluate shape functions at the integration point
-                                const auto bulkGeometry = bulkElement.geometry();
-                                this->getShapeValues(bulkIdx, bulkFvGridGeometry, bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
-                            }
+                            // evaluate shape functions at the integration point
+                            const auto bulkGeometry = bulkElement.geometry();
+                            ShapeValues shapeValues;
+                            this->getShapeValues(bulkIdx, bulkFvGridGeometry, bulkGeometry, circlePoints[k], shapeValues);
+                            circleShapeValues.emplace_back(std::move(shapeValues));
                         }
                     }
                 }
@@ -406,7 +407,7 @@ public:
                     for (const auto& vertices : circleCornerIndices)
                     {
                         this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                                   vertices.second.begin(), vertices.second.end());
+                                                                                   vertices->begin(), vertices->end());
 
                     }
                 }
@@ -497,7 +498,7 @@ public:
                         for (const auto& vertices : circleCornerIndices)
                         {
                             extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                       vertices.second.begin(), vertices.second.end());
+                                                                       vertices->begin(), vertices->end());
 
                         }
                     }
@@ -714,6 +715,9 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
+        // if we use the circle average as the 3D values or a point evaluation
+        static const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
+
         // Initialize the bulk bounding box tree
         const auto& bulkTree = this->problem(bulkIdx).fvGridGeometry().boundingBoxTree();
 
@@ -786,11 +790,11 @@ public:
                 std::vector<Scalar> circleIpWeight; circleIpWeight.reserve(circlePoints.size());
                 std::vector<GridIndex<bulkIdx>> circleStencil; circleStencil.reserve(circlePoints.size());
                 // for box
-                std::unordered_map<GridIndex<bulkIdx>, std::vector<GridIndex<bulkIdx>> > circleCornerIndices;
+                std::vector<const std::vector<GridIndex<bulkIdx>>*> circleCornerIndices;
                 using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                std::unordered_map<GridIndex<bulkIdx>, ShapeValues> circleShapeValues;
+                std::vector<ShapeValues> circleShapeValues;
 
-                // go over all circle points and precompute some quantities for the circle average
+                // go over all points of the average operator
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
                     circleBulkElementIndices[k] = intersectingEntities(circlePoints[k], bulkTree);
@@ -803,18 +807,17 @@ public:
                         circleStencil.push_back(bulkElementIdx);
                         circleIpWeight.push_back(localCircleAvgWeight);
 
-                        // precompute interpolation data for the box scheme
+                        // precompute interpolation data for box scheme for each cut bulk element
                         if (isBox<bulkIdx>())
                         {
-                            if (!static_cast<bool>(circleCornerIndices.count(bulkElementIdx)))
-                            {
-                                const auto bulkElement = bulkFvGridGeometry.element(bulkElementIdx);
-                                circleCornerIndices[bulkElementIdx] = this->vertexIndices(bulkIdx, bulkElementIdx);
+                            const auto bulkElement = bulkFvGridGeometry.element(bulkElementIdx);
+                            circleCornerIndices.push_back(&(this->vertexIndices(bulkIdx, bulkElementIdx)));
 
-                                // evaluate shape functions at the integration point
-                                const auto bulkGeometry = bulkElement.geometry();
-                                this->getShapeValues(bulkIdx, bulkFvGridGeometry, bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
-                            }
+                            // evaluate shape functions at the integration point
+                            const auto bulkGeometry = bulkElement.geometry();
+                            ShapeValues shapeValues;
+                            this->getShapeValues(bulkIdx, bulkFvGridGeometry, bulkGeometry, circlePoints[k], shapeValues);
+                            circleShapeValues.emplace_back(std::move(shapeValues));
                         }
                     }
                 }
@@ -826,7 +829,7 @@ public:
                     for (const auto& vertices : circleCornerIndices)
                     {
                         this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                                   vertices.second.begin(), vertices.second.end());
+                                                                                   vertices->begin(), vertices->end());
 
                     }
                 }
@@ -874,7 +877,8 @@ public:
                         // add data needed to compute integral over the circle
                         if (isBox<bulkIdx>())
                         {
-                            psData.addCircleInterpolation(circleCornerIndices, circleShapeValues, circleIpWeight, circleStencil);
+                            if (useCircleAverage)
+                                psData.addCircleInterpolation(circleCornerIndices, circleShapeValues, circleIpWeight, circleStencil);
 
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             const auto bulkGeometry = bulkFvGridGeometry.element(bulkElementIdx).geometry();
@@ -884,7 +888,8 @@ public:
                         }
                         else
                         {
-                            psData.addCircleInterpolation(circleIpWeight, circleStencil);
+                            if (useCircleAverage)
+                                psData.addCircleInterpolation(circleIpWeight, circleStencil);
                             psData.addBulkInterpolation(bulkElementIdx);
                         }
 
@@ -905,21 +910,24 @@ public:
                             this->couplingStencils(bulkIdx)[bulkElementIdx].push_back(lowDimElementIdx);
                         }
 
-                        // export bulk circle stencil
-                        if (isBox<bulkIdx>())
+                        // export bulk circle stencil (only needed for circle average)
+                        if (useCircleAverage)
                         {
-                            // we insert all vertices and make it unique later
-                            for (const auto& vertices : circleCornerIndices)
+                            if (isBox<bulkIdx>())
+                            {
+                                // we insert all vertices and make it unique later
+                                for (const auto& vertices : circleCornerIndices)
+                                {
+                                    extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
+                                                                               vertices->begin(), vertices->end());
+
+                                }
+                            }
+                            else
                             {
                                 extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                           vertices.second.begin(), vertices.second.end());
-
+                                                                           circleStencil.begin(), circleStencil.end());
                             }
-                        }
-                        else
-                        {
-                            extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                       circleStencil.begin(), circleStencil.end());
                         }
                     }
                 }

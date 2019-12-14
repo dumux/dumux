@@ -206,11 +206,15 @@ public:
                 for (int j = 0; j < circleStencil_.size(); ++j)
                 {
                     BulkPrimaryVariables priVars(0.0);
-                    const auto& cornerIndices = circleCornerIndices_[circleStencil_[j]];
-                    const auto& shapeValues = circleShapeValues_[circleStencil_[j]];
+                    const auto& cornerIndices = *(circleCornerIndices_[j]);
+                    const auto& shapeValues = circleShapeValues_[j];
                     for (int i = 0; i < cornerIndices.size(); ++i)
-                        for (int priVarIdx = 0; priVarIdx < priVars.size(); ++priVarIdx)
-                            priVars[priVarIdx] += sol[cornerIndices[i]][priVarIdx]*shapeValues[i];
+                    {
+                        const auto& localSol = sol[cornerIndices[i]];
+                        const auto& shapeValue = shapeValues[i];
+                        for (int priVarIdx = 0; priVarIdx < BulkPrimaryVariables::size(); ++priVarIdx)
+                            priVars[priVarIdx] += localSol[priVarIdx]*shapeValue;
+                    }
                     // multiply with weight and add
                     priVars *= circleIpWeight_[j];
                     weightSum += circleIpWeight_[j];
@@ -238,8 +242,8 @@ public:
         }
     }
 
-    void addCircleInterpolation(const std::unordered_map<GridIndex<bulkIdx>, std::vector<GridIndex<bulkIdx>> >& circleCornerIndices,
-                                const std::unordered_map<GridIndex<bulkIdx>, ShapeValues>& circleShapeValues,
+    void addCircleInterpolation(const std::vector<const std::vector<GridIndex<bulkIdx>>*>& circleCornerIndices,
+                                const std::vector<ShapeValues>& circleShapeValues,
                                 const std::vector<Scalar>& circleIpWeight,
                                 const std::vector<GridIndex<bulkIdx>>& circleStencil)
     {
@@ -265,8 +269,8 @@ public:
     }
 
 private:
-    std::unordered_map<GridIndex<bulkIdx>, std::vector<GridIndex<bulkIdx>> > circleCornerIndices_;
-    std::unordered_map<GridIndex<bulkIdx>, ShapeValues> circleShapeValues_;
+    std::vector<const std::vector<GridIndex<bulkIdx>>*> circleCornerIndices_;
+    std::vector<ShapeValues> circleShapeValues_;
     std::vector<Scalar> circleIpWeight_;
     std::vector<GridIndex<bulkIdx>> circleStencil_;
     bool enableBulkCircleInterpolation_;
