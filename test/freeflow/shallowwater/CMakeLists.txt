@@ -1,1 +1,3 @@
 add_subdirectory(dambreak)
+add_subdirectory(poiseuilleflow)
+add_subdirectory(squarebridgepillar)
