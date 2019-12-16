@@ -1,16 +1,16 @@
 [Problem]
-Name = damBreak
+Name = squareBridgePillar
 
 [TimeLoop]
-TEnd = 1.0 # [s]
-MaxTimeStepSize = 0.005 # [s]
+TEnd = 14400.0 # [s]
+MaxTimeStepSize = 2.0 # [s]
 DtInitial = 0.005 # [s]
 
 [Grid]
-Positions0 = 0.0 20.0
-Positions1 = 0.0 5.0
-Cells0 = 100
-Cells1 = 25
+Positions0 = 0.0 120.0
+Positions1 = 0.0 80.0
+Cells0 = 240
+Cells1 = 160
 
 [Newton]
 EnablePartialReassembly = true
