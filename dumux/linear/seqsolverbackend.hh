@@ -32,6 +32,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
 #include <dune/istl/umfpack.hh>
+#include <dune/istl/io.hh>
 #include <dune/common/version.hh>
 #include <dune/common/hybridutilities.hh>
 
@@ -42,6 +43,168 @@
 #include <dumux/linear/amgbackend.hh>
 
 namespace Dumux {
+
+/*!
+ * \brief Sequential SSOR preconditioner.
+ *
+ * Wraps the naked ISTL generic SSOR preconditioner into the
+ *  solver framework.
+ *
+ * \tparam M The matrix type to operate on
+ * \tparam X Type of the update
+ * \tparam Y Type of the defect
+ */
+template<class M, class X, class Y, class GridGeometry>
+class SeqUzawa : public Dune::Preconditioner<X,Y> {
+public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef M matrix_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef Dune::Simd::Scalar<field_type> scalar_field_type;
+
+    using zero = std::integral_constant<long unsigned int, 0>;
+    using one = std::integral_constant<long unsigned int, 1>;
+    using VelocityMatrix = typename std::remove_reference<decltype(std::declval<M>()[one()][one()])>::type;
+    using VelocityVector = typename std::remove_reference<decltype(std::declval<X>()[one()])>::type;
+
+    static constexpr bool isParallel = false;
+    using SolverTraits = NonoverlappingSolverTraits<VelocityMatrix, VelocityVector, isParallel>;
+    using Comm = typename SolverTraits::Comm;
+    using LinearOperator = typename SolverTraits::LinearOperator;
+    using ScalarProduct = typename SolverTraits::ScalarProduct;
+    using Smoother = typename SolverTraits::Smoother;
+
+    using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<VelocityMatrix, Dune::Amg::FirstDiagonal>>;
+    using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
+    using VelocityAMG = Dune::Amg::AMG<LinearOperator, VelocityVector, Smoother,Comm>;
+
+    /*! \brief Constructor.
+     *
+     *   constructor gets all parameters to operate the prec.
+     *   \param A The matrix to operate on.
+     *   \param n The number of iterations to perform.
+     *   \param w The relaxation factor.
+     */
+    SeqUzawa (const M& A, int n, scalar_field_type w)
+    : _A_(A), _n(n), _w(w)
+    , linearOperator_(_A_[one()][one()])
+    , params_(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu)
+    {
+        static int called = 0;
+        std::cout << "SeqUzawa constructor called " << ++called << " times." << std::endl;
+        params_.setDefaultValuesIsotropic(GridGeometry::GridView::dimension);
+        params_.setDebugLevel(0);
+
+        criterion_ = std::make_unique<Criterion>(params_);
+
+        smootherArgs_ = std::make_unique<SmootherArgs>();
+        smootherArgs_->iterations = 1;
+        smootherArgs_->relaxationFactor = 1;
+
+        velocityAMG_ = std::make_unique<VelocityAMG>(linearOperator_, *criterion_, *smootherArgs_, comm_);
+    }
+
+    /*!
+     *   \brief Constructor.
+     *
+     *   \param A The matrix to operate on.
+     *   \param configuration ParameterTree containing preconditioner parameters.
+     *
+     *   ParameterTree Key | Meaning
+     *   ------------------|------------
+     *   iterations        | The number of iterations to perform.
+     *   relaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+     *
+     *   See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqUzawa (const M& A, const Dune::ParameterTree& configuration)
+    : _A_(A)
+    {
+        _n = configuration.get<int>("iterations");
+        _w = configuration.get<scalar_field_type>("relaxation");
+    }
+
+    /*!
+     *   \brief Prepare the preconditioner.
+     *
+     *   \copydoc Preconditioner::pre(X&,Y&)
+     */
+    virtual void pre (X& x, Y& b)
+    {
+//         velocityAMG_->pre(x[one()], b[one()]);
+    }
+
+    /*!
+     *   \brief Apply the preconditioner
+     *
+     *   \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    virtual void apply (X& v, const Y& d)
+    {
+        auto& Bt = _A_[one()][zero()];
+        auto& B = _A_[zero()][one()];
+
+        const auto& f = d[one()];
+        const auto& g = d[zero()];
+        auto& velocity = v[one()];
+        auto& pressure = v[zero()];
+        pressure[0] = g[0];
+
+        for (int k = 0; k < _n; ++k)
+        {
+            // u_k+1 = A^−1*(f − B^T*p_k),
+            auto vrhs = f;
+            Bt.mmv(pressure, vrhs);
+            velocityAMG_->pre(velocity, vrhs);
+            velocityAMG_->apply(velocity, vrhs);
+            velocityAMG_->post(velocity);
+
+            // p_k+1 = p_k - omega*(g + B*u_k+1)
+            auto pUpdate = g;
+            pUpdate[0] = 0;
+            B.umv(velocity, pUpdate);
+            pUpdate *= _w;
+            pressure -= pUpdate;
+        }
+    }
+
+    /*!
+     *   \brief Clean up.
+     *
+     *   \copydoc Preconditioner::post(X&)
+     */
+    virtual void post (X& x)
+    {
+//         velocityAMG_->post(x[one()]);
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual Dune::SolverCategory::Category category() const
+    {
+        return Dune::SolverCategory::sequential;
+    }
+
+private:
+    //! \brief The matrix we operate on.
+    const M& _A_;
+    //! \brief The number of steps to do in apply
+    int _n;
+    //! \brief The relaxation factor to use
+    scalar_field_type _w;
+
+    Comm comm_;
+    LinearOperator linearOperator_;
+    Dune::Amg::Parameters params_;
+    std::unique_ptr<Criterion> criterion_;
+    std::unique_ptr<SmootherArgs> smootherArgs_;
+    std::unique_ptr<VelocityAMG> velocityAMG_;
+};
 
 /*!
  * \ingroup Linear
@@ -857,6 +1020,28 @@ public:
 
 private:
     Dune::InverseOperatorResult result_;
+};
+
+template <class GridGeometry>
+class UzawaBiCGSTABBackend : public LinearSolver
+{
+public:
+    using LinearSolver::LinearSolver;
+
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        using Preconditioner = SeqUzawa<Matrix, Vector, Vector, GridGeometry>;
+        using Solver = Dune::BiCGSTABSolver<Vector>;
+
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
+    }
+
+    std::string name() const
+    {
+        return "Uzawa preconditioned BiCGSTAB solver";
+    }
 };
 #endif // HAVE_UMFPACK
 

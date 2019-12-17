@@ -4,7 +4,8 @@ TEnd = 1.0 # [s]
 
 [Grid]
 LowerLeft = 0 0
-UpperRight = 1 1
+UpperRight = 6.28 6.28
+Cells = 20 20
 
 [Problem]
 Name = test_ff_sincos
@@ -34,3 +35,10 @@ AddProcessRank = false
 
 [Flux]
 UpwindWeight = 0.5
+
+[LinearSolver]
+Verbosity = 2
+MaxIterations = 5000
+PreconditionerIterations = 5
+PreconditionerRelaxation = 5.0e-2
+
