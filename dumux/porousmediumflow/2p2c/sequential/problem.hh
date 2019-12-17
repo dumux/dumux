@@ -42,22 +42,22 @@ template<class TypeTag>
 class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
 {
     using ParentType = IMPESProblem2P<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     // material properties
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
     enum
     {
-        adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid)
+        adaptiveGrid = getPropValue<TypeTag, Properties::AdaptiveGrid>()
     };
     enum {
         dimWorld = Grid::dimensionworld
@@ -196,7 +196,7 @@ private:
 
 protected:
     //! Sets entries of the primary variable vector to zero
-    void setZero(typename GET_PROP_TYPE(TypeTag, PrimaryVariables) &values, const int equation = -1) const
+    void setZero(GetPropType<TypeTag, Properties::PrimaryVariables> &values, const int equation = -1) const
     {
         if (equation == Indices::pressureEqIdx)
         {

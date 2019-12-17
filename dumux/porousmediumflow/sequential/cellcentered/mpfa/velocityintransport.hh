@@ -40,10 +40,10 @@ namespace Dumux
 template<class TypeTag>
 class FvMpfaVelocityInTransport
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
     using Intersection = typename GridView::Intersection;
 
 

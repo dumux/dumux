@@ -46,21 +46,21 @@ template<class TypeTag>
 class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>
 {
     using ParentType = FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PrimaryVariables = typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using PrimaryVariables = typename GetProp<TypeTag, Properties::SolutionTypes>::PrimaryVariables;
 
-    using GridTypeIndices = typename GET_PROP_TYPE(TypeTag, GridTypeIndices);
+    using GridTypeIndices = GetPropType<TypeTag, Properties::GridTypeIndices>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using ElementGeometry = typename Element::Geometry;
@@ -90,7 +90,7 @@ class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteract
 
 public:
     //! Type for storing an MPFA-interaction-volume. (Usually of type FvMpfaL3dInteractionVolume or FvMpfaL3dInteractionVolumeAdaptive)
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
+    using InteractionVolume = GetPropType<TypeTag, Properties::MPFAInteractionVolume>;
 
     using GlobalInteractionVolumeVector = std::vector<InteractionVolume>;
     using FaceAreaVector = std::vector<Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 2*dim> >;

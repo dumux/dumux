@@ -46,7 +46,10 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all sequential models
-NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(ModelProperties, GridAdapt, GridProperties));
+// Create new type tags
+namespace TTag {
+struct SequentialModel { using InheritsFrom = std::tuple<GridAdapt, GridProperties, ModelProperties>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -55,23 +58,37 @@ NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(ModelProperties, GridAdapt, GridProp
 //! Property tag for types associated with the solution of the PDE.
 //! This means vectors of primary variables, solution functions on the
 //! grid, and elements, and shape functions.
-NEW_PROP_TAG( SolutionTypes);
-NEW_PROP_TAG( Indices);
+template<class TypeTag, class MyTypeTag>
+struct  SolutionTypes { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct  Indices { using type = UndefinedProperty; };
 
 // Some properties that have been removed from numeric model
-NEW_PROP_TAG( Model ); //!< The type of the mode
-NEW_PROP_TAG( DiscretizationMethod ); //!< The type of discretization method
+template<class TypeTag, class MyTypeTag>
+struct  Model  { using type = UndefinedProperty; }; //!< The type of the mode
+template<class TypeTag, class MyTypeTag>
+struct  DiscretizationMethod  { using type = UndefinedProperty; }; //!< The type of discretization method
 
-NEW_PROP_TAG( PressureModel ); //!< The type of the discretization of a pressure model
-NEW_PROP_TAG( TransportModel ); //!< The type of the discretization of a transport model
-NEW_PROP_TAG( Velocity ); //!< The type velocity reconstruction
-NEW_PROP_TAG( NumEq ); //!< Number of equations in the system of PDEs
-NEW_PROP_TAG( NumPhases); //!< Number of phases in the system
-NEW_PROP_TAG( NumComponents); //!< Number of components in the system
-NEW_PROP_TAG( Variables); //!< The type of the container of global variables
-NEW_PROP_TAG( CellData );//!< Defines data object to be stored
-NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of an element and neighboring elements
-NEW_PROP_TAG( PressureCoefficientMatrix ); //!< Gives maximum number of intersections of an element and neighboring elements
+template<class TypeTag, class MyTypeTag>
+struct  PressureModel  { using type = UndefinedProperty; }; //!< The type of the discretization of a pressure model
+template<class TypeTag, class MyTypeTag>
+struct  TransportModel  { using type = UndefinedProperty; }; //!< The type of the discretization of a transport model
+template<class TypeTag, class MyTypeTag>
+struct  Velocity  { using type = UndefinedProperty; }; //!< The type velocity reconstruction
+template<class TypeTag, class MyTypeTag>
+struct  NumEq  { using type = UndefinedProperty; }; //!< Number of equations in the system of PDEs
+template<class TypeTag, class MyTypeTag>
+struct  NumPhases { using type = UndefinedProperty; }; //!< Number of phases in the system
+template<class TypeTag, class MyTypeTag>
+struct  NumComponents { using type = UndefinedProperty; }; //!< Number of components in the system
+template<class TypeTag, class MyTypeTag>
+struct  Variables { using type = UndefinedProperty; }; //!< The type of the container of global variables
+template<class TypeTag, class MyTypeTag>
+struct  CellData  { using type = UndefinedProperty; };//!< Defines data object to be stored
+template<class TypeTag, class MyTypeTag>
+struct  MaxIntersections  { using type = UndefinedProperty; }; //!< Gives maximum number of intersections of an element and neighboring elements
+template<class TypeTag, class MyTypeTag>
+struct  PressureCoefficientMatrix  { using type = UndefinedProperty; }; //!< Gives maximum number of intersections of an element and neighboring elements
 }
 }
 
@@ -97,7 +114,8 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Type of the jacobian matrix needed for compatibility with implicit models for the amg backend
-SET_TYPE_PROP(SequentialModel, JacobianMatrix, typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix));
+template<class TypeTag>
+struct JacobianMatrix<TypeTag, TTag::SequentialModel> { using type = GetPropType<TypeTag, Properties::PressureCoefficientMatrix>; };
 
 //! Dummy model traits for compatibility with the rest of dumux
 //! until the sequential models are incorporated into the general framework
@@ -107,8 +125,8 @@ struct ModelTraits<TypeTag, TTag::SequentialModel>
 private:
     struct DummyTraits
     {
-        using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-        static constexpr int numEq() { return GET_PROP_VALUE(TypeTag, NumEq); }
+        using Indices = GetPropType<TypeTag, Properties::Indices>;
+        static constexpr int numEq() { return getPropValue<TypeTag, Properties::NumEq>(); }
     };
 public:
     using type = DummyTraits;
@@ -119,7 +137,7 @@ template<class TypeTag>
 struct GridView<TypeTag, TTag::SequentialModel>
 {
 private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
 
 public:
     using type = typename Grid::LeafGridView;
@@ -130,7 +148,7 @@ template<class TypeTag>
 struct MaxIntersections<TypeTag, TTag::SequentialModel>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     enum
     {
         dim = GridView::dimension
@@ -151,10 +169,10 @@ template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::SequentialModel>
 {
     struct MockFVGridGeometry
-    : public DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>
+    : public DefaultMapperTraits<GetPropType<TypeTag, Properties::GridView>>
     {
         static constexpr Dumux::DiscretizationMethod discMethod = Dumux::DiscretizationMethod::cctpfa;
-        using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+        using GridView = GetPropType<TypeTag, Properties::GridView>;
     };
 
 public:
@@ -167,7 +185,7 @@ template<class TypeTag>
 struct SolutionVector<TypeTag, TTag::SequentialModel>
 {
 public:
-    using type = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
+    using type = typename GetProp<TypeTag, SolutionTypes>::ScalarSolution;
 };
 
 /*!
@@ -178,18 +196,18 @@ public:
 template<class TypeTag>
 struct SolutionTypes<TypeTag, TTag::SequentialModel>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
-    using Variables = typename GET_PROP_TYPE(TypeTag, Variables);
+    using Variables = GetPropType<TypeTag, Properties::Variables>;
 
     enum
     {
         dim = GridView::dimension,
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        maxIntersections = GET_PROP_VALUE(TypeTag, MaxIntersections)
+        numEq = getPropValue<TypeTag, Properties::NumEq>(),
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>(),
+        numComponents = getPropValue<TypeTag, Properties::NumComponents>(),
+        maxIntersections = getPropValue<TypeTag, Properties::MaxIntersections>()
     };
 
 public:
@@ -223,12 +241,15 @@ public:
     using DimVecElemFace = Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections> >;
 };
 
-SET_TYPE_PROP(SequentialModel,  Variables, VariableClass<TypeTag>);
+template<class TypeTag>
+struct Variables<TypeTag, TTag::SequentialModel> { using type = VariableClass<TypeTag>; };
 
-SET_TYPE_PROP(SequentialModel,  PrimaryVariables, typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables);
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::SequentialModel> { using type = typename GetProp<TypeTag, SolutionTypes>::PrimaryVariables; };
 
 //! Set the default type for the time manager
-SET_TYPE_PROP(SequentialModel, TimeManager, Dumux::TimeManager<TypeTag>);
+template<class TypeTag>
+struct TimeManager<TypeTag, TTag::SequentialModel> { using type = Dumux::TimeManager<TypeTag>; };
 
 /*!
  * \brief Boundary types at a single degree of freedom.
@@ -236,7 +257,7 @@ SET_TYPE_PROP(SequentialModel, TimeManager, Dumux::TimeManager<TypeTag>);
 template<class TypeTag>
 struct BoundaryTypes<TypeTag, TTag::SequentialModel>
 { private:
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = getPropValue<TypeTag, Properties::NumEq>() };
 public:
     using type = Dumux::BoundaryTypes<numEq>;
 };

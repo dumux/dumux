@@ -48,21 +48,21 @@ template<class TypeTag>
 class CapillaryDiffusion: public DiffusivePart<TypeTag>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-      using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-      using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+      using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+      using Problem = GetPropType<TypeTag, Properties::Problem>;
+      using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-      using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+      using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
       using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-      using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-      using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+      using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+      using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-      using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+      using CellData = GetPropType<TypeTag, Properties::CellData>;
 
-      using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-      using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+      using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+      using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
       using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
     enum
@@ -231,7 +231,7 @@ public:
      *  \param problem A problem class object
      */
     CapillaryDiffusion (Problem& problem)
-    : DiffusivePart<TypeTag>(problem), problem_(problem), preComput_(GET_PROP_VALUE(TypeTag, PrecomputedConstRels))
+    : DiffusivePart<TypeTag>(problem), problem_(problem), preComput_(getPropValue<TypeTag, Properties::PrecomputedConstRels>())
     {}
 
 private:

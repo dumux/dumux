@@ -30,7 +30,10 @@
 
 namespace Dumux {
 namespace Properties {
-NEW_TYPE_TAG(FvMpfaL3dPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, MPFAProperties));
+// Create new type tags
+namespace TTag {
+struct FvMpfaL3dPressureTwoPAdaptive { using InheritsFrom = std::tuple<MPFAProperties, PressureTwoP>; };
+} // end namespace TTag
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -39,10 +42,14 @@ NEW_TYPE_TAG(FvMpfaL3dPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, MPFAProp
 
 namespace Dumux {
 namespace Properties {
-SET_TYPE_PROP(FvMpfaL3dPressureTwoPAdaptive, MPFAInteractionVolume, FvMpfaL3dInteractionVolumeAdaptive<TypeTag>);
-SET_TYPE_PROP(FvMpfaL3dPressureTwoPAdaptive, MPFAInteractionVolumeContainer, FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>);
-SET_TYPE_PROP(FvMpfaL3dPressureTwoPAdaptive, PressureModel, FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>);
-SET_TYPE_PROP( FvMpfaL3dPressureTwoPAdaptive, Velocity, FvMpfaVelocityInTransport<TypeTag> );
+template<class TypeTag>
+struct MPFAInteractionVolume<TypeTag, TTag::FvMpfaL3dPressureTwoPAdaptive> { using type = FvMpfaL3dInteractionVolumeAdaptive<TypeTag>; };
+template<class TypeTag>
+struct MPFAInteractionVolumeContainer<TypeTag, TTag::FvMpfaL3dPressureTwoPAdaptive> { using type = FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>; };
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::FvMpfaL3dPressureTwoPAdaptive> { using type = FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>; };
+template<class TypeTag>
+struct Velocity<TypeTag, TTag:: FvMpfaL3dPressureTwoPAdaptive> { using type = FvMpfaVelocityInTransport<TypeTag> ; };
 } // end namespace Properties
 } // end namespace Dumux
 #endif

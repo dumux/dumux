@@ -38,7 +38,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for 1p pressure models
-NEW_TYPE_TAG(PressureOneP, INHERITS_FROM(Pressure, SequentialOneP));
+// Create new type tags
+namespace TTag {
+struct PressureOneP { using InheritsFrom = std::tuple<SequentialOneP, Pressure>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags

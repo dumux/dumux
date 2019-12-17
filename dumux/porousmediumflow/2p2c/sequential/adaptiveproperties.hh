@@ -24,7 +24,7 @@
 #ifndef DUMUX_2P2CADAPTIVE_PROPERTIES_HH
 #define DUMUX_2P2CADAPTIVE_PROPERTIES_HH
 
-#include <dumux/common/properties/propertysystemmacros.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
@@ -47,7 +47,10 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 //! The type tag for the compositional two-phase problems
-NEW_TYPE_TAG(SequentialTwoPTwoCAdaptive, INHERITS_FROM(SequentialTwoPTwoC));
+// Create new type tags
+namespace TTag {
+struct SequentialTwoPTwoCAdaptive { using InheritsFrom = std::tuple<SequentialTwoPTwoC>; };
+} // end namespace TTag
 }}
 
 //Dumux includes
@@ -63,15 +66,22 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-SET_BOOL_PROP(SequentialTwoPTwoCAdaptive, AdaptiveGrid, true);
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, GridTypeIndices, GridTypes); //!< Property not used but default necessary for mpfa2p
+template<class TypeTag>
+struct AdaptiveGrid<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { static constexpr bool value = true; };
+template<class TypeTag>
+struct GridTypeIndices<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { using type = GridTypes; }; //!< Property not used but default necessary for mpfa2p
 
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, CellData, CellData2P2CAdaptive<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, Variables, VariableClass2P2CAdaptive<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, Indices, SequentialTwoPTwoCIndicesAdaptive<TypeTag>);
+template<class TypeTag>
+struct CellData<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { using type = CellData2P2CAdaptive<TypeTag>; };
+template<class TypeTag>
+struct Variables<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { using type = VariableClass2P2CAdaptive<TypeTag>; };
+template<class TypeTag>
+struct Indices<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { using type = SequentialTwoPTwoCIndicesAdaptive<TypeTag>; };
 // Set the model properties
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, TransportModel, FV2dTransport2P2CAdaptive<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, PressureModel, FV2dPressure2P2CAdaptive<TypeTag>);
+template<class TypeTag>
+struct TransportModel<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { using type = FV2dTransport2P2CAdaptive<TypeTag>; };
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::SequentialTwoPTwoCAdaptive> { using type = FV2dPressure2P2CAdaptive<TypeTag>; };
 }
 
 

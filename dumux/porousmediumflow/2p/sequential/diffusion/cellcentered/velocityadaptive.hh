@@ -40,17 +40,17 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
 {
     using ParentType = FVVelocity2P<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
 
-     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     using Intersection = typename GridView::Intersection;
 
@@ -72,7 +72,7 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -89,7 +89,7 @@ public:
     FVVelocity2PAdaptive(Problem& problem)
     : ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
-        if (GET_PROP_VALUE(TypeTag, EnableCompressibility) && velocityType_ == vt)
+        if (getPropValue<TypeTag, Properties::EnableCompressibility>() && velocityType_ == vt)
         {
             DUNE_THROW(Dune::NotImplemented, "Total velocity - global pressure - model cannot be used with compressible fluids!");
         }
@@ -146,12 +146,12 @@ private:
     Scalar viscosity_[numPhases];
 
     //! Gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
-    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
+    static const int velocityType_ = getPropValue<TypeTag, Properties::VelocityFormulation>();
+    static const bool compressibility_ = getPropValue<TypeTag, Properties::EnableCompressibility>();
     //! Gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int pressureType_ = getPropValue<TypeTag, Properties::PressureFormulation>();
     //! Gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
 };
 
 /*!

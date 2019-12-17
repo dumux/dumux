@@ -28,6 +28,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
 #include "test_diffusionproblem.hh"
@@ -52,19 +53,21 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
+    using namespace Dumux;
+
     try {
-        using TypeTag = TTAG(FVVelocity2PTestTypeTag);
+        using TypeTag = Properties::TTag::FVVelocity2PTestTypeTag;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
-        auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+        auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
         Dumux::Parameters::init(argc, argv, defaultParams, usage);
 
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        Dumux::GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+        Dumux::GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
         gridManager.init();
         auto& grid = gridManager.grid();
 
@@ -74,7 +77,7 @@ int main(int argc, char** argv)
         Dune::Timer timer;
         bool consecutiveNumbering = true;
 
-        using FVProblem = GET_PROP_TYPE(TTAG(FVVelocity2PTestTypeTag), Problem);
+        using FVProblem = GetPropType<Properties::TTag::FVVelocity2PTestTypeTag, Properties::Problem>;
         FVProblem fvProblem(grid);
         fvProblem.setName("fvdiffusion");
         timer.reset();
@@ -85,7 +88,7 @@ int main(int argc, char** argv)
         Dumux::ResultEvaluation fvResult;
         fvResult.evaluate(grid.leafGridView(), fvProblem, consecutiveNumbering);
 
-        using MPFAOProblem = GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestTypeTag), Problem);
+        using MPFAOProblem = GetPropType<Properties::TTag::FVMPFAOVelocity2PTestTypeTag, Properties::Problem>;
         MPFAOProblem mpfaProblem(grid);
         mpfaProblem.setName("fvmpfaodiffusion");
         timer.reset();
@@ -95,7 +98,7 @@ int main(int argc, char** argv)
         Dumux::ResultEvaluation mpfaResult;
         mpfaResult.evaluate(grid.leafGridView(), mpfaProblem, consecutiveNumbering);
 
-        using MimeticProblem = GET_PROP_TYPE(TTAG(MimeticPressure2PTestTypeTag), Problem);
+        using MimeticProblem = GetPropType<Properties::TTag::MimeticPressure2PTestTypeTag, Properties::Problem>;
         MimeticProblem mimeticProblem(grid);
         mimeticProblem.setName("mimeticdiffusion");
         timer.reset();

@@ -62,17 +62,17 @@ template<class TypeTag>
 class CellData2P<TypeTag, false>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using FluxData = FluxData2P<TypeTag>;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
@@ -80,7 +80,7 @@ private:
     };
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 private:
     Scalar saturation_[numPhases];
@@ -404,17 +404,17 @@ template<class TypeTag>
 class CellData2P<TypeTag, true>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using FluxData = FluxData2P<TypeTag>;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
@@ -422,7 +422,7 @@ private:
     };
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 private:
     Scalar potential_[numPhases];

@@ -48,18 +48,18 @@ template<class TypeTag>
 class GravityPart: public ConvectivePart<TypeTag>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     enum
     {
@@ -67,7 +67,7 @@ private:
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
 
     using Intersection = typename GridView::Intersection;
@@ -200,7 +200,7 @@ public:
      *  \param problem A problem class object
      */
     GravityPart (Problem& problem)
-    : ConvectivePart<TypeTag>(problem), problem_(problem), preComput_(GET_PROP_VALUE(TypeTag, PrecomputedConstRels))
+    : ConvectivePart<TypeTag>(problem), problem_(problem), preComput_(getPropValue<TypeTag, Properties::PrecomputedConstRels>())
     {}
 
     //! For initialization

@@ -30,7 +30,10 @@
 
 namespace Dumux {
 namespace Properties {
-NEW_TYPE_TAG(FvMpfaL2dPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, MPFAProperties));
+// Create new type tags
+namespace TTag {
+struct FvMpfaL2dPressureTwoPAdaptive { using InheritsFrom = std::tuple<MPFAProperties, PressureTwoP>; };
+} // end namespace TTag
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -39,9 +42,11 @@ NEW_TYPE_TAG(FvMpfaL2dPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, MPFAProp
 
 namespace Dumux {
 namespace Properties {
-SET_TYPE_PROP(FvMpfaL2dPressureTwoPAdaptive, PressureModel, FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>);
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::FvMpfaL2dPressureTwoPAdaptive> { using type = FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>; };
 //! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
-SET_TYPE_PROP( FvMpfaL2dPressureTwoPAdaptive, Velocity, FvMpfaVelocityInTransport<TypeTag> );
+template<class TypeTag>
+struct Velocity<TypeTag, TTag:: FvMpfaL2dPressureTwoPAdaptive> { using type = FvMpfaVelocityInTransport<TypeTag> ; };
 } // end namespace Properties
 } // end namespace Dumux
 #endif

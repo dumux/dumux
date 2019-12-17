@@ -38,18 +38,18 @@ namespace Dumux {
  * \tparam TypeTag The problem TypeTag
  * \tparam bool Used for specialization for case of compressible flow (<tt>true</tt>) or incompressible flow (<tt>false</tt>)
  */
-template<class TypeTag, bool enableCompressibility = GET_PROP_VALUE(TypeTag, EnableCompressibility)>
+template<class TypeTag, bool enableCompressibility = getPropValue<TypeTag, Properties::EnableCompressibility>()>
 class CellData2PAdaptive: public CellData2P<TypeTag, enableCompressibility>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {

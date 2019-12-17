@@ -40,11 +40,11 @@ template<class TypeTag>
 class EvalCflFluxDefault: public EvalCflFlux<TypeTag>
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-      using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+      using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+      using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-      using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+      using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
@@ -226,8 +226,8 @@ private:
     Scalar fluxOut_;
     Scalar fluxIn_;
     Scalar porosityThreshold_;
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int velocityType_ = getPropValue<TypeTag, Properties::VelocityFormulation>();
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
 };
 
 //! Returns the CFL flux-function

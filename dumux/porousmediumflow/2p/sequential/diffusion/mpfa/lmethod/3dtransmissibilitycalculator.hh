@@ -49,7 +49,7 @@ namespace Dumux {
 template<class TypeTag>
 class FvMpfaL3dTransmissibilityCalculator
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum
         {
@@ -61,8 +61,8 @@ class FvMpfaL3dTransmissibilityCalculator
             sDiff = 0, sSum = 1
         };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -71,7 +71,7 @@ class FvMpfaL3dTransmissibilityCalculator
 
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
+    using InteractionVolume = GetPropType<TypeTag, Properties::MPFAInteractionVolume>;
 
 
 public:

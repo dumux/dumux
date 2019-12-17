@@ -24,6 +24,7 @@
 #ifndef TEST1_FVCA6_SPATIALPARAMETERS_HH
 #define TEST1_FVCA6_SPATIALPARAMETERS_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -38,17 +39,20 @@ class TestDiffusionSpatialParams3d;
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TestDiffusionSpatialParams3d);
+namespace TTag {
+struct TestDiffusionSpatialParams3d {};
+}
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestDiffusionSpatialParams3d, SpatialParams, TestDiffusionSpatialParams3d<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TestDiffusionSpatialParams3d> { using type = TestDiffusionSpatialParams3d<TypeTag>; };
 
 // Set the material law
 template<class TypeTag>
 struct MaterialLaw<TypeTag, TTag::TestDiffusionSpatialParams3d>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using RawMaterialLaw = LinearMaterial<Scalar>;
 public:
     using type = EffToAbsLaw<RawMaterialLaw>;
@@ -63,10 +67,10 @@ template<class TypeTag>
 class TestDiffusionSpatialParams3d: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CoordScalar = typename Grid::ctype;
 
     enum
@@ -77,7 +81,7 @@ class TestDiffusionSpatialParams3d: public SequentialFVSpatialParams<TypeTag>
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     const FieldMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const

@@ -49,10 +49,10 @@ private:
     using ParentType = VariableClassAdaptive<TypeTag>;
     using BaseType = VariableClass<TypeTag>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
     using AdaptedValues = typename CellData::AdaptedValues;
 
     using Grid = typename GridView::Grid;

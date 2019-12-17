@@ -28,6 +28,7 @@
 #define DUMUX_FVMPFAPROPERTIES_HH
 
 // dumux environment
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dune/grid/yaspgrid.hh>
 #if HAVE_DUNE_ALUGRID
@@ -89,13 +90,20 @@ struct GridImp<Dune::UGGrid<dim>, dim>
 namespace Properties
 {
 //! Basic Type tag for MFPA models
-NEW_TYPE_TAG(MPFAProperties);
+namespace TTag {
+struct MPFAProperties {};
+}
 
-NEW_PROP_TAG( GridTypeIndices );//!< The grid type indices to decide which grid is used
-NEW_PROP_TAG( GridImplementation ); //!< Gives kind of grid implementation in form of a GridType
-NEW_PROP_TAG( MPFAInteractionVolume ); //!< Type of the data container for one interaction volume
-NEW_PROP_TAG( MPFAInteractionVolumeContainer ); //!< Type of the data container for one interaction volume
-NEW_PROP_TAG( MPFATransmissibilityCalculator ); //!< Type defining the transmissibility calculation
+template<class TypeTag, class MyTypeTag>
+struct  GridTypeIndices  { using type = UndefinedProperty; };//!< The grid type indices to decide which grid is used
+template<class TypeTag, class MyTypeTag>
+struct  GridImplementation  { using type = UndefinedProperty; }; //!< Gives kind of grid implementation in form of a GridType
+template<class TypeTag, class MyTypeTag>
+struct  MPFAInteractionVolume  { using type = UndefinedProperty; }; //!< Type of the data container for one interaction volume
+template<class TypeTag, class MyTypeTag>
+struct  MPFAInteractionVolumeContainer  { using type = UndefinedProperty; }; //!< Type of the data container for one interaction volume
+template<class TypeTag, class MyTypeTag>
+struct  MPFATransmissibilityCalculator  { using type = UndefinedProperty; }; //!< Type defining the transmissibility calculation
 }
 }
 
@@ -109,14 +117,15 @@ template<class TypeTag>
 struct GridImplementation<TypeTag, TTag::MPFAProperties>
 {
 private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
 public:
     static const int value = GridImp<Grid, Grid::dimension>::imp;
 };
 //! \endcond
 
 //! Set grid type indices
-SET_TYPE_PROP(MPFAProperties, GridTypeIndices, GridTypes);
+template<class TypeTag>
+struct GridTypeIndices<TypeTag, TTag::MPFAProperties> { using type = GridTypes; };
 }
 }// end of Dune namespace
 #endif

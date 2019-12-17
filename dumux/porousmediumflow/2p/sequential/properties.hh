@@ -45,14 +45,20 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The TypeTag for sequential two-phase problems
-NEW_TYPE_TAG(SequentialTwoP, INHERITS_FROM(SequentialModel));
+// Create new type tags
+namespace TTag {
+struct SequentialTwoP { using InheritsFrom = std::tuple<SequentialModel>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the saturation model
-NEW_PROP_TAG( VelocityFormulation); //!< The type of velocity reconstructed for the transport model
-NEW_PROP_TAG( EnableCompressibility);//!< Returns whether compressibility is allowed
+template<class TypeTag, class MyTypeTag>
+struct  SaturationFormulation { using type = UndefinedProperty; }; //!< The formulation of the saturation model
+template<class TypeTag, class MyTypeTag>
+struct  VelocityFormulation { using type = UndefinedProperty; }; //!< The type of velocity reconstructed for the transport model
+template<class TypeTag, class MyTypeTag>
+struct  EnableCompressibility { using type = UndefinedProperty; };//!< Returns whether compressibility is allowed
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -67,61 +73,66 @@ namespace Properties {
 // Properties
 //////////////////////////////////////////////////////////////////
 //! Set number of equations to 2 for isothermal two-phase models
-SET_INT_PROP(SequentialTwoP, NumEq, 2);
+template<class TypeTag>
+struct NumEq<TypeTag, TTag::SequentialTwoP> { static constexpr int value = 2; };
 
 //! Set number of phases to 2 for two-phase models
-SET_INT_PROP(SequentialTwoP, NumPhases, 2);//!< The number of phases in the 2p model is 2
+template<class TypeTag>
+struct NumPhases<TypeTag, TTag::SequentialTwoP> { static constexpr int value = 2; };//!< The number of phases in the 2p model is 2
 
 //! Set number of components to 1 for immiscible two-phase models
-SET_INT_PROP(SequentialTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
+template<class TypeTag>
+struct NumComponents<TypeTag, TTag::SequentialTwoP> { static constexpr int value = 1; }; //!< Each phase consists of 1 pure component
 
 //! Set \f$p_w\f$-\f$S_w\f$ formulation as default two-phase formulation
-SET_INT_PROP(SequentialTwoP, Formulation, SequentialTwoPCommonIndices::pwsw);
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::SequentialTwoP> { static constexpr int value = SequentialTwoPCommonIndices::pwsw; };
 
 //! Chose the set of indices depending on the chosen formulation
 template<class TypeTag>
 struct Indices<TypeTag, TTag::SequentialTwoP>
 {
-    using type = SequentialTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0>;
+    using type = SequentialTwoPIndices<getPropValue<TypeTag, Properties::Formulation>(), 0>;
 };
 
 //! Set the default pressure formulation according to the chosen two-phase formulation
-SET_INT_PROP(SequentialTwoP,
-    PressureFormulation,
-    GET_PROP_TYPE(TypeTag, Indices)::pressureType);
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::SequentialTwoP> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::pressureType; };
 
 //! Set the default saturation formulation according to the chosen two-phase formulation
-SET_INT_PROP(SequentialTwoP,
-    SaturationFormulation,
-    GET_PROP_TYPE(TypeTag, Indices)::saturationType);
+template<class TypeTag>
+struct SaturationFormulation<TypeTag, TTag::SequentialTwoP> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::saturationType; };
 
 //! Set the default velocity formulation according to the chosen two-phase formulation
-SET_INT_PROP(SequentialTwoP,
-    VelocityFormulation,
-    GET_PROP_TYPE(TypeTag, Indices)::velocityDefault);
+template<class TypeTag>
+struct VelocityFormulation<TypeTag, TTag::SequentialTwoP> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::velocityDefault; };
 
 //! Disable compressibility by default
-SET_BOOL_PROP(SequentialTwoP, EnableCompressibility, false);
+template<class TypeTag>
+struct EnableCompressibility<TypeTag, TTag::SequentialTwoP> { static constexpr bool value = false; };
 
 //! Set general sequential VariableClass as default
-SET_TYPE_PROP(SequentialTwoP, Variables, VariableClass<TypeTag>);
+template<class TypeTag>
+struct Variables<TypeTag, TTag::SequentialTwoP> { using type = VariableClass<TypeTag>; };
 
 //! Set standart CellData of immiscible two-phase models as default
-SET_TYPE_PROP(SequentialTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, EnableCompressibility)>);
+template<class TypeTag>
+struct CellData<TypeTag, TTag::SequentialTwoP> { using type = CellData2P<TypeTag, getPropValue<TypeTag, Properties::EnableCompressibility>()>; };
 
 //! Set default fluid state
 template<class TypeTag>
 struct FluidState<TypeTag, TTag::SequentialTwoP>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 public:
     using type = IsothermalImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
 //! The spatial parameters to be employed. Use SequentialFVSpatialParams by default.
-SET_TYPE_PROP(SequentialTwoP, SpatialParams, SequentialFVSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::SequentialTwoP> { using type = SequentialFVSpatialParams<TypeTag>; };
 // \}
 } // end namespace Properties
 } // end namespace Dumux

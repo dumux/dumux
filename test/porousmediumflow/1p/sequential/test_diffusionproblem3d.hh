@@ -32,6 +32,7 @@
 
 #include <dumux/material/components/constant.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/pressureproperties.hh>
@@ -54,43 +55,54 @@ class TestDiffusion3DProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(DiffusionTest, INHERITS_FROM(SequentialTwoP, TestDiffusionSpatialParams3d));
+// Create new type tags
+namespace TTag {
+struct DiffusionTest { using InheritsFrom = std::tuple<TestDiffusionSpatialParams3d, SequentialTwoP>; };
+
+// set the types for the 2PFA FV method
+struct FVTest { using InheritsFrom = std::tuple<DiffusionTest, FVPressureTwoP>; };
+
+// set the types for the MPFA-L FV method
+struct FVMPFAL3DTestTypeTag { using InheritsFrom = std::tuple<DiffusionTest, FvMpfaL3dPressureTwoP>; };
+
+// set the types for the mimetic FD method
+struct MimeticTest { using InheritsFrom = std::tuple<DiffusionTest, MimeticPressureTwoP>; };
+
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(DiffusionTest, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DiffusionTest> { using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>; };
 #elif HAVE_UG
-SET_TYPE_PROP(DiffusionTest, Grid, Dune::UGGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DiffusionTest> { using type = Dune::UGGrid<3>; };
 #else
-SET_TYPE_PROP(DiffusionTest, Grid, Dune::YaspGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DiffusionTest> { using type = Dune::YaspGrid<3>; };
 #endif
 
-SET_TYPE_PROP(DiffusionTest, Problem, TestDiffusion3DProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DiffusionTest> { using type = TestDiffusion3DProblem<TypeTag>; };
 
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DiffusionTest>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 #if HAVE_SUPERLU
-SET_TYPE_PROP(DiffusionTest, LinearSolver, SuperLUBackend);
+template<class TypeTag>
+struct LinearSolver<TypeTag, TTag::DiffusionTest> { using type = SuperLUBackend; };
 #else
-SET_TYPE_PROP(DiffusionTest, LinearSolver, ILUnRestartedGMResBackend);
+template<class TypeTag>
+struct LinearSolver<TypeTag, TTag::DiffusionTest> { using type = ILUnRestartedGMResBackend; };
 #endif
 
-// set the types for the 2PFA FV method
-NEW_TYPE_TAG(FVTest, INHERITS_FROM(FVPressureTwoP, DiffusionTest));
-
-// set the types for the MPFA-L FV method
-NEW_TYPE_TAG(FVMPFAL3DTestTypeTag, INHERITS_FROM(FvMpfaL3dPressureTwoP, DiffusionTest));
-
-// set the types for the mimetic FD method
-NEW_TYPE_TAG(MimeticTest, INHERITS_FROM(MimeticPressureTwoP, DiffusionTest));
 }
 
 /*!
@@ -102,15 +114,15 @@ template<class TypeTag>
 class TestDiffusion3DProblem: public DiffusionProblem2P<TypeTag>
 {
     using ParentType = DiffusionProblem2P<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Grid = typename GridView::Grid;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     enum
     {
@@ -126,14 +138,14 @@ class TestDiffusion3DProblem: public DiffusionProblem2P<TypeTag>
         pressureEqIdx = Indices::pressureEqIdx,
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using ScalarSolution = typename SolutionTypes::ScalarSolution;
 
@@ -265,7 +277,7 @@ public:
     }
 
 private:
-    FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
+    FVVelocity<TypeTag, GetPropType<TypeTag, Properties::Velocity> > velocity_;
     static constexpr Scalar eps_ = 1e-4;
 
 };

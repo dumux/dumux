@@ -36,13 +36,18 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for transport part of a sequential two-phase model
-NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, SequentialTwoP));
+// Create new type tags
+namespace TTag {
+struct TransportTwoP { using InheritsFrom = std::tuple<SequentialTwoP, Transport>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(CapillaryFlux); //!< The type of the diffusive part in a transport equation
-NEW_PROP_TAG(GravityFlux); //!< The type of a convective part in a transport equation
+template<class TypeTag, class MyTypeTag>
+struct CapillaryFlux { using type = UndefinedProperty; }; //!< The type of the diffusive part in a transport equation
+template<class TypeTag, class MyTypeTag>
+struct GravityFlux { using type = UndefinedProperty; }; //!< The type of a convective part in a transport equation
 } // end namespace Properties
 } // end namespace Dumux
 

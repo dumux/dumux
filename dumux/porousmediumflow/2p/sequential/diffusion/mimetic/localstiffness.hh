@@ -58,8 +58,8 @@ namespace Dumux {
 template<class TypeTag, int m>
 class LocalStiffness
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     // grid types
     using Entity = typename GridView::template Codim<0>::Entity;
     enum {n=GridView::dimension};
@@ -69,7 +69,7 @@ public:
     using MBlockType = Dune::FieldMatrix<Scalar, m, m>;                      // one entry in the stiffness matrix
     using VBlockType = Dune::FieldVector<Scalar, m>;                        // one entry in the global vectors
     using BCBlockType = std::array<BoundaryConditions::Flags, m>; // componentwise boundary conditions
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     virtual ~LocalStiffness ()
     {
@@ -266,8 +266,8 @@ protected:
 template<class TypeTag, int m>
 class LinearLocalStiffness : public LocalStiffness<TypeTag,m>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     // grid types
     using Entity = typename GridView::template Codim<0>::Entity;

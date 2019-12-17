@@ -24,6 +24,7 @@
  */
 #include <config.h>
 
+#include <dumux/common/properties.hh>
 #include "test_dec2p2cproblem.hh"
 #include <dumux/common/start.hh>
 
@@ -59,6 +60,6 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    using ProblemTypeTag = TTAG(TestDecTwoPTwoC);
+    using ProblemTypeTag = Dumux::Properties::TTag::TestDecTwoPTwoC;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

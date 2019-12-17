@@ -67,8 +67,8 @@ namespace Dumux {
 template<class TypeTag>
 class CROperatorAssemblerTwoPAdaptive
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     enum {dim=GridView::dimension};
     using Element = typename GridView::template Codim<0>::Entity;
     using IS = typename GridView::IndexSet;
@@ -81,7 +81,7 @@ class CROperatorAssemblerTwoPAdaptive
     using SatType = Dune::BlockVector< Dune::FieldVector<double, 1> >;
     using IntersectionMapper = Dumux::IntersectionMapper<GridView>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {

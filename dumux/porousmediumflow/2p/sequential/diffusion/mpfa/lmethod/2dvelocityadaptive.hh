@@ -53,27 +53,27 @@ namespace Dumux {
 template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelocity2p<TypeTag>
 {
     using ParentType = FvMpfaL2dVelocity2p<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld
         };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Grid = typename GridView::Grid;
@@ -82,7 +82,7 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
     using Geometry = typename Element::Geometry;
     using JacobianTransposed = typename Geometry::JacobianTransposed ;
 
-    using GridTypeIndices = typename GET_PROP_TYPE(TypeTag, GridTypeIndices);
+    using GridTypeIndices = GetPropType<TypeTag, Properties::GridTypeIndices>;
 
     using InteractionVolume = FVMPFALInteractionVolume<TypeTag>;
     using InnerBoundaryVolumeFaces = std::vector<Dune::FieldVector<bool, 2*dim> >;
@@ -107,7 +107,7 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
             saturationIdx = Indices::saturationIdx,
             pressureEqIdx = Indices::pressureEqIdx,
             satEqIdx = Indices::satEqIdx,
-            numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+            numPhases = getPropValue<TypeTag, Properties::NumPhases>()
         };
 
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;

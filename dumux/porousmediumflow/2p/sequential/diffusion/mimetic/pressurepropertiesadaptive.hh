@@ -42,7 +42,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(MimeticPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, Mimetic));
+// Create new type tags
+namespace TTag {
+struct MimeticPressureTwoPAdaptive { using InheritsFrom = std::tuple<Mimetic, PressureTwoP>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -55,8 +58,10 @@ NEW_TYPE_TAG(MimeticPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, Mimetic));
 
 namespace Dumux {
 namespace Properties {
-SET_TYPE_PROP(MimeticPressureTwoPAdaptive, PressureModel, MimeticPressure2PAdaptive<TypeTag>);
-SET_TYPE_PROP(MimeticPressureTwoPAdaptive, LocalStiffness, MimeticTwoPLocalStiffnessAdaptive<TypeTag>);
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::MimeticPressureTwoPAdaptive> { using type = MimeticPressure2PAdaptive<TypeTag>; };
+template<class TypeTag>
+struct LocalStiffness<TypeTag, TTag::MimeticPressureTwoPAdaptive> { using type = MimeticTwoPLocalStiffnessAdaptive<TypeTag>; };
 } // end namespace Properties
 } // end namespace Dumux
 

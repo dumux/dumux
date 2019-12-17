@@ -26,7 +26,7 @@
 #define DUMUX_FVPRESSUREPORPERTIES1P_SEQUENTIAL_HH
 
 //Dumux-includes
-#include <dumux/common/properties/propertysystemmacros.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/1p/sequential/diffusion/properties.hh>
 
 namespace Dumux {
@@ -45,7 +45,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the one-phase problems using a standard finite volume model
-NEW_TYPE_TAG(FVPressureOneP, INHERITS_FROM(PressureOneP));
+// Create new type tags
+namespace TTag {
+struct FVPressureOneP { using InheritsFrom = std::tuple<PressureOneP>; };
+} // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -63,11 +66,14 @@ namespace Properties {
 // Properties
 //////////////////////////////////////////////////////////////////
 //! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
-SET_TYPE_PROP( FVPressureOneP, Velocity, FVVelocity1P<TypeTag> );
+template<class TypeTag>
+struct Velocity<TypeTag, TTag:: FVPressureOneP> { using type = FVVelocity1P<TypeTag> ; };
 //! Set finite volume implementation of the one-phase pressure equation as default pressure model
-SET_TYPE_PROP(FVPressureOneP, PressureModel, FVPressure1P<TypeTag>);
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::FVPressureOneP> { using type = FVPressure1P<TypeTag>; };
 //! Allow assembling algorithm for the pressure matrix to assemble only from one side of a cell-cell interface
-SET_BOOL_PROP(FVPressureOneP, VisitFacesOnlyOnce, true);
+template<class TypeTag>
+struct VisitFacesOnlyOnce<TypeTag, TTag::FVPressureOneP> { static constexpr bool value = true; };
 // \}
 } // end namespace Properties
 } // end namespace Dumux

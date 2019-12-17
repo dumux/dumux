@@ -40,23 +40,23 @@ template<class TypeTag>
 class GridAdaptInitializationIndicator
 {
 private:
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
 
-    using AdaptionIndicator = typename GET_PROP_TYPE(TypeTag, AdaptionIndicator);
+    using AdaptionIndicator = GetPropType<TypeTag, Properties::AdaptionIndicator>;
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     enum
         {
             dim = GridView::dimension,
             dimWorld = GridView::dimensionworld,
-            numEq = GET_PROP_VALUE(TypeTag, NumEq),
-            numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+            numEq = getPropValue<TypeTag, Properties::NumEq>(),
+            numPhases = getPropValue<TypeTag, Properties::NumPhases>()
         };
 
     enum

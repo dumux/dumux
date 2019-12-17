@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
@@ -55,31 +56,44 @@ class IMPESTestProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(IMPESTest, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TestIMPESSpatialParams));
+// Create new type tags
+namespace TTag {
+struct IMPESTest { using InheritsFrom = std::tuple<TestIMPESSpatialParams, FVTransportTwoP, IMPESTwoP, FVPressureTwoP>; };
+
+// set up an additional problem where the AMG backend is used
+struct IMPESTestWithAMG { using InheritsFrom = std::tuple<IMPESTest>; };
+
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(IMPESTest, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::IMPESTest> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
-SET_TYPE_PROP(IMPESTest, Problem, IMPESTestProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::IMPESTest> { using type = IMPESTestProblem<TypeTag>; };
 
 ////////////////////////////////////////////////////////////////////////
 //Switch to a p_n-S_w formulation
 //
-//SET_INT_PROP(IMPESTest, Formulation, SequentialTwoPCommonIndices::pnsn);
+// template<class TypeTag>
+// struct Formulation<TypeTag, TTag::IMPESTest> { static constexpr int value = SequentialTwoPCommonIndices::pnsn; };
 //
 ////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////
 //Switch to a p_global-S_w formulation
 //
-//SET_INT_PROP(IMPESTest, Formulation, SequentialTwoPCommonIndices::pGlobalSw);
+// template<class TypeTag>
+// struct Formulation<TypeTag, TTag::IMPESTest> { static constexpr int value = SequentialTwoPCommonIndices::pGlobalSw; };
 //
 //Define the capillary pressure term in the transport equation -> only needed in case of a p_global-S_w formulation!
-//SET_TYPE_PROP(IMPESTest, CapillaryFlux, CapillaryDiffusion<TypeTag>);
+template<class TypeTag>
+struct CapillaryFlux<TypeTag, TTag::IMPESTest> { using type = CapillaryDiffusion<TypeTag>; };
 //
 //Define the gravity term in the transport equation -> only needed in case of a p_global-S_w formulation!
-//SET_TYPE_PROP(IMPESTest, GravityFlux, GravityPart<TypeTag>);
+template<class TypeTag>
+struct GravityFlux<TypeTag, TTag::IMPESTest> { using type = GravityPart<TypeTag>; };
 //
 ////////////////////////////////////////////////////////////////////////
 
@@ -87,20 +101,21 @@ SET_TYPE_PROP(IMPESTest, Problem, IMPESTestProblem<TypeTag>);
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::IMPESTest>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
-SET_TYPE_PROP(IMPESTest, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
+template<class TypeTag>
+struct EvalCflFluxFunction<TypeTag, TTag::IMPESTest> { using type = EvalCflFluxCoats<TypeTag>; };
 
-// set up an additional problem where the AMG backend is used
-NEW_TYPE_TAG(IMPESTestWithAMG, INHERITS_FROM(IMPESTest));
 // use the AMG backend for the corresponding test
-SET_TYPE_PROP(IMPESTestWithAMG, LinearSolver, AMGBackend<TypeTag>);
+template<class TypeTag>
+struct LinearSolver<TypeTag, TTag::IMPESTestWithAMG> { using type = AMGBackend<TypeTag>; };
 // Set the grid type
-SET_TYPE_PROP(IMPESTestWithAMG, Grid, Dune::YaspGrid<2>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::IMPESTestWithAMG> { using type = Dune::YaspGrid<2>; };
 
 } // end namespace Properties
 
@@ -120,14 +135,14 @@ template<class TypeTag>
 class IMPESTestProblem: public IMPESProblem2P<TypeTag>
 {
 using ParentType = IMPESProblem2P<TypeTag>;
-using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using GridView = GetPropType<TypeTag, Properties::GridView>;
 using Grid = typename GridView::Grid;
 
-using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
+using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
 
-using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
 enum
 {
@@ -143,13 +158,13 @@ enum
     eqIdxSat = Indices::satEqIdx
 };
 
-using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
 using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
 public:

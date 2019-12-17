@@ -40,16 +40,16 @@ template<class TypeTag>
 class GridAdaptionIndicator2P
 {
 private:
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
     using ElementMapper = typename SolutionTypes::ElementMapper;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum
     {
@@ -213,7 +213,7 @@ protected:
     Scalar refineBound_;
     Scalar coarsenBound_;
     ScalarSolutionType indicatorVector_;
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
 };
 } // end namespace Dumux
 

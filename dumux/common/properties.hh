@@ -32,9 +32,10 @@
 #ifndef DUMUX_PROPERTY_SYSTEM_HH
 #include <dumux/common/properties/propertysystem.hh>
 
-// remove this after release 3.1 to disable macros per default
+// per default, we do not allow the old property macros
+// remove this after release 3.2
 #ifndef DUMUX_ENABLE_OLD_PROPERTY_MACROS
-#define DUMUX_ENABLE_OLD_PROPERTY_MACROS 1
+#define DUMUX_ENABLE_OLD_PROPERTY_MACROS 0
 #endif
 
 // remove this after release 3.2 to remove macros completely

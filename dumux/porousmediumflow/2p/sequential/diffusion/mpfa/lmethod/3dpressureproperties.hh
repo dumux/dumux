@@ -25,13 +25,16 @@
 #define DUMUX_FVMPFAL3DPROPERTIES2P_HH
 
 // dumux environment
-#include <dumux/common/properties/propertysystemmacros.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
 namespace Dumux {
 namespace Properties {
-NEW_TYPE_TAG(FvMpfaL3dPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
+// Create new type tags
+namespace TTag {
+struct FvMpfaL3dPressureTwoP { using InheritsFrom = std::tuple<MPFAProperties, PressureTwoP>; };
+} // end namespace TTag
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -40,10 +43,14 @@ NEW_TYPE_TAG(FvMpfaL3dPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties))
 
 namespace Dumux {
 namespace Properties {
-SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolume, FvMpfaL3dInteractionVolume<TypeTag>);
-SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolumeContainer, FvMpfaL3dInteractionVolumeContainer<TypeTag>);
-SET_TYPE_PROP(FvMpfaL3dPressureTwoP, PressureModel, FvMpfaL3dPressureVelocity2p<TypeTag>);
-SET_TYPE_PROP( FvMpfaL3dPressureTwoP, Velocity, FvMpfaVelocityInTransport<TypeTag> );
+template<class TypeTag>
+struct MPFAInteractionVolume<TypeTag, TTag::FvMpfaL3dPressureTwoP> { using type = FvMpfaL3dInteractionVolume<TypeTag>; };
+template<class TypeTag>
+struct MPFAInteractionVolumeContainer<TypeTag, TTag::FvMpfaL3dPressureTwoP> { using type = FvMpfaL3dInteractionVolumeContainer<TypeTag>; };
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::FvMpfaL3dPressureTwoP> { using type = FvMpfaL3dPressureVelocity2p<TypeTag>; };
+template<class TypeTag>
+struct Velocity<TypeTag, TTag:: FvMpfaL3dPressureTwoP> { using type = FvMpfaVelocityInTransport<TypeTag> ; };
 } // end namespace Properties
 } // end namespace Dumux
 #endif

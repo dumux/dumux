@@ -25,6 +25,7 @@
 
 #if HAVE_UG
 
+#include <dumux/common/properties.hh>
 #include "test_adaptive2p2c3dproblem.hh"
 #include <dumux/common/start.hh>
 
@@ -55,7 +56,7 @@ void usage(const char *progName, const std::string &errorMsg)
 // The main function using the standard start procedure
 int main(int argc, char** argv)
 {
-        using ProblemTypeTag = TTAG(Adaptive2p2c3d);
+        using ProblemTypeTag = Dumux::Properties::TTag::Adaptive2p2c3d;
         return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 

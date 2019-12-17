@@ -23,6 +23,7 @@
 #ifndef TEST_2P_SPATIALPARAMETERS_HH
 #define TEST_2P_SPATIALPARAMETERS_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -37,17 +38,20 @@ class Test2PSpatialParams;
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(Test2PSpatialParams);
+namespace TTag {
+struct Test2PSpatialParams {};
+}
 
 // Set the spatial parameters
-SET_TYPE_PROP(Test2PSpatialParams, SpatialParams, Test2PSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Test2PSpatialParams> { using type = Test2PSpatialParams<TypeTag>; };
 
 // Set the material law
 template<class TypeTag>
 struct MaterialLaw<TypeTag, TTag::Test2PSpatialParams>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using RawMaterialLaw = RegularizedBrooksCorey<Scalar>;
 public:
     using type = EffToAbsLaw<RawMaterialLaw>;
@@ -62,10 +66,10 @@ template<class TypeTag>
 class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CoordScalar = typename Grid::ctype;
 
     enum
@@ -78,7 +82,7 @@ class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     const FieldMatrix& intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const

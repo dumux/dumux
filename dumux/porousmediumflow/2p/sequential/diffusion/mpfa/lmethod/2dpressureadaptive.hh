@@ -74,35 +74,35 @@ template<class TypeTag>
 class FvMpfaL2dPressure2pAdaptive: public FVPressure<TypeTag>
 {
     using ParentType = FVPressure<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using CellData = GetPropType<TypeTag, Properties::CellData>;
 
-    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
 
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
 
-    using GridTypeIndices = typename GET_PROP_TYPE(TypeTag, GridTypeIndices);
+    using GridTypeIndices = GetPropType<TypeTag, Properties::GridTypeIndices>;
 
     enum
     {
@@ -119,7 +119,7 @@ class FvMpfaL2dPressure2pAdaptive: public FVPressure<TypeTag>
         saturationIdx = Indices::saturationIdx,
         pressEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>()
     };
     enum
     {
@@ -462,7 +462,7 @@ public:
         // Hence warning is not thrown if the file is not used from compositional modules
         // that require 2p2cproperties.hh.
         #ifndef DUMUX_2P2CPROPERTIES_HH
-        if (GET_PROP_VALUE(TypeTag, EnableCompressibility))
+        if (getPropValue<TypeTag, Properties::EnableCompressibility>())
         {
             DUNE_THROW(Dune::NotImplemented, "Compressibility not supported!");
         }
@@ -508,11 +508,11 @@ private:
 
     static constexpr Scalar threshold_ = 1e-15;
     //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int pressureType_ = getPropValue<TypeTag, Properties::PressureFormulation>();
     //! gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int saturationType_ = getPropValue<TypeTag, Properties::SaturationFormulation>();
     //! gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
+    static const int velocityType_ = getPropValue<TypeTag, Properties::VelocityFormulation>();
 
     // TODO doc me!
     Scalar evaluateErrorTerm_(CellData& cellData)
@@ -563,7 +563,7 @@ typename FvMpfaL2dPressure2pAdaptive<TypeTag>::Intersection
     auto nextIsIt = ++tempIsIt;
 
     // get 'nextIsIt'
-    switch (GET_PROP_VALUE(TypeTag, GridImplementation))
+    switch (getPropValue<TypeTag, Properties::GridImplementation>())
     {
         // for ALUGrid and UGGrid
         case GridTypeIndices::aluGrid:

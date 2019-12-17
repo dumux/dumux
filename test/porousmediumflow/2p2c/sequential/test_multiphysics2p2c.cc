@@ -27,6 +27,7 @@
 #include <array>
 #include <iostream>
 
+#include <dumux/common/properties.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/common/gridinfo.hh>
@@ -44,18 +45,20 @@ void usage(const char *progname, const std::string &errorMsg = "")
 
 int main(int argc, char** argv)
 {
+    using namespace Dumux;
+
     try {
-        using TypeTag = TTAG(TestMultTwoPTwoC);
-        using Grid = GET_PROP_TYPE(TypeTag, Grid);
-        using Problem = GET_PROP_TYPE(TypeTag, Problem);
-        using TimeManager = GET_PROP_TYPE(TypeTag, TimeManager);
+        using TypeTag = Properties::TTag::TestMultTwoPTwoC;
+        using Grid = GetPropType<TypeTag, Properties::Grid>;
+        using Problem = GetPropType<TypeTag, Properties::Problem>;
+        using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
         static const int dim = Grid::dimension;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
-        auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+        auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
         Dumux::Parameters::init(argc, argv, defaultParams, usage);
 
         ////////////////////////////////////////////////////////////
