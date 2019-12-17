@@ -2,7 +2,7 @@ add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
 dumux_add_test(NAME test_impes
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_impes.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -11,7 +11,7 @@ dumux_add_test(NAME test_impes
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_impes")
 
 dumux_add_test(NAME test_impesadaptive
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_impesadaptive.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_impesadaptive
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_impesadaptive")
 
 dumux_add_test(NAME test_impesadaptiverestart
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_impesadaptiverestart.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -33,7 +33,7 @@ set_tests_properties(test_impesadaptiverestart PROPERTIES DEPENDS test_impesadap
 
 if(MPI_FOUND)
   dumux_add_test(NAME test_impeswithamg
-                LABELS porousmediumflow 2p parallel
+                LABELS porousmediumflow 2p parallel sequential
                 SOURCES test_impeswithamg.cc
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS --script fuzzy
@@ -42,7 +42,7 @@ if(MPI_FOUND)
                          --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impeswithamg.input -TimeManager.TEnd 7e7")
 else()
   dumux_add_test(NAME test_impeswithamg
-                LABELS porousmediumflow 2p
+                LABELS porousmediumflow 2p sequential
                 SOURCES test_impeswithamg.cc
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS --script fuzzy
@@ -52,7 +52,7 @@ else()
 endif()
 
 dumux_add_test(NAME test_transport
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_transport.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -64,7 +64,7 @@ dumux_add_test(NAME test_transport
 add_executable(test_mpfa2p test_mpfa2p.cc)
 dumux_add_test(NAME test_mpfao2p
               TARGET test_mpfa2p
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_mpfao2p-reference.vtu
@@ -73,7 +73,7 @@ dumux_add_test(NAME test_mpfao2p
 
 dumux_add_test(NAME test_mpfal2p
               TARGET test_mpfa2p
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_mpfal2p-reference.vtu
@@ -82,7 +82,7 @@ dumux_add_test(NAME test_mpfal2p
 
 dumux_add_test(NAME test_mpfal2padaptive
               TARGET test_mpfa2p
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_mpfal2padaptive-reference.vtu
@@ -91,7 +91,7 @@ dumux_add_test(NAME test_mpfal2padaptive
 
 # 3d tests
 dumux_add_test(NAME test_3d2pfv
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -100,7 +100,7 @@ dumux_add_test(NAME test_3d2pfv
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfv -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pfv -ModelType FV")
 
 dumux_add_test(NAME test_3d2pfvadaptive
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -109,7 +109,7 @@ dumux_add_test(NAME test_3d2pfvadaptive
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfvadaptive -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pfvadaptive -ModelType FVAdaptive")
 
 dumux_add_test(NAME test_3d2pmimetic
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -118,7 +118,7 @@ dumux_add_test(NAME test_3d2pmimetic
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimetic -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmimetic -ModelType Mimetic")
 
 dumux_add_test(NAME test_3d2pmimeticadaptive
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -127,7 +127,7 @@ dumux_add_test(NAME test_3d2pmimeticadaptive
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimeticadaptive -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmimeticadaptive -ModelType MimeticAdaptive")
 
 dumux_add_test(NAME test_3d2pmpfal
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_3d2p.cc
               TIMEOUT 1500
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -137,7 +137,7 @@ dumux_add_test(NAME test_3d2pmpfal
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfal -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmpfal -ModelType MPFAL")
 
 dumux_add_test(NAME test_3d2pmpfaladaptive
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p sequential
               SOURCES test_3d2p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
