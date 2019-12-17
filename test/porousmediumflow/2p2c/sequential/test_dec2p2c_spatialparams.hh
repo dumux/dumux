@@ -24,6 +24,7 @@
 #ifndef TEST_2P2C_SPATIALPARAMS_HH
 #define TEST_2P2C_SPATIALPARAMS_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -38,17 +39,20 @@ class Test2P2CSpatialParams;
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(Test2P2CSpatialParams);
+namespace TTag {
+struct Test2P2CSpatialParams {};
+}
 
 // Set the spatial parameters
-SET_TYPE_PROP(Test2P2CSpatialParams, SpatialParams, Test2P2CSpatialParams<TypeTag>);
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Test2P2CSpatialParams> { using type = Test2P2CSpatialParams<TypeTag>; };
 
 // Set the material law
 template<class TypeTag>
 struct MaterialLaw<TypeTag, TTag::Test2P2CSpatialParams>
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using RawMaterialLaw = LinearMaterial<Scalar>;
 public:
     using type = EffToAbsLaw<RawMaterialLaw>;
@@ -62,9 +66,9 @@ public:
 template<class TypeTag>
 class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     enum { dim = GridView::dimension };
     using Element = typename GridView::Traits::template Codim<0>::Entity;
@@ -72,7 +76,7 @@ class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     const FieldMatrix& intrinsicPermeability (const Element& element) const

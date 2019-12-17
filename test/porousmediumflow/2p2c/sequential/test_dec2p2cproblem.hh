@@ -47,32 +47,42 @@ class TestDecTwoPTwoCProblem;
 // Specify the properties
 namespace Properties
 {
-NEW_TYPE_TAG(TestDecTwoPTwoC, INHERITS_FROM(SequentialTwoPTwoC, Test2P2CSpatialParams));
+// Create new type tags
+namespace TTag {
+struct TestDecTwoPTwoC { using InheritsFrom = std::tuple<Test2P2CSpatialParams, SequentialTwoPTwoC>; };
+} // end namespace TTag
 
 // Set the grid type
-SET_TYPE_PROP(TestDecTwoPTwoC, Grid, Dune::YaspGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TestDecTwoPTwoC> { using type = Dune::YaspGrid<3>; };
 
 // Set the problem property
-SET_TYPE_PROP(TestDecTwoPTwoC, Problem, TestDecTwoPTwoCProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TestDecTwoPTwoC> { using type = TestDecTwoPTwoCProblem<TypeTag>; };
 
 // Set the model properties
-SET_TYPE_PROP(TestDecTwoPTwoC, TransportModel, FVTransport2P2C<TypeTag>);
+template<class TypeTag>
+struct TransportModel<TypeTag, TTag::TestDecTwoPTwoC> { using type = FVTransport2P2C<TypeTag>; };
 
-SET_TYPE_PROP(TestDecTwoPTwoC, PressureModel,FVPressure2P2C<TypeTag>);
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::TestDecTwoPTwoC> { using type = FVPressure2P2C<TypeTag>; };
 
 
-SET_INT_PROP(TestDecTwoPTwoC, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::TestDecTwoPTwoC> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::pressureN; };
 
 // Select fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TestDecTwoPTwoC>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>>;
 };
 
-SET_BOOL_PROP(TestDecTwoPTwoC, EnableCapillarity, true);
-SET_INT_PROP(TestDecTwoPTwoC, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
+template<class TypeTag>
+struct EnableCapillarity<TypeTag, TTag::TestDecTwoPTwoC> { static constexpr bool value = true; };
+template<class TypeTag>
+struct BoundaryMobility<TypeTag, TTag::TestDecTwoPTwoC> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::satDependent; };
 }
 
 /*!
@@ -91,22 +101,22 @@ template<class TypeTag>
 class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
 using ParentType = IMPETProblem2P2C<TypeTag>;
-using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using GridView = GetPropType<TypeTag, Properties::GridView>;
 using Grid = typename GridView::Grid;
-using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
+using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
 enum
 {
     dim = GridView::dimension, dimWorld = GridView::dimensionworld
 };
 
-using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using Intersection = typename GridView::Intersection;

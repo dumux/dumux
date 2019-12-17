@@ -49,36 +49,47 @@ class Adaptive2p2c3d;
 
 namespace Properties
 {
-NEW_TYPE_TAG(Adaptive2p2c3d, INHERITS_FROM(SequentialTwoPTwoCAdaptive,Test2P2CSpatialParams, MPFAProperties));
+// Create new type tags
+namespace TTag {
+struct Adaptive2p2c3d { using InheritsFrom = std::tuple<Test2P2CSpatialParams, MPFAProperties, SequentialTwoPTwoCAdaptive>; };
+} // end namespace TTag
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(Adaptive2p2c3d, Grid, Dune::UGGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Adaptive2p2c3d> { using type = Dune::UGGrid<3>; };
 #else
-SET_TYPE_PROP(Adaptive2p2c3d, Grid, Dune::YaspGrid<3>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Adaptive2p2c3d> { using type = Dune::YaspGrid<3>; };
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(Adaptive2p2c3d, Problem, Adaptive2p2c3d<TTAG(Adaptive2p2c3d)>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Adaptive2p2c3d> { using type = Adaptive2p2c3d<Properties::TTag::Adaptive2p2c3d>; };
 
 // Set the model properties
-SET_TYPE_PROP(Adaptive2p2c3d, TransportModel, FV3dTransport2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
+template<class TypeTag>
+struct TransportModel<TypeTag, TTag::Adaptive2p2c3d> { using type = FV3dTransport2P2CAdaptive<Properties::TTag::Adaptive2p2c3d>; };
 
-SET_TYPE_PROP(Adaptive2p2c3d, PressureModel, FV3dPressure2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
+template<class TypeTag>
+struct PressureModel<TypeTag, TTag::Adaptive2p2c3d> { using type = FV3dPressure2P2CAdaptive<Properties::TTag::Adaptive2p2c3d>; };
 
 // Select fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::Adaptive2p2c3d>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>, FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
 };
 
 // Specify indicator
-SET_TYPE_PROP(Adaptive2p2c3d, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
+template<class TypeTag>
+struct AdaptionIndicator<TypeTag, TTag::Adaptive2p2c3d> { using type = GridAdaptionIndicator2P<TypeTag>; };
 
-SET_BOOL_PROP(Adaptive2p2c3d, EnableCapillarity, true);
-SET_INT_PROP(Adaptive2p2c3d, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
+template<class TypeTag>
+struct EnableCapillarity<TypeTag, TTag::Adaptive2p2c3d> { static constexpr bool value = true; };
+template<class TypeTag>
+struct PressureFormulation<TypeTag, TTag::Adaptive2p2c3d> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::pressureN; };
 
 }
 
@@ -102,20 +113,20 @@ SET_INT_PROP(Adaptive2p2c3d, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices
  * To run the simulation execute the following line in shell:
  * <tt>./test_adaptive2p2c -parameterFile ./test_adaptive2p2c.input</tt>
  */
-template<class TypeTag = TTAG(Adaptive2p2c3d)>
+template<class TypeTag = Properties::TTag::Adaptive2p2c3d>
 class Adaptive2p2c3d: public IMPETProblem2P2C<TypeTag>
 {
 using ParentType = IMPETProblem2P2C<TypeTag>;
-using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+using GridView = GetPropType<TypeTag, Properties::GridView>;
+using Grid = GetPropType<TypeTag, Properties::Grid>;
+using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
 
-using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 enum
 {
     dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -126,7 +137,7 @@ enum
     wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
 };
 
-using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using Intersection = typename GridView::Intersection;
