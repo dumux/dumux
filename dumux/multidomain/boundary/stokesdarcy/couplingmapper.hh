@@ -25,17 +25,11 @@
 #ifndef DUMUX_STOKES_DARCY_COUPLINGMAPPER_HH
 #define DUMUX_STOKES_DARCY_COUPLINGMAPPER_HH
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <utility>
-#include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
-#include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -57,12 +51,7 @@ public:
     static constexpr auto stokesIdx = stokesCellCenterIdx;
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
 
-
 private:
-    // obtain the type tags of the sub problems
-    using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
-    using DarcyTypeTag = typename MDTraits::template SubDomain<2>::TypeTag;
-
     struct ElementMapInfo
     {
         std::size_t eIdx;
@@ -70,37 +59,26 @@ private:
         std::size_t flipScvfIdx;
     };
 
-    // the sub domain type tags
-    template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-    using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
-
-    static_assert(GetPropType<SubDomainTypeTag<stokesIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::staggered,
-                  "The free flow domain must use the staggered discretization");
-
-    static_assert(GetPropType<SubDomainTypeTag<darcyIdx>, Properties::GridGeometry>::discMethod == DiscretizationMethod::cctpfa,
-                  "The Darcy domain must use the CCTpfa discretization");
 public:
-
-    /*!
-     * \brief Constructor
-     */
-    StokesDarcyCouplingMapper(const CouplingManager& couplingManager) : couplingManager_(couplingManager) {}
 
     /*!
      * \brief Main update routine
      */
-    template<class Stencils>
-    void computeCouplingMapsAndStencils(Stencils& darcyToStokesCellCenterStencils,
+    template<class CouplingManager, class Stencils>
+    void computeCouplingMapsAndStencils(const CouplingManager& couplingManager,
+                                        Stencils& darcyToStokesCellCenterStencils,
                                         Stencils& darcyToStokesFaceStencils,
                                         Stencils& stokesCellCenterToDarcyStencils,
                                         Stencils& stokesFaceToDarcyStencils)
     {
-        const auto& stokesProblem = couplingManager_.problem(stokesIdx);
-        const auto& darcyProblem = couplingManager_.problem(darcyIdx);
+        const auto& stokesFvGridGeometry = couplingManager.problem(stokesIdx).gridGeometry();
+        const auto& darcyFvGridGeometry = couplingManager.problem(darcyIdx).gridGeometry();
 
-        const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
-        const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
+        static_assert(std::decay_t<decltype(stokesFvGridGeometry)>::discMethod == DiscretizationMethod::staggered,
+                      "The free flow domain must use the staggered discretization");
+
+        static_assert(std::decay_t<decltype(darcyFvGridGeometry)>::discMethod == DiscretizationMethod::cctpfa,
+                      "The Darcy domain must use the CCTpfa discretization");
 
         isCoupledDarcyScvf_.resize(darcyFvGridGeometry.numScvf(), false);
 
@@ -108,14 +86,14 @@ public:
         auto stokesFvGeometry = localView(stokesFvGridGeometry);
         const auto& stokesGridView = stokesFvGridGeometry.gridView();
 
-        for(const auto& stokesElement : elements(stokesGridView))
+        for (const auto& stokesElement : elements(stokesGridView))
         {
             stokesFvGeometry.bindElement(stokesElement);
 
-            for(const auto& scvf : scvfs(stokesFvGeometry))
+            for (const auto& scvf : scvfs(stokesFvGeometry))
             {
                 // skip the DOF if it is not on the boundary
-                if(!scvf.boundary())
+                if  (!scvf.boundary())
                     continue;
 
                 // get element intersecting with the scvf center
@@ -125,11 +103,11 @@ public:
                 const auto darcyElementIdx = intersectingEntities(globalPos, darcyFvGridGeometry.boundingBoxTree());
 
                 // skip if no intersection was found
-                if(darcyElementIdx.empty())
+                if (darcyElementIdx.empty())
                     continue;
 
                 // sanity check
-                if(darcyElementIdx.size() > 1)
+                if (darcyElementIdx.size() > 1)
                     DUNE_THROW(Dune::InvalidStateException, "Stokes face dof should only intersect with one Darcy element");
 
                 const auto stokesElementIdx = stokesFvGridGeometry.elementMapper().index(stokesElement);
@@ -146,11 +124,11 @@ public:
                 darcyFvGeometry.bindElement(darcyElement);
 
                 // find the corresponding Darcy sub control volume face
-                for(const auto& darcyScvf : scvfs(darcyFvGeometry))
+                for (const auto& darcyScvf : scvfs(darcyFvGeometry))
                 {
                     const Scalar distance = (darcyScvf.center() - scvf.center()).two_norm();
 
-                    if(distance < eps)
+                    if (distance < eps)
                     {
                         isCoupledDarcyScvf_[darcyScvf.index()] = true;
                         darcyElementToStokesElementMap_[darcyElementIdx[0]].push_back({stokesElementIdx, scvf.index(), darcyScvf.index()});
@@ -190,8 +168,6 @@ private:
     std::unordered_map<std::size_t, std::vector<ElementMapInfo>> stokesElementToDarcyElementMap_;
 
     std::vector<bool> isCoupledDarcyScvf_;
-
-    const CouplingManager& couplingManager_;
 };
 
 } // end namespace Dumux
