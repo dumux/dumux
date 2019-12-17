@@ -26,6 +26,13 @@ In order for \Dumux simulation to run in parallel, an
 MPI library (e.g. OpenMPI, MPICH or IntelMPI) implementation
 must be installed on the system.
 
+Furthermore, we note that the parallel AMG preconditioner of \texttt{dune-istl}
+defaults to an iterative SSOR coarse grid solver if no direct solver is found on your system. Unfortunately,
+the iterative solver has a very high and hard-coded tolerance as a termination criterion, which will not solve
+the coarse grid system with sufficient accuracy for typical problems in \Dumux. We therefore recommend
+to install one of the direct solver libraries supported by \texttt{dune-istl}. This is either UMFPack contained
+in SuiteSparse, or SuperLU, see Section~\ref{sec:listofexternallibs}.
+
 \subsection{Prepare a Parallel Application}
 Not all parts of \Dumux can be used in parallel. In order to switch to the parallel \texttt{Dumux::AMGBackend}
 solver backend include the respective header
