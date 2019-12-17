@@ -2,7 +2,7 @@ add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
 dumux_add_test(NAME test_dec1p
-              LABELS porousmediumflow 1p
+              LABELS porousmediumflow 1p sequential
               SOURCES test_1p.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -11,7 +11,7 @@ dumux_add_test(NAME test_dec1p
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_dec1p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_1p.input")
 
 dumux_add_test(NAME test_diffusion
-              LABELS porousmediumflow 1p
+              LABELS porousmediumflow 1p sequential
               SOURCES test_diffusion.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_diffusion
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_diffusion")
 
 dumux_add_test(NAME test_diffusion3d
-              LABELS porousmediumflow 1p
+              LABELS porousmediumflow 1p sequential
               SOURCES test_diffusion3d.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
