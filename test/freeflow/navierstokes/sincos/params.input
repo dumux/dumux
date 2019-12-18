@@ -40,5 +40,5 @@ UpwindWeight = 0.5
 Verbosity = 2
 MaxIterations = 5000
 PreconditionerIterations = 5
-PreconditionerRelaxation = 5.0e-2
+PreconditionerRelaxation = 29.0
 

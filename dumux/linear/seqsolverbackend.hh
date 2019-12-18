@@ -96,8 +96,6 @@ public:
     , linearOperator_(_A_[one()][one()])
     , params_(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu)
     {
-        static int called = 0;
-        std::cout << "SeqUzawa constructor called " << ++called << " times." << std::endl;
         params_.setDefaultValuesIsotropic(GridGeometry::GridView::dimension);
         params_.setDebugLevel(0);
 
@@ -204,6 +202,106 @@ private:
     std::unique_ptr<Criterion> criterion_;
     std::unique_ptr<SmootherArgs> smootherArgs_;
     std::unique_ptr<VelocityAMG> velocityAMG_;
+};
+
+template <class GridGeometry>
+class UzawaSolver : public LinearSolver
+{
+public:
+    using LinearSolver::LinearSolver;
+
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        auto res = b;
+        A.mmv(x, res);
+        auto initRes = res.two_norm();
+        std::cout << "0: " << initRes << std::endl;
+
+        using Preconditioner = SeqUzawa<Matrix, Vector, Vector, GridGeometry>;
+        Preconditioner precond(A, /*precondIter=*/1, this->relaxation());
+
+        using zero = std::integral_constant<long unsigned int, 0>;
+        using one = std::integral_constant<long unsigned int, 1>;
+        const auto size = x[zero()].size() + x[one()].size();
+        const auto maxIter = this->maxIter();
+        const auto m = 10;
+
+        // Given xi0 and m >= 1, set xi1 = G(x0)
+        // For k = 1, 2, ...
+        //   Set mk = min{m, k}.
+        //   Set Fk = (fk−mk, ..., fk), where fi = G(xi) − xi.
+        //   Determine alpha(k) = (alpha0(k), ..., alphamk(k))T
+        //     that solves min | Fk.alpha | s.t. sum alphai = 1
+        //   Set xk+1 = sum alphai(k).G(xk−mk+i).
+
+        using Scalar = typename Vector::field_type;
+        Dune::DynamicMatrix<Scalar> xi(maxIter, size);
+        Dune::DynamicMatrix<Scalar> Gk(maxIter, size);
+
+        std::copy(x[zero()].begin(), x[zero()].end(), xi[0].begin());
+        std::copy(x[one()].begin(), x[one()].end(), xi[0].begin() + x[zero()].size());
+        precond.apply(x, b);
+        std::copy(x[zero()].begin(), x[zero()].end(), xi[1].begin());
+        std::copy(x[one()].begin(), x[one()].end(), xi[1].begin() + x[zero()].size());
+        Gk[0] = xi[1];
+
+        for (int k = 1; k < maxIter; ++k)
+        {
+            std::copy(xi[k].begin(), xi[k].begin() + x[zero()].size(), x[zero()].begin());
+            std::copy(xi[k].begin() + x[zero()].size(), xi[k].end(), x[one()].begin());
+
+            res = b;
+            A.mmv(x, res);
+            auto residual = res.two_norm();
+            std::cout << k << ": " << residual << std::endl;
+
+            if (residual/initRes < this->residReduction())
+                return true;
+
+            precond.apply(x, b);
+            std::copy(x[zero()].begin(), x[zero()].end(), Gk[k].begin());
+            std::copy(x[one()].begin(), x[one()].end(), Gk[k].begin() + x[zero()].size());
+
+            const auto mk = std::min(m, k);
+            Dune::DynamicMatrix<Scalar> FkT(mk+1, size);
+            for (size_t i = 0; i <= mk; ++i)
+            {
+                FkT[i] = Gk[k - mk + i] - xi[k - mk + i];
+            }
+
+            Dune::DynamicMatrix<Scalar> FkTFk(mk+1, mk+1);
+            for (size_t i = 0; i <= mk; ++i)
+                for (size_t j = 0; j <= mk; ++j)
+                    FkTFk[i][j] = FkT[i].dot(FkT[j]);
+
+            FkTFk.invert();
+            Scalar factor = 0.0;
+            for (size_t i = 0; i <= mk; ++i)
+                for (size_t j = 0; j <= mk; ++j)
+                    factor += FkTFk[i][j];
+
+            Dune::DynamicVector<Scalar> alpha(mk+1);
+            for (size_t i = 0; i <= mk; ++i)
+                alpha[i] = std::accumulate(FkTFk[i].begin(), FkTFk[i].end(), 0.0);
+            alpha /= factor;
+
+            xi[k+1] = 0;
+            for (size_t i = 0; i <= mk; ++i)
+            {
+                auto aGki = Gk[k-mk+i];
+                aGki *= alpha[i];
+                xi[k+1] += aGki;
+            }
+        }
+
+        return false;
+    }
+
+    std::string name() const
+    {
+        return "Uzawa solver";
+    }
 };
 
 /*!
