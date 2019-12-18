@@ -89,6 +89,8 @@ private:
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using PrimaryVariables = typename MDTraits::template SubDomain<id>::PrimaryVariables;
     template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
+    template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
+    template<std::size_t id> using ElementResidualVector = typename LocalResidual<id>::ElementResidualVector;
 
     using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;
 
@@ -187,6 +189,119 @@ public:
     // \{
 
     using ParentType::evalCouplingResidual;
+
+    /*!
+     * \ingroup MultiDomain
+     * \brief evaluates the element residual of a coupled element of domain i which depends on the variables
+     *        at the degree of freedom with index dofIdxGlobalJ of domain j
+     *
+     * Specialization for Darcy
+     *
+     * \param domainI the domain index of domain i
+     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param domainJ the domain index of domain j
+     * \param dofIdxGlobalJ the index of the degree of freedom of domain j which has an influence on the element residual of domain i
+     *
+     * \note  the element whose residual is to be evaluated can be retrieved from the local assembler
+     *        as localAssemblerI.element() as well as all up-to-date variables and caches.
+     * \note  the default implementation evaluates the complete element residual
+     *        if only parts (i.e. only certain scvs, or only certain terms of the residual) of the residual are coupled
+     *        to dof with index dofIdxGlobalJ the function can be overloaded in the coupling manager
+     * \return the element residual
+     */
+    template<std::size_t j, class LocalAssemblerI>
+    decltype(auto) evalCouplingResidual(Dune::index_constant<darcyIdx> domainI,
+                                        const LocalAssemblerI& localAssemblerI,
+                                        Dune::index_constant<j> domainJ,
+                                        std::size_t dofIdxGlobalJ) const
+    {
+        static_assert(domainI != domainJ, "Domain i cannot be coupled to itself!");
+
+        ElementResidualVector<darcyIdx> partialDerivs(localAssemblerI.element().subEntities(GridView<darcyIdx>::dimension));
+        partialDerivs = 0.0;
+
+        for (const auto& scvf : scvfs(localAssemblerI.fvGeometry()))
+        {
+            if (isCoupledEntity(darcyIdx, localAssemblerI.element(), scvf))
+            {
+                const auto localDofIndex = localAssemblerI.fvGeometry().scv(scvf.insideScvIdx()).localDofIndex();
+                partialDerivs[localDofIndex] += couplingData().massCouplingCondition(localAssemblerI.element(),
+                                                                                     localAssemblerI.fvGeometry(),
+                                                                                     localAssemblerI.curElemVolVars(),
+                                                                                     localAssemblerI.elemFluxVarsCache(),
+                                                                                     scvf)
+                                               * scvf.area() * localAssemblerI.curElemVolVars()[scvf.insideScvIdx()].extrusionFactor();
+            }
+        }
+
+        return partialDerivs;
+    }
+
+    /*!
+     * \ingroup MultiDomain
+     * \brief evaluates the face residual of a coupled face of domain i which depends on the variables
+     *        at the degree of freedom with index dofIdxGlobalJ of domain j
+     *
+     * \param domainI the domain index of domain i
+     * \param scvfI the subcontrol volume face whose residual shall be evaluated of domain i
+     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param domainJ the domain index of domain j
+     * \param dofIdxGlobalJ the index of the degree of freedom of domain j which has an influence on the element residual of domain i
+     *
+     * \note  the default implementation evaluates the complete face residual
+     *        if only certain terms of the residual of the residual are coupled
+     *        to dof with index dofIdxGlobalJ the function can be overloaded in the coupling manager
+     * \return the face residual
+     */
+    template<class LocalAssemblerI, std::size_t j>
+    decltype(auto) evalCouplingResidual(Dune::index_constant<faceIdx> domainI,
+                                        const SubControlVolumeFace<faceIdx>& scvfI,
+                                        const LocalAssemblerI& localAssemblerI,
+                                        Dune::index_constant<j> domainJ,
+                                        std::size_t dofIdxGlobalJ) const
+    {
+        static_assert(domainI != domainJ, "Domain i cannot be coupled to itself!");
+        using FaceResidualValue = typename LocalResidual<faceIdx>::FaceResidualValue;
+        FaceResidualValue partialDeriv(0.0);
+        partialDeriv = couplingData().momentumCouplingCondition(localAssemblerI.element(),
+                                                                localAssemblerI.fvGeometry(),
+                                                                localAssemblerI.curElemVolVars(),
+                                                                localAssemblerI.curElemFaceVars(),
+                                                                scvfI)
+                       * scvfI.area() * localAssemblerI.curElemVolVars()[scvfI.insideScvIdx()].extrusionFactor();
+        return partialDeriv;
+    }
+
+    /*!
+     * \copydoc Dumux::CouplingManager::evalCouplingResidual()
+     *
+     * \note this is a specialization for calculating the coupled residual for cellcentered dofs
+     *       w.r.t. staggered face dof changes
+     */
+    template<class LocalAssemblerI, std::size_t j>
+    decltype(auto) evalCouplingResidual(Dune::index_constant<cellCenterIdx> domainI,
+                                        const LocalAssemblerI& localAssemblerI,
+                                        Dune::index_constant<j> domainJ,
+                                        std::size_t dofIdxGlobalJ) const
+    {
+        ElementResidualVector<cellCenterIdx> partialDerivs(localAssemblerI.element().subEntities(GridView<cellCenterIdx>::dimension));
+        partialDerivs = 0.0;
+
+        for (const auto& scvf : scvfs(localAssemblerI.fvGeometry()))
+        {
+            if (isCoupledEntity(cellCenterIdx, scvf))
+            {
+                partialDerivs[scvf.insideScvIdx()] += couplingData().massCouplingCondition(localAssemblerI.element(),
+                                                                                           localAssemblerI.fvGeometry(),
+                                                                                           localAssemblerI.curElemVolVars(),
+                                                                                           localAssemblerI.curElemFaceVars(),
+                                                                                           scvf)
+                                                    * scvf.area() * localAssemblerI.curElemVolVars()[scvf.insideScvIdx()].extrusionFactor();
+            }
+        }
+
+        return partialDerivs;
+    }
 
     /*!
      * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Darcy information)
