@@ -255,10 +255,10 @@ public:
      */
     bool hasDirichlet() const
     {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isDirichlet)
-                return true;
-        return false;
+        return std::any_of(boundaryInfo_.begin(),
+                           boundaryInfo_.end(),
+                           [](const BoundaryInfo& b){ return b.isDirichlet; }
+                           );
     }
 
     /*!
@@ -288,10 +288,10 @@ public:
      */
     bool hasNeumann() const
     {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isNeumann)
-                return true;
-        return false;
+        return std::any_of(boundaryInfo_.begin(),
+                           boundaryInfo_.end(),
+                           [](const BoundaryInfo& b){ return b.isNeumann; }
+                           );
     }
 
     /*!
@@ -309,10 +309,10 @@ public:
      */
     bool hasOutflow() const
     {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isOutflow)
-                return true;
-        return false;
+        return std::any_of(boundaryInfo_.begin(),
+                           boundaryInfo_.end(),
+                           [](const BoundaryInfo& b){ return b.isOutflow; }
+                           );
     }
 
     /*!
@@ -330,10 +330,10 @@ public:
      */
     bool hasCouplingDirichlet() const
     {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isCouplingDirichlet)
-                return true;
-        return false;
+        return std::any_of(boundaryInfo_.begin(),
+                           boundaryInfo_.end(),
+                           [](const BoundaryInfo& b){ return b.isCouplingDirichlet; }
+                           );
     }
 
     /*!
@@ -351,10 +351,10 @@ public:
      */
     bool hasCouplingNeumann() const
     {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isCouplingNeumann)
-                return true;
-        return false;
+        return std::any_of(boundaryInfo_.begin(),
+                           boundaryInfo_.end(),
+                           [](const BoundaryInfo& b){ return b.isCouplingNeumann; }
+                           );
     }
 
     /*!
