@@ -244,7 +244,8 @@ public:
     {
         return std::all_of(boundaryInfo_.begin(),
                            boundaryInfo_.end(),
-                           [](const BoundaryInfo& b){ return b.isDirichlet; }
+                           [](const BoundaryInfo& b){ return b.isDirichlet ||
+                                                             b.isCouplingDirichlet; }
                            );
     }
 
