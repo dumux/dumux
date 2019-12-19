@@ -97,30 +97,49 @@ int main(int argc, char *argv[])
             for (int j = 0; j < n; ++j)
             {
                 const Scalar p = pMin + (pMax - pMin)*Scalar(j)/Scalar(n-1);
-                checkEquality("gasEnthalpy", TabulatedH2O::gasEnthalpy(T,p), IapwsH2O::gasEnthalpy(T,p), eps);
-                checkEquality("gasInternalEnergy", TabulatedH2O::gasInternalEnergy(T,p), IapwsH2O::gasInternalEnergy(T,p), eps);
-                checkEquality("gasDensity", TabulatedH2O::gasDensity(T,p), IapwsH2O::gasDensity(T,p), eps);
-                checkEquality("gasViscosity", TabulatedH2O::gasViscosity(T,p), IapwsH2O::gasViscosity(T,p), eps);
+
+                if (p < IapwsH2O::vaporPressure(T) * 1.001) {
+                    Scalar rho = IapwsH2O::gasDensity(T,p);
+                    checkEquality("Iapws::gasPressure", IapwsH2O::gasPressure(T,rho), p, eps);
+                    checkEquality("gasPressure", TabulatedH2O::gasPressure(T,rho), p, eps);
+                    checkEquality("gasEnthalpy", TabulatedH2O::gasEnthalpy(T,p), IapwsH2O::gasEnthalpy(T,p), eps);
+                    checkEquality("gasInternalEnergy", TabulatedH2O::gasInternalEnergy(T,p), IapwsH2O::gasInternalEnergy(T,p), eps);
+                    checkEquality("gasDensity", TabulatedH2O::gasDensity(T,p), rho, eps);
+                    checkEquality("gasViscosity", TabulatedH2O::gasViscosity(T,p), IapwsH2O::gasViscosity(T,p), eps);
+                }
+
+                if (p > IapwsH2O::vaporPressure(T) / 1.001) {
+                    Scalar rho = IapwsH2O::liquidDensity(T,p);
+                    checkEquality("Iapws::liquidPressure", IapwsH2O::liquidPressure(T,rho), p, eps);
+                    checkEquality("liquidPressure", TabulatedH2O::liquidPressure(T,rho), p, eps);
+                    checkEquality("liquidEnthalpy", TabulatedH2O::liquidEnthalpy(T,p), IapwsH2O::liquidEnthalpy(T,p), eps);
+                    checkEquality("liquidInternalEnergy", TabulatedH2O::liquidInternalEnergy(T,p), IapwsH2O::liquidInternalEnergy(T,p), eps);
+                    checkEquality("liquidDensity", TabulatedH2O::liquidDensity(T,p), rho, eps);
+                    checkEquality("liquidViscosity", TabulatedH2O::liquidViscosity(T,p), IapwsH2O::liquidViscosity(T,p), eps);
+                }
+
+
             }
+
         }
     }
 
     // test if other components can be tabulated
     {
-        Components::TabulatedComponent<Components::Air<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::Benzene<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::Calcite<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::CalciumIon<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::CaO<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::CaO2H2<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::CarbonateIon<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::CH4<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::Granite<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::Air<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::Benzene<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::Calcite<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::CalciumIon<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::CaO<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::CaO2H2<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::CarbonateIon<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::CH4<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::Granite<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::H2O<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::HeavyOil<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::Mesitylene<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::N2<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::NaCl<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::NaCl<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::O2<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::SimpleH2O<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::Trichloroethene<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
