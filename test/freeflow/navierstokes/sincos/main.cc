@@ -252,9 +252,7 @@ int main(int argc, char** argv) try
                                   : std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-//     using LinearSolver = Dumux::UzawaBiCGSTABBackend<GridGeometry>;
-    using LinearSolver = Dumux::UzawaSolver<GridGeometry>;
-//     using LinearSolver = Dumux::UMFPackBackend;
+    using LinearSolver = LINEARSOLVER;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

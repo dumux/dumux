@@ -45,266 +45,6 @@
 namespace Dumux {
 
 /*!
- * \brief Sequential SSOR preconditioner.
- *
- * Wraps the naked ISTL generic SSOR preconditioner into the
- *  solver framework.
- *
- * \tparam M The matrix type to operate on
- * \tparam X Type of the update
- * \tparam Y Type of the defect
- */
-template<class M, class X, class Y, class GridGeometry>
-class SeqUzawa : public Dune::Preconditioner<X,Y> {
-public:
-    //! \brief The matrix type the preconditioner is for.
-    typedef M matrix_type;
-    //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
-    //! \brief The range type of the preconditioner.
-    typedef Y range_type;
-    //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
-    //! \brief scalar type underlying the field_type
-    typedef Dune::Simd::Scalar<field_type> scalar_field_type;
-
-    using zero = std::integral_constant<long unsigned int, 0>;
-    using one = std::integral_constant<long unsigned int, 1>;
-    using VelocityMatrix = typename std::remove_reference<decltype(std::declval<M>()[one()][one()])>::type;
-    using VelocityVector = typename std::remove_reference<decltype(std::declval<X>()[one()])>::type;
-
-    static constexpr bool isParallel = false;
-    using SolverTraits = NonoverlappingSolverTraits<VelocityMatrix, VelocityVector, isParallel>;
-    using Comm = typename SolverTraits::Comm;
-    using LinearOperator = typename SolverTraits::LinearOperator;
-    using ScalarProduct = typename SolverTraits::ScalarProduct;
-    using Smoother = typename SolverTraits::Smoother;
-
-    using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<VelocityMatrix, Dune::Amg::FirstDiagonal>>;
-    using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
-    using VelocityAMG = Dune::Amg::AMG<LinearOperator, VelocityVector, Smoother,Comm>;
-
-    /*! \brief Constructor.
-     *
-     *   constructor gets all parameters to operate the prec.
-     *   \param A The matrix to operate on.
-     *   \param n The number of iterations to perform.
-     *   \param w The relaxation factor.
-     */
-    SeqUzawa (const M& A, int n, scalar_field_type w)
-    : _A_(A), _n(n), _w(w)
-    , linearOperator_(_A_[one()][one()])
-    , params_(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu)
-    {
-        params_.setDefaultValuesIsotropic(GridGeometry::GridView::dimension);
-        params_.setDebugLevel(0);
-
-        criterion_ = std::make_unique<Criterion>(params_);
-
-        smootherArgs_ = std::make_unique<SmootherArgs>();
-        smootherArgs_->iterations = 1;
-        smootherArgs_->relaxationFactor = 1;
-
-        velocityAMG_ = std::make_unique<VelocityAMG>(linearOperator_, *criterion_, *smootherArgs_, comm_);
-    }
-
-    /*!
-     *   \brief Constructor.
-     *
-     *   \param A The matrix to operate on.
-     *   \param configuration ParameterTree containing preconditioner parameters.
-     *
-     *   ParameterTree Key | Meaning
-     *   ------------------|------------
-     *   iterations        | The number of iterations to perform.
-     *   relaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
-     *
-     *   See \ref ISTL_Factory for the ParameterTree layout and examples.
-     */
-    SeqUzawa (const M& A, const Dune::ParameterTree& configuration)
-    : _A_(A)
-    {
-        _n = configuration.get<int>("iterations");
-        _w = configuration.get<scalar_field_type>("relaxation");
-    }
-
-    /*!
-     *   \brief Prepare the preconditioner.
-     *
-     *   \copydoc Preconditioner::pre(X&,Y&)
-     */
-    virtual void pre (X& x, Y& b)
-    {
-//         velocityAMG_->pre(x[one()], b[one()]);
-    }
-
-    /*!
-     *   \brief Apply the preconditioner
-     *
-     *   \copydoc Preconditioner::apply(X&,const Y&)
-     */
-    virtual void apply (X& v, const Y& d)
-    {
-        auto& Bt = _A_[one()][zero()];
-        auto& B = _A_[zero()][one()];
-
-        const auto& f = d[one()];
-        const auto& g = d[zero()];
-        auto& velocity = v[one()];
-        auto& pressure = v[zero()];
-        pressure[0] = g[0];
-
-        for (int k = 0; k < _n; ++k)
-        {
-            // u_k+1 = A^−1*(f − B^T*p_k),
-            auto vrhs = f;
-            Bt.mmv(pressure, vrhs);
-            velocityAMG_->pre(velocity, vrhs);
-            velocityAMG_->apply(velocity, vrhs);
-            velocityAMG_->post(velocity);
-
-            // p_k+1 = p_k - omega*(g + B*u_k+1)
-            auto pUpdate = g;
-            pUpdate[0] = 0;
-            B.umv(velocity, pUpdate);
-            pUpdate *= _w;
-            pressure -= pUpdate;
-        }
-    }
-
-    /*!
-     *   \brief Clean up.
-     *
-     *   \copydoc Preconditioner::post(X&)
-     */
-    virtual void post (X& x)
-    {
-//         velocityAMG_->post(x[one()]);
-    }
-
-    //! Category of the preconditioner (see SolverCategory::Category)
-    virtual Dune::SolverCategory::Category category() const
-    {
-        return Dune::SolverCategory::sequential;
-    }
-
-private:
-    //! \brief The matrix we operate on.
-    const M& _A_;
-    //! \brief The number of steps to do in apply
-    int _n;
-    //! \brief The relaxation factor to use
-    scalar_field_type _w;
-
-    Comm comm_;
-    LinearOperator linearOperator_;
-    Dune::Amg::Parameters params_;
-    std::unique_ptr<Criterion> criterion_;
-    std::unique_ptr<SmootherArgs> smootherArgs_;
-    std::unique_ptr<VelocityAMG> velocityAMG_;
-};
-
-template <class GridGeometry>
-class UzawaSolver : public LinearSolver
-{
-public:
-    using LinearSolver::LinearSolver;
-
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
-    bool solve(const Matrix& A, Vector& x, const Vector& b)
-    {
-        auto res = b;
-        A.mmv(x, res);
-        auto initRes = res.two_norm();
-        std::cout << "0: " << initRes << std::endl;
-
-        using Preconditioner = SeqUzawa<Matrix, Vector, Vector, GridGeometry>;
-        Preconditioner precond(A, /*precondIter=*/1, this->relaxation());
-
-        using zero = std::integral_constant<long unsigned int, 0>;
-        using one = std::integral_constant<long unsigned int, 1>;
-        const auto size = x[zero()].size() + x[one()].size();
-        const auto maxIter = this->maxIter();
-        const auto m = 10;
-
-        // Given xi0 and m >= 1, set xi1 = G(x0)
-        // For k = 1, 2, ...
-        //   Set mk = min{m, k}.
-        //   Set Fk = (fk−mk, ..., fk), where fi = G(xi) − xi.
-        //   Determine alpha(k) = (alpha0(k), ..., alphamk(k))T
-        //     that solves min | Fk.alpha | s.t. sum alphai = 1
-        //   Set xk+1 = sum alphai(k).G(xk−mk+i).
-
-        using Scalar = typename Vector::field_type;
-        Dune::DynamicMatrix<Scalar> xi(maxIter, size);
-        Dune::DynamicMatrix<Scalar> Gk(maxIter, size);
-
-        std::copy(x[zero()].begin(), x[zero()].end(), xi[0].begin());
-        std::copy(x[one()].begin(), x[one()].end(), xi[0].begin() + x[zero()].size());
-        precond.apply(x, b);
-        std::copy(x[zero()].begin(), x[zero()].end(), xi[1].begin());
-        std::copy(x[one()].begin(), x[one()].end(), xi[1].begin() + x[zero()].size());
-        Gk[0] = xi[1];
-
-        for (int k = 1; k < maxIter; ++k)
-        {
-            std::copy(xi[k].begin(), xi[k].begin() + x[zero()].size(), x[zero()].begin());
-            std::copy(xi[k].begin() + x[zero()].size(), xi[k].end(), x[one()].begin());
-
-            res = b;
-            A.mmv(x, res);
-            auto residual = res.two_norm();
-            std::cout << k << ": " << residual << std::endl;
-
-            if (residual/initRes < this->residReduction())
-                return true;
-
-            precond.apply(x, b);
-            std::copy(x[zero()].begin(), x[zero()].end(), Gk[k].begin());
-            std::copy(x[one()].begin(), x[one()].end(), Gk[k].begin() + x[zero()].size());
-
-            const auto mk = std::min(m, k);
-            Dune::DynamicMatrix<Scalar> FkT(mk+1, size);
-            for (size_t i = 0; i <= mk; ++i)
-            {
-                FkT[i] = Gk[k - mk + i] - xi[k - mk + i];
-            }
-
-            Dune::DynamicMatrix<Scalar> FkTFk(mk+1, mk+1);
-            for (size_t i = 0; i <= mk; ++i)
-                for (size_t j = 0; j <= mk; ++j)
-                    FkTFk[i][j] = FkT[i].dot(FkT[j]);
-
-            FkTFk.invert();
-            Scalar factor = 0.0;
-            for (size_t i = 0; i <= mk; ++i)
-                for (size_t j = 0; j <= mk; ++j)
-                    factor += FkTFk[i][j];
-
-            Dune::DynamicVector<Scalar> alpha(mk+1);
-            for (size_t i = 0; i <= mk; ++i)
-                alpha[i] = std::accumulate(FkTFk[i].begin(), FkTFk[i].end(), 0.0);
-            alpha /= factor;
-
-            xi[k+1] = 0;
-            for (size_t i = 0; i <= mk; ++i)
-            {
-                auto aGki = Gk[k-mk+i];
-                aGki *= alpha[i];
-                xi[k+1] += aGki;
-            }
-        }
-
-        return false;
-    }
-
-    std::string name() const
-    {
-        return "Uzawa solver";
-    }
-};
-
-/*!
  * \ingroup Linear
  * \brief A general solver backend allowing arbitrary preconditioners and solvers.
  *
@@ -1118,6 +858,297 @@ public:
 
 private:
     Dune::InverseOperatorResult result_;
+};
+
+template<class M, class X, class Y, class GridGeometry>
+class SeqUzawa : public Dune::Preconditioner<X,Y>
+{
+    using zero = std::integral_constant<long unsigned int, 0>;
+    using one = std::integral_constant<long unsigned int, 1>;
+    using VelocityMatrix = typename std::remove_reference<decltype(std::declval<M>()[one()][one()])>::type;
+    using VelocityVector = typename std::remove_reference<decltype(std::declval<X>()[one()])>::type;
+
+    static constexpr bool isParallel = false;
+    using SolverTraits = NonoverlappingSolverTraits<VelocityMatrix, VelocityVector, isParallel>;
+    using Comm = typename SolverTraits::Comm;
+    using LinearOperator = typename SolverTraits::LinearOperator;
+    using ScalarProduct = typename SolverTraits::ScalarProduct;
+    using Smoother = typename SolverTraits::Smoother;
+    using VelocityAMG = Dune::Amg::AMG<LinearOperator, VelocityVector, Smoother,Comm>;
+    using VelocityUMFPack = Dune::UMFPack<VelocityMatrix>;
+
+public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef M matrix_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef Dune::Simd::Scalar<field_type> scalar_field_type;
+
+    /*! \brief Constructor.
+     *
+     *   constructor gets all parameters to operate the prec.
+     *   \param A The matrix to operate on.
+     *   \param n The number of iterations to perform.
+     *   \param w The relaxation factor.
+     */
+    SeqUzawa (const M& A, int n, scalar_field_type w)
+    : _A_(A), _n(n), _w(w)
+    {
+        inexact_ = getParam<bool>("LinearSolver.InexactVelocitySolver", false);
+
+        if (inexact_)
+        {
+            Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
+            params.setDefaultValuesIsotropic(GridGeometry::GridView::dimension);
+            params.setDebugLevel(0);
+
+            using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<VelocityMatrix, Dune::Amg::FirstDiagonal>>;
+            Criterion criterion(params);
+
+            using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
+            SmootherArgs smootherArgs;
+            smootherArgs.iterations = 1;
+            smootherArgs.relaxationFactor = 1;
+
+            linearOperator_ = std::make_unique<LinearOperator>(_A_[one()][one()]);
+            velocityAMG_ = std::make_unique<VelocityAMG>(*linearOperator_, criterion, smootherArgs, comm_);
+        }
+        else
+        {
+            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[one()][one()]);
+        }
+    }
+
+    /*!
+     *   \brief Prepare the preconditioner.
+     *
+     *   \copydoc Preconditioner::pre(X&,Y&)
+     */
+    virtual void pre (X& x, Y& b) {}
+
+    /*!
+     *   \brief Apply the preconditioner
+     *
+     *   \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    virtual void apply (X& v, const Y& d)
+    {
+        auto& A = _A_[one()][one()];
+        auto& Bt = _A_[one()][zero()];
+        auto& B = _A_[zero()][one()];
+        auto& C = _A_[zero()][zero()];
+
+        const auto& f = d[one()];
+        const auto& g = d[zero()];
+        auto& velocity = v[one()];
+        auto& pressure = v[zero()];
+        for (int i = 0; i < C.N(); ++i)
+        {
+            if (std::abs(C[i][i].frobenius_norm() - 1.0) < 1e-14)
+                pressure[i] = g[i];
+        }
+
+        for (int k = 0; k < _n; ++k)
+        {
+            // u_k+1 = u_k + Q_A^−1*(f − (A*u_k + Bt*p_k)),
+            auto vrhs = f;
+            A.mmv(velocity, vrhs);
+            Bt.mmv(pressure, vrhs);
+            auto vUpdate = velocity;
+            if (inexact_)
+            {
+                velocityAMG_->pre(vUpdate, vrhs);
+                velocityAMG_->apply(vUpdate, vrhs);
+                velocityAMG_->post(vUpdate);
+            }
+            else
+            {
+                Dune::InverseOperatorResult res;
+                velocityUMFPack_->apply(vUpdate, vrhs, res);
+            }
+            velocity += vUpdate;
+
+            // p_k+1 = p_k + omega*(g - B*u_k+1 - C*p_k)
+            auto pUpdate = g;
+            B.mmv(velocity, pUpdate);
+            C.mmv(pressure, pUpdate);
+            pUpdate *= _w;
+            pressure += pUpdate;
+        }
+    }
+
+    /*!
+     *   \brief Clean up.
+     *
+     *   \copydoc Preconditioner::post(X&)
+     */
+    virtual void post (X& x) {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual Dune::SolverCategory::Category category() const
+    {
+        return Dune::SolverCategory::sequential;
+    }
+
+private:
+    //! \brief The matrix we operate on.
+    const M& _A_;
+    //! \brief The number of steps to do in apply
+    int _n;
+    //! \brief The relaxation factor to use
+    scalar_field_type _w;
+
+    Comm comm_;
+    std::unique_ptr<LinearOperator> linearOperator_;
+    std::unique_ptr<VelocityAMG> velocityAMG_;
+    std::unique_ptr<VelocityUMFPack> velocityUMFPack_;
+    bool inexact_;
+};
+
+
+template <class GridGeometry>
+class UzawaSolver : public LinearSolver
+{
+public:
+    using LinearSolver::LinearSolver;
+
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        static bool accelerated = getParamFromGroup<bool>(this->paramGroup(),
+                                                          "LinearSolver.AndersonAcceleration",
+                                                          false);
+
+        auto res = b;
+        A.mmv(x, res);
+        auto initRes = res.two_norm();
+        if (this->verbosity() > 1)
+        {
+            if (accelerated)
+                std::cout << "\nAnderson-accelerated ";
+            else
+                std::cout << "\nStandard ";
+            std::cout << "UzawaSolver starts." << std::endl;
+            std::cout << "0: " << initRes << std::endl;
+        }
+
+        using Preconditioner = SeqUzawa<Matrix, Vector, Vector, GridGeometry>;
+        Preconditioner precond(A, this->precondIter(), this->relaxation());
+        const auto maxIter = this->maxIter();
+
+        if (!accelerated)
+        {
+            for (int k = 1; k < maxIter; ++k)
+            {
+                precond.apply(x, b);
+
+                res = b;
+                A.mmv(x, res);
+                auto residual = res.two_norm();
+                if (this->verbosity() > 1)
+                    std::cout << k << ": " << residual << std::endl;
+
+                if (residual/initRes < this->residReduction())
+                {
+                    if (this->verbosity() > 0)
+                        std::cout << "UzawaSolver finished in " << k << " iterations." << std::endl;
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            using zero = std::integral_constant<long unsigned int, 0>;
+            using one = std::integral_constant<long unsigned int, 1>;
+            const auto size = x[zero()].size() + x[one()].size();
+            const auto m = 10;
+
+            // Given xi0 and m >= 1, set xi1 = G(x0)
+            // For k = 1, 2, ...
+            //   Set mk = min{m, k}.
+            //   Set Fk = (fk−mk, ..., fk), where fi = G(xi) − xi.
+            //   Determine alpha(k) = (alpha0(k), ..., alphamk(k))T
+            //     that solves min | Fk.alpha | s.t. sum alphai = 1
+            //   Set xk+1 = sum alphai(k).G(xk−mk+i).
+
+            using Scalar = typename Vector::field_type;
+            Dune::DynamicMatrix<Scalar> xi(maxIter, size);
+            Dune::DynamicMatrix<Scalar> Gk(maxIter, size);
+
+            std::copy(x[zero()].begin(), x[zero()].end(), xi[0].begin());
+            std::copy(x[one()].begin(), x[one()].end(), xi[0].begin() + x[zero()].size());
+            precond.apply(x, b);
+            std::copy(x[zero()].begin(), x[zero()].end(), xi[1].begin());
+            std::copy(x[one()].begin(), x[one()].end(), xi[1].begin() + x[zero()].size());
+            Gk[0] = xi[1];
+
+            for (int k = 1; k < maxIter; ++k)
+            {
+                std::copy(xi[k].begin(), xi[k].begin() + x[zero()].size(), x[zero()].begin());
+                std::copy(xi[k].begin() + x[zero()].size(), xi[k].end(), x[one()].begin());
+
+                res = b;
+                A.mmv(x, res);
+                auto residual = res.two_norm();
+                if (this->verbosity() > 1)
+                    std::cout << k << ": " << residual << std::endl;
+
+                if (residual/initRes < this->residReduction())
+                {
+                    if (this->verbosity() > 0)
+                        std::cout << "UzawaSolver finished in " << k << " iterations." << std::endl;
+                    return true;
+                }
+
+                precond.apply(x, b);
+                std::copy(x[zero()].begin(), x[zero()].end(), Gk[k].begin());
+                std::copy(x[one()].begin(), x[one()].end(), Gk[k].begin() + x[zero()].size());
+
+                const auto mk = std::min(m, k);
+                Dune::DynamicMatrix<Scalar> FkT(mk+1, size);
+                for (size_t i = 0; i <= mk; ++i)
+                {
+                    FkT[i] = Gk[k - mk + i] - xi[k - mk + i];
+                }
+
+                Dune::DynamicMatrix<Scalar> FkTFk(mk+1, mk+1);
+                for (size_t i = 0; i <= mk; ++i)
+                    for (size_t j = 0; j <= mk; ++j)
+                        FkTFk[i][j] = FkT[i].dot(FkT[j]);
+
+                FkTFk.invert();
+                Scalar factor = 0.0;
+                for (size_t i = 0; i <= mk; ++i)
+                    for (size_t j = 0; j <= mk; ++j)
+                        factor += FkTFk[i][j];
+
+                Dune::DynamicVector<Scalar> alpha(mk+1);
+                for (size_t i = 0; i <= mk; ++i)
+                    alpha[i] = std::accumulate(FkTFk[i].begin(), FkTFk[i].end(), 0.0);
+                alpha /= factor;
+
+                xi[k+1] = 0;
+                for (size_t i = 0; i <= mk; ++i)
+                {
+                    auto aGki = Gk[k-mk+i];
+                    aGki *= alpha[i];
+                    xi[k+1] += aGki;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    std::string name() const
+    {
+        return "Uzawa solver";
+    }
 };
 
 template <class GridGeometry>
