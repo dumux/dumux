@@ -536,7 +536,7 @@ public:
 
             // restore original state of the flux vars cache and/or vol vars in case of global caching.
             // This has to be done in order to guarantee that the undeflected residual computation done
-            // above is correct when jumping to the next coupled element.
+            // above is correct when jumping to the next coupled dof of domainJ.
             updateCoupledVariables();
         }
     }
