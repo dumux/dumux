@@ -83,10 +83,12 @@ std::array<Scalar,3> riemannProblem(const Scalar waterDepthLeft,
     const Scalar waterDepthRightReconstructed = max(0.0, waterDepthRight - dzr);
 
     // compute the mobility of the flux with the fluxlimiter
+    static const Scalar upperWaterDepthFluxLimiting = getParam<Scalar>("FluxLimiterLET.UpperWaterDepth", 1e-3);
+    static const Scalar lowerWaterDepthFluxLimiting = getParam<Scalar>("FluxLimiterLET.LowerWaterDepth", 1e-5);
     const Scalar mobility = ShallowWater::fluxLimiterLET(waterDepthLeftReconstructed,
                                                          waterDepthRightReconstructed,
-                                                         0.001,
-                                                         0.00001);
+                                                         upperWaterDepthFluxLimiting,
+                                                         lowerWaterDepthFluxLimiting);
 
     // make rotation of the flux we compute an 1d flux
     Scalar tempFlux = velocityXLeft;
