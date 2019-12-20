@@ -127,6 +127,113 @@ std::array<Scalar, 3> fixedDischargeBoundary(const Scalar dischargeBoundary,
     return cellStateOutside;
 }
 
+/*!
+ * \brief Compute the viscosity/diffusive flux at a rough wall boundary using no-slip formulation.
+ *
+ * \param alphaWall Roughness parameter: alphaWall=0.0 means full slip, alphaWall=1.0 means no slip, 0.0<alphaWall<1.0 means partial slip [-]
+ * \param waterDepthInside Water depth in the inner cell [m]
+ * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
+ * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
+ * \param turbulentViscosity Turbulent viscosity [m^2/s]
+ * \param distance Distance from inside cell center to the boundary face [m]
+ * \param nxy Normal vector of the boundary face
+ *
+ * \return cellStateOutside The outer cell state
+ */
+template<class Scalar, class GlobalPosition>
+std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
+                                         const Scalar waterDepthInside,
+                                         const Scalar velocityXInside,
+                                         const Scalar velocityYInside,
+                                         const Scalar turbulentViscosity,
+                                         const Scalar distance,
+                                         const GlobalPosition& nxy)
+{
+    std::array<Scalar, 3> roughWallFlux;
+    using std::abs;
+
+    // only impose if abs(alphaWall) > 0
+    if (abs(alphaWall) > 1.0e-9)
+    {
+        // Initialization
+        Scalar gradU   = 0.0;
+        Scalar gradV   = 0.0;
+
+        // Change of distance to wall for boundary conditions from Jasak (1996), p. 93-94:
+        //Scalar dn[2] = {0.0};
+        //Scalar fac = nxy[0]*dx+nxy[1]*dy;
+        //dn[0] = fac*nxy[0];
+        //dn[1] = fac*nxy[1];
+        //distance = std::sqrt(dn[0]*dn[0] + dn[1]*dn[1]);
+
+        // Compute the velocity gradients
+        // Outside - inside cell: therefore the minus-sign
+        // Only when cell contains sufficient water.
+        // Use LET-limiter instead for differentiability?
+        if ((waterDepthInside > 0.001))
+        {
+            gradU         = -alphaWall * velocityXInside/distance;
+            gradV         = -alphaWall * velocityYInside/distance;
+        }
+
+        //At walls we assume the connection between the two cell centres to be
+        //orthogonal to the boundary face, i.e. c_delta = 1.0
+        Scalar c_delta = 1.0/(dx*nxy[0] + dy*nxy[1]);
+
+        // Compute the viscosity/diffusive fluxes at the rough wall
+        roughWallFlux[0] = 0.0;
+        roughWallFlux[1] = turbulentViscosity * waterDepthInside * c_delta * gradU;
+        roughWallFlux[2] = turbulentViscosity * waterDepthInside * c_delta * gradV;
+
+    return roughWallFlux;
+}
+
+/*!
+ * \brief Compute the viscosity/diffusive flux at a rough wall boundary using Nikuradse formulation.
+ *
+ * \param ksWall Nikuradse roughness height for the wall [m]
+ * \param waterDepthInside Water depth in the inner cell [m]
+ * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
+ * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
+ * \param distance Distance from inside cell center to the boundary face [m]
+ * \param nxy Normal vector of the boundary face
+ *
+ * \return cellStateOutside The outer cell state
+ */
+template<class Scalar, class GlobalPosition>
+std::array<Scalar, 3> nikuradseWallBoundary(const Scalar ksWall,
+                                            const Scalar waterDepthInside,
+                                            const Scalar velocityXInside,
+                                            const Scalar velocityYInside,
+                                            const Scalar distance,
+                                            const GlobalPosition& nxy)
+{
+    std::array<Scalar, 3> roughWallFlux;
+    using std::abs;
+    using std::sqrt;
+    using std::max;
+    using std::log;
+
+    // only impose if abs(ksWall) > 0
+    if (abs(ksWall) > 1.0e-9)
+    {
+        Scalar y0w = ksWall/30.0;
+        Scalar kappa2 = 0.41*0.41;
+        // velocity magnitude
+        auto velocityMagnitude  = sqrt(velocityXInside*velocityXInside + velocityYInside*velocityYInside);
+        // and the wall shear stress components
+        // should distance/y0w be limited to not become too small?
+        auto tauWx = kappa2*velocityMagnitude*velocityXInside/ max(0.01,(log(distance/y0w + 1.0))*(log(distance/y0w + 1.0)));
+        auto tauWy = kappa2*velocityMagnitude*velocityYInside/ max(0.01,(log(distance/y0w + 1.0))*(log(distance/y0w + 1.0)));
+
+        // Compute the viscosity/diffusive fluxes at the rough wall
+        roughWallFlux[0] = 0.0;
+        roughWallFlux[1] = -waterDepthInside*tauWx; //*velocityXInside/max(0.01,abs(velocityXInside));
+        roughWallFlux[2] = -waterDepthInside*tauWy; //*velocityYInside/max(0.01,abs(velocityYInside));
+
+    return roughWallFlux;
+}
+
 } // end namespace ShallowWater
 } // end namespace Dumux
 
