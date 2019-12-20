@@ -474,7 +474,7 @@ public:
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
 
         // convenience lambda for call to update self
-        auto updateSelf = [&] ()
+        auto updateCoupledVariables = [&] ()
         {
             // Update ourself after the context has been modified. Depending on the
             // type of caching, other objects might have to be updated. All ifs can be optimized away.
@@ -510,7 +510,7 @@ public:
                 {
                     priVarsJ[pvIdx] = priVar;
                     this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
-                    updateSelf();
+                    updateCoupledVariables();
                     return this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ);
                 };
 
@@ -558,7 +558,7 @@ public:
             // This has to be done in case they depend on variables of domainJ before
             // we continue with the numeric derivative w.r.t the next globalJ. Otherwise,
             // the next "origResidual" will be incorrect.
-            updateSelf();
+            updateCoupledVariables();
         }
     }
 };
