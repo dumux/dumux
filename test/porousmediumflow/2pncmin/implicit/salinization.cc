@@ -179,7 +179,8 @@ int main(int argc, char** argv) try
 //         file << "#time, globalPos, evaporation rate, mole frac inside, ref mole frac, diffusion coefficient, molar density" << std::endl;
 
     // time loop
-    timeLoop->setPeriodicCheckPoint(episodeLength);
+//     timeLoop->setPeriodicCheckPoint(episodeLength);
+    timeLoop->setPeriodicCheckPoint(500, episodeLength-500);
     timeLoop->start(); do
     {
         // set time for problem for implicit Euler scheme
@@ -207,10 +208,10 @@ int main(int argc, char** argv) try
         // write vtk output
         vtkWriter.write(timeLoop->time());
         // write vtk output
-//         if (timeLoop->isCheckPoint() || timeLoop->finished())
-//         {
-//             vtkWriter.write(timeLoop->time());
-//         }
+        if (timeLoop->isCheckPoint() || timeLoop->finished())
+        {
+            vtkWriter.write(timeLoop->time());
+        }
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
