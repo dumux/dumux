@@ -37,7 +37,7 @@ namespace Dumux {
  * \brief A "quadrature" based on virtual refinement
  */
 template<typename ct, int mydim>
-class RefinementQuadratureRule : public Dune::QuadratureRule<ct, mydim>
+class RefinementQuadratureRule final : public Dune::QuadratureRule<ct, mydim>
 {
 public:
     //! The space dimension
