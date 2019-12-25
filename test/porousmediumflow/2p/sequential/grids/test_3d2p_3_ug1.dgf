@@ -40,7 +40,6 @@ Cube
 #
 GridParameter
 closure none
-heapsize 1000
 #
 Boundarydomain
 default 1

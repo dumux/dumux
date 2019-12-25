@@ -85,7 +85,6 @@ Adaptive | MaxLevel | std::size_t | 0 | |
 * |  | GmshPhysicalEntityThreshold | std::size_t | 0 | |
 * |  | Gradingstd::to_string(i) | Scalar | grading[i] | |
 * |  | Gradingstd::to_string(i) | std::vector<ctype> | grading[i] | |
-* |  | HeapSize | int | | |
 * |  | Image | std::string | | |
 * |  | KeepPhysicalOverlap | bool | true | |
 * |  | LeftBoundary | CoordinateType | 0.0 | |
