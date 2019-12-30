@@ -26,6 +26,8 @@
 
 #include <string>
 #include <dune/common/exceptions.hh>
+#include <dumux/material/solidsystems/1csolid.hh>
+#warning "This header is deprecated and will be removed after release 3.2. Use solidsystem.hh and SolidSystems::OneCSolid."
 
 namespace Dumux {
 namespace SolidSystems {
@@ -37,95 +39,7 @@ namespace SolidSystems {
  *       and can't increase its mass by precipitation from a fluid phase.
  */
 template <class Scalar, class ComponentT>
-class InertSolidPhase
-{
-public:
-    using Component = ComponentT;
-
-    /****************************************
-     * Solid phase related static parameters
-     ****************************************/
-    static constexpr int numComponents = 1;
-    static constexpr int numInertComponents = 1;
-
-    /*!
-     * \brief A human readable name for the component.
-     *
-     * \param compIdx The index of the component to consider
-     */
-    static std::string componentName(int compIdx = 0)
-    { return Component::name(); }
-
-    /*!
-     * \brief A human readable name for the solid system.
-     */
-    static std::string name()
-    { return "s"; }
-
-    /*!
-     * \brief Returns whether the phase is incompressible
-     */
-    static constexpr bool isCompressible(int compIdx = 0)
-    { return false; }
-
-    /*!
-     * \brief Returns whether the component is inert (doesn't react)
-     */
-    static constexpr bool isInert()
-    {  return true; }
-
-    /*!
-     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
-     */
-    static Scalar molarMass(int compIdx = 0)
-    { return Component::molarMass(); }
-
-    /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the solid phase at a given pressure and temperature.
-     */
-    static Scalar density(Scalar temperature)
-    { return Component::solidDensity(temperature); }
-
-    /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the solid phase at a given pressure and temperature.
-     */
-    template <class SolidState>
-    static Scalar density(const SolidState& solidState)
-    {
-        return density(solidState.temperature());
-    }
-
-   /*!
-     * \brief Thermal conductivity of the solid \f$\mathrm{[W/(m K)]}\f$.
-     */
-    static Scalar thermalConductivity(Scalar temperature)
-    { return Component::solidThermalConductivity(temperature); }
-
-    /*!
-     * \brief Thermal conductivity of the solid \f$\mathrm{[W/(m K)]}\f$.
-     */
-    template <class SolidState>
-    static Scalar thermalConductivity(const SolidState &solidState)
-    {
-        return thermalConductivity(solidState.temperature());
-    }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the solid \f$\mathrm{[J/(kg K)]}\f$.
-     */
-    static Scalar heatCapacity(Scalar temperature)
-    { return Component::solidHeatCapacity(temperature); }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the solid \f$\mathrm{[J/(kg K)]}\f$.
-     */
-    template <class SolidState>
-    static Scalar heatCapacity(const SolidState &solidState)
-    {
-        return heatCapacity(solidState.temperature());
-    }
-
-};
+using InertSolidPhase = OneCSolid<Scalar, ComponentT, /*isInert=*/true>;
 
 } // end namespace SolidSystems
 } // end namespace Dumux
