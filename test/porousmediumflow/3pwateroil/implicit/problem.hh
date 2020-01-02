@@ -33,7 +33,7 @@
 #include <dumux/porousmediumflow/3pwateroil/model.hh>
 
 #include <dumux/material/fluidsystems/h2oheavyoil.hh>
-#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/material/components/constant.hh>
 
 #include "spatialparams.hh"

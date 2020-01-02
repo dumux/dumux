@@ -29,7 +29,7 @@
 #include <type_traits>
 #include <dune/common/std/type_traits.hh>
 
-#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux {

@@ -24,24 +24,7 @@
 #ifndef DUMUX_SOLIDSYSTEMS_INERT_SOLID_PHASE_HH
 #define DUMUX_SOLIDSYSTEMS_INERT_SOLID_PHASE_HH
 
-#include <string>
-#include <dune/common/exceptions.hh>
-#include <dumux/material/solidsystems/1csolid.hh>
 #warning "This header is deprecated and will be removed after release 3.2. Use solidsystem.hh and SolidSystems::OneCSolid."
-
-namespace Dumux {
-namespace SolidSystems {
-
-/*!
- * \ingroup SolidSystems
- * \brief A solid phase consisting of a single inert solid component.
- * \note a solid is considered inert if it can't dissolve in a liquid and
- *       and can't increase its mass by precipitation from a fluid phase.
- */
-template <class Scalar, class ComponentT>
-using InertSolidPhase = OneCSolid<Scalar, ComponentT, /*isInert=*/true>;
-
-} // end namespace SolidSystems
-} // end namespace Dumux
+#include <dumux/material/solidsystems/1csolid.hh>
 
 #endif
