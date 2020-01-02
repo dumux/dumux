@@ -30,7 +30,7 @@
 #include "checksolidsystem.hh"
 
 // include all solid systems
-#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/material/solidsystems/compositionalsolidphase.hh>
 
 // include all solid components
@@ -52,25 +52,47 @@ int main(int argc, char** argv) try
     // with the solid components CaO, Ca(OH)2, Granite, NaCl
     ///////////////////////////////////////////////////////////
 
-    // check SolidSystems::InertSolidPhase
+    // check SolidSystems::OneCSolid inert
     {
         using ComponentT = Components::CaO<Scalar>;
-        using SolidSystem = SolidSystems::InertSolidPhase<Scalar, ComponentT>;
+        using SolidSystem = SolidSystems::OneCSolid<Scalar, ComponentT, true>;
         success += checkSolidSystem<Scalar, SolidSystem>();
     }
     {
         using ComponentT = Components::CaO2H2<Scalar>;
-        using SolidSystem = SolidSystems::InertSolidPhase<Scalar, ComponentT>;
+        using SolidSystem = SolidSystems::OneCSolid<Scalar, ComponentT, true>;
         success += checkSolidSystem<Scalar, SolidSystem>();
     }
     {
         using ComponentT = Components::Granite<Scalar>;
-        using SolidSystem = SolidSystems::InertSolidPhase<Scalar, ComponentT>;
+        using SolidSystem = SolidSystems::OneCSolid<Scalar, ComponentT, true>;
         success += checkSolidSystem<Scalar, SolidSystem>();
     }
     {
         using ComponentT = Components::NaCl<Scalar>;
-        using SolidSystem = SolidSystems::InertSolidPhase<Scalar, ComponentT>;
+        using SolidSystem = SolidSystems::OneCSolid<Scalar, ComponentT, true>;
+        success += checkSolidSystem<Scalar, SolidSystem>();
+    }
+
+    // check SolidSystems::OneCSolid non-inert
+    {
+        using ComponentT = Components::CaO<Scalar>;
+        using SolidSystem = SolidSystems::OneCSolid<Scalar, ComponentT, false>;
+        success += checkSolidSystem<Scalar, SolidSystem>();
+    }
+    {
+        using ComponentT = Components::CaO2H2<Scalar>;
+        using SolidSystem = SolidSystems::OneCSolid<Scalar, ComponentT, false>;
+        success += checkSolidSystem<Scalar, SolidSystem>();
+    }
+    {
+        using ComponentT = Components::Granite<Scalar>;
+        using SolidSystem = SolidSystems::OneCSolid<Scalar, ComponentT, false>;
+        success += checkSolidSystem<Scalar, SolidSystem>();
+    }
+    {
+        using ComponentT = Components::NaCl<Scalar>;
+        using SolidSystem = SolidSystems::OneCSolid<Scalar, ComponentT, false>;
         success += checkSolidSystem<Scalar, SolidSystem>();
     }
 
