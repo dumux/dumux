@@ -25,6 +25,8 @@
 #define DUMUX_DISCRETIZATION_ROTATION_SYMMETRIC_GG_TRAITS_HH
 
 #include <dumux/discretization/rotationpolicy.hh>
+#include <dumux/discretization/rotationsymmetricscv.hh>
+#include <dumux/discretization/rotationsymmetricscvf.hh>
 
 namespace Dumux {
 
