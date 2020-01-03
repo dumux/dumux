@@ -7,6 +7,8 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
+- Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
+
 ### Deprecated properties, to be removed after 3.2:
 
 ### Deprecated classes/files, to be removed after 3.2:

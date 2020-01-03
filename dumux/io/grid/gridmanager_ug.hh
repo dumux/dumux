@@ -51,7 +51,6 @@ namespace Dumux {
  * - CellType : "Cube" or "Simplex" to be used for structured grids
  * - Refinement : the number of global refines to perform
  * - Verbosity : whether the grid construction should output to standard out
- * - HeapSize: The heapsize used to allocate memory
  * - BoundarySegments : whether to insert boundary segments into the grid
  *
  */
@@ -143,10 +142,7 @@ private:
      * \brief Do some operations before making the grid
      */
     void preProcessing_(const std::string& modelParamGroup)
-    {
-        if(hasParamInGroup(modelParamGroup, "Grid.HeapSize"))
-            Grid::setDefaultHeapSize(getParamFromGroup<unsigned>(modelParamGroup, "Grid.HeapSize"));
-    }
+    {}
 
     /*!
      * \brief Do some operatrion after making the grid, like global refinement
