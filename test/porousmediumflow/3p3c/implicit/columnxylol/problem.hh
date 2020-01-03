@@ -30,7 +30,7 @@
 
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/material/solidstates/inertsolidstate.hh>
-#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/discretization/cctpfa.hh>

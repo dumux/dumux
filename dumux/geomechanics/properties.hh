@@ -29,7 +29,7 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/solidstates/inertsolidstate.hh>
-#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/flux/hookeslaw.hh>
 
 #include "stressvariablescache.hh"
