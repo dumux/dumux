@@ -57,7 +57,7 @@ intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
  * \brief Compute all intersections between entities and a point
  */
 template<class ctype, int dimworld>
-inline std::pair<bool, unsigned int>
+inline std::pair<bool, std::size_t>
 intersectingEntityCartesian(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& min,
                             const Dune::FieldVector<ctype, dimworld>& max,
@@ -73,14 +73,14 @@ intersectingEntityCartesian(const Dune::FieldVector<ctype, dimworld>& point,
         min[2] - eps2 <= point[2] && point[2] <= max[2] + eps2)
     {
         auto ijk = point-min;
-        using std::min; using std::max;
+        using std::min; using std::max; using std::floor;
         for (int i = 0; i < dimworld; ++i)
-            ijk[i] = max(min(std::floor(ijk[i]*cells[i]/dist[i]), cells[i]-1), 0.0);
+            ijk[i] = max(min(floor(ijk[i]*cells[i]/dist[i]), cells[i]-1), 0.0);
 
-        return std::make_pair(true, (unsigned int)(cells[1]*cells[0]*int(ijk[2]) + cells[0]*int(ijk[1]) + int(ijk[0])));
+        return std::make_pair(true, (std::size_t)(cells[1]*cells[0]*int(ijk[2]) + cells[0]*int(ijk[1]) + int(ijk[0])));
     }
     else
-        return std::make_pair(false, (unsigned int)(0));
+        return std::make_pair(false, std::size_t{});
 }
 
 /*!
