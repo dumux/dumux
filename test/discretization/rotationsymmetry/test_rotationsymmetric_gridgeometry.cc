@@ -140,8 +140,9 @@ int main (int argc, char *argv[]) try
         // make a grid
         const double innerRadius = 0.1;
         const double outerRadius = 1.0;
-        GlobalPosition lower({innerRadius, innerRadius});
-        GlobalPosition upper({outerRadius, outerRadius});
+        const double height = 0.5;
+        GlobalPosition lower({innerRadius, 0});
+        GlobalPosition upper({outerRadius, height});
         std::array<unsigned int, Grid::dimension> els({20, 20});
         std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
 
@@ -152,9 +153,9 @@ int main (int argc, char *argv[]) try
 
         // compute the annulus area and the surface
         const auto centroidRadius = 0.5*(innerRadius + outerRadius);
-        const auto side = (outerRadius - innerRadius);
-        const double refVolume = side*side*2.0*M_PI*centroidRadius;
-        const double refSurface = 4.0*side*2.0*M_PI*centroidRadius;
+        const auto width = (outerRadius - innerRadius);
+        const double refVolume = height*width*2.0*M_PI*centroidRadius;
+        const double refSurface = (2.0*height + 2.0*width)*2.0*M_PI*centroidRadius;
         runTest(gg, refVolume, refSurface);
 
         std::cout << "Successfully tested toroid policy." << std::endl;
@@ -170,9 +171,11 @@ int main (int argc, char *argv[]) try
 
         // make a grid
         const double innerRadius = 0.0;
-        const double outerRadius = 1.0;
-        GlobalPosition lower({innerRadius, innerRadius});
-        GlobalPosition upper({outerRadius, outerRadius});
+        const double outerRadius = 1.1;
+        const double minY = -0.25;
+        const double height = 0.5;
+        GlobalPosition lower({innerRadius, minY});
+        GlobalPosition upper({outerRadius, minY+height});
         std::array<unsigned int, Grid::dimension> els({20, 20});
         std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
 
@@ -182,8 +185,8 @@ int main (int argc, char *argv[]) try
         gg.update();
 
         // compute the annulus area and the surface
-        const double refVolume = outerRadius*M_PI*outerRadius*outerRadius;
-        const double refSurface = 2.0*M_PI*outerRadius + 2.0*M_PI*outerRadius*outerRadius;
+        const double refVolume = height*M_PI*outerRadius*outerRadius;
+        const double refSurface = 2.0*M_PI*outerRadius*height + 2.0*M_PI*outerRadius*outerRadius;
         runTest(gg, refVolume, refSurface);
 
         std::cout << "Successfully tested toroid policy for perfect cylinder." << std::endl;
