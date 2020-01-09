@@ -109,7 +109,7 @@ public:
     //! The area of the sub control volume face (Guldinus theorem)
     Scalar area() const
     {
-        const auto radius = this->center()[1];
+        const auto radius = this->center()[0];
         return SubControlVolumeFace::area()*2.0*M_PI*radius;
     }
 };
