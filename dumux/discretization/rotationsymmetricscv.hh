@@ -113,7 +113,7 @@ public:
     //! The volume of the sub control volume (Guldinus theorem)
     Scalar volume() const
     {
-        const auto radius = this->center()[1];
+        const auto radius = this->center()[0];
         return SubControlVolume::volume()*2.0*M_PI*radius;
     }
 };
