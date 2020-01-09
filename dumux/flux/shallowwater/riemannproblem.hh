@@ -82,14 +82,6 @@ std::array<Scalar,3> riemannProblem(const Scalar waterDepthLeft,
     const Scalar dzr = max(0.0, bedSurfaceLeft - bedSurfaceRight);
     const Scalar waterDepthRightReconstructed = max(0.0, waterDepthRight - dzr);
 
-    // compute the mobility of the flux with the fluxlimiter
-    static const Scalar upperWaterDepthFluxLimiting = getParam<Scalar>("FluxLimiterLET.UpperWaterDepth", 1e-3);
-    static const Scalar lowerWaterDepthFluxLimiting = getParam<Scalar>("FluxLimiterLET.LowerWaterDepth", 1e-5);
-    const Scalar mobility = ShallowWater::fluxLimiterLET(waterDepthLeftReconstructed,
-                                                         waterDepthRightReconstructed,
-                                                         upperWaterDepthFluxLimiting,
-                                                         lowerWaterDepthFluxLimiting);
-
     // make rotation of the flux we compute an 1d flux
     Scalar tempFlux = velocityXLeft;
     velocityXLeft =  nxy[0] * tempFlux + nxy[1] * velocityYLeft;
@@ -125,10 +117,33 @@ std::array<Scalar,3> riemannProblem(const Scalar waterDepthLeft,
       Scalar hdyzrhdyzr = gravity * nxy[1] * hgzr;
     */
 
+    // compute the mobility of the flux with the fluxlimiter
+    static const Scalar upperWaterDepthFluxLimiting = getParam<Scalar>("FluxLimiterLET.UpperWaterDepth", 1e-3);
+    static const Scalar lowerWaterDepthFluxLimiting = getParam<Scalar>("FluxLimiterLET.LowerWaterDepth", 1e-5);
+    static const bool upwindWaterDepthFluxLimiting = getParam<bool>("FluxLimiterLET.UpwindFluxLimiting", false);
+
+    Scalar limitingDepth = (waterDepthLeftReconstructed + waterDepthRightReconstructed) * 0.5;
+
+    //Using the upwind water depth from the flux direction can improve stability.
+    if (upwindWaterDepthFluxLimiting)
+    {
+        if (riemannResult.flux[0] < 0)
+        {
+            limitingDepth = waterDepthRightReconstructed;
+        }else
+        {
+            limitingDepth = waterDepthLeftReconstructed;
+        }
+    }
+
+    const Scalar mobility = ShallowWater::fluxLimiterLET(limitingDepth,
+                                                         limitingDepth,
+                                                         upperWaterDepthFluxLimiting,
+                                                         lowerWaterDepthFluxLimiting);
     std::array<Scalar, 3> localFlux;
     localFlux[0] = riemannResult.flux[0] * mobility;
-    localFlux[1] = riemannResult.flux[1] - hdxzl;
-    localFlux[2] = riemannResult.flux[2] - hdyzl;
+    localFlux[1] = (riemannResult.flux[1] - hdxzl);// * mobility;
+    localFlux[2] = (riemannResult.flux[2] - hdyzl);// * mobility;
 
     return localFlux;
 }
