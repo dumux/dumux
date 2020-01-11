@@ -24,14 +24,10 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/method.hh>
-
-#include "model.hh"
 
 namespace Dumux {
 
@@ -88,6 +84,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
       };
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
@@ -150,7 +147,6 @@ public:
         sol[GridGeometry::faceIdx()][scvf.dofIndex()][0] = initSol[Indices::velocity(scvf.directionIndex())];
     }
 
-
     /*!
      * \brief An additional drag term can be included as source term for the momentum balance
      *        to mimic 3D flow behavior in 2D:
@@ -208,9 +204,7 @@ public:
     }
 
     /*!
-     * \brief Returns the alpha value required as input parameter for the Beavers-Joseph-Saffman boundary condition
-     *
-     * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
+     * \brief Returns the beta value, or the alpha value divided by the square root of the intrinsic permeability.
      */
     Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf) const
     {
@@ -220,22 +214,25 @@ public:
 
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
+     * \note This method is deprecated. Use porousMediumVelocity(element, scvf) instead, returning a velocity vector. Will be removed after 3.2
      */
     Scalar velocityPorousMedium(const Element& element, const SubControlVolumeFace& scvf) const
-    { return 0.0; }
-
-    //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph-Saffman condition is used
-    DUNE_DEPRECATED_MSG("Use beaversJosephVelocity(element, scv, faceOnPorousBoundary, velocitySelf, tangentialVelocityGradient) instead")
-    const Scalar bjsVelocity(const Element& element,
-                             const SubControlVolume& scv,
-                             const SubControlVolumeFace& faceOnPorousBoundary,
-                             const Scalar velocitySelf) const
     {
-        // assume tangential velocity gradient of zero and
-        return beaversJosephVelocity(element, scv, faceOnPorousBoundary, velocitySelf, 0.0);
+        // Redirect to helper method to avoid spurious deprecation warnings. TODO: Remove after 3.2!
+        return deprecatedVelocityPorousMedium_();
+    }
+
+    /*!
+     * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
+     */
+    VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        // TODO: return VelocityVector(0.0) after 3.2!
+        return VelocityVector(getVelPM_(element, scvf));
     }
 
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used
+    [[deprecated("Use beaversJosephVelocity(element, scv, ownScvf, faceOnPorousBoundary, velocitySelf, tangentialVelocityGradient) instead. Will be removed after 3.2")]]
     const Scalar beaversJosephVelocity(const Element& element,
                                        const SubControlVolume& scv,
                                        const SubControlVolumeFace& faceOnPorousBoundary,
@@ -249,7 +246,54 @@ public:
         return (tangentialVelocityGradient*distance + asImp_().velocityPorousMedium(element,faceOnPorousBoundary)*betaBJ*distance + velocitySelf) / (betaBJ*distance + 1.0);
     }
 
+    //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used
+    const Scalar beaversJosephVelocity(const Element& element,
+                                       const SubControlVolume& scv,
+                                       const SubControlVolumeFace& ownScvf,
+                                       const SubControlVolumeFace& faceOnPorousBoundary,
+                                       const Scalar velocitySelf,
+                                       const Scalar tangentialVelocityGradient) const
+    {
+        // du/dy + dv/dx = alpha/sqrt(K) * (u_boundary-uPM)
+        // beta = alpha/sqrt(K)
+        const Scalar betaBJ = asImp_().betaBJ(element, faceOnPorousBoundary);
+        const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
+
+        // create a unit normal vector oriented in positive coordinate direction
+        GlobalPosition orientation = ownScvf.unitOuterNormal();
+        orientation[ownScvf.directionIndex()] = 1.0;
+
+        return (tangentialVelocityGradient*distanceNormalToBoundary
+              + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * betaBJ * distanceNormalToBoundary
+              + velocitySelf) / (betaBJ*distanceNormalToBoundary + 1.0);
+    }
+
 private:
+
+    // Auxiliary method handling deprecation warnings. TODO: Remove after 3.2!
+    Scalar getVelPM_(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        // Check if the user problem implements the deprecated velocityPorousMedium method
+        static constexpr bool implHasVelocityPorousMedium = !std::is_same<decltype(&Implementation::velocityPorousMedium), decltype(&NavierStokesProblem::velocityPorousMedium)>::value;
+        // This check would always trigger a spurious deprecation warning if the base class' (NavierStokesProblem) velocityPorousMedium method was equipped with a deprecation warning.
+        // This is why we need another level of redirection there.
+
+        // Forward either to user impl (thereby raising a deprecation warning) or return 0.0 by default
+        return deprecationHelper_(element, scvf, std::integral_constant<bool, implHasVelocityPorousMedium>{});
+    }
+
+    [[deprecated("\nvelocityPorousMedium(element, scvf) is deprecated. Use porousMediumVelocity(element, scvf) instead, returning a velocity vector. Will be removed after 3.2")]]
+    Scalar deprecationHelper_(const Element& element, const SubControlVolumeFace& scvf, std::true_type) const
+    { return asImp_().velocityPorousMedium(element, scvf); }
+
+    // Return 0.0 by default. TODO: Remove this after 3.2
+    Scalar deprecationHelper_(const Element& element, const SubControlVolumeFace& scvf, std::false_type) const
+    { return 0.0; }
+
+    // Auxiliary method to trigger a deprecation warning.
+    [[deprecated("\nvelocityPorousMedium(element, scvf) is deprecated. Use porousMediumVelocity(element, scvf) instead, returning a velocity vector. Will be removed after 3.2")]]
+    Scalar deprecatedVelocityPorousMedium_() const
+    { return 0.0; }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
