@@ -272,8 +272,11 @@ public:
             return velocityGradIJ(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
         }();
 
-        return problem.beaversJosephVelocity(element, fvGeometry.scv(scvf.insideScvIdx()),
-                                             scvf, innerLateralVelocity,
+        return problem.beaversJosephVelocity(element,
+                                             fvGeometry.scv(scvf.insideScvIdx()),
+                                             lateralScvf,
+                                             scvf, /*on boundary*/
+                                             innerLateralVelocity,
                                              tangentialVelocityGradient);
     }
 
@@ -329,9 +332,11 @@ public:
             return velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
         }();
 
-
-        return problem.beaversJosephVelocity(element, fvGeometry.scv(scvf.insideScvIdx()),
-                                             lateralScvf, innerParallelVelocity,
+        return problem.beaversJosephVelocity(element,
+                                             fvGeometry.scv(scvf.insideScvIdx()),
+                                             scvf,
+                                             lateralScvf, /*on boundary*/
+                                             innerParallelVelocity,
                                              tangentialVelocityGradient);
     }
 
