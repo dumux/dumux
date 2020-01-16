@@ -331,7 +331,7 @@ public:
                 // It is not clear how to evaluate the BJ condition here.
                 // For symmetry reasons, our own scvf should then have the same Neumann flux as the lateral face.
                 // TODO: We should clarify if this is the correct approach.
-                if (currentScvfBoundaryTypes->isBJS(Indices::velocity(lateralScvf.directionIndex())) && lateralFaceBoundaryTypes &&
+                if (currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex())) && lateralFaceBoundaryTypes &&
                     lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
@@ -375,7 +375,7 @@ public:
                 std::bitset<3> admittableBcTypes;
                 admittableBcTypes.set(0, lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
                 admittableBcTypes.set(1, lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())));
-                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())));
+                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex())));
                 if (admittableBcTypes.count() != 1)
                 {
                     DUNE_THROW(Dune::InvalidStateException, "Invalid boundary conditions for lateral scvf "
@@ -502,7 +502,7 @@ private:
                     const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                     return problem.dirichlet(element, scvf.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(lateralFace.directionIndex())];
                 }
-                else if (bcTypes.isBJS(Indices::velocity(lateralFace.directionIndex())))
+                else if (bcTypes.isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
                 {
                     return VelocityGradients::beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
                                                                                  currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
@@ -573,7 +573,7 @@ private:
         {
             if (!scvf.boundary() ||
                 currentScvfBoundaryTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
-                currentScvfBoundaryTypes->isBJS(Indices::velocity(lateralFace.directionIndex())))
+                currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
             {
                 const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
                 // Account for the orientation of the staggered normal face's outer normal vector.
