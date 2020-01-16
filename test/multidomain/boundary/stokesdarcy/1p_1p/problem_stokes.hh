@@ -190,7 +190,7 @@ public:
         {
             values.setCouplingNeumann(Indices::conti0EqIdx);
             values.setCouplingNeumann(Indices::momentumYBalanceIdx);
-            values.setBJS(Indices::momentumXBalanceIdx);
+            values.setBeaversJoseph(Indices::momentumXBalanceIdx);
         }
 
         return values;
