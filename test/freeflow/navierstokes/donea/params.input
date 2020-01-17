@@ -1,6 +1,6 @@
 [Grid]
 UpperRight = 1 1
-Cells = 40 40
+Cells = 100 100
 
 [Problem]
 Name = test_donea # name passed to the output routines
@@ -15,6 +15,30 @@ LiquidKinematicViscosity = 1.0
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
+EnableResidualCriterion = true
+SatisfyResidualAndShiftCriterion = false
+ResidualReduction = 1e-12
+MinSteps = 1
 
 [Vtk]
 WriteFaceData = false
+
+[LinearSolver]
+Verbosity = 2
+GMResRestart = 150#150
+MaxIterations = 10000
+PreconditionerIterations = 1
+PreconditionerRelaxation = 1.2#1.2
+ResidualReduction = 1e-12
+UseFlexibleGMRES = false
+
+AMG.MaxLevel = 100
+AMG.CoarsenTarget = 1000 #1000
+AMG.MinCoarsenRate = 1.0
+AMG.ProlongDamp = 2.0#2.0
+AMG.EnableScaling = true
+AMG.PreSmoothSteps = 1
+AMG.PostSmoothSteps = 1
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-5

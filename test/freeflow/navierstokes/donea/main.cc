@@ -41,7 +41,8 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+// #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/freeflowseqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/nonlinear/staggerednewtonconvergencewriter.hh>
 
@@ -110,7 +111,8 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = Dumux::UMFPackBackend;
+    using LinearSolver = Dumux::BlockDiagAMGRestartedGMRESSolver;
+    // using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
