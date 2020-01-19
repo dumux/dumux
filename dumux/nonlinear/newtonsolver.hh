@@ -209,20 +209,6 @@ public:
      * \brief Run the Newton method to solve a non-linear system.
      *        Does time step control when the Newton fails to converge
      */
-    [[deprecated("Use attachConvergenceWriter(convWriter) and solve(x, *timeLoop) instead")]]
-    void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop,
-               std::shared_ptr<ConvergenceWriter> convWriter)
-    {
-        if (!convergenceWriter_)
-            attachConvergenceWriter(convWriter);
-
-        solve(uCurrentIter, timeLoop);
-    }
-
-    /*!
-     * \brief Run the Newton method to solve a non-linear system.
-     *        Does time step control when the Newton fails to converge
-     */
     void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop) override
     {
         if (this->assembler().isStationaryProblem())
@@ -683,20 +669,6 @@ public:
         Scalar percent = Scalar(targetSteps_ - numSteps_)/targetSteps_;
         return oldTimeStep*(1.0 + percent/1.2);
     }
-
-    /*!
-     * \brief Specifies if the Newton method ought to be chatty.
-     */
-    [[deprecated("Has been replaced by setVerbosity(int). Will be removed after 3.1 release!")]]
-    void setVerbose(bool val)
-    { verbosity_ = val; }
-
-    /*!
-     * \brief Returns true if the Newton method ought to be chatty.
-     */
-    [[deprecated("Has been replaced by int verbosity(). Will be removed after 3.1 release!")]]
-    bool verbose() const
-    { return verbosity_ ; }
 
     /*!
      * \brief Specifies the verbosity level
