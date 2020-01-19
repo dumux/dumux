@@ -28,12 +28,16 @@
 #include <algorithm>
 #include <map>
 
+#include <dune/common/version.hh>
+#if DUNE_VERSION_LT(DUNE_COMMON,2,7)
 #include <dune/common/parallel/collectivecommunication.hh>
+#else
+#include <dune/common/parallel/communication.hh>
+#endif
+
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/common/datahandleif.hh>
-
-
 
 // UGGrid specific includes
 #if HAVE_UG
