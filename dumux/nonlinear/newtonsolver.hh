@@ -964,8 +964,9 @@ private:
     void newtonUpdateShiftImpl_(const SolVec &uLastIter,
                                 const SolVec &deltaU)
     {
-        for (int i = 0; i < int(uLastIter.size()); ++i) {
-            typename SolVec::block_type uNewI = uLastIter[i];
+        for (int i = 0; i < int(uLastIter.size()); ++i)
+        {
+            auto uNewI = uLastIter[i];
             uNewI -= deltaU[i];
 
             Scalar shiftAtDof = relativeShiftAtDof_(uLastIter[i], uNewI);
@@ -1054,7 +1055,7 @@ private:
         //! to this field vector type in Dune ISTL
         //! Could be avoided for vectors that already have the right type using SFINAE
         //! but it shouldn't impact performance too much
-        constexpr auto blockSize = JacobianMatrix::block_type::rows;
+        constexpr auto blockSize = std::decay_t<decltype(b[0])>::dimension;
         using BlockType = Dune::FieldVector<Scalar, blockSize>;
         Dune::BlockVector<BlockType> xTmp; xTmp.resize(b.size());
         Dune::BlockVector<BlockType> bTmp(xTmp);
