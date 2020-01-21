@@ -280,6 +280,12 @@ public:
             delta = 0; // dummy vector, there is no delta before solving the linear system
             convergenceWriter_->write(u, delta, this->assembler().residual());
         }
+
+        if (enablePartialReassembly_)
+        {
+            partialReassembler_->resetColors();
+            resizeDistanceFromLastLinearization_(uCurrentIter, distanceFromLastLinearization_);
+        }
     }
 
     /*!
@@ -798,23 +804,19 @@ private:
      */
     bool solve_(SolutionVector& uCurrentIter)
     {
-        // the given solution is the initial guess
-        SolutionVector uLastIter(uCurrentIter);
-        SolutionVector deltaU(uCurrentIter);
-
-        Dune::Timer assembleTimer(false);
-        Dune::Timer solveTimer(false);
-        Dune::Timer updateTimer(false);
-
-        if (enablePartialReassembly_)
-        {
-            partialReassembler_->resetColors();
-            resizeDistanceFromLastLinearization_(uCurrentIter, distanceFromLastLinearization_);
-        }
-
         try
         {
+            // newtonBegin may manipulate the solution
             newtonBegin(uCurrentIter);
+
+            // the given solution is the initial guess
+            SolutionVector uLastIter(uCurrentIter);
+            SolutionVector deltaU(uCurrentIter);
+
+            // setup timers
+            Dune::Timer assembleTimer(false);
+            Dune::Timer solveTimer(false);
+            Dune::Timer updateTimer(false);
 
             // execute the method as long as the solver thinks
             // that we should do another iteration
