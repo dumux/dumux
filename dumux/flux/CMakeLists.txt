@@ -17,6 +17,7 @@ hookeslaw.hh
 maxwellstefanslaw.hh
 referencesystemformulation.hh
 shallowwaterflux.hh
+shallowwaterdiffusiveflux.hh
 stationaryvelocityfield.hh
 traits.hh
 upwindscheme.hh
