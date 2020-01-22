@@ -1,5 +1,12 @@
 [Problem]
-Name = poiseuilleFlow
+Name            = poiseuilleflow
+BedSlope        = 0.00005 # [-]           slope of the bed in m/m (positive downwards)
+Gravity         = 9.81    # [m/s^2]       gravitational acceleration
+Discharge       = -4.0875 # [m^2/s]       discharge per meter at the inflow boundary
+HBoundary       = 0.0     # [m]           water level         at the ouflow boundary 
+TurbViscosity   = 0.1     # [m^2/s]       turbulent viscosity
+WallFrictionLaw = noslip  #               Type of wall friction law: "noslip" or "nikuradse"
+AlphaWall       = 1.0     # [-]           wall roughness parameter; alphaWall=0 : full slip, 0<alphaWall<1 : partial slip, alphaWall=1 : no slip
 
 [TimeLoop]
 TEnd = 12000.0 # [s]
@@ -8,10 +15,9 @@ DtInitial = 0.005 # [s]
 
 [Grid]
 Positions0 = 0.0 400.0
-Positions1 = 0.0 100.0
+Positions1 = -50.0 50.0
 Cells0 = 80
 Cells1 = 20
 
 [Newton]
 EnablePartialReassembly = true
-

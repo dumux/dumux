@@ -57,7 +57,7 @@ public:
      */
     template<class Problem, class FVElementGeometry, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,
-                            const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                            const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
                             const typename FVElementGeometry::SubControlVolumeFace& scvf)

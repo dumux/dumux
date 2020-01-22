@@ -19,10 +19,9 @@
 /*!
  * \file
  * \ingroup ShallowWaterTests
- * \brief A test for the shallow water model (wet dam break).
+ * \brief A test for the shallow water model (Poiseuille flow).
  */
 #include <config.h>
-
 
 #include <ctime>
 #include <iostream>
@@ -32,12 +31,10 @@
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/linear/amgbackend.hh>
@@ -55,7 +52,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::DamBreakWet;
+    using TypeTag = Properties::TTag::PoiseuilleFlow;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -79,23 +76,23 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    gridGeometry->update();
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(fvGridGeometry->numDofs());
+    SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
     // get some time loop parameters
@@ -110,7 +107,8 @@ int main(int argc, char** argv) try
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
     vtkWriter.addField(problem->getExactWaterDepth(), "exactWaterDepth");
     vtkWriter.addField(problem->getExactVelocityX(), "exactVelocityX");
-    problem->updateAnalyticalSolution(x,*gridVariables,0.0);
+    vtkWriter.addField(problem->getExactVelocityY(), "exactVelocityY");
+    problem->updateAnalyticalSolution();
     IOFields::initOutputModule(vtkWriter);
     vtkWriter.write(0.0);
 
@@ -120,11 +118,11 @@ int main(int argc, char** argv) try
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = Dumux::AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
@@ -136,12 +134,10 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
         nonLinearSolver.solve(x,*timeLoop);
 
         // update the analytical solution
-        problem->updateAnalyticalSolution(x,*gridVariables,timeLoop->time()+timeLoop->timeStepSize());
+        problem->updateAnalyticalSolution();
 
         // make the new solution the old solution
         xOld = x;

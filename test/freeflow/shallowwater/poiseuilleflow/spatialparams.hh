@@ -19,45 +19,70 @@
 /*!
  * \file
  * \ingroup ShallowWaterTests
- * \brief The spatial parameters for the dam break problem.
+ * \brief The spatial parameters for the Poiseuille flow problem.
  */
-#ifndef DUMUX_DAM_BREAK_SPATIAL_PARAMETERS_HH
-#define DUMUX_DAM_BREAK_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_POISEUILLE_FLOW_SPATIAL_PARAMETERS_HH
+#define DUMUX_POISEUILLE_FLOW_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
+// #include <dumux/material/fluidmatrixinteractions/wallfrictionlaws/wallfrictionlaw.hh>
+// #include <dumux/material/fluidmatrixinteractions/wallfrictionlaws/wallnoslip.hh>
+
 
 namespace Dumux {
 
 /*!
  * \ingroup ShallowWaterTests
- * \brief The spatial parameters class for the dam break test.
+ * \brief The spatial parameters class for the Poiseuille flow test.
  *
  */
-template<class FVGridGeometry, class Scalar>
-class DamBreakSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,
-                         DamBreakSpatialParams<FVGridGeometry, Scalar>>
+template<class GridGeometry, class Scalar, class VolumeVariables>
+class PoiseuilleFlowSpatialParams
+: public FVSpatialParams<GridGeometry, Scalar,
+                         PoiseuilleFlowSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
-    using ThisType = DamBreakSpatialParams<FVGridGeometry, Scalar>;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using ThisType = PoiseuilleFlowSpatialParams<GridGeometry, Scalar, VolumeVariables>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    DamBreakSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
-    {}
+    PoiseuilleFlowSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    {
+        gravity_ = getParam<Scalar>("Problem.Gravity");
+        bedSlope_ = getParam<Scalar>("Problem.BedSlope");
+        wallFrictionLawType_ = getParam<std::string>("Problem.WallFrictionLaw");
+        //initWallFrictionLaw();
+    }
 
-    /*! \brief Define the porosity in [-].
-   *
-   * \param globalPos The global position where we evaluate
-   */
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 1.0; }
-
+    /*!
+     * \brief Initialize the WallFrictionLaw
+     */
+    //void initWallFrictionLaw()
+    //{
+    //  if (wallFrictionLawType_ == "Noslip")
+    //  {
+    //      Scalar alphaWall = getParam<Scalar>("Problem.alphaWall");
+    //      wallFrictionLaw_ = std::make_unique<WallFrictionLawNoslip<VolumeVariables>>(gravity_, alphaWall);
+    //  }
+    //  else if (wallFrictionLawType_ == "Nikuradse")
+    //  {
+    //      Scalar wallKs = getParam<Scalar>("Problem.wallKs"); // equivalent sand roughness of the wall
+    //      wallFrictionLaw_ = std::make_unique<WallFrictionLawNikuradse<VolumeVariables>>(wallKs);
+    //  }
+    //  else
+    //  {
+    //      std::cout<<"The WallFrictionLaw in params.input is unknown. Valid entries are 'Noslip' and 'Nikuradse'!"<<std::endl;
+    //  }
+    //}
 
     /*! \brief Define the gravitation.
     *
@@ -68,21 +93,47 @@ public:
         return gravity_;
     }
 
+    /*! \brief Define the gravitation.
+    *
+    * \return gravity constant
+    */
+    Scalar gravity() const
+    {
+        return gravity_;
+    }
+
+    /*! \brief Get the wallFrictionLaw.
+    *
+    * Get the wallFrictionLaw, which already includes the wall friction value.
+    *
+    * \return wallFrictionLaw
+    */
+
+    //const WallFrictionLaw<VolumeVariables>& wallFrictionLaw(const Element& element,
+    //                                                const SubControlVolumeFace& scvf) const
+    //{
+    //    return *wallFrictionLaw_;
+    //}
+
     /*! \brief Define the bed surface
     *
     * \param element The current element
     * \param scv The sub-control volume inside the element.
-    * \return the bed surface
+    *
+    * \return The bed surface
     */
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
     {
         // todo depends on index e.g. eIdx = scv.elementIndex();
-        return 0.0;
+        return 9.98 - element.geometry().center()[0] * bedSlope_;
     }
 
 private:
-    static constexpr Scalar gravity_ = 9.81;
+    Scalar gravity_;
+    Scalar bedSlope_;
+    std::string wallFrictionLawType_;
+    //std::unique_ptr<FrictionLaw<VolumeVariables>> wallFrictionLaw_;
 };
 
 } // end namespace Dumux

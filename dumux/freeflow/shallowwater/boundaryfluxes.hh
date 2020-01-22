@@ -150,6 +150,7 @@ std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
                                          const GlobalPosition& nxy)
 {
     std::array<Scalar, 3> roughWallFlux;
+    roughWallFlux = {0.0};
     using std::abs;
 
     // only impose if abs(alphaWall) > 0
@@ -170,7 +171,7 @@ std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
         // Outside - inside cell: therefore the minus-sign
         // Only when cell contains sufficient water.
         // Use LET-limiter instead for differentiability?
-        if ((waterDepthInside > 0.001))
+        if (waterDepthInside > 0.001)
         {
             gradU         = -alphaWall * velocityXInside/distance;
             gradV         = -alphaWall * velocityYInside/distance;
@@ -178,13 +179,13 @@ std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
 
         //At walls we assume the connection between the two cell centres to be
         //orthogonal to the boundary face, i.e. c_delta = 1.0
-        Scalar c_delta = 1.0/(dx*nxy[0] + dy*nxy[1]);
+        Scalar c_delta = 1.0; // /(dx*nxy[0] + dy*nxy[1]);
 
         // Compute the viscosity/diffusive fluxes at the rough wall
         roughWallFlux[0] = 0.0;
         roughWallFlux[1] = turbulentViscosity * waterDepthInside * c_delta * gradU;
         roughWallFlux[2] = turbulentViscosity * waterDepthInside * c_delta * gradV;
-
+    }
     return roughWallFlux;
 }
 
@@ -209,6 +210,7 @@ std::array<Scalar, 3> nikuradseWallBoundary(const Scalar ksWall,
                                             const GlobalPosition& nxy)
 {
     std::array<Scalar, 3> roughWallFlux;
+    roughWallFlux = {0.0};
     using std::abs;
     using std::sqrt;
     using std::max;
@@ -230,7 +232,7 @@ std::array<Scalar, 3> nikuradseWallBoundary(const Scalar ksWall,
         roughWallFlux[0] = 0.0;
         roughWallFlux[1] = -waterDepthInside*tauWx; //*velocityXInside/max(0.01,abs(velocityXInside));
         roughWallFlux[2] = -waterDepthInside*tauWy; //*velocityYInside/max(0.01,abs(velocityYInside));
-
+    }
     return roughWallFlux;
 }
 
