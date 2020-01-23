@@ -337,14 +337,14 @@ public:
 
                     // adapt calculations for Beavers-Joseph-Saffman condition
                     unsigned int normalNormDim = lateralFace.directionIndex();
-                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBJS(Indices::velocity(velIdx))))
+                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBeaversJoseph(Indices::velocity(velIdx))))
                     {
                         unsigned int neighborIdx = neighborIdx_[elementIdx][normalNormDim][0];
                         if (lateralFace.center()[normalNormDim] < cellCenter_[elementIdx][normalNormDim])
                             neighborIdx = neighborIdx_[elementIdx][normalNormDim][1];
 
                         const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, lateralFace, velocity_[elementIdx][velIdx], 0.0);
+                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, scvf, lateralFace, velocity_[elementIdx][velIdx], 0.0);
                         if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
                             DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
                         bjsNeighbor[normalNormDim] = neighborIdx;

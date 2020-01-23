@@ -121,7 +121,7 @@ public:
                 const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                 return problem.dirichlet(element, lateralScvf.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(scvf.directionIndex())];
             }
-            else if (lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())))
+            else if (lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex())))
             {
                 return beaversJosephVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
                                                           currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
@@ -200,7 +200,7 @@ public:
                 const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                 return problem.dirichlet(element, scvf.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(lateralScvf.directionIndex())];
             }
-            else if (currentScvfBoundaryTypes->isBJS(Indices::velocity(lateralScvf.directionIndex())))
+            else if (currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex())))
             {
                 return beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
                                                           currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
@@ -265,15 +265,18 @@ public:
             if (lateralScvf.boundary())
             {
                 if (lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx) ||
-                    lateralFaceBoundaryTypes->isBJS(Indices::velocity(scvf.directionIndex())))
+                    lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex())))
                     return 0.0;
             }
 
             return velocityGradIJ(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
         }();
 
-        return problem.beaversJosephVelocity(element, fvGeometry.scv(scvf.insideScvIdx()),
-                                             scvf, innerLateralVelocity,
+        return problem.beaversJosephVelocity(element,
+                                             fvGeometry.scv(scvf.insideScvIdx()),
+                                             lateralScvf,
+                                             scvf, /*on boundary*/
+                                             innerLateralVelocity,
                                              tangentialVelocityGradient);
     }
 
@@ -322,16 +325,18 @@ public:
             if (scvf.boundary())
             {
                 if (currentScvfBoundaryTypes->isDirichlet(Indices::pressureIdx) ||
-                    currentScvfBoundaryTypes->isBJS(Indices::velocity(lateralScvf.directionIndex())))
+                    currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex())))
                     return 0.0;
             }
 
             return velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
         }();
 
-
-        return problem.beaversJosephVelocity(element, fvGeometry.scv(scvf.insideScvIdx()),
-                                             lateralScvf, innerParallelVelocity,
+        return problem.beaversJosephVelocity(element,
+                                             fvGeometry.scv(scvf.insideScvIdx()),
+                                             scvf,
+                                             lateralScvf, /*on boundary*/
+                                             innerParallelVelocity,
                                              tangentialVelocityGradient);
     }
 

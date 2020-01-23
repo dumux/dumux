@@ -31,7 +31,7 @@ namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
- * \brief Class to specify the type of a boundary for the staggered Navier-Stokes model.
+ * \brief Class to specify the type of a boundary condition for the staggered Navier-Stokes model.
  */
 template <int numEq>
 class StaggeredFreeFlowBoundaryTypes : public Dumux::BoundaryTypes<numEq>
@@ -41,7 +41,6 @@ class StaggeredFreeFlowBoundaryTypes : public Dumux::BoundaryTypes<numEq>
 public:
     StaggeredFreeFlowBoundaryTypes()
     {
-
         for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
             resetEq(eqIdx);
     }
@@ -55,7 +54,7 @@ public:
 
         boundaryInfo_[eqIdx].visited = false;
         boundaryInfo_[eqIdx].isSymmetry = false;
-        boundaryInfo_[eqIdx].isBJS = false;
+        boundaryInfo_[eqIdx].isBeaversJoseph = false;
     }
 
     /*!
@@ -99,11 +98,19 @@ public:
      * \brief Set a boundary condition for a single equation to
      *        Beavers-Joseph-Saffman (special case of Dirichlet b.c.).
      */
+    [[deprecated("Use setBeaversJoseph instead. Will be removed after 3.2")]]
     void setBJS(int eqIdx)
+    { setBeaversJoseph(eqIdx); }
+
+    /*!
+     * \brief Set a boundary condition for a single equation to
+     *        Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
+     */
+    void setBeaversJoseph(unsigned eqIdx)
     {
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
-        boundaryInfo_[eqIdx].isBJS = true;
+        boundaryInfo_[eqIdx].isBeaversJoseph = true;
     }
 
     /*!
@@ -112,28 +119,45 @@ public:
      *
      * \param eqIdx The index of the equation
      */
+    [[deprecated("Use isBeaversJoseph instead. Will be removed after 3.2")]]
     bool isBJS(unsigned eqIdx) const
-    {
-        return boundaryInfo_[eqIdx].isBJS;
-    }
+    { return isBeaversJoseph(eqIdx); }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        Beavers-Joseph(-Saffman) boundary condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isBeaversJoseph(unsigned eqIdx) const
+    { return boundaryInfo_[eqIdx].isBeaversJoseph; }
 
     /*!
      * \brief Returns true if some equation is used to specify a
      *        Beavers-Joseph-Saffman boundary condition.
      */
+    [[deprecated("Use hasBeaversJoseph instead. Will be removed after 3.2")]]
     bool hasBJS() const
+    { return hasBeaversJoseph(); }
+
+    /*!
+     * \brief Returns true if some equation is used to specify a
+     *        Beavers-Joseph(-Saffman) boundary condition.
+     */
+    bool hasBeaversJoseph() const
     {
         for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isBJS)
+            if (boundaryInfo_[i].isBeaversJoseph)
                 return true;
         return false;
     }
 
 protected:
-    struct StaggeredFreeFlowBoundaryInfo {
+    struct StaggeredFreeFlowBoundaryInfo
+    {
         bool visited;
         bool isSymmetry;
-        bool isBJS;
+        bool isBeaversJoseph;
     };
 
     std::array<StaggeredFreeFlowBoundaryInfo, numEq> boundaryInfo_;
