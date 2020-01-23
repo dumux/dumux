@@ -996,7 +996,6 @@ private:
                                    const SolutionVector &deltaU)
     {
         Scalar lambda = 1.0;
-        SolutionVector tmp(uLastIter);
 
         while (true)
         {
