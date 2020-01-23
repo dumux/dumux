@@ -29,7 +29,14 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/indexset.hh>
+
+#include <dune/common/version.hh>
+#if DUNE_VERSION_LT(DUNE_COMMON,2,7)
 #include <dune/common/parallel/mpicollectivecommunication.hh>
+#else
+#include <dune/common/parallel/mpicommunication.hh>
+#endif
+
 #include <dune/grid/common/capabilities.hh>
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>

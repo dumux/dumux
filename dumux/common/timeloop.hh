@@ -30,7 +30,14 @@
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
+
+#include <dune/common/version.hh>
+#if DUNE_VERSION_LT(DUNE_COMMON,2,7)
 #include <dune/common/parallel/collectivecommunication.hh>
+#else
+#include <dune/common/parallel/communication.hh>
+#endif
+
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 
