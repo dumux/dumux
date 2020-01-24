@@ -8,8 +8,13 @@ Cells = 24 16
 
 [Problem]
 Name = richardslens
-EnableGravity = 1 # enable gravity
+EnableGravity = true # enable gravity
 
 [Newton]
 TargetSteps = 18 # set the "desirable" number of Newton iterations of a time step
 EnableChop = true # chop for better convergence
+
+[LinearSolver]
+Type = bicgstabsolver
+PreconditionerType = amg
+AmgMaxLevel = 2
