@@ -1,0 +1,13 @@
+[LinearSolver]
+Type = cgsolver
+ResidualReduction = 1e-8
+
+[LinearSolver.Preconditioner]
+Type = amg
+
+[SubProblem0.LinearSolver]
+ResidualReduction = 1e-6
+Preconditioner.Type = ssor
+
+[SubProblem1.LinearSolver]
+MaxIterations = 2000
