@@ -83,7 +83,7 @@ public:
             return true;
 
         auto compoundKey = groupPrefix + "." + key;
-        if (params_.hasKey(compoundKey) || defaultParams_.hasKey(compoundKey))
+        if (params_.hasKey(compoundKey))
             return true;
 
         compoundKey = findKeyInGroup(params_, key, groupPrefix);
