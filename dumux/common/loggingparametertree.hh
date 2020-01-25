@@ -456,7 +456,7 @@ public:
     std::vector<std::string> getUnusedKeys() const
     {
         std::vector<std::string> unusedParams;
-        findUnusedKeys(params_, unusedParams);
+        findUnusedKeys_(params_, unusedParams);
         return unusedParams;
     }
 
@@ -467,9 +467,9 @@ private:
      * \param unusedParams Container to store unused keys
      * \param prefix the prefix attached to the key
      */
-    void findUnusedKeys(const Dune::ParameterTree& tree,
-                        std::vector<std::string>& unusedParams,
-                        const std::string& prefix = "") const
+    void findUnusedKeys_(const Dune::ParameterTree& tree,
+                         std::vector<std::string>& unusedParams,
+                         const std::string& prefix = "") const
     {
         // loop over all keys of the current tree
         // store keys which were not accessed
@@ -481,7 +481,7 @@ private:
         // recursively loop over all subtrees
         const auto& subTreeKeys = tree.getSubKeys();
         for (const auto& key : subTreeKeys)
-            findUnusedKeys(tree.sub(key), unusedParams, prefix + key + ".");
+            findUnusedKeys_(tree.sub(key), unusedParams, prefix + key + ".");
     }
 
     const Dune::ParameterTree& params_;
