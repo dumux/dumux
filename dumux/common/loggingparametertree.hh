@@ -56,6 +56,10 @@ public:
      *
      * Tests whether given key exists.
      *
+     * \note This ignores defaults. Hence, if the
+     *       the specified key only exists in the defaults, this
+     *       function returns false
+     *
      * \param key key name
      * \return true if key exists in structure, otherwise false
      */
@@ -68,6 +72,10 @@ public:
      * Given a group this function starts to look from the back
      *       for dots. In G1.G2.G3 the function first looks if the key
      *       "G3.Key" exists, then "G2.Key", ...
+     *
+     * \note This ignores defaults. Hence, if the
+     *       the specified key only exists in the defaults, this
+     *       function returns false
      *
      * \param key key name
      * \param groupPrefix the group prefix name
