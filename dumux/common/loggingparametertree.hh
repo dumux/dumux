@@ -33,13 +33,13 @@
 
 namespace Dumux {
 
+
 /*!
  * \ingroup Common
  * \brief A parameter tree that logs which parameters have been used
  */
 class LoggingParameterTree
 {
-
 public:
     /*
      * \brief A logging parameter tree is always attached to an existingparameter tree
@@ -61,6 +61,16 @@ public:
      */
     bool hasKey(const std::string& key) const
     { return params_.hasKey(key); }
+
+    /** \brief test for key (even in default parameters
+     *
+     * Tests whether given key exists.
+     *
+     * \param key key name
+     * \return true if key exists in structure, otherwise false
+     */
+    bool hasKeyOrDefaultKey(const std::string& key) const
+    { return params_.hasKey(key) || defaultParams_.hasKey(key); }
 
     /** \brief test for key in group
      *
@@ -91,6 +101,47 @@ public:
             return true;
 
         return false;
+    }
+
+    /** \brief test for subgroup in group
+     *
+     * Tests whether given sub group exists in a group.
+     * Given a group this function starts to look from the back
+     *       for dots. In G1.G2.G3 the function first looks if the key
+     *       "G3.Key" exists, then "G2.Key", ...
+     *
+     * \param key key name
+     * \param groupPrefix the group prefix name
+     * \return a vector of fully qualified groups ordered by decresing relevance
+     */
+    std::vector<std::string> getSubGroups(const std::string& groupName,
+                                          std::string groupPrefix) const
+    {
+        std::vector<std::string> groupNames;
+        /*
+        if (groupPrefix == "" &&
+            (params_.hasSub(groupName) || defaultParams_.hasSub(groupName))
+        {
+            groupNames.push_back(groupName);
+            return groupNames;
+        }
+        */
+        auto compoundGroup = groupPrefix.empty()? groupName : groupPrefix + "." + groupName;
+        auto dot = groupPrefix.rfind(".");
+
+        while (dot != std::string::npos)
+        {
+            groupPrefix = groupPrefix.substr(0, dot);
+            compoundGroup = groupPrefix + "." + groupName;
+            if (params_.hasSub(compoundGroup) || defaultParams_.hasSub(compoundGroup))
+                groupNames.push_back(compoundGroup);
+            dot = groupPrefix.rfind(".");
+        }
+
+        if (params_.hasSub(groupName) || defaultParams_.hasSub(groupName))
+            groupNames.push_back(groupName);
+
+        return groupNames;
     }
 
     /** \brief print the hierarchical parameter tree to stream
