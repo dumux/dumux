@@ -15,3 +15,13 @@ Cells1 = 25
 [Newton]
 EnablePartialReassembly = true
 EnableDynamicOutput = false
+
+[LinearSolver]
+Type = cgsolver
+MaxIterations = 80
+PreconditionerType = amg
+PreconditionerVerbosity = 0
+AmgMaxLevel = 2
+AmgPreSmoothingSteps = 1
+AmgPostSmoothingSteps = 1
+CriterionSymmetric = true
