@@ -209,20 +209,6 @@ public:
      * \brief Run the Newton method to solve a non-linear system.
      *        Does time step control when the Newton fails to converge
      */
-    [[deprecated("Use attachConvergenceWriter(convWriter) and solve(x, *timeLoop) instead")]]
-    void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop,
-               std::shared_ptr<ConvergenceWriter> convWriter)
-    {
-        if (!convergenceWriter_)
-            attachConvergenceWriter(convWriter);
-
-        solve(uCurrentIter, timeLoop);
-    }
-
-    /*!
-     * \brief Run the Newton method to solve a non-linear system.
-     *        Does time step control when the Newton fails to converge
-     */
     void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop) override
     {
         if (this->assembler().isStationaryProblem())
@@ -685,20 +671,6 @@ public:
     }
 
     /*!
-     * \brief Specifies if the Newton method ought to be chatty.
-     */
-    [[deprecated("Has been replaced by setVerbosity(int). Will be removed after 3.1 release!")]]
-    void setVerbose(bool val)
-    { verbosity_ = val; }
-
-    /*!
-     * \brief Returns true if the Newton method ought to be chatty.
-     */
-    [[deprecated("Has been replaced by int verbosity(). Will be removed after 3.1 release!")]]
-    bool verbose() const
-    { return verbosity_ ; }
-
-    /*!
      * \brief Specifies the verbosity level
      */
     void setVerbosity(int val)
@@ -992,8 +964,9 @@ private:
     void newtonUpdateShiftImpl_(const SolVec &uLastIter,
                                 const SolVec &deltaU)
     {
-        for (int i = 0; i < int(uLastIter.size()); ++i) {
-            typename SolVec::block_type uNewI = uLastIter[i];
+        for (int i = 0; i < int(uLastIter.size()); ++i)
+        {
+            auto uNewI = uLastIter[i];
             uNewI -= deltaU[i];
 
             Scalar shiftAtDof = relativeShiftAtDof_(uLastIter[i], uNewI);
@@ -1023,7 +996,6 @@ private:
                                    const SolutionVector &deltaU)
     {
         Scalar lambda = 1.0;
-        SolutionVector tmp(uLastIter);
 
         while (true)
         {
@@ -1082,7 +1054,7 @@ private:
         //! to this field vector type in Dune ISTL
         //! Could be avoided for vectors that already have the right type using SFINAE
         //! but it shouldn't impact performance too much
-        constexpr auto blockSize = JacobianMatrix::block_type::rows;
+        constexpr auto blockSize = std::decay_t<decltype(b[0])>::dimension;
         using BlockType = Dune::FieldVector<Scalar, blockSize>;
         Dune::BlockVector<BlockType> xTmp; xTmp.resize(b.size());
         Dune::BlockVector<BlockType> bTmp(xTmp);
