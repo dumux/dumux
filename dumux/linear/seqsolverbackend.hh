@@ -33,6 +33,7 @@
 #include <dune/istl/superlu.hh>
 #include <dune/istl/umfpack.hh>
 #include <dune/istl/io.hh>
+#include <dune/common/indices.hh>
 #include <dune/common/version.hh>
 #include <dune/common/hybridutilities.hh>
 
@@ -863,10 +864,8 @@ private:
 template<class M, class X, class Y, class GridGeometry>
 class SeqUzawa : public Dune::Preconditioner<X,Y>
 {
-    using zero = std::integral_constant<long unsigned int, 0>;
-    using one = std::integral_constant<long unsigned int, 1>;
-    using VelocityMatrix = typename std::remove_reference<decltype(std::declval<M>()[one()][one()])>::type;
-    using VelocityVector = typename std::remove_reference<decltype(std::declval<X>()[one()])>::type;
+    using VelocityMatrix = typename std::remove_reference<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_1])>::type;
+    using VelocityVector = typename std::remove_reference<decltype(std::declval<X>()[Dune::Indices::_1])>::type;
 
     static constexpr bool isParallel = false;
     using SolverTraits = NonoverlappingSolverTraits<VelocityMatrix, VelocityVector, isParallel>;
@@ -899,6 +898,7 @@ public:
     SeqUzawa (const M& A, int n, scalar_field_type w)
     : _A_(A), _n(n), _w(w)
     {
+        using namespace Dune::Indices;  // for _0, _1, etc.
         inexact_ = getParam<bool>("LinearSolver.InexactVelocitySolver", false);
 
         if (inexact_)
@@ -915,12 +915,12 @@ public:
             smootherArgs.iterations = 1;
             smootherArgs.relaxationFactor = 1;
 
-            linearOperator_ = std::make_unique<LinearOperator>(_A_[one()][one()]);
+            linearOperator_ = std::make_unique<LinearOperator>(_A_[_1][_1]);
             velocityAMG_ = std::make_unique<VelocityAMG>(*linearOperator_, criterion, smootherArgs, comm_);
         }
         else
         {
-            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[one()][one()]);
+            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[_1][_1]);
         }
     }
 
@@ -938,15 +938,17 @@ public:
      */
     virtual void apply (X& v, const Y& d)
     {
-        auto& A = _A_[one()][one()];
-        auto& Bt = _A_[one()][zero()];
-        auto& B = _A_[zero()][one()];
-        auto& C = _A_[zero()][zero()];
+        using namespace Dune::Indices;
 
-        const auto& f = d[one()];
-        const auto& g = d[zero()];
-        auto& velocity = v[one()];
-        auto& pressure = v[zero()];
+        auto& A = _A_[_1][_1];
+        auto& Bt = _A_[_1][_0];
+        auto& B = _A_[_0][_1];
+        auto& C = _A_[_0][_0];
+
+        const auto& f = d[_1];
+        const auto& g = d[_0];
+        auto& velocity = v[_1];
+        auto& pressure = v[_0];
         for (int i = 0; i < C.N(); ++i)
         {
             if (std::abs(C[i][i].frobenius_norm() - 1.0) < 1e-14)
@@ -1020,6 +1022,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        using namespace Dune::Indices; // for _0, _1, etc.
         static bool accelerated = getParamFromGroup<bool>(this->paramGroup(),
                                                           "LinearSolver.AndersonAcceleration",
                                                           false);
@@ -1063,9 +1066,7 @@ public:
         }
         else
         {
-            using zero = std::integral_constant<long unsigned int, 0>;
-            using one = std::integral_constant<long unsigned int, 1>;
-            const auto size = x[zero()].size() + x[one()].size();
+            const auto size = x[_0].size() + x[_1].size();
             const auto m = 10;
 
             // Given xi0 and m >= 1, set xi1 = G(x0)
@@ -1080,17 +1081,17 @@ public:
             Dune::DynamicMatrix<Scalar> xi(maxIter, size);
             Dune::DynamicMatrix<Scalar> Gk(maxIter, size);
 
-            std::copy(x[zero()].begin(), x[zero()].end(), xi[0].begin());
-            std::copy(x[one()].begin(), x[one()].end(), xi[0].begin() + x[zero()].size());
+            std::copy(x[_0].begin(), x[_0].end(), xi[0].begin());
+            std::copy(x[_1].begin(), x[_1].end(), xi[0].begin() + x[_0].size());
             precond.apply(x, b);
-            std::copy(x[zero()].begin(), x[zero()].end(), xi[1].begin());
-            std::copy(x[one()].begin(), x[one()].end(), xi[1].begin() + x[zero()].size());
+            std::copy(x[_0].begin(), x[_0].end(), xi[1].begin());
+            std::copy(x[_1].begin(), x[_1].end(), xi[1].begin() + x[_0].size());
             Gk[0] = xi[1];
 
             for (int k = 1; k < maxIter; ++k)
             {
-                std::copy(xi[k].begin(), xi[k].begin() + x[zero()].size(), x[zero()].begin());
-                std::copy(xi[k].begin() + x[zero()].size(), xi[k].end(), x[one()].begin());
+                std::copy(xi[k].begin(), xi[k].begin() + x[_0].size(), x[_0].begin());
+                std::copy(xi[k].begin() + x[_0].size(), xi[k].end(), x[_1].begin());
 
                 res = b;
                 A.mmv(x, res);
@@ -1106,8 +1107,8 @@ public:
                 }
 
                 precond.apply(x, b);
-                std::copy(x[zero()].begin(), x[zero()].end(), Gk[k].begin());
-                std::copy(x[one()].begin(), x[one()].end(), Gk[k].begin() + x[zero()].size());
+                std::copy(x[_0].begin(), x[_0].end(), Gk[k].begin());
+                std::copy(x[_1].begin(), x[_1].end(), Gk[k].begin() + x[_0].size());
 
                 const auto mk = std::min(m, k);
                 Dune::DynamicMatrix<Scalar> FkT(mk+1, size);
