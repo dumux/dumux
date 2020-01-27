@@ -295,10 +295,10 @@ public:
              std::enable_if_t<(!GridVariables::GridFluxVariablesCache::cachingEnabled ||
                                GridVariables::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
     void updateSwitchedFluxVarsCache(const Problem& problem,
-                               const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
-                               const typename GridVariables::GridGeometry& gridGeometry,
-                               GridVariables& gridVariables,
-                               const SolutionVector& sol) const {}
+                                     const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                     const typename GridVariables::GridGeometry& gridGeometry,
+                                     GridVariables& gridVariables,
+                                     const SolutionVector& sol) const {}
 
     //! Do nothing when the box method is not used.
     template<class Problem, class GridVariables, class SolutionVector,
