@@ -104,9 +104,9 @@ public:
             const auto curElemSol = elementSolution(element, curSol, gridGeometry);
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto dofIdxGlobal = scv.dofIndex();
-                if (!visited_[dofIdxGlobal])
+                if (!asImp_().skipDof_(element, fvGeometry, scv, problem))
                 {
+                    const auto dofIdxGlobal = scv.dofIndex();
                     // Note this implies that volume variables don't differ
                     // in any sub control volume associated with the dof!
                     visited_[dofIdxGlobal] = true;
@@ -332,6 +332,53 @@ protected:
         // evaluate if the primary variable switch would switch
         // to be implemented by the deriving class
         DUNE_THROW(Dune::NotImplemented, "This model seems to use a primary variable switch but none is implemented!");
+    }
+
+    // Maybe skip the degree of freedom (do not switch variables at this dof)
+    template<class Geometry, class Problem>
+    bool skipDof_(const typename Geometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                  const Geometry& fvGeometry,
+                  const typename Geometry::SubControlVolume& scv,
+                  const Problem& problem)
+    {
+        if (visited_[scv.dofIndex()])
+            return true;
+
+        if (isConstrainedDof_(element, fvGeometry, scv, problem))
+            return true;
+
+        return false;
+    }
+
+    template<class Geometry, class Problem,
+             std::enable_if_t<(Geometry::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
+    bool isConstrainedDof_(const typename Geometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                           const Geometry& fvGeometry,
+                           const typename Geometry::SubControlVolume& scv,
+                           const Problem& problem)
+    {
+        if (!fvGeometry.hasBoundaryScvf())
+            return false;
+
+        const auto dofIdx = scv.dofIndex();
+        if (!fvGeometry.gridGeometry().dofOnBoundary(dofIdx))
+            return false;
+
+        const auto bcTypes = problem.boundaryTypes(element, scv);
+        if (bcTypes.hasDirichlet())
+            return true;
+
+        return false;
+    }
+
+    template<class Geometry, class Problem,
+             std::enable_if_t<(Geometry::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
+    bool isConstrainedDof_(const typename Geometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                           const Geometry& fvGeometry,
+                           const typename Geometry::SubControlVolume& scv,
+                           const Problem& problem)
+    {
+        return false;
     }
 
     std::vector<bool> wasSwitched_;
