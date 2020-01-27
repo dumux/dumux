@@ -112,7 +112,7 @@ public:
                     visited_[dofIdxGlobal] = true;
                     // Compute volVars on which grounds we decide
                     // if we need to switch the primary variables
-                    auto& volVars = getVolVarAccess(gridVariables.curGridVolVars(), elemVolVars, scv);
+                    auto& volVars = getVolVarAccess_(gridVariables.curGridVolVars(), elemVolVars, scv);
                     volVars.update(curElemSol, problem, element, scv);
 
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
@@ -269,7 +269,7 @@ public:
                 {
                     if (stateChanged[scv.dofIndex()])
                     {
-                        auto& volVars = getVolVarAccess(gridVariables.curGridVolVars(), elemVolVars, scv);
+                        auto& volVars = getVolVarAccess_(gridVariables.curGridVolVars(), elemVolVars, scv);
                         volVars.update(curElemSol, problem, element, scv);
                     }
                 }
@@ -386,12 +386,12 @@ protected:
 
 private:
     template<class GridVolumeVariables, class ElementVolumeVariables, class SubControlVolume>
-    static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    static auto getVolVarAccess_(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     -> std::enable_if_t<!GridVolumeVariables::cachingEnabled, decltype(elemVolVars[scv])>
     { return elemVolVars[scv]; }
 
     template<class GridVolumeVariables, class ElementVolumeVariables, class SubControlVolume>
-    static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    static auto getVolVarAccess_(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     -> std::enable_if_t<GridVolumeVariables::cachingEnabled, decltype(gridVolVars.volVars(scv))>
     { return gridVolVars.volVars(scv); }
 
