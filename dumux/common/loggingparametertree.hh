@@ -56,6 +56,10 @@ public:
      *
      * Tests whether given key exists.
      *
+     * \note This ignores defaults. Hence, if the
+     *       the specified key only exists in the defaults, this
+     *       function returns false
+     *
      * \param key key name
      * \return true if key exists in structure, otherwise false
      */
@@ -68,6 +72,10 @@ public:
      * Given a group this function starts to look from the back
      *       for dots. In G1.G2.G3 the function first looks if the key
      *       "G3.Key" exists, then "G2.Key", ...
+     *
+     * \note This ignores defaults. Hence, if the
+     *       the specified key only exists in the defaults, this
+     *       function returns false
      *
      * \param key key name
      * \param groupPrefix the group prefix name
@@ -83,7 +91,7 @@ public:
             return true;
 
         auto compoundKey = groupPrefix + "." + key;
-        if (params_.hasKey(compoundKey) || defaultParams_.hasKey(compoundKey))
+        if (params_.hasKey(compoundKey))
             return true;
 
         compoundKey = findKeyInGroup(params_, key, groupPrefix);
@@ -448,7 +456,7 @@ public:
     std::vector<std::string> getUnusedKeys() const
     {
         std::vector<std::string> unusedParams;
-        findUnusedKeys(params_, unusedParams);
+        findUnusedKeys_(params_, unusedParams);
         return unusedParams;
     }
 
@@ -459,9 +467,9 @@ private:
      * \param unusedParams Container to store unused keys
      * \param prefix the prefix attached to the key
      */
-    void findUnusedKeys(const Dune::ParameterTree& tree,
-                        std::vector<std::string>& unusedParams,
-                        const std::string& prefix = "") const
+    void findUnusedKeys_(const Dune::ParameterTree& tree,
+                         std::vector<std::string>& unusedParams,
+                         const std::string& prefix = "") const
     {
         // loop over all keys of the current tree
         // store keys which were not accessed
@@ -473,7 +481,7 @@ private:
         // recursively loop over all subtrees
         const auto& subTreeKeys = tree.getSubKeys();
         for (const auto& key : subTreeKeys)
-            findUnusedKeys(tree.sub(key), unusedParams, prefix + key + ".");
+            findUnusedKeys_(tree.sub(key), unusedParams, prefix + key + ".");
     }
 
     const Dune::ParameterTree& params_;
