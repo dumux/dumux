@@ -66,7 +66,7 @@ public:
     bool hasKey(const std::string& key) const
     { return params_.hasKey(key); }
 
-    /** \brief test for key (even in default parameters
+    /** \brief test for key (even in default parameters)
      *
      * Tests whether given key exists.
      *
@@ -120,7 +120,7 @@ public:
      *
      * \param key key name
      * \param groupPrefix the group prefix name
-     * \return a vector of fully qualified groups ordered by decresing relevance
+     * \return a vector of fully qualified groups ordered by decreasing relevance
      */
     std::vector<std::string> getSubGroups(const std::string& groupName,
                                           std::string groupPrefix) const
