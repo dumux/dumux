@@ -208,7 +208,7 @@ public:
         constexpr auto prefix = isCellCenter ? "CellCenter" : "Face";
 
         try {
-            if(paramGroup == "")
+            if(paramGroup.empty())
                 return NumericEpsilon<typename Traits::Scalar, numEq>(prefix);
             else
                 return NumericEpsilon<typename Traits::Scalar, numEq>(paramGroup + "." + prefix);

@@ -122,7 +122,7 @@ public:
         parameterFileName = commandLineArgs.get<std::string>("ParameterFile", parameterFileName);
 
         // otherwise use the default name (executable name + .input)
-        if (parameterFileName == "")
+        if (parameterFileName.empty())
         {
             parameterFileName = [&](){
                 std::string defaultName = std::string(argv[0]) + ".input";
@@ -139,7 +139,7 @@ public:
             }();
 
             // if no parameter file was given and also no default names where found, continue without
-            if (parameterFileName == "")
+            if (parameterFileName.empty())
             {
                 if (mpiHelper.size() > 1)
                     std::cout << "Rank " << mpiHelper.rank() << ": ";
@@ -392,7 +392,7 @@ private:
     //! recursively merge all elements
     static void mergeTreeImpl_(Dune::ParameterTree& target, const Dune::ParameterTree& source, bool overwrite, const std::string& group)
     {
-        const auto prefix = group == "" ? "" : group + ".";
+        const auto prefix = group.empty() ? "" : group + ".";
         for (const auto& key : source.getValueKeys())
             if (overwrite || !target.hasKey(key))
                 target[prefix + key] = source[key];
@@ -412,7 +412,7 @@ void setParam(Dune::ParameterTree& params,
               const std::string& key,
               const std::string& value)
 {
-    if(group == "")
+    if(group.empty())
         params[key] = value;
     else
         params[group + "." + key] = value;

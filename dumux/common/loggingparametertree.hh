@@ -84,7 +84,7 @@ public:
     bool hasKeyInGroup(const std::string& key,
                        const std::string& groupPrefix) const
     {
-        if (groupPrefix == "")
+        if (groupPrefix.empty())
             return hasKey(key);
 
         if (hasKey(key))
@@ -206,7 +206,7 @@ public:
                              const std::string& key,
                              const std::string& defaultValue) const
     {
-        if (groupPrefix == "")
+        if (groupPrefix.empty())
             return get(key, defaultValue);
 
         // first, look for the compound key
@@ -315,7 +315,7 @@ public:
                    const std::string& key,
                    const T& defaultValue) const
     {
-        if (groupPrefix == "")
+        if (groupPrefix.empty())
             return get<T>(key, defaultValue);
 
         // first, look for the compound key
@@ -386,7 +386,7 @@ public:
     T getFromGroup(const std::string& groupPrefix,
                    const std::string& key) const
     {
-        if (groupPrefix == "")
+        if (groupPrefix.empty())
             return get<T>(key);
 
         // first, look for the compound key

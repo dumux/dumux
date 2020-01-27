@@ -94,7 +94,7 @@ public:
         }
         else
         {
-            const auto prefix = paramGroup == "" ? paramGroup : paramGroup + ".";
+            const auto prefix = paramGroup.empty() ? paramGroup : paramGroup + ".";
             DUNE_THROW(ParameterException, "Please supply a grid file in " << prefix << "Grid.File or " << prefix << "Grid.UpperRight/Cells.");
         }
     }
