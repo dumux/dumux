@@ -120,12 +120,20 @@ public:
         {
             Dune::initSolverFactories<typename AMGTraits::LinearOperator>();
         }
+        std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver;
         try{
-            std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(fop, params_);
-            Dune::InverseOperatorResult res;
+            solver = getSolverFromFactory(fop, params_);
+        }
+        catch(Dune::Exception& e){
+            std::cerr << "Could not create solver with factory" << std::endl;
+            std::cerr << e.what() << std::endl;
+            throw e;
+        }
+        try
+        {
             solver->apply(x,b,result_);
         }catch(Dune::Exception& e){
-            std::cerr << "Could not create solver" << std::endl;
+            std::cerr << "Exception thrown during linear solve." << std::endl;
             std::cerr << e.what() << std::endl;
             throw e;
         }
