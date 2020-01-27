@@ -126,14 +126,6 @@ public:
                                           std::string groupPrefix) const
     {
         std::vector<std::string> groupNames;
-        /*
-        if (groupPrefix == "" &&
-            (params_.hasSub(groupName) || defaultParams_.hasSub(groupName))
-        {
-            groupNames.push_back(groupName);
-            return groupNames;
-        }
-        */
         auto compoundGroup = groupPrefix.empty()? groupName : groupPrefix + "." + groupName;
         auto dot = groupPrefix.rfind(".");
 
