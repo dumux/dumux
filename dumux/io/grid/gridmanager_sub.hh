@@ -127,7 +127,7 @@ public:
                       << "Use Dune::VTKWriter to write out your grid manually." << std::endl;
 
             const auto postfix = getParamFromGroup<std::string>(paramGroup, "Problem.Name", "");
-            const std::string name = postfix == "" ? "subgrid" : "subgrid_" + postfix;
+            const std::string name = postfix.empty() ? "subgrid" : "subgrid_" + postfix;
             Dune::DGFWriter<typename Grid::LeafGridView> writer(subgridPtr->leafGridView());
             writer.write(name + ".dgf");
         }
@@ -140,7 +140,7 @@ public:
                       << "Use Dune::VTKWriter to write out your grid manually." << std::endl;
 
             const auto postfix = getParamFromGroup<std::string>(paramGroup, "Problem.Name", "");
-            const std::string name = postfix == "" ? "subgrid" : "subgrid_" + postfix;
+            const std::string name = postfix.empty() ? "subgrid" : "subgrid_" + postfix;
             Dune::VTKWriter<typename Grid::LeafGridView> vtkWriter(subgridPtr->leafGridView());
             vtkWriter.write(name);
         }

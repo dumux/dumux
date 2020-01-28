@@ -93,7 +93,7 @@ public:
         // Didn't find a way to construct the grid
         else
         {
-            const auto prefix = modelParamGroup == "" ? modelParamGroup : modelParamGroup + ".";
+            const auto prefix = modelParamGroup.empty() ? modelParamGroup : modelParamGroup + ".";
             DUNE_THROW(ParameterException, "Please supply one of the parameters "
                                            << prefix + "Grid.RightBoundary"
                                            << ", or " << prefix + "Grid.Coordinates"
