@@ -459,8 +459,9 @@ inline bool hasParamInGroup(const std::string& paramGroup, const std::string& pa
  * \brief Get a list of sub groups from the parameter tree sorted by relevance
  * \return A vector of fully qualified subGroup names sorted by descending relevance.
  */
-inline std::vector<std::string> getSubGroups(const std::string& paramGroup, const std::string& subGroupName)
-{  return Parameters::getTree().getSubGroups(subGroupName, paramGroup); }
-} // namespace Dumux
+inline std::vector<std::string> getParamSubGroups(const std::string& subGroupName, const std::string& paramGroup)
+{ return Parameters::getTree().getSubGroups(subGroupName, paramGroup); }
+
+} // end namespace Dumux
 
 #endif
