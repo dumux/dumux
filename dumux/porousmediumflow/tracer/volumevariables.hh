@@ -58,6 +58,8 @@ class TracerVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<1, numFluidComps+1>;
 
 public:
     //! Export fluid system type
@@ -93,9 +95,24 @@ public:
         for (int compIdx = 0; compIdx < ParentType::numFluidComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
-            diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
-            effectiveDiffCoeff_[compIdx] = EffDiffModel::effectiveDiffusivity(*this, diffCoeff_[compIdx] ,0 /*phaseIdx*/);
         }
+
+        // update the binary diffusion and effective diffusion coefficients
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return FluidSystem::binaryDiffusionCoefficient( compJIdx,
+                                                            problem,
+                                                            element,
+                                                            scv);
+        };
+
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+        };
+
+        diffCoeff_.update(getDiffusionCoefficient);
+        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
     }
 
     /*!
@@ -181,22 +198,24 @@ public:
     Scalar molarity(int phaseIdx, int compIdx) const
     { return moleFraction(phaseIdx, compIdx)*molarDensity(); }
 
-    /*!
-     * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The index of the component
+        /*!
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
+    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    { return diffCoeff_[compIdx]; }
+    { return diffCoeff_(phaseIdx, 0, 0); }
 
     /*!
-     * \brief Returns the effective diffusion coefficients
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    Scalar effectiveDiffusivity(int phaseIdx, int compIdx) const
-    {
-        return effectiveDiffCoeff_[compIdx];
-    }
+    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     // /*!
     //  * \brief Returns the dispersivity of the fluid's streamlines.
@@ -246,8 +265,13 @@ protected:
     { return 1.0; }
 
     // DispersivityType dispersivity_;
-    std::array<Scalar, ParentType::numFluidComponents()> diffCoeff_;
-    std::array<Scalar, ParentType::numFluidComponents()> effectiveDiffCoeff_;
+
+    // Binary diffusion coefficient
+    DiffusionCoefficients diffCoeff_;
+
+    // Effective diffusion coefficients for the phases
+    DiffusionCoefficients effectiveDiffCoeff_;
+
     std::array<Scalar, ParentType::numFluidComponents()> moleOrMassFraction_;
 };
 
