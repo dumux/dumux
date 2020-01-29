@@ -3,6 +3,7 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 
 ### Improvements and Enhancements
 
+- __C++17__: Dumux now requires a C++ compiler supporting the C++17 features of GCC 7 (e.g. GCC 7, Clang 5).
 - __Radially symmetric problems__: We now have support for radially symmetric problems (disc, ball, toroid). The support comes in form of wrappers for sub control volumes and faces that overload the respective `volume()` and `area()` function turning a 1d or 2d problem into a 2d or 3d radially symmetric problem.
 
 - __Improvements of Beavers-Joseph(-Saffman) condition for the free flow model__: The naming for handling BJ(-S) boundary conditions has been adapted from `isBJS()` to `isBeaversJoseph()` / `setBJS()` to `setBeaversJoseph()`. In order to consider the velocity within the porous medium, the old `velocityPorousMedium(element, scvf)` method (returning a Scalar) has been renamed to `porousMediumVelocity(element, scvf)` (returning a velocity vector). The latter defaults to `VelocityVector(0.0)`.
