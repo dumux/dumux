@@ -24,75 +24,13 @@
 #ifndef DUMUX_VECTOR_EXCHANGE_HH
 #define DUMUX_VECTOR_EXCHANGE_HH
 
-#include <dune/grid/common/datahandleif.hh>
+#warning "This header is deprecated and will be removed after release 3.2. Use linearsolver/linearsolvertraits.hh"
+
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 namespace Dumux {
-
-/*!
- * \ingroup Linear
- * \todo why is this needed? is parallel/vectorexhange.hh not the same?
- * \brief A data handle class to exchange entries of a vector
- */
-template<class Mapper, class Vector> // mapper type and vector type
-class VectorExchange
-  : public Dune::CommDataHandleIF<VectorExchange<Mapper,Vector>,
-                                  typename Vector::value_type>
-{
-public:
-  //! export type of data for message buffer
-  using DataType = typename Vector::value_type;
-
-  //! returns true if data for this codim should be communicated
-  bool contains (int dim, int codim) const
-  {
-        return (codim == 0);
-  }
-
-  //! returns true if size per entity of given dim and codim is a constant
-  bool fixedsize (int dim, int codim) const
-  {
-        return true;
-  }
-
-  /*!
-   * \brief how many objects of type DataType have to be sent for a given entity
-   * \note Only the sender side needs to know this size.
-   */
-  template<class Entity>
-  size_t size (Entity& entity) const
-  {
-        return 1;
-  }
-
-  //! pack data from user to message buffer
-  template<class MessageBuffer, class Entity>
-  void gather (MessageBuffer& buff, const Entity& entity) const
-  {
-      buff.write(dataVector_[mapper_.index(entity)]);
-  }
-
-  /*!
-   * \brief unpack data from message buffer to user
-   * \note n is the number of objects sent by the sender
-   */
-  template<class MessageBuffer, class Entity>
-  void scatter (MessageBuffer& buff, const Entity& entity, size_t n)
-  {
-      DataType x;
-      buff.read(x);
-      dataVector_[mapper_.index(entity)] = x;
-  }
-
-  //! constructor
-  VectorExchange (const Mapper& mapper, Vector& dataVector)
-        : mapper_(mapper), dataVector_(dataVector)
-  {}
-
-private:
-  const Mapper& mapper_;
-  Vector& dataVector_;
-};
-
+    template<class Mapper, class Vector>
+    using VectorExchange [[deprecated("Use VectorCommDataHandleEqual<Mapper, Vector, 0> instead. Will be removed after 3.2!")]] = VectorCommDataHandleEqual<Mapper, Vector, 0/*elementCodim*/>;
 } // end namespace Dumux
 
 #endif
