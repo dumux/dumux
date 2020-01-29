@@ -36,6 +36,7 @@
 
 // solvers
 #include <dune/istl/solvers.hh>
+#include <dune/istl/solverfactory.hh>
 
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/amgtraits.hh>
@@ -76,13 +77,13 @@ public:
      * \param paramGroup the parameter group for parameter lookup
      */
     IstlSolverFactoryBackend(const std::string& paramGroup = "")
-    : firstCall_(true)
+    : paramGroup_(paramGroup)
+    , firstCall_(true)
     {
         if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
 
-        resetDefaultParameters();
-        convertParameterTree_(paramGroup);
+        reset();
     }
 
     /*!
@@ -95,11 +96,11 @@ public:
     IstlSolverFactoryBackend(const GridView& gridView,
                              const DofMapper& dofMapper,
                              const std::string& paramGroup = "")
-    : phelper_(std::make_shared<ParallelISTLHelper<GridView, AMGTraits>>(gridView, dofMapper))
+    : paramGroup_(paramGroup)
+    , parallelHelper_(std::make_unique<ParallelISTLHelper<GridView, AMGTraits>>(gridView, dofMapper))
     , firstCall_(true)
     {
-        resetDefaultParameters();
-        convertParameterTree_(paramGroup);
+        reset();
     }
 
     /*!
@@ -125,29 +126,29 @@ public:
         prepareLinearAlgebraSequential<AMGTraits>(A, comm, fop, sp);
 #endif
 
-        if (firstCall_)
-        {
-            Dune::initSolverFactories<typename AMGTraits::LinearOperator>();
-        }
         std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver;
         try{
-            solver = getSolverFromFactory(fop, params_);
+            solver = Dune::getSolverFromFactory(fop, params_);
         }
         catch(Dune::Exception& e){
             std::cerr << "Could not create solver with factory" << std::endl;
             std::cerr << e.what() << std::endl;
             throw e;
         }
-        try
-        {
-            solver->apply(x,b,result_);
-        }catch(Dune::Exception& e){
-            std::cerr << "Exception thrown during linear solve." << std::endl;
-            std::cerr << e.what() << std::endl;
-            throw e;
-        }
+
+        // solve
+        solver->apply(x, b, result_);
+
         firstCall_ = false;
         return result_.converged;
+    }
+
+    //! reset the linear solver factory
+    void reset()
+    {
+        resetDefaultParameters();
+        convertParameterTree_(paramGroup_);
+        Dune::initSolverFactories<typename AMGTraits::LinearOperator>();
     }
 
     //! reset some defaults for the solver parameters
@@ -198,7 +199,8 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Solverfactory needs a specified \"type\" key to select the solver");
     }
 
-    std::shared_ptr<ParallelISTLHelper<GridView, AMGTraits>> phelper_;
+    const std::string paramGroup_;
+    std::unique_ptr<ParallelISTLHelper<GridView, AMGTraits>> parallelHelper_;
     bool firstCall_;
     Dune::InverseOperatorResult result_;
     Dune::ParameterTree params_;
