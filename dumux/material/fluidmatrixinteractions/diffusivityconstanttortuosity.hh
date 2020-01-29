@@ -83,7 +83,6 @@ public:
     }
 
 };
-
 } // end namespace Dumux
 
 #endif // DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
