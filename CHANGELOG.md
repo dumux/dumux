@@ -11,6 +11,8 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
+- The global default parameters for linear solvers have been removed and moved to the class `LinearSolver`.
+This only affects users that directly obtain this parameter via `getParam` somewhere in the code.
 
 ### Deprecated properties, to be removed after 3.2:
 
