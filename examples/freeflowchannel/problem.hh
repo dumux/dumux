@@ -190,12 +190,6 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10°C
 
-    // We need to define that there are no sources or sinks.
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return NumEqVector(0.0);
-    }
-
 private:
 
     // The inlet is at the left side of the physical domain.
