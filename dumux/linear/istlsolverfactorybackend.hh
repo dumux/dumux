@@ -67,6 +67,9 @@ class IstlSolverFactoryBackend : public LinearSolver
     using DofMapper = typename AMGTraits::DofMapper;
 
 public:
+    //! translation table for solver parameters
+    static std::vector<std::array<std::string,2> > istlToDumuxSolverParams;
+
     /*!
      * \brief Construct the backend for the sequential case only
      *
@@ -150,9 +153,7 @@ private:
         const auto& loggingTree = Parameters::getTree();
         auto matchingGroups = loggingTree.getSubGroups("LinearSolver", paramGroup);
 
-        bool doThrow = false;
-
-        for (const auto& [istlKey, dumuxKey] : istl2DumuxSolverParams)
+        for (const auto& [istlKey, dumuxKey] : istlToDumuxSolverParams)
         {
             for (const auto fullGroup : matchingGroups)
             {
@@ -166,7 +167,7 @@ private:
                                   << " " << dumuxName << std::endl
                                   << "Please use only one (e.g. " << dumuxName
                                   << ")." << std::endl;
-                        doThrow = true;
+                        DUNE_THROW(Dune::InvalidStateException, "Ambiguous parameters used for linear solver");
                     }
                     params_[istlKey] = loggingTree.get<std::string>(dumuxName);
                     break;
@@ -179,43 +180,11 @@ private:
             }
         }
 
-        for (const auto& [istlKey, dumuxKey] : istl2DumuxPreconditionerParams)
-        {
-            for (const auto fullGroup : matchingGroups)
-            {
-                auto istlName = fullGroup + ".preconditioner." + istlKey;
-                auto dumuxName = fullGroup + "." + dumuxKey;
-                if(loggingTree.hasKey(dumuxName))
-                {
-                    if(loggingTree.hasKeyOrDefaultKey(istlName))
-                    {
-                        std::cerr << "Found equivalent keys " << istlName
-                                  << " " << dumuxName << std::endl
-                                  << "Please use only one (e.g. " << dumuxName
-                              << ")." << std::endl;
-                        doThrow = true;
-                    }
-                    params_["preconditioner." + istlKey] = loggingTree.get<std::string>(dumuxName);
-                    break;
-                }
-                else if (loggingTree.hasKeyOrDefaultKey(istlName))
-                {
-                    params_["preconditioner." + istlKey] = loggingTree.get<std::string>(istlName);
-                    break;
-                }
-            }
-        }
-        params_.report();
+        // prevent throw in solve
         if (!params_.hasKey("type"))
-            // prevent throw in solve
             DUNE_THROW(Dune::InvalidStateException, "Solverfactory needs a specified \"type\" key to select the solver");
-
-        if (doThrow)
-            DUNE_THROW(Dune::InvalidStateException, "Ambiguous parameters used for linear solver");
     }
 
-    static std::vector<std::array<std::string,2> > istl2DumuxSolverParams;
-    static std::vector<std::array<std::string,2> > istl2DumuxPreconditionerParams;
     std::shared_ptr<ParallelISTLHelper<GridView, AMGTraits>> phelper_;
     bool firstCall_;
     Dune::InverseOperatorResult result_;
@@ -223,37 +192,45 @@ private:
 };
 
 template<class Matrix, class Vector, class Geometry>
-std::vector<std::array<std::string,2> > IstlSolverFactoryBackend<Matrix, Vector, Geometry>::istl2DumuxSolverParams =
-        {
-         {"verbose", "Verbosity"}, {"maxit", "MaxIterations"},
-         {"reduction", "ResidualReduction"}, {"type", "Type"},
-         {"restart", "Restart"}, // cycles before restarting
-          // maximum number of vectors to store for orthogonalization
-         {"mmax", "MaxOrthogonalizationVectors"}
-        };
+std::vector<std::array<std::string, 2>>
+IstlSolverFactoryBackend<Matrix, Vector, Geometry>::istlToDumuxSolverParams =
+{
+    // solver params
+    {"verbose", "Verbosity"},
+    {"maxit", "MaxIterations"},
+    {"reduction", "ResidualReduction"},
+    {"type", "Type"},
+    {"restart", "Restart"}, // cycles before restarting
+    {"mmax", "MaxOrthogonalizationVectors"},
 
-template<class Matrix, class Vector, class Geometry>
-std::vector<std::array<std::string,2> > IstlSolverFactoryBackend<Matrix, Vector, Geometry>::istl2DumuxPreconditionerParams =
-        {
-         {"verbosity", "PreconditionerVerbosity"}, {"type", "PreconditionerType"},
-         {"iterations", "PreconditionerIterations"}, {"relaxation", "PreconditionerRelaxation"},
-         {"n", "ILUOrder"}, {"resort", "ILUResort"},
-         {"smootherRelaxation", "AmgSmootherRelaxation"},
-         {"smootherIterations", "AmgSmootherIterations"},
-         {"maxLevel", "AmgMaxLevel"}, {"coarsenTarget", "AmgCoarsenTarget"},
-         {"minCoarseningRate", "MinCoarseningRate"},
-         {"prolongationDampingFactor", "AmgProlongationDampingFactor"},
-         {"alpha", "AmgAlpha"}, {"beta", "AmgBeta"},
-         {"additive", "AmgAdditive"}, {"gamma", "AmgGamma"},
-         {"preSteps", "AmgPreSmoothingSteps"}, {"postSteps", "AmgPostSmoothingSteps"},
-         {"criterionSymmetric", "AmgCriterionSymmetric"}, {"strengthMeasure", "AmgStrengthMeasure"},
-         {"diagonalRowIndex", "AmgDiagonalRowIndex"},
-         {"defaultAggregationSizeMode", "DefaultAggregationSizeMode"},
-         {"defaultAggregationDimension", "defaultAggregationDimension"},
-         {"maxAggregateDistance", "MaxAggregateDistance"},
-         {"minAggregateSize", "MinAggregateSize"},
-         {"maxAggregateSize", "MaxAggregateSize"}
-        };
+    // preconditioner params
+    {"preconditioner.verbosity", "PreconditionerVerbosity"},
+    {"preconditioner.type", "PreconditionerType"},
+    {"preconditioner.iterations", "PreconditionerIterations"},
+    {"preconditioner.relaxation", "PreconditionerRelaxation"},
+    {"preconditioner.n", "ILUOrder"},
+    {"preconditioner.resort", "ILUResort"},
+    {"preconditioner.smootherRelaxation", "AmgSmootherRelaxation"},
+    {"preconditioner.smootherIterations", "AmgSmootherIterations"},
+    {"preconditioner.maxLevel", "AmgMaxLevel"},
+    {"preconditioner.coarsenTarget", "AmgCoarsenTarget"},
+    {"preconditioner.minCoarseningRate", "MinCoarseningRate"},
+    {"preconditioner.prolongationDampingFactor", "AmgProlongationDampingFactor"},
+    {"preconditioner.alpha", "AmgAlpha"},
+    {"preconditioner.beta", "AmgBeta"},
+    {"preconditioner.additive", "AmgAdditive"},
+    {"preconditioner.gamma", "AmgGamma"},
+    {"preconditioner.preSteps", "AmgPreSmoothingSteps"},
+    {"preconditioner.postSteps", "AmgPostSmoothingSteps"},
+    {"preconditioner.criterionSymmetric", "AmgCriterionSymmetric"},
+    {"preconditioner.strengthMeasure", "AmgStrengthMeasure"},
+    {"preconditioner.diagonalRowIndex", "AmgDiagonalRowIndex"},
+    {"preconditioner.defaultAggregationSizeMode", "DefaultAggregationSizeMode"},
+    {"preconditioner.defaultAggregationDimension", "defaultAggregationDimension"},
+    {"preconditioner.maxAggregateDistance", "MaxAggregateDistance"},
+    {"preconditioner.minAggregateSize", "MinAggregateSize"},
+    {"preconditioner.maxAggregateSize", "MaxAggregateSize"}
+};
 
 } // end namespace Dumux
 
