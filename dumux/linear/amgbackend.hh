@@ -43,7 +43,7 @@
 #include <dune/istl/solvers.hh>
 
 #include <dumux/linear/solver.hh>
-#include <dumux/linear/amgparallelhelpers.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 namespace Dumux {
 
@@ -217,7 +217,7 @@ private:
 } // namespace Dumux
 
 #include <dumux/common/properties.hh>
-#include <dumux/linear/amgtraits.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 
 namespace Dumux {
 
@@ -228,9 +228,9 @@ namespace Dumux {
  * \note This is an adaptor using a TypeTag
  */
 template<class TypeTag>
-using AMGBackend = ParallelAMGBackend<GetPropType<TypeTag, Properties::GridView>, AmgTraits<GetPropType<TypeTag, Properties::JacobianMatrix>,
-                                                                                           GetPropType<TypeTag, Properties::SolutionVector>,
-                                                                                           GetPropType<TypeTag, Properties::GridGeometry>>>;
+using AMGBackend = ParallelAMGBackend<GetPropType<TypeTag, Properties::GridView>, LinearSolverTraits<GetPropType<TypeTag, Properties::JacobianMatrix>,
+                                                                                                     GetPropType<TypeTag, Properties::SolutionVector>,
+                                                                                                     GetPropType<TypeTag, Properties::GridGeometry>>>;
 
 } // namespace Dumux
 
