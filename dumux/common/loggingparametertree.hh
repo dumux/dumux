@@ -66,16 +66,6 @@ public:
     bool hasKey(const std::string& key) const
     { return params_.hasKey(key); }
 
-    /** \brief test for key (even in default parameters)
-     *
-     * Tests whether given key exists.
-     *
-     * \param key key name
-     * \return true if key exists in structure, otherwise false
-     */
-    bool hasKeyOrDefaultKey(const std::string& key) const
-    { return params_.hasKey(key) || defaultParams_.hasKey(key); }
-
     /** \brief test for key in group
      *
      * Tests whether given key exists in a group.
