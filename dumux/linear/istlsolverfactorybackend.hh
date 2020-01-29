@@ -39,8 +39,8 @@
 #include <dune/istl/solverfactory.hh>
 
 #include <dumux/linear/solver.hh>
-#include <dumux/linear/amgtraits.hh>
-#include <dumux/linear/amgparallelhelpers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 #if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 
@@ -52,20 +52,20 @@ namespace Dumux {
  *        allowing choosing the solver and preconditioner
  *        at runtime.
  * \note the solvers are configured via the input file
- * \note Requires Dune version 2.7.1 or newer
+ * \note requires Dune version 2.7.1 or newer
  */
 template <class Matrix, class Vector, class GridGeometry>
 class IstlSolverFactoryBackend : public LinearSolver
 {
     using GridView = typename GridGeometry::GridView;
-    using AMGTraits =  AmgTraits<Matrix, Vector, GridGeometry>;
+    using LinearSolverTraits =  Dumux::LinearSolverTraits<Matrix, Vector, GridGeometry>;
     using Grid = typename GridView::Grid;
-    using LinearOperator = typename AMGTraits::LinearOperator;
-    using ScalarProduct = typename AMGTraits::ScalarProduct;
-    using VType = typename AMGTraits::VType;
-    using Comm = typename AMGTraits::Comm;
-    using BCRSMat = typename AMGTraits::LinearOperator::matrix_type;
-    using DofMapper = typename AMGTraits::DofMapper;
+    using LinearOperator = typename LinearSolverTraits::LinearOperator;
+    using ScalarProduct = typename LinearSolverTraits::ScalarProduct;
+    using VType = typename LinearSolverTraits::VType;
+    using Comm = typename LinearSolverTraits::Comm;
+    using BCRSMat = typename LinearSolverTraits::LinearOperator::matrix_type;
+    using DofMapper = typename LinearSolverTraits::DofMapper;
 
 public:
     //! translation table for solver parameters
@@ -97,7 +97,7 @@ public:
                              const DofMapper& dofMapper,
                              const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
-    , parallelHelper_(std::make_unique<ParallelISTLHelper<GridView, AMGTraits>>(gridView, dofMapper))
+    , parallelHelper_(std::make_unique<ParallelISTLHelper<GridView, LinearSolverTraits>>(gridView, dofMapper))
     , firstCall_(true)
     {
         reset();
@@ -112,31 +112,23 @@ public:
      */
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        int rank = 0;
         std::shared_ptr<Comm> comm;
-        std::shared_ptr<LinearOperator> fop;
-        std::shared_ptr<ScalarProduct> sp; // not used.
+        std::shared_ptr<LinearOperator> linearOperator;
+        std::shared_ptr<ScalarProduct> scalarProduct; // not used.
 
 #if HAVE_MPI
-        if constexpr (AMGTraits::isParallel)
-            prepareLinearAlgebraParallel<AMGTraits>(A, b, comm, fop, sp, *phelper_, firstCall_);
+        if constexpr (LinearSolverTraits::isParallel)
+            prepareLinearAlgebraParallel<LinearSolverTraits>(A, b, comm, linearOperator, scalarProduct, *parallelHelper_, firstCall_);
         else
-            prepareLinearAlgebraSequential<AMGTraits>(A, comm, fop, sp);
+            prepareLinearAlgebraSequential<LinearSolverTraits>(A, comm, linearOperator, scalarProduct);
 #else
-        prepareLinearAlgebraSequential<AMGTraits>(A, comm, fop, sp);
+        prepareLinearAlgebraSequential<LinearSolverTraits>(A, comm, linearOperator, scalarProduct);
 #endif
 
-        std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver;
-        try{
-            solver = Dune::getSolverFromFactory(fop, params_);
-        }
-        catch(Dune::Exception& e){
-            std::cerr << "Could not create solver with factory" << std::endl;
-            std::cerr << e.what() << std::endl;
-            throw e;
-        }
+        // construct solver
+        auto solver = getSolverFromFactory_(linearOperator);
 
-        // solve
+        // solve linear system
         solver->apply(x, b, result_);
 
         firstCall_ = false;
@@ -148,7 +140,11 @@ public:
     {
         resetDefaultParameters();
         convertParameterTree_(paramGroup_);
-        Dune::initSolverFactories<typename AMGTraits::LinearOperator>();
+        checkMandatoryParameters_();
+        Dune::initSolverFactories<typename LinearSolverTraits::LinearOperator>();
+        name_ = params_.get<std::string>("preconditioner.type") + "-preconditioned " + params_.get<std::string>("type");
+        if (params_.get<int>("verbose", 0) > 0)
+            std::cout << "Initialized linear solver of type: " << name_ << std::endl;
     }
 
     //! reset some defaults for the solver parameters
@@ -160,6 +156,16 @@ public:
         params_["verbose"] = "0";
         params_["preconditioner.iterations"] = "1";
         params_["preconditioner.relaxation"] = "1.0";
+    }
+
+    const Dune::InverseOperatorResult& result() const
+    {
+        return result_;
+    }
+
+    const std::string& name() const
+    {
+        return name_;
     }
 
 private:
@@ -183,19 +189,37 @@ private:
                 }
             }
         }
+    }
 
-        // The type param is mandatory
+    void checkMandatoryParameters_()
+    {
         if (!params_.hasKey("type"))
-            DUNE_THROW(Dune::InvalidStateException, "Solver factory needs a specified \"Type\" key to select the solver");
+            DUNE_THROW(Dune::InvalidStateException, "Solver factory needs \"LinearSolver.Type\" parameter to select the solver");
+
+        if (!params_.hasKey("preconditioner.type"))
+            DUNE_THROW(Dune::InvalidStateException, "Solver factory needs \"LinearSolver.Preconditioner.Type\" parameter to select the preconditioner");
+    }
+
+    auto getSolverFromFactory_(std::shared_ptr<LinearOperator>& fop)
+    {
+        try { return Dune::getSolverFromFactory(fop, params_); }
+        catch(Dune::Exception& e)
+        {
+            std::cerr << "Could not create solver with factory" << std::endl;
+            std::cerr << e.what() << std::endl;
+            throw e;
+        }
     }
 
     const std::string paramGroup_;
-    std::unique_ptr<ParallelISTLHelper<GridView, AMGTraits>> parallelHelper_;
+    std::unique_ptr<ParallelISTLHelper<GridView, LinearSolverTraits>> parallelHelper_;
     bool firstCall_;
     Dune::InverseOperatorResult result_;
     Dune::ParameterTree params_;
+    std::string name_;
 };
 
+//! translation table for solver parameters
 template<class Matrix, class Vector, class Geometry>
 std::vector<std::array<std::string, 2>>
 IstlSolverFactoryBackend<Matrix, Vector, Geometry>::dumuxToIstlSolverParams =
