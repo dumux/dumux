@@ -19,6 +19,9 @@
 
 // We look now at the main file for the channel problem.
 // ### Includes
+//<details>
+//  <summary>Click to toggle details</summary>
+//
 #include <config.h>
 
 // We include the problem in the main file
@@ -65,8 +68,12 @@
 
 // The following class contains functionality for additional flux output to the console.
 #include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
-
+// </details>
+//
 // ### Beginning of the main function
+//<details>
+//  <summary>Click to toggle details</summary>
+//
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -83,8 +90,12 @@ int main(int argc, char** argv) try
 
     //We parse command line arguments and input file
     Parameters::init(argc, argv);
-
+    // </details>
+    //
     // ### Create the grid
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     // A gridmanager tries to create the grid either from a grid file or the input file.
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
@@ -93,10 +104,14 @@ int main(int argc, char** argv) try
     //
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
-
+    // </details>
+    //
     // ### Set-up and solving of the problem
     //
     // #### Set-up
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
     //
     // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
@@ -126,18 +141,6 @@ int main(int argc, char** argv) try
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
-
-    // we set the assembler
-    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
-
-    // we set the linear solver
-    using LinearSolver = Dumux::UMFPackBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
-
-    // additionally, we set the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // we set up two surfaces over which fluxes are calculated
     FluxOverSurface<GridVariables,
@@ -179,15 +182,44 @@ int main(int argc, char** argv) try
     const auto p0outlet = GlobalPosition{xMax, yMin};
     const auto p1outlet = GlobalPosition{xMax, yMax};
     flux.addSurface("outlet", p0outlet, p1outlet);
+    // </details>
+    //
+    // #### Assembling the linear system
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
+    // we set the assembler
+    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+    // </details>
+    //
+    // #### Solution
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
+    // we set the linear solver
+    using LinearSolver = Dumux::UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
+
+    // additionally, we set the non-linear solver
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // we solve the non-linear system
     nonLinearSolver.solve(x);
 
+    // we calculate mass fluxes over the planes
+    flux.calculateMassOrMoleFluxes();
+    // </details>
+    //
+    // ### Final Output
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     // we write vtk output
     vtkWriter.write(1.0);
 
-    // we calculate and print mass fluxes over the planes
-    flux.calculateMassOrMoleFluxes();
+    // we print mass fluxes over the planes
     if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
     {
         std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
@@ -204,9 +236,6 @@ int main(int argc, char** argv) try
     std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
     std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
-
-    // ### Final Output
-    //
     // print dumux end message
     if (mpiHelper.rank() == 0)
     {
@@ -240,3 +269,5 @@ catch (...)
     std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
     return 4;
 }
+// </details>
+//

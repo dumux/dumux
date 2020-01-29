@@ -26,6 +26,9 @@ In the following, we take a close look at the files containing the set-up: At fi
 
 Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 ### Include files
+<details>
+<summary>Click to toggle details</summary>
+
 The dune grid interphase is included here:
 ```cpp
 #include <dune/grid/yaspgrid.hh>
@@ -47,7 +50,12 @@ The fluid properties are specified in the following headers:
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 ```
+</details>
+
 ### Define basic properties for our simulation
+<details>
+<summary>Click to toggle details</summary>
+
 We enter the namespace Dumux in order to import the entire Dumux namespace for general use
 ```cpp
 namespace Dumux {
@@ -115,7 +123,12 @@ We leave the namespace Properties.
 ```cpp
 }
 ```
+</details>
+
 ### The problem class
+<details>
+<summary>Click to toggle details</summary>
+
 We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
 As this is a Stokes problem, we inherit from the basic `NavierStokesProblem`.
 ```cpp
@@ -155,11 +168,13 @@ We set the outlet pressure to 1.1e5 Pa as no run-time value is specified.
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
     }
 ```
-First, we define the type of initial and boundary conditions depending on location. Two types of boundary conditions
-can be specified: Dirichlet and Neumann. On a Dirichlet boundary, the values of the primary variables need
+First, we define the type of initial and boundary conditions depending on location.
+Two types of boundary conditions can be specified: Dirichlet and Neumann. On a Dirichlet boundary,
+the values of the primary variables need
 to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
-When Dirichlet conditions are set for the pressure, the derivative of the velocity vector with respect to the direction normal to the boundary is automatically set to zero. This boundary condition is called in-/outflow
-boundary condition in Dumux.
+When Dirichlet conditions are set for the pressure, the derivative of the velocity
+vector with respect to the direction normal to the boundary is automatically set to
+zero. This boundary condition is called in-/outflow boundary condition in Dumux.
 ```cpp
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
@@ -264,7 +279,9 @@ This is everything the freeflow channel problem class contains.
 We leave the namespace Dumux.
 ```cpp
 } // end namespace Dumux
+#endif
 ```
+</details>
 
 
 
@@ -273,6 +290,9 @@ We leave the namespace Dumux.
 
 We look now at the main file for the channel problem.
 ### Includes
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
 #include <config.h>
 ```
@@ -335,7 +355,8 @@ We need the following class to simplify the writing of dumux simulation data to 
 ```cpp
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 ```
-The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the different supported grid managers.
+The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the
+different supported grid managers.
 ```cpp
 #include <dumux/io/grid/gridmanager.hh>
 ```
@@ -343,7 +364,12 @@ The following class contains functionality for additional flux output to the con
 ```cpp
 #include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 ```
+</details>
+
 ### Beginning of the main function
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
 int main(int argc, char** argv) try
 {
@@ -366,7 +392,12 @@ We parse command line arguments and input file
 ```cpp
     Parameters::init(argc, argv);
 ```
+</details>
+
 ### Create the grid
+<details>
+<summary>Click to toggle details</summary>
+
 A gridmanager tries to create the grid either from a grid file or the input file.
 ```cpp
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -378,9 +409,14 @@ we compute on the leaf grid view
 ```cpp
     const auto& leafGridView = gridManager.grid().leafGridView();
 ```
+</details>
+
 ### Set-up and solving of the problem
 
 #### Set-up
+<details>
+<summary>Click to toggle details</summary>
+
 We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
 
 We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
@@ -408,27 +444,13 @@ and then use the solution vector to intialize the `gridVariables`.
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 ```
-and then initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model.
+and then initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters
+for that model.
 ```cpp
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
-```
-we set the assembler
-```cpp
-    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
-```
-we set the linear solver
-```cpp
-    using LinearSolver = Dumux::UMFPackBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
-```
-additionally, we set the non-linear solver
-```cpp
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
 ```
 we set up two surfaces over which fluxes are calculated
 ```cpp
@@ -475,17 +497,53 @@ The second surface is placed at the outlet of the channel.
     const auto p1outlet = GlobalPosition{xMax, yMax};
     flux.addSurface("outlet", p0outlet, p1outlet);
 ```
+</details>
+
+#### Assembling the linear system
+<details>
+<summary>Click to toggle details</summary>
+
+we set the assembler
+```cpp
+    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+```
+</details>
+
+#### Solution
+<details>
+<summary>Click to toggle details</summary>
+
+we set the linear solver
+```cpp
+    using LinearSolver = Dumux::UMFPackBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
+```
+additionally, we set the non-linear solver
+```cpp
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
+```
 we solve the non-linear system
 ```cpp
     nonLinearSolver.solve(x);
 ```
+we calculate mass fluxes over the planes
+```cpp
+    flux.calculateMassOrMoleFluxes();
+```
+</details>
+
+### Final Output
+<details>
+<summary>Click to toggle details</summary>
+
 we write vtk output
 ```cpp
     vtkWriter.write(1.0);
 ```
-we calculate and print mass fluxes over the planes
+we print mass fluxes over the planes
 ```cpp
-    flux.calculateMassOrMoleFluxes();
     if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
     {
         std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
@@ -502,10 +560,7 @@ we calculate and print volume fluxes over the planes
     flux.calculateVolumeFluxes();
     std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
     std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
-
 ```
-### Final Output
-
 print dumux end message
 ```cpp
     if (mpiHelper.rank() == 0)
@@ -541,6 +596,8 @@ catch (...)
     return 4;
 }
 ```
+</details>
+
 
 ## Results
 This example computes the following stationary velocity profile:

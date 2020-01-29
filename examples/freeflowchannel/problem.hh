@@ -23,6 +23,9 @@
 
 //Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
+//<details>
+//  <summary>Click to toggle details</summary>
+//
 // The dune grid interphase is included here:
 #include <dune/grid/yaspgrid.hh>
 
@@ -36,8 +39,12 @@
 // The fluid properties are specified in the following headers:
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
-
+// </details>
+//
 // ### Define basic properties for our simulation
+//<details>
+//  <summary>Click to toggle details</summary>
+//
 // We enter the namespace Dumux in order to import the entire Dumux namespace for general use
 namespace Dumux {
 
@@ -83,8 +90,12 @@ struct EnableGridGeometryCache<TypeTag, TTag::ChannelExample> { static constexpr
 //The cache stores values that were already calculated for later usage. This makes the simulation faster.
 // We leave the namespace Properties.
 }
-
+// </details>
+//
 // ### The problem class
+//<details>
+//  <summary>Click to toggle details</summary>
+//
 // We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
 // As this is a Stokes problem, we inherit from the basic `NavierStokesProblem`.
 template <class TypeTag>
@@ -208,3 +219,5 @@ private:
 // We leave the namespace Dumux.
 } // end namespace Dumux
 #endif
+// </details>
+//
