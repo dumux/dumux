@@ -165,18 +165,16 @@ private:
 
     void convertParameterTree_(const std::string& paramGroup="")
     {
-        const auto& loggingTree = Parameters::getTree();
         auto linearSolverGroups = getParamSubGroups("LinearSolver", paramGroup);
-
         for (const auto& [istlKey, dumuxKey] : istlToDumuxSolverParams)
         {
             for (const auto& group : linearSolverGroups)
             {
                 auto istlName = group + "." + istlKey;
                 auto dumuxName = group + "." + dumuxKey;
-                if (loggingTree.hasKeyOrDefaultKey(dumuxName))
+                if (hasParam(dumuxName))
                 {
-                    if(loggingTree.hasKeyOrDefaultKey(istlName))
+                    if(hasParam(istlName))
                     {
                         std::cerr << "Found equivalent keys " << istlName
                                   << " " << dumuxName << std::endl
@@ -184,12 +182,12 @@ private:
                                   << ")." << std::endl;
                         DUNE_THROW(Dune::InvalidStateException, "Ambiguous parameters used for linear solver");
                     }
-                    params_[istlKey] = loggingTree.get<std::string>(dumuxName);
+                    params_[istlKey] = getParam<std::string>(dumuxName);
                     break;
                 }
-                else if (loggingTree.hasKey(istlName))
+                else if (hasParam(istlName))
                 {
-                    params_[istlKey] = loggingTree.get<std::string>(istlName);
+                    params_[istlKey] = getParam<std::string>(istlName);
                     break;
                 }
             }
