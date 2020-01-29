@@ -196,15 +196,6 @@ public:
     Scalar temperature() const
     { return inletTemperature_; }
 
-   /*!
-     * \brief Returns the sources within the domain.
-     *
-     * \param globalPos The global position
-     */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return NumEqVector(0.0);
-    }
     // \}
 
    /*!
