@@ -16,5 +16,7 @@ EnableChop = true # chop for better convergence
 
 [LinearSolver]
 Type = bicgstabsolver
-PreconditionerType = amg
+
+[LinearSolver.Preconditioner]
+Type = amg
 AmgMaxLevel = 2
