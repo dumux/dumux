@@ -31,7 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/parallel/vertexhandles.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 #include "jacobianpattern.hh"
 #include "diffmethod.hh"
@@ -191,8 +191,8 @@ public:
         if (isBox && gridView().comm().size() > 1)
         {
             using VertexMapper = typename GridGeometry::VertexMapper;
-            VertexHandleSum<typename SolutionVector::block_type, SolutionVector, VertexMapper>
-            sumResidualHandle(residual, gridGeometry_->vertexMapper());
+            VectorCommDataHandleSum<VertexMapper, SolutionVector, GridGeometry::GridView::dimension>
+                sumResidualHandle(gridGeometry_->vertexMapper(), residual);
             gridView().communicate(sumResidualHandle,
                                    Dune::InteriorBorder_InteriorBorder_Interface,
                                    Dune::ForwardCommunication);

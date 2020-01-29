@@ -32,7 +32,7 @@
 
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/parallel/vertexhandles.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 #include "entitycolor.hh"
 
@@ -181,8 +181,8 @@ public:
         // at this point we communicate the yellow vertices to the
         // neighboring processes because a neigbor process may not see
         // the red vertex for yellow border vertices
-        VertexHandleMin<EntityColor, std::vector<EntityColor>,  VertexMapper>
-            minHandle(vertexColor_, vertexMapper);
+        VectorCommDataHandleMin<VertexMapper, std::vector<EntityColor>, dim>
+            minHandle(vertexMapper, vertexColor_);
         gridView.communicate(minHandle,
                              Dune::InteriorBorder_InteriorBorder_Interface,
                              Dune::ForwardCommunication);
@@ -235,8 +235,8 @@ public:
         }
 
         // demote the border orange vertices
-        VertexHandleMax<EntityColor, std::vector<EntityColor>,  VertexMapper>
-            maxHandle(vertexColor_, vertexMapper);
+        VectorCommDataHandleMax<VertexMapper, std::vector<EntityColor>, dim>
+            maxHandle(vertexMapper, vertexColor_);
         gridView.communicate(maxHandle,
                              Dune::InteriorBorder_InteriorBorder_Interface,
                              Dune::ForwardCommunication);
