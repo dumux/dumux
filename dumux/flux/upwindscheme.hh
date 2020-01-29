@@ -53,7 +53,7 @@ public:
                         Scalar flux, int phaseIdx)
     {
         // TODO: pass this from outside?
-        static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(fluxVars.problem().paramGroup(), "Flux.UpwindWeight");
 
         const auto& elemVolVars = fluxVars.elemVolVars();
         const auto& scvf = fluxVars.scvFace();
