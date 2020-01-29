@@ -10,7 +10,7 @@ dumux_add_test(NAME test_2p_incompressible_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa-00008.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa params.input -Problem.Name test_2p_incompressible_tpfa")
 
 # using tpfa
@@ -20,8 +20,8 @@ dumux_add_test(NAME test_2p_incompressible_tpfa_restart
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_restart-00003.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa params.input -Problem.Name test_2p_incompressible_tpfa_restart  -TimeLoop.DtInitial 526.62 -Restart.Time 1859.95 -Restart.File test_2p_incompressible_tpfa-00005.vtu")
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_restart-00002.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa params.input -Problem.Name test_2p_incompressible_tpfa_restart  -TimeLoop.DtInitial 603.14 -Restart.Time 2054.01 -Restart.File test_2p_incompressible_tpfa-00005.vtu")
 
 # the restart test has to run after the test that produces the corresponding vtu file
 set_tests_properties(test_2p_incompressible_tpfa_restart PROPERTIES DEPENDS test_2p_incompressible_tpfa)
@@ -74,5 +74,5 @@ dumux_add_test(NAME test_2p_incompressible_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_mpfa-00008.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_mpfa-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_mpfa params.input -Problem.Name test_2p_incompressible_mpfa")
