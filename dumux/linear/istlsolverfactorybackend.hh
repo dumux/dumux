@@ -166,15 +166,15 @@ private:
     void convertParameterTree_(const std::string& paramGroup="")
     {
         const auto& loggingTree = Parameters::getTree();
-        auto matchingGroups = loggingTree.getSubGroups("LinearSolver", paramGroup);
+        auto linearSolverGroups = getParamSubGroups("LinearSolver", paramGroup);
 
         for (const auto& [istlKey, dumuxKey] : istlToDumuxSolverParams)
         {
-            for (const auto fullGroup : matchingGroups)
+            for (const auto& group : linearSolverGroups)
             {
-                auto istlName = fullGroup + "." + istlKey;
-                auto dumuxName = fullGroup + "." + dumuxKey;
-                if(loggingTree.hasKeyOrDefaultKey(dumuxName))
+                auto istlName = group + "." + istlKey;
+                auto dumuxName = group + "." + dumuxKey;
+                if (loggingTree.hasKeyOrDefaultKey(dumuxName))
                 {
                     if(loggingTree.hasKeyOrDefaultKey(istlName))
                     {
