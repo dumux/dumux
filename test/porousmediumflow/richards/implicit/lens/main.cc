@@ -27,6 +27,7 @@
 #include <ctime>
 #include <iostream>
 
+#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
@@ -38,9 +39,13 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/linear/genericistlbackend.hh>
-#include <dumux/porousmediumflow/richards/newtonsolver.hh>
+#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
+#include <dumux/linear/istlsolverfactorybackend.hh>
+#else
+#include <dumux/linear/amgbackend.hh>
+#endif
 
+#include <dumux/porousmediumflow/richards/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -143,7 +148,14 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = Dumux::GenericIstlBackend<TypeTag>;
+#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
+    using Matrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using Vector = Dune::BlockVector<Dune::FieldVector<typename SolutionVector::block_type::value_type, SolutionVector::block_type::dimension>>;
+    using LinearSolver = IstlSolverFactoryBackend<Matrix, Vector, GridGeometry>;
+#else
+    using LinearSolver = AMGBackend<TypeTag>;
+#endif
+
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver

@@ -20,20 +20,15 @@
  * \file
  * \ingroup Linear
  * \brief Provides a generic linear solver based on the ISTL that chooses the
- *        solver and preconditioner at runtime. Needs dune version 2.7.1 or
- *        higher
+ *        solver and preconditioner at runtime
  */
 
-#ifndef DUMUX_GENERIC_ISTLBACKEND_HH
-#define DUMUX_GENERIC_ISTLBACKEND_HH
+#ifndef DUMUX_LINEAR_ISTL_SOLVERFACTORYBACKEND_HH
+#define DUMUX_LINEAR_ISTL_SOLVERFACTORYBACKEND_HH
 
-#include <dumux/linear/solver.hh>
-#include <dumux/linear/amgtraits.hh>
-#include <dumux/linear/amgparallelhelpers.hh>
-
+#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
-#include <dune/common/parametertreeparser.hh>
 
 // preconditioners
 #include <dune/istl/preconditioners.hh>
@@ -42,18 +37,24 @@
 // solvers
 #include <dune/istl/solvers.hh>
 
+#include <dumux/linear/solver.hh>
+#include <dumux/linear/amgtraits.hh>
+#include <dumux/linear/amgparallelhelpers.hh>
+
 #if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Linear
- * \brief A linear solver using the ISTL solver factory
+ * \brief A linear solver using the dune-istl solver factory
  *        allowing choosing the solver and preconditioner
  *        at runtime.
+ * \note the solvers are configured via the input file
+ * \note Requires Dune version 2.7.1 or newer
  */
 template <class Matrix, class Vector, class GridGeometry>
-class GenericIstlBackend : public LinearSolver
+class IstlSolverFactoryBackend : public LinearSolver
 {
     using GridView = typename GridGeometry::GridView;
     using AMGTraits =  AmgTraits<Matrix, Vector, GridGeometry>;
@@ -71,13 +72,14 @@ public:
      *
      * \param paramGroup the parameter group for parameter lookup
      */
-    GenericIstlBackend(const std::string& paramGroup = "")
-        : firstCall_(true)
+    IstlSolverFactoryBackend(const std::string& paramGroup = "")
+    : firstCall_(true)
     {
         if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
         convertParameterTree(paramGroup);
     }
+
     /*!
      * \brief Construct the backend for parallel or sequential runs
      *
@@ -85,14 +87,15 @@ public:
      * \param dofMapper an index mapper for dof entities
      * \param paramGroup the parameter group for parameter lookup
      */
-    GenericIstlBackend(const GridView& gridView,
-                       const DofMapper& dofMapper,
-                       const std::string& paramGroup = "")
-        : phelper_(std::make_shared<ParallelISTLHelper<GridView, AMGTraits>>(gridView, dofMapper))
-        , firstCall_(true)
+    IstlSolverFactoryBackend(const GridView& gridView,
+                             const DofMapper& dofMapper,
+                             const std::string& paramGroup = "")
+    : phelper_(std::make_shared<ParallelISTLHelper<GridView, AMGTraits>>(gridView, dofMapper))
+    , firstCall_(true)
     {
         convertParameterTree(paramGroup);
     }
+
     /*!
      * \brief Solve a linear system.
      *
@@ -221,7 +224,7 @@ private:
 };
 
 template<class Matrix, class Vector, class Geometry>
-std::vector<std::array<std::string,2> > GenericIstlBackend<Matrix, Vector, Geometry>::istl2DumuxSolverParams =
+std::vector<std::array<std::string,2> > IstlSolverFactoryBackend<Matrix, Vector, Geometry>::istl2DumuxSolverParams =
         {
          {"verbose", "Verbosity"}, {"maxit", "MaxIterations"},
          {"reduction", "ResidualReduction"}, {"type", "Type"},
@@ -231,7 +234,7 @@ std::vector<std::array<std::string,2> > GenericIstlBackend<Matrix, Vector, Geome
         };
 
 template<class Matrix, class Vector, class Geometry>
-std::vector<std::array<std::string,2> > GenericIstlBackend<Matrix, Vector, Geometry>::istl2DumuxPreconditionerParams =
+std::vector<std::array<std::string,2> > IstlSolverFactoryBackend<Matrix, Vector, Geometry>::istl2DumuxPreconditionerParams =
         {
          {"verbosity", "PreconditionerVerbosity"}, {"type", "PreconditionerType"},
          {"iterations", "PreconditionerIterations"}, {"relaxation", "PreconditionerRelaxation"},
@@ -253,17 +256,9 @@ std::vector<std::array<std::string,2> > GenericIstlBackend<Matrix, Vector, Geome
          {"maxAggregateSize", "MaxAggregateSize"}
         };
 
-template<class TypeTag>
-using IstlSolverBackend = GenericIstlBackend<
-    GetPropType<TypeTag, Properties::JacobianMatrix>,
-    GetPropType<TypeTag, Properties::SolutionVector>,
-    GetPropType<TypeTag, Properties::GridGeometry>>;
 } // end namespace Dumux
+
 #else
-#warn "Generic ISTL backend needs dune-istl > 2.7.0!"
-#warn "Ignoring configuration parameters and falling back to AMG backend."
-#include "amgbackend.hh"
-template<class TypeTag>
-using IstlSolverBackend = AMGBackend<TypeTag>;
+#warning "Generic dune-istl solver factory backend needs dune-istl >= 2.7.1!"
 #endif // DUNE version check
-#endif // DUMUX_GENERIC_ISTLBACKEND_HH
+#endif // header guard
