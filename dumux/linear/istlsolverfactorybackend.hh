@@ -194,9 +194,9 @@ private:
             }
         }
 
-        // prevent throw in solve
+        // The type param is mandatory
         if (!params_.hasKey("type"))
-            DUNE_THROW(Dune::InvalidStateException, "Solverfactory needs a specified \"type\" key to select the solver");
+            DUNE_THROW(Dune::InvalidStateException, "Solver factory needs a specified \"Type\" key to select the solver");
     }
 
     const std::string paramGroup_;
