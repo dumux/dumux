@@ -25,188 +25,63 @@
 #ifndef DUMUX_VERTEX_HANDLES_HH
 #define DUMUX_VERTEX_HANDLES_HH
 
-#include <dune/grid/common/datahandleif.hh>
+#warning "This header is deprecated and will be removed after release 3.2. Use parallel/vectorcommdatahandle.hh"
+
+#include "vectorcommdatahandle.hh"
 
 
 namespace Dumux {
 
-/*!
- * \ingroup Assembly
- * \brief Data handle for parallel communication which sums up all
- *        values are attached to vertices
- */
-template <class FieldType, class Container, class VertexMapper>
-class VertexHandleSum
-    : public Dune::CommDataHandleIF< VertexHandleSum<FieldType, Container, VertexMapper>,
-                                     FieldType >
-{
-public:
-    VertexHandleSum(Container &container,
-                    const VertexMapper &mapper)
-        : mapper_(mapper)
-        , container_(container)
-    { };
-
-    bool contains(int dim, int codim) const
+    template<class FieldType, class Container, class VertexMapper>
+    class [[deprecated("Use VectorCommDataHandleSum<VertexMapper, Container, entityCodim> instead.")]] VertexHandleSum : public VectorCommDataHandleSum<VertexMapper, Container, 0/*dummy*/>
     {
-        // only communicate vertices
-        return codim == dim;
-    }
+        using ParentType = VectorCommDataHandleSum<VertexMapper, Container, 0/*dummy*/>;
+    public:
+        VertexHandleSum(Container &container,
+                        const VertexMapper &mapper)
+            : ParentType(mapper, container)
+        { };
 
-    bool fixedsize(int dim, int codim) const
+        bool contains(int dim, int codim) const
+        {
+            // only communicate vertices
+            return codim == dim;
+        }
+    };
+
+    template<class FieldType, class Container, class VertexMapper>
+    class [[deprecated("Use VectorCommDataHandleMax<VertexMapper, Container, entityCodim> instead.")]] VertexHandleMax : public VectorCommDataHandleMax<VertexMapper, Container, 0/*dummy*/>
     {
-        // for each vertex we communicate a single field vector which
-        // has a fixed size
-        return true;
-    }
+        using ParentType = VectorCommDataHandleMax<VertexMapper, Container, 0/*dummy*/>;
+    public:
+        VertexHandleMax(Container &container,
+                        const VertexMapper &mapper)
+            : ParentType(mapper, container)
+        { };
 
-    template<class EntityType>
-    size_t size (const EntityType &e) const
+        bool contains(int dim, int codim) const
+        {
+            // only communicate vertices
+            return codim == dim;
+        }
+    };
+
+    template<class FieldType, class Container, class VertexMapper>
+    class [[deprecated("Use VectorCommDataHandleMin<VertexMapper, Container, entityCodim> instead.")]] VertexHandleMin : public VectorCommDataHandleMin<VertexMapper, Container, 0/*dummy*/>
     {
-        // communicate a field type per entity
-        return 1;
-    }
+        using ParentType = VectorCommDataHandleMin<VertexMapper, Container, 0/*dummy*/>;
+    public:
+        VertexHandleMin(Container &container,
+                        const VertexMapper &mapper)
+            : ParentType(mapper, container)
+        { };
 
-    template<class MessageBufferImp, class EntityType>
-    void gather(MessageBufferImp &buff, const EntityType &e) const
-    {
-        int vIdx = mapper_.index(e);
-        buff.write(container_[vIdx]);
-    }
-
-    template<class MessageBufferImp, class EntityType>
-    void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
-    {
-        int vIdx = mapper_.index(e);
-
-        FieldType tmp;
-        buff.read(tmp);
-        container_[vIdx] += tmp;
-    }
-
-private:
-    const VertexMapper &mapper_;
-    Container &container_;
-};
-
-/*!
- * \brief Data handle for parallel communication which takes the
- *        maximum of all values that are attached to vertices
- */
-template <class FieldType, class Container, class VertexMapper>
-class VertexHandleMax
-    : public Dune::CommDataHandleIF< VertexHandleMax<FieldType, Container, VertexMapper>,
-                                     FieldType >
-{
-public:
-    VertexHandleMax(Container &container,
-                    const VertexMapper &mapper)
-        : mapper_(mapper)
-        , container_(container)
-    { };
-
-    bool contains(int dim, int codim) const
-    {
-        // only communicate vertices
-        return codim == dim;
-    }
-
-    bool fixedsize(int dim, int codim) const
-    {
-        // for each vertex we communicate a single field vector which
-        // has a fixed size
-        return true;
-    }
-
-    template<class EntityType>
-    size_t size (const EntityType &e) const
-    {
-        // communicate a field type per entity
-        return 1;
-    }
-
-    template<class MessageBufferImp, class EntityType>
-    void gather(MessageBufferImp &buff, const EntityType &e) const
-    {
-        int vIdx = mapper_.index(e);
-        buff.write(container_[vIdx]);
-    }
-
-    template<class MessageBufferImp, class EntityType>
-    void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
-    {
-        int vIdx = mapper_.index(e);
-
-        FieldType tmp;
-        buff.read(tmp);
-        using std::max;
-        container_[vIdx] = max(container_[vIdx], tmp);
-    }
-
-private:
-    const VertexMapper &mapper_;
-    Container &container_;
-};
-
-
-/*!
- * \brief Provides data handle for parallel communication which takes
- *        the minimum of all values that are attached to vertices
- */
-template <class FieldType, class Container, class VertexMapper>
-class VertexHandleMin
-    : public Dune::CommDataHandleIF< VertexHandleMin<FieldType, Container, VertexMapper>,
-                                     FieldType >
-{
-public:
-    VertexHandleMin(Container &container,
-                    const VertexMapper &mapper)
-        : mapper_(mapper)
-        , container_(container)
-    { };
-
-    bool contains(int dim, int codim) const
-    {
-        // only communicate vertices
-        return codim == dim;
-    }
-
-    bool fixedsize(int dim, int codim) const
-    {
-        // for each vertex we communicate a single field vector which
-        // has a fixed size
-        return true;
-    }
-
-    template<class EntityType>
-    size_t size (const EntityType &e) const
-    {
-        // communicate a field type per entity
-        return 1;
-    }
-
-    template<class MessageBufferImp, class EntityType>
-    void gather(MessageBufferImp &buff, const EntityType &e) const
-    {
-        int vIdx = mapper_.index(e);
-        buff.write(container_[vIdx]);
-    }
-
-    template<class MessageBufferImp, class EntityType>
-    void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
-    {
-        int vIdx = mapper_.index(e);
-        FieldType tmp;
-        buff.read(tmp);
-        using std::min;
-        container_[vIdx] = min(container_[vIdx], tmp);
-    }
-
-private:
-    const VertexMapper &mapper_;
-    Container &container_;
-};
-
+        bool contains(int dim, int codim) const
+        {
+            // only communicate vertices
+            return codim == dim;
+        }
+    };
 } // end namespace Dumux
 
 #endif
