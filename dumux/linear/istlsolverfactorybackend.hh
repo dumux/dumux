@@ -69,7 +69,7 @@ class IstlSolverFactoryBackend : public LinearSolver
 
 public:
     //! translation table for solver parameters
-    static std::vector<std::array<std::string,2> > istlToDumuxSolverParams;
+    static std::vector<std::array<std::string,2> > dumuxToIstlSolverParams;
 
     /*!
      * \brief Construct the backend for the sequential case only
@@ -167,7 +167,7 @@ private:
     void convertParameterTree_(const std::string& paramGroup="")
     {
         auto linearSolverGroups = getParamSubGroups("LinearSolver", paramGroup);
-        for (const auto& [istlKey, dumuxKey] : istlToDumuxSolverParams)
+        for (const auto& [dumuxKey, istlKey] : dumuxToIstlSolverParams)
         {
             for (const auto& group : linearSolverGroups)
             {
@@ -208,43 +208,43 @@ private:
 
 template<class Matrix, class Vector, class Geometry>
 std::vector<std::array<std::string, 2>>
-IstlSolverFactoryBackend<Matrix, Vector, Geometry>::istlToDumuxSolverParams =
+IstlSolverFactoryBackend<Matrix, Vector, Geometry>::dumuxToIstlSolverParams =
 {
     // solver params
-    {"verbose", "Verbosity"},
-    {"maxit", "MaxIterations"},
-    {"reduction", "ResidualReduction"},
-    {"type", "Type"},
-    {"restart", "Restart"}, // cycles before restarting
-    {"mmax", "MaxOrthogonalizationVectors"},
+    {"Verbosity", "verbose"},
+    {"MaxIterations", "maxit"},
+    {"ResidualReduction", "reduction"},
+    {"Type", "type"},
+    {"Restart", "restart"}, // cycles before restarting
+    {"MaxOrthogonalizationVectors", "mmax"},
 
     // preconditioner params
-    {"preconditioner.verbosity", "PreconditionerVerbosity"},
-    {"preconditioner.type", "PreconditionerType"},
-    {"preconditioner.iterations", "PreconditionerIterations"},
-    {"preconditioner.relaxation", "PreconditionerRelaxation"},
-    {"preconditioner.n", "ILUOrder"},
-    {"preconditioner.resort", "ILUResort"},
-    {"preconditioner.smootherRelaxation", "AmgSmootherRelaxation"},
-    {"preconditioner.smootherIterations", "AmgSmootherIterations"},
-    {"preconditioner.maxLevel", "AmgMaxLevel"},
-    {"preconditioner.coarsenTarget", "AmgCoarsenTarget"},
-    {"preconditioner.minCoarseningRate", "MinCoarseningRate"},
-    {"preconditioner.prolongationDampingFactor", "AmgProlongationDampingFactor"},
-    {"preconditioner.alpha", "AmgAlpha"},
-    {"preconditioner.beta", "AmgBeta"},
-    {"preconditioner.additive", "AmgAdditive"},
-    {"preconditioner.gamma", "AmgGamma"},
-    {"preconditioner.preSteps", "AmgPreSmoothingSteps"},
-    {"preconditioner.postSteps", "AmgPostSmoothingSteps"},
-    {"preconditioner.criterionSymmetric", "AmgCriterionSymmetric"},
-    {"preconditioner.strengthMeasure", "AmgStrengthMeasure"},
-    {"preconditioner.diagonalRowIndex", "AmgDiagonalRowIndex"},
-    {"preconditioner.defaultAggregationSizeMode", "DefaultAggregationSizeMode"},
-    {"preconditioner.defaultAggregationDimension", "defaultAggregationDimension"},
-    {"preconditioner.maxAggregateDistance", "MaxAggregateDistance"},
-    {"preconditioner.minAggregateSize", "MinAggregateSize"},
-    {"preconditioner.maxAggregateSize", "MaxAggregateSize"}
+    {"PreconditionerVerbosity", "preconditioner.verbosity"},
+    {"PreconditionerType", "preconditioner.type"},
+    {"PreconditionerIterations", "preconditioner.iterations"},
+    {"PreconditionerRelaxation", "preconditioner.relaxation"},
+    {"ILUOrder", "preconditioner.n"},
+    {"ILUResort", "preconditioner.resort"},
+    {"AmgSmootherRelaxation", "preconditioner.smootherRelaxation"},
+    {"AmgSmootherIterations", "preconditioner.smootherIterations"},
+    {"AmgMaxLevel", "preconditioner.maxLevel"},
+    {"AmgCoarsenTarget", "preconditioner.coarsenTarget"},
+    {"MinCoarseningRate", "preconditioner.minCoarseningRate"},
+    {"AmgProlongationDampingFactor", "preconditioner.prolongationDampingFactor"},
+    {"AmgAlpha", "preconditioner.alpha"},
+    {"AmgBeta", "preconditioner.beta"},
+    {"AmgAdditive", "preconditioner.additive"},
+    {"AmgGamma", "preconditioner.gamma"},
+    {"AmgPreSmoothingSteps", "preconditioner.preSteps"},
+    {"AmgPostSmoothingSteps", "preconditioner.postSteps"},
+    {"AmgCriterionSymmetric", "preconditioner.criterionSymmetric"},
+    {"AmgStrengthMeasure", "preconditioner.strengthMeasure"},
+    {"AmgDiagonalRowIndex", "preconditioner.diagonalRowIndex"},
+    {"DefaultAggregationSizeMode", "preconditioner.defaultAggregationSizeMode"},
+    {"defaultAggregationDimension", "preconditioner.defaultAggregationDimension"},
+    {"MaxAggregateDistance", "preconditioner.maxAggregateDistance"},
+    {"MinAggregateSize", "preconditioner.minAggregateSize"},
+    {"MaxAggregateSize", "preconditioner.maxAggregateSize"}
 };
 
 } // end namespace Dumux
