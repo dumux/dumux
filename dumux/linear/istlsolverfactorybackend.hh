@@ -148,17 +148,16 @@ private:
     void convertParameterTree(const std::string& paramGroup="")
     {
         const auto& loggingTree = Parameters::getTree();
-        auto matchingGroups = loggingTree.getSubGroups("LinearSolver",
-                                                       paramGroup);
+        auto matchingGroups = loggingTree.getSubGroups("LinearSolver", paramGroup);
 
-        bool doThrow{};
+        bool doThrow = false;
 
-        for (const auto& transPair : istl2DumuxSolverParams)
+        for (const auto& [istlKey, dumuxKey] : istl2DumuxSolverParams)
         {
             for (const auto fullGroup : matchingGroups)
             {
-                auto istlName = fullGroup+"."+transPair[0];
-                auto dumuxName = fullGroup+"."+transPair[1];
+                auto istlName = fullGroup + "." + istlKey;
+                auto dumuxName = fullGroup + "." + dumuxKey;
                 if(loggingTree.hasKeyOrDefaultKey(dumuxName))
                 {
                     if(loggingTree.hasKeyOrDefaultKey(istlName))
@@ -169,23 +168,23 @@ private:
                                   << ")." << std::endl;
                         doThrow = true;
                     }
-                    params_[transPair[0]] = loggingTree.get<std::string>(dumuxName);
+                    params_[istlKey] = loggingTree.get<std::string>(dumuxName);
                     break;
                 }
                 else if (loggingTree.hasKey(istlName))
                 {
-                    params_[transPair[0]] = loggingTree.get<std::string>(istlName);
+                    params_[istlKey] = loggingTree.get<std::string>(istlName);
                     break;
                 }
             }
         }
 
-        for (const auto& transPair : istl2DumuxPreconditionerParams)
+        for (const auto& [istlKey, dumuxKey] : istl2DumuxPreconditionerParams)
         {
             for (const auto fullGroup : matchingGroups)
             {
-                auto istlName = fullGroup+".preconditioner."+transPair[0];
-                auto dumuxName = fullGroup+"."+transPair[1];
+                auto istlName = fullGroup + ".preconditioner." + istlKey;
+                auto dumuxName = fullGroup + "." + dumuxKey;
                 if(loggingTree.hasKey(dumuxName))
                 {
                     if(loggingTree.hasKeyOrDefaultKey(istlName))
@@ -196,12 +195,12 @@ private:
                               << ")." << std::endl;
                         doThrow = true;
                     }
-                    params_["preconditioner."+transPair[0]] = loggingTree.get<std::string>(dumuxName);
+                    params_["preconditioner." + istlKey] = loggingTree.get<std::string>(dumuxName);
                     break;
                 }
                 else if (loggingTree.hasKeyOrDefaultKey(istlName))
                 {
-                    params_["preconditioner."+transPair[0]] = loggingTree.get<std::string>(istlName);
+                    params_["preconditioner." + istlKey] = loggingTree.get<std::string>(istlName);
                     break;
                 }
             }
