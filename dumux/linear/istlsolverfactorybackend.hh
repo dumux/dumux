@@ -80,7 +80,9 @@ public:
     {
         if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
-        convertParameterTree(paramGroup);
+
+        resetDefaultParameters();
+        convertParameterTree_(paramGroup);
     }
 
     /*!
@@ -96,7 +98,8 @@ public:
     : phelper_(std::make_shared<ParallelISTLHelper<GridView, AMGTraits>>(gridView, dofMapper))
     , firstCall_(true)
     {
-        convertParameterTree(paramGroup);
+        resetDefaultParameters();
+        convertParameterTree_(paramGroup);
     }
 
     /*!
@@ -146,9 +149,21 @@ public:
         firstCall_ = false;
         return result_.converged;
     }
+
+    //! reset some defaults for the solver parameters
+    void resetDefaultParameters()
+    {
+        params_["restart"] = "10";
+        params_["maxit"] = "250";
+        params_["reduction"] = "1e-13";
+        params_["verbose"] = "0";
+        params_["preconditioner.iterations"] = "1";
+        params_["preconditioner.relaxation"] = "1.0";
+    }
+
 private:
 
-    void convertParameterTree(const std::string& paramGroup="")
+    void convertParameterTree_(const std::string& paramGroup="")
     {
         const auto& loggingTree = Parameters::getTree();
         auto matchingGroups = loggingTree.getSubGroups("LinearSolver", paramGroup);

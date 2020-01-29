@@ -52,11 +52,11 @@ public:
     LinearSolver(const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
     {
-        verbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity");
-        maxIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.MaxIterations");
-        residReduction_ = getParamFromGroup<double>(paramGroup, "LinearSolver.ResidualReduction");
-        relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.PreconditionerRelaxation");
-        precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.PreconditionerIterations");
+        verbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity", 0);
+        maxIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.MaxIterations", 250);
+        residReduction_ = getParamFromGroup<double>(paramGroup, "LinearSolver.ResidualReduction", 1e-13);
+        relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.PreconditionerRelaxation", 1);
+        precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.PreconditionerIterations", 1);
     }
 
     /*!
