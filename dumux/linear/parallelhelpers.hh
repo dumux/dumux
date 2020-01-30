@@ -46,6 +46,9 @@ class ParallelISTLHelper
     using DofMapper = typename LinearSolverTraits::DofMapper;
     enum { dofCodim = LinearSolverTraits::dofCodim };
 
+    // TODO: this is some large number (replace by limits?)
+    static constexpr std::size_t ghostMarker_ = 1<<24;
+
     class BaseGatherScatter
     {
     public:
@@ -63,7 +66,7 @@ class ParallelISTLHelper
         { return true; }
 
         template<class EntityType>
-        size_t size(EntityType& e) const
+        std::size_t size(EntityType& e) const
         { return 1; }
 
         template<class EntityType>
@@ -99,7 +102,7 @@ class ParallelISTLHelper
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType& e, size_t n)
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
             typename V::block_type block;
             buff.read(block);
@@ -111,7 +114,7 @@ class ParallelISTLHelper
 
 
     /*!
-     * \brief Writes 1<<24 to each data item (of the container) that is gathered or scattered
+     * \brief Writes ghostMarker_ to each data item (of the container) that is gathered or scattered
      * and is neither interior nor border.
      *
      * Can be used to mark ghost cells.
@@ -133,27 +136,27 @@ class ParallelISTLHelper
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            std::size_t& data = ranks_[this->index(e)]; // TODO: reference to size_t ?
+            auto& data = ranks_[this->index(e)];
             if (this->isNeitherInteriorNorBorderEntity(e))
-                data = (1<<24);
+                data = ghostMarker_;
             buff.write(data);
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType& e, size_t n)
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
             std::size_t x;
-            std::size_t& data = ranks_[this->index(e)];
-            buff.read(x); // TODO what is this good for?
+            buff.read(x);
+            auto& data = ranks_[this->index(e)];
             if (this->isNeitherInteriorNorBorderEntity(e))
-                data = (1<<24);
+                data = ghostMarker_;
         }
     private:
         std::vector<std::size_t>& ranks_;
     };
 
     /*!
-     * \brief GatherScatter handle that sets 1<<24 for data items neither associated to
+     * \brief GatherScatter handle that sets ghostMarker_ for data items neither associated to
      * the interior or border and take the minimum when scattering.
      *
      * Used to compute an owner rank for each unknown.
@@ -175,23 +178,20 @@ class ParallelISTLHelper
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            std::size_t& data = ranks_[this->index(e)]; // TODO: reference to size_t ?
+            auto& data = ranks_[this->index(e)];
             if (this->isNeitherInteriorNorBorderEntity(e))
-                data = (1<<24);
+                data = ghostMarker_;
             buff.write(data);
         }
 
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            using std::min;
             std::size_t x;
-            std::size_t& data = ranks_[this->index(e)];
             buff.read(x);
-            if (this->isNeitherInteriorNorBorderEntity(e))
-                data = x;
-            else
-                data = min(data,x);
+            auto& data = ranks_[this->index(e)];
+            using std::min;
+            data = this->isNeitherInteriorNorBorderEntity(e) ? x : min(data,x);
         }
     private:
         std::vector<std::size_t>& ranks_;
@@ -205,7 +205,7 @@ class ParallelISTLHelper
         : public BaseGatherScatter,
           public Dune::CommDataHandleIF<NeighbourGatherScatter,int>
     {
-        using DataType = int; // TODO: size_t?
+        using DataType = int;
         using BaseGatherScatter::contains;
         using BaseGatherScatter::fixedsize;
         using BaseGatherScatter::size;
@@ -221,9 +221,9 @@ class ParallelISTLHelper
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType& e, size_t n)
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            int x; // TODO: size_t?
+            int x;
             buff.read(x);
             neighbours_.insert(x);
         }
@@ -258,11 +258,11 @@ class ParallelISTLHelper
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType &e, size_t n)
+        void scatter(MessageBuffer& buff, const EntityType &e, std::size_t n)
         {
             int x;
             buff.read(x);
-            int& data = shared_[this->index(e)];
+            auto& data = shared_[this->index(e)];
             data = data || x;
         }
     private:
@@ -273,88 +273,95 @@ class ParallelISTLHelper
      * \brief GatherScatter handle for finding out about neighbouring processor ranks.
      *
      */
-    template<typename GI>
+    template<typename GlobalIndex>
     struct GlobalIndexGatherScatter
         : public BaseGatherScatter,
-          public Dune::CommDataHandleIF<GlobalIndexGatherScatter<GI>, GI>
+          public Dune::CommDataHandleIF<GlobalIndexGatherScatter<GlobalIndex>, GlobalIndex>
     {
-        using DataType = GI;
+        using DataType = GlobalIndex;
         using BaseGatherScatter::contains;
         using BaseGatherScatter::fixedsize;
         using BaseGatherScatter::size;
 
-        GlobalIndexGatherScatter(std::vector<GI>& gindices, const DofMapper& mapper)
-        : BaseGatherScatter(mapper), gindices_(gindices)
+        GlobalIndexGatherScatter(std::vector<GlobalIndex>& globalIndices, const DofMapper& mapper)
+        : BaseGatherScatter(mapper), globalIndices_(globalIndices)
         {}
 
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            buff.write(gindices_[this->index(e)]);
+            buff.write(globalIndices_[this->index(e)]);
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType& e, size_t n)
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            using std::min;
             DataType x;
             buff.read(x);
-            gindices_[this->index(e)] = min(gindices_[this->index(e)], x);
+            using std::min;
+            auto& data = globalIndices_[this->index(e)];
+            data = min(data, x);
         }
     private:
-        std::vector<GI>& gindices_;
+        std::vector<GlobalIndex>& globalIndices_;
     };
 
 public:
 
-    ParallelISTLHelper (const GridView& gridView, const DofMapper& mapper, int verbose = 1)
-        : gridView_(gridView), mapper_(mapper), verbose_(verbose), initialized_(false)
+    ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper)
+        : gridView_(gridView), mapper_(mapper), initialized_(false)
+    {}
+
+    [[deprecated("The verbose argument has no effect. Use ParallelISTLHelper(gridView, mapper) instead. Will be removed after 3.2!")]]
+    ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper, int verbose)
+        : gridView_(gridView), mapper_(mapper), initialized_(false)
     {}
 
     // \brief Initializes the markers for ghosts and owners with the correct size and values.
     //
     void initGhostsAndOwners()
     {
-        owner_.resize(mapper_.size(),
-                      gridView_.comm().rank());
-        isGhost_.resize(mapper_.size(),0.0);
+        const auto rank = gridView_.comm().rank();
+        isOwned_.resize(mapper_.size(), rank);
         // find out about ghosts
-        GhostGatherScatter ggs(owner_, mapper_);
+        GhostGatherScatter ggs(isOwned_, mapper_);
 
         if (gridView_.comm().size() > 1)
             gridView_.communicate(ggs, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
 
-        isGhost_ = owner_;
+        isGhost_ = isOwned_;
 
         // partition interior/border
-        InteriorBorderGatherScatter dh(owner_, mapper_);
+        InteriorBorderGatherScatter dh(isOwned_, mapper_);
 
         if (gridView_.comm().size() > 1)
             gridView_.communicate(dh, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
 
         // convert vector into mask vector
-        for (auto& v : owner_)
-            v = (v == gridView_.comm().rank()) ? 1.0 : 0.0;
+        for (auto& v : isOwned_)
+            v = (v == rank) ? 1 : 0;
 
         initialized_ = true;
     }
 
     // keep only DOFs assigned to this processor
     template<class W>
+    [[deprecated("This function has no effect. Will be removed after 3.2!")]]
     void mask(W& w) const
-    {
-        auto v1 = w.begin();
-        for (auto v2 = owner_.begin(), vend = owner_.end(); v2 != vend; ++v1, ++v2)
-            v1 *= v2;
-    }
+    {}
 
     // access to mask vector
-    double mask(std::size_t i) const
-    { return owner_[i]; }
+    [[deprecated("Will be removed after 3.2!")]]
+    std::size_t mask(std::size_t i) const
+    { return isOwned_[i]; }
 
     // access to ghost vector
-    std::size_t ghost (std::size_t i) const
+    [[deprecated("Will be removed after 3.2!")]]
+    std::size_t ghost(std::size_t i) const
     { return isGhost_[i]; }
+
+    bool isGhost(std::size_t i) const
+    { return isGhost_[i] == ghostMarker_; }
 
     // \brief Make a vector of the box model consistent.
     template<class B, class A>
@@ -371,20 +378,17 @@ public:
 
 #if HAVE_MPI
 
-    /*!
-     * \brief Creates a matrix suitable for parallel AMG and the parallel information
-     *
-     * \tparam MatrixType The type of the ISTL matrix used.
-     * \tparam Comm The type of the OwnerOverlapCopyCommunication
-     * \param m The local matrix.
-     * \param c The parallel information object providing index set, interfaces and
-     * communicators.
-     */
     template<typename MatrixType, typename Comm>
-    [[deprecated("Use createParallelIndexSet(comm) instead. Will be removed after 3.1!")]]
+    [[deprecated("Use createParallelIndexSet(comm) instead. Will be removed after 3.2!")]]
     void createIndexSetAndProjectForAMG(MatrixType& m, Comm& c)
     { createParallelIndexSet(c); }
 
+    /*!
+     * \brief Creates a parallel index set
+     *
+     * \tparam Comm The type of the OwnerOverlapCopyCommunication
+     * communicators.
+     */
     template<class Comm>
     void createParallelIndexSet(Comm& comm)
     {
@@ -396,105 +400,56 @@ public:
             initGhostsAndOwners();
         }
 
+        if (gridView_.comm().size() <= 1)
+        {
+            comm.remoteIndices().template rebuild<false>();
+            return;
+        }
+
         // First find out which dofs we share with other processors
-        std::vector<int> sharedDofs(mapper_.size(), false);
+        std::vector<int> isShared(mapper_.size(), false);
 
-        SharedGatherScatter sgs(sharedDofs, mapper_);
-
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(sgs, Dune::All_All_Interface,
-                                  Dune::ForwardCommunication);
+        SharedGatherScatter sgs(isShared, mapper_);
+        gridView_.communicate(sgs, Dune::All_All_Interface, Dune::ForwardCommunication);
 
         // Count shared dofs that we own
         using GlobalIndex = typename Comm::ParallelIndexSet::GlobalIndex;
         GlobalIndex count = 0;
-        auto owned = owner_.begin();
-
-        for (auto v = sharedDofs.begin(), vend=sharedDofs.end(); v != vend; ++v, ++owned)
-            if (*v && *owned == 1)
+        for (std::size_t i = 0; i < isShared.size(); ++i)
+            if (isShared[i] && isOwned_[i] == 1)
                 ++count;
 
-        Dune::dverb << gridView_.comm().rank() << ": shared count is " << count.touint()
-                    << std::endl;
-
         std::vector<GlobalIndex> counts(gridView_.comm().size());
-        gridView_.comm().allgather(&count, 1, &(counts[0]));
+        gridView_.comm().allgather(&count, 1, counts.data());
 
         // Compute start index start_p = \sum_{i=0}^{i<p} counts_i
-        GlobalIndex start = 0;
-        for (int i = 0; i < gridView_.comm().rank(); ++i)
-            start = start + counts[i];
+        const int rank = gridView_.comm().rank();
+        auto start = std::accumulate(counts.begin(), counts.begin() + rank, GlobalIndex(0));
 
-        std::vector<GlobalIndex> scalarIndices(mapper_.size(),
-                                               std::numeric_limits<GlobalIndex>::max());
+        std::vector<GlobalIndex> globalIndices(mapper_.size(), std::numeric_limits<GlobalIndex>::max());
 
-        auto shared = sharedDofs.begin();
-        auto index = scalarIndices.begin();
-
-        for (auto i = owner_.begin(), iend = owner_.end(); i != iend; ++i, ++shared, ++index)
+        for (std::size_t i = 0; i < globalIndices.size(); ++i)
         {
-            if (*i==1 && *shared)
+            if (isOwned_[i] == 1 && isShared[i])
             {
-                *index = start;
+                globalIndices[i] = start; // GlobalIndex does not implement postfix ++
                 ++start;
             }
         }
 
         // publish global indices for the shared DOFS to other processors.
-        GlobalIndexGatherScatter<GlobalIndex> gigs(scalarIndices, mapper_);
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(gigs, Dune::All_All_Interface,
-                                  Dune::ForwardCommunication);
+        GlobalIndexGatherScatter<GlobalIndex> gigs(globalIndices, mapper_);
+        gridView_.communicate(gigs, Dune::All_All_Interface, Dune::ForwardCommunication);
 
-
-        // Setup the index set
-        comm.indexSet().beginResize();
-        index = scalarIndices.begin();
-        auto ghost = isGhost_.begin();
-
-        for (auto i = owner_.begin(), iend = owner_.end(); i != iend; ++i, ++ghost, ++index)
-        {
-            Dune::OwnerOverlapCopyAttributeSet::AttributeSet attr;
-            if (*index != std::numeric_limits<GlobalIndex>::max())
-            {
-                // global index exist in index set
-                if (*i > 0)
-                {
-                    // This dof is managed by us.
-                    attr = Dune::OwnerOverlapCopyAttributeSet::owner;
-                }
-    #if DUNE_VERSION_GTE(DUNE_ISTL, 2, 7)
-                else if ( *ghost==(1<<24) && ( comm.category() ==
-                                               static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
-    #else
-                else if ( *ghost==(1<<24) && ( comm.getSolverCategory() ==
-                                               static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
-    #endif
-                {
-                    //use attribute overlap for ghosts in novlp grids
-                    attr = Dune::OwnerOverlapCopyAttributeSet::overlap;
-                }
-                else
-                {
-                    attr = Dune::OwnerOverlapCopyAttributeSet::copy;
-                }
-                comm.indexSet().add(*index, typename Comm::ParallelIndexSet::LocalIndex(i-owner_.begin(), attr));
-            }
-        }
-        comm.indexSet().endResize();
+        resizeIndexSet_(comm, globalIndices);
 
         // Compute neighbours using communication
         std::set<int> neighbours;
-        NeighbourGatherScatter ngs(mapper_, gridView_.comm().rank(),
-                                   neighbours);
-
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(ngs, Dune::All_All_Interface,
-                                  Dune::ForwardCommunication);
-
+        NeighbourGatherScatter ngs(mapper_, gridView_.comm().rank(), neighbours);
+        gridView_.communicate(ngs, Dune::All_All_Interface, Dune::ForwardCommunication);
         comm.remoteIndices().setNeighbours(neighbours);
-        comm.remoteIndices().template rebuild<false>();
 
+        comm.remoteIndices().template rebuild<false>();
     }
 
 #endif
@@ -507,12 +462,49 @@ public:
     const GridView& gridView() const
     { return gridView_; }
 
+    template<class Comm>
+    Dune::OwnerOverlapCopyAttributeSet::AttributeSet
+    getAttribute_(const Comm& comm, const bool isOwned, const bool isGhost) const
+    {
+        if (isOwned)
+            return Dune::OwnerOverlapCopyAttributeSet::owner;
+#if DUNE_VERSION_GTE(DUNE_ISTL, 2, 7)
+        else if (isGhost && ( comm.category() ==
+                                       static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
+#else
+        else if (isGhost && ( comm.getSolverCategory() ==
+                                       static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
+#endif
+            return Dune::OwnerOverlapCopyAttributeSet::overlap;
+        else
+            return Dune::OwnerOverlapCopyAttributeSet::copy;
+    }
+
+    template<class Comm, class GlobalIndices>
+    void resizeIndexSet_(Comm& comm, const GlobalIndices& globalIndices) const
+    {
+        comm.indexSet().beginResize();
+
+        for (std::size_t localIndex = 0; localIndex < globalIndices.size(); ++localIndex)
+        {
+            const auto globalIndex = globalIndices[localIndex];
+            if (globalIndex != std::numeric_limits<typename GlobalIndices::value_type>::max())
+            {
+                 const bool isOwned = isOwned_[localIndex] > 0;
+                 const auto attr = getAttribute_(comm, isOwned, isGhost(localIndex));
+                 using LocalIndex = typename Comm::ParallelIndexSet::LocalIndex;
+                 comm.indexSet().add(globalIndex, LocalIndex{localIndex, attr});
+            }
+        }
+
+        comm.indexSet().endResize();
+    }
+
 private:
     const GridView gridView_; //!< the grid view
     const DofMapper& mapper_; //!< the dof mapper
-    std::vector<std::size_t> owner_; //!< vector to identify unique decomposition
+    std::vector<std::size_t> isOwned_; //!< vector to identify unique decomposition
     std::vector<std::size_t> isGhost_; //!< vector to identify ghost dofs
-    int verbose_; //!< verbosity
     bool initialized_; //!< whether isGhost and owner arrays are initialized
 
 }; // class ParallelISTLHelper
@@ -533,36 +525,7 @@ class EntityExchanger
     using BlockType = typename Matrix::block_type;
     using IDS = typename Grid::Traits::GlobalIdSet;
     using IdType = typename IDS::IdType;
-    using RowIterator = typename Matrix::RowIterator;
-    using ColIterator = typename Matrix::ColIterator;
     using DofMapper = typename LinearSolverTraits::DofMapper;
-
-public:
-    /*! \brief Constructor. Sets up the local to global relations.
-      \param[in] gridView The gridView on which we are operating
-      \param[in] mapper The local dof mapper
-    */
-    EntityExchanger(const GridView& gridView, const DofMapper& mapper)
-    : gridView_(gridView), mapper_(mapper)
-    {
-        gid2Index_.clear();
-        index2GID_.clear();
-
-        for (const auto& entity : entities(gridView_, Dune::Codim<dofCodim>()))
-        {
-            if (entity.partitionType() == Dune::BorderEntity)
-            {
-                int localIdx = mapper_.index(entity);
-                IdType dofIdxGlobal = gridView_.grid().globalIdSet().id(entity);
-
-                std::pair<IdType, int> g2iPair(dofIdxGlobal, localIdx);
-                gid2Index_.insert(g2iPair);
-
-                std::pair<int, IdType> i2gPair(localIdx, dofIdxGlobal);
-                index2GID_.insert(i2gPair);
-            }
-        }
-    }
 
     /*!
      * \brief A DataHandle class to exchange matrix sparsity patterns.
@@ -582,63 +545,46 @@ public:
      *  </pre>
      *  If we look at vertex 7 and the corresponding entries in the matrix for P0,
      *  there will be entries for (7,4) and (7,8), but not for (7,2).
-     *  The MatPatternExchange class will find these entries and returns a vector "sparsity",
+     *  The MatrixPatternExchange class will find these entries and returns a vector "sparsity",
      *  that contains all missing connections.
      */
-    class MatPatternExchange
-        : public Dune::CommDataHandleIF<MatPatternExchange, IdType>
+    struct MatrixPatternExchange
+    : public Dune::CommDataHandleIF<MatrixPatternExchange, IdType>
     {
-        using RowIterator = typename Matrix::RowIterator;
-        using ColIterator = typename Matrix::ColIterator;
-    public:
         //! Export type of data for message buffer
         using DataType = IdType;
 
-        /** \brief Constructor
-            \param[in] mapper The local dof mapper.
-            \param[in] g2i Global to local index map.
-            \param[in] i2g Local to global index map.
-            \param[in] A Matrix to operate on.
-            \param[in] helper parallel istl helper.
-        */
-        MatPatternExchange (const DofMapper& mapper,
-                            const std::map<IdType,int>& g2i,
-                            const std::map<int,IdType>& i2g, Matrix& A,
-                            const ParallelISTLHelper<GridView, LinearSolverTraits>& helper)
-            : mapper_(mapper), gid2Index_(g2i), index2GID_(i2g),
-              sparsity_(A.N()), A_(A), helper_(helper)
+        MatrixPatternExchange(const DofMapper& mapper,
+                              const std::map<IdType,int>& globalToLocal,
+                              const std::map<int,IdType>& localToGlobal, Matrix& A,
+                              const ParallelISTLHelper<GridView, LinearSolverTraits>& helper)
+        : mapper_(mapper), idToIndex_(globalToLocal), indexToID_(localToGlobal)
+        , sparsity_(A.N()), A_(A), helper_(helper)
         {}
 
         /*!
          * \brief Returns true if data for given valid codim should be communicated
          */
         bool contains (int dim, int codim) const
-        {
-            return (codim==dofCodim);
-        }
+        { return (codim == dofCodim); }
 
         /*!
          * \brief Returns true if size of data per entity of given dim and codim is a constant
          */
         bool fixedsize (int dim, int codim) const
-        {
-            return false;
-        }
+        { return false; }
 
         /*!
          * \brief How many objects of type DataType have to be sent for a given entity
          */
         template<class EntityType>
-        size_t size (EntityType& e) const
+        std::size_t size(EntityType& e) const
         {
-            int i = mapper_.index(e);
-            int n = 0;
-            for (ColIterator j = A_[i].begin(); j != A_[i].end(); ++j)
-            {
-                typename std::map<int,IdType>::const_iterator it = index2GID_.find(j.index());
-                if (it != index2GID_.end())
+            const auto rowIdx = mapper_.index(e);
+            std::size_t  n = 0;
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                if (indexToID_.count(colIt.index()))
                     n++;
-            }
 
             return n;
         }
@@ -647,35 +593,36 @@ public:
          * \brief Pack data from user to message buffer
          */
         template<class MessageBuffer, class EntityType>
-        void gather (MessageBuffer& buff, const EntityType& e) const
+        void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            int i = mapper_.index(e);
-            for (ColIterator j = A_[i].begin(); j != A_[i].end(); ++j)
+            const auto rowIdx = mapper_.index(e);
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
             {
-                typename std::map<int,IdType>::const_iterator it=index2GID_.find(j.index());
-                if (it != index2GID_.end())
+                auto it = indexToID_.find(colIt.index());
+                if (it != indexToID_.end())
                     buff.write(it->second);
             }
-
         }
 
         /*!
          * \brief Unpack data from message buffer to user
          */
         template<class MessageBuffer, class EntityType>
-        void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            int i = mapper_.index(e);
-            for (size_t k = 0; k < n; k++)
+            const auto rowIdx = mapper_.index(e);
+            for (std::size_t k = 0; k < n; k++)
             {
                 IdType id;
                 buff.read(id);
                 // only add entries corresponding to border entities
-                typename std::map<IdType,int>::const_iterator it = gid2Index_.find(id);
-                if (it != gid2Index_.end()
-                    && sparsity_[i].find(it->second) == sparsity_[i].end()
-                    && helper_.ghost(it->second) != 1<<24)
-                    sparsity_[i].insert(it->second);
+                const auto it = idToIndex_.find(id);
+                if (it != idToIndex_.end())
+                {
+                    const auto colIdx = it->second;
+                    if (!sparsity_[rowIdx].count(colIdx) && !helper_.isGhost(colIdx))
+                        sparsity_[rowIdx].insert(colIdx);
+                }
             }
         }
 
@@ -683,83 +630,65 @@ public:
          * \brief Get the communicated sparsity pattern
          * \return the vector with the sparsity pattern
          */
-        std::vector<std::set<int> >& sparsity ()
-        {
-            return sparsity_;
-        }
+        std::vector<std::set<int>>& sparsity()
+        { return sparsity_; }
 
     private:
         const DofMapper& mapper_;
-        const std::map<IdType,int>& gid2Index_;
-        const std::map<int,IdType>& index2GID_;
+        const std::map<IdType,int>& idToIndex_;
+        const std::map<int,IdType>& indexToID_;
         std::vector<std::set<int> > sparsity_;
         Matrix& A_;
         const ParallelISTLHelper<GridView, LinearSolverTraits>& helper_;
 
-    }; // class MatPatternExchange
+    }; // class MatrixPatternExchange
 
     //! Local matrix blocks associated with the global id set
-    struct MatEntry
+    struct MatrixEntry
     {
         IdType first;
         BlockType second;
-        MatEntry (const IdType& f, const BlockType& s) : first(f), second(s) {}
-        MatEntry () {}
+        MatrixEntry (const IdType& f, const BlockType& s) : first(f), second(s) {}
+        MatrixEntry () {}
     };
 
     //! A DataHandle class to exchange matrix entries
-    class MatEntryExchange
-        : public Dune::CommDataHandleIF<MatEntryExchange,MatEntry>
+    struct MatrixEntryExchange
+    : public Dune::CommDataHandleIF<MatrixEntryExchange,MatrixEntry>
     {
-        using RowIterator = typename Matrix::RowIterator;
-        using ColIterator = typename Matrix::ColIterator;
-    public:
         //! Export type of data for message buffer
-        using DataType = MatEntry;
+        using DataType = MatrixEntry;
 
-        /*!
-         * \brief Constructor
-         * \param[in] mapper The local dof mapper.
-         * \param[in] g2i Global to local index map.
-         * \param[in] i2g Local to global index map.
-         * \param[in] A Matrix to operate on.
-         */
-        MatEntryExchange (const DofMapper& mapper, const std::map<IdType,int>& g2i,
-                          const std::map<int,IdType>& i2g,
-                          Matrix& A)
-            : mapper_(mapper), gid2Index_(g2i), index2GID_(i2g), A_(A)
+        MatrixEntryExchange(const DofMapper& mapper,
+                            const std::map<IdType,int>& globalToLocal,
+                            const std::map<int,IdType>& localToGlobal,
+                            Matrix& A)
+        : mapper_(mapper), idToIndex_(globalToLocal), indexToID_(localToGlobal), A_(A)
         {}
 
         /*!
          * \brief Returns true if data for given valid codim should be communicated
          */
-        bool contains (int dim, int codim) const
-        {
-            return (codim==dofCodim);
-        }
+        bool contains(int dim, int codim) const
+        { return (codim == dofCodim); }
 
         /*!
          * \brief Returns true if size of data per entity of given dim and codim is a constant
          */
-        bool fixedsize (int dim, int codim) const
-        {
-            return false;
-        }
+        bool fixedsize(int dim, int codim) const
+        { return false; }
 
         /*!
          * \brief How many objects of type DataType have to be sent for a given entity
          */
         template<class EntityType>
-        size_t size (EntityType& e) const
+        std::size_t size(EntityType& e) const
         {
-            int i = mapper_.index(e);
-            int n = 0;
-            for (ColIterator j = A_[i].begin(); j != A_[i].end(); ++j)
-            {
-                typename std::map<int,IdType>::const_iterator it = index2GID_.find(j.index());
-                if (it != index2GID_.end())
+            const auto rowIdx = mapper_.index(e);
+            std::size_t n = 0;
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                if (indexToID_.count(colIt.index()))
                     n++;
-            }
 
             return n;
         }
@@ -768,46 +697,66 @@ public:
          * \brief Pack data from user to message buffer
          */
         template<class MessageBuffer, class EntityType>
-        void gather (MessageBuffer& buff, const EntityType& e) const
+        void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            int i = mapper_.index(e);
-            for (ColIterator j = A_[i].begin(); j != A_[i].end(); ++j)
+            const auto rowIdx = mapper_.index(e);
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
             {
-                typename std::map<int,IdType>::const_iterator it=index2GID_.find(j.index());
-                if (it != index2GID_.end())
-                    buff.write(MatEntry(it->second,*j));
+                auto it = indexToID_.find(colIt.index());
+                if (it != indexToID_.end())
+                    buff.write(MatrixEntry(it->second,*colIt));
             }
-
         }
 
         /*!
          * \brief Unpack data from message buffer to user
          */
         template<class MessageBuffer, class EntityType>
-        void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            int i = mapper_.index(e);
-            for (size_t k = 0; k < n; k++)
+            const auto rowIdx = mapper_.index(e);
+            for (std::size_t k = 0; k < n; k++)
             {
-                MatEntry m;
+                MatrixEntry m;
                 buff.read(m);
                 // only add entries corresponding to border entities
-                typename std::map<IdType,int>::const_iterator it = gid2Index_.find(m.first);
-                if (it != gid2Index_.end())
-                    if (A_[i].find(it->second) != A_[i].end())
-                        A_[i][it->second] += m.second;
+                auto it = idToIndex_.find(m.first);
+                if (it != idToIndex_.end())
+                    if (A_[rowIdx].find(it->second) != A_[rowIdx].end())
+                        A_[rowIdx][it->second] += m.second;
             }
         }
 
     private:
         const DofMapper& mapper_;
-        const std::map<IdType,int>& gid2Index_;
-        const std::map<int,IdType>& index2GID_;
+        const std::map<IdType,int>& idToIndex_;
+        const std::map<int,IdType>& indexToID_;
         Matrix& A_;
 
-    }; // class MatEntryExchange
+    }; // class MatrixEntryExchange
 
-    [[deprecated("Use extendMatrix instead. Will be removed after 3.1!")]]
+public:
+
+    EntityExchanger(const GridView& gridView, const DofMapper& mapper)
+    : gridView_(gridView), mapper_(mapper)
+    {
+        idToIndex_.clear();
+        indexToID_.clear();
+
+        for (const auto& entity : entities(gridView_, Dune::Codim<dofCodim>()))
+        {
+            if (entity.partitionType() == Dune::BorderEntity)
+            {
+                const int localIdx = mapper_.index(entity);
+                IdType dofIdxGlobal = gridView_.grid().globalIdSet().id(entity);
+
+                idToIndex_.emplace(dofIdxGlobal, localIdx);
+                indexToID_.emplace(localIdx, dofIdxGlobal);
+            }
+        }
+    }
+
+    [[deprecated("Use extendMatrix instead. Will be removed after 3.2!")]]
     void getExtendedMatrix (Matrix& A, const ParallelISTLHelper<GridView, LinearSolverTraits>& helper)
     { extendMatrix(A, helper); }
 
@@ -818,122 +767,118 @@ public:
      */
     void extendMatrix(Matrix& A, const ParallelISTLHelper<GridView, LinearSolverTraits>& helper)
     {
-        if (gridView_.comm().size() > 1)
+        if (gridView_.comm().size() <= 1)
+            return;
+
+        Matrix tmp(A);
+        std::size_t nnz = 0;
+        // get entries from other processes
+        MatrixPatternExchange datahandle(mapper_, idToIndex_, indexToID_, A, helper);
+        gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
+                                          Dune::ForwardCommunication);
+        std::vector<std::set<int>>& sparsity = datahandle.sparsity();
+        // add own entries, count number of nonzeros
+        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
         {
-            Matrix tmp(A);
-            std::size_t nnz = 0;
-            // get entries from other processes
-            MatPatternExchange datahandle(mapper_, gid2Index_, index2GID_, A, helper);
-            gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
-                                              Dune::ForwardCommunication);
-            std::vector<std::set<int> >& sparsity = datahandle.sparsity();
-            // add own entries, count number of nonzeros
-            for (RowIterator i = A.begin(); i != A.end(); ++i)
-            {
-                for (ColIterator j = A[i.index()].begin(); j != A[i.index()].end(); ++j)
-                {
-                    if (sparsity[i.index()].find(j.index()) == sparsity[i.index()].end())
-                        sparsity[i.index()].insert(j.index());
-                }
-                nnz += sparsity[i.index()].size();
-            }
+            for (auto colIt = A[rowIt.index()].begin(); colIt != A[rowIt.index()].end(); ++colIt)
+                if (!sparsity[rowIt.index()].count(colIt.index()))
+                    sparsity[rowIt.index()].insert(colIt.index());
 
-            A.setSize(tmp.N(), tmp.N(), nnz);
-            A.setBuildMode(Matrix::row_wise);
-            typename Matrix::CreateIterator citer = A.createbegin();
-            using Iter = typename std::vector<std::set<int> >::const_iterator;
-            for (Iter i = sparsity.begin(), end = sparsity.end(); i!=end; ++i, ++citer)
-            {
-                using SIter = typename std::set<int>::const_iterator;
-                for (SIter si = i->begin(), send = i->end(); si!=send; ++si)
-                    citer.insert(*si);
-            }
-
-            // set matrix old values
-            A = 0;
-            for (RowIterator i = tmp.begin(); i != tmp.end(); ++i)
-                for (ColIterator j = tmp[i.index()].begin(); j != tmp[i.index()].end(); ++j)
-                    A[i.index()][j.index()] = tmp[i.index()][j.index()];
+            nnz += sparsity[rowIt.index()].size();
         }
+
+        A.setSize(tmp.N(), tmp.N(), nnz);
+        A.setBuildMode(Matrix::row_wise);
+        auto citer = A.createbegin();
+        for (auto i = sparsity.begin(), end = sparsity.end(); i!=end; ++i, ++citer)
+        {
+            for (auto si = i->begin(), send = i->end(); si!=send; ++si)
+                citer.insert(*si);
+        }
+
+        // set matrix old values
+        A = 0;
+        for (auto rowIt = tmp.begin(); rowIt != tmp.end(); ++rowIt)
+            for (auto colIt = tmp[rowIt.index()].begin(); colIt != tmp[rowIt.index()].end(); ++colIt)
+                A[rowIt.index()][colIt.index()] = tmp[rowIt.index()][colIt.index()];
     }
 
     /*!
      * \brief Sums up the entries corresponding to border vertices.
      * \param A Matrix to operate on.
      */
-    void sumEntries (Matrix& A)
+    void sumEntries(Matrix& A)
     {
-        if (gridView_.comm().size() > 1)
-        {
-            MatEntryExchange datahandle(mapper_, gid2Index_, index2GID_, A);
-            gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
-                                              Dune::ForwardCommunication);
-        }
+        if (gridView_.comm().size() <= 1)
+            return;
+
+        MatrixEntryExchange datahandle(mapper_, idToIndex_, indexToID_, A);
+        gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
+                                          Dune::ForwardCommunication);
     }
-
-#if HAVE_MPI
-    /*!
-     * \brief Extends the sparsity pattern of the discretization matrix for AMG.
-     * \param A A reference to the matrix to change.
-     */
-    [[deprecated("Use extendMatrix instead. Will be removed after 3.1!")]]
-    void getExtendedMatrix (Matrix& A)
-    { extendMatrix(A); }
-    /*!
-     * \brief Extends the sparsity pattern of the discretization matrix for AMG.
-     * \param A A reference to the matrix to change.
-     */
-    void extendMatrix(Matrix& A)
-    {
-        if (gridView_.comm().size() > 1)
-        {
-            Matrix tmp(A);
-            std::size_t nnz = 0;
-            // get entries from other processes
-            MatPatternExchange datahandle(mapper_, gid2Index_, index2GID_, A, *this);
-            gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
-                                  Dune::ForwardCommunication);
-            std::vector<std::set<int> >& sparsity = datahandle.sparsity();
-
-            // add own entries, count number of nonzeros
-            for (RowIterator i = A.begin(); i != A.end(); ++i)
-            {
-                for (ColIterator j = A[i.index()].begin(); j != A[i.index()].end(); ++j)
-                {
-                    if (sparsity[i.index()].find(j.index()) == sparsity[i.index()].end())
-                        sparsity[i.index()].insert(j.index());
-                }
-                nnz += sparsity[i.index()].size();
-            }
-
-            A.setSize(tmp.N(), tmp.N(), nnz);
-            A.setBuildMode(Matrix::row_wise);
-            typename Matrix::CreateIterator citer = A.createbegin();
-            using Iter = typename std::vector<std::set<int> >::const_iterator;
-            for (Iter i = sparsity.begin(), end = sparsity.end(); i!=end; ++i, ++citer){
-                using SIter = typename std::set<int>::const_iterator;
-                for (SIter si = i->begin(), send = i->end(); si!=send; ++si)
-                    citer.insert(*si);
-            }
-
-            // set matrix old values
-            A = 0;
-            for (RowIterator i = tmp.begin(); i != tmp.end(); ++i)
-                for (ColIterator j = tmp[i.index()].begin(); j != tmp[i.index()].end(); ++j)
-                    A[i.index()][j.index()] = tmp[i.index()][j.index()];
-
-            sumEntries(A);
-        }
-    }
-#endif
 
 private:
     const GridView gridView_;
     const DofMapper& mapper_;
-    std::map<IdType, int> gid2Index_;
-    std::map<int, IdType> index2GID_;
+    std::map<IdType, int> idToIndex_;
+    std::map<int, IdType> indexToID_;
 
 }; // class EntityExchanger
+
+#if HAVE_MPI
+/*!
+ * \brief Prepare linear algebra variables for parallel solvers
+ */
+template<class LinearSolverTraits, class Matrix, class Vector, class ParallelHelper>
+void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
+                                  std::shared_ptr<typename LinearSolverTraits::Comm>& comm,
+                                  std::shared_ptr<typename LinearSolverTraits::LinearOperator>& fop,
+                                  std::shared_ptr<typename LinearSolverTraits::ScalarProduct>& sp,
+                                  ParallelHelper& pHelper,
+                                  const bool firstCall)
+{
+    const auto category = LinearSolverTraits::isNonOverlapping ?
+                          Dune::SolverCategory::nonoverlapping
+                        : Dune::SolverCategory::overlapping;
+
+    if (LinearSolverTraits::isNonOverlapping && firstCall)
+        pHelper.initGhostsAndOwners();
+
+    comm = std::make_shared<typename LinearSolverTraits::Comm>(pHelper.gridView().comm(), category);
+
+    if (LinearSolverTraits::isNonOverlapping)
+    {
+        // extend the matrix pattern such that it is usable for a parallel solver
+        using GridView = std::decay_t<decltype(pHelper.gridView())>;
+        EntityExchanger<GridView, LinearSolverTraits> exchanger(pHelper.gridView(), pHelper.dofMapper());
+        exchanger.extendMatrix(A, pHelper);
+        exchanger.sumEntries(A);
+    }
+    pHelper.createParallelIndexSet(*comm);
+
+    fop = std::make_shared<typename LinearSolverTraits::LinearOperator>(A, *comm);
+    sp = std::make_shared<typename LinearSolverTraits::ScalarProduct>(*comm);
+
+    // make rhs consistent
+    if (LinearSolverTraits::isNonOverlapping)
+        pHelper.makeNonOverlappingConsistent(b);
+}
+#endif // HAVE_MPI
+
+/*!
+ * \brief Prepare linear algebra variables for sequential solvers
+ */
+template<class LinearSolverTraits, class Matrix>
+void prepareLinearAlgebraSequential(Matrix& A,
+                                    std::shared_ptr<typename LinearSolverTraits::Comm>& comm,
+                                    std::shared_ptr<typename LinearSolverTraits::LinearOperator>& fop,
+                                    std::shared_ptr<typename LinearSolverTraits::ScalarProduct>& sp)
+{
+    comm = std::make_shared<typename LinearSolverTraits::Comm>();
+    fop = std::make_shared<typename LinearSolverTraits::LinearOperator>(A);
+    sp = std::make_shared<typename LinearSolverTraits::ScalarProduct>();
+}
+
 
 /*!
  * \brief Prepare the linear algebra member variables.
@@ -949,16 +894,16 @@ private:
  *
  * \tparam isParallel decides if the setting is parallel or sequential
  */
-template<class GridView, class LinearSolverTraits, bool isParallel>
-struct LinearAlgebraPreparator
+template<class GridView, class AmgTraits, bool isParallel>
+struct LinearAlgebraPreparator // TODO: Deprecating the whole struct always triggers a warning even it is not used. Remove after 3.2
 {
-    using DofMapper = typename LinearSolverTraits::DofMapper;
-    using ParallelHelper = ParallelISTLHelper<GridView, LinearSolverTraits>;
-    using Comm = typename LinearSolverTraits::Comm;
-    using LinearOperator = typename LinearSolverTraits::LinearOperator;
-    using ScalarProduct = typename LinearSolverTraits::ScalarProduct;
+    using ParallelHelper = ParallelISTLHelper<GridView, AmgTraits>;
+    using Comm = typename AmgTraits::Comm;
+    using LinearOperator = typename AmgTraits::LinearOperator;
+    using ScalarProduct = typename AmgTraits::ScalarProduct;
 
     template<class Matrix, class Vector>
+    [[deprecated("Use free function prepareLinearAlgebraSequential instead. Will be removed after 3.2!")]]
     static void prepareLinearAlgebra(Matrix& A, Vector& b,
                                      int& rank,
                                      std::shared_ptr<Comm>& comm,
@@ -967,9 +912,7 @@ struct LinearAlgebraPreparator
                                      ParallelHelper& pHelper,
                                      const bool firstCall)
     {
-        comm = std::make_shared<Comm>();
-        fop = std::make_shared<LinearOperator>(A);
-        sp = std::make_shared<ScalarProduct>();
+        prepareLinearAlgebraSequential<AmgTraits>(A, comm, fop, sp);
     }
 };
 
@@ -977,16 +920,16 @@ struct LinearAlgebraPreparator
 /*!
  * \brief Specialization for the parallel case.
  */
-template<class GridView, class LinearSolverTraits>
-struct LinearAlgebraPreparator<GridView, LinearSolverTraits, true>
+template<class GridView, class AmgTraits>
+struct LinearAlgebraPreparator<GridView, AmgTraits, true> // TODO: Deprecating the whole struct always triggers a warning even it is not used. Remove after 3.2
 {
-    using DofMapper = typename LinearSolverTraits::DofMapper;
-    using ParallelHelper = ParallelISTLHelper<GridView, LinearSolverTraits>;
-    using Comm = typename LinearSolverTraits::Comm;
-    using LinearOperator = typename LinearSolverTraits::LinearOperator;
-    using ScalarProduct = typename LinearSolverTraits::ScalarProduct;
+    using ParallelHelper = ParallelISTLHelper<GridView, AmgTraits>;
+    using Comm = typename AmgTraits::Comm;
+    using LinearOperator = typename AmgTraits::LinearOperator;
+    using ScalarProduct = typename AmgTraits::ScalarProduct;
 
     template<class Matrix, class Vector>
+    [[deprecated("Use free function prepareLinearAlgebraParallel instead. Will be removed after 3.2!")]]
     static void prepareLinearAlgebra(Matrix& A, Vector& b,
                                      int& rank,
                                      std::shared_ptr<Comm>& comm,
@@ -995,32 +938,11 @@ struct LinearAlgebraPreparator<GridView, LinearSolverTraits, true>
                                      ParallelHelper& pHelper,
                                      const bool firstCall)
     {
-        const auto category = LinearSolverTraits::isNonOverlapping ?
-                              Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
-
-        if (LinearSolverTraits::isNonOverlapping && firstCall)
-            pHelper.initGhostsAndOwners();
-
-        comm = std::make_shared<Comm>(pHelper.gridView().comm(), category);
-
-        if (LinearSolverTraits::isNonOverlapping)
-        {
-            // extend the matrix pattern such that it is usable for the parallel solver
-            EntityExchanger<GridView, LinearSolverTraits> exchanger(pHelper.gridView(), pHelper.dofMapper());
-            exchanger.extendMatrix(A, pHelper);
-            exchanger.sumEntries(A);
-        }
-        pHelper.createParallelIndexSet(*comm);
-
-        fop = std::make_shared<LinearOperator>(A, *comm);
-        sp = std::make_shared<ScalarProduct>(*comm);
+        prepareLinearAlgebraParallel<AmgTraits>(A, b, rank, comm, fop, sp, pHelper, firstCall);
         rank = comm->communicator().rank();
-
-        // Make rhs consistent
-        if (LinearSolverTraits::isNonOverlapping)
-            pHelper.makeNonOverlappingConsistent(b);
     }
-};
+
+}; // parallel LinearAlgebraPreparator
 
 #endif // HAVE_MPI
 

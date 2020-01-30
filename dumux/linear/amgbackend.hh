@@ -134,12 +134,18 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        int rank = 0;
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> fop;
         std::shared_ptr<ScalarProduct> sp;
-        static const bool isParallel = AmgTraits::isParallel;
-        prepareLinearAlgebra_<Matrix, Vector, isParallel>(A, b, rank, comm, fop, sp);
+
+#if HAVE_MPI
+        if constexpr (AmgTraits::isParallel)
+            prepareLinearAlgebraParallel<AmgTraits>(A, b, comm, fop, sp, *phelper_, firstCall_);
+        else
+            prepareLinearAlgebraSequential<AmgTraits>(A, comm, fop, sp);
+#else
+        prepareLinearAlgebraSequential<AmgTraits>(A, comm, fop, sp);
+#endif
 
         using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
         using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat, Dune::Amg::FirstDiagonal>>;
@@ -156,7 +162,7 @@ public:
 
         AMGType amg(*fop, criterion, smootherArgs, *comm);
         Dune::BiCGSTABSolver<VType> solver(*fop, *sp, amg, this->residReduction(), this->maxIter(),
-                                           rank == 0 ? this->verbosity() : 0);
+                                           comm->communicator().rank() == 0 ? this->verbosity() : 0);
 
         solver.apply(x, b, result_);
         firstCall_ = false;
@@ -180,34 +186,6 @@ public:
     }
 
 private:
-
-    /*!
-     * \brief Prepare the linear algebra member variables.
-     *
-     * At compile time, correct constructor calls have to be chosen,
-     * depending on whether the setting is parallel or sequential.
-     * Since several template parameters are present, this cannot be solved
-     * by a full function template specialization. Instead, class template
-     * specialization has to be used.
-     * This adapts example 4 from http://www.gotw.ca/publications/mill17.htm.
-
-     * The function is called from the solve function. The call is
-     * forwarded to the corresponding function of a class template.
-     *
-     * \tparam Matrix the matrix type
-     * \tparam Vector the vector type
-     * \tparam isParallel decides if the setting is parallel or sequential
-     */
-    template<class Matrix, class Vector, bool isParallel>
-    void prepareLinearAlgebra_(Matrix& A, Vector& b, int& rank,
-                               std::shared_ptr<Comm>& comm,
-                               std::shared_ptr<LinearOperator>& fop,
-                               std::shared_ptr<ScalarProduct>& sp)
-    {
-        LinearAlgebraPreparator<GridView, AmgTraits, isParallel>
-          ::prepareLinearAlgebra(A, b, rank, comm, fop, sp,
-                                 *phelper_, firstCall_);
-    }
 
     std::shared_ptr<ParallelISTLHelper<GridView, AmgTraits>> phelper_;
     Dune::InverseOperatorResult result_;

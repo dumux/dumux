@@ -42,9 +42,7 @@
 #include <dune/grid/uggrid.hh>
 #endif // HAVE_UG
 
-namespace Dumux {
-namespace Temp {
-namespace Capabilities {
+namespace Dumux::Temp::Capabilities {
 
 template<class Grid, int codim>
 struct canCommunicate
@@ -60,9 +58,7 @@ struct canCommunicate<Dune::UGGrid<dim>, codim>
 };
 #endif // HAVE_UG
 
-} // namespace Capabilities
-} // namespace Temp
-} // namespace Dumux
+} // namespace Dumux::Temp::Capabilities
 // end workaround
 
 namespace Dumux {
