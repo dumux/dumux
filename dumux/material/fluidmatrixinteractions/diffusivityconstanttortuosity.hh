@@ -55,13 +55,12 @@ public:
      * \param saturation The saturation of the wetting phase
      * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
      */
-    [[deprecated("Signature deprecated. Use signature with volume variables!")]]
+    [[deprecated("Signature deprecated. Use effectiveDiffusionCoefficient(volvars, phaseIdx, comp1dxI, compIdxJ)!")]]
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                        const Scalar saturation,
                                        const Scalar diffCoeff)
     {
         static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
-
         return porosity * saturation * tau * diffCoeff;
     }
 
@@ -73,14 +72,16 @@ public:
      * \param compIdx the component index
      */
     template<class VolumeVariables>
-    static Scalar effectiveDiffusivity(const VolumeVariables& volVars,
-                                       const Scalar diffCoeff,
-                                       const int phaseIdx)
+    static Scalar effectiveDiffusionCoefficient(const VolumeVariables& volVars,
+                                                const int phaseIdx,
+                                                const int compIdxI,
+                                                const int compIdxJ)
     {
         static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
-
+        const Scalar diffCoeff = volVars.diffusionCoefficient(phaseIdx, compIdxI, compIdxJ);
         return volVars.porosity() * volVars.saturation(phaseIdx) * tau * diffCoeff;
     }
+
 };
 
 } // end namespace Dumux
