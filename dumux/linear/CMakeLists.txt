@@ -2,8 +2,10 @@ install(FILES
 amgbackend.hh
 amgparallelhelpers.hh
 amgtraits.hh
+linearsolvertraits.hh
 linearsolveracceptsmultitypematrix.hh
 matrixconverter.hh
+parallelhelpers.hh
 pdesolver.hh
 scotchbackend.hh
 seqsolverbackend.hh
