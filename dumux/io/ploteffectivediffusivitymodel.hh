@@ -39,7 +39,6 @@ template<class Scalar> class GnuplotInterface;
 template<class Scalar, class EffectiveDiffusivityModel>
 class PlotEffectiveDiffusivityModel
 {
-
 public:
     //! Constructor
     PlotEffectiveDiffusivityModel()
@@ -51,6 +50,7 @@ public:
      *
      * \param gnuplot The gnuplot interface
      * \param porosity The porosity
+     * \param diffCoeff The binary diffusion coefficient
      * \param lowerSat Minimum x-value for data set
      * \param upperSat Maximum x-value for data set
      * \param curveName Name of the data set
@@ -58,6 +58,7 @@ public:
      */
     void adddeffcurve(GnuplotInterface<Scalar> &gnuplot,
                       Scalar porosity,
+                      Scalar diffCoeff,
                       Scalar lowerSat = 0.0,
                       Scalar upperSat = 1.0,
                       std::string curveName = "deff",
@@ -70,16 +71,48 @@ public:
         for (int i = 0; i <= numIntervals_; i++)
         {
             sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            deff[i] = EffectiveDiffusivityModel::effectiveDiffusivity(porosity, sw[i],
-                                                                      1.0 /*Diffusion Coefficient*/);
+            VolumeVariables volVars(sw[i], porosity, diffCoeff);
+            deff[i] = EffectiveDiffusivityModel::effectiveDiffusionCoefficient(volVars, 0, 0, 1);
         }
 
-        gnuplot.setXlabel("phase saturation [-]");
-        gnuplot.setYlabel("effective diffusion/molecular diffusion [-]");
         gnuplot.addDataSetToPlot(sw, deff, curveName, curveOptions);
     }
 
+    //! for point check
+    Scalar getEffectiveDiffusionCoefficient(Scalar saturation,
+                                            Scalar porosity,
+                                            Scalar diffCoeff) const
+    {
+        VolumeVariables volVars(saturation, porosity, diffCoeff);
+        return EffectiveDiffusivityModel::effectiveDiffusionCoefficient(volVars, 0, 0, 1);
+    }
+
 private:
+
+    class VolumeVariables
+    {
+    public:
+        VolumeVariables(Scalar saturation, Scalar porosity, Scalar diffCoeff)
+        : saturation_(saturation)
+        , porosity_(porosity)
+        , diffCoeff_(diffCoeff)
+        {}
+
+        Scalar saturation(int phaseIdx = 0) const
+        { return saturation_; }
+
+        Scalar porosity() const
+        { return porosity_; }
+
+        Scalar diffusionCoefficient(const int phaseIdx, const int compIdxI, const int compIdxJ) const
+        { return diffCoeff_;}
+
+    private:
+        Scalar saturation_;
+        Scalar porosity_;
+        Scalar diffCoeff_;
+    };
+
     int numIntervals_;
 };
 
