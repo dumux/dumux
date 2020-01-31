@@ -28,25 +28,25 @@ dumux_add_test(NAME test_ff_rans2c_kepsilon_wallfunctions
 
 dumux_add_test(NAME test_ff_rans2c_komega
               SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=FlatPlateNCLowReKEpsilon
-              LABELS freeflow rans
-              CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_komega-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_komega-00031.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_komega params.input
-                             -Problem.Name test_ff_rans2c_komega")
-
-dumux_add_test(NAME test_ff_rans2c_lowrekepsilon
-              SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCKOmega
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_komega-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_komega-00036.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_komega params.input
+                             -Problem.Name test_ff_rans2c_komega")
+
+dumux_add_test(NAME test_ff_rans2c_lowrekepsilon
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=FlatPlateNCLowReKEpsilon
+              LABELS freeflow rans
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_lowrekepsilon-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_lowrekepsilon-00036.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_lowrekepsilon-00031.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_lowrekepsilon params.input
                              -Problem.Name test_ff_rans2c_lowrekepsilon")
 
