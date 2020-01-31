@@ -72,5 +72,6 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_uzawapreconditioner
                              -LinearSolver.Verbosity 1
                              -LinearSolver.MaxIterations 5000
                              -LinearSolver.PreconditionerIterations 2
-                             -LinearSolver.PreconditionerRelaxation 5.0
+                             -LinearSolver.PreconditionerDetermineOmega true
+                             -LinearSolver.PreconditionerPowerLawIterations 5
                              -LinearSolver.InexactVelocitySolver true")

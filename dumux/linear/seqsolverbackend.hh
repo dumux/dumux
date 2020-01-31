@@ -917,6 +917,50 @@ public:
 
             linearOperator_ = std::make_unique<LinearOperator>(_A_[_1][_1]);
             velocityAMG_ = std::make_unique<VelocityAMG>(*linearOperator_, criterion, smootherArgs, comm_);
+
+            static auto determineOmega = getParam<bool>("LinearSolver.PreconditionerDetermineOmega", false);
+            if (determineOmega)
+            {
+                auto& A = _A_[_1][_1];
+                auto& Bt = _A_[_1][_0];
+                auto& B = _A_[_0][_1];
+
+                VelocityVector x(A.M());
+                x = 1.0;
+
+                static auto iterations = getParam<std::size_t>("LinearSolver.PreconditionerPowerLawIterations", 5);
+
+                // apply power iteration x_k+1 = M*x_k/|M*x_k| for the matrix M = -B*Ainv*Bt
+                for (std::size_t i = 0; i < iterations; ++i)
+                {
+                    // btx = Bt*x
+                    VelocityVector btx(x.size());
+                    Bt.mv(x, btx);
+
+                    // ainvbtx = Ainv*(Bt*x)
+                    auto ainvbtx = x;
+                    velocityAMG_->pre(ainvbtx, btx);
+                    velocityAMG_->apply(ainvbtx, btx);
+                    velocityAMG_->post(ainvbtx);
+
+                    // v = M*x = -B*(Ainv*Bt*x)
+                    VelocityVector v(x.size());
+                    B.mv(ainvbtx, v);
+                    v *= -1.0;
+
+                    // eigenvalue lambda = xt*M*x/(xt*x) = xt*v/(xt*x);
+                    auto lambda = x.dot(v)/(x.dot(x));
+
+                    // relaxation factor omega = 1/lambda;
+                    _w = 1.0/lambda;
+
+                    // new iterate x = M*x/|M*x| = v/|v|
+                    x = v;
+                    x /= v.two_norm();
+                }
+
+                std::cout << "relaxation factor " << _w << std::endl;
+            }
         }
         else
         {
