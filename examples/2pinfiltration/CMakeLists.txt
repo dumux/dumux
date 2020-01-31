@@ -9,5 +9,5 @@ dumux_add_test(NAME example_2p_pointsource_adaptive
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example-2padaptive-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/example_2p_pointsource_adaptive-00007.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/example_2p_pointsource_adaptive-00006.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/example_2p_pointsource_adaptive params.input -TimeLoop.TEnd 100 -TimeLoop.DtInitial 10 -Problem.Name  example_2p_pointsource_adaptive")
