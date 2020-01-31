@@ -49,8 +49,7 @@ namespace Dumux {
 /*!
  * \ingroup Linear
  * \brief A linear solver using the dune-istl solver factory
- *        allowing choosing the solver and preconditioner
- *        at runtime.
+ *        to choose the solver and preconditioner at runtime.
  * \note the solvers are configured via the input file
  * \note requires Dune version 2.7.1 or newer
  */
@@ -89,7 +88,7 @@ public:
     /*!
      * \brief Construct the backend for parallel or sequential runs
      *
-     * \param gridView the grid view on which we are performing the multi-grid
+     * \param gridView the grid view for parallel communication via the grid
      * \param dofMapper an index mapper for dof entities
      * \param paramGroup the parameter group for parameter lookup
      */
