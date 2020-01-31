@@ -228,6 +228,7 @@ IstlSolverFactoryBackend<Matrix, Vector, Geometry>::dumuxToIstlSolverParams =
     {"MaxIterations", "maxit"},
     {"ResidualReduction", "reduction"},
     {"Type", "type"},
+    {"GMResRestart", "restart"}, // cycles before restarting
     {"Restart", "restart"}, // cycles before restarting
     {"MaxOrthogonalizationVectors", "mmax"},
 
