@@ -101,35 +101,46 @@ public:
         return false;
     }
 
-    /** \brief test for subgroup in group
+    /** \brief obtain a vector of all full group names for a specified subgroup name
      *
-     * Tests whether given sub group exists in a group.
-     * Given a group this function starts to look from the back
-     *       for dots. In G1.G2.G3 the function first looks if the key
-     *       "G3.Key" exists, then "G2.Key", ...
+     * Example:
+     * ------------
+     * For the parameter tree
      *
-     * \param key key name
-     * \param groupPrefix the group prefix name
-     * \return a vector of fully qualified groups ordered by decreasing relevance
+     * [G1]
+     * MyParam1 = 1
+     * [G2.G1]
+     * MyParam2 = 2
+     * [G3.G2.G1]
+     * MyParam3 = 3
+     *
+     * and groupPrefix="G3.G2" and subGroupName="G1"
+     * this returns a vector with the entries {"G3.G2.G1", "G2.G1", "G1"}.
+     * If groupPrefix = "G2", it returns {"G2.G1", "G1"}.
+     * If groupPrefix = "" the returned vector has size 1 (containing subGroupName),
+     * or size 0 if the subgroup does not exist in the parameter tree.
+     *
+     * \param subGroupName the sub group to look for
+     * \param groupPrefix the group prefix name (potentially prefixing the subgroup)
+     * \return a vector of fully qualified groups ordered by decreasing tree depth
      */
-    std::vector<std::string> getSubGroups(const std::string& groupName,
+    std::vector<std::string> getSubGroups(const std::string& subGroupName,
                                           std::string groupPrefix) const
     {
         std::vector<std::string> groupNames;
-        auto compoundGroup = groupPrefix.empty()? groupName : groupPrefix + "." + groupName;
-        auto dot = groupPrefix.rfind(".");
+        auto compoundGroup = groupPrefix.empty() ? subGroupName : groupPrefix + "." + subGroupName;
 
-        while (dot != std::string::npos)
+        for (std::string::size_type dotPos = 0; dotPos != std::string::npos; dotPos = groupPrefix.rfind("."))
         {
-            groupPrefix = groupPrefix.substr(0, dot);
-            compoundGroup = groupPrefix + "." + groupName;
             if (params_.hasSub(compoundGroup) || defaultParams_.hasSub(compoundGroup))
                 groupNames.push_back(compoundGroup);
-            dot = groupPrefix.rfind(".");
+
+            groupPrefix = groupPrefix.substr(0, dotPos);
+            compoundGroup = groupPrefix + "." + subGroupName;
         }
 
-        if (params_.hasSub(groupName) || defaultParams_.hasSub(groupName))
-            groupNames.push_back(groupName);
+        if (params_.hasSub(subGroupName) || defaultParams_.hasSub(subGroupName))
+            groupNames.push_back(subGroupName);
 
         return groupNames;
     }
