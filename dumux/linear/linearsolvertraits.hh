@@ -105,6 +105,10 @@ struct LinearSolverTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
                      || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
+
+    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+                                           || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
+
     using MType = Matrix;
     using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
     using SolverTraits = NonoverlappingSolverTraits<MType, VType, isParallel>;
@@ -151,6 +155,9 @@ struct LinearSolverTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
                      || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
+
+    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+                                           || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
     using MType = Matrix;
     using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
     using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
