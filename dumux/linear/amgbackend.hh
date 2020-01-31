@@ -49,37 +49,6 @@ namespace Dumux {
 
 /*!
  * \ingroup Linear
- * \brief Scale the linear system by the inverse of
- * its (block-)diagonal entries.
- *
- * \param matrix the matrix to scale
- * \param rhs the right hand side vector to scale
- */
-template <class Matrix, class Vector>
-void scaleLinearSystem(Matrix& matrix, Vector& rhs)
-{
-    typename Matrix::RowIterator row = matrix.begin();
-    for(; row != matrix.end(); ++row)
-    {
-        using size_type = typename Matrix::size_type;
-        size_type rowIdx = row.index();
-
-        using MatrixBlock = typename Matrix::block_type;
-        MatrixBlock diagonal = matrix[rowIdx][rowIdx];
-        diagonal.invert();
-
-        using VectorBlock = typename Vector::block_type;
-        const VectorBlock b = rhs[rowIdx];
-        diagonal.mv(b, rhs[rowIdx]);
-
-        typename Matrix::ColIterator col = row->begin();
-        for (; col != row->end(); ++col)
-            col->leftmultiply(diagonal);
-    }
-}
-
-/*!
- * \ingroup Linear
  * \brief A linear solver based on the ISTL AMG preconditioner
  *        and the ISTL BiCGSTAB solver.
  */
