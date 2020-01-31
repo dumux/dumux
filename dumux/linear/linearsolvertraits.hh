@@ -64,114 +64,108 @@ struct canCommunicate<Dune::UGGrid<dim>, codim>
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
-template<class MType, class VType, class GridGeometry, DiscretizationMethod discMethod> struct LinearSolverTraitsImpl;
+template<class GridGeometry, DiscretizationMethod discMethod>
+struct LinearSolverTraitsImpl;
 
 //! The type traits required for using the IstlFactoryBackend
-template<class MType, class VType, class GridGeometry>
-using LinearSolverTraits = LinearSolverTraitsImpl<MType, VType, GridGeometry, GridGeometry::discMethod>;
+template<class GridGeometry>
+using LinearSolverTraits = LinearSolverTraitsImpl<GridGeometry, GridGeometry::discMethod>;
 
-//! NonoverlappingSolverTraits used by discretization with non-overlapping parallel model
-template <class MType, class VType, bool isParallel>
-class NonoverlappingSolverTraits
+//! sequential solver traits
+template<class MType, class VType>
+struct SequentialSolverTraits
 {
-public:
-    using Comm = Dune::Amg::SequentialInformation;
-    using LinearOperator = Dune::MatrixAdapter<MType,VType,VType>;
+    using Matrix = MType;
+    using Vector = VType;
+    using LinearOperator = Dune::MatrixAdapter<MType, VType, VType>;
     using ScalarProduct = Dune::SeqScalarProduct<VType>;
-    using Smoother = Dune::SeqSSOR<MType,VType, VType>;
+
+    template<class SeqPreconditioner>
+    using Preconditioner = SeqPreconditioner;
 };
 
 #if HAVE_MPI
 template <class MType, class VType>
-class NonoverlappingSolverTraits<MType, VType, true>
+struct NonoverlappingSolverTraits
 {
 public:
-    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int>;
-    using LinearOperator = Dune::NonoverlappingSchwarzOperator<MType,VType, VType,Comm>;
-    using ScalarProduct = Dune::NonoverlappingSchwarzScalarProduct<VType,Comm>;
-    using Smoother = Dune::NonoverlappingBlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> >;
+    using Matrix = MType;
+    using Vector = VType;
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+    using LinearOperator = Dune::NonoverlappingSchwarzOperator<MType, VType, VType, Comm>;
+    using ScalarProduct = Dune::NonoverlappingSchwarzScalarProduct<VType, Comm>;
+
+    template<class SeqPreconditioner>
+    using Preconditioner = Dune::NonoverlappingBlockPreconditioner<Comm, SeqPreconditioner>;
+};
+
+template <class MType, class VType>
+struct OverlappingSolverTraits
+{
+public:
+    using Matrix = MType;
+    using Vector = VType;
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+    using LinearOperator = Dune::OverlappingSchwarzOperator<MType, VType, VType, Comm>;
+    using ScalarProduct = Dune::OverlappingSchwarzScalarProduct<VType, Comm>;
+
+    template<class SeqPreconditioner>
+    using Preconditioner = Dune::BlockPreconditioner<VType, VType, Comm, SeqPreconditioner>;
 };
 #endif
 
 //! Box: use non-overlapping model
-template<class Matrix, class Vector, class GridGeometry>
-struct LinearSolverTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod::box>
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::box>
 {
+    using GridView = typename GridGeometry::GridView;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
-    enum {
-        dofCodim = Grid::dimension,
-        isNonOverlapping = true,
-        // TODO: see above for description of this workaround, remove second line if fixed upstream
-        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-                     || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v
-    };
-
-    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-                                           || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
-
-    using MType = Matrix;
-    using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
-    using SolverTraits = NonoverlappingSolverTraits<MType, VType, isParallel>;
-    using Comm = typename SolverTraits::Comm;
-    using LinearOperator = typename SolverTraits::LinearOperator;
-    using ScalarProduct = typename SolverTraits::ScalarProduct;
-    using Smoother = typename SolverTraits::Smoother;
-
     using DofMapper = typename GridGeometry::VertexMapper;
-};
 
-//! OverlappingSolverTraits used by discretization with overlapping parallel model
-template <class MType, class VType, bool isParallel>
-class OverlappingSolverTraits
-{
-public:
-    using Comm = Dune::Amg::SequentialInformation;
-    using LinearOperator = Dune::MatrixAdapter<MType,VType,VType>;
-    using ScalarProduct = Dune::SeqScalarProduct<VType>;
-    using Smoother = Dune::SeqSSOR<MType,VType, VType>;
-};
+    static constexpr int dofCodim = Grid::dimension;
+    static constexpr bool isNonOverlapping = true;
+    // TODO: see above for description of this workaround, remove second line if fixed upstream
+    static constexpr bool canCommunicate =
+             Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+             || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
-#if HAVE_MPI
-template <class MType, class VType>
-class OverlappingSolverTraits<MType, VType, true>
-{
-public:
-    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int>;
-    using LinearOperator = Dune::OverlappingSchwarzOperator<MType,VType, VType,Comm>;
-    using ScalarProduct = Dune::OverlappingSchwarzScalarProduct<VType,Comm>;
-    using Smoother = Dune::BlockPreconditioner<VType,VType,Comm,Dune::SeqSSOR<MType,VType, VType> >;
+    template<class Matrix, class Vector>
+    using Sequential = SequentialSolverTraits<Matrix, Vector>;
+
+    template<class Matrix, class Vector>
+    using Parallel = std::conditional_t<isNonOverlapping,
+                       NonoverlappingSolverTraits<Matrix, Vector>,
+                       OverlappingSolverTraits<Matrix, Vector>>;
 };
-#endif
 
 //! Cell-centered tpfa: use overlapping model
-template<class Matrix, class Vector, class GridGeometry>
-struct LinearSolverTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod::cctpfa>
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa>
 {
+    using GridView = typename GridGeometry::GridView;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
-    enum {
-        dofCodim = 0,
-        isNonOverlapping = false,
-        // TODO: see above for description of this workaround, remove second line if fixed upstream
-        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-                     || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v
-    };
+    using DofMapper = typename GridGeometry::VertexMapper;
 
-    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-                                           || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
-    using MType = Matrix;
-    using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
-    using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
-    using Comm = typename SolverTraits::Comm;
-    using LinearOperator = typename SolverTraits::LinearOperator;
-    using ScalarProduct = typename SolverTraits::ScalarProduct;
-    using Smoother = typename SolverTraits::Smoother;
+    static constexpr int dofCodim = 0;
+    static constexpr bool isNonOverlapping = false;
+    // TODO: see above for description of this workaround, remove second line if fixed upstream
+    static constexpr bool canCommunicate =
+             Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+             || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
-    using DofMapper = typename GridGeometry::ElementMapper;
+    template<class Matrix, class Vector>
+    using Sequential = SequentialSolverTraits<Matrix, Vector>;
+
+    template<class Matrix, class Vector>
+    using Parallel = std::conditional_t<isNonOverlapping,
+                       NonoverlappingSolverTraits<Matrix, Vector>,
+                       OverlappingSolverTraits<Matrix, Vector>>;
 };
 
-template<class Matrix, class Vector, class GridGeometry>
-struct LinearSolverTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod::ccmpfa>
-: public LinearSolverTraitsImpl<Matrix, Vector, GridGeometry, DiscretizationMethod::cctpfa> {};
+//! Cell-centered mpfa: use overlapping model
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::ccmpfa>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
 
 } // end namespace Dumux
 

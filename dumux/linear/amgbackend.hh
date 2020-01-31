@@ -52,29 +52,21 @@ namespace Dumux {
  * \brief A linear solver based on the ISTL AMG preconditioner
  *        and the ISTL BiCGSTAB solver.
  */
-template <class GridView, class AmgTraits>
-class ParallelAMGBackend : public LinearSolver
+template <class LinearSolverTraits>
+class AMGBiCGSTABBackend : public LinearSolver
 {
-    using Grid = typename GridView::Grid;
-    using LinearOperator = typename AmgTraits::LinearOperator;
-    using ScalarProduct = typename AmgTraits::ScalarProduct;
-    using VType = typename AmgTraits::VType;
-    using Comm = typename AmgTraits::Comm;
-    using Smoother = typename AmgTraits::Smoother;
-    using AMGType = Dune::Amg::AMG<typename AmgTraits::LinearOperator, VType, Smoother,Comm>;
-    using BCRSMat = typename AmgTraits::LinearOperator::matrix_type;
-    using DofMapper = typename AmgTraits::DofMapper;
 public:
     /*!
      * \brief Construct the backend for the sequential case only
      *
      * \param paramGroup the parameter group for parameter lookup
      */
-    ParallelAMGBackend(const std::string& paramGroup = "")
+    AMGBiCGSTABBackend(const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
+    , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
     , firstCall_(true)
     {
-        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+        if (isParallel_)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
     }
 
@@ -85,11 +77,12 @@ public:
      * \param dofMapper an index mapper for dof entities
      * \param paramGroup the parameter group for parameter lookup
      */
-    ParallelAMGBackend(const GridView& gridView,
-                       const DofMapper& dofMapper,
+    AMGBiCGSTABBackend(const typename LinearSolverTraits::GridView& gridView,
+                       const typename LinearSolverTraits::DofMapper& dofMapper,
                        const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
-    , phelper_(std::make_shared<ParallelISTLHelper<GridView, AmgTraits>>(gridView, dofMapper))
+    , phelper_(std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
+    , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
     , firstCall_(true)
     {}
 
@@ -103,37 +96,11 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        std::shared_ptr<Comm> comm;
-        std::shared_ptr<LinearOperator> fop;
-        std::shared_ptr<ScalarProduct> sp;
-
 #if HAVE_MPI
-        if constexpr (AmgTraits::isParallel)
-            prepareLinearAlgebraParallel<AmgTraits>(A, b, comm, fop, sp, *phelper_, firstCall_);
-        else
-            prepareLinearAlgebraSequential<AmgTraits>(A, comm, fop, sp);
+        solveSequentialOrParallel_(A, x, b);
 #else
-        prepareLinearAlgebraSequential<AmgTraits>(A, comm, fop, sp);
+        solveSequential_(A, x, b);
 #endif
-
-        using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
-        using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat, Dune::Amg::FirstDiagonal>>;
-
-        //! \todo Check whether the default accumulation mode atOnceAccu is needed.
-        //! \todo make parameters changeable at runtime from input file / parameter tree
-        Dune::Amg::Parameters params(15,2000,1.2,1.6,Dune::Amg::atOnceAccu);
-        params.setDefaultValuesIsotropic(Grid::dimension);
-        params.setDebugLevel(this->verbosity());
-        Criterion criterion(params);
-        SmootherArgs smootherArgs;
-        smootherArgs.iterations = 1;
-        smootherArgs.relaxationFactor = 1;
-
-        AMGType amg(*fop, criterion, smootherArgs, *comm);
-        Dune::BiCGSTABSolver<VType> solver(*fop, *sp, amg, this->residReduction(), this->maxIter(),
-                                           comm->communicator().rank() == 0 ? this->verbosity() : 0);
-
-        solver.apply(x, b, result_);
         firstCall_ = false;
         return result_.converged;
     }
@@ -143,7 +110,7 @@ public:
      */
     std::string name() const
     {
-        return "AMG preconditioned BiCGSTAB solver";
+        return "AMG-preconditioned BiCGSTAB solver";
     }
 
     /*!
@@ -156,10 +123,96 @@ public:
 
 private:
 
-    std::shared_ptr<ParallelISTLHelper<GridView, AmgTraits>> phelper_;
+#if HAVE_MPI
+    template<class Matrix, class Vector>
+    void solveSequentialOrParallel_(Matrix& A, Vector& x, Vector& b)
+    {
+        if constexpr (LinearSolverTraits::canCommunicate)
+        {
+            if (isParallel_)
+                solveParallel_(A, x, b);
+            else
+                solveSequential_(A, x, b);
+        }
+        else
+        {
+            solveSequential_(A, x, b);
+        }
+    }
+
+    template<class Matrix, class Vector>
+    void solveParallel_(Matrix& A, Vector& x, Vector& b)
+    {
+        using Traits = typename LinearSolverTraits::template Parallel<Matrix, Vector>;
+        using Comm = typename Traits::Comm;
+        using LinearOperator = typename Traits::LinearOperator;
+        using ScalarProduct = typename Traits::ScalarProduct;
+
+        std::shared_ptr<Comm> comm;
+        std::shared_ptr<LinearOperator> linearOperator;
+        std::shared_ptr<ScalarProduct> scalarProduct;
+        prepareLinearAlgebraParallel<LinearSolverTraits>(A, b, comm, linearOperator, scalarProduct, *phelper_, firstCall_);
+
+        using SeqSmoother = Dune::SeqSSOR<Matrix, Vector, Vector>;
+        using Smoother = typename Traits::template Preconditioner<SeqSmoother>;
+        solveWithAmg_<Smoother>(A, x, b, linearOperator, comm, scalarProduct);
+    }
+#endif // HAVE_MPI
+
+    template<class Matrix, class Vector>
+    void solveSequential_(Matrix& A, Vector& x, Vector& b)
+    {
+        using Comm = Dune::Amg::SequentialInformation;
+        using Traits = typename LinearSolverTraits::template Sequential<Matrix, Vector>;
+        using LinearOperator = typename Traits::LinearOperator;
+        using ScalarProduct = typename Traits::ScalarProduct;
+
+        auto comm = std::make_shared<Comm>();
+        auto linearOperator = std::make_shared<LinearOperator>(A);
+        auto scalarProduct = std::make_shared<ScalarProduct>();
+
+        using Smoother = Dune::SeqSSOR<Matrix, Vector, Vector>;
+        solveWithAmg_<Smoother>(A, x, b, linearOperator, comm, scalarProduct);
+    }
+
+    template<class Smoother, class Matrix, class Vector, class LinearOperator, class Comm, class ScalarProduct>
+    void solveWithAmg_(Matrix& A, Vector& x, Vector& b,
+                       std::shared_ptr<LinearOperator>& linearOperator,
+                       std::shared_ptr<Comm>& comm,
+                       std::shared_ptr<ScalarProduct>& scalarProduct)
+    {
+        using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
+        using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<Matrix, Dune::Amg::FirstDiagonal>>;
+
+        //! \todo Check whether the default accumulation mode atOnceAccu is needed.
+        //! \todo make parameters changeable at runtime from input file / parameter tree
+        Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
+        params.setDefaultValuesIsotropic(LinearSolverTraits::GridView::dimension);
+        params.setDebugLevel(this->verbosity());
+        Criterion criterion(params);
+        SmootherArgs smootherArgs;
+        smootherArgs.iterations = 1;
+        smootherArgs.relaxationFactor = 1;
+
+        using Amg = Dune::Amg::AMG<LinearOperator, Vector, Smoother, Comm>;
+        auto amg = std::make_shared<Amg>(*linearOperator, criterion, smootherArgs, *comm);
+
+        Dune::BiCGSTABSolver<Vector> solver(*linearOperator, *scalarProduct, *amg, this->residReduction(), this->maxIter(),
+                                            comm->communicator().rank() == 0 ? this->verbosity() : 0);
+
+        solver.apply(x, b, result_);
+    }
+
+    std::shared_ptr<ParallelISTLHelper<LinearSolverTraits>> phelper_;
     Dune::InverseOperatorResult result_;
+    bool isParallel_;
     bool firstCall_;
 };
+
+// deprecation helper -> will be removed after 3.2
+template<class GridView, class Traits>
+using ParallelAMGBackend
+= AMGBiCGSTABBackend<Traits>;
 
 } // namespace Dumux
 
@@ -175,9 +228,9 @@ namespace Dumux {
  * \note This is an adaptor using a TypeTag
  */
 template<class TypeTag>
-using AMGBackend = ParallelAMGBackend<GetPropType<TypeTag, Properties::GridView>, LinearSolverTraits<GetPropType<TypeTag, Properties::JacobianMatrix>,
-                                                                                                     GetPropType<TypeTag, Properties::SolutionVector>,
-                                                                                                     GetPropType<TypeTag, Properties::GridGeometry>>>;
+using AMGBackend [[deprecated("Use AMGBiCGSTABBackend instead. Will be removed after 3.2!")]]
+= ParallelAMGBackend<GetPropType<TypeTag, Properties::GridView>,
+                     LinearSolverTraits<GetPropType<TypeTag, Properties::GridGeometry>>>;
 
 } // namespace Dumux
 

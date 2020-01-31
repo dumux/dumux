@@ -33,7 +33,7 @@ namespace Dumux {
 
 //! The type traits required for using the AMG backend
 template<class MType, class VType, class GridGeometry>
-using AmgTraits [[deprecated("Use LinearSolverTraits<MType, VType, GridGeometry> instead. AmgTraits will be removed after 3.2!")]] = LinearSolverTraits<MType, VType, GridGeometry>;
+using AmgTraits [[deprecated("Use LinearSolverTraits<GridGeometry> instead. AmgTraits will be removed after 3.2!")]] = LinearSolverTraits<GridGeometry>;
 
 } // end namespace Dumux
 
