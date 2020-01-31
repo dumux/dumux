@@ -1,0 +1,6 @@
+TestSolver = CG
+ProblemSize = 2
+
+[CG.LinearSolver]
+Type = cgsolver
+Preconditioner.Type = amg
