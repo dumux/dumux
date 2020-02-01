@@ -4,19 +4,19 @@
     <Piece NumberOfCells="10" NumberOfPoints="18">
       <CellData Scalars="S_liq" Vectors="velocity_liq (m/s)">
         <DataArray type="Float32" Name="S_liq" NumberOfComponents="1" format="ascii">
-          0.362084 0.362084 0.340382 0.340382 0.316467 0.316467 0.301085 0.301085 0.282783 0.282783
+          0.362074 0.362074 0.340376 0.340376 0.316472 0.316472 0.301101 0.301101 0.282813 0.282813
         </DataArray>
         <DataArray type="Float32" Name="p_liq" NumberOfComponents="1" format="ascii">
-          92385.2 92385.2 92240.5 92240.5 92036 92036 91861.3 91861.3 91564.8 91564.8
+          92385.2 92385.2 92240.6 92240.6 92036.2 92036.2 91861.7 91861.7 91565.5 91565.5
         </DataArray>
         <DataArray type="Float32" Name="rho_liq" NumberOfComponents="1" format="ascii">
-          1012.97 1012.97 1012.98 1012.98 1013.13 1013.13 1016.92 1016.92 1116.91 1116.91
+          1012.97 1012.97 1012.98 1012.98 1013.13 1013.13 1016.92 1016.92 1116.9 1116.9
         </DataArray>
         <DataArray type="Float32" Name="mob_liq" NumberOfComponents="1" format="ascii">
-          5.03768 5.03768 2.83968 2.83968 1.25285 1.25285 0.61688 0.61688 0.148255 0.148255
+          5.03642 5.03642 2.83918 2.83918 1.25312 1.25312 0.617395 0.617395 0.148614 0.148614
         </DataArray>
         <DataArray type="Float32" Name="S_gas" NumberOfComponents="1" format="ascii">
-          0.637916 0.637916 0.659618 0.659618 0.683533 0.683533 0.698915 0.698915 0.717217 0.717217
+          0.637926 0.637926 0.659624 0.659624 0.683528 0.683528 0.698899 0.698899 0.717187 0.717187
         </DataArray>
         <DataArray type="Float32" Name="p_gas" NumberOfComponents="1" format="ascii">
           100003 100003 100003 100003 100003 100003 100003 100003 100002 100002
@@ -25,37 +25,37 @@
           1.21187 1.21187 1.21186 1.21186 1.21186 1.21186 1.21187 1.21187 1.21218 1.21218
         </DataArray>
         <DataArray type="Float32" Name="mob_gas" NumberOfComponents="1" format="ascii">
-          40641 40641 43590.7 43590.7 46987.1 46987.1 49693.9 49693.9 52974.1 52974.1
+          39520.7 39520.7 42634.9 42634.9 45078.6 45078.6 46704.6 46704.6 50826.1 50826.1
         </DataArray>
         <DataArray type="Float32" Name="pc" NumberOfComponents="1" format="ascii">
-          7617.59 7617.59 7762.18 7762.18 7966.6 7966.6 8141.26 8141.26 8437.63 8437.63
+          7617.65 7617.65 7762.22 7762.22 7966.54 7966.54 8141.05 8141.05 8437.03 8437.03
         </DataArray>
         <DataArray type="Float32" Name="porosity" NumberOfComponents="1" format="ascii">
           0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4
         </DataArray>
         <DataArray type="Float32" Name="x^H2O_liq" NumberOfComponents="1" format="ascii">
-          0.993731 0.993731 0.99373 0.99373 0.993658 0.993658 0.991904 0.991904 0.944436 0.944436
+          0.993731 0.993731 0.99373 0.99373 0.993658 0.993658 0.991904 0.991904 0.944441 0.944441
         </DataArray>
         <DataArray type="Float32" Name="x^Air_liq" NumberOfComponents="1" format="ascii">
-          1.71059e-05 1.71059e-05 1.71056e-05 1.71056e-05 1.71052e-05 1.71052e-05 1.71055e-05 1.71055e-05 1.71174e-05 1.71174e-05
+          1.7106e-05 1.7106e-05 1.71057e-05 1.71057e-05 1.71053e-05 1.71053e-05 1.71055e-05 1.71055e-05 1.71174e-05 1.71174e-05
         </DataArray>
         <DataArray type="Float32" Name="x^NaCl_liq" NumberOfComponents="1" format="ascii">
-          0.00625227 0.00625227 0.00625305 0.00625305 0.00632463 0.00632463 0.00807839 0.00807839 0.0555472 0.0555472
+          0.00625227 0.00625227 0.00625305 0.00625305 0.00632467 0.00632467 0.00807885 0.00807885 0.0555419 0.0555419
         </DataArray>
         <DataArray type="Float32" Name="rhoMolar_liq" NumberOfComponents="1" format="ascii">
-          55450.4 55450.4 55450.4 55450.4 55450 55450 55442.3 55442.3 55126.2 55126.2
+          55450.4 55450.4 55450.4 55450.4 55450 55450 55442.3 55442.3 55126.3 55126.3
         </DataArray>
         <DataArray type="Float32" Name="x^H2O_gas" NumberOfComponents="1" format="ascii">
-          0.0145878 0.0145878 0.0145886 0.0145886 0.0145886 0.0145886 0.0145633 0.0145633 0.0138667 0.0138667
+          0.0145876 0.0145876 0.0145884 0.0145884 0.0145884 0.0145884 0.0145631 0.0145631 0.0138666 0.0138666
         </DataArray>
         <DataArray type="Float32" Name="x^Air_gas" NumberOfComponents="1" format="ascii">
-          0.985412 0.985412 0.985411 0.985411 0.985411 0.985411 0.985437 0.985437 0.986133 0.986133
+          0.985412 0.985412 0.985412 0.985412 0.985412 0.985412 0.985437 0.985437 0.986133 0.986133
         </DataArray>
         <DataArray type="Float32" Name="x^NaCl_gas" NumberOfComponents="1" format="ascii">
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
         </DataArray>
         <DataArray type="Float32" Name="rhoMolar_gas" NumberOfComponents="1" format="ascii">
-          42.0784 42.0784 42.0782 42.0782 42.0781 42.0781 42.078 42.078 42.0778 42.0778
+          42.0785 42.0785 42.0783 42.0783 42.0781 42.0781 42.0781 42.0781 42.0779 42.0779
         </DataArray>
         <DataArray type="Float32" Name="phase presence" NumberOfComponents="1" format="ascii">
           3 3 3 3 3 3 3 3 3 3
@@ -64,17 +64,17 @@
           0 0 0 0 0 0 0 0 0 0
         </DataArray>
         <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
-          285.841 285.841 285.842 285.842 285.843 285.843 285.843 285.843 285.844 285.844
+          285.841 285.841 285.841 285.841 285.842 285.842 285.843 285.843 285.843 285.843
         </DataArray>
         <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
-          0 2.35559e-09 0 0 2.35559e-09 0 0 7.07053e-09 0 0 7.07053e-09 0
-          9.11568e-23 1.01265e-08 0 9.11568e-23 1.01265e-08 0 0 1.11427e-08 0 0 1.11427e-08 0
-          2.15739e-23 1.14623e-08 0 2.15739e-23 1.14623e-08 0
+          0 2.35434e-09 0 0 2.35434e-09 0 2.06578e-22 7.06553e-09 0 2.06578e-22 7.06553e-09 0
+          0 1.01185e-08 0 0 1.01185e-08 0 0 1.11355e-08 0 0 1.11355e-08 0
+          1.08131e-23 1.14563e-08 0 1.08131e-23 1.14563e-08 0
         </DataArray>
         <DataArray type="Float32" Name="velocity_gas (m/s)" NumberOfComponents="3" format="ascii">
-          0 -2.37122e-09 0 0 -2.37122e-09 0 0 -7.00433e-09 0 0 -7.00433e-09 0
-          3.41876e-18 -1.19557e-09 0 3.41876e-18 -1.19557e-09 0 0 3.1111e-07 0 0 3.1111e-07 0
-          3.85438e-18 6.15346e-07 0 3.85438e-18 6.15346e-07 0
+          0 -2.36998e-09 0 0 -2.36998e-09 0 3.1021e-18 -6.99934e-09 0 3.1021e-18 -6.99934e-09 0
+          3.2799e-18 -1.18614e-09 0 3.2799e-18 -1.18614e-09 0 0 3.11043e-07 0 0 3.11043e-07 0
+          3.69809e-18 6.152e-07 0 3.69809e-18 6.152e-07 0
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0

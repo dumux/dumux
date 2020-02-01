@@ -8,9 +8,13 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 
 - __Improvements of Beavers-Joseph(-Saffman) condition for the free flow model__: The naming for handling BJ(-S) boundary conditions has been adapted from `isBJS()` to `isBeaversJoseph()` / `setBJS()` to `setBeaversJoseph()`. In order to consider the velocity within the porous medium, the old `velocityPorousMedium(element, scvf)` method (returning a Scalar) has been renamed to `porousMediumVelocity(element, scvf)` (returning a velocity vector). The latter defaults to `VelocityVector(0.0)`.
 
+- __Van Genuchten__: The VanGenuchten-Mualem material law now allows to set a parameter `l` (default to 0.5) which is sometimes fitted.
+
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
+- __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the non-wetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
+- __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
 
 ### Deprecated properties, to be removed after 3.2:
 

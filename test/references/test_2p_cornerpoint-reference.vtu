@@ -2,36 +2,36 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="4" NumberOfPoints="22">
-      <CellData Scalars="porosity">
-        <DataArray type="Float32" Name="porosity" NumberOfComponents="1" format="ascii">
-          0.1 0.1 0.3 0.3
-        </DataArray>
-        <DataArray type="Float32" Name="pc" NumberOfComponents="1" format="ascii">
-          2614.11 2091.05 2024.13 1414.34
-        </DataArray>
+      <CellData Scalars="S_aq">
         <DataArray type="Float32" Name="S_aq" NumberOfComponents="1" format="ascii">
-          0.285556 0.652038 0.702397 0.96918
+          0.282385 0.642584 0.718714 0.976281
         </DataArray>
         <DataArray type="Float32" Name="p_aq" NumberOfComponents="1" format="ascii">
-          184557 119320 121961 116546
+          180196 110365 92261.3 85641.4
         </DataArray>
         <DataArray type="Float32" Name="rho_aq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000
         </DataArray>
         <DataArray type="Float32" Name="mob_aq" NumberOfComponents="1" format="ascii">
-          22.5775 249.234 311.805 943.527
+          21.8674 238.578 334.311 964.98
         </DataArray>
         <DataArray type="Float32" Name="S_napl" NumberOfComponents="1" format="ascii">
-          0.714444 0.347962 0.297603 0.0308204
+          0.717615 0.357416 0.281286 0.0237186
         </DataArray>
         <DataArray type="Float32" Name="p_napl" NumberOfComponents="1" format="ascii">
-          187171 121411 123985 117961
+          182816 112468 94263 87004.4
         </DataArray>
         <DataArray type="Float32" Name="rho_napl" NumberOfComponents="1" format="ascii">
           1460 1460 1460 1460
         </DataArray>
         <DataArray type="Float32" Name="mob_napl" NumberOfComponents="1" format="ascii">
-          989.879 243.734 178.199 1.74053
+          944.375 216.615 128.785 0.544553
+        </DataArray>
+        <DataArray type="Float32" Name="pc" NumberOfComponents="1" format="ascii">
+          2620.15 2103.33 2001.68 1363.02
+        </DataArray>
+        <DataArray type="Float32" Name="porosity" NumberOfComponents="1" format="ascii">
+          0.1 0.1 0.3 0.3
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0 0 0 0

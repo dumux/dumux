@@ -22,8 +22,8 @@
  * \brief   Implementation of the capillary pressure and
  *          relative permeability <-> saturation relations according to van Genuchten.
  */
-#ifndef VAN_GENUCHTEN_HH
-#define VAN_GENUCHTEN_HH
+#ifndef DUMUX_VAN_GENUCHTEN_HH
+#define DUMUX_VAN_GENUCHTEN_HH
 
 #include "vangenuchtenparams.hh"
 
@@ -41,6 +41,9 @@ namespace Dumux {
  *        absolute to effective saturations and vice versa.
  *
  * For general info: EffToAbsLaw
+ *
+ * \note Capillary pressure model from van Genuchten (1980),
+ *       relative permeability model from Mualem (1976)
  *
  * \see VanGenuchtenParams
  */
@@ -175,7 +178,7 @@ public:
 
     /*!
      * \brief The relative permeability for the wetting phase of
-     *        the medium implied by van Genuchten's
+     *        the medium implied by van Genuchten / Mualem
      *        parameterization.
      *
      * \param swe The mobile saturation of the wetting phase.
@@ -190,20 +193,19 @@ public:
     static Scalar krw(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::sqrt;
         using std::min;
         using std::max;
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.vgm()), params.vgm());
-        return sqrt(swe)*r*r;
+        return pow(swe, params.vgl())*r*r;
     }
 
     /*!
      * \brief The derivative of the relative permeability for the
      *        wetting phase in regard to the wetting saturation of the
-     *        medium implied by the van Genuchten parameterization.
+     *        medium implied by the van Genuchten / Mualem parameterization.
      *
      * \param swe The mobile saturation of the wetting phase.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
@@ -217,7 +219,6 @@ public:
     static Scalar dkrw_dswe(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::sqrt;
         using std::min;
         using std::max;
 
@@ -225,7 +226,7 @@ public:
 
         const Scalar x = 1.0 - pow(swe, 1.0/params.vgm());
         const Scalar xToM = pow(x, params.vgm());
-        return (1.0 - xToM)/sqrt(swe) * ( (1.0 - xToM)/2 + 2*xToM*(1.0-x)/x );
+        return (1.0 - xToM)*pow(swe, params.vgl()-1) * ( (1.0 - xToM)*params.vgl() + 2*xToM*(1.0-x)/x );
     }
 
     /*!
@@ -241,6 +242,7 @@ public:
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
+     * \note See e.g. Dury, Fischer, Schulin (1999) for application of Mualem model to non-wetting rel. perm. 
      */
     static Scalar krn(const Params &params, Scalar swe)
     {
@@ -250,7 +252,7 @@ public:
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        return pow(1 - swe, 1.0/3) * pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
+        return pow(1 - swe, params.vgl()) * pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
     }
 
     /*!
@@ -276,8 +278,9 @@ public:
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        const Scalar x = pow(swe, 1.0/params.vgm());
-        return -pow(1.0 - x, 2*params.vgm()) * pow(1.0 - swe, -2.0/3) * (1.0/3 + 2*x/swe);
+        const auto sne = 1.0 - swe;
+        const auto x = 1.0 - pow(swe, 1.0/params.vgm());
+        return -pow(sne, params.vgl()-1.0) * pow(x, 2*params.vgm() - 1.0) * ( params.vgl()*x - 2.0*sne/swe*(1.0 - x) );
     }
 
 };

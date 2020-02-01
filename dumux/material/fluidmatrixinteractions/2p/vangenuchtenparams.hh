@@ -20,10 +20,10 @@
  * \file
  * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material parameters
- *       for the van Genuchten constitutive relations.
+ *       for the van Genuchten-Mualem constitutive relations.
  */
-#ifndef VAN_GENUCHTEN_PARAMS_HH
-#define VAN_GENUCHTEN_PARAMS_HH
+#ifndef DUMUX_VAN_GENUCHTEN_PARAMS_HH
+#define DUMUX_VAN_GENUCHTEN_PARAMS_HH
 
 #include <dune/common/float_cmp.hh>
 
@@ -32,7 +32,7 @@ namespace Dumux {
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material parameters
- *       for the van Genuchten constitutive relations.
+ *       for the van Genuchten-Mualem constitutive relations.
  *
  *       In this implementation setting either the \f$\mathrm{n}\f$ or \f$\mathrm{m}\f$ shape parameter
  *       automatically calculates the other. I.e. they cannot be set independently.
@@ -46,10 +46,11 @@ public:
     VanGenuchtenParams()
     {}
 
-    VanGenuchtenParams(Scalar vgAlpha, Scalar vgn)
+    VanGenuchtenParams(Scalar vgAlpha, Scalar vgn, Scalar vgl=0.5)
     {
         setVgAlpha(vgAlpha);
         setVgn(vgn);
+        setVgl(vgl);
     }
 
     /*!
@@ -59,7 +60,8 @@ public:
     bool operator== (const OtherParams& otherParams) const
     {
         return Dune::FloatCmp::eq(vgAlpha_, otherParams.vgAlpha(), /*eps*/1e-6*vgAlpha_)
-               && Dune::FloatCmp::eq(vgn_, otherParams.vgn(), /*eps*/1e-6*vgn_);
+               && Dune::FloatCmp::eq(vgn_, otherParams.vgn(), /*eps*/1e-6*vgn_)
+               && Dune::FloatCmp::eq(vgl_, otherParams.vgl(), /*eps*/1e-6*vgl_);
     }
 
     /*!
@@ -107,11 +109,27 @@ public:
      */
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }
+    
+    /*!
+     * \brief Return the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+     *        curve.
+     */
+    Scalar vgl() const
+    { return vgl_; }
+
+    /*!
+     * \brief Set the pore-connectivity parameter \f$\mathrm{l}\f$ (\f$\mathrm{[-]}\f$) of Mualem's relative permeability curve
+     * \note In the orignal Mualem (1976) paper the pore-connectivity parameter is called "n". It's referred to as "l" in
+     *       several later publication of van Genuchten, e.g. van Genuchten (1991), Shaap & van Genuchten (2006).
+     */
+    void setVgl(Scalar l)
+    { vgl_ = l; }
 
 private:
     Scalar vgAlpha_;
     Scalar vgm_;
     Scalar vgn_;
+    Scalar vgl_ = 0.5; //!< l is usually chosen as 0.5 (according to Mualem (1976), WRR)
 };
 } // namespace Dumux
 
