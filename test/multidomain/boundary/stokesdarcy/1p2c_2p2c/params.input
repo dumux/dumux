@@ -49,7 +49,6 @@ InterfaceDiffusionCoefficientAvg = FreeFlowOnly
 EnableInertiaTerms = false
 
 [Vtk]
-AddVelocity = true
 WriteFaceData = false
 OutputName = test_md_boundary_darcy2p2c_stokes1p2c_horizontal
 
