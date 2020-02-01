@@ -178,8 +178,6 @@ int main(int argc, char** argv) try
     stokesVtkWriter.write(0.0);
 
     VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyProblem->name());
-    using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
-    darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
     darcyVtkWriter.write(0.0);
 

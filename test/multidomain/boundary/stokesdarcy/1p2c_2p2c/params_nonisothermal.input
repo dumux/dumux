@@ -54,7 +54,6 @@ SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790
 
 [Vtk]
-AddVelocity = true
 WriteFaceData = false
 OutputName = test_md_boundary_darcy2p2cni_stokes1p2cni_horizontal
 
