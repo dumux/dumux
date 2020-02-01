@@ -1,7 +1,7 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_2ptracer_lens_tpfa
-              LABELS porousmediumflow tracer
+              LABELS porousmediumflow tracer 2p
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
