@@ -33,6 +33,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/components/air.hh>
+#include <dumux/material/components/ammonia.hh>
 #include <dumux/material/components/benzene.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/calcite.hh>
@@ -41,7 +42,9 @@
 #include <dumux/material/components/cao2h2.hh>
 #include <dumux/material/components/carbonateion.hh>
 #include <dumux/material/components/ch4.hh>
+#include <dumux/material/components/chlorideion.hh>
 #include <dumux/material/components/co2.hh>
+#include <dumux/material/components/glucose.hh>
 #include <dumux/material/components/granite.hh>
 #include <dumux/material/components/h2.hh>
 #include <dumux/material/components/h2o.hh>
@@ -51,7 +54,9 @@
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/o2.hh>
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/sodiumion.hh>
 #include <dumux/material/components/trichloroethene.hh>
+#include <dumux/material/components/urea.hh>
 #include <dumux/material/components/xylene.hh>
 #include <dumux/material/components/componenttraits.hh>
 
@@ -337,6 +342,8 @@ int main(int argc, char *argv[])
 
     if (compName == "Air")
         plotStuff< Components::Air<double> >(openPlotWindow);
+    if (compName == "Ammonia")
+        plotStuff< Components::Ammonia<double> >(openPlotWindow);
     else if (compName == "Benzene")
         plotStuff< Components::Benzene<double> >(openPlotWindow);
     else if (compName == "Brine")
@@ -356,6 +363,10 @@ int main(int argc, char *argv[])
         plotStuff< Components::CarbonateIon<double> >(openPlotWindow);
     else if (compName == "CH4")
         plotStuff< Components::CH4<double> >(openPlotWindow);
+    else if (compName == "ChlorideIon")
+        plotStuff< Components::ChlorideIon<double> >(openPlotWindow);
+    else if (compName == "Glucose")
+        plotStuff< Components::Glucose<double> >(openPlotWindow);
     else if (compName == "Granite")
         plotStuff< Components::Granite<double> >(openPlotWindow);
     else if (compName == "H2")
@@ -374,8 +385,12 @@ int main(int argc, char *argv[])
         plotStuff< Components::O2<double> >(openPlotWindow);
     else if (compName == "SimpleH2O")
         plotStuff< Components::SimpleH2O<double>  >(openPlotWindow);
+    else if (compName == "SodiumIon")
+        plotStuff< Components::SodiumIon<double>  >(openPlotWindow);
     else if (compName == "Trichloroethene")
         plotStuff< Components::Trichloroethene<double> >(openPlotWindow);
+    else if (compName == "Urea")
+        plotStuff< Components::Urea<double>  >(openPlotWindow);
     else if (compName == "Xylene")
         plotStuff< Components::Xylene<double> >(openPlotWindow);
     else
