@@ -88,9 +88,10 @@ public:
         const Scalar porosity = volVars.porosity();
         const Scalar rhoSolid = volVars.solidDensity();
 
-        return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity, rhoSolid);
+        return effectiveThermalConductivity_(sw, lambdaW, lambdaN, lambdaSolid, porosity, rhoSolid);
     }
 
+private:
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 .
      *
@@ -103,19 +104,18 @@ public:
      *
      * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977
      */
-    static Scalar effectiveThermalConductivity(const Scalar Sw,
-                                               const Scalar lambdaW,
-                                               const Scalar lambdaN,
-                                               const Scalar lambdaSolid,
-                                               const Scalar porosity,
-                                               const Scalar rhoSolid)
+    static Scalar effectiveThermalConductivity_(const Scalar Sw,
+                                                const Scalar lambdaW,
+                                                const Scalar lambdaN,
+                                                const Scalar lambdaSolid,
+                                                const Scalar porosity,
+                                                const Scalar rhoSolid)
     {
         using std::max;
         const Scalar satW = max<Scalar>(0.0, Sw);
 
         const Scalar kappa = 15.6; // fitted to medium quartz sand
         const Scalar rhoBulk = rhoSolid*porosity;
-        // lambdaSolid^(1-porosity) * lambdaW^porosity =
 
         using std::pow;
         const Scalar lSat = lambdaSolid * pow(lambdaW / lambdaSolid, porosity);

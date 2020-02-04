@@ -88,9 +88,10 @@ public:
         const Scalar lambdaSolid = volVars.solidThermalConductivity();
         const Scalar porosity = volVars.porosity();
 
-        return effectiveThermalConductivity(satLiquid, lambdaLiquid, lambdaGas, lambdaSolid, porosity);
+        return effectiveThermalConductivity_(satLiquid, lambdaLiquid, lambdaGas, lambdaSolid, porosity);
     }
 
+private:
     /*!
      * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
@@ -103,12 +104,12 @@ public:
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974
      */
-    static Scalar effectiveThermalConductivity(const Scalar satLiquid,
-                                               const Scalar lambdaLiquid,
-                                               const Scalar lambdaGas,
-                                               const Scalar lambdaSolid,
-                                               const Scalar porosity,
-                                               const Scalar rhoSolid = 0.0 /*unused*/)
+    static Scalar effectiveThermalConductivity_(const Scalar satLiquid,
+                                                const Scalar lambdaLiquid,
+                                                const Scalar lambdaGas,
+                                                const Scalar lambdaSolid,
+                                                const Scalar porosity,
+                                                const Scalar rhoSolid = 0.0 /*unused*/)
     {
         using std::max;
         using std::pow;
