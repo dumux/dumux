@@ -60,19 +60,19 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static constexpr bool doAdvection = ModelTraits::enableAdvection();
-    static constexpr bool doDiffusion = ModelTraits::enableMolecularDiffusion();
-    static constexpr bool doHeatConduction = ModelTraits::enableEnergyBalance();
+    static constexpr bool advectionEnabled = ModelTraits::enableAdvection();
+    static constexpr bool diffusionEnabled = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool heatConductionEnabled = ModelTraits::enableEnergyBalance();
 
-    static constexpr bool soldependentAdvection = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
-    static constexpr bool soldependentDiffusion = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
-    static constexpr bool soldependentHeatConduction = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
+    static constexpr bool advectionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
+    static constexpr bool diffusionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
+    static constexpr bool heatConductionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
 
 
 public:
-    static constexpr bool isSolDependent = (doAdvection && soldependentAdvection) ||
-                                           (doDiffusion && soldependentDiffusion) ||
-                                           (doHeatConduction && soldependentHeatConduction);
+    static constexpr bool isSolDependent = (advectionEnabled && advectionIsSolDependent) ||
+                                           (diffusionEnabled && diffusionIsSolDependent) ||
+                                           (heatConductionEnabled && heatConductionIsSolDependent);
 
     //! The constructor. Sets the problem pointer
     PorousMediumFluxVariablesCacheFillerImplementation(const Problem& problem)
@@ -101,17 +101,20 @@ public:
         // fill the physics-related quantities of the caches
         if (forceUpdateAll)
         {
-            fillAdvection_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
-            fillDiffusion_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
-            fillHeatConduction_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+            if constexpr (advectionEnabled)
+                fillAdvection_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+            if constexpr (diffusionEnabled)
+                fillDiffusion_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+            if constexpr (heatConductionEnabled)
+                fillHeatConduction_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
         }
         else
         {
-            if (doAdvection && soldependentAdvection)
+            if constexpr (advectionEnabled && advectionIsSolDependent)
                 fillAdvection_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
-            if (doDiffusion && soldependentDiffusion)
+            if constexpr (diffusionEnabled && diffusionIsSolDependent)
                 fillDiffusion_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
-            if (doHeatConduction && soldependentHeatConduction)
+            if constexpr (heatConductionEnabled && heatConductionIsSolDependent)
                 fillHeatConduction_(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
         }
     }
@@ -122,13 +125,12 @@ private:
     { return *problemPtr_; }
 
     //! method to fill the advective quantities
-    template<class FluxVariablesCache, bool advectionEnabled = doAdvection>
-    typename std::enable_if<advectionEnabled>::type
-    fillAdvection_(FluxVariablesCache& scvfFluxVarsCache,
-                   const Element& element,
-                   const FVElementGeometry& fvGeometry,
-                   const ElementVolumeVariables& elemVolVars,
-                   const SubControlVolumeFace& scvf)
+    template<class FluxVariablesCache>
+    void fillAdvection_(FluxVariablesCache& scvfFluxVarsCache,
+                        const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf)
     {
         using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
         using AdvectionFiller = typename AdvectionType::Cache::Filler;
@@ -137,24 +139,13 @@ private:
         AdvectionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
     }
 
-    //! do nothing if advection is not enabled
-    template<class FluxVariablesCache, bool advectionEnabled = doAdvection>
-    typename std::enable_if<!advectionEnabled>::type
-    fillAdvection_(FluxVariablesCache& scvfFluxVarsCache,
-                   const Element& element,
-                   const FVElementGeometry& fvGeometry,
-                   const ElementVolumeVariables& elemVolVars,
-                   const SubControlVolumeFace& scvf)
-    {}
-
     //! method to fill the diffusive quantities
-    template<class FluxVariablesCache, bool diffusionEnabled = doDiffusion>
-    typename std::enable_if<diffusionEnabled>::type
-    fillDiffusion_(FluxVariablesCache& scvfFluxVarsCache,
-                   const Element& element,
-                   const FVElementGeometry& fvGeometry,
-                   const ElementVolumeVariables& elemVolVars,
-                   const SubControlVolumeFace& scvf)
+    template<class FluxVariablesCache>
+    void fillDiffusion_(FluxVariablesCache& scvfFluxVarsCache,
+                        const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf)
     {
         using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
@@ -170,24 +161,13 @@ private:
                     DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element, fvGeometry, elemVolVars, scvf, *this);
     }
 
-    //! do nothing if diffusion is not enabled
-    template<class FluxVariablesCache, bool diffusionEnabled = doDiffusion>
-    typename std::enable_if<!diffusionEnabled>::type
-    fillDiffusion_(FluxVariablesCache& scvfFluxVarsCache,
-                   const Element& element,
-                   const FVElementGeometry& fvGeometry,
-                   const ElementVolumeVariables& elemVolVars,
-                   const SubControlVolumeFace& scvf)
-    {}
-
     //! method to fill the quantities related to heat conduction
-    template<class FluxVariablesCache, bool heatConductionEnabled = doHeatConduction>
-    typename std::enable_if<heatConductionEnabled>::type
-    fillHeatConduction_(FluxVariablesCache& scvfFluxVarsCache,
-                        const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolumeFace& scvf)
+    template<class FluxVariablesCache>
+    void fillHeatConduction_(FluxVariablesCache& scvfFluxVarsCache,
+                             const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf)
     {
         using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
         using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
@@ -195,16 +175,6 @@ private:
         // forward to the filler of the diffusive quantities
         HeatConductionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
     }
-
-    //! do nothing if heat conduction is disabled
-    template<class FluxVariablesCache, bool heatConductionEnabled = doHeatConduction>
-    typename std::enable_if<!heatConductionEnabled>::type
-    fillHeatConduction_(FluxVariablesCache& scvfFluxVarsCache,
-                        const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolumeFace& scvf)
-    {}
 
     const Problem* problemPtr_;
 };
@@ -235,13 +205,13 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    static constexpr bool doAdvection = ModelTraits::enableAdvection();
-    static constexpr bool doDiffusion = ModelTraits::enableMolecularDiffusion();
-    static constexpr bool doHeatConduction = ModelTraits::enableEnergyBalance();
+    static constexpr bool advectionEnabled = ModelTraits::enableAdvection();
+    static constexpr bool diffusionEnabled = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool heatConductionEnabled = ModelTraits::enableEnergyBalance();
 
-    static constexpr bool soldependentAdvection = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
-    static constexpr bool soldependentDiffusion = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
-    static constexpr bool soldependentHeatConduction = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
+    static constexpr bool advectionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
+    static constexpr bool diffusionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
+    static constexpr bool heatConductionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
 
 public:
     //! This cache filler is always solution-dependent, as it updates the
@@ -411,17 +381,18 @@ private:
             i++;
         }
 
-        fillAdvection_(iv, handle, ivScvfs, ivFluxVarCaches, forceUpdateAll);
-        fillDiffusion_(iv, handle, ivScvfs, ivFluxVarCaches, forceUpdateAll);
-        fillHeatConduction_(iv, handle, ivScvfs, ivFluxVarCaches, forceUpdateAll);
+        if constexpr (advectionEnabled)
+            fillAdvection_(iv, handle, ivScvfs, ivFluxVarCaches, forceUpdateAll);
+        if constexpr (diffusionEnabled)
+            fillDiffusion_(iv, handle, ivScvfs, ivFluxVarCaches, forceUpdateAll);
+        if constexpr (heatConductionEnabled)
+            fillHeatConduction_(iv, handle, ivScvfs, ivFluxVarCaches, forceUpdateAll);
     }
 
     //! fills the advective quantities (enabled advection)
     template< class InteractionVolume,
               class DataHandle,
-              class FluxVariablesCache,
-              bool enableAdvection = doAdvection,
-              typename std::enable_if_t<enableAdvection, int> = 0 >
+              class FluxVariablesCache>
     void fillAdvection_(InteractionVolume& iv,
                         DataHandle& handle,
                         const std::vector<const SubControlVolumeFace*>& ivScvfs,
@@ -432,7 +403,8 @@ private:
         using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
         // fill data in the handle
-        fillAdvectionHandle_(iv, handle, forceUpdateAll);
+        if constexpr (AdvectionType::discMethod == DiscretizationMethod::ccmpfa)
+            fillAdvectionHandle_(iv, handle, forceUpdateAll);
 
         // fill advection caches
         for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
@@ -461,25 +433,10 @@ private:
         }
     }
 
-    //! do nothing if advection is not enabled
-    template< class InteractionVolume,
-              class DataHandle,
-              class FluxVariablesCache,
-              bool enableAdvection = doAdvection,
-              typename std::enable_if_t<!enableAdvection, int> = 0 >
-    void fillAdvection_(InteractionVolume& iv,
-                        DataHandle& handle,
-                        const std::vector<const SubControlVolumeFace*>& ivScvfs,
-                        const std::vector<FluxVariablesCache*>& ivFluxVarCaches,
-                        bool forceUpdateAll = false)
-    {}
-
     //! fills the diffusive quantities (diffusion enabled)
     template< class InteractionVolume,
               class DataHandle,
-              class FluxVariablesCache,
-              bool enableDiffusion = doDiffusion,
-              typename std::enable_if_t<enableDiffusion, int> = 0 >
+              class FluxVariablesCache>
     void fillDiffusion_(InteractionVolume& iv,
                         DataHandle& handle,
                         const std::vector<const SubControlVolumeFace*>& ivScvfs,
@@ -503,20 +460,21 @@ private:
 
                 // fill data in the handle
                 handle.diffusionHandle().setComponentIndex(compIdx);
-                fillDiffusionHandle_(iv, handle, forceUpdateAll, phaseIdx, compIdx);
+                if constexpr (DiffusionType::discMethod == DiscretizationMethod::ccmpfa)
+                    fillDiffusionHandle_(iv, handle, forceUpdateAll, phaseIdx, compIdx);
 
                 // fill diffusion caches
                 for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
                 {
                     // set pointer to current local face data object
                     // ifs are evaluated at compile time and are optimized away
-                    if (std::is_same<PrimaryInteractionVolume, SecondaryInteractionVolume>::value)
+                    if constexpr (std::is_same<PrimaryInteractionVolume, SecondaryInteractionVolume>::value)
                     {
                         // we cannot make a disctinction, thus we set both pointers
                         primaryLocalFaceData_ = &(iv.localFaceData()[i]);
                         secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
                     }
-                    else if (std::is_same<InteractionVolume, PrimaryInteractionVolume>::value)
+                    else if constexpr (std::is_same<InteractionVolume, PrimaryInteractionVolume>::value)
                         primaryLocalFaceData_ = &(iv.localFaceData()[i]);
                     else
                         secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
@@ -536,25 +494,10 @@ private:
         }
     }
 
-    //! do nothing if diffusion is not enabled
-    template< class InteractionVolume,
-              class DataHandle,
-              class FluxVariablesCache,
-              bool enableDiffusion = doDiffusion,
-              typename std::enable_if_t<!enableDiffusion, int> = 0 >
-    void fillDiffusion_(InteractionVolume& iv,
-                        DataHandle& handle,
-                        const std::vector<const SubControlVolumeFace*>& ivScvfs,
-                        const std::vector<FluxVariablesCache*>& ivFluxVarCaches,
-                        bool forceUpdateAll = false)
-    {}
-
     //! fills the quantities related to heat conduction (heat conduction enabled)
     template< class InteractionVolume,
               class DataHandle,
-              class FluxVariablesCache,
-              bool enableHeatConduction = doHeatConduction,
-              typename std::enable_if_t<enableHeatConduction, int> = 0 >
+              class FluxVariablesCache>
     void fillHeatConduction_(InteractionVolume& iv,
                              DataHandle& handle,
                              const std::vector<const SubControlVolumeFace*>& ivScvfs,
@@ -565,20 +508,21 @@ private:
         using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
 
         // prepare data in handle
-        fillHeatConductionHandle_(iv, handle, forceUpdateAll);
+        if constexpr (HeatConductionType::discMethod == DiscretizationMethod::ccmpfa)
+            fillHeatConductionHandle_(iv, handle, forceUpdateAll);
 
         // fill heat conduction caches
         for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
         {
             // set pointer to current local face data object
             // ifs are evaluated at compile time and are optimized away
-            if (std::is_same<PrimaryInteractionVolume, SecondaryInteractionVolume>::value)
+            if constexpr (std::is_same<PrimaryInteractionVolume, SecondaryInteractionVolume>::value)
             {
                 // we cannot make a disctinction, thus we set both pointers
                 primaryLocalFaceData_ = &(iv.localFaceData()[i]);
                 secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
             }
-            else if (std::is_same<InteractionVolume, PrimaryInteractionVolume>::value)
+            else if constexpr (std::is_same<InteractionVolume, PrimaryInteractionVolume>::value)
                 primaryLocalFaceData_ = &(iv.localFaceData()[i]);
             else
                 secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
@@ -594,24 +538,8 @@ private:
         }
     }
 
-    //! do nothing if heat conduction is disabled
-    template< class InteractionVolume,
-              class DataHandle,
-              class FluxVariablesCache,
-              bool enableHeatConduction = doHeatConduction,
-              typename std::enable_if_t<!enableHeatConduction, int> = 0 >
-    void fillHeatConduction_(InteractionVolume& iv,
-                             DataHandle& handle,
-                             const std::vector<const SubControlVolumeFace*>& ivScvfs,
-                             const std::vector<FluxVariablesCache*>& ivFluxVarCaches,
-                             bool forceUpdateAll = false)
-    {}
-
     //! prepares the quantities necessary for advective fluxes in the handle
-    template< class InteractionVolume,
-              class DataHandle,
-              class AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>,
-              typename std::enable_if_t<AdvectionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
+    template<class InteractionVolume, class DataHandle>
     void fillAdvectionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
         using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
@@ -622,7 +550,7 @@ private:
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // Assemble T only if permeability is sol-dependent or if update is forced
-        if (forceUpdateAll || soldependentAdvection)
+        if (forceUpdateAll || advectionIsSolDependent)
             localAssembler.assembleMatrices(handle.advectionHandle(), iv, LambdaFactory::getAdvectionLambda());
 
         // assemble pressure vectors
@@ -644,16 +572,14 @@ private:
     }
 
     //! prepares the quantities necessary for diffusive fluxes in the handle
-    template< class InteractionVolume,
-              class DataHandle,
-              class DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>,
-              typename std::enable_if_t<DiffusionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
+    template<class InteractionVolume, class DataHandle>
     void fillDiffusionHandle_(InteractionVolume& iv,
                               DataHandle& handle,
                               bool forceUpdateAll,
                               int phaseIdx, int compIdx)
     {
         using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
+        using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
 
         // get instance of the interaction volume-local assembler
         using Traits = typename InteractionVolume::Traits;
@@ -661,7 +587,7 @@ private:
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // maybe (re-)assemble matrices
-        if (forceUpdateAll || soldependentDiffusion)
+        if (forceUpdateAll || diffusionIsSolDependent)
             localAssembler.assembleMatrices(handle.diffusionHandle(),
                                             iv,
                                             LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
@@ -672,10 +598,7 @@ private:
     }
 
     //! prepares the quantities necessary for conductive fluxes in the handle
-    template< class InteractionVolume,
-              class DataHandle,
-              class HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>,
-              typename std::enable_if_t<HeatConductionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
+    template<class InteractionVolume, class DataHandle>
     void fillHeatConductionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
         using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
@@ -687,7 +610,7 @@ private:
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // maybe (re-)assemble matrices
-        if (forceUpdateAll || soldependentHeatConduction)
+        if (forceUpdateAll || heatConductionIsSolDependent)
             localAssembler.assembleMatrices(handle.heatConductionHandle(),
                                             iv,
                                             LambdaFactory::template getHeatConductionLambda<ThermCondModel>());
@@ -696,27 +619,6 @@ private:
         auto getTemperature = [] (const auto& volVars) { return volVars.temperature(); };
         localAssembler.assembleU(handle.heatConductionHandle(), iv, getTemperature);
     }
-
-    //! fill handle only when advection uses mpfa
-    template< class InteractionVolume,
-              class DataHandle,
-              class AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>,
-              typename std::enable_if_t<AdvectionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
-    void fillAdvectionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
-
-    //! fill handle only when diffusion uses mpfa
-    template< class InteractionVolume,
-              class DataHandle,
-              class DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>,
-              typename std::enable_if_t<DiffusionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
-    void fillDiffusionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll, int phaseIdx, int compIdx) {}
-
-    //! fill handle only when heat conduction uses mpfa
-    template< class InteractionVolume,
-              class DataHandle,
-              class HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>,
-              typename std::enable_if_t<HeatConductionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
-    void fillHeatConductionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
 
     const Problem* problemPtr_;
     const Element* elementPtr_;
