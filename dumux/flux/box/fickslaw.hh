@@ -29,6 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
+#include <dumux/flux/fickiandiffusioncoefficients.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
@@ -72,6 +73,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
+
+    template<int numPhases, int numComponents>
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
+
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }
@@ -105,8 +110,8 @@ public:
                 continue;
 
             // effective diffusion tensors
-            auto insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
-            auto outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
+            auto insideD = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+            auto outsideD = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();
@@ -153,8 +158,8 @@ public:
                 continue;
 
             // effective diffusion tensors
-            auto insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
-            auto outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
+            auto insideD = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+            auto outsideD = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();

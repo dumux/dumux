@@ -34,7 +34,9 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
+#include <dumux/flux/fickiandiffusioncoefficients.hh>
 #include <dumux/flux/referencesystemformulation.hh>
+
 
 namespace Dumux {
 
@@ -55,7 +57,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, reference
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -76,7 +77,10 @@ public:
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
-    template<class Problem>
+    template<int numPhases, int numComponents>
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
+
+    template<class Problem, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
@@ -107,8 +111,7 @@ public:
 
             const Scalar massOrMoleFractionInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
             const Scalar massOrMoleFractionOutside =  massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
-
-            const Scalar insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx) * insideVolVars.extrusionFactor();
+            const Scalar insideD = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx) * insideVolVars.extrusionFactor();
 
             if (scvf.boundary())
             {
@@ -118,7 +121,8 @@ public:
             else
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const Scalar outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx) * outsideVolVars.extrusionFactor();
+                const Scalar outsideD = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx)
+                                      * outsideVolVars.extrusionFactor();
                 const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
                 const Scalar outsideDensity = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
 
