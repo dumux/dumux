@@ -337,7 +337,7 @@ public:
                     //additionally get equilibrium values from volume variables
                     const Scalar xEquil = volVars.xEquil(phaseIdx, compIdx);
                     //get the diffusion coefficient
-                    const Scalar diffCoeff = volVars.diffusionCoefficient(phaseIdx, compIdx);
+                    const Scalar diffCoeff = volVars.diffusionCoefficient(phaseIdx, phaseIdx, compIdx);
 
                     //now compute the flux
                     const Scalar compFluxIntoOtherPhase = factorMassTransfer * (xEquil-xNonEquil)/characteristicLength * awn * volVars.molarDensity(phaseIdx) * diffCoeff * sherwoodNumber;
