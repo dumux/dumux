@@ -919,9 +919,7 @@ protected:
      * \brief Returns the molecular diffusion coefficient within the free flow domain.
      */
     Scalar diffusionCoefficientMS_(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compKIdx, int compLIdx) const
-    {
-         return volVars.effectiveDiffusivity(compKIdx, compLIdx);
-    }
+    { return volVars.effectiveDiffusionCoefficient(phaseIdx, compKIdx, compLIdx); }
 
     /*!
      * \brief Returns the effective diffusion coefficient within the porous medium.
@@ -932,14 +930,9 @@ protected:
         auto fluidState = volVars.fluidState();
         typename FluidSystem<darcyIdx>::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
-        auto diffCoeff = FluidSystem<darcyIdx>::binaryDiffusionCoefficient(fluidState,
-                                                                            paramCache,
-                                                                            phaseIdx,
-                                                                            compKIdx,
-                                                                            compLIdx);
-        return EffDiffModel::effectiveDiffusivity(volVars,
-                                                  diffCoeff,
-                                                  phaseIdx);
+        return EffDiffModel::effectiveDiffusionCoefficient(volVars,
+                                                           phaseIdx,
+                                                           compKIdx,                                                                            compLIdx);
     }
 
     Scalar getComponentEnthalpy(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIdx) const
@@ -1127,8 +1120,8 @@ protected:
                                                        domainJ,
                                                        insideDistance,
                                                        outsideDistance,
-                                                       volVarsI.effectiveDiffusivity(couplingPhaseIdx(domainI), domainICompIdx),
-                                                       volVarsJ.effectiveDiffusivity(couplingPhaseIdx(domainJ), domainJCompIdx),
+                                                       volVarsI.effectiveDiffusionCoefficient(couplingPhaseIdx(domainI), domainICompIdx, domainICompIdx),
+                                                       volVarsJ.effectiveDiffusionCoefficient(couplingPhaseIdx(domainJ), domainICompIdx, domainJCompIdx),
                                                        diffCoeffAvgType);
             diffusiveFlux[domainICompIdx] += -avgDensity * tij * deltaMassOrMoleFrac;
         }

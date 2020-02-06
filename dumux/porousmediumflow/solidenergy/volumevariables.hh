@@ -133,6 +133,13 @@ public:
     { return solidState_.thermalConductivity(); }
 
     /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the solid phase in the sub-control volume. In this case (non-porous) identical to the solidThermalCondutivity.
+     */
+    Scalar effectiveThermalConductivity() const
+    { return solidThermalConductivity(); }
+
+    /*!
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
