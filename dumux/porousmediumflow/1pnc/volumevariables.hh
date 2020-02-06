@@ -110,7 +110,7 @@ public:
 
         paramCache.updatePhase(fluidState_, 0);
 
-        auto mylambda = [&](int phaseIdx, int compIIdx, int compJIdx)
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
             return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
                                                             paramCache,
@@ -119,13 +119,13 @@ public:
                                                             compJIdx);
         };
 
-        auto myEfflambda = [&](int phaseIdx, int compIIdx, int compJIdx)
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            return EffDiffModel::effectiveDiffusivity(*this, phaseIdx, compIIdx, compJIdx);
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
         };
 
-        diffCoeff_.update(mylambda);
-        effectiveDiffCoeff_.update(myEfflambda);
+        diffCoeff_.update(getDiffusionCoefficient);
+        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
     }
 
     /*!
@@ -344,14 +344,7 @@ public:
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    [[deprecated("Signature deprecated. Use effectiveDiffusivity(phaseIdx, compIIdx, compJIdx)!")]]
-    Scalar effectiveDiffusivity(int phaseIdx, int compI) const
-    { return effectiveDiffCoeff_(phaseIdx, 0, 0); }
-
-    /*!
-     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
-     */
-    Scalar effectiveDiffusivity(int phaseIdx, int compIIdx, int compJIdx) const
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
     { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     /*!
