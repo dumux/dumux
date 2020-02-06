@@ -145,7 +145,7 @@ struct RichardsModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class DT, class EDM>
 struct RichardsVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -155,31 +155,8 @@ struct RichardsVolumeVariablesTraits
     using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
+    using DiffusionType = DT;
     using EffectiveDiffusivityModel = EDM;
-};
-
-/*!
- * \ingroup RichardsModel
- * \brief Traits class for the RichardsNI VolumeVariables.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam PT The type used for permeabilities
- * \tparam MT The model traits
- */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM, class ETCM>
-struct RichardsNIVolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using FluidSystem = FSY;
-    using FluidState = FST;
-    using SolidSystem = SSY;
-    using SolidState = SST;
-    using PermeabilityType = PT;
-    using ModelTraits = MT;
-    using EffectiveDiffusivityModel = EDM;
-    using EffectiveThermalConductivityModel = ETCM;
 };
 
 // \{
@@ -233,11 +210,11 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-
-    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
+    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
 public:
     using type = RichardsVolumeVariables<Traits>;
 };
@@ -337,14 +314,18 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+    using BaseTraits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
 
-    using Traits = RichardsNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
+    using ETCM = GetPropType< TypeTag, Properties::ThermalConductivityModel>;
+    template<class BaseTraits, class ETCM>
+    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+
 public:
-    using type = RichardsVolumeVariables<Traits>;
+    using type = RichardsVolumeVariables<NITraits<BaseTraits, ETCM>>;
 };
 
 // \}

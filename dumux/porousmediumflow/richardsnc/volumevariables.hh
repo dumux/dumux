@@ -45,13 +45,17 @@ class RichardsNCVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
 , public EnergyVolumeVariables<Traits, RichardsNCVolumeVariables<Traits> >
 {
+
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, RichardsNCVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
-    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
 
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
+
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<2, numFluidComps>;
 
 public:
     //! Export type of the fluid system
@@ -109,20 +113,27 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState_, 0);
 
-        const int compIIdx = 0;
-        for (unsigned int compJIdx = 0; compJIdx < ParentType::numFluidComponents(); ++compJIdx)
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            if(compIIdx != compJIdx)
-            {
-                setDiffusionCoefficient_(compJIdx,
-                                         FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                 paramCache,
-                                                                                 0,
-                                                                                 compIIdx,
-                                                                                 compJIdx));
-                setEffectiveDiffusionCoefficient_(compJIdx);
-            }
-        }
+            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                            paramCache,
+                                                            phaseIdx,
+                                                            compIIdx,
+                                                            compJIdx);
+        };
+
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+        };
+
+        diffCoeff_.update(getDiffusionCoefficient);
+        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
+
+        // calculate the remaining quantities
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!
@@ -399,32 +410,31 @@ public:
      * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component
      */
+    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(const int phaseIdx, const int compIdx) const
-    { return diffCoefficient_[compIdx-1]; }
+    { return diffCoeff_(phaseIdx, phaseIdx, compIdx-1);}
 
     /*!
-     * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
-     *
-     * \param phaseIdx The index of the phase.
-     * \param compIdx The index of the component
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    Scalar effectiveDiffusivity(const int phaseIdx, const int compIdx) const
-    { return effectiveDiffCoefficient_[compIdx-1]; }
+    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
 protected:
     FluidState fluidState_; //!< the fluid state
 
 private:
-    void setDiffusionCoefficient_(int compIdx, Scalar d)
-    { diffCoefficient_[compIdx-1] = d; }
+    // Binary diffusion coefficient
+    DiffusionCoefficients diffCoeff_;
 
-    void setEffectiveDiffusionCoefficient_(int compIdx)
-    {
-        effectiveDiffCoefficient_[compIdx-1] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[compIdx-1], 0);
-    }
-
-    std::array<Scalar, ParentType::numFluidComponents()-1> diffCoefficient_;
-    std::array<Scalar, ParentType::numFluidComponents()-1> effectiveDiffCoefficient_;
+    // Effective diffusion coefficients for the phases
+    DiffusionCoefficients effectiveDiffCoeff_;
 
     Scalar relativePermeabilityWetting_; // the relative permeability of the wetting phase
     SolidState solidState_;
