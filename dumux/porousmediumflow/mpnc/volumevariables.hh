@@ -70,6 +70,7 @@ class MPNCVolumeVariablesImplementation<Traits, false>
     using ComponentVector = Dune::FieldVector<Scalar, ModelTraits::numFluidComponents()>;
     using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<ModelTraits::numFluidPhases(), ParentType::numFluidComponents()>;
 
 public:
     //! Export the type encapsulating primary variable indices
@@ -121,26 +122,24 @@ public:
         // porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
 
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                            paramCache,
+                                                            phaseIdx,
+                                                            compIIdx,
+                                                            compJIdx);
+        };
+
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+        };
+
         if (enableDiffusion)
         {
-            for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx)
-            {
-                int compIIdx = phaseIdx;
-                for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
-                {
-                    // binary diffusion coefficients
-                    if(compIIdx!= compJIdx)
-                    {
-                        setDiffusionCoefficient_(phaseIdx, compJIdx,
-                                                FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                        paramCache,
-                                                                                        phaseIdx,
-                                                                                        compIIdx,
-                                                                                        compJIdx));
-                        setEffectiveDiffusionCoefficient_(phaseIdx, compJIdx);
-                    }
-                }
-            }
+            diffCoeff_.update(getDiffusionCoefficient);
+            effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
         }
 
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
@@ -257,7 +256,7 @@ public:
             Scalar h = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
-   }
+    }
 
     /*!
      * \brief Returns the fluid configuration at the given primary
@@ -433,30 +432,30 @@ public:
     }
 
     /*!
-     * \brief Returns the diffusion coefficient.
+     * \brief Returns the diffusion coefficient
      */
+    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         if (compIdx < phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx];
+            return diffCoeff_(phaseIdx, phaseIdx, compIdx);
         else if (compIdx > phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx-1];
+             return diffCoeff_(phaseIdx, phaseIdx, compIdx);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
 
     /*!
-     * \brief Returns the diffusion coefficient.
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    Scalar effectiveDiffusivity(int phaseIdx, int compIdx) const
-    {
-        if (compIdx < phaseIdx)
-            return effectiveDiffCoeff_[phaseIdx][compIdx];
-        else if (compIdx > phaseIdx)
-            return effectiveDiffCoeff_[phaseIdx][compIdx-1];
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
-    }
+    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     /*!
      * \brief Returns the value of the NCP-function for a phase.
@@ -501,29 +500,6 @@ public:
     }
 
 protected:
-
-    void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
-    {
-        if (compIdx < phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
-        else if (compIdx > phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
-    }
-
-    void setEffectiveDiffusionCoefficient_(int phaseIdx, int compIdx)
-    {
-        if (compIdx < phaseIdx)
-            effectiveDiffCoeff_[phaseIdx][compIdx] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[phaseIdx][compIdx], phaseIdx);
-        else if (compIdx > phaseIdx)
-            effectiveDiffCoeff_[phaseIdx][compIdx-1] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[phaseIdx][compIdx-1], phaseIdx);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Effective diffusion coefficient for phaseIdx = compIdx doesn't exist");
-    }
-
-    std::array<std::array<Scalar, numFluidComps-1>, numFluidPhases()> diffCoefficient_;
-    std::array<std::array<Scalar, numFluidComps-1>, numFluidPhases()> effectiveDiffCoeff_;
     Scalar porosity_; //!< Effective porosity within the control volume
     std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_; //!< Effective relative permeability within the control volume
     PermeabilityType permeability_;
@@ -532,6 +508,11 @@ protected:
     FluidState fluidState_;
     SolidState solidState_;
 
+    // Binary diffusion coefficient
+    DiffusionCoefficients diffCoeff_;
+
+    // Effective diffusion coefficients for the phases
+    DiffusionCoefficients effectiveDiffCoeff_;
 };
 
 template <class Traits>
@@ -554,9 +535,10 @@ class MPNCVolumeVariablesImplementation<Traits, true>
     using Indices = typename ModelTraits::Indices;
     using ComponentVector = Dune::FieldVector<Scalar,  ModelTraits::numFluidComponents()>;
     using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
-    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-
     using ParameterCache = typename Traits::FluidSystem::ParameterCache;
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<ModelTraits::numFluidPhases(), ParentType::numFluidComponents()>;
+
 public:
     //! Export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -605,26 +587,23 @@ public:
 
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
 
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                            paramCache,
+                                                            phaseIdx,
+                                                            compIIdx,
+                                                            compJIdx);
+        };
+
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+        };
         if (enableDiffusion)
         {
-            for (int phaseIdx = 0; phaseIdx < numFluidPhases(); ++phaseIdx)
-            {
-                int compIIdx = phaseIdx;
-                for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
-                {
-                    // binary diffusion coefficients
-                    if(compIIdx!= compJIdx)
-                    {
-                        setDiffusionCoefficient_(phaseIdx, compJIdx,
-                                                FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                        paramCache,
-                                                                                        phaseIdx,
-                                                                                        compIIdx,
-                                                                                        compJIdx));
-                        setEffectiveDiffusionCoefficient_(phaseIdx, compJIdx);
-                    }
-                }
-            }
+            diffCoeff_.update(getDiffusionCoefficient);
+            effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
         }
 
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
@@ -974,28 +953,28 @@ public:
     /*!
      * \brief Returns the diffusion coefficient
      */
+    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         if (compIdx < phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx];
+            return diffCoeff_(phaseIdx, phaseIdx, compIdx);
         else if (compIdx > phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx-1];
+             return diffCoeff_(phaseIdx, phaseIdx, compIdx);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
+
+    /*!
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    Scalar effectiveDiffusivity(int phaseIdx, int compIdx) const
-    {
-        if (compIdx < phaseIdx)
-            return effectiveDiffCoeff_[phaseIdx][compIdx];
-        else if (compIdx > phaseIdx)
-            return effectiveDiffCoeff_[phaseIdx][compIdx-1];
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
-    }
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     /*!
      * \brief Returns the value of the NCP-function for a phase.
@@ -1040,29 +1019,6 @@ public:
     }
 
 protected:
-
-    void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
-    {
-        if (compIdx < phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
-        else if (compIdx > phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
-    }
-
-    void setEffectiveDiffusionCoefficient_(int phaseIdx, int compIdx)
-    {
-        if (compIdx < phaseIdx)
-            effectiveDiffCoeff_[phaseIdx][compIdx] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[phaseIdx][compIdx], phaseIdx);
-        else if (compIdx > phaseIdx)
-            effectiveDiffCoeff_[phaseIdx][compIdx-1] = EffDiffModel::effectiveDiffusivity(*this, diffCoefficient_[phaseIdx][compIdx-1], phaseIdx);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Effective diffusion coefficient for phaseIdx = compIdx doesn't exist");
-    }
-
-    std::array<std::array<Scalar, numFluidComps-1>, numFluidPhases()> diffCoefficient_;
-    std::array<std::array<Scalar, numFluidComps-1>, numFluidPhases()> effectiveDiffCoeff_;
     std::array<Scalar, ModelTraits::numFluidPhases()> relativePermeability_; //!< Effective relative permeability within the control volume
     PermeabilityType permeability_;
     std::array<std::array<Scalar, numFluidComps>, numFluidPhases()> xEquil_;
@@ -1070,6 +1026,11 @@ protected:
     //! Mass fractions of each component within each phase
     FluidState fluidState_;
     SolidState solidState_;
+
+    // Binary diffusion coefficient
+    DiffusionCoefficients diffCoeff_;
+    // Effective diffusion coefficients for the phases
+    DiffusionCoefficients effectiveDiffCoeff_;
 };
 
 } // end namespace
