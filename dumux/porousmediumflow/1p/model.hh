@@ -98,30 +98,6 @@ struct OnePVolumeVariablesTraits
     using ModelTraits = MT;
 };
 
-/*!
- * \ingroup OnePModel
- * \brief Traits class for the volume variables of the single-phase model.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam PT The type used for permeabilities
- * \tparam MT The model traits
- * \tparam ETCM The effective thermal conductivity model
- */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class ETCM>
-struct OnePNIVolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using FluidSystem = FSY;
-    using FluidState = FST;
-    using SolidSystem = SSY;
-    using SolidState = SST;
-    using PermeabilityType = PT;
-    using ModelTraits = MT;
-    using EffectiveThermalConductivityModel = ETCM;
-};
-
 namespace Properties {
 // Create new type tags
 namespace TTag {
@@ -154,8 +130,8 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     using Traits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -201,13 +177,16 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
-    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using Traits = OnePNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, ETCM>;
+    using ETCM = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
+    template<class BaseTraits, class ETCM>
+    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+
 public:
-    using type = OnePVolumeVariables<Traits>;
+    using type = OnePVolumeVariables<NITraits<BaseTraits, ETCM>>;
 };
 
 //! Use the average for effective conductivities
