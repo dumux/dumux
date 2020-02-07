@@ -118,7 +118,7 @@ class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
 public:
     // This is the constructor of our problem class:
     ChannelExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
     {
         // We set the inlet velocity to a run-time specified value.
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
@@ -204,7 +204,7 @@ private:
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
-    Scalar eps_;
+    static constexpr Scalar eps_=1e-6;
     Scalar inletVelocity_;
     Scalar outletPressure_;
 
