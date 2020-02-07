@@ -5,7 +5,6 @@ add_subdirectory(projection)
 add_subdirectory(staggered)
 
 install(FILES
-basefvgridgeometry.hh
 basegridgeometry.hh
 box.hh
 ccmpfa.hh
