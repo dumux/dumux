@@ -294,8 +294,6 @@ public:
     }
 
 private:
-    static constexpr Scalar eps_ = 1e-6;
-
     Scalar kinematicViscosity_;
     bool enableInertiaTerms_;
     Scalar time_;
