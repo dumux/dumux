@@ -128,29 +128,30 @@ public:
 
     // First, we define the type of initial and boundary conditions depending on location.
     // Two types of boundary  conditions can be specified: Dirichlet and Neumann. On a Dirichlet boundary,
-    // the values of the primary variables need
-    // to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
+    // the values of the primary variables need to be fixed.
+    // On a Neumann boundary condition, values for derivatives need to be fixed.
     // When Dirichlet conditions are set for the pressure, the derivative of the velocity
     // vector with respect to the  direction normal to the boundary is automatically set to
     // zero. This boundary condition is called in-/outflow boundary condition in Dumux.
+    // In the following we specify Dirichlet boundaries for velocity on the left of our domain
+    // if isInlet_ is true, Dirichlet boundaries for pressure on the right of our domain
+    // if isOutlet_ is true and specify Dirichlet boundaries for velocity on the top and bottom
+    // of our domain else.
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
 
         if(isInlet_(globalPos))
         {
-            // We specify Dirichlet boundaries for velocity on the left of our domain:
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
         }
         else if(isOutlet_(globalPos))
         {
-            // We specify Dirichlet boundaries for pressure on the right of our domain:
             values.setDirichlet(Indices::pressureIdx);
         }
         else
         {
-            // We specify Dirichlet boundaries for velocity on the top and bottom of our domain:
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
         }
@@ -158,15 +159,15 @@ public:
         return values;
     }
 
-    // Second, we specify the values for the Dirichlet boundaries. We need to fix values of our  primary variable
+    // Second, we specify the values for the Dirichlet boundaries. We need to fix the values of our primary variables.
+    // To ensure a no-slip boundary condition at the top and bottom of the channel, the Dirichlet velocity
+    // in x-direction is set to zero if not at the inlet.
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values = initialAtPos(globalPos);
 
         if(!isInlet_(globalPos))
         {
-            // To ensure a no-slip boundary condition at the top and bottom of the channel, the Dirichlet velocity
-            // in x-direction is set to zero if not at the inlet.
             values[Indices::velocityXIdx] = 0.0;
         }
 
@@ -174,11 +175,11 @@ public:
     }
 
     // We specify the values for the initial conditions.
+    // We assign constant values for pressure and velocity components.
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
 
-        // we assign constant values for pressure and velocity components.
         values[Indices::pressureIdx] = outletPressure_;
         values[Indices::velocityXIdx] = inletVelocity_;
         values[Indices::velocityYIdx] = 0.0;
@@ -187,8 +188,9 @@ public:
     }
 
     // We need to specify a constant temperature for our isothermal problem.
+    // We set it to 10°C.
     Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
+    { return 273.15 + 10; }
 
 private:
 
