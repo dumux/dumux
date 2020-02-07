@@ -110,7 +110,7 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
 
 public:
     KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
@@ -335,7 +335,7 @@ private:
         }
     }
 
-    Scalar eps_;
+    static constexpr Scalar eps_=1e-6;
 
     Scalar kinematicViscosity_;
     Scalar lambda_;
