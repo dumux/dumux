@@ -1,4 +1,5 @@
 add_input_file_links()
+add_subdirectory(analytical)
 dune_symlink_to_source_files(FILES references scripts)
 
 add_executable(test_ff_rans_lauferpipe_kepsilon EXCLUDE_FROM_ALL main.cc)

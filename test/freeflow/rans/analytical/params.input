@@ -1,0 +1,37 @@
+[Grid]
+Positions0 = 0.0 1.0
+Positions1 = 0.0 1.0
+Cells0 = 20
+Cells1 = 20
+
+[Problem]
+Name = test_ff_rans_komega_verification
+EnableGravity = false
+EnableInertiaTerms = true
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
+
+[Component]
+LiquidDensity  = 1.0 # kg/m^3
+LiquidKinematicViscosity = 1.0 # m^2/s
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 5
+MaxRelativeShift = 1e-8
+
+[RANS]
+IsFlatWallBounded = false
+
+[KOmega]
+EnableProductionLimiter = false
+EnableDissipationLimiter = false
+
+[Vtk]
+WriteFaceData = false
+AddProcessRank = false
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
