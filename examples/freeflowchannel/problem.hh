@@ -23,21 +23,18 @@
 
 //Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
-// Files are included:
+// The dune grid interface (from YASP) is included, as are the staggered grid discretization scheme, the freeflow model
+// and the freeflow Navier-Stokes problem class that this class is derived from. The material (fluid) properties are specified.
 //<details>
 //  <summary>Click to toggle details</summary>
 //
-// The dune grid interphase is included here:
 #include <dune/grid/yaspgrid.hh>
 
-// The staggered grid discretization scheme is included:
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-// The freeflow model is included:
+
 #include <dumux/freeflow/navierstokes/model.hh>
-// This is the freeflow Navier-Stokes problem class that this class is derived from:
 #include <dumux/freeflow/navierstokes/problem.hh>
 
-// The fluid properties are specified in the following headers:
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 // </details>
@@ -70,13 +67,11 @@ struct Grid<TypeTag, TTag::ChannelExample> { using type = Dune::YaspGrid<2>; };
 template<class TypeTag>
 struct Problem<TypeTag, TTag::ChannelExample> { using type = Dumux::ChannelExampleProblem<TypeTag> ; };
 
-// In the following we define our fluid properties.
+// This is where we define the fluid system, which contains information about the properties of the fluid we're simulating. To define the fluid system we first define the property Scalar. We then use this type to create a fluid system that consists of an incompressible fluid of constant visosity.
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::ChannelExample>
 {
-    // We define a convenient shortcut to the property Scalar:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    // We create a fluid system that consists of an incompressible fluid of constant visosity
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 

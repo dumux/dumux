@@ -26,28 +26,19 @@ In the following, we take a close look at the files containing the set-up: At fi
 
 Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 ### Include files
-Files are included:
+The dune grid interface (from YASP) is included, as are the staggered grid discretization scheme, the freeflow model
+and the freeflow Navier-Stokes problem class that this class is derived from. The material (fluid) properties are specified.
 <details>
 <summary>Click to toggle details</summary>
 
-The dune grid interphase is included here:
 ```cpp
 #include <dune/grid/yaspgrid.hh>
-```
-The staggered grid discretization scheme is included:
-```cpp
+
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-```
-The freeflow model is included:
-```cpp
+
 #include <dumux/freeflow/navierstokes/model.hh>
-```
-This is the freeflow Navier-Stokes problem class that this class is derived from:
-```cpp
 #include <dumux/freeflow/navierstokes/problem.hh>
-```
-The fluid properties are specified in the following headers:
-```cpp
+
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 ```
@@ -321,26 +312,31 @@ We leave the namespace Dumux.
 
 We look now at the main file for the channel problem.
 ### Includes
+Necessary files are included.
+<details>
+<summary>Click to toggle details</summary>
+
+First, the configuration file is include, then the problem, followed by the standard header file for C++ to get time and date information
+and another standard header for in- and output.
+
 <details>
 <summary>Click to toggle details</summary>
 
 ```cpp
 #include <config.h>
-```
-We include the problem in the main file
-```cpp
+
 #include "problem.hh"
-```
-Further, we include a standard header file for C++, to get time and date information
-```cpp
+
 #include <ctime>
-```
-and another one for in- and output.
-```cpp
 #include <iostream>
 ```
+</details>
+
 Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and
 linear solvers. So we need some includes from that.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -348,56 +344,65 @@ linear solvers. So we need some includes from that.
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 ```
+</details>
+
 In Dumux, a property system is used to specify the model. For this, different properties are defined containing
 type definitions, values and methods. All properties are declared in the file `properties.hh`.
+The file parameters.hh contains the parameter class, which manages the definition of input parameters by a default
+value, the inputfile or the command line.
+The file `dumuxmessage.hh` contains the class defining the start and end message of the simulation.
+The file valgrind.hh contains debugging funcionality.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
 #include <dumux/common/properties.hh>
-```
-The following file contains the parameter class, which manages the definition of input parameters by a default
-value, the inputfile or the command line.
-```cpp
 #include <dumux/common/parameters.hh>
-```
-The file `dumuxmessage.hh` contains the class defining the start and end message of the simulation.
-```cpp
 #include <dumux/common/dumuxmessage.hh>
-```
-The following file contains debugging funcionality
-```cpp
 #include <dumux/common/valgrind.hh>
 ```
-The following file contains the class, which defines the sequential linear solver backends.
+</details>
+
+The file seqsolverbackend.hh contains the class, which defines the sequential linear solver backends.
+The nonlinear Newton's method is included, as well as the assembler, which assembles the linear systems for staggered-grid finite volume schemes.
+The containing class in the file diffmethod.hh defines the different differentiation methods used to compute the derivatives of the residual.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
 #include <dumux/linear/seqsolverbackend.hh>
-```
-we include the nonlinear Newton's method
-```cpp
 #include <dumux/nonlinear/newtonsolver.hh>
-```
-Further we include the assembler, which assembles the linear systems for staggered-grid finite volume schemes.
-```cpp
 #include <dumux/assembly/staggeredfvassembler.hh>
-```
-The containing class in the following file defines the different differentiation methods used to compute the derivatives of the residual.
-```cpp
 #include <dumux/assembly/diffmethod.hh>
 ```
-We need the following class to simplify the writing of dumux simulation data to VTK format.
-```cpp
-#include <dumux/io/staggeredvtkoutputmodule.hh>
-```
+</details>
+
+We need the class in staggeredvtkoutputmodule.hh to simplify the writing of dumux simulation data to VTK format.
 The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the
 different supported grid managers.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
+#include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 ```
+</details>
+
 The following class contains functionality for additional flux output to the console.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
 #include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 ```
 </details>
 
+</details>
+
 ### Beginning of the main function
+We begin the main function by defining the type tag for this problem, initializing MPI (finalizing is done automatically on exit),
+printing the dumux start message and parsing the command line arguments and input file in the init function.
 <details>
 <summary>Click to toggle details</summary>
 
@@ -405,111 +410,99 @@ The following class contains functionality for additional flux output to the con
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
-```
-we define the type tag for this problem
-```cpp
+
     using TypeTag = Properties::TTag::ChannelExample;
-```
-We initialize MPI, finalize is done automatically on exit
-```cpp
+
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
-```
-We print dumux start message
-```cpp
+
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
-```
-We parse command line arguments and input file
-```cpp
+
     Parameters::init(argc, argv);
 ```
 </details>
 
 ### Create the grid
+A gridmanager tries to create the grid either from a grid file or the input file.
+Then, we compute on the leaf grid view.
 <details>
 <summary>Click to toggle details</summary>
 
-A gridmanager tries to create the grid either from a grid file or the input file.
 ```cpp
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
-```
-The instationary non-linear problem is run on this grid.
 
-we compute on the leaf grid view
-```cpp
     const auto& leafGridView = gridManager.grid().leafGridView();
 ```
 </details>
 
 ### Set-up and solving of the problem
 
+We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
 #### Set-up
+
+We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
+In the problem, we define the boundary and initial conditions.
+We initialize the solution vector
+and then use the solution vector to intialize the `gridVariables`.
+We then initialize the vtkoutput. Each model has a predefined model-specific output with relevant parameters
+for that model.
 <details>
 <summary>Click to toggle details</summary>
 
-We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-
-We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
 ```cpp
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
-```
-In the problem, we define the boundary and initial conditions.
-```cpp
+
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
-```
-We initialize the solution vector.
-```cpp
+
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x;
     x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
     x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
     problem->applyInitialSolution(x);
-```
-and then use the solution vector to intialize the `gridVariables`.
-```cpp
+
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
-```
-and then initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters
-for that model.
-```cpp
+
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 ```
-we set up two surfaces over which fluxes are calculated
+</details>
+
+We set up two surfaces over which fluxes are calculated.
+We determine the extensions [xMin,xMax]x[yMin,yMax] of the physical domain.
+The first surface (added by the first call of addSurface) shall be placed at the middle of the channel.
+If we have an odd number of cells in x-direction, there would not be any cell faces
+at the position of the surface (which is required for the flux calculation).
+In this case, we add half a cell-width to the x-position in order to make sure that
+the cell faces lie on the surface. This assumes a regular cartesian grid.
+The second surface (second call of addSurface) is placed at the outlet of the channel.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     FluxOverSurface<GridVariables,
                     SolutionVector,
                     GetPropType<TypeTag, Properties::ModelTraits>,
                     GetPropType<TypeTag, Properties::LocalResidual>> flux(*gridVariables, x);
-```
-we determine the extensions of the physical domain.
-```cpp
+
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     const Scalar xMin = gridGeometry->bBoxMin()[0];
     const Scalar xMax = gridGeometry->bBoxMax()[0];
     const Scalar yMin = gridGeometry->bBoxMin()[1];
     const Scalar yMax = gridGeometry->bBoxMax()[1];
-```
-The first surface shall be placed at the middle of the channel.
-If we have an odd number of cells in x-direction, there would not be any cell faces
-at the position of the surface (which is required for the flux calculation).
-In this case, we add half a cell-width to the x-position in order to make sure that
-the cell faces lie on the surface. This assumes a regular cartesian grid.
-```cpp
+
     const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
     int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
 
     const unsigned int refinement = getParam<unsigned int>("Grid.Refinement", 0);
-
     numCellsX *= (1<<refinement);
 
     const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
@@ -521,20 +514,20 @@ the cell faces lie on the surface. This assumes a regular cartesian grid.
     const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};
     const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax};
     flux.addSurface("middle", p0middle, p1middle);
-```
-The second surface is placed at the outlet of the channel.
-```cpp
+
     const auto p0outlet = GlobalPosition{xMax, yMin};
     const auto p1outlet = GlobalPosition{xMax, yMax};
     flux.addSurface("outlet", p0outlet, p1outlet);
 ```
 </details>
 
+</details>
+
 #### Assembling the linear system
+We set the assembler.
 <details>
 <summary>Click to toggle details</summary>
 
-we set the assembler
 ```cpp
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
@@ -542,39 +535,34 @@ we set the assembler
 </details>
 
 #### Solution
+We set the linear and non-linear solver, solve the non-linear system and calculate mass and volume fluxes over the planes.
 <details>
 <summary>Click to toggle details</summary>
 
-we set the linear solver
 ```cpp
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
-```
-additionally, we set the non-linear solver
-```cpp
+
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
-```
-we solve the non-linear system
-```cpp
+
     nonLinearSolver.solve(x);
-```
-we calculate mass fluxes over the planes
-```cpp
+
     flux.calculateMassOrMoleFluxes();
+    flux.calculateVolumeFluxes();
 ```
 </details>
 
 ### Final Output
+We write the vtk output and print the mass/energy/volume fluxes over the planes.
+We conclude by printing the dumux end message. After the end of the main function,
+possible catched error messages are printed.
 <details>
 <summary>Click to toggle details</summary>
 
-we write vtk output
 ```cpp
     vtkWriter.write(1.0);
-```
-we print mass fluxes over the planes
-```cpp
+
     if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
     {
         std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
@@ -585,15 +573,10 @@ we print mass fluxes over the planes
         std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
         std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
     }
-```
-we calculate and print volume fluxes over the planes
-```cpp
-    flux.calculateVolumeFluxes();
+
     std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
     std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
-```
-print dumux end message
-```cpp
+
     if (mpiHelper.rank() == 0)
     {
         Parameters::print();
