@@ -124,7 +124,7 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
 
 public:
     ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
     {
         deltaP_ = getParam<Scalar>("Problem.DeltaP");
         height_ = getParam<Scalar>("Problem.Height");
@@ -266,7 +266,7 @@ private:
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
-    Scalar eps_;
+    static constexpr Scalar eps_=1e-6;
     Scalar deltaP_;
     Scalar extrusionFactor_;
     Scalar height_;

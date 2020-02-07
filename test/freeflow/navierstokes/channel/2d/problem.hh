@@ -116,7 +116,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
 public:
     ChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         const auto tmp = getParam<std::string>("Problem.OutletCondition", "Outflow");
@@ -347,7 +347,7 @@ private:
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
-    Scalar eps_;
+    static constexpr Scalar eps_=1e-6;
     Scalar inletVelocity_;
     Scalar outletPressure_;
     OutletCondition outletCondition_;

@@ -98,7 +98,7 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
 
 public:
     ClosedSystemTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
     {
         lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
     }
@@ -211,7 +211,7 @@ public:
 
 private:
 
-    Scalar eps_;
+    static constexpr Scalar eps_=1e-6;
     Scalar lidVelocity_;
 };
 } // end namespace Dumux

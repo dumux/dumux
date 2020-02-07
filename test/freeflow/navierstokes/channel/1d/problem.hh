@@ -106,7 +106,7 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
 
 public:
     NavierStokesAnalyticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         density_ = getParam<Scalar>("Component.LiquidDensity");
@@ -393,7 +393,6 @@ private:
         }
      }
 
-    Scalar eps_;
     bool printL2Error_;
     Scalar density_;
     Scalar kinematicViscosity_;

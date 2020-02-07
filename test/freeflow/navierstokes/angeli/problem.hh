@@ -239,8 +239,6 @@ public:
     }
 
 private:
-    static constexpr Scalar eps_ = 1e-6;
-
     Scalar kinematicViscosity_;
     Scalar time_ = 0;
     Scalar timeStepSize_ = 0;

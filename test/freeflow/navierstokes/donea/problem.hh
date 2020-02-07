@@ -106,7 +106,7 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
 
 public:
     DoneaTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         createAnalyticalSolution_();
@@ -324,7 +324,6 @@ private:
         }
      }
 
-    Scalar eps_;
     bool printL2Error_;
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
