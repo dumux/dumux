@@ -23,6 +23,7 @@
 
 //Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
+// Files are included:
 //<details>
 //  <summary>Click to toggle details</summary>
 //
@@ -42,6 +43,7 @@
 // </details>
 //
 // ### Define basic properties for our simulation
+// Basis properties of the simulation are defined, e.g. the model, discretization scheme, grid, fluid properties, caching.
 //<details>
 //  <summary>Click to toggle details</summary>
 //
@@ -93,15 +95,19 @@ struct EnableGridGeometryCache<TypeTag, TTag::ChannelExample> { static constexpr
 // </details>
 //
 // ### The problem class
+// We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
+//
 //<details>
 //  <summary>Click to toggle details</summary>
 //
-// We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
 // As this is a Stokes problem, we inherit from the basic `NavierStokesProblem`.
 template <class TypeTag>
 class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
 {
     // We use convenient declarations that we derive from the property system.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     using ParentType = NavierStokesProblem<TypeTag>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -116,17 +122,23 @@ class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    // This is the constructor of our problem class:
+    // </details>
+    //
+    // There follows the constructor of our problem class:
+    // Within the constructor, we set the inlet velocity to a run-time specified value.
+    // As no run-time value is specified, we set the outlet pressure to 1.1e5 Pa.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     ChannelExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        // We set the inlet velocity to a run-time specified value.
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
-        // We set the outlet pressure to 1.1e5 Pa as no run-time value is specified.
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
     }
-
-    // First, we define the type of initial and boundary conditions depending on location.
+    // </details>
+    //
+    // Now, we define the type of initial and boundary conditions depending on location.
     // Two types of boundary  conditions can be specified: Dirichlet and Neumann. On a Dirichlet boundary,
     // the values of the primary variables need to be fixed.
     // On a Neumann boundary condition, values for derivatives need to be fixed.
@@ -137,6 +149,9 @@ public:
     // if isInlet_ is true, Dirichlet boundaries for pressure on the right of our domain
     // if isOutlet_ is true and specify Dirichlet boundaries for velocity on the top and bottom
     // of our domain else.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
@@ -158,10 +173,14 @@ public:
 
         return values;
     }
-
+    // </details>
+    //
     // Second, we specify the values for the Dirichlet boundaries. We need to fix the values of our primary variables.
     // To ensure a no-slip boundary condition at the top and bottom of the channel, the Dirichlet velocity
     // in x-direction is set to zero if not at the inlet.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values = initialAtPos(globalPos);
@@ -173,9 +192,13 @@ public:
 
         return values;
     }
-
+    // </details>
+    //
     // We specify the values for the initial conditions.
     // We assign constant values for pressure and velocity components.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
@@ -186,30 +209,47 @@ public:
 
         return values;
     }
-
+    // </details>
+    //
     // We need to specify a constant temperature for our isothermal problem.
     // We set it to 10°C.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     Scalar temperature() const
     { return 273.15 + 10; }
-
 private:
-
+    // </details>
+    //
     // The inlet is at the left side of the physical domain.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     bool isInlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] < eps_;
     }
-
+    // </details>
+    //
     // The outlet is at the right side of the physical domain.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     bool isOutlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
-
+    // </details>
+    //
+    // Finally, private variables are declared:
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     static constexpr Scalar eps_=1e-6;
     Scalar inletVelocity_;
     Scalar outletPressure_;
-
+    // </details>
+    //
     // This is everything the freeflow channel problem class contains.
 };
 // We leave the namespace Dumux.

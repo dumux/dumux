@@ -26,6 +26,7 @@ In the following, we take a close look at the files containing the set-up: At fi
 
 Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 ### Include files
+Files are included:
 <details>
 <summary>Click to toggle details</summary>
 
@@ -53,6 +54,7 @@ The fluid properties are specified in the following headers:
 </details>
 
 ### Define basic properties for our simulation
+Basis properties of the simulation are defined, e.g. the model, discretization scheme, grid, fluid properties, caching.
 <details>
 <summary>Click to toggle details</summary>
 
@@ -126,10 +128,11 @@ We leave the namespace Properties.
 </details>
 
 ### The problem class
+We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
+
 <details>
 <summary>Click to toggle details</summary>
 
-We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
 As this is a Stokes problem, we inherit from the basic `NavierStokesProblem`.
 ```cpp
 template <class TypeTag>
@@ -137,6 +140,9 @@ class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
 {
 ```
 We use convenient declarations that we derive from the property system.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     using ParentType = NavierStokesProblem<TypeTag>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
@@ -153,28 +159,38 @@ We use convenient declarations that we derive from the property system.
 
 public:
 ```
-This is the constructor of our problem class:
+</details>
+
+There follows the constructor of our problem class:
+Within the constructor, we set the inlet velocity to a run-time specified value.
+As no run-time value is specified, we set the outlet pressure to 1.1e5 Pa.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     ChannelExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
     {
-```
-We set the inlet velocity to a run-time specified value.
-```cpp
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
-```
-We set the outlet pressure to 1.1e5 Pa as no run-time value is specified.
-```cpp
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
     }
 ```
-First, we define the type of initial and boundary conditions depending on location.
+</details>
+
+Now, we define the type of initial and boundary conditions depending on location.
 Two types of boundary conditions can be specified: Dirichlet and Neumann. On a Dirichlet boundary,
-the values of the primary variables need
-to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
+the values of the primary variables need to be fixed.
+On a Neumann boundary condition, values for derivatives need to be fixed.
 When Dirichlet conditions are set for the pressure, the derivative of the velocity
 vector with respect to the direction normal to the boundary is automatically set to
 zero. This boundary condition is called in-/outflow boundary condition in Dumux.
+In the following we specify Dirichlet boundaries for velocity on the left of our domain
+if isInlet_ is true, Dirichlet boundaries for pressure on the right of our domain
+if isOutlet_ is true and specify Dirichlet boundaries for velocity on the top and bottom
+of our domain else.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
@@ -182,24 +198,15 @@ zero. This boundary condition is called in-/outflow boundary condition in Dumux.
 
         if(isInlet_(globalPos))
         {
-```
-We specify Dirichlet boundaries for velocity on the left of our domain:
-```cpp
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
         }
         else if(isOutlet_(globalPos))
         {
-```
-We specify Dirichlet boundaries for pressure on the right of our domain:
-```cpp
             values.setDirichlet(Indices::pressureIdx);
         }
         else
         {
-```
-We specify Dirichlet boundaries for velocity on the top and bottom of our domain:
-```cpp
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
         }
@@ -207,7 +214,14 @@ We specify Dirichlet boundaries for velocity on the top and bottom of our domain
         return values;
     }
 ```
-Second, we specify the values for the Dirichlet boundaries. We need to fix values of our primary variable
+</details>
+
+Second, we specify the values for the Dirichlet boundaries. We need to fix the values of our primary variables.
+To ensure a no-slip boundary condition at the top and bottom of the channel, the Dirichlet velocity
+in x-direction is set to zero if not at the inlet.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -215,24 +229,24 @@ Second, we specify the values for the Dirichlet boundaries. We need to fix value
 
         if(!isInlet_(globalPos))
         {
-```
-To ensure a no-slip boundary condition at the top and bottom of the channel, the Dirichlet velocity
-in x-direction is set to zero if not at the inlet.
-```cpp
             values[Indices::velocityXIdx] = 0.0;
         }
 
         return values;
     }
 ```
+</details>
+
 We specify the values for the initial conditions.
+We assign constant values for pressure and velocity components.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-```
-we assign constant values for pressure and velocity components.
-```cpp
+
         values[Indices::pressureIdx] = outletPressure_;
         values[Indices::velocityXIdx] = inletVelocity_;
         values[Indices::velocityYIdx] = 0.0;
@@ -240,38 +254,55 @@ we assign constant values for pressure and velocity components.
         return values;
     }
 ```
+</details>
+
 We need to specify a constant temperature for our isothermal problem.
+We set it to 10°C.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
-```
-We need to define that there are no sources or sinks.
-```cpp
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return NumEqVector(0.0);
-    }
-
+    { return 273.15 + 10; }
 private:
 ```
+</details>
+
 The inlet is at the left side of the physical domain.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     bool isInlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] < eps_;
     }
 ```
+</details>
+
 The outlet is at the right side of the physical domain.
+<details>
+<summary>Click to toggle details</summary>
+
 ```cpp
     bool isOutlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
+```
+</details>
 
-    Scalar eps_;
+Finally, private variables are declared:
+<details>
+<summary>Click to toggle details</summary>
+
+```cpp
+    static constexpr Scalar eps_=1e-6;
     Scalar inletVelocity_;
     Scalar outletPressure_;
 ```
+</details>
+
 This is everything the freeflow channel problem class contains.
 ```cpp
 };
