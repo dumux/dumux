@@ -60,6 +60,18 @@ dumux_add_test(NAME test_richards_lens_box_parallel_yasp
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_yasp-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box_parallel_yasp -Grid.Overlap 0")
 
+dumux_add_test(NAME test_richards_lens_box_parallel_yasp_ovlp_2
+              TARGET test_richards_lens_box
+              LABELS porousmediumflow richards parallel
+              CMAKE_GUARD MPI_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box_parallel-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_box_parallel_yasp_ovlp_2-00007.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_yasp_ovlp_2-00007.pvtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box_parallel_yasp_ovlp_2 -Grid.Overlap 2")
+
 dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp
               TARGET test_richards_lens_tpfa
               LABELS porousmediumflow richards parallel
