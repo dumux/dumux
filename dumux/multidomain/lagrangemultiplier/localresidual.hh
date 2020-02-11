@@ -32,6 +32,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/assembly/felocalresidual.hh>
 #include <dumux/discretization/fem/ipdata.hh>
 
 namespace Dumux {

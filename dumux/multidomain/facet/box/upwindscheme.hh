@@ -53,30 +53,31 @@ public:
         const auto& scvf = fluxVars.scvFace();
         const auto& insideScv = fluxVars.fvGeometry().scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
+        return flux*upwindTerm(insideVolVars);
 
-        // check if this is an interior boundary
-        if (scvf.interiorBoundary())
-        {
-            const auto& cm = fluxVars.problem().couplingManager();
-            const auto& outsideVolVars = cm.getLowDimVolVars(fluxVars.element(), scvf);
-            if (std::signbit(flux)) // if sign of flux is negative
-                return flux*(upwindWeight*upwindTerm(outsideVolVars)
-                             + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
-            else
-                return flux*(upwindWeight*upwindTerm(insideVolVars)
-                             + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
-        }
-        else
-        {
-            const auto& outsideScv = fluxVars.fvGeometry().scv(scvf.outsideScvIdx());
-            const auto& outsideVolVars = elemVolVars[outsideScv];
-            if (std::signbit(flux)) // if sign of flux is negative
-                return flux*(upwindWeight*upwindTerm(outsideVolVars)
-                             + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
-            else
-                return flux*(upwindWeight*upwindTerm(insideVolVars)
-                             + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
-        }
+        // // check if this is an interior boundary
+        // if (scvf.interiorBoundary())
+        // {
+        //     const auto& cm = fluxVars.problem().couplingManager();
+        //     const auto& outsideVolVars = cm.getLowDimVolVars(fluxVars.element(), scvf);
+        //     if (std::signbit(flux)) // if sign of flux is negative
+        //         return flux*(upwindWeight*upwindTerm(outsideVolVars)
+        //                      + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
+        //     else
+        //         return flux*(upwindWeight*upwindTerm(insideVolVars)
+        //                      + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
+        // }
+        // else
+        // {
+        //     const auto& outsideScv = fluxVars.fvGeometry().scv(scvf.outsideScvIdx());
+        //     const auto& outsideVolVars = elemVolVars[outsideScv];
+        //     if (std::signbit(flux)) // if sign of flux is negative
+        //         return flux*(upwindWeight*upwindTerm(outsideVolVars)
+        //                      + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
+        //     else
+        //         return flux*(upwindWeight*upwindTerm(insideVolVars)
+        //                      + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
+        // }
     }
 };
 
