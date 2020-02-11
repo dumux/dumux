@@ -82,8 +82,8 @@ class VtkOutputModule
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
-    struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
-    struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; };
+    struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
+    struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
     using Field = Vtk::template Field<GridView>;
 
     using VelocityOutputType = Dumux::VelocityOutput<GridVariables>;
@@ -108,9 +108,14 @@ public:
     , sol_(sol)
     , name_(name)
     , paramGroup_(paramGroup)
-    , verbose_(gridVariables.gridGeometry().gridView().comm().rank() == 0 && verbose)
     , dm_(dm)
+    , verbose_(gridVariables.gridGeometry().gridView().comm().rank() == 0 && verbose)
+#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
+    [[deprecated("Use the new VtkOutputModule with variable output precision")]]
     , writer_(std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.gridGeometry().gridView(), dm))
+#else
+    , writer_(std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.gridGeometry().gridView(), dm, coordPrecision_))
+#endif
     , sequenceWriter_(writer_, name)
     , velocityOutput_(std::make_shared<VelocityOutputType>())
     {}
@@ -136,9 +141,10 @@ public:
     //! Output a scalar volume variable
     //! \param name The name of the vtk field
     //! \param f A function taking a VolumeVariables object and returning the desired scalar
-    void addVolumeVariable(std::function<Scalar(const VolumeVariables&)>&& f, const std::string& name)
+    void addVolumeVariable(std::function<Scalar(const VolumeVariables&)>&& f,
+                                                const std::string& name)
     {
-        volVarScalarDataInfo_.push_back(VolVarScalarDataInfo{f, name});
+        volVarScalarDataInfo_.push_back(VolVarScalarDataInfo{f, name, precision_});
     }
 
     //! Add a vector-valued variable
@@ -146,9 +152,10 @@ public:
     //! \param name The name of the vtk field
     //! \note This method is only available for dimWorld > 1. For 1-D problems, the overload for volVar methods returning a Scalar will be used.
     template<class VVV = VolVarsVector, typename std::enable_if_t<(VVV::dimension > 1), int> = 0>
-    void addVolumeVariable(std::function<VolVarsVector(const VolumeVariables&)>&& f, const std::string& name)
+    void addVolumeVariable(std::function<VolVarsVector(const VolumeVariables&)>&& f,
+                                                       const std::string& name)
     {
-        volVarVectorDataInfo_.push_back(VolVarVectorDataInfo{f, name});
+        volVarVectorDataInfo_.push_back(VolVarVectorDataInfo{f, name, precision_});
     }
 
     //! Add a scalar or vector valued vtk field
@@ -158,7 +165,9 @@ public:
     //!        This determines whether the values are associated with vertices or elements.
     //!        By default, the method automatically deduces the correct type for the given input.
     template<typename Vector>
-    void addField(const Vector& v, const std::string& name, FieldType fieldType = FieldType::automatic)
+    void addField(const Vector& v,
+                  const std::string& name,
+                  FieldType fieldType = FieldType::automatic)
     {
         // Deduce the number of components from the given vector type
         const auto nComp = getNumberOfComponents_(v);
@@ -193,9 +202,9 @@ public:
 
         // add the appropriate field
         if (fieldType == FieldType::element)
-            fields_.emplace_back(gridGeometry().gridView(), gridGeometry().elementMapper(), v, name, nComp, 0);
+            fields_.emplace_back(gridGeometry().gridView(), gridGeometry().elementMapper(), v, name, nComp, 0, dm_, precision_);
         else
-            fields_.emplace_back(gridGeometry().gridView(), gridGeometry().vertexMapper(), v, name, nComp, dim);
+            fields_.emplace_back(gridGeometry().gridView(), gridGeometry().vertexMapper(), v, name, nComp, dim, dm_, precision_);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -361,19 +370,19 @@ private:
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
                     sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarScalarData[i],
-                                                         volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim).get() );
+                                                         volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, dm_, precision_).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
                     sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarVectorData[i],
-                                                         volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim).get() );
+                                                         volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, dm_, precision_).get() );
             }
             else
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
                     sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
-                                                       volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0).get() );
+                                                       volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0,dm_, precision_).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
                     sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
-                                                       volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0).get() );
+                                                       volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0,dm_, precision_).get() );
             }
 
             // the velocity field
@@ -384,7 +393,7 @@ private:
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                                             /*numComp*/dimWorld, /*codim*/dim).get() );
+                                                             /*numComp*/dimWorld, /*codim*/dim, dm_, precision_).get() );
                 }
                 // cell-centered models
                 else
@@ -392,7 +401,7 @@ private:
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
                                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                                           /*numComp*/dimWorld, /*codim*/0).get() );
+                                                           /*numComp*/dimWorld, /*codim*/0, dm_, precision_).get() );
                 }
             }
 
@@ -549,11 +558,11 @@ private:
             // volume variables if any
             for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
                 sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
-                                                     volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, /*nonconforming*/dm_).get() );
+                                                     volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, /*nonconforming*/dm_, precision_).get() );
 
             for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
                 sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
-                                                     volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, /*nonconforming*/dm_).get() );
+                                                     volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, /*nonconforming*/dm_, precision_).get() );
 
             // the velocity field
             if (velocityOutput_->enableOutput())
@@ -563,14 +572,14 @@ private:
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                                             /*numComp*/dimWorld, /*codim*/dim).get() );
+                                                             /*numComp*/dimWorld, /*codim*/dim, dm_, precision_).get() );
 
                 // cell-wise velocities
                 else
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
                         sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
                                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                                           /*numComp*/dimWorld, /*codim*/0).get() );
+                                                           /*numComp*/dimWorld, /*codim*/0,dm_, precision_).get());
             }
 
             // the process rank
@@ -615,9 +624,12 @@ private:
     const SolutionVector& sol_;
 
     std::string name_;
-    std::string paramGroup_;
-    bool verbose_;
+    const std::string paramGroup_;
     Dune::VTK::DataMode dm_;
+    bool verbose_;
+    const std::string precisionString_ = getParamFromGroup<std::string>(paramGroup_,"Vtk.Precision", "Float32");
+    const Dumux::Vtk::Precision precision_ = Dumux::Vtk::stringToPrecision(precisionString_);
+    const Dumux::Vtk::Precision coordPrecision_ = Dumux::Vtk::stringToPrecision(getParamFromGroup<std::string>(paramGroup_,"Vtk.CoordPrecision",precisionString_));
 
     std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
     Dune::VTKSequenceWriter<GridView> sequenceWriter_;
