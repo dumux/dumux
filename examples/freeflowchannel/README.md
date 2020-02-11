@@ -81,18 +81,12 @@ The problem class specifies initial and boundary conditions:
 template<class TypeTag>
 struct Problem<TypeTag, TTag::ChannelExample> { using type = Dumux::ChannelExampleProblem<TypeTag> ; };
 ```
-In the following we define our fluid properties.
+This is where we define the fluid system, which contains information about the properties of the fluid we're simulating. To define the fluid system we first define the property Scalar. We then use this type to create a fluid system that consists of an incompressible fluid of constant visosity.
 ```cpp
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::ChannelExample>
 {
-```
-We define a convenient shortcut to the property Scalar:
-```cpp
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-```
-We create a fluid system that consists of an incompressible fluid of constant visosity
-```cpp
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 ```
@@ -534,8 +528,11 @@ We set the assembler.
 ```
 </details>
 
-#### Solution
-We set the linear and non-linear solver, solve the non-linear system and calculate mass and volume fluxes over the planes.
+#### Calculations
+Calculations are done in the following:
+
+##### Solution
+We set the linear and non-linear solver and solve the non-linear system.
 <details>
 <summary>Click to toggle details</summary>
 
@@ -547,7 +544,15 @@ We set the linear and non-linear solver, solve the non-linear system and calcula
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     nonLinearSolver.solve(x);
+```
+</details>
 
+##### Postprocessing
+We calculate mass and volume fluxes over the planes.
+<details>
+<summary>Click to toggle details</summary>
+
+```cpp
     flux.calculateMassOrMoleFluxes();
     flux.calculateVolumeFluxes();
 ```

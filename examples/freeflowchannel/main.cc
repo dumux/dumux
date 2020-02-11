@@ -219,8 +219,11 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
     // </details>
     //
-    // #### Solution
-    // We set the linear and non-linear solver, solve the non-linear system and calculate mass and volume fluxes over the planes.
+    // #### Calculations
+    // Calculations are done in the following:
+    //
+    // ##### Solution
+    // We set the linear and non-linear solver and solve the non-linear system.
     //<details>
     //  <summary>Click to toggle details</summary>
     //
@@ -231,7 +234,13 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     nonLinearSolver.solve(x);
-
+    // </details>
+    //
+    // ##### Postprocessing
+    // We calculate mass and volume fluxes over the planes.
+    //<details>
+    //  <summary>Click to toggle details</summary>
+    //
     flux.calculateMassOrMoleFluxes();
     flux.calculateVolumeFluxes();
     // </details>
