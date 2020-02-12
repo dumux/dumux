@@ -189,13 +189,18 @@ public:
         origResiduals[0] = this->evalLocalResidual()[0];
 
         // lambda for convenient evaluation of the fluxes across scvfs in the neighbors
+        // if the neighbor is a ghost we don't want to add anything to their residual
+        // so we return 0 and omit computing the flux
         auto evalNeighborFlux = [&] (const auto& neighbor, const auto& scvf)
         {
-            return this->localResidual().evalFlux(this->problem(),
-                                                  neighbor,
-                                                  this->fvGeometry(),
-                                                  this->curElemVolVars(),
-                                                  this->elemFluxVarsCache(), scvf);
+            if (neighbor.partitionType() == Dune::GhostEntity)
+                return NumEqVector(0.0);
+            else
+                return this->localResidual().evalFlux(this->problem(),
+                                                      neighbor,
+                                                      this->fvGeometry(),
+                                                      this->curElemVolVars(),
+                                                      this->elemFluxVarsCache(), scvf);
         };
 
         // get the elements in which we need to evaluate the fluxes
