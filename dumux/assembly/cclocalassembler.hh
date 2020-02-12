@@ -247,8 +247,8 @@ public:
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
 
-                // calculate the residual with the deflected primary variables (except for ghosts)
-                if (!this->elementIsGhost()) partialDerivsTmp[0] = this->evalLocalResidual()[0];
+                // calculate the residual with the deflected primary variables
+                partialDerivsTmp[0] = this->evalLocalResidual()[0];
 
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
