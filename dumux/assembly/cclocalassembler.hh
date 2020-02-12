@@ -436,6 +436,8 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/tr
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+
 public:
     using ParentType::ParentType;
 
@@ -447,6 +449,17 @@ public:
      */
     NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
+        // treat ghost separately, we always want zero update for ghosts
+        if (this->elementIsGhost())
+        {
+            const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
+            for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+                A[globalI][globalI][pvIdx][pvIdx] = 1.0;
+
+            // return zero residual
+            return NumEqVector(0.0);
+        }
+
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
 
@@ -515,6 +528,8 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/fa
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+
 public:
     using ParentType::ParentType;
 
@@ -526,6 +541,17 @@ public:
      */
     NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
+        // treat ghost separately, we always want zero update for ghosts
+        if (this->elementIsGhost())
+        {
+            const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
+            for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+                A[globalI][globalI][pvIdx][pvIdx] = 1.0;
+
+            // return zero residual
+            return NumEqVector(0.0);
+        }
+
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
 
