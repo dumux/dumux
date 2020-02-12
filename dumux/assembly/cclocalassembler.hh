@@ -274,6 +274,7 @@ public:
             }
 
             // add the current partial derivatives to the global jacobian matrix
+            // no special treatment is needed if globalJ is a ghost because then derivatives have been assembled to 0 above
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
             {
                 // the diagonal entries
