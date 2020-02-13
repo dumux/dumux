@@ -187,13 +187,18 @@ public:
         origResiduals[0] = this->evalLocalResidual()[0];
 
         // lambda for convenient evaluation of the fluxes across scvfs in the neighbors
+        // if the neighbor is a ghost we don't want to add anything to their residual
+        // so we return 0 and omit computing the flux
         auto evalNeighborFlux = [&] (const auto& neighbor, const auto& scvf)
         {
-            return this->localResidual().evalFlux(this->problem(),
-                                                  neighbor,
-                                                  this->fvGeometry(),
-                                                  this->curElemVolVars(),
-                                                  this->elemFluxVarsCache(), scvf);
+            if (neighbor.partitionType() == Dune::GhostEntity)
+                return NumEqVector(0.0);
+            else
+                return this->localResidual().evalFlux(this->problem(),
+                                                      neighbor,
+                                                      this->fvGeometry(),
+                                                      this->curElemVolVars(),
+                                                      this->elemFluxVarsCache(), scvf);
         };
 
         // get the elements in which we need to evaluate the fluxes
@@ -240,8 +245,8 @@ public:
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
 
-                // calculate the residual with the deflected primary variables (except for ghosts)
-                if (!this->elementIsGhost()) partialDerivsTmp[0] = this->evalLocalResidual()[0];
+                // calculate the residual with the deflected primary variables
+                partialDerivsTmp[0] = this->evalLocalResidual()[0];
 
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
@@ -267,6 +272,7 @@ public:
             }
 
             // add the current partial derivatives to the global jacobian matrix
+            // no special treatment is needed if globalJ is a ghost because then derivatives have been assembled to 0 above
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
             {
                 // the diagonal entries
@@ -427,6 +433,8 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/tr
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+
 public:
     using ParentType::ParentType;
 
@@ -438,6 +446,17 @@ public:
      */
     NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
+        // treat ghost separately, we always want zero update for ghosts
+        if (this->elementIsGhost())
+        {
+            const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
+            for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+                A[globalI][globalI][pvIdx][pvIdx] = 1.0;
+
+            // return zero residual
+            return NumEqVector(0.0);
+        }
+
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
 
@@ -506,6 +525,8 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/fa
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+
 public:
     using ParentType::ParentType;
 
@@ -517,6 +538,17 @@ public:
      */
     NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
+        // treat ghost separately, we always want zero update for ghosts
+        if (this->elementIsGhost())
+        {
+            const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
+            for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+                A[globalI][globalI][pvIdx][pvIdx] = 1.0;
+
+            // return zero residual
+            return NumEqVector(0.0);
+        }
+
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
 
