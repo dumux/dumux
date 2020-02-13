@@ -432,6 +432,7 @@ public:
     const GridView& gridView() const
     { return gridView_; }
 
+private:
     template<class Comm, class GlobalIndices>
     void resizeIndexSet_(Comm& comm, const GlobalIndices& globalIndices) const
     {
@@ -468,7 +469,6 @@ public:
             return Dune::OwnerOverlapCopyAttributeSet::copy;
     }
 
-private:
     const GridView gridView_; //!< the grid view
     const DofMapper& mapper_; //!< the dof mapper
     std::vector<std::size_t> isOwned_; //!< vector to identify unique decomposition
