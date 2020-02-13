@@ -130,7 +130,18 @@ private:
         if constexpr (LinearSolverTraits::canCommunicate)
         {
             if (isParallel_)
-                solveParallel_(A, x, b);
+            {
+                if (LinearSolverTraits::isNonOverlapping(phelper_->gridView()))
+                {
+                    using PTraits = typename LinearSolverTraits::template ParallelNonoverlapping<Matrix, Vector>;
+                    solveParallel_<PTraits>(A, x, b);
+                }
+                else
+                {
+                    using PTraits = typename LinearSolverTraits::template ParallelOverlapping<Matrix, Vector>;
+                    solveParallel_<PTraits>(A, x, b);
+                }
+            }
             else
                 solveSequential_(A, x, b);
         }
@@ -140,21 +151,20 @@ private:
         }
     }
 
-    template<class Matrix, class Vector>
+    template<class ParallelTraits, class Matrix, class Vector>
     void solveParallel_(Matrix& A, Vector& x, Vector& b)
     {
-        using Traits = typename LinearSolverTraits::template Parallel<Matrix, Vector>;
-        using Comm = typename Traits::Comm;
-        using LinearOperator = typename Traits::LinearOperator;
-        using ScalarProduct = typename Traits::ScalarProduct;
+        using Comm = typename ParallelTraits::Comm;
+        using LinearOperator = typename ParallelTraits::LinearOperator;
+        using ScalarProduct = typename ParallelTraits::ScalarProduct;
 
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> linearOperator;
         std::shared_ptr<ScalarProduct> scalarProduct;
-        prepareLinearAlgebraParallel<LinearSolverTraits>(A, b, comm, linearOperator, scalarProduct, *phelper_, firstCall_);
+        prepareLinearAlgebraParallel<LinearSolverTraits, ParallelTraits>(A, b, comm, linearOperator, scalarProduct, *phelper_, firstCall_);
 
         using SeqSmoother = Dune::SeqSSOR<Matrix, Vector, Vector>;
-        using Smoother = typename Traits::template Preconditioner<SeqSmoother>;
+        using Smoother = typename ParallelTraits::template Preconditioner<SeqSmoother>;
         solveWithAmg_<Smoother>(A, x, b, linearOperator, comm, scalarProduct);
     }
 #endif // HAVE_MPI

@@ -786,21 +786,22 @@ private:
 /*!
  * \brief Prepare linear algebra variables for parallel solvers
  */
-template<class LinearSolverTraits, class Matrix, class Vector, class ParallelHelper>
+template<class LinearSolverTraits, class ParallelTraits,
+         class Matrix, class Vector, class ParallelHelper>
 void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
-    std::shared_ptr<typename LinearSolverTraits::template Parallel<Matrix, Vector>::Comm>& comm,
-    std::shared_ptr<typename LinearSolverTraits::template Parallel<Matrix, Vector>::LinearOperator>& fop,
-    std::shared_ptr<typename LinearSolverTraits::template Parallel<Matrix, Vector>::ScalarProduct>& sp,
-    ParallelHelper& pHelper,
-    const bool firstCall)
+                                  std::shared_ptr<typename ParallelTraits::Comm>& comm,
+                                  std::shared_ptr<typename ParallelTraits::LinearOperator>& fop,
+                                  std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
+                                  ParallelHelper& pHelper,
+                                  const bool firstCall)
 {
     if (firstCall) pHelper.initGhostsAndOwners();
 
-    if (LinearSolverTraits::isNonOverlapping)
+    if constexpr (ParallelTraits::isNonOverlapping)
     {
         // extend the matrix pattern such that it is usable for a parallel solver
         // and make right-hand side consistent
-        using GridView = std::decay_t<decltype(pHelper.gridView())>;
+        using GridView = typename LinearSolverTraits::GridView;
         using DofMapper = typename LinearSolverTraits::DofMapper;
         static constexpr int dofCodim = LinearSolverTraits::dofCodim;
         ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim> matrixHelper(pHelper.gridView(), pHelper.dofMapper());
@@ -810,7 +811,7 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
         pHelper.makeNonOverlappingConsistent(b);
 
         // create commicator, operator, scalar product
-        using Traits = typename LinearSolverTraits::template Parallel<Matrix, Vector>;
+        using Traits = typename LinearSolverTraits::template ParallelNonoverlapping<Matrix, Vector>;
         const auto category = Dune::SolverCategory::nonoverlapping;
         comm = std::make_shared<typename Traits::Comm>(pHelper.gridView().comm(), category);
         pHelper.createParallelIndexSet(*comm);
@@ -820,7 +821,7 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
     else
     {
         // create commicator, operator, scalar product
-        using Traits = typename LinearSolverTraits::template Parallel<Matrix, Vector>;
+        using Traits = typename LinearSolverTraits::template ParallelOverlapping<Matrix, Vector>;
         const auto category = Dune::SolverCategory::overlapping;
         comm = std::make_shared<typename Traits::Comm>(pHelper.gridView().comm(), category);
         pHelper.createParallelIndexSet(*comm);

@@ -94,6 +94,7 @@ public:
     using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
     using LinearOperator = Dune::NonoverlappingSchwarzOperator<MType, VType, VType, Comm>;
     using ScalarProduct = Dune::NonoverlappingSchwarzScalarProduct<VType, Comm>;
+    static constexpr bool isNonOverlapping = true;
 
     template<class SeqPreconditioner>
     using Preconditioner = Dune::NonoverlappingBlockPreconditioner<Comm, SeqPreconditioner>;
@@ -108,58 +109,65 @@ public:
     using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
     using LinearOperator = Dune::OverlappingSchwarzOperator<MType, VType, VType, Comm>;
     using ScalarProduct = Dune::OverlappingSchwarzScalarProduct<VType, Comm>;
+    static constexpr bool isNonOverlapping = false;
 
     template<class SeqPreconditioner>
     using Preconditioner = Dune::BlockPreconditioner<VType, VType, Comm, SeqPreconditioner>;
 };
 #endif
 
-//! Box: use non-overlapping model
 template<class GridGeometry>
-struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::box>
+struct LinearSolverTraitsBase
 {
     using GridView = typename GridGeometry::GridView;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
-    using DofMapper = typename GridGeometry::VertexMapper;
-
-    static constexpr int dofCodim = Grid::dimension;
-    static constexpr bool isNonOverlapping = true;
-    // TODO: see above for description of this workaround, remove second line if fixed upstream
-    static constexpr bool canCommunicate =
-             Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-             || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
     template<class Matrix, class Vector>
     using Sequential = SequentialSolverTraits<Matrix, Vector>;
 
     template<class Matrix, class Vector>
-    using Parallel = std::conditional_t<isNonOverlapping,
-                       NonoverlappingSolverTraits<Matrix, Vector>,
-                       OverlappingSolverTraits<Matrix, Vector>>;
+    using ParallelOverlapping = OverlappingSolverTraits<Matrix, Vector>;
+
+    template<class Matrix, class Vector>
+    using ParallelNonoverlapping = NonoverlappingSolverTraits<Matrix, Vector>;
+};
+
+//! Box: use overlapping or non-overlapping model depending on the grid
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::box>
+: public LinearSolverTraitsBase<GridGeometry>
+{
+    using DofMapper = typename GridGeometry::VertexMapper;
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
+    static constexpr int dofCodim = Grid::dimension;
+
+    // TODO: see above for description of this workaround, remove second line if fixed upstream
+    static constexpr bool canCommunicate =
+             Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+             || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
+
+    template<class GridView>
+    static bool isNonOverlapping(const GridView& gridView)
+    { return gridView.overlapSize(0) == 0; }
 };
 
 //! Cell-centered tpfa: use overlapping model
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa>
+: public LinearSolverTraitsBase<GridGeometry>
 {
-    using GridView = typename GridGeometry::GridView;
+    using DofMapper = typename GridGeometry::ElementMapper;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
-    using DofMapper = typename GridGeometry::VertexMapper;
-
     static constexpr int dofCodim = 0;
-    static constexpr bool isNonOverlapping = false;
+
     // TODO: see above for description of this workaround, remove second line if fixed upstream
     static constexpr bool canCommunicate =
              Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
              || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
-    template<class Matrix, class Vector>
-    using Sequential = SequentialSolverTraits<Matrix, Vector>;
-
-    template<class Matrix, class Vector>
-    using Parallel = std::conditional_t<isNonOverlapping,
-                       NonoverlappingSolverTraits<Matrix, Vector>,
-                       OverlappingSolverTraits<Matrix, Vector>>;
+    template<class GridView>
+    static bool isNonOverlapping(const GridView& gridView)
+    { return false; }
 };
 
 //! Cell-centered mpfa: use overlapping model

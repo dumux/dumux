@@ -35,7 +35,6 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/basegridgeometry.hh>
-#include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
 #include <dumux/discretization/box/subcontrolvolume.hh>
@@ -118,12 +117,7 @@ public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
-    {
-        // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
-            DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
-                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
-    }
+    {}
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -391,12 +385,7 @@ public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
-    {
-        // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod::box>::isValid(gridView))
-            DUNE_THROW(Dune::InvalidStateException, "The box discretization method only works with zero overlap for parallel computations. "
-                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
-    }
+    {}
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
