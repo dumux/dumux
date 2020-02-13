@@ -797,7 +797,7 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
     const auto category = LinearSolverTraits::isNonOverlapping ?
         Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
 
-    if (LinearSolverTraits::isNonOverlapping && firstCall)
+    if (firstCall)
         pHelper.initGhostsAndOwners();
 
     using Traits = typename LinearSolverTraits::template Parallel<Matrix, Vector>;
