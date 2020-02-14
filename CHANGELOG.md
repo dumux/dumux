@@ -15,10 +15,13 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
 - __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the non-wetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
 - __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
+- __AMGBackend__: The internal structure of the AMGBackend and the ParallelISTLHelper has been overhauled, as only used by the AMG, we did not make the changes backwards-compatible
 
 ### Deprecated properties, to be removed after 3.2:
 
 ### Deprecated classes/files, to be removed after 3.2:
+- __AMGBackend__: The class AMGBackend is deprecated and has been replaced by AMGBiCGSTABBackend which gets some different template arguments
+- __AMGTraits__: AMGTraits are deprecated, are to be replaced by LinearSolverTraits and restructured internally. As they were only used by the AMGBackend, we did not make the internal changes backwards-compatible
 
 ### Deprecated member functions, to be removed after 3.2:
 

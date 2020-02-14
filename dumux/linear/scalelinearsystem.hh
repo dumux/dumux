@@ -19,22 +19,36 @@
 /*!
  * \file
  * \ingroup Linear
- * \brief Define traits for the AMG backend.
+ * \brief Free function to scale a linear system
  */
-#ifndef DUMUX_AMG_TRAITS_HH
-#define DUMUX_AMG_TRAITS_HH
-
-#warning "This header is deprecated and will be removed after release 3.2. Use linearsolver/linearsolvertraits.hh"
-
-#include "linearsolvertraits.hh"
-
+#ifndef DUMUX_LINEAR_SCALELINEARSYSTEM_HH
+#define DUMUX_LINEAR_SCALELINEARSYSTEM_HH
 
 namespace Dumux {
 
-//! The type traits required for using the AMG backend
-template<class MType, class VType, class GridGeometry>
-using AmgTraits [[deprecated("Use LinearSolverTraits<GridGeometry> instead. AmgTraits will be removed after 3.2!")]] = LinearSolverTraits<GridGeometry>;
+/*!
+ * \ingroup Linear
+ * \brief Scale the linear system by the inverse of
+ * its (block-)diagonal entries.
+ *
+ * \param matrix the matrix to scale
+ * \param rhs the right hand side vector to scale
+ */
+template <class Matrix, class Vector>
+void scaleLinearSystem(Matrix& matrix, Vector& rhs)
+{
+    for (auto rowIt = matrix.begin(); rowIt != matrix.end(); ++rowIt)
+    {
+        auto rowIdx = rowIt.index();
+        auto diagonal = matrix[rowIdx][rowIdx];
+        diagonal.invert();
+
+        const auto b = rhs[rowIdx];
+        diagonal.mv(b, rhs[rowIdx]);
+
+        for (auto& col : *rowIt)
+            col.leftmultiply(diagonal);
+    }
+}
 
 } // end namespace Dumux
-
-#endif // DUMUX_AMG_TRAITS_HH

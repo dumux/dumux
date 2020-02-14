@@ -22,8 +22,10 @@
  * \brief Provides a helper class for nonoverlapping
  *        decomposition.
  */
-#ifndef DUMUX_PARALLELHELPERS_HH
-#define DUMUX_PARALLELHELPERS_HH
+#ifndef DUMUX_LINEAR_PARALLELHELPERS_HH
+#define DUMUX_LINEAR_PARALLELHELPERS_HH
+
+#if HAVE_MPI
 
 #include <dune/common/version.hh>
 #include <dune/geometry/dimension.hh>
@@ -40,9 +42,10 @@ namespace Dumux {
  *        decomposition of all degrees of freedom
  */
 // operator that resets result to zero at constrained DOFS
-template<class GridView, class LinearSolverTraits>
+template<class LinearSolverTraits>
 class ParallelISTLHelper
 {
+    using GridView = typename LinearSolverTraits::GridView;
     using DofMapper = typename LinearSolverTraits::DofMapper;
     enum { dofCodim = LinearSolverTraits::dofCodim };
 
@@ -312,11 +315,6 @@ public:
         : gridView_(gridView), mapper_(mapper), initialized_(false)
     {}
 
-    [[deprecated("The verbose argument has no effect. Use ParallelISTLHelper(gridView, mapper) instead. Will be removed after 3.2!")]]
-    ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper, int verbose)
-        : gridView_(gridView), mapper_(mapper), initialized_(false)
-    {}
-
     // \brief Initializes the markers for ghosts and owners with the correct size and values.
     //
     void initGhostsAndOwners()
@@ -344,22 +342,6 @@ public:
         initialized_ = true;
     }
 
-    // keep only DOFs assigned to this processor
-    template<class W>
-    [[deprecated("This function has no effect. Will be removed after 3.2!")]]
-    void mask(W& w) const
-    {}
-
-    // access to mask vector
-    [[deprecated("Will be removed after 3.2!")]]
-    std::size_t mask(std::size_t i) const
-    { return isOwned_[i]; }
-
-    // access to ghost vector
-    [[deprecated("Will be removed after 3.2!")]]
-    std::size_t ghost(std::size_t i) const
-    { return isGhost_[i]; }
-
     bool isGhost(std::size_t i) const
     { return isGhost_[i] == ghostMarker_; }
 
@@ -367,21 +349,11 @@ public:
     template<class B, class A>
     void makeNonOverlappingConsistent(Dune::BlockVector<B,A>& v)
     {
-#if HAVE_MPI
         ConsistencyBoxGatherScatter<Dune::BlockVector<B,A> > gs(v, mapper_);
         if (gridView_.comm().size() > 1)
             gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface,
                                   Dune::ForwardCommunication);
-#endif
     }
-
-
-#if HAVE_MPI
-
-    template<typename MatrixType, typename Comm>
-    [[deprecated("Use createParallelIndexSet(comm) instead. Will be removed after 3.2!")]]
-    void createIndexSetAndProjectForAMG(MatrixType& m, Comm& c)
-    { createParallelIndexSet(c); }
 
     /*!
      * \brief Creates a parallel index set
@@ -452,8 +424,6 @@ public:
         comm.remoteIndices().template rebuild<false>();
     }
 
-#endif
-
     //! Return the dofMapper
     const DofMapper& dofMapper() const
     { return mapper_; }
@@ -462,24 +432,7 @@ public:
     const GridView& gridView() const
     { return gridView_; }
 
-    template<class Comm>
-    Dune::OwnerOverlapCopyAttributeSet::AttributeSet
-    getAttribute_(const Comm& comm, const bool isOwned, const bool isGhost) const
-    {
-        if (isOwned)
-            return Dune::OwnerOverlapCopyAttributeSet::owner;
-#if DUNE_VERSION_GTE(DUNE_ISTL, 2, 7)
-        else if (isGhost && ( comm.category() ==
-                                       static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
-#else
-        else if (isGhost && ( comm.getSolverCategory() ==
-                                       static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
-#endif
-            return Dune::OwnerOverlapCopyAttributeSet::overlap;
-        else
-            return Dune::OwnerOverlapCopyAttributeSet::copy;
-    }
-
+private:
     template<class Comm, class GlobalIndices>
     void resizeIndexSet_(Comm& comm, const GlobalIndices& globalIndices) const
     {
@@ -490,17 +443,32 @@ public:
             const auto globalIndex = globalIndices[localIndex];
             if (globalIndex != std::numeric_limits<typename GlobalIndices::value_type>::max())
             {
-                 const bool isOwned = isOwned_[localIndex] > 0;
-                 const auto attr = getAttribute_(comm, isOwned, isGhost(localIndex));
-                 using LocalIndex = typename Comm::ParallelIndexSet::LocalIndex;
-                 comm.indexSet().add(globalIndex, LocalIndex{localIndex, attr});
+                const bool isOwned = isOwned_[localIndex] > 0;
+                const auto attr = getAttribute_(comm, isOwned, isGhost(localIndex));
+                using LocalIndex = typename Comm::ParallelIndexSet::LocalIndex;
+                comm.indexSet().add(globalIndex, LocalIndex{localIndex, attr});
             }
         }
 
         comm.indexSet().endResize();
     }
 
-private:
+    template<class Comm>
+    Dune::OwnerOverlapCopyAttributeSet::AttributeSet
+    getAttribute_(const Comm& comm, const bool isOwned, const bool isGhost) const
+    {
+        if (isOwned)
+            return Dune::OwnerOverlapCopyAttributeSet::owner;
+#if DUNE_VERSION_GTE(DUNE_ISTL, 2, 7)
+        else if (isGhost && (comm.category() == static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
+#else
+        else if (isGhost && (comm.getSolverCategory() == static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
+#endif
+            return Dune::OwnerOverlapCopyAttributeSet::overlap;
+        else
+            return Dune::OwnerOverlapCopyAttributeSet::copy;
+    }
+
     const GridView gridView_; //!< the grid view
     const DofMapper& mapper_; //!< the dof mapper
     std::vector<std::size_t> isOwned_; //!< vector to identify unique decomposition
@@ -512,20 +480,15 @@ private:
 /*!
  * \ingroup Linear
  * \brief Helper class for adding up matrix entries on border.
- * \tparam GridView The grid view to work on
- * \tparam LinearSolverTraits traits class
  */
-template<class GridView, class LinearSolverTraits>
-class EntityExchanger
+template<class Matrix, class GridView, class DofMapper, int dofCodim>
+class ParallelMatrixHelper
 {
-    using Matrix = typename LinearSolverTraits::MType;
-    enum { dim = GridView::dimension };
-    enum { dofCodim = LinearSolverTraits::dofCodim };
+    static constexpr int dim = GridView::dimension;
     using Grid = typename GridView::Traits::Grid;
     using BlockType = typename Matrix::block_type;
     using IDS = typename Grid::Traits::GlobalIdSet;
     using IdType = typename IDS::IdType;
-    using DofMapper = typename LinearSolverTraits::DofMapper;
 
     /*!
      * \brief A DataHandle class to exchange matrix sparsity patterns.
@@ -545,22 +508,27 @@ class EntityExchanger
      *  </pre>
      *  If we look at vertex 7 and the corresponding entries in the matrix for P0,
      *  there will be entries for (7,4) and (7,8), but not for (7,2).
-     *  The MatrixPatternExchange class will find these entries and returns a vector "sparsity",
+     *  The MatrixPatternExchange class will find these entries and fills a vector "sparsity",
      *  that contains all missing connections.
      */
+    template<class IsGhostFunc>
     struct MatrixPatternExchange
-    : public Dune::CommDataHandleIF<MatrixPatternExchange, IdType>
+    : public Dune::CommDataHandleIF<MatrixPatternExchange<IsGhostFunc>, IdType>
     {
         //! Export type of data for message buffer
         using DataType = IdType;
 
         MatrixPatternExchange(const DofMapper& mapper,
                               const std::map<IdType,int>& globalToLocal,
-                              const std::map<int,IdType>& localToGlobal, Matrix& A,
-                              const ParallelISTLHelper<GridView, LinearSolverTraits>& helper)
+                              const std::map<int,IdType>& localToGlobal,
+                              Matrix& A,
+                              std::vector<std::set<int>>& sparsity,
+                              const IsGhostFunc& isGhost)
         : mapper_(mapper), idToIndex_(globalToLocal), indexToID_(localToGlobal)
-        , sparsity_(A.N()), A_(A), helper_(helper)
-        {}
+        , sparsity_(sparsity), A_(A), isGhost_(isGhost)
+        {
+            sparsity_.resize(A.N());
+        }
 
         /*!
          * \brief Returns true if data for given valid codim should be communicated
@@ -620,26 +588,19 @@ class EntityExchanger
                 if (it != idToIndex_.end())
                 {
                     const auto colIdx = it->second;
-                    if (!sparsity_[rowIdx].count(colIdx) && !helper_.isGhost(colIdx))
+                    if (!sparsity_[rowIdx].count(colIdx) && !isGhost_(colIdx))
                         sparsity_[rowIdx].insert(colIdx);
                 }
             }
         }
 
-        /*!
-         * \brief Get the communicated sparsity pattern
-         * \return the vector with the sparsity pattern
-         */
-        std::vector<std::set<int>>& sparsity()
-        { return sparsity_; }
-
     private:
         const DofMapper& mapper_;
         const std::map<IdType,int>& idToIndex_;
         const std::map<int,IdType>& indexToID_;
-        std::vector<std::set<int> > sparsity_;
+        std::vector<std::set<int>>& sparsity_;
         Matrix& A_;
-        const ParallelISTLHelper<GridView, LinearSolverTraits>& helper_;
+        const IsGhostFunc& isGhost_;
 
     }; // class MatrixPatternExchange
 
@@ -654,7 +615,7 @@ class EntityExchanger
 
     //! A DataHandle class to exchange matrix entries
     struct MatrixEntryExchange
-    : public Dune::CommDataHandleIF<MatrixEntryExchange,MatrixEntry>
+    : public Dune::CommDataHandleIF<MatrixEntryExchange, MatrixEntry>
     {
         //! Export type of data for message buffer
         using DataType = MatrixEntry;
@@ -737,7 +698,7 @@ class EntityExchanger
 
 public:
 
-    EntityExchanger(const GridView& gridView, const DofMapper& mapper)
+    ParallelMatrixHelper(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
         idToIndex_.clear();
@@ -756,16 +717,13 @@ public:
         }
     }
 
-    [[deprecated("Use extendMatrix instead. Will be removed after 3.2!")]]
-    void getExtendedMatrix (Matrix& A, const ParallelISTLHelper<GridView, LinearSolverTraits>& helper)
-    { extendMatrix(A, helper); }
-
     /*!
      * \brief communicates values for the sparsity pattern of the new matrix.
      * \param A Matrix to operate on.
      * \param helper ParallelelISTLHelper.
      */
-    void extendMatrix(Matrix& A, const ParallelISTLHelper<GridView, LinearSolverTraits>& helper)
+    template<class IsGhostFunc>
+    void extendMatrix(Matrix& A, const IsGhostFunc& isGhost)
     {
         if (gridView_.comm().size() <= 1)
             return;
@@ -773,10 +731,10 @@ public:
         Matrix tmp(A);
         std::size_t nnz = 0;
         // get entries from other processes
-        MatrixPatternExchange datahandle(mapper_, idToIndex_, indexToID_, A, helper);
+        std::vector<std::set<int>> sparsity;
+        MatrixPatternExchange datahandle(mapper_, idToIndex_, indexToID_, A, sparsity, isGhost);
         gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
                                           Dune::ForwardCommunication);
-        std::vector<std::set<int>>& sparsity = datahandle.sparsity();
         // add own entries, count number of nonzeros
         for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
         {
@@ -825,127 +783,54 @@ private:
 
 }; // class EntityExchanger
 
-#if HAVE_MPI
 /*!
  * \brief Prepare linear algebra variables for parallel solvers
  */
-template<class LinearSolverTraits, class Matrix, class Vector, class ParallelHelper>
+template<class LinearSolverTraits, class ParallelTraits,
+         class Matrix, class Vector, class ParallelHelper>
 void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
-                                  std::shared_ptr<typename LinearSolverTraits::Comm>& comm,
-                                  std::shared_ptr<typename LinearSolverTraits::LinearOperator>& fop,
-                                  std::shared_ptr<typename LinearSolverTraits::ScalarProduct>& sp,
+                                  std::shared_ptr<typename ParallelTraits::Comm>& comm,
+                                  std::shared_ptr<typename ParallelTraits::LinearOperator>& fop,
+                                  std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
                                   ParallelHelper& pHelper,
                                   const bool firstCall)
 {
-    const auto category = LinearSolverTraits::isNonOverlapping ?
-                          Dune::SolverCategory::nonoverlapping
-                        : Dune::SolverCategory::overlapping;
+    if (firstCall) pHelper.initGhostsAndOwners();
 
-    if (LinearSolverTraits::isNonOverlapping && firstCall)
-        pHelper.initGhostsAndOwners();
-
-    comm = std::make_shared<typename LinearSolverTraits::Comm>(pHelper.gridView().comm(), category);
-
-    if (LinearSolverTraits::isNonOverlapping)
+    if constexpr (ParallelTraits::isNonOverlapping)
     {
         // extend the matrix pattern such that it is usable for a parallel solver
-        using GridView = std::decay_t<decltype(pHelper.gridView())>;
-        EntityExchanger<GridView, LinearSolverTraits> exchanger(pHelper.gridView(), pHelper.dofMapper());
-        exchanger.extendMatrix(A, pHelper);
-        exchanger.sumEntries(A);
-    }
-    pHelper.createParallelIndexSet(*comm);
+        // and make right-hand side consistent
+        using GridView = typename LinearSolverTraits::GridView;
+        using DofMapper = typename LinearSolverTraits::DofMapper;
+        static constexpr int dofCodim = LinearSolverTraits::dofCodim;
+        ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim> matrixHelper(pHelper.gridView(), pHelper.dofMapper());
+        matrixHelper.extendMatrix(A, [&pHelper](auto idx){ return pHelper.isGhost(idx); });
+        matrixHelper.sumEntries(A);
 
-    fop = std::make_shared<typename LinearSolverTraits::LinearOperator>(A, *comm);
-    sp = std::make_shared<typename LinearSolverTraits::ScalarProduct>(*comm);
-
-    // make rhs consistent
-    if (LinearSolverTraits::isNonOverlapping)
         pHelper.makeNonOverlappingConsistent(b);
-}
-#endif // HAVE_MPI
 
-/*!
- * \brief Prepare linear algebra variables for sequential solvers
- */
-template<class LinearSolverTraits, class Matrix>
-void prepareLinearAlgebraSequential(Matrix& A,
-                                    std::shared_ptr<typename LinearSolverTraits::Comm>& comm,
-                                    std::shared_ptr<typename LinearSolverTraits::LinearOperator>& fop,
-                                    std::shared_ptr<typename LinearSolverTraits::ScalarProduct>& sp)
-{
-    comm = std::make_shared<typename LinearSolverTraits::Comm>();
-    fop = std::make_shared<typename LinearSolverTraits::LinearOperator>(A);
-    sp = std::make_shared<typename LinearSolverTraits::ScalarProduct>();
-}
-
-
-/*!
- * \brief Prepare the linear algebra member variables.
- *
- * At compile time, correct constructor calls have to be chosen,
- * depending on whether the setting is parallel or sequential.
- * Since several template parameters are present, this cannot be solved
- * by a full function template specialization. Instead, class template
- * specialization has to be used.
- * This adapts example 4 from http://www.gotw.ca/publications/mill17.htm.
- *
- * This class template implements the function for the sequential case.
- *
- * \tparam isParallel decides if the setting is parallel or sequential
- */
-template<class GridView, class AmgTraits, bool isParallel>
-struct LinearAlgebraPreparator // TODO: Deprecating the whole struct always triggers a warning even it is not used. Remove after 3.2
-{
-    using ParallelHelper = ParallelISTLHelper<GridView, AmgTraits>;
-    using Comm = typename AmgTraits::Comm;
-    using LinearOperator = typename AmgTraits::LinearOperator;
-    using ScalarProduct = typename AmgTraits::ScalarProduct;
-
-    template<class Matrix, class Vector>
-    [[deprecated("Use free function prepareLinearAlgebraSequential instead. Will be removed after 3.2!")]]
-    static void prepareLinearAlgebra(Matrix& A, Vector& b,
-                                     int& rank,
-                                     std::shared_ptr<Comm>& comm,
-                                     std::shared_ptr<LinearOperator>& fop,
-                                     std::shared_ptr<ScalarProduct>& sp,
-                                     ParallelHelper& pHelper,
-                                     const bool firstCall)
-    {
-        prepareLinearAlgebraSequential<AmgTraits>(A, comm, fop, sp);
+        // create commicator, operator, scalar product
+        using Traits = typename LinearSolverTraits::template ParallelNonoverlapping<Matrix, Vector>;
+        const auto category = Dune::SolverCategory::nonoverlapping;
+        comm = std::make_shared<typename Traits::Comm>(pHelper.gridView().comm(), category);
+        pHelper.createParallelIndexSet(*comm);
+        fop = std::make_shared<typename Traits::LinearOperator>(A, *comm);
+        sp = std::make_shared<typename Traits::ScalarProduct>(*comm);
     }
-};
-
-#if HAVE_MPI
-/*!
- * \brief Specialization for the parallel case.
- */
-template<class GridView, class AmgTraits>
-struct LinearAlgebraPreparator<GridView, AmgTraits, true> // TODO: Deprecating the whole struct always triggers a warning even it is not used. Remove after 3.2
-{
-    using ParallelHelper = ParallelISTLHelper<GridView, AmgTraits>;
-    using Comm = typename AmgTraits::Comm;
-    using LinearOperator = typename AmgTraits::LinearOperator;
-    using ScalarProduct = typename AmgTraits::ScalarProduct;
-
-    template<class Matrix, class Vector>
-    [[deprecated("Use free function prepareLinearAlgebraParallel instead. Will be removed after 3.2!")]]
-    static void prepareLinearAlgebra(Matrix& A, Vector& b,
-                                     int& rank,
-                                     std::shared_ptr<Comm>& comm,
-                                     std::shared_ptr<LinearOperator>& fop,
-                                     std::shared_ptr<ScalarProduct>& sp,
-                                     ParallelHelper& pHelper,
-                                     const bool firstCall)
+    else
     {
-        prepareLinearAlgebraParallel<AmgTraits>(A, b, rank, comm, fop, sp, pHelper, firstCall);
-        rank = comm->communicator().rank();
+        // create commicator, operator, scalar product
+        using Traits = typename LinearSolverTraits::template ParallelOverlapping<Matrix, Vector>;
+        const auto category = Dune::SolverCategory::overlapping;
+        comm = std::make_shared<typename Traits::Comm>(pHelper.gridView().comm(), category);
+        pHelper.createParallelIndexSet(*comm);
+        fop = std::make_shared<typename Traits::LinearOperator>(A, *comm);
+        sp = std::make_shared<typename Traits::ScalarProduct>(*comm);
     }
-
-}; // parallel LinearAlgebraPreparator
-
-#endif // HAVE_MPI
+}
 
 } // end namespace Dumux
 
+#endif // HAVE_MPI
 #endif // DUMUX_PARALLELHELPERS_HH

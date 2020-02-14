@@ -498,13 +498,13 @@ void FVPressure<TypeTag>::assemble(bool first)
 }
 
 // forward declaration
-template<class GV, class T>
-class ParallelAMGBackend;
+template<class T>
+class AMGBiCGSTABBackend;
 
 namespace Detail {
 template<class T> struct isParallelAMGBackend : public std::false_type {};
-template<class GV, class T>
-struct isParallelAMGBackend<Dumux::ParallelAMGBackend<GV, T>> : public std::true_type {};
+template<class T>
+struct isParallelAMGBackend<Dumux::AMGBiCGSTABBackend<T>> : public std::true_type {};
 } // end namespace Detail
 
 template<class Solver, class Problem>
