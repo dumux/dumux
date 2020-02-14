@@ -374,12 +374,13 @@ public:
                 convergedRemote = comm_.min(converged);
 
             if (!converged) {
-                DUNE_THROW(NumericalProblem,
-                           "Linear solver did not converge");
+                DUNE_THROW(NumericalProblem, "Linear solver did not converge");
+                ++numLinearSolverBreakdowns_;
             }
             else if (!convergedRemote) {
                 DUNE_THROW(NumericalProblem,
                            "Linear solver did not converge on a remote process");
+                ++numLinearSolverBreakdowns_; // we keep correct count for process 0
             }
         }
         catch (const Dune::Exception &e) {
@@ -597,10 +598,11 @@ public:
         sout << '\n'
              << "Newton statistics\n"
              << "----------------------------------------------\n"
-             << "-- Total Newton iterations:           " << totalWastedIter_ + totalSucceededIter_ << '\n'
-             << "-- Total wasted Newton iterations:    " << totalWastedIter_ << '\n'
-             << "-- Total succeeded Newton iterations: " << totalSucceededIter_ << '\n'
-             << "-- Average iterations per solve:      " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
+             << "-- Total Newton iterations:            " << totalWastedIter_ + totalSucceededIter_ << '\n'
+             << "-- Total wasted Newton iterations:     " << totalWastedIter_ << '\n'
+             << "-- Total succeeded Newton iterations:  " << totalSucceededIter_ << '\n'
+             << "-- Average iterations per solve:       " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
+             << "-- Number of linear solver breakdowns: " << numLinearSolverBreakdowns_ << '\n'
              << std::endl;
     }
 
@@ -612,6 +614,7 @@ public:
         totalWastedIter_ = 0;
         totalSucceededIter_ = 0;
         numConverged_ = 0;
+        numLinearSolverBreakdowns_ = 0;
     }
 
     /*!
@@ -1305,6 +1308,7 @@ private:
     std::size_t totalWastedIter_ = 0; //! Newton steps in solves that didn't converge
     std::size_t totalSucceededIter_ = 0; //! Newton steps in solves that converged
     std::size_t numConverged_ = 0; //! total number of converged solves
+    std::size_t numLinearSolverBreakdowns_ = 0; //! total number of linear solves that failed
 
     //! the class handling the primary variable switch
     std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
