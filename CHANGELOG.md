@@ -10,6 +10,8 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 
 - __Van Genuchten__: The VanGenuchten-Mualem material law now allows to set a parameter `l` (default to 0.5) which is sometimes fitted.
 
+- __Runtime variable output precision e.g. Float64__: The VtkOutputModule has been adapted to allow easy changes of the vtk output precision. It is now possible to specify output precision in the input file using `Vtk.Precision` followed by either `Float32`, `Float64`, `UInt32`, `UInt8` or `Int32`. `Float32` stays the default. We especially advice the use of `Float64` when working with restart files.
+An additional new option is `Vtk.CoordPrecision` which changes the precision of the coordinates only and uses the default of `Vtk.Precision`.
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
