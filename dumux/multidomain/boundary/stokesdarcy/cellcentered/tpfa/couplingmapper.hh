@@ -60,12 +60,6 @@ private:
     };
 
 public:
-
-    /*!
-     * \brief Constructor
-     */
-    StokesDarcyCouplingMapperTpfa(const CouplingManager& couplingManager) : couplingManager_(couplingManager) {}
-
     /*!
      * \brief Main update routine
      */

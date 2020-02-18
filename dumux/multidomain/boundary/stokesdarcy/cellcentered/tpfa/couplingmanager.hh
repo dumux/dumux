@@ -123,7 +123,7 @@ public:
 
     //! Constructor
     StokesDarcyCouplingManagerImplementation(std::shared_ptr<const GridGeometry<stokesIdx>> stokesFvGridGeometry,
-                               std::shared_ptr<const GridGeometry<darcyIdx>> darcyFvGridGeometry) : couplingMapper_(*this)
+                               std::shared_ptr<const GridGeometry<darcyIdx>> darcyFvGridGeometry)
     { }
 
     /*!
@@ -158,7 +158,8 @@ public:
     //! Prepare the coupling stencils
     void computeStencils()
     {
-        couplingMapper_.computeCouplingMapsAndStencils(darcyToStokesCellCenterCouplingStencils_,
+        couplingMapper_.computeCouplingMapsAndStencils(*this,
+                                                       darcyToStokesCellCenterCouplingStencils_,
                                                        darcyToStokesFaceCouplingStencils_,
                                                        stokesCellCenterCouplingStencils_,
                                                        stokesFaceCouplingStencils_);

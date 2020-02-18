@@ -104,25 +104,19 @@ public:
     };
 
     /*!
-     * \brief Constructor
-     */
-    StokesDarcyCouplingMapperBox(const CouplingManager& couplingManager)
-    : couplingManager_(couplingManager)
-    {}
-
-    /*!
      * \brief Main update routine
      */
-    template<class Stencils, class StencilsB>
-    void computeCouplingMapsAndStencils(Stencils& darcyToStokesCellCenterStencils,
+    template<class CouplingManager, class Stencils, class StencilsB>
+    void computeCouplingMapsAndStencils(const CouplingManager& couplingManager,
+                                        Stencils& darcyToStokesCellCenterStencils,
                                         StencilsB& darcyToStokesFaceStencils,
                                         Stencils& stokesCellCenterToDarcyStencils,
                                         Stencils& stokesFaceToDarcyStencils)
     {
-        computeCouplingMaps();
+        computeCouplingMaps(couplingManager);
 
-        const auto& stokesProblem = couplingManager_.problem(stokesIdx);
-        const auto& darcyProblem = couplingManager_.problem(darcyIdx);
+        const auto& stokesProblem = couplingManager.problem(stokesIdx);
+        const auto& darcyProblem = couplingManager.problem(darcyIdx);
 
         const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
@@ -155,10 +149,11 @@ public:
         }
     }
 
-    void computeCouplingMaps()
+    template<class CouplingManager>
+    void computeCouplingMaps(const CouplingManager& couplingManager)
     {
-        const auto& stokesProblem = couplingManager_.problem(stokesIdx);
-        const auto& darcyProblem = couplingManager_.problem(darcyIdx);
+        const auto& stokesProblem = couplingManager.problem(stokesIdx);
+        const auto& darcyProblem = couplingManager.problem(darcyIdx);
 
         const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
@@ -246,8 +241,6 @@ private:
     std::unordered_map<std::size_t, std::vector<CouplingSegment>> stokesElementToDarcyElementMap_;
 
     std::vector<std::vector<bool>> isCoupledDarcyScvf_;
-
-    const CouplingManager& couplingManager_;
 };
 
 } // end namespace Dumux
