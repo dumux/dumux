@@ -46,7 +46,6 @@ namespace Deprecated {
 ///// REMOVE THIS AFTER RELEASE 3.1
 ////////////////////////////////////////////////////////
 
-
 // support old interface of the effective thermal conductivity laws
 template<class VV>
 struct HasNewEffThermCondIF
@@ -118,6 +117,11 @@ auto neumann(const P& problem,
     return problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 }
 
+constexpr auto hasEffTherCondImpl = Dumux::isValid([](auto&& v) -> decltype(v.effectiveThermalConductivity()){return 0;});
+template<class VolumeVariables> constexpr bool hasEffTherCond = decltype(hasEffTherCondImpl(std::declval<VolumeVariables>())){};
+
+constexpr auto hasEffDiffCoeffImpl = Dumux::isValid([](auto&& v) -> decltype(v.effectiveDiffusionCoefficient(0,0,0)){return 0;});
+template<class VolumeVariables> constexpr bool hasEffDiffCoeff = decltype(hasEffDiffCoeffImpl(std::declval<VolumeVariables>())){};
 
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
