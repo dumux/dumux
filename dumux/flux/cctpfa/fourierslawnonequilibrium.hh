@@ -116,53 +116,37 @@ public:
         if (phaseIdx != sPhaseIdx)
         {
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-           if (numEnergyEqFluid < ModelTraits::numFluidPhases())
-            {
-                insideLambda += insideVolVars.effectiveThermalConductivity();
-            }
-            else //numEnergyEqFluid >1
-            {
+            if (numEnergyEqFluid < ModelTraits::numFluidPhases())
+                insideLambda += getEffectiveThermalConductivity_(insideVolVars, problem, element, fvGeometry, insideScv);
+            else // numEnergyEqFluid >1
                 insideLambda += insideVolVars.fluidThermalConductivity(phaseIdx)*insideVolVars.saturation(phaseIdx)*insideVolVars.porosity();
-            }
         }
-        //solid phase
-        else
-        {
+        else // solid phase
             insideLambda += insideVolVars.solidThermalConductivity()*(1.0-insideVolVars.porosity());
-        }
 
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-        {
             tij = scvf.area()*ti;
-        }
-        // otherwise we compute a tpfa harmonic mean
-        else
+        else // otherwise we compute a tpfa harmonic mean
         {
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
-       // effective diffusion tensors
-        if (phaseIdx != sPhaseIdx)
-        {
-            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-           if (numEnergyEqFluid < ModelTraits::numFluidPhases())
+            // effective diffusion tensors
+            if (phaseIdx != sPhaseIdx)
             {
-                outsideLambda += outsideVolVars.effectiveThermalConductivity();
+                //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
+                if (numEnergyEqFluid < ModelTraits::numFluidPhases())
+                    outsideLambda += getEffectiveThermalConductivity_(outsideVolVars, problem, element, fvGeometry, outsideScv);
+                else
+                    outsideLambda += outsideVolVars.fluidThermalConductivity(phaseIdx)*outsideVolVars.saturation(phaseIdx)*outsideVolVars.porosity();
             }
-            else
-            {
-                outsideLambda += outsideVolVars.fluidThermalConductivity(phaseIdx)*outsideVolVars.saturation(phaseIdx)*outsideVolVars.porosity();
-            }
-        }
-        //solid phase
-        else
-        {
-            outsideLambda +=outsideVolVars.solidThermalConductivity()*(1.0-outsideVolVars.porosity());
-        }
+            else //solid phase
+                outsideLambda +=outsideVolVars.solidThermalConductivity()*(1.0-outsideVolVars.porosity());
+
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
@@ -177,6 +161,27 @@ public:
                 tij = scvf.area()*(ti * tj)/(ti + tj);
         }
         return tij;
+    }
+
+private:
+    template <class VolumeVariables>
+    static Scalar getEffectiveThermalConductivity_(const VolumeVariables& volVars,
+                                                   const Problem& problem,
+                                                   const Element& element,
+                                                   const FVElementGeometry& fvGeometry,
+                                                   const SubControlVolume& scv)
+    {
+        if constexpr (Dumux::Deprecated::hasEffTherCond<VolumeVariables>)
+            return volVars.effectiveThermalConductivity();
+        else
+        {
+            // TODO: remove this fallback after release 3.2!
+            return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(volVars,
+                                                                                               problem.spatialParams(),
+                                                                                               element,
+                                                                                               fvGeometry,
+                                                                                               scv);
+        }
     }
 };
 
