@@ -45,7 +45,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -68,8 +70,8 @@ public:
         const auto& outsideVolVars = elemVolVars[outsideScv];
 
         // effective diffusion tensors
-        auto insideLambda = insideVolVars.effectiveThermalConductivity();
-        auto outsideLambda = outsideVolVars.effectiveThermalConductivity();
+        auto insideLambda = getEffectiveThermalConductivity_(insideVolVars, problem, element, fvGeometry, insideScv);
+        auto outsideLambda = getEffectiveThermalConductivity_(outsideVolVars, problem, element, fvGeometry, outsideScv);
 
         // scale by extrusion factor
         insideLambda *= insideVolVars.extrusionFactor();
@@ -89,6 +91,28 @@ public:
         // comute the heat conduction flux
         return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*scvf.area();
     }
+
+private:
+
+    static Scalar getEffectiveThermalConductivity_(const VolumeVariables& volVars,
+                                                   const Problem& problem,
+                                                   const Element& element,
+                                                   const FVElementGeometry& fvGeometry,
+                                                   const SubControlVolume& scv)
+    {
+        if constexpr (Dumux::Deprecated::hasEffTherCond<VolumeVariables>)
+            return volVars.effectiveThermalConductivity();
+        else
+        {
+            // TODO: remove this fallback after release 3.2!
+            return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(volVars,
+                                                                                               problem.spatialParams(),
+                                                                                               element,
+                                                                                               fvGeometry,
+                                                                                               scv);
+        }
+    }
+
 };
 
 } // end namespace Dumux
