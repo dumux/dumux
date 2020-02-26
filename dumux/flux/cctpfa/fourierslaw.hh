@@ -144,7 +144,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const auto insideLambda = insideVolVars.effectiveThermalConductivity();
+        const auto insideLambda = getEffectiveThermalConductivity_(insideVolVars, problem, element, fvGeometry, insideScv);
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
@@ -159,7 +159,7 @@ public:
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
-            const auto outsideLambda = outsideVolVars.effectiveThermalConductivity();
+            const auto outsideLambda = getEffectiveThermalConductivity_(outsideVolVars, problem, element, fvGeometry, outsideScv);
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
@@ -205,6 +205,27 @@ private:
         }
         return sumTempTi/sumTi;
     }
+
+    template <class VolumeVariables>
+    static Scalar getEffectiveThermalConductivity_(const VolumeVariables& volVars,
+                                                   const Problem& problem,
+                                                   const Element& element,
+                                                   const FVElementGeometry& fvGeometry,
+                                                   const SubControlVolume& scv)
+    {
+        if constexpr (Dumux::Deprecated::hasEffTherCond<VolumeVariables>)
+            return volVars.effectiveThermalConductivity();
+        else
+        {
+            // TODO: remove this fallback after release 3.2!
+            return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(volVars,
+                                                                                               problem.spatialParams(),
+                                                                                               element,
+                                                                                               fvGeometry,
+                                                                                               scv);
+        }
+    }
+
 };
 
 } // end namespace Dumux

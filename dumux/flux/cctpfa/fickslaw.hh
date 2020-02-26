@@ -185,23 +185,21 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
+        const auto insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx); //, Dune::index_constant<hasEffDiff>{});
 
-        const auto insideD = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideD, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-        {
             tij = scvf.area()*ti;
-        }
+
         // otherwise we compute a tpfa harmonic mean
         else
         {
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-
-            const auto outsideD = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+            const auto outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx); //, Dune::index_constant<hasEffDiff>{});
 
             Scalar tj;
             if (dim == dimWorld)
@@ -268,6 +266,21 @@ private:
         }
         return rho/(scvf.numOutsideScvs()+1);
     }
+
+    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
+    {
+        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
+            return volVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+        else
+        {
+            // TODO: remove this else clause after release 3.2!
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
+                                                      volVars.saturation(phaseIdx),
+                                                      volVars.diffusionCoefficient(phaseIdx, compIdx));
+        }
+    }
+
 };
 
 } // end namespace Dumux
