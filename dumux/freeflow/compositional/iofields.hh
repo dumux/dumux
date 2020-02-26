@@ -57,7 +57,7 @@ struct FreeflowNCIOFields
 
                 // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
                 if (turbulenceModel)
-                    out.addVolumeVariable([j](const auto& v){ return v.effectiveDiffusionCoefficient(0,0, j) - v.diffusionCoefficient(0,0, j); }, "D_t^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
+                    out.addVolumeVariable([j](const auto& v){ return getEffectiveDiffusionCoefficient_(v, 0, j) - v.diffusionCoefficient(0,0, j); }, "D_t^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
             }
         }
     }
@@ -74,6 +74,20 @@ struct FreeflowNCIOFields
             return BaseOutputFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
 
     }
+
+    template<class VolumeVariables>
+    static double getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
+    {
+        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
+            return volVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+        else
+        {
+            // TODO: remove this else clause after release 3.2!
+            return volVars.effectiveDiffusivity(phaseIdx, compIdx);
+        }
+    }
+
+
 };
 
 } // end namespace Dumux
