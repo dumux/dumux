@@ -220,7 +220,7 @@ private:
             const auto xi = volVars.moleFraction(compIIdx);
             const auto avgMolarMass = volVars.averageMolarMass(0);
             const auto Mn = FluidSystem::molarMass(numComponents-1);
-            const Scalar tin = volVars.effectiveDiffusionCoefficient(0, compIIdx, numComponents-1);
+            const Scalar tin = getEffectiveDiffusionCoefficient_(volVars, compIIdx, numComponents-1);
 
             // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] +=  xi*avgMolarMass/(tin*Mn);
@@ -234,13 +234,24 @@ private:
                 const auto xj = volVars.moleFraction(compJIdx);
                 const auto Mi = FluidSystem::molarMass(compIIdx);
                 const auto Mj = FluidSystem::molarMass(compJIdx);
-                const Scalar tij = volVars.effectiveDiffusionCoefficient(0, compIIdx, compJIdx);
+                const Scalar tij = getEffectiveDiffusionCoefficient_(volVars, compIIdx, compJIdx);
                 reducedDiffusionMatrix[compIIdx][compIIdx] +=  xj*avgMolarMass/(tij*Mi);
                 if (compJIdx < numComponents-1)
                     reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
         return reducedDiffusionMatrix;
+    }
+
+    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
+    {
+        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
+            return volVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+        else
+        {
+            // TODO: remove this else clause after release 3.2!
+            return volVars.effectiveDiffusivity(phaseIdx, compIdx);
+        }
     }
 };
 } // end namespace

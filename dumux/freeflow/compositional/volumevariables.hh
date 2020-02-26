@@ -270,6 +270,16 @@ public:
     { return diffCoefficient_(0, compIIdx, compJIdx); }
 
     /*!
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
+     */
+    [[deprecated("Signature deprecated. Use effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
+    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = 0) const
+    { return diffusionCoefficient(compIIdx, compJIdx); }
+
+    /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const

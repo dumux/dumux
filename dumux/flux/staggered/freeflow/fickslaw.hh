@@ -55,6 +55,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, reference
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -111,7 +112,7 @@ public:
 
             const Scalar massOrMoleFractionInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
             const Scalar massOrMoleFractionOutside =  massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
-            const Scalar insideD = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx) * insideVolVars.extrusionFactor();
+            const Scalar insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx) * insideVolVars.extrusionFactor();
 
             if (scvf.boundary())
             {
@@ -121,7 +122,7 @@ public:
             else
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const Scalar outsideD = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx)
+                const Scalar outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx)
                                       * outsideVolVars.extrusionFactor();
                 const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
                 const Scalar outsideDensity = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
@@ -141,6 +142,18 @@ public:
         flux *= scvf.area();
 
         return flux;
+    }
+
+private:
+    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
+    {
+        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
+            return volVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+        else
+        {
+            // TODO: remove this else clause after release 3.2!
+            return volVars.effectiveDiffusivity(phaseIdx, compIdx);
+        }
     }
 };
 } // end namespace
