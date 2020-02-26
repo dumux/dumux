@@ -110,8 +110,8 @@ public:
                 continue;
 
             // effective diffusion tensors
-            auto insideD = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
-            auto outsideD = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+            auto insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx);
+            auto outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx);
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();
@@ -158,8 +158,8 @@ public:
                 continue;
 
             // effective diffusion tensors
-            auto insideD = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
-            auto outsideD = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+            auto insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx);
+            auto outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx);
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();
@@ -174,6 +174,20 @@ public:
         }
 
         return ti;
+    }
+private:
+    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
+    {
+        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
+            return volVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+        else
+        {
+            // TODO: remove this else clause after release 3.2!
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
+                                                      volVars.saturation(phaseIdx),
+                                                      volVars.diffusionCoefficient(phaseIdx, compIdx));
+        }
     }
 };
 

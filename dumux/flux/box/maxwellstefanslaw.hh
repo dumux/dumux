@@ -70,7 +70,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
 
     static_assert(referenceSystem == ReferenceSystemFormulation::massAveraged, "only the mass averaged reference system is supported for the Maxwell-Stefan formulation");
 
-
 public:
 
     template<int numFluidPhases, int numComponents>
@@ -158,6 +157,8 @@ private:
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+        const auto insideScvIdx = scvf.insideScvIdx();
+        const auto outsideScvIdx = scvf.outsideScvIdx();
 
         //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
         if(Dune::FloatCmp::eq<Scalar>(insideVolVars.saturation(phaseIdx), 0) || Dune::FloatCmp::eq<Scalar>(outsideVolVars.saturation(phaseIdx), 0))
@@ -168,8 +169,9 @@ private:
             //calculate diffusivity for i,numComponents
             const auto xi = moleFrac[compIIdx];
             const auto Mn = FluidSystem::molarMass(numComponents-1);
-            auto tinInside = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1);
-            auto tinOutside = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1);
+
+            auto tinInside = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIIdx, numComponents-1, problem, element, fvGeometry.scv(insideScvIdx));
+            auto tinOutside = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIIdx, numComponents-1, problem, element, fvGeometry.scv(outsideScvIdx));
 
             // scale by extrusion factor
             tinInside *= insideVolVars.extrusionFactor();
@@ -193,8 +195,8 @@ private:
                 const auto Mi = FluidSystem::molarMass(compIIdx);
                 const auto Mj = FluidSystem::molarMass(compJIdx);
                 // effective diffusion tensors
-                auto tijInside = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
-                auto tijOutside = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
+                auto tijInside = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIIdx, compJIdx, problem, element, fvGeometry.scv(insideScvIdx));
+                auto tijOutside = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIIdx, compJIdx, problem, element, fvGeometry.scv(outsideScvIdx));
 
                 // scale by extrusion factor
                 tijInside *= insideVolVars.extrusionFactor();
@@ -210,6 +212,63 @@ private:
         }
         return reducedDiffusionMatrix;
     }
+
+    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars,
+                                                    const int phaseIdx,
+                                                    const int compIIdx,
+                                                    const int compJIdx,
+                                                    const Problem& problem,
+                                                    const Element& element,
+                                                    const SubControlVolume& scv)
+    {
+        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
+            return volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
+        else
+        {
+            // TODO: remove this else clause after release 3.2!// effective diffusion tensors
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            const auto tinInside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, volVars, scv);
+            return EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tinInside);
+        }
+    }
+
+    template <class T = TypeTag, typename std::enable_if_t<GetPropType<T, Properties::FluidSystem>::isTracerFluidSystem(), int> =0 >
+    [[deprecated("Signature deprecated. Will be removed after 3.2!")]]
+    static Scalar getDiffusionCoefficient(const int phaseIdx,
+                                          const int compIIdx,
+                                          const int compJIdx,
+                                          const Problem& problem,
+                                          const Element& element,
+                                          const VolumeVariables& volVars,
+                                          const SubControlVolume& scv)
+    {
+        return FluidSystem::binaryDiffusionCoefficient(compIIdx,
+                                                       compJIdx,
+                                                       problem,
+                                                       element,
+                                                       scv);
+    }
+
+    template <class T = TypeTag, typename std::enable_if_t<!GetPropType<T, Properties::FluidSystem>::isTracerFluidSystem(), int> =0 >
+    [[deprecated("Signature deprecated. Will be removed after 3.2!")]]
+    static Scalar getDiffusionCoefficient(const int phaseIdx,
+                                          const int compIIdx,
+                                          const int compJIdx,
+                                          const Problem& problem,
+                                          const Element& element,
+                                          const VolumeVariables& volVars,
+                                          const SubControlVolume& scv)
+    {
+        auto fluidState = volVars.fluidState();
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState);
+        return FluidSystem::binaryDiffusionCoefficient(fluidState,
+                                                       paramCache,
+                                                       phaseIdx,
+                                                       compIIdx,
+                                                       compJIdx);
+    }
+
 };
 } // end namespace Dumux
 
