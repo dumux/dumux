@@ -732,7 +732,7 @@ public:
         std::size_t nnz = 0;
         // get entries from other processes
         std::vector<std::set<int>> sparsity;
-        MatrixPatternExchange datahandle(mapper_, idToIndex_, indexToID_, A, sparsity, isGhost);
+        MatrixPatternExchange<IsGhostFunc> datahandle(mapper_, idToIndex_, indexToID_, A, sparsity, isGhost);
         gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface,
                                           Dune::ForwardCommunication);
         // add own entries, count number of nonzeros
