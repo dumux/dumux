@@ -128,15 +128,18 @@ public:
                                           std::string groupPrefix) const
     {
         std::vector<std::string> groupNames;
-        auto compoundGroup = groupPrefix.empty() ? subGroupName : groupPrefix + "." + subGroupName;
 
-        for (std::string::size_type dotPos = 0; dotPos != std::string::npos; dotPos = groupPrefix.rfind("."))
+        if (!groupPrefix.empty())
         {
-            if (params_.hasSub(compoundGroup) || defaultParams_.hasSub(compoundGroup))
-                groupNames.push_back(compoundGroup);
+            auto compoundGroup = groupPrefix + "." + subGroupName;
+            for (std::string::size_type dotPos = 0; dotPos != std::string::npos; dotPos = groupPrefix.rfind("."))
+            {
+                if (params_.hasSub(compoundGroup) || defaultParams_.hasSub(compoundGroup))
+                    groupNames.push_back(compoundGroup);
 
-            groupPrefix = groupPrefix.substr(0, dotPos);
-            compoundGroup = groupPrefix + "." + subGroupName;
+                groupPrefix = groupPrefix.substr(0, dotPos);
+                compoundGroup = groupPrefix + "." + subGroupName;
+            }
         }
 
         if (params_.hasSub(subGroupName) || defaultParams_.hasSub(subGroupName))
