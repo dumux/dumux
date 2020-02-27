@@ -166,10 +166,13 @@ private:
         using LinearOperator = typename ParallelTraits::LinearOperator;
         using ScalarProduct = typename ParallelTraits::ScalarProduct;
 
+        if (firstCall_)
+            phelper_->initGhostsAndOwners();
+
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> linearOperator;
         std::shared_ptr<ScalarProduct> scalarProduct;
-        prepareLinearAlgebraParallel<LinearSolverTraits, ParallelTraits>(A, b, comm, linearOperator, scalarProduct, *phelper_, firstCall_);
+        prepareLinearAlgebraParallel<LinearSolverTraits, ParallelTraits>(A, b, comm, linearOperator, scalarProduct, *phelper_);
 
         using SeqSmoother = Dune::SeqSSOR<Matrix, Vector, Vector>;
         using Smoother = typename ParallelTraits::template Preconditioner<SeqSmoother>;
