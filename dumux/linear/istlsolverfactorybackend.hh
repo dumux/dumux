@@ -131,6 +131,7 @@ public:
         params_["verbose"] = "0";
         params_["preconditioner.iterations"] = "1";
         params_["preconditioner.relaxation"] = "1.0";
+        params_["preconditioner.verbosity"] = "0";
     }
 
     const Dune::InverseOperatorResult& result() const
