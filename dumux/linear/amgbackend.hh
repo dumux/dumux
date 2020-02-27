@@ -64,10 +64,11 @@ public:
     AMGBiCGSTABBackend(const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
     , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
-    , firstCall_(true)
     {
         if (isParallel_)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
+
+        reset();
     }
 
     /*!
@@ -83,8 +84,9 @@ public:
     : LinearSolver(paramGroup)
     , phelper_(std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
     , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
-    , firstCall_(true)
-    {}
+    {
+        reset();
+    }
 
     /*!
      * \brief Solve a linear system.
@@ -103,6 +105,12 @@ public:
 #endif
         firstCall_ = false;
         return result_.converged;
+    }
+
+    //! reset the linear solver
+    void reset()
+    {
+        firstCall_ = true;
     }
 
     /*!
