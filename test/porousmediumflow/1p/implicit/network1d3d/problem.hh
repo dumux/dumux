@@ -28,6 +28,7 @@
 
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dune/geometry/quadraturerules.hh>
+#include <dune/geometry/type.hh>
 
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
@@ -312,7 +313,7 @@ public:
         Scalar lTwoNorm = 0.0;
 
         // get the Gaussian quadrature rule for intervals
-        const auto& quad = Dune::QuadratureRules<Scalar, dim>::rule(Dune::GeometryType(1), 1);
+        const auto& quad = Dune::QuadratureRules<Scalar, dim>::rule(Dune::GeometryTypes::line, 1);
 
         const auto& gg = this->gridGeometry();
         for (const auto& element : elements(gg.gridView()))
