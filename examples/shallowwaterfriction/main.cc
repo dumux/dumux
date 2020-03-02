@@ -128,7 +128,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop);
 
     // We set the linear solver.
-    using LinearSolver = Dumux::AMGBackend<TypeTag>;
+    using LinearSolver = AMGBackend<TypeTag>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // Additionaly, we set the non-linear solver.
