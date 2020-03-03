@@ -39,6 +39,7 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/porousmediumflow/nonequilibrium/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
@@ -152,7 +153,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = AMGBackend<TypeTag>;
+    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver

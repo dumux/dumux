@@ -33,6 +33,7 @@
 #include <dune/grid/io/file/vtk.hh>
 
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -127,7 +128,7 @@ int main(int argc, char** argv) try
 
     // solve the linear system
     Dune::Timer solverTimer;
-    using LinearSolver = AMGBackend<TypeTag>;
+    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
     if (mpiHelper.rank() == 0) std::cout << "Solving linear system using " + linearSolver->name() + "..." << std::flush;
