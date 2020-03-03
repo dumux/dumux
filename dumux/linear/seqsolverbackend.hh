@@ -887,7 +887,7 @@ class BlockDiagILU0Preconditioner : public Dune::Preconditioner<X, Y>
     using BlockILU = Dune::SeqILU0<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>, blockLevel-1>;
 #endif
 
-    using ILUTuple = typename makeFromIndexedType<std::tuple, BlockILU, std::make_index_sequence<M::size()> >::type;
+    using ILUTuple = typename makeFromIndexedType<std::tuple, BlockILU, std::make_index_sequence<M::N()> >::type;
 
 public:
     //! \brief The matrix type the preconditioner is for.
@@ -906,7 +906,7 @@ public:
        \param w The relaxation factor
      */
     BlockDiagILU0Preconditioner(const M& m, double w = 1.0)
-    : BlockDiagILU0Preconditioner(m, w, std::make_index_sequence<M::size()>{})
+    : BlockDiagILU0Preconditioner(m, w, std::make_index_sequence<M::N()>{})
     {
         static_assert(blockLevel >= 2, "Only makes sense for MultiTypeBlockMatrix!");
     }
@@ -1004,7 +1004,7 @@ class BlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
     template<std::size_t i>
     using BlockAMG = Dune::Amg::AMG<LinearOperator<i>, VecBlockType<i>, Smoother<i>>;
 
-    using AMGTuple = typename makeFromIndexedType<std::tuple, BlockAMG, std::make_index_sequence<M::size()> >::type;
+    using AMGTuple = typename makeFromIndexedType<std::tuple, BlockAMG, std::make_index_sequence<M::N()> >::type;
 
 public:
     //! \brief The matrix type the preconditioner is for.
@@ -1025,7 +1025,7 @@ public:
      */
     template<class LOP, class Criterion, class SmootherArgs>
     BlockDiagAMGPreconditioner(const LOP& lop, const Criterion& c, const SmootherArgs& sa)
-    : BlockDiagAMGPreconditioner(lop, c, sa, std::make_index_sequence<M::size()>{})
+    : BlockDiagAMGPreconditioner(lop, c, sa, std::make_index_sequence<M::N()>{})
     {
         static_assert(blockLevel >= 2, "Only makes sense for MultiTypeBlockMatrix!");
     }
@@ -1148,8 +1148,8 @@ public:
         params.setDefaultValuesIsotropic(3);
         params.setDebugLevel(this->verbosity());
 
-        auto criterion = makeCriterion_<Criterion, Matrix>(params, std::make_index_sequence<Matrix::size()>{});
-        auto smootherArgs = makeSmootherArgs_<SmootherArgs, Matrix, Vector>(std::make_index_sequence<Matrix::size()>{});
+        auto criterion = makeCriterion_<Criterion, Matrix>(params, std::make_index_sequence<Matrix::N()>{});
+        auto smootherArgs = makeSmootherArgs_<SmootherArgs, Matrix, Vector>(std::make_index_sequence<Matrix::N()>{});
 
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(m)), [&](const auto i)
@@ -1159,7 +1159,7 @@ public:
             args->relaxationFactor = 1;
         });
 
-        auto linearOperator = makeLinearOperator_<LinearOperator, Matrix, Vector>(m, std::make_index_sequence<Matrix::size()>{});
+        auto linearOperator = makeLinearOperator_<LinearOperator, Matrix, Vector>(m, std::make_index_sequence<Matrix::N()>{});
 
         BlockDiagAMGPreconditioner<Matrix, Vector, Vector> preconditioner(linearOperator, criterion, smootherArgs);
 
