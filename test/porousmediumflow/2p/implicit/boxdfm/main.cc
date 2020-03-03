@@ -36,7 +36,7 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
