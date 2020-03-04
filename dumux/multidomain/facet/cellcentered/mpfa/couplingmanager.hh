@@ -149,13 +149,7 @@ public:
         const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
         assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
 
-        const auto& lowDimProblem = this->problem(lowDimId);
-        const auto& lowDimElement = lowDimProblem.gridGeometry().element(lowDimElemIdx);
-        const auto& lowDimVolVars = this->bulkCouplingContext().lowDimVolVars[idxInContext];
-        const auto& lowDimFvGeometry = this->bulkCouplingContext().lowDimFvGeometries[idxInContext];
-
-        // we assume constant parameters on the element and use the first scv within the low dim element.
-        return getT(lowDimProblem, lowDimElement, lowDimVolVars, lowDimFvGeometry, *scvs(lowDimFvGeometry).begin());
+        return getT(this->bulkCouplingContext().lowDimVolVars[idxInContext]);
     }
 
     using ParentType::evalCouplingResidual;

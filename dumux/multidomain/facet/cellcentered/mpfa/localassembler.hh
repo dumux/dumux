@@ -324,7 +324,7 @@ private:
                 const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
                 const auto& posVolVars = this->elemVolVars()[posGlobalScv];
                 const auto& posElement = iv.element(neighborScvIndices[0]);
-                const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
+                const auto tensor = getT(posVolVars);
 
                 // the omega factors of the "positive" sub volume
                 Helper::resizeVector(wijk[faceIdx], /*no outside scvs present*/1);
@@ -363,7 +363,7 @@ private:
                 const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
                 const auto& posVolVars = this->elemVolVars()[posGlobalScv];
                 const auto& posElement = iv.element(neighborScvIndices[0]);
-                const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
+                const auto tensor = getT(posVolVars);
 
                 // the omega factors of the "positive" sub volume
                 Helper::resizeVector(wijk[faceIdx], neighborScvIndices.size());
@@ -429,7 +429,7 @@ private:
                         const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.gridScvIndex());
                         const auto& negVolVars = this->elemVolVars()[negGlobalScv];
                         const auto& negElement = iv.element( neighborScvIndices[idxOnScvf] );
-                        const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
+                        const auto negTensor = getT(negVolVars);
 
                         // On surface grids, use outside face for "negative" transmissibility calculation
                         const auto& scvf = dim < dimWorld ? this->fvGeometry().flipScvf(curGlobalScvf.index(), idxInOutside)

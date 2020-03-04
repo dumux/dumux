@@ -61,11 +61,7 @@ public:
     //! return void lambda here
     static auto getAdvectionLambda()
     {
-        return [] (const auto& problem,
-                   const auto& element,
-                   const auto& volVars,
-                   const auto& fvGeometry,
-                   const auto& scv)
+        return [] (const auto& volVars)
                { return volVars.permeability(); };
     }
 
@@ -73,11 +69,7 @@ public:
     template<class EffDiffModel>
     static auto getDiffusionLambda(unsigned int phaseIdx, unsigned int compIdx)
     {
-        return [phaseIdx, compIdx] (const auto& problem,
-                                    const auto& element,
-                                    const auto& volVars,
-                                    const auto& fvGeometry,
-                                    const auto& scv)
+        return [phaseIdx, compIdx] (const auto& volVars)
                { return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(
                           volVars, phaseIdx, phaseIdx, compIdx); };
     }
@@ -86,13 +78,8 @@ public:
     template<class ThermalConductivityModel>
     static auto getHeatConductionLambda()
     {
-        return [] (const auto& problem,
-                   const auto& element,
-                   const auto& volVars,
-                   const auto& fvGeometry,
-                   const auto& scv)
-               { return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                          volVars, problem.spatialParams(), element, fvGeometry, scv); };
+        return [] (const auto& volVars)
+               { return volVars.effectiveThermalConductivity(); };
     }
 };
 
