@@ -117,7 +117,7 @@ public:
         {
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
             if (numEnergyEqFluid < ModelTraits::numFluidPhases())
-                insideLambda += getEffectiveThermalConductivity_(insideVolVars, problem, element, fvGeometry, insideScv);
+                insideLambda += insideVolVars.effectiveThermalConductivity();
             else // numEnergyEqFluid >1
                 insideLambda += insideVolVars.fluidThermalConductivity(phaseIdx)*insideVolVars.saturation(phaseIdx)*insideVolVars.porosity();
         }
@@ -140,7 +140,7 @@ public:
             {
                 //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
                 if (numEnergyEqFluid < ModelTraits::numFluidPhases())
-                    outsideLambda += getEffectiveThermalConductivity_(outsideVolVars, problem, element, fvGeometry, outsideScv);
+                    outsideLambda += outsideVolVars.effectiveThermalConductivity();
                 else
                     outsideLambda += outsideVolVars.fluidThermalConductivity(phaseIdx)*outsideVolVars.saturation(phaseIdx)*outsideVolVars.porosity();
             }
@@ -161,27 +161,6 @@ public:
                 tij = scvf.area()*(ti * tj)/(ti + tj);
         }
         return tij;
-    }
-
-private:
-    template <class VolumeVariables>
-    static Scalar getEffectiveThermalConductivity_(const VolumeVariables& volVars,
-                                                   const Problem& problem,
-                                                   const Element& element,
-                                                   const FVElementGeometry& fvGeometry,
-                                                   const SubControlVolume& scv)
-    {
-        if constexpr (Dumux::Deprecated::hasEffTherCond<VolumeVariables>)
-            return volVars.effectiveThermalConductivity();
-        else
-        {
-            // TODO: remove this fallback after release 3.2!
-            return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(volVars,
-                                                                                               problem.spatialParams(),
-                                                                                               element,
-                                                                                               fvGeometry,
-                                                                                               scv);
-        }
     }
 };
 

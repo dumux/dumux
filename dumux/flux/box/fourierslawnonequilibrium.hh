@@ -84,8 +84,8 @@ public:
             //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
             if (numEnergyEqFluid < ModelTraits::numFluidPhases())
             {
-                insideLambda += getEffectiveThermalConductivity_(insideVolVars, problem, element, fvGeometry, insideScv);
-                outsideLambda += getEffectiveThermalConductivity_(outsideVolVars, problem, element, fvGeometry, outsideScv);
+                insideLambda += insideVolVars.effectiveThermalConductivity();
+                outsideLambda += outsideVolVars.effectiveThermalConductivity();
             }
             else
             {
@@ -122,27 +122,6 @@ public:
 
         // comute the heat conduction flux
         return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*scvf.area();
-    }
-
-private:
-    template <class VolumeVariables>
-    static Scalar getEffectiveThermalConductivity_(const VolumeVariables& volVars,
-                                                   const Problem& problem,
-                                                   const Element& element,
-                                                   const FVElementGeometry& fvGeometry,
-                                                   const SubControlVolume& scv)
-    {
-        if constexpr (Dumux::Deprecated::hasEffTherCond<VolumeVariables>)
-            return volVars.effectiveThermalConductivity();
-        else
-        {
-            // TODO: remove this fallback after release 3.2!
-            return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(volVars,
-                                                                                               problem.spatialParams(),
-                                                                                               element,
-                                                                                               fvGeometry,
-                                                                                               scv);
-        }
     }
 };
 
