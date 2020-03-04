@@ -26,6 +26,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/deprecated.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
@@ -180,16 +181,17 @@ public:
                                             const SubControlVolumeFace& scvf,
                                             const int phaseIdx, const int compIdx)
     {
-        Scalar tij;
+        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx); //, Dune::index_constant<hasEffDiff>{});
+        const auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVolVars, phaseIdx, phaseIdx, compIdx);
 
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideD, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
+        Scalar tij;
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
             tij = scvf.area()*ti;
 
@@ -199,7 +201,7 @@ public:
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx); //, Dune::index_constant<hasEffDiff>{});
+            const auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVolVars, phaseIdx, phaseIdx, compIdx);
 
             Scalar tj;
             if (dim == dimWorld)
@@ -266,21 +268,6 @@ private:
         }
         return rho/(scvf.numOutsideScvs()+1);
     }
-
-    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
-    {
-        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
-            return volVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
-        else
-        {
-            // TODO: remove this else clause after release 3.2!
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-            return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
-                                                      volVars.saturation(phaseIdx),
-                                                      volVars.diffusionCoefficient(phaseIdx, compIdx));
-        }
-    }
-
 };
 
 } // end namespace Dumux

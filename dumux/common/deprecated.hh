@@ -117,11 +117,28 @@ auto neumann(const P& problem,
     return problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 }
 
-constexpr auto hasEffTherCondImpl = Dumux::isValid([](auto&& v) -> decltype(v.effectiveThermalConductivity()){return 0;});
-template<class VolumeVariables> constexpr bool hasEffTherCond = decltype(hasEffTherCondImpl(std::declval<VolumeVariables>())){};
-
+///////////////////////////////////////////////////////////////
+// Deprecation warnings for effective diffusion coefficients //
+///////////////////////////////////////////////////////////////
 constexpr auto hasEffDiffCoeffImpl = Dumux::isValid([](auto&& v) -> decltype(v.effectiveDiffusionCoefficient(0,0,0)){return 0;});
 template<class VolumeVariables> constexpr bool hasEffDiffCoeff = decltype(hasEffDiffCoeffImpl(std::declval<VolumeVariables>())){};
+
+template<class EDL, class VV,
+         typename std::enable_if_t<!hasEffDiffCoeff<VV>, int> = 0>
+[[deprecated("The volume variables class used does not have an effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx) function. This will become mandatory after the 3.2 release!")]]
+decltype(EDL::effectiveDiffusionCoefficient(std::declval<VV>(), int(), int(), int()))
+effectiveDiffusionCoefficient(const VV& volVars, int phaseIdx, int compIIdx, int compJIdx)
+{
+    return EDL::effectiveDiffusionCoefficient(volVars, phaseIdx, compIIdx, compJIdx);
+}
+
+template<class EDL, class VV,
+         typename std::enable_if_t<hasEffDiffCoeff<VV>, int> = 0>
+auto effectiveDiffusionCoefficient(const VV& volVars, int phaseIdx, int compIIdx, int compJIdx)
+{ return volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx); }
+
+constexpr auto hasEffTherCondImpl = Dumux::isValid([](auto&& v) -> decltype(v.effectiveThermalConductivity()){return 0;});
+template<class VolumeVariables> constexpr bool hasEffTherCond = decltype(hasEffTherCondImpl(std::declval<VolumeVariables>())){};
 
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
