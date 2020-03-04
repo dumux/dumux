@@ -112,7 +112,7 @@ public:
             // are enforced strongly by replacing the residual entry afterwards.
             if (bcTypes.hasNeumann())
             {
-                auto neumannFluxes = Deprecated::neumann(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();

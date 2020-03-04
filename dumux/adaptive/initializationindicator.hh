@@ -213,7 +213,7 @@ public:
                         // we are on a pure Neumann boundary
                         else if(refineAtFluxBC_)
                         {
-                            const auto fluxes = Deprecated::neumann(*problem_, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                            const auto fluxes = problem_->neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
                             if (fluxes.infinity_norm() > eps_)
                             {
                                 indicatorVector_[eIdx] = true;
@@ -247,7 +247,7 @@ public:
                             //! check if scvf is on Neumann boundary
                             if (scvf.boundary() && bcTypes[scvf.insideScvIdx()].hasNeumann())
                             {
-                                const auto fluxes = Deprecated::neumann(*problem_, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                                const auto fluxes = problem_->neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
                                 if (fluxes.infinity_norm() > eps_)
                                 {
                                     indicatorVector_[eIdx] = true;

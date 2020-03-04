@@ -301,7 +301,7 @@ public:
                         else
                         {
                             // check if we have Neumann no flow, we can just use 0
-                            const auto neumannFlux = Deprecated::neumann(problem_, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                            const auto neumannFlux = problem_.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
                             using NumEqVector = std::decay_t<decltype(neumannFlux)>;
                             if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
                                 scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
