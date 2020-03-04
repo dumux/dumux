@@ -600,6 +600,7 @@ private:
 
                 using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
                 using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+                using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
                 // get instance of the interaction volume-local assembler
                 using Traits = typename InteractionVolume::Traits;
@@ -622,13 +623,13 @@ private:
                         // use transmissibility with molecular coefficient for epsilon estimate
                         localAssembler.assembleMatrices(handle.diffusionHandle(),
                                                         iv,
-                                                        LambdaFactory::getDiffusionLambda(phaseIdx, compIdx),
+                                                        LambdaFactory::template getDiffusionLambda<EffDiffModel>(phaseIdx, compIdx),
                                                         tij*1e-7);
                     }
                     else
                         localAssembler.assembleMatrices(handle.diffusionHandle(),
                                                         iv,
-                                                        LambdaFactory::getDiffusionLambda(phaseIdx, compIdx));
+                                                        LambdaFactory::template getDiffusionLambda<EffDiffModel>(phaseIdx, compIdx));
                 }
 
                 // assemble vector of mole fractions

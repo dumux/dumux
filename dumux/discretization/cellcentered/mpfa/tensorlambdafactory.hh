@@ -70,6 +70,7 @@ public:
     }
 
     //! return void lambda here
+    template<class EffDiffModel>
     static auto getDiffusionLambda(unsigned int phaseIdx, unsigned int compIdx)
     {
         return [phaseIdx, compIdx] (const auto& problem,
@@ -77,7 +78,8 @@ public:
                                     const auto& volVars,
                                     const auto& fvGeometry,
                                     const auto& scv)
-               { return volVars.effectiveDiffusionCoefficient(phaseIdx, compIdx, compIdx); };
+               { return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(
+                          volVars, phaseIdx, phaseIdx, compIdx); };
     }
 
     //! return void lambda here
