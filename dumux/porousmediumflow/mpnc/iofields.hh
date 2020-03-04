@@ -66,6 +66,27 @@ public:
         out.addVolumeVariable([](const auto& v){ return v.porosity(); },
                               IOName::porosity());
     }
+
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state=0)
+    {
+        if (pvIdx < ModelTraits::numFluidComponents())
+            return "fugacity^"+ FluidSystem::componentName(pvIdx);
+        else if (pvIdx < ModelTraits::numEq()-1)
+            return "S_"+ FluidSystem::phaseName(pvIdx - ModelTraits::numFluidComponents());
+        else
+        {
+            switch (ModelTraits::pressureFormulation())
+            {
+                case MpNcPressureFormulation::mostWettingFirst :
+                    return "p_"+ FluidSystem::phaseName(0);
+                case MpNcPressureFormulation::leastWettingFirst :
+                    return "p_"+ FluidSystem::phaseName(ModelTraits::numFluidPhases()-1);
+                default: DUNE_THROW(Dune::InvalidStateException, "Invalid formulation ");
+            }
+        }
+    }
+
 };
 
 } // end namespace Dumux
