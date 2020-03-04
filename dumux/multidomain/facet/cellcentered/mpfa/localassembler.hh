@@ -323,7 +323,6 @@ private:
                 const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
                 const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.gridScvIndex());
                 const auto& posVolVars = this->elemVolVars()[posGlobalScv];
-                const auto& posElement = iv.element(neighborScvIndices[0]);
                 const auto tensor = getT(posVolVars);
 
                 // the omega factors of the "positive" sub volume
@@ -403,7 +402,7 @@ private:
                 if (curIsInteriorBoundary && !curIsDirichlet)
                 {
                     const auto facetVolVars = this->problem().couplingManager().getLowDimVolVars(posElement, curGlobalScvf);
-                    const auto facetTensor = this->problem().couplingManager().getLowDimTensor(posElement, curGlobalScvf, getT);
+                    const auto facetTensor = getT(facetVolVars);
 
                     // On surface grids we use the square root of the extrusion factor as approximation of the aperture
                     using std::sqrt;
@@ -428,7 +427,6 @@ private:
                         const auto& negLocalScv = iv.localScv( neighborScvIndices[idxOnScvf] );
                         const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.gridScvIndex());
                         const auto& negVolVars = this->elemVolVars()[negGlobalScv];
-                        const auto& negElement = iv.element( neighborScvIndices[idxOnScvf] );
                         const auto negTensor = getT(negVolVars);
 
                         // On surface grids, use outside face for "negative" transmissibility calculation
