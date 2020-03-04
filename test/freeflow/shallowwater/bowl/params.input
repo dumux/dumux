@@ -1,0 +1,39 @@
+[Problem]
+Name = bowl
+BowlDepthAtCenter = 0.03 # [m]
+BowlParaboloidRadius = 1.6 # [m]
+BowlInitialWaterElevationAtCenter = 0.005 # [m]
+Gravity = 9.81 # [m/s^2]
+
+[FluxLimiterLET]
+UpperWaterDepth = 1.0E-5
+LowerWaterDepth = 1.0E-7
+UpwindFluxLimiting = true
+
+[TimeLoop]
+TEnd = 13.104 # [s] 6.552 is one period
+MaxTimeStepSize = 0.1 # [s]
+DtInitial = 0.01 # [s]
+
+[Grid]
+Positions0 = -2.0 2.0
+Positions1 = -2.0 2.0
+Cells0 = 50
+Cells1 = 50
+
+[Newton]
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-6
+RetryTimeStepReductionFactor = 0.5
+SatisfyResidualAndShiftCriterion = "false"
+EnableDynamicOutput = false
+EnablePartialReassembly = false
+TargetSteps = 6
+MaxSteps = 10
+UseLineSearch = true
+
+[LinearSolver]
+MaxIterations = 200
+ResidualReduction = 1e-5
+
+
