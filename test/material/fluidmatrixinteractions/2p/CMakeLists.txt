@@ -7,3 +7,11 @@ dumux_add_test(SOURCES test_thermalconductivity.cc
                               ${CMAKE_SOURCE_DIR}/test/references/thermalconductivityjohansen-reference.dat
                               ${CMAKE_CURRENT_BINARY_DIR}/johansen_lambda_eff.dat
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_thermalconductivity")
+
+dumux_add_test(SOURCES test_materiallaws.cc
+              LABELS unit material
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzyData --delimiter " "
+                      --files  ${CMAKE_SOURCE_DIR}/test/references/pcswcurve.dat
+                              ${CMAKE_CURRENT_BINARY_DIR}/pcswcurve.dat
+                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_materiallaws")
