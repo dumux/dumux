@@ -151,17 +151,6 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    //! Compute the transmissibility associated with the facet element
-    template<class VolumeVariables, class FacetVolVars>
-    static ScalarType computeFacetTransmissibility_(const VolumeVariables& insideVolVars,
-                                                    const FacetVolVars& facetVolVars,
-                                                    const SubControlVolumeFace& scvf)
-    {
-        return 2.0*scvf.area()*insideVolVars.extrusionFactor()
-                              /facetVolVars.extrusionFactor()
-                              *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
-    }
-
   public:
     //! state the scalar type of the law
     using Scalar = ScalarType;
@@ -285,7 +274,9 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = computeFacetTransmissibility_(insideVolVars, facetVolVars, scvf);
+            const auto wFacet = 2.0*scvf.area()*insideVolVars.extrusionFactor()
+                                   /facetVolVars.extrusionFactor()
+                                   *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
 
             // The fluxes across this face and the outside face can be expressed in matrix form:
             // \f$\mathbf{C} \bar{\mathbf{u}} + \mathbf{D} \mathbf{u} + \mathbf{E} \mathbf{u}_\gamma\f$,
