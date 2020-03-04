@@ -117,6 +117,10 @@ auto neumann(const P& problem,
     return problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 }
 
+////////////////////////////////////////////
+// Remove the following after Release 3.2 //
+////////////////////////////////////////////
+
 ///////////////////////////////////////////////////////////////
 // Deprecation warnings for effective diffusion coefficients //
 ///////////////////////////////////////////////////////////////
@@ -125,7 +129,9 @@ template<class VolumeVariables> constexpr bool hasEffDiffCoeff = decltype(hasEff
 
 template<class EDL, class VV,
          typename std::enable_if_t<!hasEffDiffCoeff<VV>, int> = 0>
-[[deprecated("The volume variables class used does not have an effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx) function. This will become mandatory after the 3.2 release!")]]
+[[deprecated("The volume variables class used does not have an effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx) function. "
+             "This will become mandatory after the 3.2 release! See e.g. the files /dumux/porousmediumflow/2p2c/volumevariables.hh "
+             "and /dumux/porousmediumflow/2p2c/properties.hh to see how this can be realized.")]]
 decltype(EDL::effectiveDiffusionCoefficient(std::declval<VV>(), int(), int(), int()))
 effectiveDiffusionCoefficient(const VV& volVars, int phaseIdx, int compIIdx, int compJIdx)
 {
