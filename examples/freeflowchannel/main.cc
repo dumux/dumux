@@ -21,13 +21,13 @@
 // ### Includes
 // Necessary files are included.
 //<details>
-//  <summary>Click to toggle details</summary>
+//  <summary>Toggle to expand details</summary>
 //
 // First, the configuration file is include, then the problem, followed by the standard header file for C++ to get time and date information
 // and another standard header for in- and output.
 //
 //<details>
-//  <summary>Click to toggle details</summary>
+//  <summary>Toggle to expand code (includes of problem file and of standard headers)</summary>
 //
 #include <config.h>
 
@@ -40,7 +40,7 @@
 // Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and
 // linear solvers. So we need some includes from that.
 //<details>
-//  <summary>Click to toggle details</summary>
+//  <summary>Toggle to expand code (dune includes)</summary>
 //
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -51,55 +51,47 @@
 //
 // In Dumux, a property system is used to specify the model. For this, different properties are defined containing
 // type definitions, values and methods. All properties are declared in the file `properties.hh`.
-// The file parameters.hh contains the parameter class, which manages the definition of input parameters by a default
+// The file `parameters.hh` contains the parameter class, which manages the definition of input parameters by a default
 // value, the inputfile or the command line.
 // The file `dumuxmessage.hh` contains the class defining the start and end message of the simulation.
-// The file valgrind.hh contains debugging funcionality.
+// The file `valgrind.hh` contains debugging funcionality.
+//
+// The file `seqsolverbackend.hh` contains the class, which defines the sequential linear solver backends.
+// The nonlinear Newton's method is included, as well as the assembler, which assembles the linear systems for staggered-grid finite volume schemes.
+// The containing class in the file `diffmethod.hh` defines the different differentiation methods used to compute the derivatives of the residual.
+//
+// We need the class in `staggeredvtkoutputmodule.hh` to simplify the writing of dumux simulation data to VTK format.
+// The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the
+// different supported grid managers.
+//
+// The following class contains functionality for additional flux output to the console.
 //<details>
-//  <summary>Click to toggle details</summary>
+//  <summary>Toggle to expand code (dumux includes)</summary>
 //
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/valgrind.hh>
-// </details>
-//
-// The file seqsolverbackend.hh contains the class, which defines the sequential linear solver backends.
-// The nonlinear Newton's method is included, as well as the assembler, which assembles the linear systems for staggered-grid finite volume schemes.
-// The containing class in the file diffmethod.hh defines the different differentiation methods used to compute the derivatives of the residual.
-//<details>
-//  <summary>Click to toggle details</summary>
-//
+
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-// </details>
-//
-// We need the class in staggeredvtkoutputmodule.hh to simplify the writing of dumux simulation data to VTK format.
-// The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the
-// different supported grid managers.
-//<details>
-//  <summary>Click to toggle details</summary>
-//
+
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-// </details>
-//
-// The following class contains functionality for additional flux output to the console.
-//<details>
-//  <summary>Click to toggle details</summary>
-//
+
 #include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 // </details>
 //
 // </details>
 //
 // ### Beginning of the main function
-// We begin the main function by defining the type tag for this problem, initializing MPI (finalizing is done automatically on exit),
-// printing the dumux start message and parsing the command line arguments and input file in the init function.
+// We begin the main function by making the type tag `ChannelExample`, that we defined in `problem.hh` for this test problem available here.
+// Then we initializing the message passing interface (MPI), even if we do not plan to run the application in parallel. Finalizing of the MPI is done automatically on exit.
+// We continue by printing the dumux start message and parsing the command line arguments and runtimeparameters from the input file in the init function.
 //<details>
-//  <summary>Click to toggle details</summary>
+//  <summary>Toggle to expand code (beginning of main)</summary>
 //
 int main(int argc, char** argv) try
 {
@@ -115,32 +107,29 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
     // </details>
     //
-    // ### Create the grid
-    // A gridmanager tries to create the grid either from a grid file or the input file.
-    // Then, we compute on the leaf grid view.
+    // ### Set-up and solving of the problem
+    //
+    // A gridmanager tries to create the grid either from a grid file or the input file. You can learn more about grids in
+    // Dumux in the [grid exercise](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/-/tree/master/exercises/exercise-grids).
+    // Then, we compute the leaf grid view, which is the overlap of all grid levels in hierarchical grids.
+    // We create (`std::make_shared`) and initialize (`update`) the finite volume geometry to build up the subcontrolvolumes
+    // and subcontrolvolume faces for each element of the grid partition.
+    // In the problem, we define the boundary and initial conditions.
+    // We set a solution vector which has a part (indexed by `cellCenterIdx`) for degrees of freedom (`dofs`) living
+    // in grid cell centers - pressures - and a part (indexed by `faceIdx`) for degrees of freedom livin on grid cell faces.
+    // We initialize the solution vector by what was defined as the initial solution in `problem.hh` (`applyInitialSolution`)
+    // and then use the solution vector to intialize the `gridVariables`. Grid variables in general contain the s
+    // primary variables (velocities, pressures) as well as secondary variables (density, viscosity, ...).
+    // We then initialize the vtkoutput. Each model has a predefined model-specific output with relevant parameters
+    // for that model. Here, it is pressure, velocity, density and process rank (relevant in the case of parallelisation).
     //<details>
-    //  <summary>Click to toggle details</summary>
+    //  <summary>Toggle to expand code</summary>
     //
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     const auto& leafGridView = gridManager.grid().leafGridView();
-    // </details>
-    //
-    // ### Set-up and solving of the problem
-    //
-    // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-    // #### Set-up
-    //
-    // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
-    // In the problem, we define the boundary and initial conditions.
-    // We initialize the solution vector
-    // and then use the solution vector to intialize the `gridVariables`.
-    // We then initialize the vtkoutput. Each model has a predefined model-specific output with relevant parameters
-    // for that model.
-    //<details>
-    //  <summary>Click to toggle details</summary>
-    //
+
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
@@ -173,7 +162,7 @@ int main(int argc, char** argv) try
     // the cell faces lie on the surface. This assumes a regular cartesian grid.
     // The second surface (second call of addSurface) is placed at the outlet of the channel.
     //<details>
-    //  <summary>Click to toggle details</summary>
+    //  <summary>Toggle to expand code (addition of surfaces)</summary>
     //
     FluxOverSurface<GridVariables,
                     SolutionVector,
@@ -208,25 +197,18 @@ int main(int argc, char** argv) try
     flux.addSurface("outlet", p0outlet, p1outlet);
     // </details>
     //
-    // </details>
-    //
-    // #### Assembling the linear system
-    // We set the assembler.
+    // The incompressible Stokes equation depends only linearly on the velocity, so we could use a linear solver to solve the problem.
+    // Here, we use the show the more general case which would also work for incompressible fluids or the
+    // Navier-Stokes equation. We use non-linear Newton solver for the solution.
+    // In each step of the Newton solver, we assemble the respective linear system, including the jacobian matrix and the residual by the
+    // `assembler`. The linear systems are here solved by the direct linear solver `UMFPack`.
+    // As a postprocessing, we calculate mass and volume fluxes over the planes specified above.
     //<details>
-    //  <summary>Click to toggle details</summary>
+    //  <summary>Toggle to expand code (assembly, solution process, postprocessing)</summary>
     //
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
-    // </details>
-    //
-    // #### Calculations
-    // Calculations are done in the following:
-    //
-    // ##### Solution
-    // We set the linear and non-linear solver and solve the non-linear system.
-    //<details>
-    //  <summary>Click to toggle details</summary>
-    //
+
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
@@ -234,13 +216,7 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     nonLinearSolver.solve(x);
-    // </details>
-    //
-    // ##### Postprocessing
-    // We calculate mass and volume fluxes over the planes.
-    //<details>
-    //  <summary>Click to toggle details</summary>
-    //
+
     flux.calculateMassOrMoleFluxes();
     flux.calculateVolumeFluxes();
     // </details>
@@ -248,9 +224,9 @@ int main(int argc, char** argv) try
     // ### Final Output
     // We write the vtk output and print the mass/energy/volume fluxes over the planes.
     // We conclude by printing the dumux end message. After the end of the main function,
-    // possible catched error messages are printed.
+    // possibly catched error messages are printed.
     //<details>
-    //  <summary>Click to toggle details</summary>
+    //  <summary>Toggle to expand code (final output)</summary>
     //
     vtkWriter.write(1.0);
 

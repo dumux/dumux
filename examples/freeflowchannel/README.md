@@ -26,10 +26,12 @@ In the following, we take a close look at the files containing the set-up: At fi
 
 Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 ### Include files
-The dune grid interface (from YASP) is included, as are the staggered grid discretization scheme, the freeflow model
-and the freeflow Navier-Stokes problem class that this class is derived from. The material (fluid) properties are specified.
+The dune grid interface from YASP grid is included, which is a structured, conforming grid, which can also be used for parallel simulations.
+Next, the properties of the staggered grid (marker-and-cell) discretization scheme are included, which is the spatial discretization used for free-flow simulations in dumux and is summarized in [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/-/blob/master/slides/dumux-course-intro.pdf).
+The single-phase, isothermal Navier-Stokes model and Navier-Stokes problem class that this class is derived from are also included.
+We will simulate the flow of fluid composed of one liquid phase (`1pliquid.hh`), which will have constant fluid properties (density, viscosity,...) (`constant.hh`).
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (file includes):</summary>
 
 ```cpp
 #include <dune/grid/yaspgrid.hh>
@@ -39,75 +41,53 @@ and the freeflow Navier-Stokes problem class that this class is derived from. Th
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
-#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/components/constant.hh>
 ```
 </details>
 
-### Define basic properties for our simulation
-Basis properties of the simulation are defined, e.g. the model, discretization scheme, grid, fluid properties, caching.
-<details>
-<summary>Click to toggle details</summary>
+### Setup basic properties for our simulation
+We setup the DuMux properties for our simulation (click [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/blob/master/slides/dumux-course-properties.pdf) for DuMux course slides on the property system) within the namespace Properties, which is a sub-namespace of Dumux.
+1. For every test problem, a new `TypeTag` has to be created, which is done within the namespace `TTag` (subnamespace of `Properties`). It inherits from the Navier-Stokes flow model and the staggered-grid discretization scheme.
+2. The grid is chosen to be a two-dimensional YASP grid.
+3. We set the `FluidSystem` to be a one-phase liquid with a single component. The class `Component::Constant` refers to a component with constant fluid properties (density, viscosity, ...) that can be set via the input file in the group `[0.Component]` where the number is the identifier given as template argument to the class template `Component::Constant`.
+4. The problem class `ChannelExampleProblem`, which is forward declared before we enter `namespace Dumux` and defined later in this file, is defined to be the problem used in this test problem (charaterized by the TypeTag `ChannelExample`). The fluid system, which contains information about the properties such as density, viscosity or diffusion coefficient of the fluid we're simulating, is set to a constant one phase liquid.
+5. We enable caching for the following classes (which stores values that were already calculated for later usage and thus results in higher memory usage but improved CPU speed): the grid volume variables, the grid flux variables, the finite volume grid geometry.
+<details><summary>Toggle to expand code (property definitions):</summary>
 
-We enter the namespace Dumux in order to import the entire Dumux namespace for general use
 ```cpp
 namespace Dumux {
-```
-The problem class is forward declared:
-```cpp
+
 template <class TypeTag>
 class ChannelExampleProblem;
-```
-We enter the namespace Properties, which is a sub-namespace of the namespace Dumux:
-```cpp
+
 namespace Properties {
-```
-Create new type tags
-```cpp
+
 namespace TTag {
-```
-A `TypeTag` for our simulation is created which inherits from the Navier-Stokes flow model and the staggered-grid discretization scheme.
-```cpp
 struct ChannelExample { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
-} // end namespace TTag
-```
-We use a structured 2D grid:
-```cpp
+}
+
 template<class TypeTag>
 struct Grid<TypeTag, TTag::ChannelExample> { using type = Dune::YaspGrid<2>; };
-```
-The problem class specifies initial and boundary conditions:
-```cpp
+
 template<class TypeTag>
 struct Problem<TypeTag, TTag::ChannelExample> { using type = Dumux::ChannelExampleProblem<TypeTag> ; };
-```
-This is where we define the fluid system, which contains information about the properties of the fluid we're simulating. To define the fluid system we first define the property Scalar. We then use this type to create a fluid system that consists of an incompressible fluid of constant visosity.
-```cpp
+
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::ChannelExample>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
-```
-We enable caching for the grid volume variables.
-```cpp
+
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
-```
-We enable caching for the grid flux variables.
-```cpp
+
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
-```
-We enable caching for the FV grid geometry
-```cpp
+
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
-```
-The cache stores values that were already calculated for later usage. This makes the simulation faster.
-We leave the namespace Properties.
-```cpp
 }
 ```
 </details>
@@ -115,18 +95,19 @@ We leave the namespace Properties.
 ### The problem class
 We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
 
-<details>
-<summary>Click to toggle details</summary>
-
 As this is a Stokes problem, we inherit from the basic `NavierStokesProblem`.
+<details><summary>Toggle to expand code:</summary>
+
 ```cpp
 template <class TypeTag>
 class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
 {
 ```
+</details>
+
 We use convenient declarations that we derive from the property system.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (convenient declarations)</summary>
 
 ```cpp
     using ParentType = NavierStokesProblem<TypeTag>;
@@ -150,7 +131,7 @@ There follows the constructor of our problem class:
 Within the constructor, we set the inlet velocity to a run-time specified value.
 As no run-time value is specified, we set the outlet pressure to 1.1e5 Pa.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (constructor)</summary>
 
 ```cpp
     ChannelExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -174,7 +155,7 @@ if isInlet_ is true, Dirichlet boundaries for pressure on the right of our domai
 if isOutlet_ is true and specify Dirichlet boundaries for velocity on the top and bottom
 of our domain else.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (`boundaryTypesAtPos`)</summary>
 
 ```cpp
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -205,7 +186,7 @@ Second, we specify the values for the Dirichlet boundaries. We need to fix the v
 To ensure a no-slip boundary condition at the top and bottom of the channel, the Dirichlet velocity
 in x-direction is set to zero if not at the inlet.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (`dirichletAtPos`)</summary>
 
 ```cpp
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
@@ -225,7 +206,7 @@ in x-direction is set to zero if not at the inlet.
 We specify the values for the initial conditions.
 We assign constant values for pressure and velocity components.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (`initialAtPos`)</summary>
 
 ```cpp
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
@@ -244,7 +225,7 @@ We assign constant values for pressure and velocity components.
 We need to specify a constant temperature for our isothermal problem.
 We set it to 10°C.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (`temperature`)</summary>
 
 ```cpp
     Scalar temperature() const
@@ -255,7 +236,7 @@ private:
 
 The inlet is at the left side of the physical domain.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (`isInlet_`)</summary>
 
 ```cpp
     bool isInlet_(const GlobalPosition& globalPos) const
@@ -267,7 +248,7 @@ The inlet is at the left side of the physical domain.
 
 The outlet is at the right side of the physical domain.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (`isOutlet_`)</summary>
 
 ```cpp
     bool isOutlet_(const GlobalPosition& globalPos) const
@@ -279,22 +260,14 @@ The outlet is at the right side of the physical domain.
 
 Finally, private variables are declared:
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (private variables)</summary>
 
 ```cpp
     static constexpr Scalar eps_=1e-6;
     Scalar inletVelocity_;
     Scalar outletPressure_;
-```
-</details>
-
-This is everything the freeflow channel problem class contains.
-```cpp
 };
-```
-We leave the namespace Dumux.
-```cpp
-} // end namespace Dumux
+}
 #endif
 ```
 </details>
@@ -308,13 +281,13 @@ We look now at the main file for the channel problem.
 ### Includes
 Necessary files are included.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand details</summary>
 
 First, the configuration file is include, then the problem, followed by the standard header file for C++ to get time and date information
 and another standard header for in- and output.
 
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (includes of problem file and of standard headers)</summary>
 
 ```cpp
 #include <config.h>
@@ -329,7 +302,7 @@ and another standard header for in- and output.
 Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and
 linear solvers. So we need some includes from that.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (dune includes)</summary>
 
 ```cpp
 #include <dune/common/parallel/mpihelper.hh>
@@ -342,52 +315,37 @@ linear solvers. So we need some includes from that.
 
 In Dumux, a property system is used to specify the model. For this, different properties are defined containing
 type definitions, values and methods. All properties are declared in the file `properties.hh`.
-The file parameters.hh contains the parameter class, which manages the definition of input parameters by a default
+The file `parameters.hh` contains the parameter class, which manages the definition of input parameters by a default
 value, the inputfile or the command line.
 The file `dumuxmessage.hh` contains the class defining the start and end message of the simulation.
-The file valgrind.hh contains debugging funcionality.
+The file `valgrind.hh` contains debugging funcionality.
+
+The file `seqsolverbackend.hh` contains the class, which defines the sequential linear solver backends.
+The nonlinear Newton's method is included, as well as the assembler, which assembles the linear systems for staggered-grid finite volume schemes.
+The containing class in the file `diffmethod.hh` defines the different differentiation methods used to compute the derivatives of the residual.
+
+We need the class in `staggeredvtkoutputmodule.hh` to simplify the writing of dumux simulation data to VTK format.
+The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the
+different supported grid managers.
+
+The following class contains functionality for additional flux output to the console.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (dumux includes)</summary>
 
 ```cpp
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/valgrind.hh>
-```
-</details>
 
-The file seqsolverbackend.hh contains the class, which defines the sequential linear solver backends.
-The nonlinear Newton's method is included, as well as the assembler, which assembles the linear systems for staggered-grid finite volume schemes.
-The containing class in the file diffmethod.hh defines the different differentiation methods used to compute the derivatives of the residual.
-<details>
-<summary>Click to toggle details</summary>
-
-```cpp
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-```
-</details>
 
-We need the class in staggeredvtkoutputmodule.hh to simplify the writing of dumux simulation data to VTK format.
-The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the
-different supported grid managers.
-<details>
-<summary>Click to toggle details</summary>
-
-```cpp
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-```
-</details>
 
-The following class contains functionality for additional flux output to the console.
-<details>
-<summary>Click to toggle details</summary>
-
-```cpp
 #include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 ```
 </details>
@@ -395,10 +353,11 @@ The following class contains functionality for additional flux output to the con
 </details>
 
 ### Beginning of the main function
-We begin the main function by defining the type tag for this problem, initializing MPI (finalizing is done automatically on exit),
-printing the dumux start message and parsing the command line arguments and input file in the init function.
+We begin the main function by making the type tag `ChannelExample`, that we defined in `problem.hh` for this test problem available here.
+Then we initializing the message passing interface (MPI), even if we do not plan to run the application in parallel. Finalizing of the MPI is done automatically on exit.
+We continue by printing the dumux start message and parsing the command line arguments and runtimeparameters from the input file in the init function.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (beginning of main)</summary>
 
 ```cpp
 int main(int argc, char** argv) try
@@ -416,35 +375,30 @@ int main(int argc, char** argv) try
 ```
 </details>
 
-### Create the grid
-A gridmanager tries to create the grid either from a grid file or the input file.
-Then, we compute on the leaf grid view.
+### Set-up and solving of the problem
+
+A gridmanager tries to create the grid either from a grid file or the input file. You can learn more about grids in
+Dumux in the [grid exercise](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/-/tree/master/exercises/exercise-grids).
+Then, we compute the leaf grid view, which is the overlap of all grid levels in hierarchical grids.
+We create (`std::make_shared`) and initialize (`update`) the finite volume geometry to build up the subcontrolvolumes
+and subcontrolvolume faces for each element of the grid partition.
+In the problem, we define the boundary and initial conditions.
+We set a solution vector which has a part (indexed by `cellCenterIdx`) for degrees of freedom (`dofs`) living
+in grid cell centers - pressures - and a part (indexed by `faceIdx`) for degrees of freedom livin on grid cell faces.
+We initialize the solution vector by what was defined as the initial solution in `problem.hh` (`applyInitialSolution`)
+and then use the solution vector to intialize the `gridVariables`. Grid variables in general contain the s
+primary variables (velocities, pressures) as well as secondary variables (density, viscosity, ...).
+We then initialize the vtkoutput. Each model has a predefined model-specific output with relevant parameters
+for that model. Here, it is pressure, velocity, density and process rank (relevant in the case of parallelisation).
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code</summary>
 
 ```cpp
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     const auto& leafGridView = gridManager.grid().leafGridView();
-```
-</details>
 
-### Set-up and solving of the problem
-
-We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-#### Set-up
-
-We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
-In the problem, we define the boundary and initial conditions.
-We initialize the solution vector
-and then use the solution vector to intialize the `gridVariables`.
-We then initialize the vtkoutput. Each model has a predefined model-specific output with relevant parameters
-for that model.
-<details>
-<summary>Click to toggle details</summary>
-
-```cpp
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
@@ -478,7 +432,7 @@ In this case, we add half a cell-width to the x-position in order to make sure t
 the cell faces lie on the surface. This assumes a regular cartesian grid.
 The second surface (second call of addSurface) is placed at the outlet of the channel.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (addition of surfaces)</summary>
 
 ```cpp
     FluxOverSurface<GridVariables,
@@ -515,28 +469,19 @@ The second surface (second call of addSurface) is placed at the outlet of the ch
 ```
 </details>
 
-</details>
-
-#### Assembling the linear system
-We set the assembler.
+The incompressible Stokes equation depends only linearly on the velocity, so we could use a linear solver to solve the problem.
+Here, we use the show the more general case which would also work for incompressible fluids or the
+Navier-Stokes equation. We use non-linear Newton solver for the solution.
+In each step of the Newton solver, we assemble the respective linear system, including the jacobian matrix and the residual by the
+`assembler`. The linear systems are here solved by the direct linear solver `UMFPack`.
+As a postprocessing, we calculate mass and volume fluxes over the planes specified above.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (assembly, solution process, postprocessing)</summary>
 
 ```cpp
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
-```
-</details>
 
-#### Calculations
-Calculations are done in the following:
-
-##### Solution
-We set the linear and non-linear solver and solve the non-linear system.
-<details>
-<summary>Click to toggle details</summary>
-
-```cpp
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
@@ -544,15 +489,7 @@ We set the linear and non-linear solver and solve the non-linear system.
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     nonLinearSolver.solve(x);
-```
-</details>
 
-##### Postprocessing
-We calculate mass and volume fluxes over the planes.
-<details>
-<summary>Click to toggle details</summary>
-
-```cpp
     flux.calculateMassOrMoleFluxes();
     flux.calculateVolumeFluxes();
 ```
@@ -561,9 +498,9 @@ We calculate mass and volume fluxes over the planes.
 ### Final Output
 We write the vtk output and print the mass/energy/volume fluxes over the planes.
 We conclude by printing the dumux end message. After the end of the main function,
-possible catched error messages are printed.
+possibly catched error messages are printed.
 <details>
-<summary>Click to toggle details</summary>
+<summary>Toggle to expand code (final output)</summary>
 
 ```cpp
     vtkWriter.write(1.0);
