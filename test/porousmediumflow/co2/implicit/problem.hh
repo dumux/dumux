@@ -31,6 +31,7 @@
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/co2/model.hh>
@@ -217,6 +218,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 
     // the discretization method we are using
     static constexpr auto discMethod = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
 
     // world dimension to access gravity vector
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -257,10 +259,13 @@ public:
                           /*np=*/nPressure_);
 
         // stating in the console whether mole or mass fractions are used
-        if(useMoles)
-            std::cout<<"problem uses mole fractions"<<std::endl;
-        else
-            std::cout<<"problem uses mass fractions"<<std::endl;
+        if (gridGeometry->gridView().comm().rank() == 0)
+        {
+            if (useMoles)
+                std::cout << "-- Problem uses mole fractions." << std::endl;
+            else
+                std::cout << "-- Problem uses mass fractions." << std::endl;
+        }
 
         // precompute the boundary types for the box method from the cell-centered boundary types
         scvfToScvBoundaryTypes_.computeBoundaryTypes(*this);
@@ -294,7 +299,7 @@ public:
 #endif
 
         const auto& gridView = this->gridGeometry().gridView();
-        for (const auto& element : elements(gridView))
+        for (const auto& element : elements(gridView, Dune::Partitions::interior))
         {
             const auto eIdx = this->gridGeometry().elementMapper().index(element);
             auto fvGeometry = localView(this->gridGeometry());
@@ -311,6 +316,19 @@ public:
 
             vtkKxx_[eIdx] = this->spatialParams().permeability(eIdx);
             vtkPorosity_[eIdx] = 1- this->spatialParams().inertVolumeFraction(eIdx);
+        }
+
+        // communicate box volume at process boundaries for vertex-centered scheme (box)
+        if constexpr (isBox)
+        {
+            if (gridView.comm().size() > 1)
+            {
+                VectorCommDataHandleSum<typename GridGeometry::VertexMapper, std::vector<Scalar>, GridView::dimension>
+                sumVolumeHandle(this->gridGeometry().vertexMapper(), vtkBoxVolume_);
+                gridView.communicate(sumVolumeHandle,
+                                     Dune::InteriorBorder_InteriorBorder_Interface,
+                                     Dune::ForwardCommunication);
+            }
         }
     }
 
