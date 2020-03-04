@@ -184,6 +184,7 @@ while test "$LAST_REQUIRED_HEADERS" != "$REQUIRED_HEADERS"; do
 
   # sort the required headers, eliminate copies
   REQUIRED_HEADERS=$(sort -u tmp_header_file)
+
 done
 
 # remove the file that stores all required headers line by line
@@ -211,12 +212,10 @@ find . -path '*.deps' -delete
 echo "Removed architecture-dependent files."
 
 # remove directories that are not required
-sed -i '/"dune"/d' CMakeLists.txt
-sed -i '/"src"/d' CMakeLists.txt
-sed -i '/"m4"/d' CMakeLists.txt
+sed -i '/(dune)/d' CMakeLists.txt
+sed -i '/(src)/d' CMakeLists.txt
 rm -rf dune/
 rm -rf src/
-rm -rf m4/
 
 # create a list of the subfolders
 EMPTY_DIR_NAME="."
@@ -267,7 +266,7 @@ for SUBDIR in $SUBDIR_LIST; do
   if ([ ! -f CMakeLists.txt ]); then
     # add subfolder information
     for DIR in $DIR_LIST; do
-      echo "add_subdirectory(\"$DIR\")" >> CMakeLists.txt
+      echo "add_subdirectory($DIR)" >> CMakeLists.txt
     done
 
     # determine whether to add file information
@@ -297,7 +296,7 @@ done
 
 # update top CMakeLists.txt
 for INITIAL_SUBDIR in $INITIAL_SUBDIR_LIST; do
-  sed -i '/add_subdirectory("doc")/a add_subdirectory('"$INITIAL_SUBDIR"')' CMakeLists.txt
+  sed -i '/add_subdirectory(doc)/a add_subdirectory('$INITIAL_SUBDIR')' CMakeLists.txt
 done
 echo "Updated and created CMakeLists.txt's."
 cd ..
