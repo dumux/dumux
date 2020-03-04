@@ -284,7 +284,7 @@ public:
         if (enablePartialReassembly_)
         {
             partialReassembler_->resetColors();
-            resizeDistanceFromLastLinearization_(uCurrentIter, distanceFromLastLinearization_);
+            resizeDistanceFromLastLinearization_(u, distanceFromLastLinearization_);
         }
     }
 
