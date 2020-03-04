@@ -46,36 +46,6 @@ namespace Deprecated {
 ///// REMOVE THIS AFTER RELEASE 3.1
 ////////////////////////////////////////////////////////
 
-// support old interface of the effective thermal conductivity laws
-template<class VV>
-struct HasNewEffThermCondIF
-{
-    template<class ETC>
-    auto operator()(ETC&& e) -> decltype(e.effectiveThermalConductivity(std::declval<const VV&>())) {}
-};
-
-template<class ETC, class VV, class SpatialParams, class Element, class FVGeometry,
-         typename std::enable_if_t<!decltype(isValid(HasNewEffThermCondIF<VV>()).template check<ETC>())::value, int> = 0>
-auto effectiveThermalConductivity(const VV& volVars,
-                                  const SpatialParams& spatialParams,
-                                  const Element& element,
-                                  const FVGeometry& fvGeometry,
-                                  const typename FVGeometry::SubControlVolume& scv)
-{
-    return ETC::effectiveThermalConductivity(volVars, spatialParams, element, fvGeometry, scv);
-}
-
-template<class ETC, class VV, class SpatialParams, class Element, class FVGeometry,
-         typename std::enable_if_t<decltype(isValid(HasNewEffThermCondIF<VV>()).template check<ETC>())::value, int> = 0>
-auto effectiveThermalConductivity(const VV& volVars,
-                                  const SpatialParams& spatialParams,
-                                  const Element& element,
-                                  const FVGeometry& fvGeometry,
-                                  const typename FVGeometry::SubControlVolume& scv)
-{
-    return ETC::effectiveThermalConductivity(volVars);
-}
-
 // support old interface of the neumann() function on problems
 template<class E, class FVEG, class EVV, class EFVC>
 class HasNewNeumannIF
