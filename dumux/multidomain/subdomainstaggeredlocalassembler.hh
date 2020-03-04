@@ -83,8 +83,8 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
 
 public:
     static constexpr auto domainId = typename Dune::index_constant<id>();
-    static constexpr auto cellCenterId = typename Dune::index_constant<0>();
-    static constexpr auto faceId = typename Dune::index_constant<1>();
+    static constexpr auto cellCenterId = GridGeometry::cellCenterIdx();
+    static constexpr auto faceId = GridGeometry::faceIdx();
 
     static constexpr auto numEqCellCenter = CellCenterResidualValue::dimension;
     static constexpr auto faceOffset = numEqCellCenter;
@@ -131,7 +131,16 @@ public:
         this->asImp_().bindLocalViews();
         this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
 
-        assembleResidualImpl_(domainId, res);
+        if constexpr (domainId == cellCenterId)
+        {
+            const auto cellCenterGlobalI = problem().gridGeometry().elementMapper().index(this->element());
+            res[cellCenterGlobalI] = this->asImp_().assembleCellCenterResidualImpl();
+        }
+        else
+        {
+            for (auto&& scvf : scvfs(this->fvGeometry()))
+                res[scvf.dofIndex()] +=  this->asImp_().assembleFaceResidualImpl(scvf);
+        }
     }
 
     /*!
@@ -315,25 +324,9 @@ public:
 
 private:
 
-    //! Assembles the residuals for the cell center dofs.
-    template<class SubSol>
-    void assembleResidualImpl_(Dune::index_constant<0>, SubSol& res)
-    {
-        const auto cellCenterGlobalI = problem().gridGeometry().elementMapper().index(this->element());
-        res[cellCenterGlobalI] = this->asImp_().assembleCellCenterResidualImpl();
-    }
-
-    //! Assembles the residuals for the face dofs.
-    template<class SubSol>
-    void assembleResidualImpl_(Dune::index_constant<1>, SubSol& res)
-    {
-        for (auto&& scvf : scvfs(this->fvGeometry()))
-            res[scvf.dofIndex()] +=  this->asImp_().assembleFaceResidualImpl(scvf);
-    }
-
     //! Assembles the residuals and derivatives for the cell center dofs.
     template<class JacobianMatrixRow, class SubSol, class GridVariablesTuple>
-    auto assembleJacobianAndResidualImpl_(Dune::index_constant<0>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
+    auto assembleJacobianAndResidualImpl_(Dune::index_constant<cellCenterId>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
     {
         auto& gridVariablesI = *std::get<domainId>(gridVariables);
         const auto cellCenterGlobalI = problem().gridGeometry().elementMapper().index(this->element());
@@ -355,7 +348,7 @@ private:
 
     //! Assembles the residuals and derivatives for the face dofs.
     template<class JacobianMatrixRow, class SubSol, class GridVariablesTuple>
-    void assembleJacobianAndResidualImpl_(Dune::index_constant<1>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
+    void assembleJacobianAndResidualImpl_(Dune::index_constant<faceId>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
     {
         auto& gridVariablesI = *std::get<domainId>(gridVariables);
         const auto residual = this->asImp_().assembleFaceJacobianAndResidualImpl(jacRow[domainId], gridVariablesI);
@@ -508,8 +501,8 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     static constexpr int maxNeighbors = 4*(2*ModelTraits::dim());
     static constexpr auto domainI = Dune::index_constant<id>();
-    static constexpr auto cellCenterId = typename Dune::index_constant<0>();
-    static constexpr auto faceId = typename Dune::index_constant<1>();
+    static constexpr auto cellCenterId = GridGeometry::cellCenterIdx();
+    static constexpr auto faceId = GridGeometry::faceIdx();
 
     static constexpr auto numEq = ModelTraits::numEq();
     static constexpr auto numEqCellCenter = CellCenterPrimaryVariables::dimension;
@@ -665,7 +658,7 @@ public:
             auto evaluateFaceDerivatives = [&](const std::size_t globalJ)
             {
                 // get the faceVars of the face with respect to which we are going to build the derivative
-                auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), this->curElemFaceVars(), scvf);
+                auto& faceVars = getFaceVarAccess_(gridVariables.curGridFaceVars(), this->curElemFaceVars(), scvf);
                 const auto origFaceVars = faceVars;
 
                 for (int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
@@ -725,7 +718,7 @@ public:
      * \return The element residual at the current solution.
      */
     template<class JacobianBlock, class GridVariables>
-    void assembleJacobianCellCenterCoupling(Dune::index_constant<1> domainJ, JacobianBlock& A,
+    void assembleJacobianCellCenterCoupling(Dune::index_constant<faceId> domainJ, JacobianBlock& A,
                                             const CellCenterResidualValue& origResidual, GridVariables& gridVariables)
     {
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -745,7 +738,7 @@ public:
             const auto globalJ = scvfJ.dofIndex();
 
             // get the faceVars of the face with respect to which we are going to build the derivative
-            auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), this->curElemFaceVars(), scvfJ);
+            auto& faceVars = getFaceVarAccess_(gridVariables.curGridFaceVars(), this->curElemFaceVars(), scvfJ);
             const auto origFaceVars(faceVars);
 
             for (int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
@@ -847,7 +840,7 @@ public:
      * \return The element residual at the current solution.
      */
     template<class JacobianBlock, class ElementResidualVector, class GridVariables>
-    void assembleJacobianFaceCoupling(Dune::index_constant<0> domainJ, JacobianBlock& A,
+    void assembleJacobianFaceCoupling(Dune::index_constant<cellCenterId> domainJ, JacobianBlock& A,
                                       const ElementResidualVector& origResiduals, GridVariables& gridVariables)
     {
         /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1012,15 +1005,13 @@ public:
 
 private:
 
-    template<class T = TypeTag>
-    static typename std::enable_if<!getPropValue<T, Properties::EnableGridFaceVariablesCache>(), FaceVariables&>::type
-    getFaceVarAccess(GridFaceVariables& gridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
-    { return elemFaceVars[scvf]; }
-
-    template<class T = TypeTag>
-    static typename std::enable_if<getPropValue<T, Properties::EnableGridFaceVariablesCache>(), FaceVariables&>::type
-    getFaceVarAccess(GridFaceVariables& gridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
-    { return gridFaceVariables.faceVars(scvf.index()); }
+    FaceVariables& getFaceVarAccess_(GridFaceVariables& gridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
+    {
+        if constexpr (getPropValue<TypeTag, Properties::EnableGridFaceVariablesCache>())
+            return gridFaceVariables.faceVars(scvf.index());
+        else
+            return elemFaceVars[scvf];
+    }
 };
 
 } // end namespace Dumux
