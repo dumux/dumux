@@ -1,6 +1,7 @@
 [TimeLoop]
-DtInitial = 250# [s]
-TEnd = 1e6# [s]
+DtInitial = 5e3 # [s]
+TEnd = 1e6 # [s]
+MaxTimeStepSize = 4e4 # [s]
 
 [Grid]
 File = ./grids/heterogeneousSmall.dgf # relative path to the grid file
@@ -17,10 +18,7 @@ TemperatureHigh = 331.00 # [Pa] high end for tabularization of fluid properties
 Name = co2 # [-] the name of the output files
 EnableGravity = true
 DepthBOR = 1200# [m] depth below ground surface
-InjectionRate = 1e-4 # [kg/sq/s]
+InjectionRate = 3e-3 # [kg/sq/s]
 
 [Brine]
 Salinity = 1e-1
-
-[LinearSolver]
-ResidualReduction = 1e-10

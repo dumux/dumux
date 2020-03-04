@@ -1,6 +1,7 @@
 [TimeLoop]
-DtInitial = 250 # [s]
+DtInitial = 5e3 # [s]
 TEnd = 1e6 # [s]
+MaxTimeStepSize = 4e4 # [s]
 
 [Grid]
 File = ./grids/heterogeneousSmall.dgf # relative path to the grid file
@@ -20,12 +21,9 @@ Salinity = 0.1 # [-] salinity of brine
 Name = co2ni # [-] the name of the output files
 EnableGravity = true
 DepthBOR = 1200 # [m] depth below ground surface
-InjectionRate = 1e-4 #  always given as [kg/(m^2/s)]
+InjectionRate = 3e-3 #  always given as [kg/(m^2/s)]
 InjectionPressure = 16e6 #[Pa]
 InjectionTemperature = 305 # [K]
-
-[LinearSolver]
-ResidualReduction = 1e-10
 
 [Component]
 SolidDensity = 2700
