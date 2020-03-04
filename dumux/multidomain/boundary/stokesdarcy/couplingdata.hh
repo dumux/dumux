@@ -409,31 +409,11 @@ protected:
                                              domainJ,
                                              insideDistance,
                                              outsideDistance,
-                                             getEffectiveThermalConductivity_(volVarsI, fvGeometryI, scvI),
-                                             getEffectiveThermalConductivity_(volVarsJ, fvGeometryJ, scvJ),
+                                             volVarsI.effectiveThermalConductivity(),
+                                             volVarsJ.effectiveThermalConductivity(),
                                              diffCoeffAvgType);
 
         return -tij * deltaT;
-    }
-
-    template <class VolumeVariables, class FVElementGeometry, class SubControlVolume>
-    Scalar getEffectiveThermalConductivity_(const VolumeVariables& volVars,
-                                            const FVElementGeometry& fvGeometry,
-                                            const SubControlVolume& scv) const
-    {
-        if constexpr (Dumux::Deprecated::hasEffTherCond<VolumeVariables>)
-            return volVars.effectiveThermalConductivity();
-        else
-        {
-            // TODO: remove this fallback after release 3.2!
-            using ThermalConductivityModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ThermalConductivityModel>;
-            const auto& problem = this->couplingManager().problem(darcyIdx);
-            return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(volVars,
-                                                                                               problem.spatialParams(),
-                                                                                               fvGeometry.gridGeometry().element(scv.elementIndex()),
-                                                                                               fvGeometry,
-                                                                                               scv);
-        }
     }
 
     /*!

@@ -70,8 +70,8 @@ public:
         const auto& outsideVolVars = elemVolVars[outsideScv];
 
         // effective diffusion tensors
-        auto insideLambda = getEffectiveThermalConductivity_(insideVolVars, problem, element, fvGeometry, insideScv);
-        auto outsideLambda = getEffectiveThermalConductivity_(outsideVolVars, problem, element, fvGeometry, outsideScv);
+        auto insideLambda = insideVolVars.effectiveThermalConductivity();
+        auto outsideLambda = outsideVolVars.effectiveThermalConductivity();
 
         // scale by extrusion factor
         insideLambda *= insideVolVars.extrusionFactor();
@@ -91,28 +91,6 @@ public:
         // comute the heat conduction flux
         return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*scvf.area();
     }
-
-private:
-
-    static Scalar getEffectiveThermalConductivity_(const VolumeVariables& volVars,
-                                                   const Problem& problem,
-                                                   const Element& element,
-                                                   const FVElementGeometry& fvGeometry,
-                                                   const SubControlVolume& scv)
-    {
-        if constexpr (Dumux::Deprecated::hasEffTherCond<VolumeVariables>)
-            return volVars.effectiveThermalConductivity();
-        else
-        {
-            // TODO: remove this fallback after release 3.2!
-            return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(volVars,
-                                                                                               problem.spatialParams(),
-                                                                                               element,
-                                                                                               fvGeometry,
-                                                                                               scv);
-        }
-    }
-
 };
 
 } // end namespace Dumux

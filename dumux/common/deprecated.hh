@@ -143,9 +143,6 @@ template<class EDL, class VV,
 auto effectiveDiffusionCoefficient(const VV& volVars, int phaseIdx, int compIIdx, int compJIdx)
 { return volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx); }
 
-constexpr auto hasEffTherCondImpl = Dumux::isValid([](auto&& v) -> decltype(v.effectiveThermalConductivity()){return 0;});
-template<class VolumeVariables> constexpr bool hasEffTherCond = decltype(hasEffTherCondImpl(std::declval<VolumeVariables>())){};
-
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 
