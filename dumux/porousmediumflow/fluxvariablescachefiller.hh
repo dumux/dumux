@@ -26,10 +26,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/deprecated.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/referencesystemformulation.hh>
-#include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux {
@@ -550,16 +550,17 @@ private:
     template<class InteractionVolume, class DataHandle>
     void prepareAdvectionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
-        using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
-
         // get instance of the interaction volume-local assembler
         using Traits = typename InteractionVolume::Traits;
         using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
+        // lambda to obtain the permeability tensor
+        auto getK = [] (const auto& volVars) { return volVars.permeability(); };
+
         // Assemble T only if permeability is sol-dependent or if update is forced
         if (forceUpdateAll || advectionIsSolDependent)
-            localAssembler.assembleMatrices(handle.advectionHandle(), iv, LambdaFactory::getAdvectionLambda());
+            localAssembler.assembleMatrices(handle.advectionHandle(), iv, getK);
 
         // assemble pressure vectors
         for (unsigned int pIdx = 0; pIdx < ModelTraits::numFluidPhases(); ++pIdx)
@@ -598,7 +599,6 @@ private:
                 handle.diffusionHandle().setPhaseIndex(phaseIdx);
                 handle.diffusionHandle().setComponentIndex(compIdx);
 
-                using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
                 using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
                 using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
@@ -606,6 +606,10 @@ private:
                 using Traits = typename InteractionVolume::Traits;
                 using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
                 IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
+
+                // lambda to obtain diffusion coefficient
+                auto getD = [phaseIdx, compIdx] (const auto& volVars)
+                { return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVars, phaseIdx, phaseIdx, compIdx); };
 
                 // maybe (re-)assemble matrices
                 if (forceUpdateAll || diffusionIsSolDependent)
@@ -621,15 +625,10 @@ private:
                         const auto tij = computeTpfaTransmissibility(scvf, scv, D, vv.extrusionFactor())*scvf.area();
 
                         // use transmissibility with molecular coefficient for epsilon estimate
-                        localAssembler.assembleMatrices(handle.diffusionHandle(),
-                                                        iv,
-                                                        LambdaFactory::template getDiffusionLambda<EffDiffModel>(phaseIdx, compIdx),
-                                                        tij*1e-7);
+                        localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD, tij*1e-7);
                     }
                     else
-                        localAssembler.assembleMatrices(handle.diffusionHandle(),
-                                                        iv,
-                                                        LambdaFactory::template getDiffusionLambda<EffDiffModel>(phaseIdx, compIdx));
+                        localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD);
                 }
 
                 // assemble vector of mole fractions
@@ -643,19 +642,17 @@ private:
     template<class InteractionVolume, class DataHandle>
     void prepareHeatConductionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
-        using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
-        using ThermCondModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-
         // get instance of the interaction volume-local assembler
         using Traits = typename InteractionVolume::Traits;
         using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
+        // lambda to obtain the effective thermal conductivity
+        auto getLambda = [] (const auto& volVars) { return volVars.effectiveThermalConductivity(); };
+
         // maybe (re-)assemble matrices
         if (forceUpdateAll || heatConductionIsSolDependent)
-            localAssembler.assembleMatrices(handle.heatConductionHandle(),
-                                            iv,
-                                            LambdaFactory::template getHeatConductionLambda<ThermCondModel>());
+            localAssembler.assembleMatrices(handle.heatConductionHandle(), iv, getLambda);
 
         // assemble vector of temperatures
         auto getTemperature = [] (const auto& volVars) { return volVars.temperature(); };
