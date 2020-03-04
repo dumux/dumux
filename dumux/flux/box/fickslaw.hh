@@ -27,6 +27,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/method.hh>
 
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
@@ -110,8 +111,9 @@ public:
                 continue;
 
             // effective diffusion tensors
-            auto insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx);
-            auto outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx);
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVolVars, phaseIdx, phaseIdx, compIdx);
+            auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVolVars, phaseIdx, phaseIdx, compIdx);
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();
@@ -158,8 +160,9 @@ public:
                 continue;
 
             // effective diffusion tensors
-            auto insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx);
-            auto outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx);
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVolVars, phaseIdx, phaseIdx, compIdx);
+            auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVolVars, phaseIdx, phaseIdx, compIdx);
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();
@@ -174,20 +177,6 @@ public:
         }
 
         return ti;
-    }
-private:
-    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
-    {
-        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
-            return volVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
-        else
-        {
-            // TODO: remove this else clause after release 3.2!
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-            return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
-                                                      volVars.saturation(phaseIdx),
-                                                      volVars.diffusionCoefficient(phaseIdx, compIdx));
-        }
     }
 };
 
