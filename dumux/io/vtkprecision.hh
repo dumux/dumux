@@ -21,11 +21,11 @@
  * \ingroup InputOutput
  * \brief Vtk output precision options available in Dumux
  */
-#ifndef VTK_PRECISION_HH
-#define VTK_PRECISION_HH
+#ifndef DUMUX_IO_VTK_PRECISION_HH
+#define DUMUX_IO_VTK_PRECISION_HH
 
-#include <string>
-
+#include <string_view>
+#include <dune/common/version.hh>
 #include <dune/grid/io/file/vtk/common.hh>
 
 namespace Dumux::Vtk {

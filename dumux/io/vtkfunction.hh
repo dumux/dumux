@@ -21,8 +21,8 @@
  * \ingroup InputOutput
  * \brief Dune style VTK functions
  */
-#ifndef VTK_FUNCTION_HH
-#define VTK_FUNCTION_HH
+#ifndef DUMUX_IO_VTK_FUNCTION_HH
+#define DUMUX_IO_VTK_FUNCTION_HH
 
 #include <string>
 #include <memory>
