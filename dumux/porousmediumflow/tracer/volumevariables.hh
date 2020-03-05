@@ -97,10 +97,14 @@ public:
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
         }
 
-        // update the binary diffusion and effective diffusion coefficients
+        // Update the binary diffusion and effective diffusion coefficients.
+        // The container starts counting from compJIdx = 1 as it assumes the
+        // phase (main component) to have compIdx = 0. Tracer fluid systems
+        // start counting from zero with the actual tracer components, so we
+        // have to subtract 1 here before calling the fluid system
         auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            return FluidSystem::binaryDiffusionCoefficient( compJIdx,
+            return FluidSystem::binaryDiffusionCoefficient( compJIdx-1,
                                                             problem,
                                                             element,
                                                             scv);
@@ -108,7 +112,7 @@ public:
 
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx-1, compJIdx-1);
         };
 
         diffCoeff_.update(getDiffusionCoefficient);
@@ -207,15 +211,23 @@ public:
 
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     * \note The container starts counting from compJIdx = 1 as it assumes the
+     *       phase (main component) to have compIdx = 0. Tracer fluid systems
+     *       start counting from zero with the actual tracer components, so we
+     *       have to increase compJIdx by 1 before calling the container.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    { return diffCoeff_(phaseIdx, compIIdx+1, compJIdx+1); }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     * \note The container starts counting from compJIdx = 1 as it assumes the
+     *       phase (main component) to have compIdx = 0. Tracer fluid systems
+     *       start counting from zero with the actual tracer components, so we
+     *       have to increase compJIdx by 1 before calling the container.
      */
     Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx+1, compJIdx+1); }
 
     // /*!
     //  * \brief Returns the dispersivity of the fluid's streamlines.
