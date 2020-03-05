@@ -94,7 +94,7 @@ private:
 
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
 
-    using CouplingMapper = StokesDarcyCouplingMapper<MDTraits>;
+    using CouplingMapper = StokesDarcyCouplingMapper;
 
     struct StationaryStokesCouplingContext
     {

@@ -29,7 +29,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <dune/common/exceptions.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -38,20 +37,8 @@ namespace Dumux {
  * \ingroup StokesDarcyCoupling
  * \brief Coupling mapper for Stokes and Darcy domains with equal dimension.
  */
-template<class MDTraits>
 class StokesDarcyCouplingMapper
 {
-    using Scalar = typename MDTraits::Scalar;
-
-public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto stokesIdx = stokesCellCenterIdx;
-    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
-
-private:
     struct ElementMapInfo
     {
         std::size_t eIdx;
@@ -71,8 +58,8 @@ public:
                                         Stencils& stokesCellCenterToDarcyStencils,
                                         Stencils& stokesFaceToDarcyStencils)
     {
-        const auto& stokesFvGridGeometry = couplingManager.problem(stokesIdx).gridGeometry();
-        const auto& darcyFvGridGeometry = couplingManager.problem(darcyIdx).gridGeometry();
+        const auto& stokesFvGridGeometry = couplingManager.problem(CouplingManager::stokesIdx).gridGeometry();
+        const auto& darcyFvGridGeometry = couplingManager.problem(CouplingManager::darcyIdx).gridGeometry();
 
         static_assert(std::decay_t<decltype(stokesFvGridGeometry)>::discMethod == DiscretizationMethod::staggered,
                       "The free flow domain must use the staggered discretization");
@@ -126,7 +113,7 @@ public:
                 // find the corresponding Darcy sub control volume face
                 for (const auto& darcyScvf : scvfs(darcyFvGeometry))
                 {
-                    const Scalar distance = (darcyScvf.center() - scvf.center()).two_norm();
+                    const auto distance = (darcyScvf.center() - scvf.center()).two_norm();
 
                     if (distance < eps)
                     {
