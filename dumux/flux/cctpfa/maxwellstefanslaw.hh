@@ -216,6 +216,7 @@ private:
                                                  const SubControlVolume& scv,
                                                  const int phaseIdx)
     {
+        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
         //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
@@ -229,7 +230,7 @@ private:
             const auto xi = volVars.moleFraction(phaseIdx, compIIdx);
 
             const auto Mn = FluidSystem::molarMass(numComponents-1);
-            Scalar tin = getEffectiveDiffusionCoefficient_(volVars, phaseIdx, compIIdx, numComponents-1, problem, element, scv);
+            Scalar tin = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(volVars, phaseIdx, compIIdx, numComponents-1, problem, element, scv);
 
             // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
@@ -244,7 +245,7 @@ private:
                 const auto xj = volVars.moleFraction(phaseIdx, compJIdx);
                 const auto Mi = FluidSystem::molarMass(compIIdx);
                 const auto Mj = FluidSystem::molarMass(compJIdx);
-                Scalar tij = getEffectiveDiffusionCoefficient_(volVars, phaseIdx, compIIdx, compJIdx, problem, element, scv);
+                Scalar tij = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(volVars, phaseIdx, compIIdx, compJIdx, problem, element, scv);
                 reducedDiffusionMatrix[compIIdx][compIIdx] += xj*avgMolarMass/(tij*Mi);
 
                 if (compJIdx < numComponents-1)
@@ -252,62 +253,6 @@ private:
             }
         }
         return reducedDiffusionMatrix;
-    }
-
-    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars,
-                                                    const int phaseIdx,
-                                                    const int compIIdx,
-                                                    const int compJIdx,
-                                                    const Problem& problem,
-                                                    const Element& element,
-                                                    const SubControlVolume& scv)
-    {
-        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
-            return volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
-        else
-        {
-            // TODO: remove this else clause after release 3.2!// effective diffusion tensors
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-            const auto tinInside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, volVars, scv);
-            return EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tinInside);
-        }
-    }
-
-    template <class T = TypeTag, typename std::enable_if_t<GetPropType<T, Properties::FluidSystem>::isTracerFluidSystem(), int> =0 >
-    [[deprecated("Signature deprecated. Will be removed after 3.2!")]]
-    static Scalar getDiffusionCoefficient(const int phaseIdx,
-                                          const int compIIdx,
-                                          const int compJIdx,
-                                          const Problem& problem,
-                                          const Element& element,
-                                          const VolumeVariables& volVars,
-                                          const SubControlVolume& scv)
-    {
-        return FluidSystem::binaryDiffusionCoefficient(compIIdx,
-                                                       compJIdx,
-                                                       problem,
-                                                       element,
-                                                       scv);
-    }
-
-    template <class T = TypeTag, typename std::enable_if_t<!GetPropType<T, Properties::FluidSystem>::isTracerFluidSystem(), int> =0 >
-    [[deprecated("Signature deprecated. Will be removed after 3.2!")]]
-    static Scalar getDiffusionCoefficient(const int phaseIdx,
-                                          const int compIIdx,
-                                          const int compJIdx,
-                                          const Problem& problem,
-                                          const Element& element,
-                                          const VolumeVariables& volVars,
-                                          const SubControlVolume& scv)
-    {
-        auto fluidState = volVars.fluidState();
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState);
-        return FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                       paramCache,
-                                                       phaseIdx,
-                                                       compIIdx,
-                                                       compJIdx);
     }
 
 };
