@@ -26,6 +26,7 @@
 
 #include <array>
 #include <vector>
+#include <type_traits>
 
 namespace Dumux {
 
@@ -88,14 +89,17 @@ public:
     * \param fvGeometry The finite-volume geometry
     * \param scvf The sub-control volume face of interest
     */
-    template<class SolVector, class Problem, class Element,
+    template<class FaceSolution, class Problem, class Element,
              class FVElementGeometry, class SubControlVolumeFace>
-    void update(const SolVector& faceSol,
+    void update(const FaceSolution& faceSol,
                 const Problem& problem,
                 const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const SubControlVolumeFace& scvf)
     {
+        static_assert(std::decay_t<decltype(faceSol[0])>::dimension == 1,
+                      "\n\n\nVelocity primary variable must be a scalar value. \n\n Make sure to use\n\n ffSol = partial(sol, ffFaceIdx, ffCellCenterIdx);\n\n");
+
         inAxisVelocities_.self = faceSol[scvf.dofIndex()];
         inAxisVelocities_.opposite = faceSol[scvf.dofIndexOpposingFace()];
 

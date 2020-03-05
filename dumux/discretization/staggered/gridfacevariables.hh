@@ -27,6 +27,7 @@
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementfacevariables.hh>
+#include <dumux/discretization/staggered/facesolution.hh>
 
 namespace Dumux {
 
@@ -82,18 +83,18 @@ public:
 
     //! Update all face variables
     template<class GridGeometry, class SolutionVector>
-    void update(const GridGeometry& gridGeometry, const SolutionVector& faceSol)
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
-
         faceVariables_.resize(gridGeometry.numScvf());
 
-        for(auto&& element : elements(gridGeometry.gridView()))
+        for (auto&& element : elements(gridGeometry.gridView()))
         {
             auto fvGeometry = localView(gridGeometry);
             fvGeometry.bindElement(element);
 
-            for(auto&& scvf : scvfs(fvGeometry))
+            for (auto&& scvf : scvfs(fvGeometry))
             {
+                const auto faceSol = StaggeredFaceSolution(scvf, sol, gridGeometry);
                 faceVariables_[scvf.index()].update(faceSol, problem(), element, fvGeometry, scvf);
             }
         }
