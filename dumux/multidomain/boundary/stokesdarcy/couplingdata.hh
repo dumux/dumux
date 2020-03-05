@@ -537,10 +537,10 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 {
     using ParentType = StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>;
     using Scalar = typename MDTraits::Scalar;
-    static constexpr auto stokesIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
-    static constexpr auto stokesCellCenterIdx = stokesIdx;
-    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto stokesIdx = CouplingManager::stokesIdx;
+    static constexpr auto darcyIdx = CouplingManager::darcyIdx;
+    static constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
+    static constexpr auto stokesCellCenterIdx = CouplingManager::stokesCellCenterIdx;
 
     // the sub domain type tags
     template<std::size_t id>
@@ -699,10 +699,10 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 {
     using ParentType = StokesDarcyCouplingDataImplementationBase<MDTraits, CouplingManager>;
     using Scalar = typename MDTraits::Scalar;
-    static constexpr auto stokesIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
-    static constexpr auto stokesCellCenterIdx = stokesIdx;
-    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto stokesIdx = CouplingManager::stokesIdx;
+    static constexpr auto darcyIdx = CouplingManager::darcyIdx;
+    static constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
+    static constexpr auto stokesCellCenterIdx = CouplingManager::stokesCellCenterIdx;
 
     // the sub domain type tags
     template<std::size_t id>
