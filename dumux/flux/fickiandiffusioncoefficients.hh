@@ -57,7 +57,7 @@ public:
 
 private:
     std::array<Scalar, numPhases * (numComponents - 1)> diffCoeff_;
-    const int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+    int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     {
         return ((phaseIdx * (numComponents-1)) + compJIdx) - (phaseIdx < compJIdx);
     }
@@ -90,7 +90,7 @@ public:
 
 private:
     std::array<Scalar, numComponents-1> diffCoeff_;
-    const int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+    int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     { return  compJIdx-1; }
 };
 
@@ -114,7 +114,7 @@ public:
 
 private:
     std::array<Scalar, 2> diffCoeff_;
-    const int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+    int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     { return  phaseIdx; }
 };
 
@@ -139,7 +139,7 @@ public:
 
 private:
     std::array<Scalar, 3> diffCoeff_;
-    const int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+    int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     { return  phaseIdx; }
 };
 
