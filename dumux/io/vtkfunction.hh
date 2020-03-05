@@ -34,8 +34,7 @@
 #include <dumux/io/vtkprecision.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 
-namespace Dumux {
-namespace Vtk {
+namespace Dumux::Vtk {
 
 /*!
  * \ingroup InputOutput
@@ -349,7 +348,6 @@ private:
     std::shared_ptr<Dune::VTKFunction<GridView>> field_;
 };
 
-} // end namespace Vtk
-} // end namespace Dumux
+} // end namespace Dumux::Vtk
 
 #endif
