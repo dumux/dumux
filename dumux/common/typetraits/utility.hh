@@ -70,6 +70,34 @@ template <std::size_t n, std::size_t e>
 using makeIncompleteIntegerSequence =
         typename Detail::ConcatSeq<decltype(std::make_index_sequence<e>{}), e + 1, decltype(std::make_index_sequence<(n > e) ? (n - e - 1) : 0>{})>::type;
 
+/*
+ * \ingroup TypeTraits
+ * \brief add an offset to an index sequence
+ * \tparam offset the offset
+ * \tparam is the index sequence
+ *
+ * see https://stackoverflow.com/a/35625414
+ */
+template <std::size_t offset, std::size_t ... is>
+constexpr std::index_sequence<(offset + is)...> addOffsetToIndexSequence(std::index_sequence<is...>)
+{ return {}; }
+
+/*
+ * \ingroup TypeTraits
+ * \brief create an index sequence starting from an offset
+ * \tparam offset the offset
+ * \tparam n the length of the sequence
+ *
+ * example: makeIndexSequenceWithOffset<2, 3> = [2,3,4]
+ *
+ * see https://stackoverflow.com/a/35625414
+ */
+template <std::size_t offset, std::size_t n>
+constexpr auto makeIndexSequenceWithOffset()
+{
+    return addOffsetToIndexSequence<offset>(std::make_index_sequence<n>{});
+}
+
 } // end namespace Dumux
 
 #endif
