@@ -198,7 +198,7 @@ public:
     Scalar molarity(int phaseIdx, int compIdx) const
     { return moleFraction(phaseIdx, compIdx)*molarDensity(); }
 
-        /*!
+    /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
