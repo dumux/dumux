@@ -207,7 +207,7 @@ public:
      */
     [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    { return diffCoeff_(phaseIdx, 0, 0); }
+    { return diffCoeff_(0, 0, compIdx+1); }
 
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
