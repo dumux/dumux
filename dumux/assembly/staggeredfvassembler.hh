@@ -66,7 +66,6 @@ class StaggeredFVAssembler: public MultiDomainFVAssembler<StaggeredMultiDomainTr
 
 public:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using CouplingManager = typename ParentType::CouplingManager;
 
@@ -116,17 +115,11 @@ public:
         this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
     }
 
-
     auto& gridVariables()
     { return ParentType::gridVariables(Dune::index_constant<0>()); }
 
     const auto& gridVariables() const
     { return ParentType::gridVariables(Dune::index_constant<0>()); }
-
-    //! The global finite volume geometry
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const GridGeometry& fvGridGeometry() const
-    { return gridGeometry(); }
 
     const GridGeometry& gridGeometry() const
     { return ParentType::gridGeometry(Dune::index_constant<0>()).actualGridGeometry(); }

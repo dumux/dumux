@@ -76,9 +76,6 @@ public:
     using GridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
 
     template<std::size_t id>
-    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry<id>;
-
-    template<std::size_t id>
     using Problem = typename MDTraits::template SubDomain<id>::Problem;
 
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
@@ -357,12 +354,6 @@ public:
     template<std::size_t i>
     const auto& problem(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(problemTuple_); }
-
-    //! the finite volume grid geometry of domain i
-    template<std::size_t i>
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const auto& fvGridGeometry(Dune::index_constant<i> domainId) const
-    { return gridGeometry(domainId); }
 
     //! the finite volume grid geometry of domain i
     template<std::size_t i>
