@@ -29,9 +29,27 @@
 
 namespace Dumux {
 
-// General Case (mpnc)
+/*!
+ * \ingroup Flux
+ * \brief Container storing the diffusion coefficients required by Fick's law.
+ *        Uses the minimal possible container size and provides unified access.
+ * \tparam Scalar The type used for scalar values
+ * \tparam numPhases Number of phases in the fluid composition
+ * \tparam numComponents Number of components in the fluid composition
+ * \tparam allTracerComponents If false, this means that the main component of
+ *                             a phase is part of the components. In this case,
+ *                             the storage container is optimized with respect to
+ *                             memory consumption as diffusion coefficients of the
+ *                             main component of a phase in itself are not stored.
+ *                             If true, all diffusion coefficients of all components
+ *                             are stored
+ */
+template <class Scalar, int numPhases, int numComponents, bool allTracerComponents>
+class FickianDiffusionCoefficients;
+
+//! General case (mpnc), for compositions containing the phases' main components
 template <class Scalar, int numPhases, int numComponents>
-class FickianDiffusionCoefficients
+class FickianDiffusionCoefficients<Scalar, numPhases, numComponents, false>
 {
 public:
     template<class DiffCoeffFunc>
@@ -63,9 +81,9 @@ private:
     }
 };
 
-// Specialization for 1pnc
+//! Specialization for 1pnc & compositions containing the phases' main components
 template <class Scalar, int numComponents>
-class FickianDiffusionCoefficients<Scalar, 1, numComponents>
+class FickianDiffusionCoefficients<Scalar, 1, numComponents, false>
 {
 public:
     template<class DiffCoeffFunc>
@@ -94,9 +112,9 @@ private:
     { return  compJIdx-1; }
 };
 
-// Specialization for 2p2c
+//! Specialization for 2p2c & compositions containing the phases' main components
 template <class Scalar>
-class FickianDiffusionCoefficients<Scalar, 2, 2>
+class FickianDiffusionCoefficients<Scalar, 2, 2, false>
 {
 public:
     template<class DiffCoeffFunc>
@@ -118,9 +136,9 @@ private:
     { return  phaseIdx; }
 };
 
-// Specialization for 3p2c
+//! Specialization for 3p2c & compositions containing the phases' main components
 template <class Scalar>
-class FickianDiffusionCoefficients<Scalar, 3, 2>
+class FickianDiffusionCoefficients<Scalar, 3, 2, false>
 {
 public:
     template<class DiffCoeffFunc>
@@ -141,6 +159,36 @@ private:
     std::array<Scalar, 3> diffCoeff_;
     int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     { return  phaseIdx; }
+};
+
+//! Specialization for mpnc & compositions that only contain tracers
+template <class Scalar, int numPhases, int numComponents>
+class FickianDiffusionCoefficients<Scalar, numPhases, numComponents, true>
+{
+public:
+    template<class DiffCoeffFunc>
+    void update(DiffCoeffFunc& computeDiffCoeff)
+    {
+        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
+                diffCoeff_[getIndex_(phaseIdx, compIdx)]
+                    = computeDiffCoeff(phaseIdx, phaseIdx, compIdx);
+    }
+
+    const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
+    {
+        assert(phaseIdx < numPhases);
+        assert(compIIdx != compJIdx);
+        assert(compIIdx < numComponents);
+        assert(compJIdx < numComponents);
+        assert(compIIdx < compJIdx);
+        return diffCoeff_[getIndex_(phaseIdx, compJIdx)];
+    }
+
+private:
+    std::array<Scalar, numPhases*numComponents> diffCoeff_;
+    int getIndex_(int phaseIdx, int compJIdx) const
+    { return phaseIdx*numComponents + compJIdx; }
 };
 
 } // end namespace Dumux

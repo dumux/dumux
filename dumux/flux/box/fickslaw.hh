@@ -76,7 +76,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem
 public:
 
     template<int numPhases, int numComponents>
-    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
+                                                                        numPhases,
+                                                                        numComponents,
+                                                                        FluidSystem::isTracerFluidSystem()>;
 
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()

@@ -170,7 +170,10 @@ public:
     using Cache = MpfaFicksLawCache;
     //export the diffusion container
     template<int numPhases, int numComponents>
-    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
+                                                                        numPhases,
+                                                                        numComponents,
+                                                                        FluidSystem::isTracerFluidSystem()>;
 
     //! Compute the diffusive flux across an scvf
     static ComponentFluxVector flux(const Problem& problem,

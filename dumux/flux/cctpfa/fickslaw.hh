@@ -128,7 +128,10 @@ public:
     using Cache = TpfaFicksLawCache;
 
     template<int numPhases, int numComponents>
-    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
+                                                                        numPhases,
+                                                                        numComponents,
+                                                                        FluidSystem::isTracerFluidSystem()>;
 
     //! return diffusive fluxes for all components in a phase
     static ComponentFluxVector flux(const Problem& problem,

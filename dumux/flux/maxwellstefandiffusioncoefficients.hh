@@ -29,7 +29,15 @@
 
 namespace Dumux {
 
-// General case
+/*!
+ * \ingroup Flux
+ * \brief Container storing the diffusion coefficients required by the Maxwell-
+ *        Stefan diffusion law. Uses the minimal possible container size and
+ *        provides unified access.
+ * \tparam Scalar The type used for scalar values
+ * \tparam numPhases Number of phases in the fluid composition
+ * \tparam numComponents Number of components in the fluid composition
+ */
 template <class Scalar, int numPhases, int numComponents>
 class MaxwellStefanDiffusionCoefficients
 {
@@ -41,7 +49,8 @@ public:
             for (unsigned int compIIdx = 0; compIIdx < numComponents; ++compIIdx)
                 for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
                     if(compIIdx != compJIdx && compIIdx < compJIdx)
-                        diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)] = computeDiffCoeff(phaseIdx, compIIdx, compJIdx);
+                        diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)]
+                            = computeDiffCoeff(phaseIdx, compIIdx, compJIdx);
     }
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
@@ -54,10 +63,10 @@ private:
     std::array<Scalar, (numPhases * ((numComponents * numComponents - numComponents)/2))> diffCoeff_;
     const int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     {
-        return  phaseIdx * ((numComponents * numComponents - numComponents) / 2)
-              + compIIdx * numComponents
-              - ((compIIdx * compIIdx + compIIdx) / 2)
-              + compJIdx - (compIIdx +1);
+        return phaseIdx * ((numComponents * numComponents - numComponents) / 2)
+               + compIIdx * numComponents
+               - ((compIIdx * compIIdx + compIIdx) / 2)
+               + compJIdx - (compIIdx +1);
     }
 };
 
