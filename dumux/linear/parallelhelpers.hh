@@ -792,11 +792,8 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
                                   std::shared_ptr<typename ParallelTraits::Comm>& comm,
                                   std::shared_ptr<typename ParallelTraits::LinearOperator>& fop,
                                   std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
-                                  ParallelHelper& pHelper,
-                                  const bool firstCall)
+                                  ParallelHelper& pHelper)
 {
-    if (firstCall) pHelper.initGhostsAndOwners();
-
     if constexpr (ParallelTraits::isNonOverlapping)
     {
         // extend the matrix pattern such that it is usable for a parallel solver
