@@ -17,6 +17,47 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 - __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
 - __AMGBackend__: The internal structure of the AMGBackend and the ParallelISTLHelper has been overhauled, as only used by the AMG, we did not make the changes backwards-compatible
 
+- __Change matrix block arrangement for staggered models__: The matrix block structure has been adapted such that it complies with the literature standard, i.e., having the velocity block (C) on `M[0][0]`
+rather than on `M[1][1]`. This also requires re-arranging the submodels and properties in dumux-multidomain such that the face-related classes and vector entries now appear before the cell-centered ones.
+
+```math
+M = \begin{pmatrix}
+  A & B^T\\
+  B & C
+\end{pmatrix}
+
+\qquad => \qquad
+
+M = \begin{pmatrix}
+    C & B^T\\
+    B & A
+    \end{pmatrix}
+```
+
+Backwards-compatibility can only be provided to a certain extent. The following changes need to made in the main file:
+
+1.) change the order of the arguments for the `assembler` such that it reads:
+```c++
+auto assembler = std::make_shared<Assembler>(std::make_tuple(ffProblem, ffProblem, otherProblem, ...),
+                                             std::make_tuple(ffGridGeometry->faceFVGridGeometryPtr(),
+                                                             ffFvGridGeometry->cellCenterFVGridGeometryPtr(),
+                                                             otherFvGridGeometry, ...),
+                                             std::make_tuple(ffGridVariables->faceGridVariablesPtr(),
+                                                             ffGridVariables->cellCenterGridVariablesPtr(),
+                                                             otherGridVariables, ...),
+                                             couplingManager,
+                                             timeLoop, solOld);
+
+// Not changing the arguments will yield a deprecation warning stating this hint but the code still compiles and runs.
+```
+
+2.) change the order of arguments in the `partial` function:
+```c++
+ffSol = partial(sol, ffFaceIdx, ffCellCenterIdx);
+
+// Not changing the argument will rise a compiler error which makes the MR not fully backwards-compatible.
+```
+
 ### Deprecated properties, to be removed after 3.2:
 
 ### Deprecated classes/files, to be removed after 3.2:
