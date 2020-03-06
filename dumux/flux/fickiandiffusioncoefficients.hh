@@ -25,7 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_FICKIAN_DIFFUSION_COEFFICIENTS_HH
 #define DUMUX_DISCRETIZATION_FICKIAN_DIFFUSION_COEFFICIENTS_HH
 
-#include <dune/common/exceptions.hh>
+#include <cassert>
 
 namespace Dumux {
 
