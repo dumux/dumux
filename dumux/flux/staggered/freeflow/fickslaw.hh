@@ -79,7 +79,10 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
     template<int numPhases, int numComponents>
-    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
+                                                                        numPhases,
+                                                                        numComponents,
+                                                                        FluidSystem::isTracerFluidSystem()>;
 
     template<class Problem, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,

@@ -59,7 +59,7 @@ class TracerVolumeVariables
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<1, numFluidComps+1>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<1, numFluidComps>;
 
 public:
     //! Export fluid system type
@@ -98,13 +98,10 @@ public:
         }
 
         // Update the binary diffusion and effective diffusion coefficients.
-        // The container starts counting from compJIdx = 1 as it assumes the
-        // phase (main component) to have compIdx = 0. Tracer fluid systems
-        // start counting from zero with the actual tracer components, so we
-        // have to subtract 1 here before calling the fluid system
         auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            return FluidSystem::binaryDiffusionCoefficient( compJIdx-1,
+            return FluidSystem::binaryDiffusionCoefficient( compIIdx,
+                                                            compJIdx,
                                                             problem,
                                                             element,
                                                             scv);
@@ -112,7 +109,7 @@ public:
 
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx-1, compJIdx-1);
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
         };
 
         diffCoeff_.update(getDiffusionCoefficient);
@@ -207,27 +204,19 @@ public:
      */
     [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    { return diffCoeff_(0, 0, compIdx+1); }
+    { return diffCoeff_(0, 0, compIdx); }
 
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
-     * \note The container starts counting from compJIdx = 1 as it assumes the
-     *       phase (main component) to have compIdx = 0. Tracer fluid systems
-     *       start counting from zero with the actual tracer components, so we
-     *       have to increase compJIdx by 1 before calling the container.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx+1, compJIdx+1); }
+    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
-     * \note The container starts counting from compJIdx = 1 as it assumes the
-     *       phase (main component) to have compIdx = 0. Tracer fluid systems
-     *       start counting from zero with the actual tracer components, so we
-     *       have to increase compJIdx by 1 before calling the container.
      */
     Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return effectiveDiffCoeff_(phaseIdx, compIIdx+1, compJIdx+1); }
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     // /*!
     //  * \brief Returns the dispersivity of the fluid's streamlines.
