@@ -159,10 +159,10 @@ template<class TypeTag>
 struct SolutionVector<TypeTag, TTag::StaggeredModel>
 {
 private:
-    using CellCenterSolutionVector = GetPropType<TypeTag, Properties::CellCenterSolutionVector>;
     using FaceSolutionVector = GetPropType<TypeTag, Properties::FaceSolutionVector>;
+    using CellCenterSolutionVector = GetPropType<TypeTag, Properties::CellCenterSolutionVector>;
 public:
-    using type = Dune::MultiTypeBlockVector<CellCenterSolutionVector, FaceSolutionVector>;
+    using type = Dune::MultiTypeBlockVector<FaceSolutionVector, CellCenterSolutionVector>;
 };
 
 //! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits
@@ -191,11 +191,11 @@ public:
     using MatrixBlockFaceToCC = typename Dune::BCRSMatrix<MatrixLittleBlockFaceToCC>;
 
     // the row types
-    using RowCellCenter = typename Dune::MultiTypeBlockVector<MatrixBlockCCToCC, MatrixBlockCCToFace>;
-    using RowFace = typename Dune::MultiTypeBlockVector<MatrixBlockFaceToCC, MatrixBlockFaceToFace>;
+    using RowFace = typename Dune::MultiTypeBlockVector<MatrixBlockFaceToFace, MatrixBlockFaceToCC>;
+    using RowCellCenter = typename Dune::MultiTypeBlockVector<MatrixBlockCCToFace, MatrixBlockCCToCC>;
 
     // the jacobian matrix
-    using type = typename Dune::MultiTypeBlockMatrix<RowCellCenter, RowFace>;
+    using type = typename Dune::MultiTypeBlockMatrix<RowFace, RowCellCenter>;
 };
 
 } // namespace Properties

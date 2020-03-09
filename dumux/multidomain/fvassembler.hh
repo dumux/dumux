@@ -34,6 +34,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/common/typetraits/utility.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
@@ -42,6 +43,8 @@
 #include "subdomaincclocalassembler.hh"
 #include "subdomainboxlocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
+
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
@@ -74,9 +77,6 @@ public:
 
     template<std::size_t id>
     using GridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
-
-    template<std::size_t id>
-    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry<id>;
 
     template<std::size_t id>
     using Problem = typename MDTraits::template SubDomain<id>::Problem;
@@ -196,6 +196,48 @@ public:
     {
         std::cout << "Instantiated assembler for an instationary problem." << std::endl;
     }
+
+    template<class DeprecatedGridGeometryTuple, class DeprecatedGridVariablesTuple,
+             bool isStaggered = std::tuple_element_t<0, GridGeometryTuple>::element_type::discMethod == DiscretizationMethod::staggered,
+             bool isDeprecated = !std::is_convertible<DeprecatedGridVariablesTuple, GridVariablesTuple>::value,
+             std::enable_if_t<isStaggered && isDeprecated, int> = 0>
+    [[deprecated("Please change the order within your tuples for gridGeometry and gridVariables. Will be removed after release 3.2!")]]
+    MultiDomainFVAssembler(ProblemTuple&& problem,
+                           DeprecatedGridGeometryTuple&& gridGeometry,
+                           DeprecatedGridVariablesTuple&& gridVariables,
+                           std::shared_ptr<CouplingManager> couplingManager)
+   : MultiDomainFVAssembler(std::forward<ProblemTuple>(problem), gridGeometry, gridVariables, couplingManager,
+                            makeIndexSequenceWithOffset<2,std::tuple_size<DeprecatedGridGeometryTuple>::value - 2>())
+   {}
+
+    template<class DeprecatedGridGeometryTuple, class DeprecatedGridVariablesTuple,
+             bool isStaggered = std::tuple_element_t<0, GridGeometryTuple>::element_type::discMethod == DiscretizationMethod::staggered,
+             bool isDeprecated = !std::is_convertible<DeprecatedGridVariablesTuple, GridVariablesTuple>::value,
+             std::enable_if_t<isStaggered && isDeprecated, int> = 0>
+    [[deprecated("Please change the order within your tuples for gridGeometry and gridVariables. Will be removed after release 3.2!")]]
+    MultiDomainFVAssembler(ProblemTuple&& problem,
+                           DeprecatedGridGeometryTuple&& gridGeometry,
+                           DeprecatedGridVariablesTuple&& gridVariables,
+                           std::shared_ptr<CouplingManager> couplingManager,
+                           std::shared_ptr<const TimeLoop> timeLoop,
+                           const SolutionVector& prevSol)
+   : MultiDomainFVAssembler(std::forward<ProblemTuple>(problem), gridGeometry, gridVariables, couplingManager, timeLoop, prevSol,
+                            makeIndexSequenceWithOffset<2,std::tuple_size<DeprecatedGridGeometryTuple>::value - 2>())
+   {}
+
+    template<class DeprecatedGridGeometryTuple, class DeprecatedGridVariablesTuple,
+             bool isStaggered = std::tuple_element_t<0, GridGeometryTuple>::element_type::discMethod == DiscretizationMethod::staggered,
+             bool isDeprecated = !std::is_convertible<DeprecatedGridVariablesTuple, GridVariablesTuple>::value,
+             std::enable_if_t<isStaggered && isDeprecated, int> = 0>
+    [[deprecated("Please change the order within your tuples for gridGeometry and gridVariables. Will be removed after release 3.2!")]]
+    MultiDomainFVAssembler(ProblemTuple&& problem,
+                           DeprecatedGridGeometryTuple&& gridGeometry,
+                           DeprecatedGridVariablesTuple&& gridVariables,
+                           std::shared_ptr<CouplingManager> couplingManager,
+                           std::shared_ptr<const TimeLoop> timeLoop)
+   : MultiDomainFVAssembler(std::forward<ProblemTuple>(problem), gridGeometry, gridVariables, couplingManager, timeLoop, nullptr,
+                            makeIndexSequenceWithOffset<2,std::tuple_size<DeprecatedGridGeometryTuple>::value - 2>())
+   {}
 
     /*!
      * \brief Assembles the global Jacobian of the residual
@@ -360,12 +402,6 @@ public:
 
     //! the finite volume grid geometry of domain i
     template<std::size_t i>
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const auto& fvGridGeometry(Dune::index_constant<i> domainId) const
-    { return gridGeometry(domainId); }
-
-    //! the finite volume grid geometry of domain i
-    template<std::size_t i>
     const auto& gridGeometry(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(gridGeometryTuple_); }
 
@@ -524,6 +560,71 @@ private:
                                                         domainI, gridGeometry(domainI),
                                                         domainJ, gridGeometry(domainJ));
     }
+
+    template<class DeprecatedGridGeometryTuple, class DeprecatedGridVariablesTuple, std::size_t... I>
+    [[deprecated("\n\n Please change the order within your tuples for gridGeometry and gridVariables. Usage:\n\n"
+                 "auto assembler = std::make_shared<Assembler>(std::make_tuple(ffProblem, ffProblem, otherProblem, ...),\n"
+                 "                                             std::make_tuple(ffGridGeometry->faceFVGridGeometryPtr(),\n"
+                 "                                                             ffFvGridGeometry->cellCenterFVGridGeometryPtr(),\n"
+                 "                                                             otherFvGridGeometry, ...),\n"
+                 "                                             std::make_tuple(ffGridVariables->faceGridVariablesPtr(),\n"
+                 "                                                             ffGridVariables->cellCenterGridVariablesPtr(),\n"
+                 "                                                             otherGridVariables, ...),\n"
+                 "                                             couplingManager);\n\n"
+                 "Will be removed after release 3.2!")]]
+    MultiDomainFVAssembler(ProblemTuple&& problem,
+                           DeprecatedGridGeometryTuple&& gridGeometry,
+                           DeprecatedGridVariablesTuple&& gridVariables,
+                           std::shared_ptr<CouplingManager> couplingManager,
+                           std::index_sequence<I...>)
+   : couplingManager_(couplingManager)
+   , problemTuple_(problem)
+   , gridGeometryTuple_(std::make_tuple(std::move(std::get<1>(gridGeometry)),
+                                        std::move(std::get<0>(gridGeometry)),
+                                        std::move(std::get<I>(gridGeometry))...))
+   , gridVariablesTuple_(std::make_tuple(std::move(std::get<1>(gridVariables)),
+                                         std::move(std::get<0>(gridVariables)),
+                                         std::move(std::get<I>(gridVariables))...))
+   , timeLoop_()
+   , isStationaryProblem_(true)
+   {
+       static_assert(isImplicit(), "Explicit assembler for stationary problem doesn't make sense!");
+       std::cout << "Instantiated assembler for a stationary problem." << std::endl;
+   }
+
+    template<class DeprecatedGridGeometryTuple, class DeprecatedGridVariablesTuple, std::size_t... I>
+    [[deprecated("\n\n Please change the order within your tuples for gridGeometry and gridVariables. Usage:\n\n"
+                 "auto assembler = std::make_shared<Assembler>(std::make_tuple(ffProblem, ffProblem, otherProblem, ...),\n"
+                 "                                             std::make_tuple(ffGridGeometry->faceFVGridGeometryPtr(),\n"
+                 "                                                             ffFvGridGeometry->cellCenterFVGridGeometryPtr(),\n"
+                 "                                                             otherFvGridGeometry, ...),\n"
+                 "                                             std::make_tuple(ffGridVariables->faceGridVariablesPtr(),\n"
+                 "                                                             ffGridVariables->cellCenterGridVariablesPtr(),\n"
+                 "                                                             otherGridVariables, ...),\n"
+                 "                                             couplingManager,\n"
+                 "                                             timeLoop, solOld);\n\n"
+                 "Will be removed after release 3.2!")]]
+    MultiDomainFVAssembler(ProblemTuple&& problem,
+                           DeprecatedGridGeometryTuple&& gridGeometry,
+                           DeprecatedGridVariablesTuple&& gridVariables,
+                           std::shared_ptr<CouplingManager> couplingManager,
+                           std::shared_ptr<const TimeLoop> timeLoop,
+                           const SolutionVector& prevSol,
+                           std::index_sequence<I...>)
+   : couplingManager_(couplingManager)
+   , problemTuple_(problem)
+   , gridGeometryTuple_(std::make_tuple(std::move(std::get<1>(gridGeometry)),
+                                        std::move(std::get<0>(gridGeometry)),
+                                        std::move(std::get<I>(gridGeometry))...))
+   , gridVariablesTuple_(std::make_tuple(std::move(std::get<1>(gridVariables)),
+                                         std::move(std::get<0>(gridVariables)),
+                                         std::move(std::get<I>(gridVariables))...))
+   , timeLoop_(timeLoop)
+   , prevSol_(&prevSol)
+   , isStationaryProblem_(false)
+   {
+       std::cout << "Instantiated assembler for an instationary problem." << std::endl;
+   }
 
     //! pointer to the problem to be solved
     ProblemTuple problemTuple_;

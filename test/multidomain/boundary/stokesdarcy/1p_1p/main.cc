@@ -136,7 +136,7 @@ int main(int argc, char** argv) try
     sol[darcyIdx].resize(darcyFvGridGeometry->numDofs());
 
     // get a solution vector storing references to the two Stokes solution vectors
-    auto stokesSol = partial(sol, stokesCellCenterIdx, stokesFaceIdx);
+    auto stokesSol = partial(sol, stokesFaceIdx, stokesCellCenterIdx);
 
     couplingManager->init(stokesProblem, darcyProblem, sol);
 
@@ -162,11 +162,11 @@ int main(int argc, char** argv) try
     // the assembler for a stationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
-                                                 std::make_tuple(stokesFvGridGeometry->cellCenterFVGridGeometryPtr(),
-                                                                 stokesFvGridGeometry->faceFVGridGeometryPtr(),
+                                                 std::make_tuple(stokesFvGridGeometry->faceFVGridGeometryPtr(),
+                                                                 stokesFvGridGeometry->cellCenterFVGridGeometryPtr(),
                                                                  darcyFvGridGeometry),
-                                                 std::make_tuple(stokesGridVariables->cellCenterGridVariablesPtr(),
-                                                                 stokesGridVariables->faceGridVariablesPtr(),
+                                                 std::make_tuple(stokesGridVariables->faceGridVariablesPtr(),
+                                                                 stokesGridVariables->cellCenterGridVariablesPtr(),
                                                                  darcyGridVariables),
                                                  couplingManager);
 

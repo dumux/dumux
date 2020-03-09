@@ -51,8 +51,8 @@ struct StaggeredFreeFlowDefaultFVGridGeometryTraits
 
     struct DofTypeIndices
     {
-        using CellCenterIdx = Dune::index_constant<0>;
-        using FaceIdx = Dune::index_constant<1>;
+        using FaceIdx = Dune::index_constant<0>;
+        using CellCenterIdx = Dune::index_constant<1>;
     };
 
     template<class GridGeometry>

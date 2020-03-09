@@ -51,11 +51,9 @@ class StokesDarcyCouplingManager
     using ParentType = StaggeredCouplingManager<MDTraits>;
 
 public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto stokesIdx = stokesCellCenterIdx;
+    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto stokesIdx = stokesFaceIdx;
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
 
 private:
@@ -94,7 +92,7 @@ private:
 
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
 
-    using CouplingMapper = StokesDarcyCouplingMapper<MDTraits>;
+    using CouplingMapper = StokesDarcyCouplingMapper;
 
     struct StationaryStokesCouplingContext
     {
@@ -322,7 +320,7 @@ public:
                                const LocalAssemblerI& localAssemblerI,
                                Dune::index_constant<stokesFaceIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<1>& priVars,
+                               const PrimaryVariables<stokesFaceIdx>& priVars,
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;

@@ -218,11 +218,11 @@ int main(int argc, char** argv) try
     // the assembler with time loop for instationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
-                                                 std::make_tuple(stokesFvGridGeometry->cellCenterFVGridGeometryPtr(),
-                                                                 stokesFvGridGeometry->faceFVGridGeometryPtr(),
+                                                 std::make_tuple(stokesFvGridGeometry->faceFVGridGeometryPtr(),
+                                                                 stokesFvGridGeometry->cellCenterFVGridGeometryPtr(),
                                                                  darcyFvGridGeometry),
-                                                 std::make_tuple(stokesGridVariables->cellCenterGridVariablesPtr(),
-                                                                 stokesGridVariables->faceGridVariablesPtr(),
+                                                 std::make_tuple(stokesGridVariables->faceGridVariablesPtr(),
+                                                                 stokesGridVariables->cellCenterGridVariablesPtr(),
                                                                  darcyGridVariables),
                                                  couplingManager,
                                                  timeLoop, solOld);

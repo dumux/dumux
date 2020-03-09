@@ -47,7 +47,6 @@ public:
     //! export primary variable type
     using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
     using GridGeometry = typename ActualGridVariables::GridGeometry;
-    using FVGridGeometry [[deprecated ("Use GridGeometry instead. Will be removed after 3.1!")]]= GridGeometry;
 
     explicit StaggeredGridVariablesView(ActualGridVariables* gridVariables)
     : gridVariables_(gridVariables) {}
@@ -93,10 +92,6 @@ public:
     { return gridVariables_->prevGridFaceVars(); }
 
     //! return the fv grid geometry
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const GridGeometry& fvGridGeometry() const
-    { return (*gridVariables_->gridGeometry_);    }
-    //! return the fv grid geometry
     const GridGeometry& gridGeometry() const
     { return (*gridVariables_->gridGeometry_);    }
 
@@ -131,14 +126,6 @@ public:
         this->curGridVolVars().update(this->gridGeometry(), curSol);
         this->gridFluxVarsCache().update(this->gridGeometry(), this->curGridVolVars(), curSol, true);
         this->prevGridVolVars().update(this->gridGeometry(), curSol);
-    }
-
-    //! initialize all variables (instationary case)
-    template<class SolVector>
-    [[deprecated("Use init with one argument")]]
-    void init(const SolVector& curSol, const SolVector& initSol)
-    {
-        init(initSol);
     }
 
     //! update the volume variables and the flux variables cache
@@ -176,14 +163,6 @@ public:
     {
         this->curGridFaceVars().update(this->gridGeometry(), curSol);
         this->prevGridFaceVars().update(this->gridGeometry(), curSol);
-    }
-
-    //! initialize all variables (instationary case)
-    template<class SolVector>
-    [[deprecated("Use init with one argument")]]
-    void init(const SolVector& curSol, const SolVector& initSol)
-    {
-        init(initSol);
     }
 
     //! update the face variables
@@ -258,14 +237,6 @@ public:
         ParentType::init(curSol[cellCenterIdx]);
         curGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
         prevGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
-    }
-
-    //! initialize all variables (instationary case)
-    template<class SolutionVector>
-    [[deprecated("Use init with one argument")]]
-    void init(const SolutionVector& curSol, const SolutionVector& initSol)
-    {
-        init(initSol);
     }
 
     //! Sets the current state as the previous for next time step

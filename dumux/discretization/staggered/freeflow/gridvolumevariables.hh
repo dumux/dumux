@@ -162,8 +162,13 @@ public:
     template<class GridGeometry, class SolutionVector>
     void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
     {
-        auto numScv = gridGeometry.numScv();
-        volumeVariables_.resize(numScv);
+        if (sol.size() != gridGeometry.numScv())
+            DUNE_THROW(Dune::InvalidStateException, "The solution vector passed to the GridVolumeVariables has the wrong size.\n"
+                                                     << "Make sure to initialize the gridVariables correctly: \n\n"
+                                                     << "auto ffSol = partial(sol, ffFaceIdx, ffCellCenterIdx); \n"
+                                                     << "ffGridVariables->init(ffSol);\n\n");
+
+        volumeVariables_.resize(gridGeometry.numScv());
 
         for (const auto& element : elements(gridGeometry.gridView()))
         {
@@ -240,7 +245,14 @@ public:
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     template<class GridGeometry, class SolutionVector>
-    void update(const GridGeometry& gridGeometry, const SolutionVector& sol) {}
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
+    {
+        if (sol.size() != gridGeometry.numScv())
+            DUNE_THROW(Dune::InvalidStateException, "The solution vector passed to the GridVolumeVariables has the wrong size.\n"
+                                                     << "Make sure to initialize the gridVariables correctly: \n\n"
+                                                     << "auto ffSol = partial(sol, ffFaceIdx, ffCellCenterIdx); \n"
+                                                     << "ffGridVariables->init(ffSol);\n\n");
+    }
 
     const Problem& problem() const
     { return *problemPtr_;}
