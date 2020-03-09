@@ -51,11 +51,9 @@ class StokesDarcyCouplingManager
     using ParentType = StaggeredCouplingManager<MDTraits>;
 
 public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto stokesIdx = stokesCellCenterIdx;
+    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto stokesIdx = stokesFaceIdx;
     static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
 
 private:

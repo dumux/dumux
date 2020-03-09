@@ -53,11 +53,11 @@ struct SubDomainFVGridGeometryImpl
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainFVGridGeometryImpl<SubDomainTypeTag, 0>
-{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridGeometry>::CellCenterFVGridGeometryType; };
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridGeometry>::FaceFVGridGeometryType; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainFVGridGeometryImpl<SubDomainTypeTag, 1>
-{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridGeometry>::FaceFVGridGeometryType; };
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridGeometry>::CellCenterFVGridGeometryType; };
 //////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////
@@ -67,11 +67,11 @@ struct SubDomainGridVariablesImpl
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainGridVariablesImpl<SubDomainTypeTag, 0>
-{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::CellCenterGridVariablesType; };
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::FaceGridVariablesType; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainGridVariablesImpl<SubDomainTypeTag, 1>
-{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::FaceGridVariablesType; };
+{ using type = typename GetPropType<SubDomainTypeTag<0>, Properties::GridVariables>::CellCenterGridVariablesType; };
 //////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////
@@ -81,11 +81,11 @@ struct SubDomainPrimaryVariablesImpl
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainPrimaryVariablesImpl<SubDomainTypeTag, 0>
-{ using type = GetPropType<SubDomainTypeTag<0>, Properties::CellCenterPrimaryVariables>; };
+{ using type = GetPropType<SubDomainTypeTag<0>, Properties::FacePrimaryVariables>; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainPrimaryVariablesImpl<SubDomainTypeTag, 1>
-{ using type = GetPropType<SubDomainTypeTag<0>, Properties::FacePrimaryVariables>; };
+{ using type = GetPropType<SubDomainTypeTag<0>, Properties::CellCenterPrimaryVariables>; };
 //////////////////////////////////////////////////////////
 
 template<class Scalar, int numEq>
@@ -105,12 +105,12 @@ struct SubDomainJacobianMatrixImpl
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainJacobianMatrixImpl<SubDomainTypeTag, 0>
 { using type = typename JacobianTypeImpl<GetPropType<SubDomainTypeTag<0>, Properties::Scalar>,
-                                         getPropValue<SubDomainTypeTag<0>, Properties::NumEqCellCenter>()>::type; };
+                                         getPropValue<SubDomainTypeTag<0>, Properties::NumEqFace>()>::type; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainJacobianMatrixImpl<SubDomainTypeTag, 1>
 { using type = typename JacobianTypeImpl<GetPropType<SubDomainTypeTag<1>, Properties::Scalar>,
-                                         getPropValue<SubDomainTypeTag<0>, Properties::NumEqFace>()>::type; };
+                                         getPropValue<SubDomainTypeTag<0>, Properties::NumEqCellCenter>()>::type; };
 //////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////
@@ -120,11 +120,11 @@ struct SubDomainSolutionVectorImpl
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainSolutionVectorImpl<SubDomainTypeTag, 0>
-{ using type = GetPropType<SubDomainTypeTag<0>, Properties::CellCenterSolutionVector>; };
+{ using type = GetPropType<SubDomainTypeTag<0>, Properties::FaceSolutionVector>; };
 
 template<template<std::size_t> class SubDomainTypeTag>
 struct SubDomainSolutionVectorImpl<SubDomainTypeTag, 1>
-{ using type = GetPropType<SubDomainTypeTag<0>, Properties::FaceSolutionVector>; };
+{ using type = GetPropType<SubDomainTypeTag<0>, Properties::CellCenterSolutionVector>; };
 //////////////////////////////////////////////////////////
 
 } // end namespace Staggered

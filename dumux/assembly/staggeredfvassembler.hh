@@ -25,9 +25,10 @@
 #ifndef DUMUX_STAGGERED_FV_ASSEMBLER_HH
 #define DUMUX_STAGGERED_FV_ASSEMBLER_HH
 
-#include <type_traits>
+#include <tuple>
+#include <memory>
 
-#include <dune/istl/matrixindexset.hh>
+#include <dune/common/indices.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
@@ -74,8 +75,8 @@ public:
                          std::shared_ptr<const GridGeometry> gridGeometry,
                          std::shared_ptr<GridVariables> gridVariables)
     : ParentType(std::make_tuple(problem, problem),
-                 std::make_tuple(gridGeometry->cellCenterFVGridGeometryPtr(), gridGeometry->faceFVGridGeometryPtr()),
-                 std::make_tuple(gridVariables->cellCenterGridVariablesPtr(), gridVariables->faceGridVariablesPtr()),
+                 std::make_tuple(gridGeometry->faceFVGridGeometryPtr(), gridGeometry->cellCenterFVGridGeometryPtr()),
+                 std::make_tuple(gridVariables->faceGridVariablesPtr(), gridVariables->cellCenterGridVariablesPtr()),
                  std::make_shared<CouplingManager>())
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
@@ -89,8 +90,8 @@ public:
                          std::shared_ptr<GridVariables> gridVariables,
                          std::shared_ptr<const TimeLoop> timeLoop)
     : ParentType(std::make_tuple(problem, problem),
-                 std::make_tuple(gridGeometry->cellCenterFVGridGeometryPtr(), gridGeometry->faceFVGridGeometryPtr()),
-                 std::make_tuple(gridVariables->cellCenterGridVariablesPtr(), gridVariables->faceGridVariablesPtr()),
+                 std::make_tuple(gridGeometry->faceFVGridGeometryPtr(), gridGeometry->cellCenterFVGridGeometryPtr()),
+                 std::make_tuple(gridVariables->faceGridVariablesPtr(), gridVariables->cellCenterGridVariablesPtr()),
                  std::make_shared<CouplingManager>(),
                  timeLoop)
     {
@@ -105,8 +106,8 @@ public:
                          std::shared_ptr<const TimeLoop> timeLoop,
                          const SolutionVector& prevSol)
     : ParentType(std::make_tuple(problem, problem),
-                 std::make_tuple(gridGeometry->cellCenterFVGridGeometryPtr(), gridGeometry->faceFVGridGeometryPtr()),
-                 std::make_tuple(gridVariables->cellCenterGridVariablesPtr(), gridVariables->faceGridVariablesPtr()),
+                 std::make_tuple(gridGeometry->faceFVGridGeometryPtr(), gridGeometry->cellCenterFVGridGeometryPtr()),
+                 std::make_tuple(gridVariables->faceGridVariablesPtr(), gridVariables->cellCenterGridVariablesPtr()),
                  std::make_shared<CouplingManager>(),
                  timeLoop,
                  prevSol)
