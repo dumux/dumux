@@ -19,8 +19,9 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Container storing the diffusion coefficients required by Fick's law.
- *        Uses the minimal possible container size and provides unified access.
+ * \brief Container storing the diffusion coefficients required by the Maxwell-
+ *        Stefan diffusion law. Uses the minimal possible container size and
+ *        provides unified access.
  */
 #ifndef DUMUX_DISCRETIZATION_MAXWELLSTEFAN_DIFFUSION_COEFFICIENTS_HH
 #define DUMUX_DISCRETIZATION_MAXWELLSTEFAN_DIFFUSION_COEFFICIENTS_HH
@@ -60,7 +61,29 @@ public:
     }
 
 private:
-    std::array<Scalar, (numPhases * ((numComponents * numComponents - numComponents)/2))> diffCoeff_;
+    /*!
+     * \brief Maxwell Stefan diffusion coefficient container.
+     *        This container is sized to hold all required diffusion coefficients.
+     *
+     *        For each phase "(numPhases * ("
+     *        We have a square coefficient matrix sized by
+     *        the number of components "((numComponents * numComponents)".
+     *        The diagonal is not used and removed " - numComponents)".
+     *        The matrix is symmetrical, but only the upper triangle is required " / 2))".
+     */
+    std::array<Scalar, (numPhases * (((numComponents * numComponents) - numComponents)/2))> diffCoeff_;
+
+    /*!
+     * \brief Index logic for collecting the correct diffusion coefficient from the container.
+     *
+     *        First, we advance our index to the correct phase coefficient matrix:
+     *        " phaseIdx * ((numComponents * numComponents - numComponents) / 2) ".
+     *        The individual index within each phase matrix is then calculated using
+     *        " i*n - (i^2+i)/2 + j-(i+1) ".
+     *
+     *        This index calculation can be reduced from the following:
+     *        https://stackoverflow.com/questions/27086195/
+     */
     const int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     {
         return phaseIdx * ((numComponents * numComponents - numComponents) / 2)
