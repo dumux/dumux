@@ -185,11 +185,6 @@ public:
         return sandGrainRoughness_;
     }
 
-    bool shouldWriteRestartFile() const
-    {
-        return false;
-    }
-
    /*!
      * \brief Returns the temperature [K] within the domain for the isothermal model.
      */

@@ -127,11 +127,6 @@ public:
      */
     // \{
 
-    bool shouldWriteRestartFile() const
-    {
-        return false;
-    }
-
     void printL2Error(const SolutionVector& curSol) const
     {
         if(printL2Error_)

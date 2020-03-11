@@ -198,14 +198,6 @@ public:
     Scalar temperature() const
     { return temperature_; }
 
-    /*!
-     * \brief Write a restart file?
-     */
-    bool shouldWriteRestartFile() const
-    {
-        return ParentType::shouldWriteRestartFile();
-    }
-
     // \}
 
     /*!

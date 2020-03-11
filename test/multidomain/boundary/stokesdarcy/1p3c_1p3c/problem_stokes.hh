@@ -120,9 +120,6 @@ public:
      */
     // \{
 
-    bool shouldWriteRestartFile() const
-    { return false; }
-
    /*!
      * \brief Returns the temperature within the domain in [K].
      *
@@ -131,13 +128,6 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10°C
 
-   /*!
-     * \brief Returns the sources within the domain.
-     *
-     * \param globalPos The global position
-     */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-    { return NumEqVector(0.0); }
     // \}
 
    /*!

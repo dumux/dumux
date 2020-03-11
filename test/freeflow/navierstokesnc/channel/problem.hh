@@ -140,11 +140,6 @@ public:
      */
     // \{
 
-    bool shouldWriteRestartFile() const
-    {
-        return false;
-    }
-
    /*!
      * \brief Returns the temperature within the domain in [K].
      *
