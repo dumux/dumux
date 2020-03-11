@@ -17,13 +17,11 @@ EnablePartialReassembly = true
 EnableDynamicOutput = false
 
 [LinearSolver]
-Type = cgsolver
+Type = bicgstabsolver
 MaxIterations = 80
 
 [LinearSolver.Preconditioner]
-Type = amg
+Type = ilu
 Verbosity = 0
-AmgMaxLevel = 2
-AmgPreSmoothingSteps = 1
-AmgPostSmoothingSteps = 1
-AmgCriterionSymmetric = true
+ILUOrder = 0
+ILUResort = true
