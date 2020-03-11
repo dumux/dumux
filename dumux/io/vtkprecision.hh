@@ -47,10 +47,8 @@ using Dune::VTK::Precision;
 /*!
  * \ingroup InputOutput
  * \brief Maps a string (e.g. from input) to a Dune precision type
- *
- * \param precisionName string, e.g. from input-file
  */
-inline Precision stringToPrecision(std::string precisionName)
+inline Precision stringToPrecision(std::string_view precisionName)
 {
     // this should really be constexpr but GCC <= 7.2 has a bug which
     // doesn't allow string_view to be constexpr
