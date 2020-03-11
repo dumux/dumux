@@ -13,6 +13,4 @@ gridmanager_sp.hh
 gridmanager_sub.hh
 gridmanager_ug.hh
 gridmanager_yasp.hh
-subgridgridcreator.hh
-subgridmanager.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io/grid)
