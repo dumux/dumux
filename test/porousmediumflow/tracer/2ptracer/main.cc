@@ -39,6 +39,7 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
@@ -131,7 +132,7 @@ int main(int argc, char** argv) try
     auto twoPAssembler = std::make_shared<TwoPAssembler>(twoPProblem, gridGeometry, twoPGridVariables, timeLoop, pOld);
 
     // the linear solver
-    using TwoPLinearSolver = AMGBackend<TwoPTypeTag>;
+    using TwoPLinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto twoPLinearSolver = std::make_shared<TwoPLinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
@@ -163,7 +164,7 @@ int main(int argc, char** argv) try
     tracerGridVariables->init(x);
 
     // the linear solver
-    using TracerLinearSolver = AMGBackend<TracerTypeTag>;
+    using TracerLinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto tracerLinearSolver = std::make_shared<TracerLinearSolver>(leafGridView, gridGeometry->dofMapper());
 
      //! the linear system

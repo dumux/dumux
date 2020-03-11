@@ -45,6 +45,7 @@
 
 //we include the linear solver to be used to solve the linear system
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 //we include the nonlinear Newton's method
 #include <dumux/nonlinear/newtonsolver.hh>
 // Further, we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
@@ -201,7 +202,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop);
 
     // we set the linear solver
-    using LinearSolver = AMGBackend<TypeTag>;
+    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // additionally we set the non-linear solver.
