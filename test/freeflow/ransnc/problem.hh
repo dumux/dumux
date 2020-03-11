@@ -181,12 +181,6 @@ public:
         return globalPos[1] < eps_;
     }
 
-
-    bool shouldWriteRestartFile() const
-    {
-        return false;
-    }
-
    /*!
      * \brief Returns the temperature within the domain in [K].
      *

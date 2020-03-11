@@ -146,11 +146,6 @@ public:
         return problemName_;
     }
 
-    /*!
-     * \name Simulation steering
-     */
-    // \{
-
     template<class SolutionVector, class GridVariables>
     void printWaterMass(const SolutionVector& curSol,
                         const GridVariables& gridVariables,
@@ -184,18 +179,9 @@ public:
     }
 
     /*!
-     * \brief Returns true if a restart file should be written to disk.
-     */
-    bool shouldWriteRestartFile() const
-    { return false; }
-
-    /*!
      * \name Problem parameters
      */
     // \{
-
-    bool shouldWriteOutput() const //define output
-    { return true; }
 
     /*!
      * \brief Returns the temperature within the domain in [K].
