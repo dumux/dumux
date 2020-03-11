@@ -110,15 +110,21 @@ public:
     , paramGroup_(paramGroup)
     , dm_(dm)
     , verbose_(gridVariables.gridGeometry().gridView().comm().rank() == 0 && verbose)
-#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
-    [[deprecated("Use the new VtkOutputModule with variable output precision")]]
-    , writer_(std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.gridGeometry().gridView(), dm))
-#else
-    , writer_(std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.gridGeometry().gridView(), dm, coordPrecision_))
-#endif
-    , sequenceWriter_(writer_, name)
     , velocityOutput_(std::make_shared<VelocityOutputType>())
-    {}
+    {
+        const auto precisionString = getParamFromGroup<std::string>(paramGroup_, "Vtk.Precision", "Float32");
+        precision_ = Dumux::Vtk::stringToPrecision(precisionString);
+        const auto coordPrecision = Dumux::Vtk::stringToPrecision(getParamFromGroup<std::string>(paramGroup_, "Vtk.CoordPrecision", precisionString));
+#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
+        if (precision_ != Dumux::Vtk::Precision::float32 || coordPrecision != Dumux::Vtk::Precision::float32)
+            std::cerr << "Warning: Specifying VTK output precision other than Float32 is only supported in Dune 2.7 and newer. "
+                      << "Ignoring parameter and defaulting to Float32." << std::endl;
+        writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.gridGeometry().gridView(), dm);
+#else
+        writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridVariables.gridGeometry().gridView(), dm, coordPrecision_);
+#endif
+        sequenceWriter_ = std::make_unique<Dune::VTKSequenceWriter<GridView>>(writer_, name);
+    }
 
     //! the parameter group for getting parameter from the parameter tree
     const std::string& paramGroup() const
@@ -248,7 +254,7 @@ protected:
     Dune::VTK::DataMode dataMode() const { return dm_; }
 
     Dune::VTKWriter<GridView>& writer() { return *writer_; }
-    Dune::VTKSequenceWriter<GridView>& sequenceWriter() { return sequenceWriter_; }
+    Dune::VTKSequenceWriter<GridView>& sequenceWriter() { return *sequenceWriter_; }
 
     const std::vector<VolVarScalarDataInfo>& volVarScalarDataInfo() const { return volVarScalarDataInfo_; }
     const std::vector<VolVarVectorDataInfo>& volVarVectorDataInfo() const { return volVarVectorDataInfo_; }
@@ -369,19 +375,19 @@ private:
             if (isBox)
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarScalarData[i],
+                    sequenceWriter_->addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarScalarData[i],
                                                          volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, dm_, precision_).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarVectorData[i],
+                    sequenceWriter_->addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarVectorData[i],
                                                          volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, dm_, precision_).get() );
             }
             else
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
+                    sequenceWriter_->addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
                                                        volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0,dm_, precision_).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
+                    sequenceWriter_->addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
                                                        volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0,dm_, precision_).get() );
             }
 
@@ -391,7 +397,7 @@ private:
                 if (isBox && dim > 1)
                 {
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
+                        sequenceWriter_->addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim, dm_, precision_).get() );
                 }
@@ -399,7 +405,7 @@ private:
                 else
                 {
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
+                        sequenceWriter_->addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
                                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0, dm_, precision_).get() );
                 }
@@ -407,15 +413,15 @@ private:
 
             // the process rank
             if (addProcessRank)
-                sequenceWriter_.addCellData(Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get());
+                sequenceWriter_->addCellData(Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get());
 
             // also register additional (non-standardized) user fields if any
             for (auto&& field : fields_)
             {
                 if (field.codim() == 0)
-                    sequenceWriter_.addCellData(field.get());
+                    sequenceWriter_->addCellData(field.get());
                 else if (field.codim() == dim)
-                    sequenceWriter_.addVertexData(field.get());
+                    sequenceWriter_->addVertexData(field.get());
                 else
                     DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
             }
@@ -424,7 +430,7 @@ private:
         //////////////////////////////////////////////////////////////
         //! (2) The writer writes the output for us
         //////////////////////////////////////////////////////////////
-        sequenceWriter_.write(time, type);
+        sequenceWriter_->write(time, type);
 
         //////////////////////////////////////////////////////////////
         //! (3) Clear the writer
@@ -557,11 +563,11 @@ private:
 
             // volume variables if any
             for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
+                sequenceWriter_->addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
                                                      volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, /*nonconforming*/dm_, precision_).get() );
 
             for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
+                sequenceWriter_->addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
                                                      volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, /*nonconforming*/dm_, precision_).get() );
 
             // the velocity field
@@ -570,29 +576,29 @@ private:
                 // node-wise velocities
                 if (dim > 1)
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        sequenceWriter_.addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
+                        sequenceWriter_->addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim, dm_, precision_).get() );
 
                 // cell-wise velocities
                 else
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
+                        sequenceWriter_->addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
                                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0,dm_, precision_).get());
             }
 
             // the process rank
             if (addProcessRank)
-                sequenceWriter_.addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get() );
+                sequenceWriter_->addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get() );
 
             // also register additional (non-standardized) user fields if any
             for (auto&& field : fields_)
             {
                 if (field.codim() == 0)
-                    sequenceWriter_.addCellData(field.get());
+                    sequenceWriter_->addCellData(field.get());
                 else if (field.codim() == dim)
-                    sequenceWriter_.addVertexData(field.get());
+                    sequenceWriter_->addVertexData(field.get());
                 else
                     DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
             }
@@ -601,7 +607,7 @@ private:
         //////////////////////////////////////////////////////////////
         //! (2) The writer writes the output for us
         //////////////////////////////////////////////////////////////
-        sequenceWriter_.write(time, type);
+        sequenceWriter_->write(time, type);
 
         //////////////////////////////////////////////////////////////
         //! (3) Clear the writer
@@ -627,12 +633,10 @@ private:
     const std::string paramGroup_;
     Dune::VTK::DataMode dm_;
     bool verbose_;
-    const std::string precisionString_ = getParamFromGroup<std::string>(paramGroup_,"Vtk.Precision", "Float32");
-    const Dumux::Vtk::Precision precision_ = Dumux::Vtk::stringToPrecision(precisionString_);
-    const Dumux::Vtk::Precision coordPrecision_ = Dumux::Vtk::stringToPrecision(getParamFromGroup<std::string>(paramGroup_,"Vtk.CoordPrecision",precisionString_));
+    Dumux::Vtk::Precision precision_;
 
     std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
-    Dune::VTKSequenceWriter<GridView> sequenceWriter_;
+    std::unique_ptr<Dune::VTKSequenceWriter<GridView>> sequenceWriter_;
 
     std::vector<VolVarScalarDataInfo> volVarScalarDataInfo_; //!< Registered volume variables (scalar)
     std::vector<VolVarVectorDataInfo> volVarVectorDataInfo_; //!< Registered volume variables (vector)
