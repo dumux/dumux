@@ -72,9 +72,6 @@ template<class TypeTag, class MyTypeTag>
 struct PointSource { using type = UndefinedProperty; };            //!< Property defining the type of point source used
 template<class TypeTag, class MyTypeTag>
 struct PointSourceHelper { using type = UndefinedProperty; };      //!< Property defining the class that computes which sub control volume point sources belong to
-// TODO: Remove deprecated property VtkOutputFields
-template<class TypeTag, class MyTypeTag>
-struct VtkOutputFields { using type = UndefinedProperty; };        //!< A class helping models to define default vtk output parameters
 template<class TypeTag, class MyTypeTag>
 struct IOFields { using type = UndefinedProperty; };               //!< A class helping models to define input and output fields
 template<class TypeTag, class MyTypeTag>

@@ -60,12 +60,6 @@ struct ModelDefaultParameters<TypeTag, TTag::ModelProperties>
     static void defaultParams(Dune::ParameterTree& tree, const std::string& group = "") { }
 };
 
-//! \todo this property is deprecated use IOFields instead!
-template<class TypeTag>
-struct VtkOutputFields<TypeTag, TTag::ModelProperties> {
-    using type [[deprecated("This property is deprecated use property IOFields instead")]] = GetPropType<TypeTag, Properties::IOFields>;
-};
-
 //! Set the default to an implementation throwing a NotImplemented error
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::ModelProperties> { using type = DefaultIOFields; };
