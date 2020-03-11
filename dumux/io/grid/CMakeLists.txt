@@ -1,5 +1,4 @@
 install(FILES
-cakegridcreator.hh
 cakegridmanager.hh
 cpgridmanager.hh
 gmshgriddatahandle.hh
