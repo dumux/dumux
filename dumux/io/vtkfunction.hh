@@ -63,11 +63,7 @@ public:
     virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const
     { return accessChooser_(mycomp, mapper_.index(e), IsIndexable<decltype(field_[0])>()); }
 
-#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
-    //! get output precision for the field
-    Dumux::Vtk::Precision precision() const
-    { return precision_; }
-#else
+#if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
     Dumux::Vtk::Precision precision() const override
     { return precision_; }
@@ -147,15 +143,12 @@ public:
         return interpolation.global(xi);
     }
 
-#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
-    //! get output precision for the field
-    Dumux::Vtk::Precision precision() const
-    { return precision_; }
-#else
+#if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
     Dumux::Vtk::Precision precision() const override
     { return precision_; }
 #endif
+
 
     //! Constructor
     VectorP1VTKFunction(const GridView& gridView,
@@ -234,11 +227,7 @@ public:
         return interpolation.global(xi);
     }
 
-#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
-    //! get output precision for the field
-    Dumux::Vtk::Precision precision() const
-    { return precision_; }
-#else
+#if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
     Dumux::Vtk::Precision precision() const override
     { return precision_; }
@@ -327,7 +316,14 @@ public:
     virtual int ncomps() const { return field_->ncomps(); }
 
     //! return the precision of this field
-    virtual Dumux::Vtk::Precision precision() const { return field_->precision(); }
+    virtual Dumux::Vtk::Precision precision() const
+    {
+#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
+        return Dumux::Vtk::Precision::float32;
+#else
+        return field_->precision();
+#endif
+    }
 
     //! codimension of the entities on which the field values live
     int codim() const { return codim_; }
