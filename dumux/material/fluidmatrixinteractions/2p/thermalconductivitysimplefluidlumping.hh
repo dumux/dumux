@@ -40,20 +40,6 @@ class ThermalConductivitySimpleFluidLumping
 
 public:
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
-     */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
-    [[deprecated("Signature deprecated. Use signature with volume variables only!")]]
-    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
-                                               const SpatialParams& spatialParams,
-                                               const Element& element,
-                                               const FVGeometry& fvGeometry,
-                                               const typename FVGeometry::SubControlVolume& scv)
-    {
-        return effectiveThermalConductivity(volVars);
-    }
-
-    /*!
      * \brief Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      *
      * \param volVars volume variables
