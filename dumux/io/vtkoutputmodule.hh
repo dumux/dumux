@@ -54,7 +54,6 @@ namespace Dumux {
  *
  * \tparam GridVariables The grid variables
  * \tparam SolutionVector The solution vector
- * \tparam VelocityOutput The velocity output nodule
  *
  * Handles the output of scalar and vector fields to VTK formatted file for multiple
  * variables and timesteps. Certain predefined fields can be registered on
