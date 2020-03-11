@@ -50,16 +50,9 @@ namespace TTag {
 struct CCTpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 } // end namespace TTag
 
-// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
-// For ensuring backward compatibility on the user side, it is necessary to
-// stick to the old name for the specializations, see the discussion in MR 1647.
-// Use diagnostic pragmas to prevent the emission of a warning message.
-// TODO after 3.1: Rename to GridGeometry, remove the pragmas and this comment.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-//! Set the default for the global finite volume geometry
+//! Set the default for the grid geometry
 template<class TypeTag>
-struct FVGridGeometry<TypeTag, TTag::CCTpfaModel>
+struct GridGeometry<TypeTag, TTag::CCTpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -67,7 +60,6 @@ private:
 public:
     using type = CCTpfaFVGridGeometry<GridView, enableCache>;
 };
-#pragma GCC diagnostic pop
 
 //! The grid volume variables vector class
 template<class TypeTag>

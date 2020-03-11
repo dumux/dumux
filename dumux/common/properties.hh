@@ -112,64 +112,10 @@ struct BalanceEqOpts { using type = UndefinedProperty; };          //!< A class 
 template<class TypeTag, class MyTypeTag>
 struct ElementBoundaryTypes { using type = UndefinedProperty; };                //!< Stores the boundary types on an element
 
-#if defined(__clang__) && !defined(DONT_EMIT_CLANG_GRIDGEOMETRY_WARNING)
-#warning "The properties `FVGridGeometry` and `EnableFVGridGeometryCache` \
-are deprecated in favor of `GridGeometry` and `EnableGridGeometryCache`. \
-The old properties will be removed after release 3.1. \
-If clang is used, no deprecation warnings are emitted. \
-We recommend to use gcc for getting rid of the warnings. \
-You can suppress this message by defining the preprocessor variable \
-DONT_EMIT_CLANG_GRIDGEOMETRY_WARNING."
-#endif
-// TODO: Remove deprecated property FVGridGeometry after 3.1
 template<class TypeTag, class MyTypeTag>
-struct [[deprecated("Use GridGeometry instead.")]] FVGridGeometry { using type = UndefinedProperty; }; //!< The type of the global finite volume geometry
-
-// TODO: Remove deprecated property EnableFVGridGeometryCache after 3.1
-template<class TypeTag, class MyTypeTag>
-struct [[deprecated("Use EnableGridGeometryCache instead.")]] EnableFVGridGeometryCache { using type = UndefinedProperty; };           //!< specifies if geometric data is saved (faster, but more memory consuming)
-
-// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
-// For ensuring backward compatibility, it is necessary to set the default value
-// of the new property to the old one, see the discussion in MR 1647.
-// Use diagnostic pragmas to prevent the emission of a warning message.
-// TODO after 3.1: change default vale to `UndefinedProperty`, remove pragmas
-// and comment.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-template<class TypeTag, class T>
-struct GridGeometryHelper
-{ using type = GetPropType<TypeTag, Properties::FVGridGeometry>; };
-
-template<class TypeTag>
-struct GridGeometryHelper<TypeTag, UndefinedProperty>
-{ using type = UndefinedProperty; };
-
-template<class TypeTag, class MyTypeTag>
-struct GridGeometry
-{
-    using type = typename GridGeometryHelper<TypeTag, typename FVGridGeometry<TypeTag, MyTypeTag>::type>::type;
-};
-
-template<class TypeTag, bool hasParentTypeTag>
-struct EnableGridGeometryCacheHelper
-{ using type = UndefinedProperty; };
-
-template<class TypeTag>
-struct EnableGridGeometryCacheHelper<TypeTag, false>
-{
-    // fallback
-    static constexpr bool value = getPropValue<TypeTag, Properties::EnableFVGridGeometryCache>();
-};
-
-// only use the fallback (EnableFVGridGeometryCache) if none
-// of the TypeTags define EnableGridGeometryCache
+struct GridGeometry { using type = UndefinedProperty; };
 template <class TypeTag, class MyTypeTag>
-struct EnableGridGeometryCache : public EnableGridGeometryCacheHelper<TypeTag, Detail::hasParentTypeTag<MyTypeTag>(int{})>
-{};
-
-#pragma GCC diagnostic pop
+struct EnableGridGeometryCache { using type = UndefinedProperty; };
 
 template<class TypeTag, class MyTypeTag>
 struct VolumeVariables { using type = UndefinedProperty; };                     //!< The secondary variables within a sub-control volume

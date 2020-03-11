@@ -157,16 +157,9 @@ public:
     static const int value = 2*dim;
 };
 
-// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
-// For ensuring backward compatibility on the user side, it is necessary to
-// stick to the old name for the specializations, see the discussion in MR 1647.
-// Use diagnostic pragmas to prevent the emission of a warning message.
-// TODO after 3.1: Rename to GridGeometry, remove the pragmas and this comment.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 //! A simplified grid geometry for compatibility with new style models
 template<class TypeTag>
-struct FVGridGeometry<TypeTag, TTag::SequentialModel>
+struct GridGeometry<TypeTag, TTag::SequentialModel>
 {
     struct MockFVGridGeometry
     : public DefaultMapperTraits<GetPropType<TypeTag, Properties::GridView>>
@@ -178,7 +171,6 @@ struct FVGridGeometry<TypeTag, TTag::SequentialModel>
 public:
     using type = MockFVGridGeometry;
 };
-#pragma GCC diagnostic pop
 
 //! For compatibility with new style models we need a solution vector type
 template<class TypeTag>

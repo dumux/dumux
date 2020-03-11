@@ -326,11 +326,6 @@ public:
     }
 
     //! The finite volume grid geometry
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const GridGeometry& fvGridGeometry() const
-    { return *gridGeometry_; }
-
-    //! The finite volume grid geometry
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 

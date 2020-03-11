@@ -67,7 +67,6 @@ public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -269,11 +268,6 @@ public:
     //! The problem
     const Problem& problem() const
     { return *problem_; }
-
-    //! The global finite volume geometry
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const GridGeometry& fvGridGeometry() const
-    { return gridGeometry(); }
 
     //! The global finite volume geometry
     const GridGeometry& gridGeometry() const

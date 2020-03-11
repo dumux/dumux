@@ -55,17 +55,9 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-// Dumux 3.1 changes the property `EnableFVGridGeometryCache` to `EnableGridGeometryCache`.
-// For ensuring backward compatibility on the user side, it is necessary to
-// stick to the old name for the specializations, see the discussion in MR 1647.
-// Use diagnostic pragmas to prevent the emission of a warning message.
-// TODO after 3.1: Rename to EnableGridGeometryCache, remove the pragmas and this comment.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 //! We do not store the FVGeometry by default
 template<class TypeTag>
-struct EnableFVGridGeometryCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
-#pragma GCC diagnostic pop
+struct EnableGridGeometryCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
 
 //! We do not store the volume variables by default
 template<class TypeTag>

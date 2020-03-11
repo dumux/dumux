@@ -96,16 +96,9 @@ public:
     using type = CCMpfaOInteractionVolume< Traits >;
 };
 
-// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
-// For ensuring backward compatibility on the user side, it is necessary to
-// stick to the old name for the specializations, see the discussion in MR 1647.
-// Use diagnostic pragmas to prevent the emission of a warning message.
-// TODO after 3.1: Rename to GridGeometry, remove the pragmas and this comment.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-//! Set the default for the global finite volume geometry
+//! Set the default for the grid geometry
 template<class TypeTag>
-struct FVGridGeometry<TypeTag, TTag::CCMpfaModel>
+struct GridGeometry<TypeTag, TTag::CCMpfaModel>
 {
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -116,7 +109,6 @@ private:
 public:
     using type = CCMpfaFVGridGeometry<GridView, Traits, getPropValue<TypeTag, Properties::EnableGridGeometryCache>()>;
 };
-#pragma GCC diagnostic pop
 
 //! The grid volume variables vector class
 template<class TypeTag>
