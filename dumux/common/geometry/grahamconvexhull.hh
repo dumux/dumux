@@ -213,36 +213,6 @@ std::vector<Dune::FieldVector<ctype, dimWorld>> grahamConvexHull(const std::vect
     return grahamConvexHullImpl<dim>(copyPoints);
 }
 
-// deprecated interfaces
-#ifndef DOXYGEN
-template<class ctype>
-[[deprecated("Use grahamConvexHull<dim> with dim as template argument. Will be removed after 3.1")]]
-std::vector<Dune::FieldVector<ctype, 3>>
-grahamConvexHull2d3d(const std::vector<Dune::FieldVector<ctype, 3>>& points)
-{
-    auto copyPoints = points;
-    return grahamConvexHull<2>(copyPoints);
-}
-
-template<class ctype>
-[[deprecated("Use grahamConvexHull<dim> with dim as template argument. Will be removed after 3.1")]]
-std::vector<Dune::FieldVector<ctype, 3>>
-grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
-{ return grahamConvexHull<2>(points); }
-
-/*!
- * \ingroup Geometry
- * \brief Triangulate area given points of the convex hull
- * \note Assumes all points of the convex hull are coplanar
- * \note This inserts a mid point and connects all corners with that point to triangles
- */
-template<class ctype>
-[[deprecated("Please use triangulate. Will be removed after 3.1")]]
-std::vector<std::array<Dune::FieldVector<ctype, 3>, 3> >
-triangulateConvexHull(const std::vector<Dune::FieldVector<ctype, 3>>& convexHull)
-{ return triangulate<2, 3>(convexHull); }
-#endif
-
 } // end namespace Dumux
 
 # endif
