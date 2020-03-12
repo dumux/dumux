@@ -1,5 +1,6 @@
 add_subdirectory(1p_1p)
 add_subdirectory(el1p_1p)
+add_subdirectory(el1p_1p_fem)
 add_subdirectory(tracer_tracer)
 
 dune_symlink_to_source_files(FILES "grid.msh" "markers.msh" "grid2.msh"
