@@ -36,20 +36,20 @@ namespace Dumux {
  * \tparam Scalar The type used for scalar values
  * \tparam numPhases Number of phases in the fluid composition
  * \tparam numComponents Number of components in the fluid composition
- * \tparam allTracerComponents If false, this means that the main component of
- *                             a phase is part of the components. In this case,
- *                             the storage container is optimized with respect to
- *                             memory consumption as diffusion coefficients of the
- *                             main component of a phase in itself are not stored.
- *                             If true, all diffusion coefficients of all components
- *                             are stored
+ * \tparam onlyTracers If false, this means that the main component of
+ *                     a phase is part of the components. In this case,
+ *                     the storage container is optimized with respect to
+ *                     memory consumption as diffusion coefficients of the
+ *                     main component of a phase in itself are not stored.
+ *                     If true, all diffusion coefficients of all components
+ *                     are stored
  */
-template <class Scalar, int numPhases, int numComponents, bool allTracerComponents>
+template <class Scalar, int numPhases, int numComponents, bool onlyTracers = false>
 class FickianDiffusionCoefficients;
 
 //! General case (mpnc), for compositions containing the phases' main components
 template <class Scalar, int numPhases, int numComponents>
-class FickianDiffusionCoefficients<Scalar, numPhases, numComponents, false>
+class FickianDiffusionCoefficients<Scalar, numPhases, numComponents>
 {
 public:
     template<class DiffCoeffFunc>
@@ -83,7 +83,7 @@ private:
 
 //! Specialization for 1pnc & compositions containing the phases' main components
 template <class Scalar, int numComponents>
-class FickianDiffusionCoefficients<Scalar, 1, numComponents, false>
+class FickianDiffusionCoefficients<Scalar, 1, numComponents>
 {
 public:
     template<class DiffCoeffFunc>
@@ -114,7 +114,7 @@ private:
 
 //! Specialization for 2p2c & compositions containing the phases' main components
 template <class Scalar>
-class FickianDiffusionCoefficients<Scalar, 2, 2, false>
+class FickianDiffusionCoefficients<Scalar, 2, 2>
 {
 public:
     template<class DiffCoeffFunc>
@@ -138,7 +138,7 @@ private:
 
 //! Specialization for 3p2c & compositions containing the phases' main components
 template <class Scalar>
-class FickianDiffusionCoefficients<Scalar, 3, 2, false>
+class FickianDiffusionCoefficients<Scalar, 3, 2>
 {
 public:
     template<class DiffCoeffFunc>

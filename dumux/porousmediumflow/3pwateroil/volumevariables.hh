@@ -87,7 +87,7 @@ class ThreePWaterOilVolumeVariables
     };
 
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<3, 2>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
 
 public:
     //! The type of the object returned by the fluidState() method

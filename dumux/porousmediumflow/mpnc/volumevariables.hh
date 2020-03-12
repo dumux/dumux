@@ -70,7 +70,7 @@ class MPNCVolumeVariablesImplementation<Traits, false>
     using ComponentVector = Dune::FieldVector<Scalar, ModelTraits::numFluidComponents()>;
     using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<ModelTraits::numFluidPhases(), ParentType::numFluidComponents()>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
 
 public:
     //! Export the type encapsulating primary variable indices
@@ -535,7 +535,7 @@ class MPNCVolumeVariablesImplementation<Traits, true>
     using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
     using ParameterCache = typename Traits::FluidSystem::ParameterCache;
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<ModelTraits::numFluidPhases(), ParentType::numFluidComponents()>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
 
 public:
     //! Export the underlying fluid system

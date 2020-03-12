@@ -88,7 +88,7 @@ class TwoPTwoCCO2VolumeVariables
 
     // type used for the diffusion coefficients
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<2, 2>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
 
 public:
     //! The type of the object returned by the fluidState() method

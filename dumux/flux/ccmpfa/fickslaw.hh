@@ -62,6 +62,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa, referenceSys
     using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
 
     static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
+    static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! Class that fills the cache corresponding to mpfa Fick's Law
@@ -163,17 +164,20 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa, referenceSys
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
+
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }
+
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;
+
     //export the diffusion container
-    template<int numPhases, int numComponents>
+    template <bool onlyTracers = false>
     using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
                                                                         numPhases,
                                                                         numComponents,
-                                                                        FluidSystem::isTracerFluidSystem()>;
+                                                                        onlyTracers>;
 
     //! Compute the diffusive flux across an scvf
     static ComponentFluxVector flux(const Problem& problem,

@@ -74,12 +74,11 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
-
-    template<int numPhases, int numComponents>
+    template <bool onlyTracers = false>
     using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
                                                                         numPhases,
                                                                         numComponents,
-                                                                        FluidSystem::isTracerFluidSystem()>;
+                                                                        onlyTracers>;
 
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()

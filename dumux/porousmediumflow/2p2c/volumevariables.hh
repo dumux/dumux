@@ -101,7 +101,7 @@ class TwoPTwoCVolumeVariablesBase
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, typename Traits::FluidSystem>;
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition< Scalar, typename Traits::FluidSystem >;
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<2, 2>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
 public:
     //! The type of the object returned by the fluidState() method
     using FluidState = typename Traits::FluidState;

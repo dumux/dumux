@@ -80,8 +80,8 @@ public:
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }
 
-    template<int numFluidPhases, int numComponents>
-    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numFluidPhases, numComponents>;
+    template<bool onlyTracers = false>
+    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents, onlyTracers>;
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law

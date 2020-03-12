@@ -45,7 +45,7 @@ class FreeflowNCVolumeVariables : public FreeFlowVolumeVariables< Traits, Freefl
 
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
     static constexpr int numFluidComps = ParentType::numFluidComponents();
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<1, numFluidComps>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
 
 public:
     //! export the underlying fluid system
