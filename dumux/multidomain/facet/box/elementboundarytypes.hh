@@ -81,15 +81,8 @@ public:
                 this->hasOutflow_ = this->hasOutflow_ || this->vertexBCTypes_[scvIdxLocal].hasOutflow();
             };
 
-            // We have to have Neumann-type BCs on nodes that touch interior boundaries
-            if (fvGeometry.gridGeometry().dofOnInteriorBoundary(scv.dofIndex()))
-            {
-                this->vertexBCTypes_[scvIdxLocal].setAllNeumann();
-                updateElemBCInfo(this->vertexBCTypes_[scvIdxLocal]);
-            }
-
-            // otherwise, let the problem decide
-            else if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
+            // let the problem decide
+            if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
             {
                 this->vertexBCTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
                 updateElemBCInfo(this->vertexBCTypes_[scvIdxLocal]);
