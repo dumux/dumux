@@ -46,7 +46,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
-#include <dumux/multidomain/embedded/mixeddimensionglue.hh>
+#include <dumux/multidomain/glue.hh>
 
 #include "problem_root.hh"
 #include "problem_soil.hh"
@@ -242,18 +242,14 @@ int main(int argc, char** argv) try
     for (int i = 0; i < levels; ++i)
     {
         auto& soilGrid = bulkGridManager.grid();
-        using BulkGridView = GetPropType<BulkTypeTag, Properties::GridView>;
-        using LowDimGridView = GetPropType<LowDimTypeTag, Properties::GridView>;
-
-        MixedDimensionGlue<BulkGridView, LowDimGridView>
-            glue(bulkFvGridGeometry->boundingBoxTree(), lowDimFvGridGeometry->boundingBoxTree());
+        const auto glue = makeGlue(*lowDimFvGridGeometry, *bulkFvGridGeometry);
 
         // refine all 3D cells intersected
         for (const auto& is : intersections(glue))
         {
-            for (unsigned int outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+            for (unsigned int targetIdx = 0; targetIdx < is.numTargetNeighbors(); ++targetIdx)
             {
-                const auto cutElement = is.outside(outsideIdx);
+                const auto cutElement = is.targetEntity(targetIdx);
 
                 // mark the cut element and all it's neighbors
                 soilGrid.mark(1, cutElement);
