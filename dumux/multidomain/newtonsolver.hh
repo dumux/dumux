@@ -144,6 +144,15 @@ public:
         couplingManager_->updateSolution(uCurrentIter);
     }
 
+protected:
+    virtual void computeResidualReduction_(const SolutionVector &uCurrentIter) override
+    {
+        couplingManager_->updateSolution(uCurrentIter);
+        this->residualNorm_ = this->assembler().residualNorm(uCurrentIter);
+        this->reduction_ = this->residualNorm_;
+        this->reduction_ /= this->initialResidual_;
+    }
+
 private:
 
     /*!
