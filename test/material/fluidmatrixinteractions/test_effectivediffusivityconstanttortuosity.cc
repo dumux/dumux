@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    Parameters::parseCommandLineArguments(argc, argv);
+    Parameters::init(argc, argv);
 
     GnuplotInterface<double> gnuplot;
     gnuplot.setOpenPlotWindow(false);
