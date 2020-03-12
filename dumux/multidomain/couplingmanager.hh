@@ -269,6 +269,27 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "The problem pointer was not set or has already expired. Use setSubProblems() before calling this function");
     }
 
+    const SolutionVector& getSol() const
+    {
+        if (usePrevSol_)
+            return *prevSol_;
+        else
+            return curSol_;
+    }
+
+    void setUsePrevSol(bool value)
+    {
+        usePrevSol_ = value;
+    }
+
+    void setPreviousSolution(const SolutionVector* prevSol)
+    {
+        prevSol_ = prevSol;
+    }
+
+    bool usePrevSol() const
+    { return usePrevSol_; }
+
 protected:
 
     /*!
@@ -291,12 +312,14 @@ private:
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
     SolutionVector curSol_;
-
+    const SolutionVector* prevSol_;
     /*!
      * \brief A tuple of std::weak_ptrs to the sub problems
      * \note these are weak pointers and not shared pointers to break the cyclic dependency between coupling manager and problems
      */
     Problems problems_;
+
+    bool usePrevSol_ = false;
 
 };
 
