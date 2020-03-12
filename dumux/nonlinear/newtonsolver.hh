@@ -418,9 +418,9 @@ public:
      *               system of equations. This parameter also stores
      *               the updated solution.
      */
-    void newtonUpdate(SolutionVector &uCurrentIter,
-                      const SolutionVector &uLastIter,
-                      const SolutionVector &deltaU)
+    virtual void newtonUpdate(SolutionVector &uCurrentIter,
+                              const SolutionVector &uLastIter,
+                              const SolutionVector &deltaU)
     {
         if (enableShiftCriterion_ || enablePartialReassembly_)
             newtonUpdateShift_(uLastIter, deltaU);
@@ -714,7 +714,7 @@ public:
 
 protected:
 
-    void computeResidualReduction_(const SolutionVector &uCurrentIter)
+    virtual void computeResidualReduction_(const SolutionVector &uCurrentIter)
     {
         residualNorm_ = this->assembler().residualNorm(uCurrentIter);
         reduction_ = residualNorm_;
