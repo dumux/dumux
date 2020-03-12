@@ -196,30 +196,6 @@ public:
             auto& subRes = (*residual_)[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
         });
-
-        static bool print = getParam<bool>("Problem.PrintMatrices");
-        if(print)
-        {
-            using namespace Dune::Indices;
-            Dune::printvector(std::cout, (*residual_)[_0], "", "");
-            Dune::printvector(std::cout, (*residual_)[_1], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_0][_0], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_0][_1], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_0][_2], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_0][_3], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_1][_0], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_1][_1], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_1][_2], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_1][_3], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_2][_0], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_2][_1], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_2][_2], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_2][_3], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_3][_0], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_3][_1], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_3][_2], "", "");
-            // Dune::printmatrix(std::cout, (*jacobian_)[_3][_3], "", "");
-        }
     }
 
     //! compute the residuals using the internal residual
