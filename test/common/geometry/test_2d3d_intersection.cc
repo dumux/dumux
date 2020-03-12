@@ -28,7 +28,7 @@ void testSegTriangle(const Dune::FieldVector<double, dimworld>& a,
     using SegGeometry = Dune::MultiLinearGeometry<double, 1, dimworld>;
     using Policy = Dumux::IntersectionPolicy::PointPolicy<double, dimworld>;
     using Test = Dumux::GeometryIntersection<TriGeometry, SegGeometry, Policy>;
-    typename Test::IntersectionType intersection;
+    typename Test::Intersection intersection;
 
     const auto tria = TriGeometry(Dune::GeometryTypes::triangle, CornerStorage({a, b, c}));
     const auto seg = SegGeometry(Dune::GeometryTypes::line, CornerStorage({q, p}));

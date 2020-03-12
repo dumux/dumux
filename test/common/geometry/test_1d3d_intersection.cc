@@ -27,7 +27,7 @@ bool testIntersection(const Dune::MultiLinearGeometry<double, dimworld, dimworld
 {
     using Test = Dumux::GeometryIntersection<Dune::MultiLinearGeometry<double,dimworld,dimworld>,
                                              Dune::MultiLinearGeometry<double,1,dimworld> >;
-    typename Test::IntersectionType intersection;
+    typename Test::Intersection intersection;
     bool found = Test::intersection(polyhedron, line, intersection);
     if (!found && foundExpected)
         std::cerr << "Failed detecting intersection with " << line.corner(0) << " " << line.corner(1) << std::endl;
