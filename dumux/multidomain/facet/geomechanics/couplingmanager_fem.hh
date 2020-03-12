@@ -154,7 +154,9 @@ class FacetCouplingPoroMechanicsCouplingManager
 
     //! Volume variables in the facet flow domain
     using FacetFlowGridVariables = GetPropType<SubDomainTypeTag<facetFlowDomainId>, Properties::GridVariables>;
-    using FacetFlowVolumeVariables = typename FacetFlowGridVariables::GridVolumeVariables::VolumeVariables;
+    using FacetFlowGridVolVars = typename FacetFlowGridVariables::GridVolumeVariables;
+    using FacetFlowElemVolVars  = typename FacetFlowGridVolVars::LocalView;
+    using FacetFlowVolumeVariables = typename FacetFlowGridVolVars::VolumeVariables;
 
     //! Class defining a sub-set of a contact surface segment.
     class ContactSurfaceSubSegment
@@ -687,10 +689,6 @@ public:
         const auto& gg = problem(lagrangeId).gridGeometry();
         const auto elemSol = elementSolution(element, curSol_[lagrangeId], gg);
         return evalSolution(element, eg, gg, elemSol, pos, true);
-        // auto sigma = evalSolution(element, eg, gg, elemSol, pos, true);
-        // auto f = getContactSurface(element).getBasisVector(dimWorld-1);
-        // f *= sigma;
-        // return f;
     }
 
     /*!
@@ -823,11 +821,20 @@ public:
 
         // both fluxes and sources are afffected by the deformation
         const auto& localResidual = facetFlowLocalAssembler.localResidual();
-        return localResidual.evalFluxAndSource(facetFlowLocalAssembler.element(),
-                                               facetFlowLocalAssembler.fvGeometry(),
-                                               facetFlowLocalAssembler.curElemVolVars(),
-                                               facetFlowLocalAssembler.elemFluxVarsCache(),
-                                               facetFlowLocalAssembler.elemBcTypes());
+        auto res = localResidual.evalFluxAndSource(facetFlowLocalAssembler.element(),
+                                                   facetFlowLocalAssembler.fvGeometry(),
+                                                   facetFlowLocalAssembler.curElemVolVars(),
+                                                   facetFlowLocalAssembler.elemFluxVarsCache(),
+                                                   facetFlowLocalAssembler.elemBcTypes());
+
+        // If the residual instationary, evaluate storage
+        if (!localResidual.isStationary())
+            res += localResidual.evalStorage(facetFlowLocalAssembler.element(),
+                                             facetFlowLocalAssembler.fvGeometry(),
+                                             facetFlowLocalAssembler.prevElemVolVars(),
+                                             facetFlowLocalAssembler.curElemVolVars());
+
+        return  res;
     }
 
     /*!
@@ -891,14 +898,6 @@ public:
                                const PrimaryVariables<j>& priVarsJ,
                                int pvIdxJ)
     {
-        // if (domainI == lagrangeId && domainJ == mechanicsId)
-        // {
-        //     std::cout << "COMING FROM " << localAssemblerI.element().geometry().center()
-        //               << "  -- > UPDATING CONTEXT at mech dof " << dofIdxGlobalJ
-        //               << "  -- > with privar idx " << pvIdxJ << std::endl;
-        //     std::cout << "CHANGE FROM " << std::setprecision(25) << curSol_[domainJ][dofIdxGlobalJ][pvIdxJ]
-        //               << " to " << priVarsJ[pvIdxJ] << std::endl;
-        // }
         curSol_[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
     }
 
@@ -1111,16 +1110,30 @@ public:
 
     /*!
      * \brief update variables of the porous medium flow problem in the facet domain
-     *        that depend on variables in domain j after the coupling context has been updated
+     *        that depend on variables in domain j after the coupling context has been updated (no caching)
      */
-    template<class LocalAssemblerI, class UpdatableElementVolVars, class UpdatableFluxVarCache>
+    template<class LocalAssemblerI, class UpdatableFluxVarCache>
     void updateCoupledVariables(FacetFlowIdType domainI,
                                 const LocalAssemblerI& localAssemblerI,
-                                UpdatableElementVolVars& elemVolVars,
+                                FacetFlowElemVolVars& elemVolVars,
                                 UpdatableFluxVarCache& elemFluxVarsCache)
     {
+        // update the element volume variables to obtain the updated apertures
+        elemVolVars.bind(localAssemblerI.element(), localAssemblerI.fvGeometry(), this->curSol()[facetFlowId]);
+        // maybe update transmissibilities
         BulkFacetFlowManager::updateCoupledVariables(facetFlowId, localAssemblerI, elemVolVars, elemFluxVarsCache);
     }
+
+    /*!
+     * \brief update variables of the porous medium flow problem in the facet domain
+     *        that depend on variables in domain j after the coupling context has been updated (no caching)
+     */
+    template<class LocalAssemblerI, class UpdatableFluxVarCache>
+    void updateCoupledVariables(FacetFlowIdType domainI,
+                                const LocalAssemblerI& localAssemblerI,
+                                FacetFlowGridVolVars& gridVars,
+                                UpdatableFluxVarCache& elemFluxVarsCache)
+    { DUNE_THROW(Dune::NotImplemented, "Caching not yet supported for poro-elastic facet coupling models"); }
 
     /*!
      * \brief update variables of the geomechanical problem in the bulk domain
