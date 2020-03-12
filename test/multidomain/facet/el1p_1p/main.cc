@@ -159,18 +159,21 @@ int main(int argc, char** argv) try
     couplingMapperFlow->update(fvGridGeometry[bulkFlowId], fvGridGeometry[facetFlowId], gridManager.getEmbeddings());
     couplingMapperMech->update(fvGridGeometry[bulkMechId], fvGridGeometry[facetFlowId], gridManager.getEmbeddings());
 
-    // initialize the coupling manager
-    couplingManager->init(problem.get(bulkFlowId),
-                          problem.get(facetFlowId),
-                          problem.get(bulkMechId),
-                          couplingMapperFlow,
-                          couplingMapperMech,
-                          x);
-
     // the grid variables
     using GridVariables = MultiDomainFVGridVariables<Traits>;
     GridVariables gridVars(fvGridGeometry.getTuple(), problem.getTuple());
     gridVars.init(x);
+
+    // initialize the coupling manager
+    couplingManager->init(problem.get(bulkFlowId),
+                          problem.get(facetFlowId),
+                          problem.get(bulkMechId),
+                          gridVars.get(bulkFlowId),
+                          gridVars.get(facetFlowId),
+                          gridVars.get(bulkMechId),
+                          couplingMapperFlow,
+                          couplingMapperMech,
+                          x);
 
     // intialize the vtk output module
     MultiDomainVtkOutputModule<Traits> vtkWriter;

@@ -365,6 +365,12 @@ public:
     const SolutionVector& curSol() const
     { return ParentType::curSol(); }
 
+    /*!
+     * \brief Returns the coupling context of the coupled problem
+     */
+    const PoroMechanicsCouplingContext& poroMechanicsCouplingContext() const
+    { return poroMechCouplingContext_; }
+
 private:
     /*!
      * \brief Initializes the pm flow domain coupling map. Since the elements

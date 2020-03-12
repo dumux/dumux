@@ -180,9 +180,9 @@ public:
               const SolutionVector& curSol)
     {
         curSol_ = curSol;
-        BulkFacetFlowManager::init(matrixFlowProblem, facetFlowProblem, matrixGridVars, facetFlowGridVars, bulkFacetFlowMapper, curSol);
-        BulkFacetMechManager::init(mechProblem, facetFlowProblem, mechGridVars, facetFlowGridVars, bulkFacetMechMapper, curSol);
-        PoroMechManager::init(matrixFlowProblem, mechProblem, matrixGridVars, mechGridVars, curSol);
+        BulkFacetFlowManager::init(matrixFlowProblem, facetFlowProblem, bulkFacetFlowMapper, curSol);
+        BulkFacetMechManager::init(mechProblem, facetFlowProblem, bulkFacetMechMapper, curSol);
+        PoroMechManager::init(matrixFlowProblem, mechProblem, curSol);
 
         // set up the map of bulk dofs coinciding with the lower-dimensional elements
         // in order to be able to compute the deformation-dependent aperture
@@ -230,6 +230,12 @@ public:
             }
         }
     }
+
+    /*!
+     * \brief Returns the coupling context of the coupled problem
+     */
+    const auto& poroMechanicsCouplingContext() const
+    { return PoroMechManager::poroMechanicsCouplingContext(); }
 
     /*!
      * \brief Computes the aperture of a sub-control volume within
