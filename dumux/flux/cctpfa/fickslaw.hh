@@ -127,11 +127,11 @@ public:
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;
 
-    template<int numPhases, int numComponents>
+    template<bool onlyTracers = false>
     using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
                                                                         numPhases,
                                                                         numComponents,
-                                                                        FluidSystem::isTracerFluidSystem()>;
+                                                                        onlyTracers>;
 
     //! return diffusive fluxes for all components in a phase
     static ComponentFluxVector flux(const Problem& problem,

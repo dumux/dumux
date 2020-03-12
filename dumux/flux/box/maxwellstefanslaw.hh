@@ -71,9 +71,11 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
     static_assert(referenceSystem == ReferenceSystemFormulation::massAveraged, "only the mass averaged reference system is supported for the Maxwell-Stefan formulation");
 
 public:
-
-    template<int numFluidPhases, int numComponents>
-    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numFluidPhases, numComponents>;
+    template <bool onlyTracers = false>
+    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar,
+                                                                              numFluidPhases,
+                                                                              numComponents,
+                                                                              onlyTracers>;
 
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()

@@ -63,6 +63,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, reference
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     static constexpr int numComponents = ModelTraits::numFluidComponents();
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+
     using NumEqVector = Dune::FieldVector<Scalar, numComponents>;
 
     static_assert(ModelTraits::numFluidPhases() == 1, "Only one phase supported!");
@@ -78,11 +80,11 @@ public:
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
-    template<int numPhases, int numComponents>
+    template <bool onlyTracers = false>
     using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
                                                                         numPhases,
                                                                         numComponents,
-                                                                        FluidSystem::isTracerFluidSystem()>;
+                                                                        onlyTracers>;
 
     template<class Problem, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,

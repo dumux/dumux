@@ -59,7 +59,9 @@ class TracerVolumeVariables
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<1, numFluidComps>;
+
+    static constexpr bool onlyTracerComponents = true;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<onlyTracerComponents>;
 
 public:
     //! Export fluid system type
@@ -100,11 +102,11 @@ public:
         // Update the binary diffusion and effective diffusion coefficients.
         auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            return FluidSystem::binaryDiffusionCoefficient( compIIdx,
-                                                            compJIdx,
-                                                            problem,
-                                                            element,
-                                                            scv);
+            return FluidSystem::binaryDiffusionCoefficient(compIIdx,
+                                                           compJIdx,
+                                                           problem,
+                                                           element,
+                                                           scv);
         };
 
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)

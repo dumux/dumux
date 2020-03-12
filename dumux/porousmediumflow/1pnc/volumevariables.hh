@@ -55,7 +55,7 @@ class OnePNCVolumeVariables
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using Idx = typename Traits::ModelTraits::Indices;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<1, numFluidComps>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
 
     enum
     {

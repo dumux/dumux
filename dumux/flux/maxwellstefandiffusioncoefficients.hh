@@ -38,8 +38,15 @@ namespace Dumux {
  * \tparam Scalar The type used for scalar values
  * \tparam numPhases Number of phases in the fluid composition
  * \tparam numComponents Number of components in the fluid composition
+ * \tparam onlyTracers If false, this means that the main component of
+ *                     a phase is part of the components. In this case,
+ *                     the storage container is optimized with respect to
+ *                     memory consumption as diffusion coefficients of the
+ *                     main component of a phase in itself are not stored.
+ *                     If true, all diffusion coefficients of all components
+ *                     are stored
  */
-template <class Scalar, int numPhases, int numComponents>
+template <class Scalar, int numPhases, int numComponents, bool onlyTracers = false>
 class MaxwellStefanDiffusionCoefficients
 {
 public:

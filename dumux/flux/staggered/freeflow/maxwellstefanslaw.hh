@@ -62,6 +62,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered, 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static const int numComponents = ModelTraits::numFluidComponents();
+    static const int numPhases = ModelTraits::numFluidPhases();
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
@@ -83,8 +84,8 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
-    template<int numPhases, int numComponents>
-    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents>;
+    template <bool onlyTracers = false>
+    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents, onlyTracers>;
 
     template<class ElementVolumeVariables>
     static CellCenterPrimaryVariables flux(const Problem& problem,

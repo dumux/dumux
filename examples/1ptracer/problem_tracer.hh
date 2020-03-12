@@ -133,7 +133,8 @@ public:
     // We set the value for the binary diffusion coefficient. This
     // might depend on spatial parameters like pressure / temperature.
     // But, in this case we neglect diffusion and return 0.0:
-    static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
+    static Scalar binaryDiffusionCoefficient(unsigned int compIdxI,
+                                             unsigned int compIdxJ,
                                              const Problem& problem,
                                              const Element& element,
                                              const SubControlVolume& scv)

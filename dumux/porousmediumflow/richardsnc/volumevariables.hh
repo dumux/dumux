@@ -55,7 +55,7 @@ class RichardsNCVolumeVariables
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
 
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<2, numFluidComps>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
 
 public:
     //! Export type of the fluid system
