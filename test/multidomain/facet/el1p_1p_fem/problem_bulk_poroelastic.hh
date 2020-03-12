@@ -18,12 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
- * \brief The problem for the bulk domain in the elastic
+ * \brief The problem for the poromechanical domain in the elastic
  *        single-phase facet coupling test.
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_POROELASTIC_PROBLEM_HH
-#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_POROELASTIC_PROBLEM_HH
+#ifndef DUMUX_ANALYTIC_CRACK_BULK_POROELASTIC_PROBLEM_HH
+#define DUMUX_ANALYTIC_CRACK_BULK_POROELASTIC_PROBLEM_HH
 
 #include <dune/alugrid/grid.hh>
 #include <dune/functions/functionspacebases/lagrangebasis.hh>
@@ -35,10 +34,17 @@
 #include <dumux/discretization/fem/ipdata.hh>
 #include <dumux/discretization/fem/elementsolution.hh>
 #include <dumux/discretization/fem/fegridgeometry.hh>
+#include <dumux/multidomain/facet/box/properties.hh>
+
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
 #include "spatialparams_bulk_poroelastic.hh"
+
+// order of the ansatz space in FEM
+#ifndef FEMORDER
+#define FEMORDER 1
+#endif
 
 namespace Dumux {
 
@@ -50,14 +56,19 @@ namespace Properties {
 
 // Create new type tags
 namespace TTag {
-struct PoroElasticBulk { using InheritsFrom = std::tuple<PoroElastic, FiniteElementModel>; };
+struct PoroElasticBulk { using InheritsFrom = std::tuple<PoroElastic>; };
+struct PoroElasticBulkFem { using InheritsFrom = std::tuple<PoroElasticBulk, FiniteElementModel>; };
+struct PoroElasticBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, PoroElasticBulk>; };
+
 } // end namespace TTag
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PoroElasticBulk> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+struct Grid<TypeTag, TTag::PoroElasticBulk> { using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>; };
+
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PoroElasticBulk> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
+
 // The fluid phase consists of one constant component
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PoroElasticBulk>
@@ -75,25 +86,24 @@ struct SpatialParams<TypeTag, TTag::PoroElasticBulk>
 
 // We use a lagrange basis of first order here
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::PoroElasticBulk>
+struct GridGeometry<TypeTag, TTag::PoroElasticBulkFem>
 {
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FEBasis = Dune::Functions::LagrangeBasis<GridView, 2>;
+    using FEBasis = Dune::Functions::LagrangeBasis<GridView, FEMORDER>;
 public:
     using type = FEGridGeometry<FEBasis>;
 };
 
-// We use a lagrange basis of zero-th order here
+// TODO: Remove this once fix is finished in dumux
 template<class TypeTag>
-struct FVGridGeometry<TypeTag, TTag::PoroElasticBulk>
+struct FVGridGeometry<TypeTag, TTag::PoroElasticBulkFem>
 { using type = GetPropType<TypeTag, Properties::GridGeometry>; };
 
 } // end namespace Properties
 
 /*!
- * \ingroup FacetTests
- * \brief The problem for the bulk domain in the elastic
+ * \brief The problem for the poromechanical domain in the elastic
  *        single-phase facet coupling test.
  */
 template<class TypeTag>
@@ -107,16 +117,11 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using SecondaryVariables = typename GridVariables::SecondaryVariables;
-
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FEElementGeometry = typename GridGeometry::LocalView;
-    using AnsatzBasis = typename GridGeometry::AnsatzSpaceBasis;
-    using FiniteElement = typename AnsatzBasis::LocalView::Tree::FiniteElement;
-    using LocalBasis = typename FiniteElement::Traits::LocalBasisType;
+    using GGLocalView = typename GridGeometry::LocalView;
 
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -125,6 +130,8 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
 
     using StressType = GetPropType<TypeTag, Properties::StressType>;
     using Force = typename StressType::ForceVector;
+
+    static constexpr bool isFem = GridGeometry::discMethod == DiscretizationMethod::fem;
 
 public:
     PoroElasticSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
@@ -135,15 +142,13 @@ public:
     , couplingManagerPtr_(couplingManagerPtr)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-        injectionPressure_ = getParam<Scalar>("Problem.InjectionPressure");
+        boundaryStress_ = getParamFromGroup<Scalar>(paramGroup, "Problem.InjectionOverPressure");
 
         sigma_x_.resize(gridGeometry->gridView().size(0), Force(0.0));
         sigma_y_.resize(gridGeometry->gridView().size(0), Force(0.0));
     }
 
-    /*!
-     * \brief The problem name.
-     */
+    //! The problem name.
     const std::string& name() const
     { return problemName_; }
 
@@ -159,20 +164,8 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * \param element The grid element
-     * \param is The intersection
-     * \param elemSol The element solution vector
-     * \param ipData Shape function values/gradients evaluated at an integration point
-     * \param secVars The primary/secondary variables evaluated at an integration point
-     *
-     * Negative values mean influx.
-     * E.g. for a mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
-     */
-    template<class ElementSolution, class IpData>
+    //! Evaluate the boundary conditions for a neumann boundary segment (fem implementation).
+    template<class ElementSolution, class IpData, class SecondaryVariables>
     NumEqVector neumann(const Element& element,
                         const Intersection& is,
                         const ElementSolution& elemSol,
@@ -181,12 +174,15 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        // apply facet domain pressure and/or contact traction on interior boundaries
+        // apply contact traction on interior boundaries
+        // neglect facet pressure here!!
         if (couplingManager().isOnInteriorBoundary(element, is))
         {
             // Contribution of the fluid pressure
+            const auto& facetVolVars = couplingManager().getLowDimVolVars(element, is, ipData.ipGlobal());
             Force force = is.centerUnitOuterNormal();
-            force *= couplingManager().getLowDimVolVars(element, is, ipData.ipGlobal()).pressure();
+            force *= facetVolVars.pressure();
+            force *= -1.0;
 
             // Contribution of the contact mechanics
             force += couplingManager().getContactTraction(element, is, ipData.ipGlobal());
@@ -195,83 +191,109 @@ public:
         }
 
         // apply boundary pressures on inlet/outlet
-        else if (isOnInlet_(ipData.ipGlobal()))
+        else if (onStressBoundary_(ipData.ipGlobal()))
         {
             values = is.centerUnitOuterNormal();
-            values *= injectionPressure_;
+            values *= boundaryStress_;
             values *= -1.0;
         }
-        // else if (isOnOutlet_(scvf.ipGlobal()))
-        // {
-        //     values = scvf.unitOuterNormal();
-        //     values *= extractionPressure_;
-        //     values *= -1.0;
-        // }
-        // // there might be neumann faces on the upper or lower boundary
-        // // if there are fractures extending to them. In this case, compute
-        // // the boundary force from the urrent stress such that displacement
-        // // in y results in 0
-        // else if (isOnUpperBoundary_(scvf.ipGlobal()) || isOnLowerBoundary_(scvf.ipGlobal()))
-        // {
-        //     // make element solution and set displacements on boundary to zero
-        //     auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-        //
-        //     for (const auto& curScvf : scvfs(fvGeometry))
-        //         if ( curScvf.boundary() &&
-        //              (isOnUpperBoundary_(curScvf.ipGlobal()) || isOnLowerBoundary_(curScvf.ipGlobal())) )
-        //         { elemSol[fvGeometry.scv(curScvf.insideScvIdx()).localDofIndex()][Indices::uyIdx] = 0.0; }
-        //
-        //     // with this element sol, make new elemVolVars
-        //     auto modifiedElemVolVars = elemVolVars;
-        //     for (const auto& scv : scvs(fvGeometry))
-        //         modifiedElemVolVars[scv].update(elemSol, *this, element, scv);
-        //
-        //     using StressVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-        //     StressVariablesCache cache;
-        //     cache.update(*this, element, fvGeometry, modifiedElemVolVars, scvf);
-        //
-        //     // compute the force f = -sigma*n
-        //     const auto sigma = StressType::stressTensor(*this, element, fvGeometry, modifiedElemVolVars, cache);
-        //     sigma.mv(scvf.unitOuterNormal(), values);
-        // }
 
         return values;
     }
 
-    /*!
-     * \brief Returns the effective fluid density (box implementation).
-     */
+    //! Evaluates the boundary conditions for a Neumann boundary segment (box implementation).
+    template<class ElementVolumeVariables, class SubControlVolumeFace>
+    NumEqVector neumann(const Element& element,
+                        const GGLocalView& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
+    {
+        PrimaryVariables values(0.0);
+
+        // apply boundary pressures on inlet/outlet
+        if (onStressBoundary_(scvf.ipGlobal()))
+        {
+            values = scvf.unitOuterNormal();
+            values *= boundaryStress_;
+            values *= -1.0;
+        }
+
+        return values;
+    }
+
+    //! Specifies which kind of interior boundary condition should be
+    //! used for which equation on a given sub-control volume face
+    //! that couples to a facet element. (Only relevant for box)
+    template<class SubControlVolumeFace>
+    BoundaryTypes interiorBoundaryTypes(const Element& element,
+                                        const SubControlVolumeFace& scvf) const
+    {
+        BoundaryTypes values;
+        values.setAllNeumann();
+        return values;
+    }
+
+    //! Applies the forces stemming from pressure and contact forces (box implementation).
+    template<class ElementVolumeVariables, class SubControlVolumeFace>
+    Force interiorBoundaryForce(const Element& element,
+                                const GGLocalView& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const SubControlVolumeFace& scvf) const
+    {
+        const auto& facetVolVars = couplingManager().getLowDimVolVars(element, scvf);
+
+        // Contribution of the fluid pressure
+        Force force = scvf.unitOuterNormal();
+        force *= facetVolVars.pressure();
+        force *= scvf.area();
+        force *= -1.0;
+
+        // Contribution of the contact mechanics
+        force += couplingManager().getContactForce(element, scvf);
+
+        return force;
+    }
+
+    //! Returns the effective fluid density (fem implementation).
     template<class IpData, class ElemSol>
     Scalar effectiveFluidDensity(const Element& element,
                                  const IpData& ipData,
                                  const ElemSol& elemSol) const
-    { return couplingManager().getPMFlowVolVars(element).density(); }
+    { return couplingManager().getPMFlowVolVars(element, ipData.ipGlobal()).density(); }
 
-    /*!
-     * \brief Returns the effective pore pressure (fem implementation).
-     */
+    //! Returns the effective pore pressure (fem implementation).
     template< class IpData, class ElemSol, class SecondaryVariables >
     Scalar effectivePorePressure(const Element& element,
-                                 const FEElementGeometry& feGeometry,
+                                 const GGLocalView& feGeometry,
                                  const ElemSol& elemSol,
                                  const IpData& ipData,
                                  const SecondaryVariables& secVars) const
-    { return couplingManager().getPMFlowVolVars(element).pressure(); }
+    { return couplingManager().getPMFlowVolVars(element, ipData.ipGlobal()).pressure(); }
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param globalPos The global position
-     */
+    //! Returns the effective fluid density in an scv (box implementation).
+    template<class SubControlVolume>
+    Scalar effectiveFluidDensity(const Element& element,
+                                 const SubControlVolume& scv) const
+    { return couplingManager().getPMFlowVolVars(element, scv.center()).density(); }
+
+    //! Returns the effective pore pressure at a flux integration point (box implementation).
+    template< class ElementVolumeVariables, class FluxVarsCache >
+    Scalar effectivePorePressure(const Element& element,
+                                 const GGLocalView& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const FluxVarsCache& fluxVarsCache) const
+    { return couplingManager().getPMFlowVolVars(element, fluxVarsCache.ipGlobal()).pressure(); }
+
+    //! Specifies which kind of boundary condition should be
+    //! used for which equation on a given boundary segment.
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
         values.setAllNeumann();
 
-        const auto xMax = this->gridGeometry().bBoxMax()[0];
-        const auto yMin = this->gridGeometry().bBoxMin()[1];
-        const auto yMax = this->gridGeometry().bBoxMax()[1];
+        static const auto xMax = this->gridGeometry().bBoxMax()[0];
+        static const auto yMin = this->gridGeometry().bBoxMin()[1];
+        static const auto yMax = this->gridGeometry().bBoxMax()[1];
 
         if (globalPos[0] > xMax - 1e-6)
             values.setDirichlet(Indices::uxIdx);
@@ -285,13 +307,18 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 
-    //! update the output fields
-    template<class GridVariables, class Assembler, class SolutionVector, class Id>
+    //! update the output fields (fem implementation)
+    template<class GridVariables, class Assembler, class SolutionVector, class Id,
+             bool isFE = isFem, std::enable_if_t<isFE, int> = 0>
     void updateOutputFields(const GridVariables& gridVariables,
                             const Assembler& assembler,
                             const SolutionVector& x,
                             Id id)
     {
+        using AnsatzBasis = typename GridGeometry::AnsatzSpaceBasis;
+        using FiniteElement = typename AnsatzBasis::LocalView::Tree::FiniteElement;
+        using LocalBasis = typename FiniteElement::Traits::LocalBasisType;
+
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             const auto eIdx = this->gridGeometry().elementMapper().index(element);
@@ -304,10 +331,39 @@ public:
             const auto& localBasis = feGeometry.feBasisLocalView().tree().finiteElement().localBasis();
 
             FEIntegrationPointData<GlobalPosition, LocalBasis> ipData(eg, eg.local(eg.center()), localBasis);
-            SecondaryVariables secVars;
+            typename GridVariables::SecondaryVariables secVars;
             secVars.update(elemSol, *this, element, ipData);
 
             const auto sigma = StressType::effectiveStressTensor(*this, element, feGeometry, elemSol, ipData, secVars);
+            sigma_x_[eIdx] = sigma[Indices::uxIdx];
+            sigma_y_[eIdx] = sigma[Indices::uyIdx];
+        }
+    }
+
+    //! update the output fields (box implementation)
+    template<class GridVariables, class Assembler, class SolutionVector, class Id,
+             bool isFE = isFem, std::enable_if_t<!isFE, int> = 0>
+    void updateOutputFields(const GridVariables& gridVariables,
+                            const Assembler& assembler,
+                            const SolutionVector& x,
+                            Id id)
+    {
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+
+            auto fvGeometry = localView(this->fvGridGeometry());
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
+
+            couplingManagerPtr_->bindCouplingContext(id, element, assembler);
+            fvGeometry.bindElement(element);
+            elemVolVars.bindElement(element, fvGeometry, x);
+
+            using StressVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+            StressVariablesCache cache;
+            cache.update(*this, element, fvGeometry, elemVolVars, element.geometry().center());
+
+            const auto sigma = StressType::effectiveStressTensor(*this, element, fvGeometry, elemVolVars, cache);
             sigma_x_[eIdx] = sigma[Indices::uxIdx];
             sigma_y_[eIdx] = sigma[Indices::uyIdx];
         }
@@ -318,31 +374,18 @@ public:
     const std::vector<Force>& sigma_y() const { return sigma_y_; }
 
 private:
-    //! The inlet is on the left side of the domain
-    bool isOnInlet_(const GlobalPosition& globalPos) const
+    bool onStressBoundary_(const GlobalPosition& globalPos) const
     { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + 1e-6; }
-
-    //! The outlet is on the right side of the domain
-    bool isOnOutlet_(const GlobalPosition& globalPos) const
-    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - 1e-6; }
-
-    //! Returns true if position is on upper boundary
-    bool isOnUpperBoundary_(const GlobalPosition& globalPos) const
-    { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - 1e-6; }
-
-    //! Returns true if position is on lower boundary
-    bool isOnLowerBoundary_(const GlobalPosition& globalPos) const
-    { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + 1e-6; }
 
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
     static constexpr Scalar eps_ = 3e-6;
     std::string problemName_;
 
-    Scalar injectionPressure_;
+    Scalar boundaryStress_;
     std::vector<Force> sigma_x_;
     std::vector<Force> sigma_y_;
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_POROELASTIC_PROBLEM_HH
+#endif

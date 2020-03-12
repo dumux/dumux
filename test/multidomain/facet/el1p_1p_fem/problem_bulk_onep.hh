@@ -18,20 +18,21 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the bulk domain in the elastic
  *        single-phase facet coupling test.
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_FLOW_PROBLEM_HH
-#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_FLOW_PROBLEM_HH
+#ifndef DUMUX_NETWORK_2D_BULK_FLOW_PROBLEM_HH
+#define DUMUX_NETWORK_2D_BULK_FLOW_PROBLEM_HH
 
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
+#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
+#include <dumux/multidomain/facet/box/properties.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 
@@ -46,14 +47,18 @@ namespace Properties {
 namespace TTag {
 struct OnePBulk { using InheritsFrom = std::tuple<OneP>; };
 struct OnePBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePBulk>; };
+struct OnePBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePBulk>; };
+struct OnePBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePBulk>; };
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePBulk> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+struct Grid<TypeTag, TTag::OnePBulk> { using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming>; };
+
 // Set the problem type
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePBulk> { using type = OnePBulkProblem<TypeTag>; };
+
 // set the spatial params
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePBulk>
@@ -77,10 +82,14 @@ public:
     using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<0, Scalar> >;
 };
 
+// solution-independent permeabilities
+template<class TypeTag>
+struct SolutionDependentAdvection<TypeTag, TTag::OnePBulk>
+{ static constexpr bool value = false; };
+
 } // end namespace Properties
 
 /*!
- * \ingroup FacetTests
  * \brief The problem for the bulk domain in the elastic
  *        single-phase facet coupling test.
  */
@@ -95,6 +104,7 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GridVariables::Scalar;
 
     using FVGridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -102,6 +112,8 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
     //! The constructor
@@ -113,17 +125,12 @@ public:
     , couplingManagerPtr_(couplingManagerPtr)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-
-        porosities_.resize(fvGridGeometry->gridView().size(0), getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPorosity"));
-        permeabilities_.resize(fvGridGeometry->gridView().size(0), getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPermeability"));
-
-        injectionPressure_ = getParam<Scalar>("Problem.InjectionPressure");
         extractionPressure_ = getParam<Scalar>("Problem.ExtractionPressure");
+        injectionOverPressure_ = getParam<Scalar>("Problem.InjectionOverPressure");
+        porosity_.resize(fvGridGeometry->gridView().size(0), getParam<Scalar>("SpatialParams.InitialPorosity"));
     }
 
-    /*!
-     * \brief The problem name.
-     */
+    //! The problem name.
     const std::string& name() const
     { return problemName_; }
 
@@ -132,33 +139,43 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - 1e-6)
+
+        if ( isOnInlet(globalPos) || isOnOutlet(globalPos) )
             values.setAllDirichlet();
+
         return values;
     }
 
-    /*!
-     * \brief Specifies which kind of interior boundary condition should be
-     *        used for which equation on a given sub-control volume face
-     *        that couples to a facet element.
-     *
-     * \param element The finite element the scvf is embedded in
-     * \param scvf The sub-control volume face
-     */
+    //! Specifies which kind of interior boundary condition should be
+    //! used for which equation on a given sub-control volume face
+    //! that couples to a facet element.
     BoundaryTypes interiorBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
-        values.setAllDirichlet();
+        static const bool useInteriorDirichlet = getParam<bool>("Problem.UseInteriorDirichlet");
+        if (useInteriorDirichlet)
+            values.setAllDirichlet();
+        else
+            values.setAllNeumann();
         return values;
     }
 
     //! Evaluates the Dirichlet boundary conditions at a given position.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        if (isOnInlet_(globalPos))
-            return PrimaryVariables(injectionPressure_);
-         return initialAtPos(globalPos);
-     }
+        auto values = initialAtPos(globalPos);
+        if (isOnInlet(globalPos))
+            values[0] += injectionOverPressure_;
+        return values;
+    }
+
+    //! evaluate the Neumann boundary conditions
+    template<class ElementVolumeVariables>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
+    { return NumEqVector(0.0); }
 
     //! Evaluates the initial conditions.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
@@ -172,17 +189,24 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 
-    //! returns the vector of apertures
-    const std::vector<Scalar>& porosities() const
-    { return porosities_; }
+    //! The inlet is on the left side of the domain
+    bool isOnInlet(const GlobalPosition& globalPos) const
+    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + 1e-6; }
 
-    //! returns the vector of permeabilities
-    const std::vector<Scalar>& permeabilities() const
-    { return permeabilities_; }
+    //! The inlet is on the left side of the domain
+    bool isOnOutlet(const GlobalPosition& globalPos) const
+    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - 1e-6; }
 
-    //! update the output fields
+    //! adds additional output fields to a vtk writer
+    template<class OutputModule>
+    void addOutputFields(OutputModule& outputModule)
+    {
+        outputModule.addField(porosity_, "porosity", OutputModule::FieldType::element);
+    }
+
+    //! updates the output fields for a given solution
     template<class SolutionVector>
-    void updateOutputFields(SolutionVector x)
+    void updateOutputFields(const SolutionVector& x)
     {
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
@@ -190,30 +214,23 @@ public:
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
 
+            Scalar porosity = 0.0;
             for (const auto& scv : scvs(fvGeometry))
-            {
-                porosities_[scv.elementIndex()] = this->spatialParams().porosity(element, scv, elemSol);
-                permeabilities_[scv.elementIndex()] = this->spatialParams().permeability(element, scv, elemSol);
-            }
+                porosity += this->spatialParams().porosity(element, scv, elemSol);
+            porosity /= fvGeometry.numScv();
+
+            porosity_[this->fvGridGeometry().elementMapper().index(element)] = porosity;
         }
     }
 
 private:
-    //! The inlet is on the left side of the domain
-    bool isOnInlet_(const GlobalPosition& globalPos) const
-    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + 1e-6; }
-
     std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
-
-    // fields to be added to output
-    std::vector<Scalar> porosities_;
-    std::vector<Scalar> permeabilities_;
-
-    Scalar injectionPressure_;
     Scalar extractionPressure_;
+    Scalar injectionOverPressure_;
+    std::vector<Scalar> porosity_;
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_FLOW_PROBLEM_HH
+#endif

@@ -18,19 +18,20 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the (d-1)-dimensional facet domain in the elastic
  *        single-phase facet coupling test.
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_FACET_FLOW_PROBLEM_HH
-#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_FACET_FLOW_PROBLEM_HH
+#ifndef DUMUX_NETWORK_2D_FACET_FLOW_PROBLEM_HH
+#define DUMUX_NETWORK_2D_FACET_FLOW_PROBLEM_HH
 
 #include <dune/foamgrid/foamgrid.hh>
 
-#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 
@@ -45,14 +46,17 @@ namespace Properties {
 namespace TTag {
 struct OnePFacet { using InheritsFrom = std::tuple<OneP>; };
 struct OnePFacetTpfa { using InheritsFrom = std::tuple<OnePFacet, CCTpfaModel>; };
+struct OnePFacetBox { using InheritsFrom = std::tuple<OnePFacet, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePFacet> { using type = Dune::FoamGrid<1, 2>; };
+
 // Set the problem type
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePFacet> { using type = OnePFacetProblem<TypeTag>; };
+
 // set the spatial params
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::OnePFacet>
@@ -79,7 +83,6 @@ public:
 } // end namespace Properties
 
 /*!
- * \ingroup FacetTests
  * \brief The problem for the (d-1)-dimensional facet domain in the elastic
  *        single-phase facet coupling test.
  */
@@ -105,6 +108,8 @@ class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+
 public:
     OnePFacetProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                      std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
@@ -112,18 +117,17 @@ public:
                      const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
-    , initialAperture_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialAperture"))
     , extractionPressure_(getParamFromGroup<Scalar>(paramGroup, "Problem.ExtractionPressure"))
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        initialAperture_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialGap");
+        initialAperture_ += getParamFromGroup<Scalar>(paramGroup, "SpatialParams.MinHydraulicAperture");
 
         apertures_.resize(fvGridGeometry->gridView().size(0), initialAperture_);
         permeabilities_.resize(fvGridGeometry->gridView().size(0), initialAperture_*initialAperture_/12.0);
     }
 
-    /*!
-     * \brief The problem name.
-     */
+    //! The problem name.
     const std::string& name() const
     { return problemName_; }
 
@@ -131,29 +135,15 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
+
         values.setAllNeumann();
+        if (isOnOutlet(globalPos))
+            values.setAllDirichlet();
+
         return values;
     }
 
-    /*!
-     * \brief Specifies which kind of interior boundary condition should be
-     *        used for which equation on a given sub-control volume face
-     *        that couples to a facet element.
-     *
-     * \param element The finite element the scvf is embedded in
-     * \param scvf The sub-control volume face
-     */
-    BoundaryTypes interiorBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        BoundaryTypes values;
-        values.setAllNeumann();
-        return values;
-    }
-
-    /*!
-     * \brief Evaluates the source term for all phases within a given
-     *        sub-control volume.
-     */
+    //!Evaluates the source term for all phases within a given sub-control volume.
     NumEqVector source(const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
@@ -171,15 +161,11 @@ public:
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol) const
     {
-        static const Scalar zeroA = getParam<Scalar>("Problem.ZeroApertureThreshold");
-        static const bool considerZeroA = getParam<bool>("Problem.UseZeroApertureThreshold");
-
-        const auto a = couplingManager().computeAperture(element, scv, initialAperture_);
-
-        if (considerZeroA && a < zeroA)
-            return zeroA;
-
-        return a;
+        static const Scalar gapZeroThreshold = getParam<Scalar>("SpatialParams.ZeroGapThreshold");
+        static const Scalar minA = getParam<Scalar>("SpatialParams.MinHydraulicAperture");
+        static const Scalar initGap = getParam<Scalar>("SpatialParams.InitialGap");
+        const auto a = couplingManager().computeAperture(element, scv, initGap);
+        return a < gapZeroThreshold ? minA : minA + a;
     }
 
     //! Evaluates the initial conditions.
@@ -188,7 +174,15 @@ public:
 
     //! Evaluates the Dirichlet boundary conditions at a given position.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    { DUNE_THROW(Dune::InvalidStateException, "Problem should not have Dirichlet BCs"); }
+    { return initialAtPos(globalPos); }
+
+    //! evaluate the Neumann boundary conditions
+    template<class ElementVolumeVariables>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
+    { return NumEqVector(0.0); }
 
     //! Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
     Scalar temperature() const
@@ -222,6 +216,14 @@ public:
                 permeabilities_[scv.elementIndex()] = this->spatialParams().permeability(element, scv, elemSol);
             }
         }
+    }
+
+    //! The inlet is on the left side of the domain
+    bool isOnOutlet(const GlobalPosition& globalPos) const
+    {
+        static constexpr auto bulkId = Dune::index_constant<0>();
+        const auto& bulkFvGridGeometry = couplingManager().problem(bulkId).fvGridGeometry();
+        return globalPos[0] > bulkFvGridGeometry.bBoxMax()[0] - 1e-6;
     }
 
 private:

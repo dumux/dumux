@@ -18,14 +18,17 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the lagrange-multiplier domain that is
  *        used to model contact mechanics of closing fractures.
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_LAGRANGE_MP_PROBLEM_HH
-#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_LAGRANGE_MP_PROBLEM_HH
+#ifndef DUMUX_ANALYTIC_CRACK_LAGRANGE_MP_PROBLEM_HH
+#define DUMUX_ANALYTIC_CRACK_LAGRANGE_MP_PROBLEM_HH
+
+#include <limits>
 
 #include <dune/foamgrid/foamgrid.hh>
+
+#include <dune/common/reservedvector.hh>
 #include <dune/functions/functionspacebases/lagrangebasis.hh>
 #include <dune/functions/functionspacebases/lagrangedgbasis.hh>
 
@@ -36,14 +39,22 @@
 #include <dumux/discretization/fem/fegridgeometry.hh>
 #include <dumux/multidomain/lagrangemultiplier/localresidual.hh>
 
+// change the order of the basis
+#ifndef LAGRANGEBASISORDER
+#define LAGRANGEBASISORDER 0
+#endif
+
+// change the basis type
+#ifndef LAGRANGEBASISTYPE
+#define LAGRANGEBASISTYPE LagrangeDGBasis<GridView, LAGRANGEBASISORDER>
+#endif
+
 namespace Dumux {
 
 // The model traits corresponding to this problem
 template<int dimWorld>
 struct ContactLagrangeModelTraits
-{
-    static constexpr int numEq() { return dimWorld; }
-};
+{ static constexpr int numEq() { return dimWorld; } };
 
 // forward declarations
 template<class TypeTag> class LagrangeProblem;
@@ -69,12 +80,12 @@ struct GridGeometry<TypeTag, TTag::LagrangeFacet>
 {
 private:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using FEBasis = Dune::Functions::LagrangeBasis<GridView, 0>;
+    using FEBasis = Dune::Functions::LAGRANGEBASISTYPE;
 public:
     using type = FEGridGeometry<FEBasis>;
 };
 
-// We use a lagrange basis of zero-th order here
+// TODO: Get rid once it is no longer necessary
 template<class TypeTag>
 struct FVGridGeometry<TypeTag, TTag::LagrangeFacet>
 { using type = GetPropType<TypeTag, Properties::GridGeometry>; };
@@ -97,9 +108,8 @@ struct LocalResidual<TypeTag, TTag::LagrangeFacet>
 } // end namespace Properties
 
 /*!
- * \ingroup FacetTests
- * \brief The problem for the (d-1)-dimensional facet domain in the elastic
- *        single-phase facet coupling test.
+ * \brief The problem for the (d-1)-dimensional lagrange multiplier
+ *        domain in the elastic single-phase facet coupling test.
  */
 template<class TypeTag>
 class LagrangeProblem : public FEProblem<TypeTag>
@@ -113,6 +123,7 @@ class LagrangeProblem : public FEProblem<TypeTag>
     using SecondaryVariables = typename GridVariables::SecondaryVariables;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Grid = typename GridGeometry::GridView::Grid;
     using FEElementGeometry = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -135,15 +146,15 @@ public:
                          + "_"
                          + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
 
-        initialValues_ = getParamFromGroup<NumEqVector>(paramGroup, "InitialLagrangeMP");
+        initialValues_ = getParamFromGroup<NumEqVector>(paramGroup, "InitialTraction");
         penaltyFactor_ = getParamFromGroup<Scalar>(paramGroup, "PenaltyFactor");
+        initialGap_ = getParam<Scalar>("SpatialParams.InitialGap");
+
+        // this test does not consider friction
         frictionCoefficient_ = getParamFromGroup<Scalar>(paramGroup, "FrictionCoefficient");
-        initialAperture_ = getParam<Scalar>("OnePFacet.SpatialParams.InitialAperture");
     }
 
-    /*!
-     * \brief The problem name.
-     */
+    //! The problem name.
     const std::string& name() const
     { return problemName_; }
 
@@ -152,17 +163,10 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-
-        // the tangential traction must be zero at fracture tips
-        // values.setDirichlet(1);
-
         return values;
     }
 
-    /*!
-     * \brief Evaluates the source term for all phases within a given
-     *        sub-control volume.
-     */
+    //! Evaluates the interface constraint
     template<class ElementSolution, class IpData>
     NumEqVector evalConstraint(const Element& element,
                                const FEElementGeometry& feGeometry,
@@ -176,83 +180,56 @@ public:
         const auto& traction = secVars.priVars();
         const auto& contactSurfaceSegment = couplingManager().getContactSurfaceSegment(element);
 
-        const auto a = couplingManager().computeAperture(element, ipData.ipGlobal(), initialAperture_);
+        const auto a = couplingManager().computeAperture(element, ipData.ipGlobal(), initialGap_);
         const auto deltaUT = couplingManager().computeTangentialDisplacementJump(element, ipData.ipGlobal());
 
+        // compute normal and tangential traction
         const auto tN = traction*contactSurfaceSegment.getBasisVector(dimWorld-1);
         auto tT = contactSurfaceSegment.getBasisVector(dimWorld-1);
-        tT *= -1.0;
-        tT *= tN;
+        tT *= -1.0*tN;
         tT += traction;
-        // if (feGeometry.gridGeometry().elementMapper().index(element) > -1){
-        // std::cout << "ip: " << ipData.ipGlobal() << " -> a " << a << " -> delta " << deltaUT << " // "
-        //           << couplingManager().computeNormalDisplacementJump(element, ipData.ipGlobal()) << std::endl;
-        // std::cout << "TRACTION " << traction << std::endl;
-        // std::cout << "BASIS Vector1:" << contactSurfaceSegment.getBasisVector(0) << std::endl;
-        // std::cout << "BASIS Vector2:" << contactSurfaceSegment.getBasisVector(dimWorld-1) << std::endl;
-        // }
+
         const auto normalMaxArg = -1.0*tN - penaltyFactor_*a;
         auto tangMaxArg = deltaUT;
         tangMaxArg *= penaltyFactor_;
         tangMaxArg -= tT;
-        // if (feGeometry.gridGeometry().elementMapper().index(element) > -1){
-        // std::cout << "NORMALMAXARG " << normalMaxArg << std::endl;
-        // std::cout << "TANGMAXARG " << tangMaxArg << std::endl;
-        // }
 
         const auto tangMaxArgNorm = tangMaxArg.two_norm();
         const auto& tangent = contactSurfaceSegment.getBasisVector(0);
-        const auto fricCoeff = frictionCoefficientAtPos(ipData.ipGlobal());
+        const auto fricCoeff = frictionCoefficient(element, ipData.ipGlobal());
+
         result[0] = -1.0*(tT*tangent)*max(fricCoeff*normalMaxArg, tangMaxArgNorm)
                     -fricCoeff*max(0.0, normalMaxArg)*(tangMaxArg*tangent);
         result[numEq-1] = -1.0*tN - max(0.0, normalMaxArg);
-        // if (feGeometry.gridGeometry().elementMapper().index(element) > -1){
-        // std::cout << "RESIDUAL = " << result << std::endl;
-    // }
+
         return result;
     }
 
-    //! Sets the aperture as extrusion factor.
-    template<class IpData, class ElementSolution>
-    Scalar extrusionFactor(const Element& element,
-                           const IpData& ipData,
-                           const ElementSolution& elemSol) const
-    { return 1.0; } //return couplingManager().computeAperture(element, scv, initialAperture_); }
-
     //! Evaluates the initial conditions.
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    PrimaryVariables initial(const Element& element, const GlobalPosition& globalPos) const
     { return initialValues_; }
 
     //! Evaluates the Dirichlet boundary conditions.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables({0.0, 0.0}); }
+    { DUNE_THROW(Dune::InvalidStateException, "Should not have Dirichlet BCs"); }
 
     //! Returns const reference to the coupling manager.
     const CouplingManager& couplingManager() const
     { return *couplingManagerPtr_; }
 
     //! Returns the friction coefficient at a given position
-    const Scalar frictionCoefficientAtPos(const GlobalPosition& globalPos) const
-    {
-        auto f = frictionCoefficient_;
-        double d;
-        if (globalPos[1] > 0.5)
-            d = (GlobalPosition({0.5, 0.75}) - globalPos).two_norm2();
-        else
-            d = (GlobalPosition({0.5, 0.25}) - globalPos).two_norm2();
-
-        static const auto factor = getParam<Scalar>("Problem.FrictionCoefficientParam");
-        return f*(1.0 + factor*std::exp(-800.0*d));
-    }
+    const Scalar frictionCoefficient(const Element& element, const GlobalPosition& globalPos) const
+    { return frictionCoefficient_; }
 
 private:
+
     std::shared_ptr<CouplingManager> couplingManagerPtr_;
     std::string problemName_;
 
     PrimaryVariables initialValues_;
     Scalar penaltyFactor_;
     Scalar frictionCoefficient_;
-    Scalar initialAperture_;
+    Scalar initialGap_;
 };
 
 } // end namespace Dumux

@@ -18,12 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
- * \brief The spatial parameters class for the flow domains in the
+ * \brief The spatial parameters class for the poroelastic domain in the
  *        elastic single-phase facet coupling test.
  */
-#ifndef DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
-#define DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
+#ifndef DUMUX_ANALYTIC_CRACK_POROELASTIC_SPATIAL_PARAMS_HH
+#define DUMUX_ANALYTIC_CRACK_POROELASTIC_SPATIAL_PARAMS_HH
 
 #include <dumux/geomechanics/lameparams.hh>
 #include <dumux/material/spatialparams/fvporoelastic.hh>
@@ -32,7 +31,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Definition of the spatial parameters for the poro-elastic
  *        sub-problem in the coupled poro-mechanical el1p problem.
  */
@@ -55,6 +53,7 @@ public:
     PoroElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry)
     , initPorosity_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPorosity"))
+    , alpha_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.BiotCoefficient"))
     {
         // Young's modulus [Pa]
        Scalar E = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.EModule");
@@ -70,24 +69,16 @@ public:
     { return lameParams_; }
 
     //! Returns the porosity of the porous medium.
-    template<class IpData, class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const IpData& ipData,
-                    const ElementSolution& elemSol) const
-
-    {
-        return PorosityDeformation<Scalar>::evaluatePorosity(this->gridGeometry(), element, ipData.ipGlobal(), elemSol, initPorosity_);
-    }
+    Scalar porosityAtPos(const GlobalPosition& elemSol) const
+    { return initPorosity_; }
 
     //! Returns the Biot coefficient of the porous medium.
     Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const
-    {
-        static const Scalar bc = getParam<Scalar>("Problem.BiotCoefficient");
-        return bc;
-    }
+    { return alpha_; }
 
 private:
     Scalar initPorosity_;
+    Scalar alpha_;
     LameParams lameParams_;
 };
 

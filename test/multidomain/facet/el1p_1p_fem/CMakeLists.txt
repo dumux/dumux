@@ -1,16 +1,64 @@
 dune_symlink_to_source_files(FILES "grids" "params.input")
 set(CMAKE_BUILD_TYPE Release)
-dune_add_test(NAME test_md_facet_el1p1p_fem
-              LABELS multidomain
-              SOURCES main.cc
-              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_tpfa_bulk-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_tpfa_bulk-00001.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_tpfa_facet-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_tpfa_facet-00001.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_tpfa_edge-reference.vtp
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_tpfa_edge-00001.vtp
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_tpfa params.input
-                       -Vtk.OutputName test_md_facet_1p1p_threedomain_tpfa")
+
+# using FEM (1st order) and TPFA
+dune_add_test(NAME test_el1p1p_fem_1storder_tpfa
+              SOURCES main_fem_fv.cc
+              COMPILE_DEFINITIONS BULKFLOWTYPETAG=OnePBulkTpfa
+              COMPILE_DEFINITIONS FACETFLOWTYPETAG=OnePFacetTpfa
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+
+# using FEM (1st order) and MPFA
+dune_add_test(NAME test_el1p1p_fem_1storder_mpfa
+              SOURCES main_fem_fv.cc
+              COMPILE_DEFINITIONS FEMORDER=1
+              COMPILE_DEFINITIONS BULKFLOWTYPETAG=OnePBulkMpfa
+              COMPILE_DEFINITIONS FACETFLOWTYPETAG=OnePFacetTpfa
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+
+# using FEM (1st order) and BOX
+dune_add_test(NAME test_el1p1p_fem_1storder_box
+              SOURCES main_fem_fv.cc
+              COMPILE_DEFINITIONS FEMORDER=1
+              COMPILE_DEFINITIONS BULKFLOWTYPETAG=OnePBulkBox
+              COMPILE_DEFINITIONS FACETFLOWTYPETAG=OnePFacetBox
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+
+
+# using FEM (2nd order) and TPFA
+dune_add_test(NAME test_el1p1p_fem_2ndorder_tpfa
+              SOURCES main_fem_fv.cc
+              COMPILE_DEFINITIONS FEMORDER=2
+              COMPILE_DEFINITIONS BULKFLOWTYPETAG=OnePBulkTpfa
+              COMPILE_DEFINITIONS FACETFLOWTYPETAG=OnePFacetTpfa
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+
+# using FEM (2nd order) and TPFA
+dune_add_test(NAME test_el1p1p_fem_2ndorder_mpfa
+              SOURCES main_fem_fv.cc
+              COMPILE_DEFINITIONS FEMORDER=2
+              COMPILE_DEFINITIONS BULKFLOWTYPETAG=OnePBulkMpfa
+              COMPILE_DEFINITIONS FACETFLOWTYPETAG=OnePFacetTpfa
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+
+# using FEM (2nd order) and BOX
+dune_add_test(NAME test_el1p1p_fem_2ndorder_box
+             SOURCES main_fem_fv.cc
+             COMPILE_DEFINITIONS FEMORDER=2
+             COMPILE_DEFINITIONS BULKFLOWTYPETAG=OnePBulkBox
+             COMPILE_DEFINITIONS FACETFLOWTYPETAG=OnePFacetBox
+             CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+
+# using Box and TPFA
+dune_add_test(NAME test_el1p1p_box_tpfa
+              SOURCES main_box_fv.cc
+              COMPILE_DEFINITIONS BULKFLOWTYPETAG=OnePBulkTpfa
+              COMPILE_DEFINITIONS FACETFLOWTYPETAG=OnePFacetTpfa
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+
+# using Box and MPFA
+dune_add_test(NAME test_el1p1p_box_mpfa
+              SOURCES main_box_fv.cc
+              COMPILE_DEFINITIONS BULKFLOWTYPETAG=OnePBulkMpfa
+              COMPILE_DEFINITIONS FACETFLOWTYPETAG=OnePFacetTpfa
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")

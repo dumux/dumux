@@ -1,54 +1,67 @@
 [Problem]
 EnableGravity = false
-InjectionPressure = 1e5
-ExtractionPressure = 1
-PrintMatrices = false
-ZeroApertureThreshold = 1e-18
-UseZeroApertureThreshold = true
-UseKozenyKarman = false
-FrictionCoefficientParam = 0.0
-BiotCoefficient = 1.0
+ExtractionPressure = 0
+InjectionOverPressure = 1e5
+UseInteriorDirichlet = true
 
 [Component]
 SolidDensity = 2750.0 # granite
 
 [Grid]
-File = ./grids/singlefracture_cube.msh
+File = ./grids/singlefracture.msh
 
 [SpatialParams]
-InitialPorosity = 0.25 # used from both ElasticBulk & OnePBulk
+InitialPorosity = 0.15 # used from both ElasticBulk & OnePBulk
+InitialGap = 1e-4
+MinHydraulicAperture = 1e-7
+ZeroGapThreshold = 1e-15
 
 [OnePBulk]
 Problem.Name = onep_bulk
-SpatialParams.InitialPermeability = 1
+Problem.BoxUseDirichletOutlet = false
+SpatialParams.InitialPermeability = 1e-14
+SpatialParams.UseConstantPorosity = true
 
 [OnePFacet]
 Problem.Name = onep_facet
-SpatialParams.InitialAperture = 1e-3
 
 [Lagrange]
-Grid.File = ./grids/singlefracture_cube.msh
+Grid.File = ./grids/singlefracture_lagrange.msh
 Problem.Name = lagrange
-InitialLagrangeMP = 0.0 0.0
-PenaltyFactor = 1e7
+InitialTraction = 0.0 0.0
+PenaltyFactor = 1e8
 FrictionCoefficient = 0.5
 Assembly.FEIntegrationOrder = 2
 
 [ElasticBulk]
 Problem.Name = elastic_bulk
-SpatialParams.EModule = 2.5e7
-SpatialParams.Nu = 0.2
+SpatialParams.EModule = 1e9
+SpatialParams.Nu = 0.25
+SpatialParams.BiotCoefficient = 1.0
 Assembly.FEIntegrationOrder = 2
+Assembly.FEBoundaryIntegrationOrder = 2
 
 [ContactProblem]
 ContactForceIntegrationOrder = 2
 
 [Newton]
-MaxSteps = 1000
+MaxSteps = 40
+SatisfyResidualAndShiftCriterion = false
+EnableAbsoluteResidualCriterion = true
+EnableResidualCriterion = false
+EnableShiftCriterion = true
+ResidualReduction = 1e-20
+MaxAbsoluteResidual = 5.0e-6
+MaxRelativeShift = 1e-8
+UseLineSearch = false
 
 [Vtk]
-OutputName = test_md_facet_el1p1p_tpfa
+OutputName = densenetwork
+AddVelocity = true
+
+[Output]
+FluxFile = fluxes.csv
 
 [0.Component]
-LiquidKinematicViscosity = 1
-LiquidDensity = 1
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1000
