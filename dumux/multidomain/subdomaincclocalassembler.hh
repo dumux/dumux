@@ -249,8 +249,10 @@ public:
         {
             curElemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+            couplingManager_.setUsePrevSol(true);
             if (!this->assembler().isStationaryProblem())
                 this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+            couplingManager_.setUsePrevSol(false);
         }
         else
         {
