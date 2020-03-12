@@ -80,6 +80,7 @@ public:
     : problem_(problem)
     , timeLoop_(timeLoop)
     , intOrder_(getParamFromGroup<Scalar>(problem->paramGroup(), "Assembly.FEIntegrationOrder"))
+    , intOrderBoundary_(getParamFromGroup<Scalar>(problem->paramGroup(), "Assembly.FEBoundaryIntegrationOrder", intOrder_))
     {}
 
     /*!
@@ -425,6 +426,10 @@ public:
     int integrationOrder() const
     { return intOrder_; }
 
+    //! returns the underlying integration order
+    int boundaryIntegrationOrder() const
+    { return intOrderBoundary_; }
+
     // \}
 
     /*!
@@ -473,7 +478,7 @@ public:
 
             // select quadrature rule for intersection faces (dim-1)
             auto insideGeom = is.geometryInInside();
-            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(insideGeom.type(), intOrder_);
+            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(insideGeom.type(), intOrderBoundary_);
 
             for (const auto& quadPoint : faceRule)
             {
@@ -546,7 +551,7 @@ public:
 
             // select quadrature rule for intersection faces (dim-1)
             auto insideGeom = is.geometryInInside();
-            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(insideGeom.type(), intOrder_);
+            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(insideGeom.type(), intOrderBoundary_);
 
             for (const auto& quadPoint : faceRule)
             {
@@ -591,7 +596,8 @@ protected:
 private:
     const Problem* problem_; //!< the problem we are assembling this residual for
     const TimeLoop* timeLoop_; //!< the timeloop for instationary problems
-    int intOrder_; //!< The order used for the quadrature rule to evaluate the residual
+    int intOrder_; //!< The order used for the quadrature rule in volume integrals
+    int intOrderBoundary_; //!< The order used for the quadrature rule in boundary integrals
 };
 
 } // end namespace Dumux
