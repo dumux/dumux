@@ -18,12 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The spatial parameters class for the facet flow domain in the
  *        elastic single-phase facet coupling test.
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_FACET_FLOW_SPATIALPARAMS_HH
-#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_FACET_FLOW_SPATIALPARAMS_HH
+#ifndef DUMUX_ANALYTIC_CRACK_FACET_FLOW_SPATIALPARAMS_HH
+#define DUMUX_ANALYTIC_CRACK_FACET_FLOW_SPATIALPARAMS_HH
 
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
@@ -31,7 +30,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief The spatial parameters for the single-phase facet coupling test.
  */
 template<class FVGridGeometry, class Scalar, class CouplingManager>
@@ -54,9 +52,12 @@ public:
                            std::shared_ptr<CouplingManager> couplingManagerPtr,
                            const std::string& paramGroup = "")
     : ParentType(fvGridGeometry)
+    , paramGroup_(paramGroup)
     , couplingManagerPtr_(couplingManagerPtr)
-    , initialAperture_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialAperture"))
-    {}
+    {
+        initialAperture_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialGap");
+        initialAperture_ += getParamFromGroup<Scalar>(paramGroup, "SpatialParams.MinHydraulicAperture");
+    }
 
     //! Function for defining the (intrinsic) permeability \f$[m^2]\f$.
     template<class ElementSolution>
@@ -64,13 +65,12 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolution& elemSol) const
     {
-        auto a = couplingManagerPtr_->computeAperture(element, scv, initialAperture_);
+        static const Scalar gapZeroThreshold = getParam<Scalar>("SpatialParams.ZeroGapThreshold");
+        static const Scalar minA = getParam<Scalar>("SpatialParams.MinHydraulicAperture");
+        static const Scalar initGap = getParam<Scalar>("SpatialParams.InitialGap");
 
-        static const Scalar zeroA = getParam<Scalar>("Problem.ZeroApertureThreshold");
-        static const bool considerZeroA = getParam<bool>("Problem.UseZeroApertureThreshold");
-
-        if (considerZeroA && a < zeroA)
-            a = zeroA;
+        auto a = couplingManagerPtr_->computeAperture(element, scv, initGap);
+        a = a < gapZeroThreshold ? minA : minA + a;
 
         return a*a/12.0;
     }
@@ -80,10 +80,11 @@ public:
     { return 1.0; }
 
 private:
-    std::shared_ptr<const CouplingManager> couplingManagerPtr_;
+    std::string paramGroup_;
     Scalar initialAperture_;
+    std::shared_ptr<const CouplingManager> couplingManagerPtr_;
 };
 
 } // end namespace Dumux
 
-#endif // DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_FACET_FLOW_SPATIALPARAMS_HH
+#endif

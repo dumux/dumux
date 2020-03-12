@@ -18,24 +18,21 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The spatial parameters class for the bulk flow domain in the
  *        elastic single-phase facet coupling test.
  */
-#ifndef DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_FLOW_SPATIALPARAMS_HH
-#define DUMUX_TEST_FACETCOUPLING_ELONEP_ONEP_BULK_FLOW_SPATIALPARAMS_HH
+#ifndef DUMUX_ANALYTIC_CRACK_BULK_FLOW_SPATIALPARAMS_HH
+#define DUMUX_ANALYTIC_CRACK_BULK_FLOW_SPATIALPARAMS_HH
 
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
-#include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
- * \brief The spatial parameters for the single-phase facet coupling test.
+ * \brief The spatial parameters for the bulk flow domain in the single-phase facet coupling test.
  */
 template<class FVGridGeometry, class Scalar, class CouplingManager>
 class OnePBulkSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
@@ -60,6 +57,7 @@ public:
     , couplingManagerPtr_(couplingManagerPtr)
     , initialPorosity_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPorosity"))
     , initialPermeability_(getParamFromGroup<Scalar>(paramGroup, "SpatialParams.InitialPermeability"))
+    , useConstantPorosity_(getParamFromGroup<bool>(paramGroup, "SpatialParams.UseConstantPorosity"))
     {}
 
     //! Function for defining the (intrinsic) permeability \f$[m^2]\f$.
@@ -67,15 +65,7 @@ public:
     Scalar permeability(const Element& element,
                         const SubControlVolume& scv,
                         const ElementSolution& elemSol) const
-    {
-        static const bool useKK = getParam<bool>("Problem.UseKozenyKarman");
-        if (useKK)
-        {
-            PermeabilityKozenyCarman<PermeabilityType> permLaw;
-            return permLaw.evaluatePermeability(initialPermeability_, initialPorosity_, porosity(element, scv, elemSol));
-        }
-        return initialPermeability_;
-    }
+    { return initialPermeability_; }
 
     //! Returns the porosity for a sub-control volume.
     template<class ElementSolution>
@@ -83,20 +73,27 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
-        return initialPorosity_;
-        // static constexpr auto mechId = CouplingManager::poroMechId;
-        //
-        // const auto& poroMechGridGeom = couplingManagerPtr_->problem(mechId).gridGeometry();
-        // const auto poroMechElemSol = elementSolution(element, couplingManagerPtr_->curSol()[mechId], poroMechGridGeom);
-        //
-        // // evaluate the deformation-dependent porosity at the scv center
-        // return PorosityDeformation<Scalar>::evaluatePorosity(poroMechGridGeom, element, scv.center(), poroMechElemSol, initialPorosity_);
+        if (useConstantPorosity_)
+            return initialPorosity_;
+
+        static constexpr auto mechId = CouplingManager::poroMechId;
+        static constexpr auto matrixFlowId = CouplingManager::matrixFlowId;
+
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto poroMechElementIdx = couplingManagerPtr_->bulkIndexMap().map(matrixFlowId, eIdx);
+        const auto& poroMechGridGeom = couplingManagerPtr_->problem(mechId).gridGeometry();
+        const auto poroMechElement = poroMechGridGeom.element(poroMechElementIdx);
+
+        auto poroMechElemSol = elementSolution(poroMechElement, couplingManagerPtr_->curSol()[mechId], poroMechGridGeom);
+        // evaluate the deformation-dependent porosity at the scv center
+        return PorosityDeformation<Scalar>::evaluatePorosity(poroMechGridGeom, poroMechElement, scv.center(), poroMechElemSol, initialPorosity_);
     }
 
 private:
     std::shared_ptr<const CouplingManager> couplingManagerPtr_;
     Scalar initialPorosity_;
     Scalar initialPermeability_;
+    bool useConstantPorosity_;
 };
 
 } // end namespace Dumux
