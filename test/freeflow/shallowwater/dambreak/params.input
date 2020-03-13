@@ -15,3 +15,13 @@ Cells1 = 25
 [Newton]
 EnablePartialReassembly = true
 EnableDynamicOutput = false
+
+[LinearSolver]
+Type = bicgstabsolver
+MaxIterations = 80
+
+[LinearSolver.Preconditioner]
+Type = ilu
+Verbosity = 0
+ILUOrder = 0
+ILUResort = true

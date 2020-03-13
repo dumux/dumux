@@ -27,6 +27,7 @@
 #include <ctime>
 #include <iostream>
 
+#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
@@ -37,11 +38,16 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
-
-#include <dumux/linear/amgbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/porousmediumflow/richards/newtonsolver.hh>
 
+#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
+#include <dumux/linear/istlsolverfactorybackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#else
+#include <dumux/linear/amgbackend.hh>
+#endif
+
+#include <dumux/porousmediumflow/richards/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -144,7 +150,12 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
+#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
+#else
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+#endif
+
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver

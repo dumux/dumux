@@ -101,6 +101,53 @@ public:
         return false;
     }
 
+    /** \brief obtain a vector of all full group names for a specified subgroup name
+     *
+     * Example:
+     * ------------
+     * For the parameter tree
+     *
+     * [G1]
+     * MyParam1 = 1
+     * [G2.G1]
+     * MyParam2 = 2
+     * [G3.G2.G1]
+     * MyParam3 = 3
+     *
+     * and groupPrefix="G3.G2" and subGroupName="G1"
+     * this returns a vector with the entries {"G3.G2.G1", "G2.G1", "G1"}.
+     * If groupPrefix = "G2", it returns {"G2.G1", "G1"}.
+     * If groupPrefix = "" the returned vector has size 1 (containing subGroupName),
+     * or size 0 if the subgroup does not exist in the parameter tree.
+     *
+     * \param subGroupName the sub group to look for
+     * \param groupPrefix the group prefix name (potentially prefixing the subgroup)
+     * \return a vector of fully qualified groups ordered by decreasing tree depth
+     */
+    std::vector<std::string> getSubGroups(const std::string& subGroupName,
+                                          std::string groupPrefix) const
+    {
+        std::vector<std::string> groupNames;
+
+        if (!groupPrefix.empty())
+        {
+            auto compoundGroup = groupPrefix + "." + subGroupName;
+            for (std::string::size_type dotPos = 0; dotPos != std::string::npos; dotPos = groupPrefix.rfind("."))
+            {
+                if (params_.hasSub(compoundGroup) || defaultParams_.hasSub(compoundGroup))
+                    groupNames.push_back(compoundGroup);
+
+                groupPrefix = groupPrefix.substr(0, dotPos);
+                compoundGroup = groupPrefix + "." + subGroupName;
+            }
+        }
+
+        if (params_.hasSub(subGroupName) || defaultParams_.hasSub(subGroupName))
+            groupNames.push_back(subGroupName);
+
+        return groupNames;
+    }
+
     /** \brief print the hierarchical parameter tree to stream
      *
      * \param stream the output stream to print to

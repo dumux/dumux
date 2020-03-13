@@ -48,15 +48,17 @@ public:
      *       - LinearSolver.ResidualReduction the residual reduction threshold, i.e. stopping criterion
      *       - LinearSolver.PreconditionerRelaxation precondition relaxation
      *       - LinearSolver.PreconditionerIterations the number of preconditioner iterations
+     *       - LinearSolver.PreconditionerVerbosity the preconditioner verbosity level
      */
     LinearSolver(const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
     {
-        verbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity");
-        maxIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.MaxIterations");
-        residReduction_ = getParamFromGroup<double>(paramGroup, "LinearSolver.ResidualReduction");
-        relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.PreconditionerRelaxation");
-        precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.PreconditionerIterations");
+        verbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity", 0);
+        maxIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.MaxIterations", 250);
+        residReduction_ = getParamFromGroup<double>(paramGroup, "LinearSolver.ResidualReduction", 1e-13);
+        relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.PreconditionerRelaxation", 1);
+        precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.PreconditionerIterations", 1);
+        precondVerbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.PreconditionerVerbosity", 0);
     }
 
     /*!
@@ -117,12 +119,21 @@ public:
     void setPrecondIter(int i)
     { precondIter_ = i; }
 
+    //! the preconditioner verbosity
+    int precondVerbosity() const
+    { return precondVerbosity_; }
+
+    //! set the preconditioner verbosity
+    void setPrecondVerbosity(int verbosityLevel)
+    { precondVerbosity_ = verbosityLevel; }
+
 private:
     int verbosity_;
     int maxIter_;
     double residReduction_;
     double relaxation_;
     int precondIter_;
+    int precondVerbosity_;
     const std::string paramGroup_;
 };
 
