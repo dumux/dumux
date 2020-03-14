@@ -63,14 +63,11 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSys
     using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Indices = typename ModelTraits::Indices;
-
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     static const int numPhases = ModelTraits::numFluidPhases();
     static const int numComponents = ModelTraits::numFluidComponents();
 
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! Class that fills the cache corresponding to tpfa Fick's Law
