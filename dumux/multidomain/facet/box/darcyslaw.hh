@@ -41,7 +41,7 @@ namespace Dumux {
 
 /*!
  * \ingroup FacetCoupling
- * \brief Darcy's law for the box scheme scheme in the context of coupled models
+ * \brief Darcy's law for the box scheme in the context of coupled models
  *        where coupling occurs across the facets of the bulk domain elements
  *        with a lower-dimensional domain living on these facets.
  */

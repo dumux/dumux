@@ -65,7 +65,7 @@ using CCTpfaFacetCouplingDarcysLaw =
 
 /*!
  * \ingroup FacetCoupling
- * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for non-network grids.
+ * \brief Specialization of FacetCouplingTpfaDarcysLawCache for non-network grids.
  */
 template<class AdvectionType, class GridGeometry>
 class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, GridGeometry, /*isNetwork*/false>
@@ -133,7 +133,7 @@ private:
 
 /*!
  * \ingroup FacetCoupling
- * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
+ * \brief Specialization of CCTpfaFacetCouplingDarcysLawImpl for dim=dimWorld
  */
 template<class ScalarType, class GridGeometry>
 class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/false>
@@ -342,7 +342,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
 
 /*!
  * \ingroup FacetCoupling
- * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for network grids
+ * \brief Specialization of FacetCouplingTpfaDarcysLawCache for network grids
  */
 template<class AdvectionType, class GridGeometry>
 class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, GridGeometry, /*isNetwork*/true>
@@ -397,7 +397,7 @@ private:
 
 /*!
  * \ingroup FacetCoupling
- * \brief Specialization of the CCTpfaDarcysLaw grids where dim<dimWorld
+ * \brief Specialization of CCTpfaFacetCouplingDarcysLawImpl for dim<dimWorld
  */
 template<class ScalarType, class GridGeometry>
 class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/true>
