@@ -27,9 +27,6 @@
 #include <array>
 #include <cmath>
 
-#include <dune/common/fmatrix.hh>
-#include <dune/common/dynmatrix.hh>
-#include <dune/common/dynvector.hh>
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>

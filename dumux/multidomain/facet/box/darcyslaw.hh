@@ -24,16 +24,15 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_FACET_COUPLING_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FACET_COUPLING_DARCYS_LAW_HH
 
+#include <vector>
+#include <cmath>
+
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
-#include <dune/geometry/multilineargeometry.hh>
 
-#include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/geometry/geometryintersection.hh>
-#include <dumux/common/geometry/diameter.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/box/darcyslaw.hh>
