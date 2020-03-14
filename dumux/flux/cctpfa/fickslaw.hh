@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/deprecated.hh>
