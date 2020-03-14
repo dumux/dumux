@@ -25,10 +25,10 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_SUBCONTROLVOLUMEFACE_HH
 
 #include <utility>
+
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 
-#include <dumux/common/optional.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 
