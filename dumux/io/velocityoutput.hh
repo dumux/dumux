@@ -75,16 +75,6 @@ public:
                                    const ElementFluxVarsCache& elemFluxVarsCache,
                                    int phaseIdx) const
     {}
-
-    //! Calculate the velocities for the scvs in the element
-    //! We assume the local containers to be bound to the complete stencil
-    [[deprecated("Use the new interface signature with elemFluxVarsCache")]]
-    virtual void calculateVelocity(VelocityVector& velocity,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const FVElementGeometry& fvGeometry,
-                                   const Element& element,
-                                   int phaseIdx) const
-    {}
 };
 
 } // end namespace Dumux

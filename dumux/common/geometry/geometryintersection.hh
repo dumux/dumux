@@ -222,9 +222,6 @@ public:
     using Point = typename Policy::Point;
     using Intersection = typename Policy::Intersection;
 
-    //! Deprecated alias, will be removed after 3.1
-    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
-
     //! Determine if the two geometries intersect and compute the intersection geometry
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
     {
@@ -252,9 +249,6 @@ public:
     using ctype = typename Policy::ctype;
     using Point = typename Policy::Point;
     using Intersection = typename Policy::Intersection;
-
-    //! Deprecated alias, will be removed after 3.1
-    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
     /*!
      * \brief Colliding two segments
@@ -369,9 +363,6 @@ public:
     using ctype = typename Policy::ctype;
     using Point = typename Policy::Point;
     using Intersection = typename Policy::Intersection;
-
-    //! Deprecated alias, will be removed after 3.1
-    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
@@ -519,9 +510,6 @@ public:
     using Point = typename Policy::Point;
     using Intersection = typename Policy::Intersection;
 
-    //! Deprecated alias, will be removed after 3.1
-    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
-
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
     using ReferenceElementsGeo1 = typename Dune::ReferenceElements<ctype, dim1>;
@@ -667,9 +655,6 @@ public:
     using ctype = typename Policy::ctype;
     using Point = typename Policy::Point;
     using Intersection = typename Policy::Intersection;
-
-    //! Deprecated alias, will be removed after 3.1
-    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
@@ -819,9 +804,6 @@ public:
     using ctype = typename Policy::ctype;
     using Point = typename Policy::Point;
     using Intersection = typename Policy::Intersection;
-
-    //! Deprecated alias, will be removed after 3.1
-    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
@@ -1015,9 +997,6 @@ public:
     using Point = typename Policy::Point;
     using Intersection = typename Policy::Intersection;
 
-    //! Deprecated alias, will be removed after 3.1
-    using IntersectionType [[deprecated("Please use Intersection instead")]] = Intersection;
-
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
     using ReferenceElements = typename Dune::ReferenceElements<ctype, dim1>;
@@ -1094,25 +1073,6 @@ public:
         else
             DUNE_THROW(Dune::NotImplemented, "Collision of segment and geometry of type "
                           << geo1.type() << ", "<< geo1.corners() << " corners.");
-    }
-
-    /*!
-     *  \brief Colliding segment and convex polyhedron
-     *  \note Algorithm based on the one from "Real-Time Collision Detection" by Christer Ericson,
-     *        published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.3.6)
-     * \param is If the geometries collide, is holds the corner points of
-     *        the intersection object in global coordinates.
-     * \param a/b/c Points of triangle
-     * \param p/q Points of segment
-     * \note This overload is used when point-like intersections are seeked
-     */
-    template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
-    [[deprecated("Please use intersection(triangle, segment, ...) instead")]]
-    static bool intersection(const Point& a, const Point& b, const Point& c,
-                             const Point& p, const Point& q,
-                             Intersection& is)
-    {
-        return intersect_<Policy>(a, b, c, p, q, is);
     }
 
 private:

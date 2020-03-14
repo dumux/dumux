@@ -70,8 +70,6 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! Export type of finite volume grid geometry
     using GridGeometry = GG;
-    //! Export type of finite volume grid geometry
-    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
 
     //! The maximum number of scvs per element (2^dim for cubes)
     //! multiplied by 3 for the maximum number of fracture scvs per vertex
@@ -153,11 +151,6 @@ public:
     }
 
     //! The global finite volume geometry we are a restriction of
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const GridGeometry& fvGridGeometry() const
-    { return *gridGeometryPtr_; }
-
-    //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
 
@@ -193,8 +186,6 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! Export type of finite volume grid geometry
     using GridGeometry = GG;
-    //! export type of finite volume grid geometry
-    using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
     //! The maximum number of scvs per element (2^dim for cubes)
     //! multiplied by 3 for the maximum number of fracture scvs per vertex
     static constexpr std::size_t maxNumElementScvs = (1<<dim)*3;
@@ -271,11 +262,6 @@ public:
         eIdx_ = gridGeometry().elementMapper().index(element);
         makeElementGeometries(element);
     }
-
-    //! The global finite volume geometry we are a restriction of
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const GridGeometry& fvGridGeometry() const
-    { return *gridGeometryPtr_; }
 
     //! The global finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const

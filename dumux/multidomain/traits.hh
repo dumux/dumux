@@ -49,12 +49,7 @@ namespace Detail {
 template<class Scalar, class... JacobianBlocks>
 class createMultiTypeBlockMatrixType
 {
-    //! TODO: replace by std::conjuction in C++17
-    template<bool...> struct boolPack;
-    template<bool... bools>
-    using all_true = std::is_same<boolPack<bools..., true>, boolPack<true, bools...>>;
-
-    static_assert(all_true<isBCRSMatrix<JacobianBlocks>::value...>::value, "Jacobian blocks have to be BCRSMatrices!");
+    static_assert(std::conjunction_v<isBCRSMatrix<JacobianBlocks>...>, "Jacobian blocks have to be BCRSMatrices!");
 
     template<std::size_t id>
     using JacobianDiagBlock = typename std::tuple_element_t<id, std::tuple<JacobianBlocks...>>;
@@ -182,7 +177,6 @@ public:
         using TypeTag = SubDomainTypeTag<id>;
         using Grid = GetPropType<SubDomainTypeTag<id>, Properties::Grid>;
         using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-        using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
         using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
         using GridVariables =GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
         using IOFields = GetPropType<SubDomainTypeTag<id>, Properties::IOFields>;

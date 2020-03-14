@@ -22,7 +22,6 @@ fvproblem.hh
 indextraits.hh
 integrate.hh
 intersectionmapper.hh
-intrange.hh
 loggingparametertree.hh
 math.hh
 monotonecubicspline.hh

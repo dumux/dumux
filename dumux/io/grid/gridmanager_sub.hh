@@ -26,7 +26,6 @@
 
 #include <memory>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/concept.hh>
 
@@ -34,10 +33,6 @@
 #if HAVE_DUNE_SUBGRID
 #include <dune/subgrid/subgrid.hh>
 #include <dumux/io/rasterimagereader.hh>
-// TODO: deprecated: remove this after 3.1 is released
-#include <dune/grid/io/file/vtk.hh>
-// TODO: deprecated: remove this after 3.1 is released
-#include <dune/grid/io/file/dgfparser/dgfwriter.hh>
 #endif
 
 #ifndef DUMUX_IO_GRID_MANAGER_HH
@@ -103,50 +98,6 @@ public:
         initHostGrid_(paramGroup);
         this->gridPtr() = createGrid_(hostGridManager_->grid(), selector, paramGroup);
         loadBalance();
-    }
-
-    /*!
-     * \brief Make the subgrid.
-     */
-    template<class ElementSelector>
-    [[deprecated("Create an instance of this class and use subgridManager.init(hostGrid, selector, paramGroup)")]]
-    static std::unique_ptr<Grid> makeGrid(HostGrid& hostGrid,
-                                          const ElementSelector& selector,
-                                          const std::string& paramGroup = "")
-    {
-        std::cerr << "Deprecation warning: SubGridManager::makeGrid is deprecated."
-                  << "Create an instance of this class and use subgridManager.init(hostGrid, selector, paramGroup)." << std::endl;
-
-        auto subgridPtr = createGrid_(hostGrid, selector, paramGroup);
-
-        // TODO: remove this after 3.1 is released
-        // If desired, write out the final subgrid as a dgf file.
-        if (getParamFromGroup<bool>(paramGroup, "Grid.WriteSubGridToDGF", false))
-        {
-            std::cerr << "Deprecation warning: SubGridManager: Grid.WriteSubGridToDGF is deprecated."
-                      << "Use Dune::VTKWriter to write out your grid manually." << std::endl;
-
-            const auto postfix = getParamFromGroup<std::string>(paramGroup, "Problem.Name", "");
-            const std::string name = postfix.empty() ? "subgrid" : "subgrid_" + postfix;
-            Dune::DGFWriter<typename Grid::LeafGridView> writer(subgridPtr->leafGridView());
-            writer.write(name + ".dgf");
-        }
-
-        // TODO: remove this after 3.1 is released
-        // If desired, write out the hostgrid as vtk file.
-        if (getParamFromGroup<bool>(paramGroup, "Grid.WriteSubGridToVtk", false))
-        {
-            std::cerr << "Deprecation warning: SubGridManager: Grid.WriteSubGridToVtk is deprecated."
-                      << "Use Dune::VTKWriter to write out your grid manually." << std::endl;
-
-            const auto postfix = getParamFromGroup<std::string>(paramGroup, "Problem.Name", "");
-            const std::string name = postfix.empty() ? "subgrid" : "subgrid_" + postfix;
-            Dune::VTKWriter<typename Grid::LeafGridView> vtkWriter(subgridPtr->leafGridView());
-            vtkWriter.write(name);
-        }
-
-        // Return a unique pointer to the subgrid.
-        return subgridPtr;
     }
 
     /*!

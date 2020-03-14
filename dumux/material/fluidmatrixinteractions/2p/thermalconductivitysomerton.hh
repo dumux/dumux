@@ -61,20 +61,6 @@ class ThermalConductivitySomerton
 public:
     /*!
      * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
-     */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
-    [[deprecated("Signature deprecated. Use signature with volume variables only!")]]
-    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
-                                               const SpatialParams& spatialParams,
-                                               const Element& element,
-                                               const FVGeometry& fvGeometry,
-                                               const typename FVGeometry::SubControlVolume& scv)
-    {
-        return effectiveThermalConductivity(volVars);
-    }
-
-    /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
      * \param volVars volume variables
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>

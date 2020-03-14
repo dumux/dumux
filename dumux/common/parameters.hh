@@ -261,47 +261,6 @@ public:
         return commandLineArgs;
     }
 
-    [[deprecated("parseCommandLineArguments is deprecated and will be removed after 3.1")]]
-    static std::string parseCommandLineArguments(int argc, char **argv,
-                                                 std::string parameterFileName = "")
-    {
-        for (int i = 1; i < argc; ++i)
-        {
-            if (argv[i][0] != '-' && i == 1)
-            {
-                // try to pass first argument as parameter file
-                parameterFileName = argv[1];
-                continue;
-            }
-
-            if (argv[i][0] != '-')
-                DUNE_THROW(ParameterException, "-> Command line argument " << i << " (='" << argv[i] << "') is invalid. <-");
-
-            if (i+1 == argc)
-                DUNE_THROW(ParameterException, "-> No argument given for parameter '" << argv[i] << "'! <-");
-
-            // check for the ParameterFile argument
-            if (argv[i]+1 == std::string("ParameterFile")) // +1 removes the '-'
-            {
-                parameterFileName = argv[i+1];
-                ++i;
-            }
-
-            // add all other options as key value pairs
-            else
-            {
-                // read a -MyOpt VALUE option
-                std::string paramName = argv[i]+1; // +1 removes the '-'
-                std::string paramValue = argv[i+1];
-                ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
-
-                // Put the key=value pair into the parameter tree
-                paramTree_()[paramName] = paramValue;
-            }
-        }
-        return parameterFileName;
-    }
-
     /*!
      * \brief Get the parameter tree
      *
@@ -401,22 +360,6 @@ private:
             mergeTreeImpl_(target, source.sub(subKey), overwrite, prefix + subKey);
     }
 };
-
-/*!
- * \ingroup Common
- * \brief a free function to set model- or problem-specific default parameters
- */
-[[deprecated("Setting parameters is deprecated and will be removed after 3.1")]]
-void setParam(Dune::ParameterTree& params,
-              const std::string& group,
-              const std::string& key,
-              const std::string& value)
-{
-    if(group.empty())
-        params[key] = value;
-    else
-        params[group + "." + key] = value;
-}
 
 /*!
  * \ingroup Common

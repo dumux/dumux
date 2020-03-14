@@ -52,7 +52,7 @@ bool testPolygonIntersection(const Polygon1& pol1,
     using Policy = Dumux::IntersectionPolicy::PolygonPolicy<double, dimworld>;
     using Algorithm = Dumux::GeometryIntersection<Polygon1, Polygon2, Policy>;
 
-    typename Algorithm::IntersectionType intersection;
+    typename Algorithm::Intersection intersection;
     const bool found = Algorithm::intersection(pol1, pol2, intersection);
     if (found && !expectIntersection)
         std::cout << "Found false positive!" << std::endl;

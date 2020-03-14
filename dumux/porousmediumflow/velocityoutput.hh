@@ -80,7 +80,6 @@ public:
      * \param gridVariables The grid variables
      */
     PorousMediumFlowVelocityOutput(const GridVariables& gridVariables)
-    : gridVariables_(gridVariables) // TODO: can be removed after the deprecated calculateVelocity interface is removed
     {
         // check, if velocity output can be used (works only for cubes so far)
         enableOutput_ = getParamFromGroup<bool>(gridVariables.curGridVolVars().problem().paramGroup(), "Vtk.AddVelocity");
@@ -97,20 +96,6 @@ public:
     //! Returns the number of phases.
     int numFluidPhases() const override { return VolumeVariables::numFluidPhases(); }
 
-    //! Calculate the velocities for the scvs in the element
-    //! We assume the local containers to be bound to the complete stencil
-    [[deprecated("Use the new interface signature with elemFluxVarsCache")]]
-    void calculateVelocity(VelocityVector& velocity,
-                           const ElementVolumeVariables& elemVolVars,
-                           const FVElementGeometry& fvGeometry,
-                           const Element& element,
-                           int phaseIdx) const override
-    {
-        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
-        calculateVelocity(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
-    }
-
     //! Calculates the velocities for the scvs in the element.
     //! We assume the local containers to be bound to the complete stencil.
     void calculateVelocity(VelocityVector& velocity,
@@ -125,7 +110,6 @@ public:
     }
 
 private:
-    const GridVariables& gridVariables_; // TODO: can be removed after the deprecated calculateVelocity interface is removed
     bool enableOutput_;
     std::unique_ptr<VelocityBackend> velocityBackend;
 };

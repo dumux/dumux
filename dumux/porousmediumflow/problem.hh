@@ -118,29 +118,6 @@ public:
     }
 
     /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * This is discretization independent interface. By default it
-     * just calls gravity().
-     */
-    [[deprecated("Use the gravity function of the spatialParams (i.e. problem.spatialParams().gravity(pos)). Will be removed after 3.1!")]]
-    const GravityVector &gravityAtPos(const GlobalPosition &pos) const
-    { return this->asImp_().gravity(); }
-
-    /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * This method is used for problems where the gravitational
-     * acceleration does not depend on the spatial position. The
-     * default behaviour is that if the <tt>ProblemEnableGravity</tt>
-     * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
-     * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
-     */
-    [[deprecated("Use the gravity function of the spatialParams (i.e. problem.spatialParams().gravity(pos)). Will be removed after 3.1!")]]
-    const GravityVector &gravity() const
-    { return gravity_; }
-
-    /*!
      * \brief Returns the spatial parameters object.
      */
     SpatialParams &spatialParams()

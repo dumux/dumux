@@ -66,20 +66,6 @@ class ThermalConductivityJohansen
 {
 public:
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 <BR>
-     */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
-    [[deprecated("Signature deprecated. Use signature with volume variables only!")]]
-    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
-                                               const SpatialParams& spatialParams,
-                                               const Element& element,
-                                               const FVGeometry& fvGeometry,
-                                               const typename FVGeometry::SubControlVolume& scv)
-    {
-        return effectiveThermalConductivity(volVars);
-    }
-
-    /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 .
      *
      * \param volVars volume variables

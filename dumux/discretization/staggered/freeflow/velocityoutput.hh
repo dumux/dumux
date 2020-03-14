@@ -81,20 +81,6 @@ public:
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil
-    [[deprecated("Use the new interface signature with elemFluxVarsCache")]]
-    void calculateVelocity(VelocityVector& velocity,
-                           const ElementVolumeVariables& elemVolVars,
-                           const FVElementGeometry& fvGeometry,
-                           const Element& element,
-                           int phaseIdx) const override
-    {
-        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
-        calculateVelocity(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
-    }
-
-    //! Calculate the velocities for the scvs in the element
-    //! We assume the local containers to be bound to the complete stencil
     void calculateVelocity(VelocityVector& velocity,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,

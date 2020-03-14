@@ -99,7 +99,6 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
-    using FVGridGeometry [[deprecated ("Use GridGeometry instead. Will be removed after 3.1!")]] = GridGeometry;
 
     //! Constructor getting a auxiliary cell center of face specific FvGridGeometry type.
     //! Needed for the multi-domain framework.
@@ -209,10 +208,7 @@ public:
         makeElementGeometries_(element);
     }
 
-    //! The global finite volume geometry we are a restriction of
-    [[deprecated("Use gridGeometry() instead. fvGridGeometry() will be removed after 3.1!")]]
-    const GridGeometry& fvGridGeometry() const
-    { return gridGeometry(); }
+    //! The grid finite volume geometry we are a restriction of
     const GridGeometry& gridGeometry() const
     { return *gridGeometryPtr_; }
 

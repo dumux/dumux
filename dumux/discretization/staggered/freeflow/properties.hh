@@ -76,16 +76,9 @@ public:
     static constexpr int value = numEq - dim;
 };
 
-// Dumux 3.1 changes the property `FVGridGeometry` to `GridGeometry`.
-// For ensuring backward compatibility on the user side, it is necessary to
-// stick to the old name for the specializations, see the discussion in MR 1647.
-// Use diagnostic pragmas to prevent the emission of a warning message.
-// TODO after 3.1: Rename to GridGeometry, remove the pragmas and this comment.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-//! The default fv grid geometry
+//! The default grid geometry
 template<class TypeTag>
-struct FVGridGeometry<TypeTag, TTag::StaggeredFreeFlowModel>
+struct GridGeometry<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
@@ -95,7 +88,6 @@ private:
 public:
     using type = StaggeredFVGridGeometry<GridView, enableCache, Traits>;
 };
-#pragma GCC diagnostic pop
 
 //! The variables living on the faces
 template<class TypeTag>

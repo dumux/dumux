@@ -195,7 +195,6 @@ public:
         using TypeTag = SubDomainTypeTag<id>;
         using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
         using GridGeometry = typename Detail::Staggered::SubDomainFVGridGeometryImpl<SubDomainTypeTag, id>::type;
-        using FVGridGeometry [[deprecated("Use GridGeometry instead. FVGridGeometry will be removed after 3.1!")]] = GridGeometry;
         using GridVariables = typename Detail::Staggered::SubDomainGridVariablesImpl<SubDomainTypeTag, id>::type;
         using SolutionVector = typename Detail::Staggered::SubDomainSolutionVectorImpl<SubDomainTypeTag, id>::type;
         using PrimaryVariables = typename Detail::Staggered::SubDomainPrimaryVariablesImpl<SubDomainTypeTag, id>::type;

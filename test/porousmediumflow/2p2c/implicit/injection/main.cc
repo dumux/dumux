@@ -121,11 +121,11 @@ int main(int argc, char** argv) try
     gridVariables->init(x);
 
     // intialize the vtk output module
-    using VtkOutputFields = GetPropType<TypeTag, Properties::VtkOutputFields>;
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    VtkOutputFields::initOutputModule(vtkWriter); // Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(restartTime);
 
     // instantiate time loop
