@@ -39,7 +39,6 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/grid/subgridmanager.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -79,15 +78,15 @@ struct CouplingManager<TypeTag, TTag::OnePSub>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePSub>
 {
-    using FullDomainGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-    using type = Dune::SubGrid<FullDomainGrid::dimension, FullDomainGrid>;
+    using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
+    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
 };
 #elif DOMAINSPLIT==0
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePSub>
 {
-    using FullDomainGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-    using type = FullDomainGrid;
+    using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
+    using type = HostGrid;
 };
 #endif
 
@@ -136,14 +135,17 @@ int main(int argc, char** argv) try
     using SubTypeTag1 = Properties::TTag::OnePSub1;
 
     // create the full grid that we are gonna split for the output
-    using FullDomainGrid = typename GetProp<TypeTag, Properties::Grid>::FullDomainGrid;
-    GridManager<FullDomainGrid> gridManager;
+    using HostGrid = typename GetProp<TypeTag, Properties::Grid>::HostGrid;
+    GridManager<HostGrid> gridManager;
     gridManager.init();
 
     // get the lens
-    using GlobalPosition = typename FullDomainGrid::template Codim<0>::Geometry::GlobalCoordinate;
+    using GlobalPosition = typename HostGrid::template Codim<0>::Geometry::GlobalCoordinate;
     const auto lensLowerLeft = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
     const auto lensUpperRight = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
+
+    // grid managers for the subdomains
+    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager0, gridManager1;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // split the domains by creating two separate grids for lens and the rest (using sub-grid)
@@ -156,16 +158,8 @@ int main(int argc, char** argv) try
     auto elementSelector1 = [&lensLowerLeft, &lensUpperRight](const auto& element)
     { return !LensSpatialParams::pointInLens(element.geometry().center(), lensLowerLeft, lensUpperRight); };
 
-    auto subGrid0 = SubgridManager<FullDomainGrid>::makeGrid(gridManager.grid(), elementSelector0);
-    auto subGrid1 = SubgridManager<FullDomainGrid>::makeGrid(gridManager.grid(), elementSelector1);
-
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
-
-    // we compute on the leaf grid views
-    const auto& gridView0 = subGrid0->leafGridView();
-    const auto& gridView1 = subGrid1->leafGridView();
+    gridManager0.init(gridManager.grid(), elementSelector0, "1");
+    gridManager1.init(gridManager.grid(), elementSelector1, "2");
 
 //////////////////////////////////////////////////////////////////////////////////
 // split the domains by creating two separate grids for the lower and upper half
@@ -173,15 +167,14 @@ int main(int argc, char** argv) try
 #elif DOMAINSPLIT==0
 
     // create an upper half and lower half grid
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager0, gridManager1;
     gridManager0.init("1");
     gridManager1.init("2");
+
+#endif
 
     // we compute on the leaf grid views
     const auto& gridView0 = gridManager0.grid().leafGridView();
     const auto& gridView1 = gridManager1.grid().leafGridView();
-
-#endif
 
     ////////////////////////////////////////////////
     // run the multidomain simulation on two grids
@@ -299,7 +292,7 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////////////////////////
 
     const auto& gridView = gridManager.grid().leafGridView();
-    CCTpfaFVGridGeometry<typename FullDomainGrid::LeafGridView> gridGeometry(gridView);
+    CCTpfaFVGridGeometry<typename HostGrid::LeafGridView> gridGeometry(gridView);
     const auto& bBoxTree = gridGeometry.boundingBoxTree();
     // copy data from the subdomains to full domain data vectors
     std::vector<int> processRank(gridView.size(0), 0); // sequential simulation
@@ -319,7 +312,7 @@ int main(int argc, char** argv) try
         pressure[eIdxHost] = sol[domain1Idx][eIdx][0];
     }
 
-    Dune::VTKWriter<typename FullDomainGrid::LeafGridView> vtkWriter(gridView);
+    Dune::VTKWriter<typename HostGrid::LeafGridView> vtkWriter(gridView);
     vtkWriter.addCellData(processRank, "process rank");
     vtkWriter.addCellData(pressure, "pressure");
     const auto filename = getParam<std::string>("Vtk.OutputName") + "_combined";

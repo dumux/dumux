@@ -39,7 +39,6 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/grid/subgridmanager.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
@@ -78,8 +77,8 @@ struct CouplingManager<TypeTag, TTag::OnePSub>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePSub>
 {
-    using FullDomainGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-    using type = Dune::SubGrid<FullDomainGrid::dimension, FullDomainGrid>;
+    using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
+    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
 };
 
 // set the spatial params
@@ -135,8 +134,8 @@ int main(int argc, char** argv) try
     using SubTypeTag1 = Properties::TTag::OnePSub1;
 
     // create the full grid that we are gonna split for the output
-    using FullDomainGrid = typename GetProp<TypeTag, Properties::Grid>::FullDomainGrid;
-    GridManager<FullDomainGrid> gridManager;
+    using HostGrid = typename GetProp<TypeTag, Properties::Grid>::HostGrid;
+    GridManager<HostGrid> gridManager;
     gridManager.init();
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -144,7 +143,7 @@ int main(int argc, char** argv) try
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // create subgrids coinciding with the lens
-    using GlobalPosition = typename FullDomainGrid::template Codim<0>::Geometry::GlobalCoordinate;
+    using GlobalPosition = typename HostGrid::template Codim<0>::Geometry::GlobalCoordinate;
     const auto radius = getParam<double>("Problem.TwoPhaseDomainRadius");
     const auto lowerLeft = getParam<GlobalPosition>("Grid.LowerLeft");
     const auto upperRight = getParam<GlobalPosition>("Grid.UpperRight");
@@ -158,16 +157,17 @@ int main(int argc, char** argv) try
     auto elementSelector1 = [radius](const auto& element)
     { return element.geometry().center().two_norm() < radius; };
 
-    auto subGrid0 = SubgridManager<FullDomainGrid>::makeGrid(gridManager.grid(), elementSelector0);
-    auto subGrid1 = SubgridManager<FullDomainGrid>::makeGrid(gridManager.grid(), elementSelector1);
+    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager0, gridManager1;
+    gridManager0.init(gridManager.grid(), elementSelector0);
+    gridManager1.init(gridManager.grid(), elementSelector1);
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid views
-    const auto& gridView0 = subGrid0->leafGridView();
-    const auto& gridView1 = subGrid1->leafGridView();
+    const auto& gridView0 = gridManager0.grid().leafGridView();
+    const auto& gridView1 = gridManager1.grid().leafGridView();
 
     ////////////////////////////////////////////////
     // run the multidomain simulation on two grids
