@@ -26,6 +26,7 @@
 #ifndef DUMUX_COMMON_OPTIONAL_HH
 #define DUMUX_COMMON_OPTIONAL_HH
 
+#warning "This header is deprecated and will be removed after release 3.2"
 #include <utility>
 
 #include <dune/common/typeutilities.hh>
@@ -38,7 +39,7 @@ namespace Dumux {
  * \tparam T Type of wrapped objects
  */
 template<class T>
-class Optional
+class [[deprecated("Optional is deprecated (removed after 3.2); use std::optional")]] Optional
 {
 public:
 
