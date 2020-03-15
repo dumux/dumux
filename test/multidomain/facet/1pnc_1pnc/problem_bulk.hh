@@ -25,6 +25,7 @@
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_BULKPROBLEM_HH
 
 #include <dune/alugrid/grid.hh>
+#include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
@@ -37,11 +38,6 @@
 #include <dumux/porousmediumflow/1pnc/model.hh>
 
 #include "spatialparams.hh"
-
-// default for the bulk grid type
-#ifndef BULKGRIDTYPE
-#define BULKGRIDTYPE Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>
-#endif
 
 namespace Dumux {
 // forward declarations
@@ -57,9 +53,9 @@ struct OnePNCBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel
 struct OnePNCBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePNCBulk>; };
 } // end namespace TTag
 
-// Set the grid type
+// Set the grid type (DIMWORLD is defined in CMakeLists.txt)
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePNCBulk> { using type = BULKGRIDTYPE; };
+struct Grid<TypeTag, TTag::OnePNCBulk> { using type = Dune::ALUGrid<2, DIMWORLD, Dune::cube, Dune::nonconforming>; };
 // Set the problem type
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePNCBulk> { using type = OnePNCBulkProblem<TypeTag>; };

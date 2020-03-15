@@ -52,7 +52,7 @@ struct OnePNCFacetBox { using InheritsFrom = std::tuple<OnePNCFacet, BoxModel>; 
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePNCFacet> { using type = Dune::FoamGrid<1, 2>; };
+struct Grid<TypeTag, TTag::OnePNCFacet> { using type = Dune::FoamGrid<1, DIMWORLD>; };
 // Set the problem type
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePNCFacet> { using type = OnePNCLowDimProblem<TypeTag>; };
