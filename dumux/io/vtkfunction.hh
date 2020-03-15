@@ -21,8 +21,8 @@
  * \ingroup InputOutput
  * \brief Dune style VTK functions
  */
-#ifndef VTK_FUNCTION_HH
-#define VTK_FUNCTION_HH
+#ifndef DUMUX_IO_VTK_FUNCTION_HH
+#define DUMUX_IO_VTK_FUNCTION_HH
 
 #include <string>
 #include <memory>
@@ -31,10 +31,10 @@
 #include <dune/grid/io/file/vtk/common.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
+#include <dumux/io/vtkprecision.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 
-namespace Dumux {
-namespace Vtk {
+namespace Dumux::Vtk {
 
 /*!
  * \ingroup InputOutput
@@ -63,9 +63,20 @@ public:
     virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const
     { return accessChooser_(mycomp, mapper_.index(e), IsIndexable<decltype(field_[0])>()); }
 
+#if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
+    //! get output precision for the field
+    Dumux::Vtk::Precision precision() const override
+    { return precision_; }
+#endif
+
     //! Constructor
-    VectorP0VTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
-    : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
+    VectorP0VTKFunction(const GridView& gridView,
+                        const Mapper& mapper,
+                        const F& field,
+                        const std::string& name,
+                        int nComps,
+                        Dumux::Vtk::Precision precision = Dumux::Vtk::Precision::float32)
+    : field_(field), name_(name), nComps_(nComps), mapper_(mapper), precision_(precision)
     {
         if (field.size()!=(unsigned int)(mapper.size()))
             DUNE_THROW(Dune::IOError, "VectorP0VTKFunction: size mismatch between field "
@@ -91,6 +102,7 @@ private:
     const std::string name_;
     int nComps_;
     const Mapper& mapper_;
+    Dumux::Vtk::Precision precision_;
 };
 
 /*!
@@ -131,9 +143,21 @@ public:
         return interpolation.global(xi);
     }
 
+#if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
+    //! get output precision for the field
+    Dumux::Vtk::Precision precision() const override
+    { return precision_; }
+#endif
+
+
     //! Constructor
-    VectorP1VTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
-    : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
+    VectorP1VTKFunction(const GridView& gridView,
+                        const Mapper& mapper,
+                        const F& field,
+                        const std::string& name,
+                        int nComps,
+                        Dumux::Vtk::Precision precision = Dumux::Vtk::Precision::float32)
+    : field_(field), name_(name), nComps_(nComps), mapper_(mapper), precision_(precision)
     {
         if (field.size()!=(unsigned int)( mapper.size() ))
             DUNE_THROW(Dune::IOError, "VectorP1VTKFunction: size mismatch between field "
@@ -158,6 +182,7 @@ private:
     const std::string name_;
     int nComps_;
     const Mapper& mapper_;
+    Dumux::Vtk::Precision precision_;
 };
 
 /*!
@@ -202,9 +227,20 @@ public:
         return interpolation.global(xi);
     }
 
+#if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
+    //! get output precision for the field
+    Dumux::Vtk::Precision precision() const override
+    { return precision_; }
+#endif
+
     //! Constructor
-    VectorP1NonConformingVTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
-    : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
+    VectorP1NonConformingVTKFunction(const GridView& gridView,
+                                     const Mapper& mapper,
+                                     const F& field,
+                                     const std::string& name,
+                                     int nComps,
+                                     Dumux::Vtk::Precision precision = Dumux::Vtk::Precision::float32)
+    : field_(field), name_(name), nComps_(nComps), mapper_(mapper), precision_(precision)
     {
         if (field.size()!=(unsigned int)(mapper.size()))
             DUNE_THROW(Dune::IOError, "VectorP1NonConformingVTKFunction: size mismatch between field "
@@ -232,6 +268,8 @@ private:
     const std::string name_;
     int nComps_;
     const Mapper& mapper_;
+    Dumux::Vtk::Precision precision_;
+
 };
 
 /*!
@@ -252,18 +290,19 @@ public:
     template <typename F, class Mapper>
     Field(const GridView& gridView, const Mapper& mapper, F const& f,
           const std::string& name, int numComp = 1, int codim = 0,
-          Dune::VTK::DataMode dm = Dune::VTK::conforming)
+          Dune::VTK::DataMode dm = Dune::VTK::conforming,
+          Dumux::Vtk::Precision precision = Dumux::Vtk::Precision::float32)
     : codim_(codim)
     {
         if (codim == GridView::dimension)
         {
             if (dm == Dune::VTK::conforming)
-                field_ = std::make_shared< VectorP1VTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp);
+                field_ = std::make_shared< VectorP1VTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp, precision);
             else
-                field_ = std::make_shared< VectorP1NonConformingVTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp);
+                field_ = std::make_shared< VectorP1NonConformingVTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp, precision);
         }
         else if (codim == 0)
-            field_ = std::make_shared< VectorP0VTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp);
+            field_ = std::make_shared< VectorP0VTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp, precision);
         else
             DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
     }
@@ -275,6 +314,16 @@ public:
 
     //! return the number of components of this field
     virtual int ncomps() const { return field_->ncomps(); }
+
+    //! return the precision of this field
+    virtual Dumux::Vtk::Precision precision() const
+    {
+#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
+        return Dumux::Vtk::Precision::float32;
+#else
+        return field_->precision();
+#endif
+    }
 
     //! codimension of the entities on which the field values live
     int codim() const { return codim_; }
@@ -295,8 +344,6 @@ private:
     std::shared_ptr<Dune::VTKFunction<GridView>> field_;
 };
 
-} // end namespace Vtk
-
-} // end namespace Dumux
+} // end namespace Dumux::Vtk
 
 #endif

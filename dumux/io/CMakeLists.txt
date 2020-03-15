@@ -22,5 +22,6 @@ vtkfunction.hh
 vtkmultiwriter.hh
 vtknestedfunction.hh
 vtkoutputmodule.hh
+vtkprecision.hh
 vtksequencewriter.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io)
