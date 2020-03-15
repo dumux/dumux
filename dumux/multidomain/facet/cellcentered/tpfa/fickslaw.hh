@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FacetCoupling
- * \copydoc Dumux::CCTpfaFacetCouplingDarcysLaw
+ * \copydoc Dumux::CCTpfaFacetCouplingFicksLaw
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_FICKS_LAW_HH
@@ -155,7 +155,7 @@ public:
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }
 
-    //! Compute the advective flux
+    //! Compute the diffusive fluxes
     template< class Problem, class ElementVolumeVariables, class ElementFluxVarsCache >
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
@@ -217,7 +217,7 @@ public:
         typename Cache::DiffusionTransmissibilityContainer tij;
         if (!problem.couplingManager().isCoupled(element, scvf))
         {
-            //! use the standard darcy's law and only compute one transmissibility
+            //! use the standard Fick's law and only compute one transmissibility
             tij[Cache::insideTijIdx] = ParentType::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
             return tij;
         }
@@ -289,6 +289,205 @@ public:
         {
             tij[Cache::insideTijIdx] = wIn;
             tij[Cache::outsideTijIdx] = 0.0;
+            tij[Cache::facetTijIdx] = -wIn;
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented, "Interior boundary types other than pure Dirichlet or Neumann");
+
+        return tij;
+    }
+};
+
+/*!
+ * \ingroup FacetCoupling
+ * \brief Specialization of CCTpfaFacetCouplingFicksLawImpl for dim<dimWorld
+ */
+template<class TypeTag, ReferenceSystemFormulation referenceSystem>
+class CCTpfaFacetCouplingFicksLawImpl<TypeTag, referenceSystem, /*isNetwork*/true>
+: public FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>
+{
+    using Implementation = CCTpfaFacetCouplingFicksLawImpl<TypeTag, referenceSystem, true>;
+    using ParentType = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa, referenceSystem>;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
+
+    static const int numPhases = ModelTraits::numFluidPhases();
+    static const int numComponents = ModelTraits::numFluidComponents();
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
+
+    /*!
+     * \brief The cache class used with this specialization of Fick's law.
+     */
+    class FacetCouplingFicksLawCache
+    {
+    public:
+        //! export the corresponding filler class
+        using Filler = typename ParentType::Cache::Filler;
+
+        //! we store the transmissibilities associated with the interior
+        //! cell and the fracture facet in an array. Access to this array
+        //! should be done using the following indices:
+        static constexpr int insideTijIdx = 0;
+        static constexpr int facetTijIdx = 1;
+
+        //! Export transmissibility storage type
+        using DiffusionTransmissibilityContainer = std::array<Scalar, 2>;
+
+        //! update subject to a given problem
+        template< class Problem, class ElementVolumeVariables >
+        void updateDiffusion(const Problem& problem,
+                             const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace &scvf,
+                             unsigned int phaseIdx,
+                             unsigned int compIdx)
+        {
+            tij_[phaseIdx][compIdx] = Implementation::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+        }
+
+        //! We use the same name as in the TpfaFicksLawCache so
+        //! that this cache and the law implementation for non-coupled
+        //! models can be reused here on facets that do not lie on an
+        //! interior boundary, i.e. do not coincide with a facet element
+        Scalar diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
+        { return tij_[phaseIdx][compIdx][insideTijIdx]; }
+
+        //! returns the transmissibility associated with the inside cell
+        Scalar diffusionTijInside(unsigned int phaseIdx, unsigned int compIdx) const
+        { return tij_[phaseIdx][compIdx][insideTijIdx]; }
+
+        //! returns the transmissibility associated with the outside cell
+        Scalar diffusionTijFacet(unsigned int phaseIdx, unsigned int compIdx) const
+        { return tij_[phaseIdx][compIdx][facetTijIdx]; }
+
+    private:
+        std::array< std::array<DiffusionTransmissibilityContainer, numComponents>, numPhases> tij_;
+    };
+
+public:
+    //! export the type for the corresponding cache
+    using Cache = FacetCouplingFicksLawCache;
+
+    //! state the discretization method this implementation belongs to
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+
+    //! Return the reference system
+    static constexpr ReferenceSystemFormulation referenceSystemFormulation()
+    { return referenceSystem; }
+
+    //! Compute the diffusive fluxes
+    template< class Problem, class ElementVolumeVariables, class ElementFluxVarsCache >
+    static ComponentFluxVector flux(const Problem& problem,
+                                    const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const SubControlVolumeFace& scvf,
+                                    int phaseIdx,
+                                    const ElementFluxVarsCache& elemFluxVarsCache)
+    {
+        if (!problem.couplingManager().isOnInteriorBoundary(element, scvf))
+            return ParentType::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
+
+        ComponentFluxVector componentFlux(0.0);
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
+                continue;
+
+            // get inside/outside volume variables
+            const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+            const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
+
+            // the inside and outside mass/mole fractions fractions
+            const Scalar xInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
+            const Scalar xFacet = massOrMoleFraction(facetVolVars, referenceSystem, phaseIdx, compIdx);
+
+            const Scalar rhoInside = massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
+            const Scalar rhoFacet = massOrMolarDensity(facetVolVars, referenceSystem, phaseIdx);
+            const Scalar rho = 0.5*(rhoInside + rhoFacet);
+
+            componentFlux[compIdx] = rho*(fluxVarsCache.diffusionTijInside(phaseIdx, compIdx)*xInside
+                                          + fluxVarsCache.diffusionTijFacet(phaseIdx, compIdx)*xFacet);
+
+            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+        }
+
+        return componentFlux;
+    }
+
+    // The flux variables cache has to be bound to an element prior to flux calculations
+    // During the binding, the transmissibility will be computed and stored using the method below.
+    template< class Problem, class ElementVolumeVariables >
+    static typename Cache::DiffusionTransmissibilityContainer
+    calculateTransmissibility(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolumeFace& scvf,
+                              unsigned int phaseIdx, unsigned int compIdx)
+    {
+        typename Cache::DiffusionTransmissibilityContainer tij;
+        if (!problem.couplingManager().isCoupled(element, scvf))
+        {
+            //! use the standard Fick's law and only compute one transmissibility
+            tij[Cache::insideTijIdx] = ParentType::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+            return tij;
+        }
+
+        //! xi factor for the coupling conditions
+        static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
+
+        // On surface grids only xi = 1.0 can be used, as the coupling condition
+        // for xi != 1.0 does not generalize for surface grids where the normal
+        // vectors of the inside/outside elements have different orientations.
+        if (Dune::FloatCmp::ne(xi, 1.0, 1e-6))
+            DUNE_THROW(Dune::InvalidStateException, "Xi != 1.0 cannot be used on surface grids");
+
+        const auto insideScvIdx = scvf.insideScvIdx();
+        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+        const auto& insideVolVars = elemVolVars[insideScvIdx];
+        const auto wIn = scvf.area()*computeTpfaTransmissibility(scvf,
+                                                                 insideScv,
+                                                                 insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx),
+                                                                 insideVolVars.extrusionFactor());
+
+        // proceed depending on the interior BC types used
+        const auto iBcTypes = problem.interiorBoundaryTypes(element, scvf);
+
+        // neumann-coupling
+        if (iBcTypes.hasOnlyNeumann())
+        {
+            // Here we use the square root of the facet extrusion factor
+            // as an approximate average distance from scvf ip to facet center
+            using std::sqrt;
+            const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
+            const auto wFacet = 2.0*scvf.area()*insideVolVars.extrusionFactor()
+                                   /sqrt(facetVolVars.extrusionFactor())
+                                   *vtmv(scvf.unitOuterNormal(),
+                                         facetVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx),
+                                         scvf.unitOuterNormal());
+
+            tij[Cache::insideTijIdx] = wFacet*wIn/(wIn+wFacet);
+            tij[Cache::facetTijIdx] = -tij[Cache::insideTijIdx];
+        }
+        else if (iBcTypes.hasOnlyDirichlet())
+        {
+            tij[Cache::insideTijIdx] = wIn;
             tij[Cache::facetTijIdx] = -wIn;
         }
         else
