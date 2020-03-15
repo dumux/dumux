@@ -57,7 +57,7 @@ public:
         return codim == dim;
     }
 
-    bool fixedsize(int dim, int codim) const
+    bool fixedSize(int dim, int codim) const
     {
         // for each vertex we communicate a single field vector which
         // has a fixed size
