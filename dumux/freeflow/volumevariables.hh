@@ -61,7 +61,6 @@ public:
     //! return number of components considered by the model
     static constexpr int numFluidComponents() { return Traits::ModelTraits::numFluidComponents(); }
 
-
     /*!
      * \brief Update all quantities for a given control volume
      *
