@@ -62,8 +62,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-
     //! Class that fills the cache corresponding to tpfa Fick's Law
     class TpfaFouriersLawCacheFiller
     {
