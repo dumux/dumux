@@ -571,6 +571,7 @@ The file dumuxmessage.hh contains the class defining the start and end message o
 we include the linear solver to be used to solve the linear system
 ```cpp
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 ```
 we include the nonlinear Newton's method
 ```cpp
@@ -785,7 +786,7 @@ we set the assembler with the time loop because we have an instationary problem
 ```
 we set the linear solver
 ```cpp
-    using LinearSolver = AMGBackend<TypeTag>;
+    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 ```
 additionally we set the non-linear solver.
