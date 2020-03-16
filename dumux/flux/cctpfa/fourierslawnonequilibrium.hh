@@ -57,7 +57,6 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cct
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr auto numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();

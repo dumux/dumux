@@ -57,7 +57,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
-    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
 
     //! Class that fills the cache corresponding to mpfa Darcy's Law
     class MpfaFouriersLawCacheFiller
