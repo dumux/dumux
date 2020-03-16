@@ -72,10 +72,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
 
 public:
     template <bool onlyTracers = false>
-    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar,
-                                                                              numFluidPhases,
-                                                                              numComponents,
-                                                                              onlyTracers>;
+    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numFluidPhases, numComponents>;
 
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
