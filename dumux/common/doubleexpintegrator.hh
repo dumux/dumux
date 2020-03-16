@@ -74,7 +74,7 @@ public:
      * \param b upper limit of integration
      * \param targetAbsoluteError desired bound on error
      * \param numFunctionEvaluations number of function evaluations used
-     * \param f errorEstimate estimate for error in integration
+     * \param errorEstimate estimate for error in integration
      * \return The value of the integral
      */
     template<class Function,

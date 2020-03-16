@@ -1293,7 +1293,7 @@ public:
     /*!
      *  \brief Colliding two segments in 3D
      * \param geo1/geo2 The geometries to intersect
-     * \param is If the geometries collide, is holds the corner points of
+     * \param intersection If the geometries collide, is holds the corner points of
      *        the intersection object in global coordinates.
      * \note This overload is used when segment-like intersections are seeked
      */
