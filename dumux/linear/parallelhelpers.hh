@@ -65,7 +65,7 @@ class ParallelISTLHelper
         bool contains(int dim, int codim) const
         { return dofCodim == codim; }
 
-        bool fixedsize(int dim, int codim) const
+        bool fixedSize(int dim, int codim) const
         { return true; }
 
         template<class EntityType>
@@ -91,7 +91,7 @@ class ParallelISTLHelper
     public:
         using DataType = typename V::block_type;
         using BaseGatherScatter::contains;
-        using BaseGatherScatter::fixedsize;
+        using BaseGatherScatter::fixedSize;
         using BaseGatherScatter::size;
 
         ConsistencyBoxGatherScatter(V& container, const DofMapper& mapper)
@@ -129,7 +129,7 @@ class ParallelISTLHelper
     public:
         using DataType = std::size_t;
         using BaseGatherScatter::contains;
-        using BaseGatherScatter::fixedsize;
+        using BaseGatherScatter::fixedSize;
         using BaseGatherScatter::size;
 
         GhostGatherScatter(std::vector<std::size_t>& ranks, const DofMapper& mapper)
@@ -171,7 +171,7 @@ class ParallelISTLHelper
     public:
         using DataType = std::size_t;
         using BaseGatherScatter::contains;
-        using BaseGatherScatter::fixedsize;
+        using BaseGatherScatter::fixedSize;
         using BaseGatherScatter::size;
 
         InteriorBorderGatherScatter(std::vector<std::size_t>& ranks, const DofMapper& mapper)
@@ -210,7 +210,7 @@ class ParallelISTLHelper
     {
         using DataType = int;
         using BaseGatherScatter::contains;
-        using BaseGatherScatter::fixedsize;
+        using BaseGatherScatter::fixedSize;
         using BaseGatherScatter::size;
 
         NeighbourGatherScatter(const DofMapper& mapper, int rank, std::set<int>& neighbours)
@@ -246,7 +246,7 @@ class ParallelISTLHelper
     {
         using DataType = int;
         using BaseGatherScatter::contains;
-        using BaseGatherScatter::fixedsize;
+        using BaseGatherScatter::fixedSize;
         using BaseGatherScatter::size;
 
         SharedGatherScatter(std::vector<int>& shared, const DofMapper& mapper)
@@ -283,7 +283,7 @@ class ParallelISTLHelper
     {
         using DataType = GlobalIndex;
         using BaseGatherScatter::contains;
-        using BaseGatherScatter::fixedsize;
+        using BaseGatherScatter::fixedSize;
         using BaseGatherScatter::size;
 
         GlobalIndexGatherScatter(std::vector<GlobalIndex>& globalIndices, const DofMapper& mapper)
@@ -539,7 +539,7 @@ class ParallelMatrixHelper
         /*!
          * \brief Returns true if size of data per entity of given dim and codim is a constant
          */
-        bool fixedsize (int dim, int codim) const
+        bool fixedSize (int dim, int codim) const
         { return false; }
 
         /*!
@@ -636,7 +636,7 @@ class ParallelMatrixHelper
         /*!
          * \brief Returns true if size of data per entity of given dim and codim is a constant
          */
-        bool fixedsize(int dim, int codim) const
+        bool fixedSize(int dim, int codim) const
         { return false; }
 
         /*!

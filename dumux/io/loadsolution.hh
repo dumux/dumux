@@ -66,7 +66,7 @@ public:
     bool contains(int dim, int cd) const
     { return cd == codim; }
 
-    bool fixedsize(int dim, int cd) const
+    bool fixedSize(int dim, int cd) const
     { return true; }
 
     template<class EntityType>
