@@ -85,7 +85,7 @@ public:
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
     template <bool onlyTracers = false>
-    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents, onlyTracers>;
+    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents>;
 
     template<class ElementVolumeVariables>
     static CellCenterPrimaryVariables flux(const Problem& problem,

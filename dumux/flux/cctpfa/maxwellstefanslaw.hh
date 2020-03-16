@@ -81,7 +81,7 @@ public:
     { return referenceSystem; }
 
     template<bool onlyTracers = false>
-    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents, onlyTracers>;
+    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents>;
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law
