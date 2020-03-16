@@ -864,16 +864,14 @@ private:
 template<class M, class X, class Y, class GridGeometry>
 class SeqUzawa : public Dune::Preconditioner<X,Y>
 {
-    using VelocityMatrix = typename std::remove_reference<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_1])>::type;
-    using VelocityVector = typename std::remove_reference<decltype(std::declval<X>()[Dune::Indices::_1])>::type;
+    using VelocityMatrix = typename std::remove_reference<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>::type;
+    using VelocityVector = typename std::remove_reference<decltype(std::declval<X>()[Dune::Indices::_0])>::type;
 
-    static constexpr bool isParallel = false;
-    using SolverTraits = NonoverlappingSolverTraits<VelocityMatrix, VelocityVector, isParallel>;
-    using Comm = typename SolverTraits::Comm;
-    using LinearOperator = typename SolverTraits::LinearOperator;
-    using ScalarProduct = typename SolverTraits::ScalarProduct;
-    using Smoother = typename SolverTraits::Smoother;
-    using VelocityAMG = Dune::Amg::AMG<LinearOperator, VelocityVector, Smoother,Comm>;
+    using Comm = Dune::Amg::SequentialInformation;
+    using LinearOperator = Dune::MatrixAdapter<VelocityMatrix, VelocityVector, VelocityVector>;
+    using ScalarProduct = Dune::SeqScalarProduct<VelocityVector>;
+    using Smoother = Dune::SeqSSOR<VelocityMatrix, VelocityVector, VelocityVector>;
+    using VelocityAMG = Dune::Amg::AMG<LinearOperator, VelocityVector, Smoother, Comm>;
     using VelocityUMFPack = Dune::UMFPack<VelocityMatrix>;
 
 public:
@@ -891,12 +889,12 @@ public:
     /*! \brief Constructor.
      *
      *   constructor gets all parameters to operate the prec.
-     *   \param A The matrix to operate on.
+     *   \param mat The matrix to operate on.
      *   \param n The number of iterations to perform.
      *   \param w The relaxation factor.
      */
-    SeqUzawa (const M& A, int n, scalar_field_type w)
-    : _A_(A), _n(n), _w(w)
+    SeqUzawa (const M& mat, int n, scalar_field_type w)
+    : _A_(mat), _n(n), _w(w)
     {
         using namespace Dune::Indices;  // for _0, _1, etc.
         inexact_ = getParam<bool>("LinearSolver.InexactVelocitySolver", false);
@@ -915,20 +913,20 @@ public:
             smootherArgs.iterations = 1;
             smootherArgs.relaxationFactor = 1;
 
-            linearOperator_ = std::make_unique<LinearOperator>(_A_[_1][_1]);
+            linearOperator_ = std::make_unique<LinearOperator>(_A_[_0][_0]);
             velocityAMG_ = std::make_unique<VelocityAMG>(*linearOperator_, criterion, smootherArgs, comm_);
 
             static auto determineOmega = getParam<bool>("LinearSolver.PreconditionerDetermineOmega", false);
             if (determineOmega)
             {
-                auto& A = _A_[_1][_1];
-                auto& Bt = _A_[_1][_0];
-                auto& B = _A_[_0][_1];
+                auto& A = _A_[_0][_0];
+                auto& Bt = _A_[_0][_1];
+                auto& B = _A_[_1][_0];
 
                 VelocityVector x(A.M());
                 x = 1.0;
 
-                static auto iterations = getParam<std::size_t>("LinearSolver.PreconditionerPowerLawIterations", 5);
+                static const auto iterations = getParam<std::size_t>("LinearSolver.PreconditionerPowerLawIterations", 5);
 
                 // apply power iteration x_k+1 = M*x_k/|M*x_k| for the matrix M = -B*Ainv*Bt
                 for (std::size_t i = 0; i < iterations; ++i)
@@ -964,7 +962,7 @@ public:
         }
         else
         {
-            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[_1][_1]);
+            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[_0][_0]);
         }
     }
 
@@ -984,15 +982,15 @@ public:
     {
         using namespace Dune::Indices;
 
-        auto& A = _A_[_1][_1];
-        auto& Bt = _A_[_1][_0];
-        auto& B = _A_[_0][_1];
-        auto& C = _A_[_0][_0];
+        auto& A = _A_[_0][_0];
+        auto& Bt = _A_[_0][_1];
+        auto& B = _A_[_1][_0];
+        auto& C = _A_[_1][_1];
 
-        const auto& f = d[_1];
-        const auto& g = d[_0];
-        auto& velocity = v[_1];
-        auto& pressure = v[_0];
+        const auto& f = d[_0];
+        const auto& g = d[_1];
+        auto& velocity = v[_0];
+        auto& pressure = v[_1];
         for (int i = 0; i < C.N(); ++i)
         {
             if (std::abs(C[i][i].frobenius_norm() - 1.0) < 1e-14)
