@@ -224,9 +224,7 @@ public:
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::KOmegaNI> { using type = FreeflowNonIsothermalIOFields<KOmegaIOFields, true/*turbulenceModel*/>; };
 
-// \}
-}
-
+} // end properties
 } // end namespace
 
 #endif // DUMUX_KOMEGA_MODEL_HH

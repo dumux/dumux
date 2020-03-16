@@ -107,16 +107,19 @@ private:
     using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-
     static_assert(FSY::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    using BaseTraits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
 
-    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
-    using NCVolVars = FreeflowNCVolumeVariables<Traits>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    template<class BaseTraits, class DT>
+    struct NCTraits : public BaseTraits { using DiffusionType = DT; };
+
+    using NCVolVars = FreeflowNCVolumeVariables<NCTraits<BaseTraits, DT>>;
 public:
-    using type = LowReKEpsilonVolumeVariables<Traits, NCVolVars>;
+    using type = LowReKEpsilonVolumeVariables<NCTraits<BaseTraits, DT>, NCVolVars>;
 };
 
 //! The local residual
@@ -178,16 +181,18 @@ private:
     using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-
     static_assert(FSY::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    using BaseTraits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
 
-    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
-    using NCVolVars = FreeflowNCVolumeVariables<Traits>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    template<class BaseTraits, class DT>
+    struct NCNITraits : public BaseTraits { using DiffusionType = DT; };
+    using NCNIVolVars = FreeflowNCVolumeVariables<NCNITraits<BaseTraits, DT>>;
 public:
-    using type = LowReKEpsilonVolumeVariables<Traits, NCVolVars>;
+    using type = LowReKEpsilonVolumeVariables<NCNITraits<BaseTraits, DT>, NCNIVolVars>;
 };
 
 //! The local residual
@@ -220,8 +225,7 @@ public:
     using type = FreeflowNonIsothermalIOFields<IsothermalIOFields, true/*turbulenceModel*/>;
 };
 
-// \}
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif
+#endif // DUMUX_LOWREKEPSILON_NC_MODEL_HH
