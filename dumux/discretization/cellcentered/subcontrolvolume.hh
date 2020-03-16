@@ -24,9 +24,10 @@
 #ifndef DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
+#include <optional>
+
 #include <dune/common/fvector.hh>
 
-#include <dumux/common/optional.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
 
@@ -108,7 +109,6 @@ public:
         // We want to use the default copy/move assignment.
         // But since geometry is not copy assignable :( we
         // have to construct it again
-        geometry_.release();
         geometry_.emplace(other.geometry_.value());
         center_ = other.center_;
         elementIndex_ = other.elementIndex_;
@@ -121,7 +121,6 @@ public:
         // We want to use the default copy/move assignment.
         // But since geometry is not copy assignable :( we
         // have to construct it again
-        geometry_.release();
         geometry_.emplace(std::move(other.geometry_.value()));
         center_ = std::move(other.center_);
         elementIndex_ = std::move(other.elementIndex_);
@@ -188,7 +187,7 @@ public:
 
 private:
     // Work around the fact that geometry is not default constructible
-    Optional<Geometry> geometry_;
+    std::optional<Geometry> geometry_;
     GlobalPosition center_;
     GridIndexType elementIndex_;
 };
