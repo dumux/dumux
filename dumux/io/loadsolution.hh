@@ -32,6 +32,7 @@
 #include <type_traits>
 #include <functional>
 
+#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
 #include <dune/grid/common/partitionset.hh>
@@ -66,8 +67,15 @@ public:
     bool contains(int dim, int cd) const
     { return cd == codim; }
 
-    bool fixedSize(int dim, int cd) const
+#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedSize(int dim, int codim) const
     { return true; }
+#else
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedsize(int dim, int codim) const
+    { return true; }
+#endif
 
     template<class EntityType>
     size_t size (const EntityType &e) const

@@ -103,8 +103,15 @@ struct GmshGridDataHandle : public Dune::CommDataHandleIF<GmshGridDataHandle<Gri
     bool contains (int dim, int codim) const
     { return codim == 0 || codim == 1; }
 
-    bool fixedSize (int dim, int codim) const
+#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedSize(int dim, int codim) const
     { return true; }
+#else
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedsize(int dim, int codim) const
+    { return true; }
+#endif
 
     template<class EntityType>
     std::size_t size (const EntityType& e) const
@@ -181,8 +188,15 @@ struct GmshGridDataHandle<Dune::UGGrid<dimgrid>, GridFactory, Data>
     bool contains (int dim, int codim) const
     { return codim == 0 || codim == 1; }
 
-    bool fixedSize (int dim, int codim) const
+#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedSize(int dim, int codim) const
     { return true; }
+#else
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedsize(int dim, int codim) const
+    { return true; }
+#endif
 
     template<class EntityType>
     std::size_t size (const EntityType& e) const
