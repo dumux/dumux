@@ -90,8 +90,7 @@
 #include "volumevariables.hh"
 #include "iofields.hh"
 
-namespace Dumux {
-namespace Properties {
+namespace Dumux::Properties {
 
 /*!
  * \ingroup OneEqModel
@@ -231,9 +230,6 @@ public:
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::OneEqNI> { using type = FreeflowNonIsothermalIOFields<OneEqIOFields, true/*turbulenceModel*/>; };
 
-// \}
-}
+} // end namespace Dumux::Properties
 
-} // end namespace
-
-#endif
+#endif // DUMUX_ONEEQ_MODEL_HH

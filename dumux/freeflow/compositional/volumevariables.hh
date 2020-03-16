@@ -44,6 +44,8 @@ class FreeflowNCVolumeVariables : public FreeFlowVolumeVariables< Traits, Freefl
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
+    static constexpr int numFluidComps = ParentType::numFluidComponents();
+    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<1, numFluidComps>;
 
 public:
     //! export the underlying fluid system
@@ -75,22 +77,16 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
 
-        for (unsigned int compIIdx = 0; compIIdx < ParentType::numFluidComponents(); ++compIIdx)
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            for (unsigned int compJIdx = 0; compJIdx < ParentType::numFluidComponents(); ++compJIdx)
-            {
-                // binary diffusion coefficients
-                if(compIIdx != compJIdx)
-                {
-                    diffCoefficient_[compIIdx][compJIdx]
-                        = FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                  paramCache,
-                                                                  0,
-                                                                  compIIdx,
-                                                                  compJIdx);
-                }
-            }
-        }
+            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                            paramCache,
+                                                            0,
+                                                            compIIdx,
+                                                            compJIdx);
+        };
+
+        diffCoefficient_.update(getDiffusionCoefficient);
     }
 
     /*!
@@ -253,30 +249,31 @@ public:
     Scalar averageMolarMass(const int phaseIdx = 0) const
     { return fluidState_.averageMolarMass(phaseIdx); }
 
-   /*!
-    * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-    *
-    * \param compIIdx the index of the component which diffusive
-    * \param compJIdx the index of the component with respect to which compIIdx diffuses
-    */
-   Scalar diffusionCoefficient(int compIIdx, int compJIdx = 0) const
-   {
+    /*!
+     * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
+     */
+    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
+    Scalar diffusionCoefficient(int compIIdx, int compJIdx = 0) const
+    {
        if (compIIdx == compJIdx)
            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for compIIdx = compJIdx");
-       return diffCoefficient_[compIIdx][compJIdx];
-   }
+       return diffCoefficient_(0, compIIdx, compJIdx);
+    }
 
-   /*!
-    * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-    *
-    * \param compIIdx the index of the component which diffusive
-    * \param compJIdx the index of the component with respect to which compIIdx diffuses
-    */
-   Scalar effectiveDiffusivity(int compIIdx, int compJIdx = 0) const
-   {
-       return diffusionCoefficient(compIIdx, compJIdx);
-   }
+    /*!
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffCoefficient_(0, compIIdx, compJIdx); }
 
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffusionCoefficient(0, compIIdx, compJIdx); }
 
     /*!
      * \brief Return the fluid state of the control volume.
@@ -286,7 +283,8 @@ public:
 
 protected:
     FluidState fluidState_;
-    std::array<std::array<Scalar, ParentType::numFluidComponents()>, ParentType::numFluidComponents()> diffCoefficient_ = {};
+    // Binary diffusion coefficient
+    DiffusionCoefficients diffCoefficient_;
 };
 
 } // end namespace Dumux

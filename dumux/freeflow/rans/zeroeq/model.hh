@@ -43,8 +43,7 @@
 #include "problem.hh"
 #include "volumevariables.hh"
 
-namespace Dumux {
-namespace Properties {
+namespace Dumux::Properties {
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal RANS 0-Eq. model
@@ -145,9 +144,6 @@ public:
     using type = ZeroEqVolumeVariables<Traits, NSVolVars>;
 };
 
-// \}
-}
-
-} // end namespace
+} // end namespace Dumux::Properties
 
 #endif // DUMUX_ZEROEQ_MODEL_HH

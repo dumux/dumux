@@ -218,9 +218,7 @@ public:
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::KEpsilonNI> { using type = FreeflowNonIsothermalIOFields<KEpsilonIOFields, true/*turbulenceModel*/>; };
 
-// \}
-}
-
+} // end properties
 } // end namespace
 
-#endif
+#endif // DUMUX_KEPSILON_MODEL_HH

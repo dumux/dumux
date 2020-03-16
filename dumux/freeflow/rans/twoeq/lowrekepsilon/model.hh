@@ -231,9 +231,7 @@ public:
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::LowReKEpsilonNI> { using type = FreeflowNonIsothermalIOFields<LowReKEpsilonIOFields, true/*turbulenceModel*/>; };
 
-// \}
-}
-
+} // end properties
 } // end namespace
 
-#endif
+#endif // DUMUX_LOWREKEPSILON_MODEL_HH
