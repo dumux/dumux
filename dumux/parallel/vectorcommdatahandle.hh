@@ -87,9 +87,15 @@ public:
   bool contains(int dim, int codim) const
   { return (codim == entityCodim); }
 
+#if DUNE_VERSION_GT(DUNE_GRID,2,7)
   //! returns true if size per entity of given dim and codim is a constant
   bool fixedSize(int dim, int codim) const
   { return true; }
+#else
+  //! returns true if size per entity of given dim and codim is a constant
+  bool fixedsize(int dim, int codim) const
+  { return true; }
+#endif
 
   /*!
    * \brief how many objects of type DataType have to be sent for a given entity
