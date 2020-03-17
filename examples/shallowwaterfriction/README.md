@@ -613,6 +613,7 @@ The gridmanager constructs a grid from the information in the input or grid file
 We include the linear solver to be used to solve the linear system
 ```cpp
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 ```
 We include the nonlinear newtons method
 ```cpp
@@ -721,7 +722,7 @@ we set the assembler with the time loop because we have an instationary problem.
 ```
 We set the linear solver.
 ```cpp
-    using LinearSolver = Dumux::AMGBackend<TypeTag>;
+    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 ```
 Additionaly, we set the non-linear solver.
