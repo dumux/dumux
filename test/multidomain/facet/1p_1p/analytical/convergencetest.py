@@ -49,7 +49,7 @@ for permIndex in range(0, len(k)):
         geoFile.close()
         tmpGeoFile.close()
 
-        subprocess.call(['gmsh', '-2', "grids/" + execName + ".geo"])
+        subprocess.call(['gmsh', '-format', 'msh2', '-2', "grids/" + execName + ".geo"])
         subprocess.call(['./' + execName, 'params.input',
                                           '-Vtk.OutputName', execName,
                                           '-Grid.File', "grids/" + execName + ".msh",
