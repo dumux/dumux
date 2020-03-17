@@ -35,6 +35,7 @@
 #include <dumux/multidomain/facet/cellcentered/localresidual.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/darcyslaw.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/fickslaw.hh>
+#include <dumux/multidomain/facet/cellcentered/tpfa/fourierslaw.hh>
 
 #include <dumux/porousmediumflow/fluxvariables.hh>
 
@@ -62,6 +63,13 @@ template<class TypeTag>
 struct MolecularDiffusionType<TypeTag, TTag::CCTpfaFacetCouplingModel>
 {
     using type = CCTpfaFacetCouplingFicksLaw< TypeTag >;
+};
+
+//! Use the tpfa facet coupling-specific Ficks's law
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::CCTpfaFacetCouplingModel>
+{
+    using type = CCTpfaFacetCouplingFouriersLaw< TypeTag >;
 };
 
 //! Use the cc local residual for models with facet coupling
