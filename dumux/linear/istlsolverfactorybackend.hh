@@ -37,15 +37,62 @@
 // preconditioners
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/paamg/amg.hh>
+#include "preconditioners.hh"
 
 // solvers
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solverfactory.hh>
 
+#include <dumux/common/typetraits/matrix.hh>
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/parallelhelpers.hh>
 
 namespace Dumux {
+
+// initSolverFactoriesForMultiTypeBlockMatrix differs in different compilation units,
+// so we have it in an anonymous namespace
+namespace {
+
+/*!
+ * \brief Initializes the direct solvers, preconditioners and iterative solvers in
+ *        the factories with the corresponding Matrix and Vector types.
+ * \note  We currently consider only direct solvers and preconditioners provided by
+ *        Dumux which, unlike the ones implemented in Dune, also support MultiTypeBlockMatrices.
+ * \note This function could be removed once Dune::initSolverFactories supports MultiTypeBlockMatrices.
+ * \tparam LinearOperator the linear operator type
+ */
+template<class LinearOperator>
+int initSolverFactoriesForMultiTypeBlockMatrix()
+{
+    using M  = typename LinearOperator::matrix_type;
+    using X  = typename LinearOperator::range_type;
+    using Y  = typename LinearOperator::domain_type;
+    using TL = Dune::TypeList<M,X,Y>;
+    auto& dsfac = Dune::DirectSolverFactory<M,X,Y>::instance();
+    Dune::addRegistryToFactory<TL>(dsfac, Dumux::MultiTypeBlockMatrixDirectSolverTag{});
+    auto& pfac = Dune::PreconditionerFactory<LinearOperator,X,Y>::instance();
+    Dune::addRegistryToFactory<TL>(pfac, Dumux::MultiTypeBlockMatrixPreconditionerTag{});
+    using TLS = Dune::TypeList<X,Y>;
+    auto& isfac = Dune::IterativeSolverFactory<X,Y>::instance();
+    return Dune::addRegistryToFactory<TLS>(isfac, Dune::IterativeSolverTag{});
+}
+} // end namespace
+
+/*!
+ * \brief Initialize the solver factories for regular matrices or MultiTypeBlockMatrices
+ * \tparam Matrix the matrix
+ * \tparam LinearOperator the linear operator
+ *
+ * \note This function could be removed once Dune::initSolverFactories supports MultiTypeBlockMatrices.
+ */
+template<class Matrix, class LinearOperator>
+void initSolverFactories()
+{
+    if constexpr (isMultiTypeBlockMatrix<Matrix>::value)
+        initSolverFactoriesForMultiTypeBlockMatrix<LinearOperator>();
+    else
+        Dune::initSolverFactories<LinearOperator>();
+}
 
 /*!
  * \ingroup Linear
@@ -148,7 +195,10 @@ private:
     template<class Matrix, class Vector>
     void solveSequentialOrParallel_(Matrix& A, Vector& x, Vector& b)
     {
-        if constexpr (LinearSolverTraits::canCommunicate)
+        // Dune::MultiTypeBlockMatrix does not provide a ColIterator which is needed by Dune::NonoverlappingSchwarzOperator.
+        // We therefore can only solve these types of systems sequentially.
+        // TODO: This can be adapted once the situation in Dune ISTL changes.
+        if constexpr (LinearSolverTraits::canCommunicate && !isMultiTypeBlockMatrix<Matrix>::value)
         {
             if (isParallel_)
             {
@@ -181,7 +231,7 @@ private:
 
         if (firstCall_)
         {
-            Dune::initSolverFactories<LinearOperator>();
+            initSolverFactories<Matrix, LinearOperator>();
             parallelHelper_->initGhostsAndOwners();
         }
 
@@ -207,7 +257,7 @@ private:
         auto linearOperator = std::make_shared<LinearOperator>(A);
 
         if (firstCall_)
-            Dune::initSolverFactories<LinearOperator>();
+            initSolverFactories<Matrix, LinearOperator>();
 
         // construct solver
         auto solver = getSolverFromFactory_(linearOperator);
