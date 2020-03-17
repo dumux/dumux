@@ -9,7 +9,7 @@ dumux_add_test(NAME test_co2_box
               LABELS porousmediumflow co2
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousBox
-              CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
+              CMAKE_GUARD "( dune-alugrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_box-reference.vtu
@@ -21,7 +21,7 @@ dumux_add_test(NAME test_co2_tpfa
               LABELS porousmediumflow co2
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCTpfa
-              CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
+              CMAKE_GUARD "( dune-alugrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_tpfa-reference.vtu
@@ -34,7 +34,7 @@ dumux_add_test(NAME test_co2ni_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousNIBox
                                   ISOTHERMAL=0
-              CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
+              CMAKE_GUARD "( dune-alugrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_box-reference.vtu
@@ -47,7 +47,7 @@ dumux_add_test(NAME test_co2ni_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousNICCTpfa
                                   ISOTHERMAL=0
-              CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
+              CMAKE_GUARD "( dune-alugrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_tpfa-reference.vtu

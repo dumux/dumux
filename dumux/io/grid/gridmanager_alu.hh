@@ -231,8 +231,6 @@ public:
     }
 };
 
-#if DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-
 //! alu uses boundary id
 template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
 class BoundaryFlag<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
@@ -255,7 +253,6 @@ private:
     int flag_;
 };
 
-#endif // DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 #endif // HAVE_DUNE_ALUGRID
 
 } // end namespace Dumux
