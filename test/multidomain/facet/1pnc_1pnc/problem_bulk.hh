@@ -47,21 +47,29 @@ namespace Properties {
 
 // create the type tag nodes
 namespace TTag {
-struct OnePNCBulk { using InheritsFrom = std::tuple<OnePNC>; };
+struct BaseBulk {};
+struct OnePNCBulk { using InheritsFrom = std::tuple<OnePNC, BaseBulk>; };
+struct OnePNCNIBulk { using InheritsFrom = std::tuple<OnePNCNI, BaseBulk>; };
+
 struct OnePNCBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePNCBulk>; };
+struct OnePNCNIBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePNCNIBulk>; };
+
 struct OnePNCBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePNCBulk>; };
+struct OnePNCNIBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePNCNIBulk>; };
+
 struct OnePNCBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePNCBulk>; };
+struct OnePNCNIBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePNCNIBulk>; };
 } // end namespace TTag
 
 // Set the grid type (DIMWORLD is defined in CMakeLists.txt)
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePNCBulk> { using type = Dune::ALUGrid<2, DIMWORLD, Dune::cube, Dune::nonconforming>; };
+struct Grid<TypeTag, TTag::BaseBulk> { using type = Dune::ALUGrid<2, DIMWORLD, Dune::cube, Dune::nonconforming>; };
 // Set the problem type
 template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePNCBulk> { using type = OnePNCBulkProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::BaseBulk> { using type = OnePNCBulkProblem<TypeTag>; };
 // set the spatial params
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePNCBulk>
+struct SpatialParams<TypeTag, TTag::BaseBulk>
 {
     using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
                                     GetPropType<TypeTag, Properties::Scalar> >;
@@ -69,7 +77,7 @@ struct SpatialParams<TypeTag, TTag::OnePNCBulk>
 
 // Set fluid configuration
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePNCBulk>
+struct FluidSystem<TypeTag, TTag::BaseBulk>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -107,6 +115,9 @@ class OnePNCBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr bool enableHeatConduction = ModelTraits::enableEnergyBalance();
 
     enum
     {
@@ -164,8 +175,16 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         auto values = initialAtPos(globalPos);
+
         if (globalPos[1] < 1e-6)
+        {
             values[N2Idx] = 1e-3;
+            if constexpr (enableHeatConduction)
+            {
+                values[Indices::temperatureIdx] += 100; // DeltaT = 100 K
+            }
+        }
+
         return values;
     }
 
@@ -175,6 +194,12 @@ public:
         PrimaryVariables values;
         values[pressureIdx] = 1.0e5;
         values[N2Idx] = 0.0;
+
+        if constexpr (enableHeatConduction)
+        {
+            values[Indices::temperatureIdx] = temperature();
+        }
+
         return values;
     }
 

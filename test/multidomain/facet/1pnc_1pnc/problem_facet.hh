@@ -45,20 +45,26 @@ namespace Properties {
 
 // create the type tag nodes
 namespace TTag {
-struct OnePNCFacet { using InheritsFrom = std::tuple<OnePNC>; };
+struct BaseFacet {};
+struct OnePNCFacet { using InheritsFrom = std::tuple<OnePNC, BaseFacet>; }; // Isothermal case
+struct OnePNCNIFacet { using InheritsFrom = std::tuple<OnePNCNI, BaseFacet>; }; // Non-Isothermal case
+
 struct OnePNCFacetTpfa { using InheritsFrom = std::tuple<OnePNCFacet, CCTpfaModel>; };
+struct OnePNCNIFacetTpfa { using InheritsFrom = std::tuple<OnePNCNIFacet, CCTpfaModel>; };
+
 struct OnePNCFacetBox { using InheritsFrom = std::tuple<OnePNCFacet, BoxModel>; };
+struct OnePNCNIFacetBox { using InheritsFrom = std::tuple<OnePNCNIFacet, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePNCFacet> { using type = Dune::FoamGrid<1, DIMWORLD>; };
+struct Grid<TypeTag, TTag::BaseFacet> { using type = Dune::FoamGrid<1, DIMWORLD>; };
 // Set the problem type
 template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePNCFacet> { using type = OnePNCLowDimProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::BaseFacet> { using type = OnePNCLowDimProblem<TypeTag>; };
 // set the spatial params
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePNCFacet>
+struct SpatialParams<TypeTag, TTag::BaseFacet>
 {
     using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
                                     GetPropType<TypeTag, Properties::Scalar> >;
@@ -66,7 +72,7 @@ struct SpatialParams<TypeTag, TTag::OnePNCFacet>
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePNCFacet>
+struct FluidSystem<TypeTag, TTag::BaseFacet>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -104,6 +110,9 @@ class OnePNCLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr bool enableHeatConduction = ModelTraits::enableEnergyBalance();
 
     enum
     {
@@ -163,6 +172,12 @@ public:
         PrimaryVariables values;
         values[pressureIdx] = 1.0e5;
         values[N2Idx] = 0.0;
+
+        if constexpr (enableHeatConduction)
+        {
+            values[Indices::temperatureIdx] = temperature();
+        }
+
         return values;
     }
 
