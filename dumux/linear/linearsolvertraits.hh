@@ -175,6 +175,11 @@ template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::ccmpfa>
 : public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
 
+//! staggered: use overlapping model TODO what to do here?
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::staggered>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
+
 } // end namespace Dumux
 
 #endif // DUMUX_LINEAR_SOLVER_TRAITS_HH
