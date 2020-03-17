@@ -65,6 +65,7 @@ dumux_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_tpfa
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_linearprofile_surface_tpfa_lowdim-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_surface_xi1_tpfa_lowdim-00001.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_surface_tpfa params.input \
+                                                              -Grid.File grids/linear_surface.msh \
                                                               -Vtk.OutputName test_md_facet_1p1p_linearprofile_surface_xi1_tpfa")
 
 dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_mpfa
@@ -105,4 +106,5 @@ dumux_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_mpfa
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_linearprofile_surface_tpfa_lowdim-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_surface_xi1_mpfa_lowdim-00001.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_surface_mpfa params.input \
+                                                              -Grid.File grids/linear_surface.msh \
                                                               -Vtk.OutputName test_md_facet_1p1p_linearprofile_surface_xi1_mpfa")
