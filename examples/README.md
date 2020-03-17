@@ -33,3 +33,10 @@ You learn how to
 
 * solve a shallow water flow problem including bottom friction
 * computate and output (VTK) an analytical reference solution
+
+### [:open_file_folder: Example 4: Freeflow channel](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples/freeflowchannel)
+In this example, we simulate a free flow between two plates in two dimensions.
+You learn how to
+
+* solve a free flow problem
+* set outflow boundary conditions in the free-flow context
