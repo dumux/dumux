@@ -490,7 +490,7 @@ void MimeticPressure2P<TypeTag>::solve()
 {
     using Solver = GetPropType<TypeTag, Properties::LinearSolver>;
 
-    auto verboseLevelSolver = getParam<int>("LinearSolver.Verbosity");
+    auto verboseLevelSolver = getParam<int>("LinearSolver.Verbosity", 0);
 
     if (verboseLevelSolver)
     std::cout << "MimeticPressure2P: solve for pressure" << std::endl;

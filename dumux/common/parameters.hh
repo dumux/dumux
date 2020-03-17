@@ -301,14 +301,6 @@ private:
         // parameters in the assembly group
         defaultParams["Assembly.NumericDifferenceMethod"] = "1";
 
-        // parameters in the linear solver group
-        defaultParams["LinearSolver.GMResRestart"] = "10";
-        defaultParams["LinearSolver.MaxIterations"] = "250";
-        defaultParams["LinearSolver.PreconditionerIterations"] = "1";
-        defaultParams["LinearSolver.PreconditionerRelaxation"] = "1.0";
-        defaultParams["LinearSolver.ResidualReduction"] = "1e-13";
-        defaultParams["LinearSolver.Verbosity"] = "0";
-
         // parameters in the problem group
         defaultParams["Problem.EnableGravity"] = "true";
         defaultParams["Problem.EnableInertiaTerms"] = "true";

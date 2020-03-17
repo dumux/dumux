@@ -88,7 +88,7 @@ public:
                                const std::string& modelParamGroup = "")
     {
         // get the restart threshold
-        const int restartGMRes = getParamFromGroup<double>(modelParamGroup, "LinearSolver.GMResRestart");
+        const int restartGMRes = getParamFromGroup<int>(modelParamGroup, "LinearSolver.GMResRestart", 10);
 
         Preconditioner precond(A, s.precondIter(), s.relaxation());
 
@@ -131,7 +131,7 @@ public:
                                        const std::string& modelParamGroup = "")
     {
         // get the restart threshold
-        const int restartGMRes = getParamFromGroup<int>(modelParamGroup, "LinearSolver.GMResRestart");
+        const int restartGMRes = getParamFromGroup<int>(modelParamGroup, "LinearSolver.GMResRestart", 10);
 
         Preconditioner precond(A, s.relaxation());
 
