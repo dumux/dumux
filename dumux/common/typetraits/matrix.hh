@@ -26,7 +26,14 @@
 
 #include <type_traits>
 
-#include <dune/istl/bcrsmatrix.hh>
+// Forward declare to avoid includes
+namespace Dune {
+template<class ... Args>
+class MultiTypeBlockVector;
+
+template<class FirstRow, class ... Args>
+class MultiTypeBlockMatrix;
+}
 
 namespace Dumux {
 
@@ -36,6 +43,13 @@ template<class T> struct isBCRSMatrix : public std::false_type {};
 //! Helper type to determine whether a given type is a Dune::BCRSMatrix
 template<class T>
 struct isBCRSMatrix<Dune::BCRSMatrix<T> > : public std::true_type {};
+
+//! Helper type to determine whether a given type is a Dune::MultiTypeBlockMatrix
+template<class... Args> struct isMultiTypeBlockMatrix : public std::false_type {};
+
+//! Helper type to determine whether a given type is a Dune::MultiTypeBlockMatrix
+template<class... Args>
+struct isMultiTypeBlockMatrix<Dune::MultiTypeBlockMatrix<Args...>> : public std::true_type {};
 
 } // end namespace Dumux
 
