@@ -57,15 +57,15 @@ class NewSeqUzawa : public Dune::Preconditioner<X,Y>
 
 public:
     //! \brief The matrix type the preconditioner is for.
-    typedef M matrix_type;
+    using matrix_type = M;
     //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
+    using domain_type = X;
     //! \brief The range type of the preconditioner.
-    typedef Y range_type;
+    using range_type = Y;
     //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
+    using field_type = typename X::field_type;
     //! \brief scalar type underlying the field_type
-    typedef Dune::Simd::Scalar<field_type> scalar_field_type;
+    using scalar_field_type = Dune::Simd::Scalar<field_type>;
 
     /*! \brief Constructor.
      *
@@ -74,77 +74,10 @@ public:
      *   \param n The number of iterations to perform.
      *   \param w The relaxation factor.
      */
-    NewSeqUzawa (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& mat, const ParameterTree& configuration)
-    : _A_(mat->getmat()), _n(3), _w(1)
+    NewSeqUzawa (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& mat, const ParameterTree& params)
+    : _A_(mat->getmat()), _n(3)
     {
-        using namespace Dune::Indices;  // for _0, _1, etc.
-        inexact_ = Dumux::getParam<bool>("LinearSolver.InexactVelocitySolver", false);
-
-        if (inexact_)
-        {
-            Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
-            params.setDefaultValuesIsotropic(dim);
-            params.setDebugLevel(0);
-
-            using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<VelocityMatrix, Dune::Amg::FirstDiagonal>>;
-            Criterion criterion(params);
-
-            using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
-            SmootherArgs smootherArgs;
-            smootherArgs.iterations = 1;
-            smootherArgs.relaxationFactor = 1;
-
-            linearOperator_ = std::make_unique<LinearOperator>(_A_[_0][_0]);
-            velocityAMG_ = std::make_unique<VelocityAMG>(*linearOperator_, criterion, smootherArgs, comm_);
-
-            static auto determineOmega = Dumux::getParam<bool>("LinearSolver.PreconditionerDetermineOmega", false);
-            if (determineOmega)
-            {
-                auto& A = _A_[_0][_0];
-                auto& Bt = _A_[_0][_1];
-                auto& B = _A_[_1][_0];
-
-                VelocityVector x(A.M());
-                x = 1.0;
-
-                static const auto iterations = Dumux::getParam<std::size_t>("LinearSolver.PreconditionerPowerLawIterations", 5);
-
-                // apply power iteration x_k+1 = M*x_k/|M*x_k| for the matrix M = -B*Ainv*Bt
-                for (std::size_t i = 0; i < iterations; ++i)
-                {
-                    // btx = Bt*x
-                    VelocityVector btx(x.size());
-                    Bt.mv(x, btx);
-
-                    // ainvbtx = Ainv*(Bt*x)
-                    auto ainvbtx = x;
-                    velocityAMG_->pre(ainvbtx, btx);
-                    velocityAMG_->apply(ainvbtx, btx);
-                    velocityAMG_->post(ainvbtx);
-
-                    // v = M*x = -B*(Ainv*Bt*x)
-                    VelocityVector v(x.size());
-                    B.mv(ainvbtx, v);
-                    v *= -1.0;
-
-                    // eigenvalue lambda = xt*M*x/(xt*x) = xt*v/(xt*x);
-                    auto lambda = x.dot(v)/(x.dot(x));
-
-                    // relaxation factor omega = 1/lambda;
-                    _w = 1.0/lambda;
-
-                    // new iterate x = M*x/|M*x| = v/|v|
-                    x = v;
-                    x /= v.two_norm();
-                }
-
-                std::cout << "relaxation factor " << _w << std::endl;
-            }
-        }
-        else
-        {
-            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[_0][_0]);
-        }
+        init_(params);
     }
 
     /*!
@@ -221,6 +154,75 @@ public:
     }
 
 private:
+
+    void init_(const ParameterTree& params)
+    {
+        using namespace Dune::Indices;
+        // inexact_ = params.get<bool>("preconditioner.InexactVelocitySolver");
+        inexact_ = Dumux::getParam<bool>("LinearSolver.InexactVelocitySolver", false);
+
+        if (inexact_)
+        {
+            linearOperator_ = std::make_shared<LinearOperator>(_A_[_0][_0]);
+            velocityAMG_ = std::make_unique<VelocityAMG>(linearOperator_, params);
+
+            static auto determineOmega = Dumux::getParam<bool>("LinearSolver.PreconditionerDetermineOmega", false);
+            if (determineOmega)
+                _w = estimateOmega_();
+            else
+                _w = Dumux::getParam<double>("LinearSolver.PreconditionerRelaxation", 1);
+        }
+        else
+            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[_0][_0]);
+    }
+
+    scalar_field_type estimateOmega_() const
+    {
+        using namespace Dune::Indices;
+        auto& A = _A_[_0][_0];
+        auto& Bt = _A_[_0][_1];
+        auto& B = _A_[_1][_0];
+
+        VelocityVector x(A.M());
+        x = 1.0;
+
+        scalar_field_type omega = 0.0;
+
+        static const auto iterations = Dumux::getParam<std::size_t>("LinearSolver.PreconditionerPowerLawIterations", 5);
+
+        // apply power iteration x_k+1 = M*x_k/|M*x_k| for the matrix M = -B*Ainv*Bt
+        for (std::size_t i = 0; i < iterations; ++i)
+        {
+            // btx = Bt*x
+            VelocityVector btx(x.size());
+            Bt.mv(x, btx);
+
+            // ainvbtx = Ainv*(Bt*x)
+            auto ainvbtx = x;
+            velocityAMG_->pre(ainvbtx, btx);
+            velocityAMG_->apply(ainvbtx, btx);
+            velocityAMG_->post(ainvbtx);
+
+            // v = M*x = -B*(Ainv*Bt*x)
+            VelocityVector v(x.size());
+            B.mv(ainvbtx, v);
+            v *= -1.0;
+
+            // eigenvalue lambda = xt*M*x/(xt*x) = xt*v/(xt*x);
+            auto lambda = x.dot(v)/(x.dot(x));
+
+            // relaxation factor omega = 1/lambda;
+            omega = 1.0/lambda;
+
+            // new iterate x = M*x/|M*x| = v/|v|
+            x = v;
+            x /= v.two_norm();
+        }
+
+        std::cout << "relaxation factor " << omega << std::endl;
+        return omega;
+    }
+
     //! \brief The matrix we operate on.
     const M& _A_;
     //! \brief The number of steps to do in apply
@@ -229,7 +231,7 @@ private:
     scalar_field_type _w;
 
     Comm comm_;
-    std::unique_ptr<LinearOperator> linearOperator_;
+    std::shared_ptr<LinearOperator> linearOperator_;
     std::unique_ptr<VelocityAMG> velocityAMG_;
     std::unique_ptr<VelocityUMFPack> velocityUMFPack_;
     bool inexact_;
