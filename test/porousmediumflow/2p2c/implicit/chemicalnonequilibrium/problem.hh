@@ -249,7 +249,7 @@ public:
         {
             Scalar moleFracH2OInside = volVars.moleFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx);
             Scalar moleFracRefH2O = 0.0;
-            Scalar evaporationRate = volVars.diffusionCoefficient(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx)
+            Scalar evaporationRate = volVars.diffusionCoefficient(FluidSystem::gasPhaseIdx, FluidSystem::AirIdx, FluidSystem::H2OIdx)
                                      * (moleFracH2OInside - moleFracRefH2O)
                                      / boundaryLayerThickness
                                      * volVars.molarDensity(FluidSystem::gasPhaseIdx);
