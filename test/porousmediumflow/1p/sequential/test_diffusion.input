@@ -11,5 +11,5 @@ EnableGravity = false
 LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
-[LinearSolver]
-PreconditionerIterations = 2
+[LinearSolver.Preconditioner]
+Iterations = 2
