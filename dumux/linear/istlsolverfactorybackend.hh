@@ -284,16 +284,9 @@ IstlSolverFactoryBackend<LinearSolverTraits>::dumuxToIstlSolverParams =
     {"MaxOrthogonalizationVectors", "mmax"},
 
     // preconditioner params
-    // we expect parameters in the subgroup "Preconditioner"
-    // there are some legacy param names that are still supported
-    // subgroup parameters overwrite legacy parameters
-    {"PreconditionerVerbosity", "preconditioner.verbosity"},
     {"Preconditioner.Verbosity", "preconditioner.verbosity"},
-    {"PreconditionerType", "preconditioner.type"},
     {"Preconditioner.Type", "preconditioner.type"},
-    {"PreconditionerIterations", "preconditioner.iterations"},
     {"Preconditioner.Iterations", "preconditioner.iterations"},
-    {"PreconditionerRelaxation", "preconditioner.relaxation"},
     {"Preconditioner.Relaxation", "preconditioner.relaxation"},
     {"Preconditioner.ILUOrder", "preconditioner.n"},
     {"Preconditioner.ILUResort", "preconditioner.resort"},
