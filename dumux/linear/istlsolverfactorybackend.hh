@@ -33,6 +33,7 @@
 // preconditioners
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/paamg/amg.hh>
+#include "preconditioners.hh"
 
 // solvers
 #include <dune/istl/solvers.hh>
@@ -44,6 +45,38 @@
 #if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 
 namespace Dumux {
+
+// Factory for Dumux-specific precondioners (e.g., allowing MultiTypeBlockMatrix):
+template<class M, class X, class Y>
+using DumuxPreconditionerSignature = std::shared_ptr<Dune::Preconditioner<X,Y>>(const std::shared_ptr<M>&, const Dune::ParameterTree&);
+template<class M, class X, class Y>
+using DumuxPreconditionerFactory = Dune::Singleton<Dune::ParameterizedObjectFactory<DumuxPreconditionerSignature<M,X,Y>>>;
+
+// initSolverFactories differs in different compilation units, so we have it
+// in an anonymous namespace
+namespace {
+
+/* initializes the direct solvers, preconditioners and iterative solvers in
+   the factories with the corresponding Matrix and Vector types.
+
+   @tparam LinearOperator the assembled linear operator type
+*/
+template<class LinearOperator>
+int initSolverFactoriesForMultiTypeBlockMatrix()
+{
+    using M  = typename LinearOperator::matrix_type;
+    using X  = typename LinearOperator::range_type;
+    using Y  = typename LinearOperator::domain_type;
+    using TL = Dune::TypeList<M,X,Y>;
+    // auto& dsfac=Dune::DirectSolverFactory<M,X,Y>::instance();
+    // Dune::addRegistryToFactory<TL>(dsfac, Dune::DirectSolverTag{});
+    auto& pfac = DumuxPreconditionerFactory<LinearOperator,X,Y>::instance();
+    Dune::addRegistryToFactory<TL>(pfac, DumuxPreconditionerTag{});
+    using TLS = Dune::TypeList<X,Y>;
+    auto& isfac = Dune::IterativeSolverFactory<X,Y>::instance();
+    return Dune::addRegistryToFactory<TLS>(isfac, Dune::IterativeSolverTag{});
+}
+}
 
 /*!
  * \ingroup Linear
