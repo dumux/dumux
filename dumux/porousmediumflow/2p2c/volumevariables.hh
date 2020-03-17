@@ -153,17 +153,27 @@ public:
         relativePermeability_[wPhaseIdx_] = MaterialLaw::krw(matParams, saturation(wPhaseIdx_));
         relativePermeability_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx_));
 
-        // binary diffusion coefficients
-        diffCoeff_(phase0Idx, comp0Idx, comp1Idx) = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase0Idx, comp0Idx, comp1Idx);
-        diffCoeff_(phase1Idx, comp1Idx, comp0Idx) = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase1Idx, comp0Idx, comp1Idx);
-
         // porosity & permeabilty
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        effectiveDiffCoeff_(phase0Idx, comp0Idx, comp1Idx) = EffDiffModel::effectiveDiffusivity(*this, phase0Idx, comp0Idx, comp1Idx);
-        effectiveDiffCoeff_(phase1Idx, comp1Idx, comp0Idx) = EffDiffModel::effectiveDiffusivity(*this, phase1Idx, comp1Idx, comp0Idx);
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                            paramCache,
+                                                            phaseIdx,
+                                                            compIIdx,
+                                                            compJIdx);
+        };
+
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+        };
+
+        diffCoeff_.update(getDiffusionCoefficient);
+        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
 
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
@@ -390,14 +400,7 @@ public:
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    [[deprecated("Signature deprecated. Use effectiveDiffusivity(phaseIdx, compIIdx, compJIdx)!")]]
-    Scalar effectiveDiffusivity(int phaseIdx, int compI) const
-    { return effectiveDiffCoeff_(phaseIdx, 0, 0); }
-
-    /*!
-     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
-     */
-    Scalar effectiveDiffusivity(int phaseIdx, int compIIdx, int compJIdx) const
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
     { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     /*!
