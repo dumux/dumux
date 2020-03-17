@@ -527,7 +527,7 @@ void FVPressure<TypeTag>::solve()
 {
     using Solver = GetPropType<TypeTag, Properties::LinearSolver>;
 
-    int verboseLevelSolver = getParam<int>("LinearSolver.Verbosity");
+    int verboseLevelSolver = getParam<int>("LinearSolver.Verbosity", 0);
 
     if (verboseLevelSolver)
         std::cout << __FILE__ << ": solve for pressure" << std::endl;
