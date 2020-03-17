@@ -88,9 +88,8 @@
 
 #include "problem.hh"
 // </details>
-//
 // </details>
-
+//
 //
 // ### Setup basic properties for our simulation
 // We setup the DuMux properties for our simulation (click [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/blob/master/slides/dumux-course-properties.pdf) for DuMux course slides on the property system) within the namespace Properties, which is a sub-namespace of Dumux.
@@ -134,8 +133,6 @@ struct EnableGridGeometryCache<TypeTag, TTag::ChannelExample> { static constexpr
 // We begin the main function by making the type tag `ChannelExample`, that we defined in `problem.hh` for this test problem available here.
 // Then we initializing the message passing interface (MPI), even if we do not plan to run the application in parallel. Finalizing of the MPI is done automatically on exit.
 // We continue by printing the dumux start message and parsing the command line arguments and runtimeparameters from the input file in the init function.
-//<details>
-//  <summary>Toggle to expand code (beginning of main)</summary>
 //
 int main(int argc, char** argv) try
 {
@@ -149,7 +146,6 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     Parameters::init(argc, argv);
-    // </details>
     //
     // ### Set-up and solving of the problem
     //
@@ -166,8 +162,6 @@ int main(int argc, char** argv) try
     // primary variables (velocities, pressures) as well as secondary variables (density, viscosity, ...).
     // We then initialize the vtkoutput. Each model has a predefined model-specific output with relevant parameters
     // for that model. Here, it is pressure, velocity, density and process rank (relevant in the case of parallelisation).
-    //<details>
-    //  <summary>Toggle to expand code</summary>
     //
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
@@ -195,7 +189,6 @@ int main(int argc, char** argv) try
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
-    // </details>
     //
     // We set up two surfaces over which fluxes are calculated.
     // We determine the extensions [xMin,xMax]x[yMin,yMax] of the physical domain.
@@ -205,8 +198,6 @@ int main(int argc, char** argv) try
     // In this case, we add half a cell-width to the x-position in order to make sure that
     // the cell faces lie on the surface. This assumes a regular cartesian grid.
     // The second surface (second call of addSurface) is placed at the outlet of the channel.
-    //<details>
-    //  <summary>Toggle to expand code (addition of surfaces)</summary>
     //
     FluxOverSurface<GridVariables,
                     SolutionVector,
@@ -239,7 +230,6 @@ int main(int argc, char** argv) try
     const auto p0outlet = GlobalPosition{xMax, yMin};
     const auto p1outlet = GlobalPosition{xMax, yMax};
     flux.addSurface("outlet", p0outlet, p1outlet);
-    // </details>
     //
     // The incompressible Stokes equation depends only linearly on the velocity, so we could use a linear solver to solve the problem.
     // Here, we use the show the more general case which would also work for incompressible fluids or the
