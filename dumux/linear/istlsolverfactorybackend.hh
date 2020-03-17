@@ -42,6 +42,9 @@
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/parallelhelpers.hh>
 
+#include <dumux/common/typetraits/matrix.hh>
+
+
 #if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 
 namespace Dumux {
@@ -271,7 +274,12 @@ private:
         auto linearOperator = std::make_shared<LinearOperator>(A);
 
         if (firstCall_)
-            Dune::initSolverFactories<LinearOperator>();
+        {
+            if constexpr (isMultiTypeBlockMatrix<Matrix>::value)
+                initSolverFactoriesForMultiTypeBlockMatrix<LinearOperator>();
+            else
+                Dune::initSolverFactories<LinearOperator>();
+        }
 
         // construct solver
         auto solver = getSolverFromFactory_(linearOperator);
