@@ -8,6 +8,7 @@ linearsolveracceptsmultitypematrix.hh
 matrixconverter.hh
 parallelhelpers.hh
 pdesolver.hh
+preconditioners.hh
 scalelinearsystem.hh
 scotchbackend.hh
 seqsolverbackend.hh
