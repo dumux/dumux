@@ -451,7 +451,9 @@ public:
                 }
             }
             case nPhaseIdx:
-                DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficients of substances in non-wetting liquid phase are undefined!\n");
+            {
+                return 0;
+            }
         }
         return 0;
     }

@@ -442,10 +442,7 @@ public:
                            "is constraint by sum of diffusive fluxes = 0 !\n");
             }
         } else if (phaseIdx==nPhaseIdx) {
-
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Diffusion coefficients of "
-                       "substances in liquid phase are undefined!\n");
+            return 0.0;
         }
         return 0;
     }

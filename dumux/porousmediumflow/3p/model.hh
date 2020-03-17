@@ -113,30 +113,6 @@ struct ThreePVolumeVariablesTraits
     using ModelTraits = MT;
 };
 
-/*!
- * \ingroup ThreePModel
- * \brief Traits class for the two-phase model.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam PT The type used for permeabilities
- * \tparam MT The model traits
- * \tparam ETCM The effective thermal conductivity model
- */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class ETCM>
-struct ThreePNIVolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using FluidSystem = FSY;
-    using FluidState = FST;
-    using SolidSystem = SSY;
-    using SolidState = SST;
-    using PermeabilityType = PT;
-    using ModelTraits = MT;
-    using EffectiveThermalConductivityModel = ETCM;
-};
-
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -250,11 +226,13 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using BaseTraits = ThreePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
     using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
 
-    using Traits = ThreePNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, ETCM>;
+    template<class BaseTraits, class ETCM>
+    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
 public:
-    using type = ThreePVolumeVariables<Traits>;
+    using type = ThreePVolumeVariables<NITraits<BaseTraits, ETCM>>;
 };
 
 } // end namespace Properties

@@ -82,16 +82,16 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/3p/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
-
-#include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
-
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
+
+#include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -120,56 +120,6 @@ struct ThreePThreeCModelTraits
 
     static constexpr bool useConstraintSolver() { return useCS; }
     static constexpr bool useMoles() { return useMol; }
-};
-
-/*!
- * \ingroup ThreePThreeCModel
- * \brief Traits class for the 3p3c model.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam PT The type used for permeabilities
- * \tparam MT The model traits
- * \tparam EDM The effective diffusivity model
- */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM>
-struct ThreePThreeCVolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using FluidSystem = FSY;
-    using FluidState = FST;
-    using SolidSystem = SSY;
-    using SolidState = SST;
-    using PermeabilityType = PT;
-    using ModelTraits = MT;
-    using EffectiveDiffusivityModel = EDM;
-};
-
-/*!
- * \ingroup ThreePThreeCModel
- * \brief Traits class for the 3p3c model.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam PT The type used for permeabilities
- * \tparam MT The model traits
- * \tparam EDM The effective diffusivity model
- * \tparam ETCM The effective thermal conductivity model
- */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class EDM, class ETCM>
-struct ThreePThreeCNIVolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using FluidSystem = FSY;
-    using FluidState = FST;
-    using SolidSystem = SSY;
-    using SolidState = SST;
-    using PermeabilityType = PT;
-    using ModelTraits = MT;
-    using EffectiveDiffusivityModel = EDM;
-    using EffectiveThermalConductivityModel = ETCM;
 };
 
 namespace Properties {
@@ -246,13 +196,21 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
-    using Traits = ThreePThreeCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM>;
+    using BaseTraits = ThreePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    template<class BaseTraits, class DT, class EDM>
+    struct NCTraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+    };
+
 public:
-    using type = ThreePThreeCVolumeVariables<Traits>;
+    using type = ThreePThreeCVolumeVariables<NCTraits<BaseTraits, DT, EDM>>;
 };
 
 //! The model after Millington (1961) is used for the effective diffusivity
@@ -267,10 +225,6 @@ struct IOFields<TypeTag, TTag::ThreePThreeC> { using type = ThreePThreeCIOFields
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::ThreePThreeC> { static constexpr bool value = true; };
 
-//! Somerton is used as default model to compute the effective thermal heat conductivity
-template<class TypeTag>
-struct ThermalConductivityModel<TypeTag, TTag::ThreePThreeCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
-
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
@@ -280,9 +234,9 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::ThreePThreeCNI>
 {
 private:
-    using IsothermalModelTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
+    using IsothermalTraits = GetPropType<TypeTag, Properties::BaseModelTraits>;
 public:
-    using type = PorousMediumFlowNIModelTraits<IsothermalModelTraits>;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set the volume variables property
@@ -295,19 +249,31 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
-    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using BaseTraits = ThreePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using Traits = ThreePThreeCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, EDM, ETCM>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties::ThermalConductivityModel>;
+    template<class BaseTraits, class DT, class EDM, class ETCM>
+    struct NCNITraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+        using EffectiveThermalConductivityModel = ETCM;
+    };
 public:
-    using type = ThreePThreeCVolumeVariables<Traits>;
+    using type = ThreePThreeCVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>>;
 };
 
 //! Set the non-isothermal vktoutputfields
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::ThreePThreeCNI> { using type = EnergyIOFields<ThreePThreeCIOFields>; };
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::ThreePThreeCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux
