@@ -74,8 +74,7 @@ public:
      *   \param n The number of iterations to perform.
      *   \param w The relaxation factor.
      */
-    template<class T>
-    NewSeqUzawa (const T& mat, const ParameterTree& configuration)
+    NewSeqUzawa (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& mat, const ParameterTree& configuration)
     : _A_(mat->getmat()), _n(3), _w(1)
     {
         using namespace Dune::Indices;  // for _0, _1, etc.
