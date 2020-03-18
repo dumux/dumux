@@ -1050,7 +1050,7 @@ protected:
 
             const Scalar xi = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIIdx);
             const Scalar avgMolarMass = volVarsJ.averageMolarMass(couplingPhaseIdx(domainJ));
-            const Scalar Mn = FluidSystem<i>::molarMass(numComponents-1);
+            const Scalar Mn = FluidSystem<j>::molarMass(numComponents-1);
             const Scalar tin = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, couplingCompIdx(domainJ, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
@@ -1066,8 +1066,8 @@ protected:
                     continue;
 
                 const Scalar xj = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompJIdx);
-                const Scalar Mi = FluidSystem<i>::molarMass(domainJCompIIdx);
-                const Scalar Mj = FluidSystem<i>::molarMass(domainJCompJIdx);
+                const Scalar Mi = FluidSystem<j>::molarMass(domainJCompIIdx);
+                const Scalar Mj = FluidSystem<j>::molarMass(domainJCompJIdx);
                 const Scalar tij = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, domainJCompJIdx);
                 reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] += xj*avgMolarMass/(tij*Mi);
                 reducedDiffusionMatrixOutside[domainICompIIdx][domainICompJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
