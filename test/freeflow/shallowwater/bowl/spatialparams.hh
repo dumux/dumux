@@ -24,8 +24,8 @@
 #ifndef DUMUX_BOWL_SPATIAL_PARAMETERS_HH
 #define DUMUX_BOWL_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nofriction.hh>
 
@@ -34,7 +34,9 @@ namespace Dumux {
 /*!
  * \ingroup ShallowWaterTests
  * \brief The spatial parameters class for the bowl test.
- *
+ * \note Analytical solution from Thacker (1981) section 4
+ *       William Thacker, "Some exact solutions to the nonlinear shallow-water wave equations", Journal
+ *       of Fluid Mechanics, 107:499–508, 1981
  */
 template<class GridGeometry, class Scalar, class VolumeVariables>
 class BowlSpatialParams
@@ -54,29 +56,22 @@ public:
     : ParentType(gridGeometry)
     {
         gravity_ = getParam<Scalar>("Problem.Gravity");
-        const Scalar bowlDepthAtCenter =  getParam<Scalar>("Problem.BowlDepthAtCenter");
-        const Scalar bowlParaboloidRadius =  getParam<Scalar>("Problem.BowlParaboloidRadius");
-        initFrictionLaw();
+        frictionLaw_ = std::make_unique<FrictionLawNoFriction<VolumeVariables>>();
         bedSurface_.assign(this->gridGeometry().gridView().size(0), 0.0);
 
-        //compute the bedSurface for all elements
+        // compute the bedSurface for all elements
+        const Scalar D0 = getParam<Scalar>("Problem.BowlDepthAtCenter");
+        const Scalar L = getParam<Scalar>("Problem.BowlParaboloidRadius");
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             const auto eIdx = this->gridGeometry().elementMapper().index(element);
             const auto& globalPos = element.geometry().center();
-            bedSurface_[eIdx] = bowlDepthAtCenter *(((globalPos[0] * globalPos[0]) +
-                                (globalPos[1] * globalPos[1])) /
-                                (bowlParaboloidRadius * bowlParaboloidRadius) - 1.0) + 1.0;
+            // see Thacker (1981) Eq. (13) + shift bowl so that midpoint is a z=0
+            // the shift is arbitrary and doesn't affect the analytical solution
+            const auto radiusSquared = globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1];
+            const auto D = D0*(1.0 - radiusSquared/(L*L));
+            bedSurface_[eIdx] = D0 - D;
         }
-
-    }
-
-    /*!
-     * \brief Initialize the FrictionLaw
-     */
-    void initFrictionLaw()
-    {
-        frictionLaw_ = std::make_unique<FrictionLawNoFriction<VolumeVariables>>();
     }
 
     /*! \brief Define the gravitation.
@@ -84,15 +79,6 @@ public:
     * \return gravity constant
     */
     Scalar gravity(const GlobalPosition& globalPos) const
-    {
-        return gravity_;
-    }
-
-    /*! \brief Define the gravitation.
-    *
-    * \return gravity constant
-    */
-    Scalar gravity() const
     {
         return gravity_;
     }
@@ -106,9 +92,7 @@ public:
 
     const FrictionLaw<VolumeVariables>& frictionLaw(const Element& element,
                                                     const SubControlVolume& scv) const
-    {
-        return *frictionLaw_;
-    }
+    { return *frictionLaw_; }
 
     /*! \brief Define the bed surface
     *
@@ -119,10 +103,7 @@ public:
     */
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
-    {
-        auto eIdx = scv.elementIndex();
-        return bedSurface_[eIdx];
-    }
+    { return bedSurface_[scv.elementIndex()]; }
 
 private:
     std::vector<Scalar> bedSurface_;

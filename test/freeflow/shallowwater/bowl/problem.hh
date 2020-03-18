@@ -24,58 +24,10 @@
 #ifndef DUMUX_BOWL_TEST_PROBLEM_HH
 #define DUMUX_BOWL_TEST_PROBLEM_HH
 
-#include <dune/grid/yaspgrid.hh>
-#include <dumux/discretization/cctpfa.hh>
-#include "spatialparams.hh"
-#include <dumux/common/parameters.hh>
-
-#include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 
 namespace Dumux {
-
-template <class TypeTag>
-class BowlProblem;
-
-// Specify the properties for the problem
-namespace Properties {
-
-// Create new type tags
-namespace TTag {
-struct Bowl { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-} // end namespace TTag
-
-template<class TypeTag>
-struct Grid<TypeTag, TTag::Bowl>
-{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::Bowl>
-{ using type = Dumux::BowlProblem<TypeTag>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::Bowl>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-public:
-    using type = BowlSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-};
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::Bowl>
-{ static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::Bowl>
-{ static constexpr bool value = false; };
-} // end namespace Properties
 
 /*!
  * \ingroup ShallowWaterTests
@@ -89,11 +41,14 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::Bowl>
  * (UpwindFluxLimiting = true) will help to improve the convergence for such cases.
  *
  * This test uses a low mesh resoultion and only ensures that UpwindFluxLimiting for the mobility
- * works.
+ * works. For low mesh resolution the solution is very diffusive so that the oscillation is dampened.
+ * This gets better with grid refinement (not tested here).
  *
  * The results are checked against a analytical solution which is based on the "Thacker-Solution"
  * (William Thacker, "Some exact solutions to the nonlinear shallow-water wave equations", Journal
- * of Fluid Mechanics, 107:499–508, 1981). Further examples and details on the solution are given
+ * of Fluid Mechanics, 107:499–508, 1981, doi: https://doi.org/10.1017/S0022112081001882).
+ * This implements the oscillating solution in a circular bowl (Section 4 in the paper).
+ * Further examples and details on the solution are given
  * in SWASHES (Shallow Water Analytic Solutions for Hydraulic and Environmental Studies,
  * https://www.idpoisson.fr/swashes/).
  *
@@ -103,125 +58,93 @@ template <class TypeTag>
 class BowlProblem : public ShallowWaterProblem<TypeTag>
 {
     using ParentType = ShallowWaterProblem<TypeTag>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+
+    using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+
 
 public:
     BowlProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        using std::sqrt;
-        using std::pow;
 
         name_ = getParam<std::string>("Problem.Name");
-        gravity_ = getParam<Scalar>("Problem.Gravity");
         bowlDepthAtCenter_ =  getParam<Scalar>("Problem.BowlDepthAtCenter");
         bowlParaboloidRadius_ =  getParam<Scalar>("Problem.BowlParaboloidRadius");
-        bowlInitialWaterElevationAtCenter_ =  getParam<Scalar>("Problem.BowlInitialWaterElevationAtCenter");
-        bowlAnalyticParameterOmega_ = sqrt(8.0 * gravity_ * bowlDepthAtCenter_) / bowlParaboloidRadius_;
-        bowlAnalyticParameterA_ = (pow(bowlDepthAtCenter_ + bowlInitialWaterElevationAtCenter_, 2.0) -
-                                  pow(bowlDepthAtCenter_, 2.0)) /
-                                  (pow(bowlDepthAtCenter_ + bowlInitialWaterElevationAtCenter_, 2.0)+
-                                  pow(bowlDepthAtCenter_, 2.0));
-        exactWaterDepth_.resize(gridGeometry->numDofs(), 0.0);
-        updateAnalyticalSolution(0.0);
-    }
 
-    //! Get the analytical water depth
-    const std::vector<Scalar>& getExactWaterDepth()
-    {
-        return exactWaterDepth_;
-    }
-
-    //! Get the analctic water depth at
-    Scalar calculateAnalyticWaterDepth(Scalar time, Scalar x, Scalar y)
-    {
-        using std::max;
+        // Thacker (1981) Eq. (43)
         using std::sqrt;
-        using std::pow;
+        bowlAnalyticParameterOmega_ = sqrt(8.0 * getParam<Scalar>("Problem.Gravity") * bowlDepthAtCenter_) / bowlParaboloidRadius_;
+        std::cout << "One full oscillation period of the water table is: "
+                  << oscillationPeriodInSeconds() << " seconds." << std::endl;
+
+        // Thacker (1981) Eq. (50)
+        const auto D0PlusEta = bowlDepthAtCenter_ + getParam<Scalar>("Problem.BowlInitialWaterElevationAtCenter");
+        const auto D0PlusEtaSquared = D0PlusEta*D0PlusEta;
+        const auto D0Squared = bowlDepthAtCenter_*bowlDepthAtCenter_;
+        bowlAnalyticParameterA_ = (D0PlusEtaSquared - D0Squared)/(D0PlusEtaSquared + D0Squared);
+
+        // check constraint Thacker (1981) text after Eq. (49)
+        if (bowlAnalyticParameterA_ >= 1.0)
+            DUNE_THROW(Dune::InvalidStateException, "Parameter A has to be smaller than unity!");
+    }
+
+    //! One oscillation period of the water table (analytically this goes on forever)
+    Scalar oscillationPeriodInSeconds() const
+    { return 2*M_PI/bowlAnalyticParameterOmega_; }
+
+    //! Get the analytical water depth at time t and position pos
+    PrimaryVariables analyticalSolution(const Scalar t, const GlobalPosition& pos) const
+    {
+        using std::sqrt;
         using std::cos;
+        using std::sin;
 
-        auto waterDepth = max(bowlDepthAtCenter_* ((sqrt(1.0 - pow(bowlAnalyticParameterA_, 2.0)))/
-                          (1.0 - bowlAnalyticParameterA_ * cos(bowlAnalyticParameterOmega_ * time))-
-                          1.0 - (pow(x, 2.0) + pow(y, 2.0)) / pow(bowlParaboloidRadius_, 2.0) *
-                          ((1.0- pow(bowlAnalyticParameterA_, 2.0)) /
-                          (pow(1.0 - bowlAnalyticParameterA_ *
-                          cos(bowlAnalyticParameterOmega_ * time), 2.0)) - 1.0)) -
-                          bowlDepthAtCenter_ *((pow(x, 2.0) + pow(y, 2.0))/
-                          pow(bowlParaboloidRadius_, 2.0) - 1.0), 1.0E-5);
+        // see Thacker (1981) Eq. (51) for formula
+        const auto radiusSquared = pos[0]*pos[0] + pos[1]*pos[1];
+        const auto LSquared = bowlParaboloidRadius_*bowlParaboloidRadius_;
+        const auto A = bowlAnalyticParameterA_;
+        const auto omega = bowlAnalyticParameterOmega_;
+        const auto D0 = bowlDepthAtCenter_;
 
-        return waterDepth;
-    }
+        const auto oneMinusASq = 1.0 - A*A;
+        const auto oneMinusACosOmegaT = 1.0 - A*cos(omega*t);
+        const auto ratioSq = oneMinusASq / (oneMinusACosOmegaT*oneMinusACosOmegaT);
+        const auto localRadiusSq = radiusSquared / LSquared;
+        // bowl depth function (cf. D in Thacker (1981))
+        const auto D = D0*(1.0 - localRadiusSq);
+        // height above equilibrium water level (cf. h in Thacker (1981))
+        const auto h = D0*(sqrt(ratioSq) - 1.0 - localRadiusSq*(ratioSq - 1.0));
+        // see remark about total water depth in Thacker (1981) beginning section 2
+        const auto analyticalWaterDepth = h + D;
 
-    //! Compute L2 error
-    void computeL2error(const Scalar time,
-                        const SolutionVector& curSol,
-                        const GridVariables& gridVariables)
-    {
-        Scalar l2error = 0.0;
+        const auto halfOmegaASinOmegaT = 0.5*omega*A*sin(omega*t);
+        const auto analyticalVelocityX = pos[0]*halfOmegaASinOmegaT/oneMinusACosOmegaT;
+        const auto analyticalVelocityY = pos[1]*halfOmegaASinOmegaT/oneMinusACosOmegaT;
 
-        //first ensure that the Analytical solution is up-to-date
-        updateAnalyticalSolution(time);
+        // The radius of the shoreline (where h + D = 0), Eq. (48)
+        const auto h0 = D0*(sqrt(ratioSq) - 1.0); // h in the middle of the bowl (r=0)
+        const auto shoreLineRadiusSquared = LSquared*(D0/(D0 + h0));
 
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            const auto eIdx = this->gridGeometry().elementMapper().index(element);
-            const auto& globalPos = element.geometry().center();
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
-            auto elemVolVars = localView(gridVariables.curGridVolVars());
-            elemVolVars.bindElement(element, fvGeometry, curSol);
-            exactWaterDepth_[eIdx] = calculateAnalyticWaterDepth(time, globalPos[0], globalPos[1]);
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                using std::pow;
-                l2error += pow(exactWaterDepth_[eIdx] - elemVolVars[scv].waterDepth(), 2.0);
-            }
-        }
-        using std::sqrt;
-        l2error = sqrt(l2error);
-        l2error = this->gridGeometry().gridView().comm().sum(l2error);
-
-        if (this->gridGeometry().gridView().comm().rank() == 0)
-        {
-            std::cout << "L2 error at t =  "
-                  <<  time << " seconds "
-                  << " for "
-                  << std::setw(6) << this->gridGeometry().gridView().size(0)
-                  << " elements: "
-                  << std::scientific
-                  << l2error
-                  << std::endl;
-        }
-    }
-
-    //! Udpate the analytical solution
-    void updateAnalyticalSolution(const Scalar time)
-    {
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            const auto eIdx = this->gridGeometry().elementMapper().index(element);
-            const auto& globalPos = element.geometry().center();
-
-            exactWaterDepth_[eIdx] = calculateAnalyticWaterDepth(time, globalPos[0], globalPos[1]);
-        }
+        // outside shoreline the water height and velocity is zero
+        if (radiusSquared > shoreLineRadiusSquared)
+            return { 0.0, 0.0, 0.0 };
+        else
+            return { analyticalWaterDepth, analyticalVelocityX, analyticalVelocityY };
     }
 
     /*!
@@ -231,41 +154,10 @@ public:
 
     /*!
      * \brief The problem name
-     *
      * This is used as a prefix for files generated by the simulation.
      */
     const std::string& name() const
-    {
-        return name_;
-    }
-
-     /*!
-     * \brief Evaluate the source term for all balance equations within a given
-     *        sub-control-volume.
-     *
-     * This is the method for the case where the source term is
-     * potentially solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param scv The sub control volume
-     *
-     * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
-     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
-     */
-     NumEqVector source(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolume &scv) const
-    {
-        NumEqVector source (0.0);
-
-        return source;
-    }
+    { return name_; }
 
     // \}
 
@@ -277,8 +169,6 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
-     *
-     * \param globalPos The position for which the boundary type is set
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
@@ -293,12 +183,8 @@ public:
      *  We need the Riemann invariants to compute the values depending of the boundary type.
      *  Since we use a weak imposition we do not have a dirichlet value. We impose fluxes
      *  based on q, h, etc. computed with the Riemann invariants
-     *
-     * \param element
-     * \param fvGeometry
-     * \param elemVolVars
-     * \param scvf
      */
+    template<class ElementFluxVariablesCache>
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
@@ -321,16 +207,12 @@ public:
         boundaryStateVariables[1] =  nxy[0] * vNormalGhost - nxy[1] * vTangentialGhost;
         boundaryStateVariables[2] =  nxy[1] * vNormalGhost + nxy[0] * vTangentialGhost;
 
-        auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
-                                                        boundaryStateVariables[0],
-                                                        insideVolVars.velocity(0),
-                                                        boundaryStateVariables[1],
-                                                        insideVolVars.velocity(1),
-                                                        boundaryStateVariables[2],
-                                                        insideVolVars.bedSurface(),
-                                                        insideVolVars.bedSurface(),
-                                                        gravity,
-                                                        nxy);
+        const auto riemannFlux =
+            ShallowWater::riemannProblem(insideVolVars.waterDepth(), boundaryStateVariables[0],
+                                         insideVolVars.velocity(0), boundaryStateVariables[1],
+                                         insideVolVars.velocity(1), boundaryStateVariables[2],
+                                         insideVolVars.bedSurface(), insideVolVars.bedSurface(),
+                                         gravity, nxy);
 
         values[Indices::massBalanceIdx] = riemannFlux[0];
         values[Indices::velocityXIdx]   = riemannFlux[1];
@@ -347,33 +229,19 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial values for a control volume.
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
-     *
-     * \param globalPos The position for which the boundary type is set
+     * \brief Evaluate the initial values at position globalPos
      */
-    PrimaryVariables initial(const Element& element) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values(0.0);
-
-        auto elemId = this->gridGeometry().elementMapper().index(element);
-        values[0] = exactWaterDepth_[elemId];
-        values[1] = 0.0;
-        values[2] = 0.0;
-
-        return values;
+        using std::max; // regularize so that we are virtually dry but not completely dry
+        return { max(analyticalSolution(0, globalPos)[0], 1e-5), 0.0, 0.0 };
     };
 
     // \}
 
 private:
-    std::vector<Scalar> exactWaterDepth_;
-    Scalar gravity_;
     Scalar bowlDepthAtCenter_;
     Scalar bowlParaboloidRadius_;
-    Scalar bowlInitialWaterElevationAtCenter_;
     Scalar bowlAnalyticParameterOmega_;
     Scalar bowlAnalyticParameterA_;
     static constexpr Scalar eps_ = 1.0e-6;

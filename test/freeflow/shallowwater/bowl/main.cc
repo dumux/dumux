@@ -42,7 +42,83 @@
 
 #include <dumux/assembly/fvassembler.hh>
 
-#include "problem.hh"
+#include "properties.hh"
+
+template<class SolutionVector, int i>
+class SolutionComponent
+{
+    const SolutionVector& sol_;
+public:
+    SolutionComponent(const SolutionVector& sol) : sol_(sol) {}
+    auto operator[] (std::size_t idx) const { return sol_[idx][i]; }
+    auto size() const { return sol_.size(); }
+};
+
+//! Compute the analytical solution at time t
+template<class SolutionVector, class Problem>
+SolutionVector computeAnalyticalSolution(const double t, const Problem& problem)
+{
+    const auto& gg = problem.gridGeometry();
+    SolutionVector exactSolution(gg.numDofs());
+    for (const auto& element : elements(gg.gridView()))
+    {
+        const auto eIdx = gg.elementMapper().index(element);
+        const auto& globalPos = element.geometry().center();
+        exactSolution[eIdx] = problem.analyticalSolution(t, globalPos);
+    }
+    return exactSolution;
+}
+
+//! Compute L2 error wrt the analytical solution at time t
+template<class SolutionVector, class GridGeometry>
+typename SolutionVector::block_type
+computeL2Error(const double t,
+               const SolutionVector& exactSolution,
+               const SolutionVector& curSol,
+               const GridGeometry& gridGeometry)
+{
+    typename SolutionVector::block_type l2Error(0.0);
+    for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
+    {
+        auto fvGeometry = localView(gridGeometry);
+        fvGeometry.bindElement(element);
+
+        using std::pow;
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            auto localDiffSq = exactSolution[scv.dofIndex()] - curSol[scv.dofIndex()];
+            for (int i = 0; i < localDiffSq.size(); ++i)
+                localDiffSq[i] *= localDiffSq[i];
+            l2Error += localDiffSq;
+        }
+    }
+    // sum over processes if we are running with multiple processes in parallel
+    if (gridGeometry.gridView().comm().size() > 0)
+        l2Error = gridGeometry.gridView().comm().sum(l2Error);
+
+    // square root of sum of squared errors is our absolute discrete l2 error
+    for (int i = 0; i < l2Error.size(); ++i)
+        l2Error[i] = std::sqrt(l2Error[i]);
+    return l2Error;
+}
+
+//! Compute and print L2 error wrt the analytical solution at time t
+template<class SolutionVector, class GridGeometry>
+void computeAndPrintL2Error(const double t,
+                            const SolutionVector& exactSolution,
+                            const SolutionVector& curSol,
+                            const GridGeometry& gridGeometry)
+{
+    const auto l2Error = computeL2Error(t, exactSolution, curSol, gridGeometry);
+    auto numElements = gridGeometry.gridView().size(0);
+    // sum over processes if we are running with multiple processes in parallel
+    if (gridGeometry.gridView().comm().size() > 0)
+        numElements = gridGeometry.gridView().comm().sum(numElements);
+
+    if (gridGeometry.gridView().comm().rank() == 0)
+        std::cout << "L2 error in (h, u, v) at t = " <<  t << " seconds for " << numElements << " elements: "
+                  << std::scientific << l2Error << std::endl;
+}
 
 ////////////////////////
 // the main function
@@ -86,7 +162,7 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
+    SolutionVector x;
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -97,16 +173,20 @@ int main(int argc, char** argv) try
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto tEnd = 2.0*problem->oscillationPeriodInSeconds();
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // intialize the vtk output module
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-
+    // intialize the vtk output module and analytical solution
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
-    vtkWriter.addField(problem->getExactWaterDepth(), "exactWaterDepth");
-    problem->updateAnalyticalSolution(0.0);
+    auto exactSolution = computeAnalyticalSolution<SolutionVector>(0.0, *problem);
+    const auto exactWaterDepth = SolutionComponent<SolutionVector, 0>(exactSolution);
+    const auto exactVelocityX = SolutionComponent<SolutionVector, 1>(exactSolution);
+    const auto exactVelocityY = SolutionComponent<SolutionVector, 2>(exactSolution);
+    vtkWriter.addField(exactWaterDepth, "exactWaterDepth");
+    vtkWriter.addField(exactVelocityX, "exactVelocityX");
+    vtkWriter.addField(exactVelocityY, "exactVelocityY");
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter);
     vtkWriter.write(0.0);
 
@@ -126,11 +206,8 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    //! set some check point at the end of the time loop
-    timeLoop->setCheckPoint(tEnd);
-
-    //! Compute L2 error for the initial solution (should be zero)
-    problem->computeL2error(timeLoop->time(), x, *gridVariables);
+    //! Compute L2 error for the initial solution (should be zero because initial solution is exact)
+    computeAndPrintL2Error(0.0, exactSolution, x, *gridGeometry);
 
     // time loop
     timeLoop->start(); do
@@ -141,15 +218,15 @@ int main(int argc, char** argv) try
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        // update the analytical solution
-        problem->updateAnalyticalSolution(timeLoop->time());
-        problem->computeL2error(timeLoop->time(), x, *gridVariables);
+        // update the analytical solution and print current l2 error
+        exactSolution = computeAnalyticalSolution<SolutionVector>(timeLoop->time(), *problem);
+        computeAndPrintL2Error(timeLoop->time(), exactSolution, x, *gridGeometry);
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output
-        if (timeLoop->isCheckPoint())
+        // write vtk output every 10 time steps
+        if (!(timeLoop->timeStepIndex() % 10))
             vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
@@ -176,28 +253,14 @@ int main(int argc, char** argv) try
 
     return 0;
 }
-
+// Error handling
 catch (const Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
-catch (const Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
 catch (const Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
+    return 2;
 }
