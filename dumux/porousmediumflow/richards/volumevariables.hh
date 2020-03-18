@@ -71,6 +71,7 @@ class RichardsVolumeVariables
     using ModelTraits = typename Traits::ModelTraits;
 
     static constexpr int numFluidComps = ParentType::numFluidComponents();
+    static constexpr int numPhases = ParentType::numFluidPhases();
 
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
 
@@ -172,11 +173,11 @@ public:
             //binary diffusion coefficients
             paramCache.updateAll(fluidState_);
             diffCoeff_ = getDiffusionCoefficient(FluidSystem::gasPhaseIdx,
-                                                 FluidSystem::comp0Idx,
-                                                 FluidSystem::comp1Idx);
+                                                 FluidSystem::comp1Idx,
+                                                 FluidSystem::comp0Idx);
             effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(FluidSystem::gasPhaseIdx,
-                                                                   FluidSystem::comp0Idx,
-                                                                   FluidSystem::comp1Idx);
+                                                                   FluidSystem::comp1Idx,
+                                                                   FluidSystem::comp0Idx);
         }
         else if (phasePresence == Indices::bothPhases)
         {
@@ -201,11 +202,11 @@ public:
                 // binary diffusion coefficients
                 paramCache.updateAll(fluidState_);
                 diffCoeff_ = getDiffusionCoefficient(FluidSystem::gasPhaseIdx,
-                                                     FluidSystem::comp0Idx,
-                                                     FluidSystem::comp1Idx);
+                                                     FluidSystem::comp1Idx,
+                                                     FluidSystem::comp0Idx);
                 effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(FluidSystem::gasPhaseIdx,
-                                                                       FluidSystem::comp0Idx,
-                                                                       FluidSystem::comp1Idx);
+                                                                       FluidSystem::comp1Idx,
+                                                                       FluidSystem::comp0Idx);
             }
         }
         else if (phasePresence == Indices::liquidPhaseOnly)
@@ -507,9 +508,9 @@ public:
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
     {
-        assert(enableWaterDiffusionInAir() && phaseIdx == FluidSystem::gasPhaseIdx
-                                           && compIIdx == FluidSystem::comp0Idx
-                                           && compJIdx == FluidSystem::comp1Idx);
+        assert(enableWaterDiffusionInAir());
+        assert(phaseIdx == FluidSystem::gasPhaseIdx);
+        assert(compIIdx != compJIdx);
         return diffCoeff_;
     }
 
@@ -518,9 +519,9 @@ public:
      */
     Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
     {
-        assert(enableWaterDiffusionInAir() && phaseIdx == FluidSystem::gasPhaseIdx
-                                           && compIIdx == FluidSystem::comp0Idx
-                                           && compJIdx == FluidSystem::comp1Idx);
+        assert(enableWaterDiffusionInAir());
+        assert(phaseIdx == FluidSystem::gasPhaseIdx);
+        assert(compIIdx != compJIdx);
         return effectiveDiffCoeff_;
     }
 
@@ -530,9 +531,9 @@ protected:
     Scalar relativePermeabilityWetting_; //!< the relative permeability of the wetting phase
     PermeabilityType permeability_; //!< the instrinsic permeability
     Scalar minPc_; //!< the minimum capillary pressure (entry pressure)
-    Scalar moleFraction_[ParentType::numFluidPhases()]; //!< The water mole fractions in water and air
-    Scalar massFraction_[ParentType::numFluidPhases()]; //!< The water mass fractions in water and air
-    Scalar molarDensity_[ParentType::numFluidPhases()]; //!< The molar density of water and air
+    Scalar moleFraction_[numPhases]; //!< The water mole fractions in water and air
+    Scalar massFraction_[numPhases]; //!< The water mass fractions in water and air
+    Scalar molarDensity_[numPhases]; //!< The molar density of water and air
 
     // Binary diffusion coefficient
     Scalar diffCoeff_;
