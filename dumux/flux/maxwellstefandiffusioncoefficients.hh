@@ -48,15 +48,15 @@ public:
     {
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
             for (unsigned int compIIdx = 0; compIIdx < numComponents; ++compIIdx)
-                for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
-                    if(compIIdx != compJIdx && compIIdx < compJIdx)
-                        diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)]
-                            = computeDiffCoeff(phaseIdx, compIIdx, compJIdx);
+                for (unsigned int compJIdx = compIIdx+1; compJIdx < numComponents; ++compJIdx)
+                    diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)] = computeDiffCoeff(phaseIdx,
+                                                                                           compIIdx,
+                                                                                           compJIdx);
     }
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
     {
-        assert(phaseIdx != compJIdx);
+        sortComponentIndices_(compIIdx, compJIdx);
         return diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)];
     }
 
@@ -86,11 +86,14 @@ private:
      */
     constexpr int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     {
-        return phaseIdx * ((numComponents * numComponents - numComponents) / 2)
+        return phaseIdx * ((numComponents * (numComponents - 1)) / 2)
                + compIIdx * numComponents
-               - ((compIIdx * compIIdx + compIIdx) / 2)
+               - ((compIIdx * (compIIdx + 1)) / 2)
                + compJIdx - (compIIdx +1);
     }
+
+    void sortComponentIndices_(int& compIIdx, int& compJIdx) const
+    { if (compIIdx > compJIdx) std::swap(compIIdx, compJIdx); }
 };
 
 } // end namespace Dumux
