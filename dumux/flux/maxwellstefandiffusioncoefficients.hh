@@ -84,7 +84,7 @@ private:
      *        This index calculation can be reduced from the following:
      *        https://stackoverflow.com/questions/27086195/
      */
-    const int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+    constexpr int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     {
         return phaseIdx * ((numComponents * numComponents - numComponents) / 2)
                + compIIdx * numComponents

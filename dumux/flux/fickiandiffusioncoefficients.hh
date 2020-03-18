@@ -69,16 +69,35 @@ public:
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
     {
+        sortComponentIndices_(compIIdx, compJIdx);
         assert(phaseIdx != compJIdx);
         return diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)];
     }
 
 private:
+    /*
+     * \brief For the mpnc case, we have a rectangular diffCoeff matrix (numPhases x numComponents).
+     *        As we do not track a diffusion coefficient for a component within it's phase,
+     *        this numComponents is reduced by 1. (numPhases x (numComponents - 1))
+    */
     std::array<Scalar, numPhases * (numComponents - 1)> diffCoeff_;
-    int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
-    {
-        return ((phaseIdx * (numComponents-1)) + compJIdx) - (phaseIdx < compJIdx);
-    }
+
+    /*
+     * \brief This calculates the linear index of the diffusion coefficient matrix.
+     *        An example with a 3p5c model:
+     *                        compJIdx
+     *                   [ x  0  1  2  3  ]
+     *          phaseIdx [ 4  x  5  6  7  ]
+     *                   [ 8  9  x  10 11 ]
+     *        -- "(phaseIdx * (numComponents-1))" advances to the phaseIdx row (numComp-1 per phase)
+     *        -- "+ compJIdx" advances to the component index
+     *        -- "- static_cast<int>(phaseIdx < compJIdx)" if the index is after the diagonal, -1.
+     */
+    constexpr int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+    { return (phaseIdx * (numComponents-1)) + compJIdx - static_cast<int>(phaseIdx < compJIdx); }
+
+    void sortComponentIndices_(int& compIIdx, int& compJIdx) const
+    { if (compIIdx > compJIdx) std::swap(compIIdx, compJIdx); }
 };
 
 //! Specialization for 1pnc & compositions containing the phases' main components
@@ -97,19 +116,24 @@ public:
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
     {
+        sortComponentIndices_(compIIdx, compJIdx);
         assert(phaseIdx == 0);
         assert(phaseIdx != compJIdx);
         assert(compIIdx != compJIdx);
         assert(compIIdx < numComponents);
         assert(compJIdx < numComponents);
-        assert(compIIdx < compJIdx);
+        assert(compIIdx <= compJIdx);
         return diffCoeff_[compJIdx-1];
     }
 
 private:
     std::array<Scalar, numComponents-1> diffCoeff_;
-    int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+
+    constexpr int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     { return  compJIdx-1; }
+
+    void sortComponentIndices_(int& compIIdx, int& compJIdx) const
+    { if (compIIdx > compJIdx) std::swap(compIIdx, compJIdx); }
 };
 
 //! Specialization for 2p2c & compositions containing the phases' main components
@@ -126,14 +150,18 @@ public:
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
     {
-        assert(phaseIdx != compJIdx);
+        sortComponentIndices_(compIIdx, compJIdx);
         return diffCoeff_[phaseIdx];
     }
 
 private:
     std::array<Scalar, 2> diffCoeff_;
-    int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+
+    constexpr int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
     { return  phaseIdx; }
+
+    void sortComponentIndices_(int& compIIdx, int& compJIdx) const
+    { if (compIIdx > compJIdx) std::swap(compIIdx, compJIdx); }
 };
 
 //! Specialization for 3p2c & compositions containing the phases' main components
@@ -151,14 +179,18 @@ public:
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
     {
-        assert(phaseIdx != compJIdx);
+        sortComponentIndices_(compIIdx, compJIdx);
         return diffCoeff_[phaseIdx];
     }
 
 private:
     std::array<Scalar, 3> diffCoeff_;
-    int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
-    { return  phaseIdx; }
+
+    constexpr int getIndex_(int phaseIdx, int compIIdx, int compJIdx) const
+    { return phaseIdx; }
+
+    void sortComponentIndices_(int& compIIdx, int& compJIdx) const
+    { if (compIIdx > compJIdx) std::swap(compIIdx, compJIdx); }
 };
 
 //! Specialization for mpnc & compositions that only contain tracers
@@ -177,18 +209,22 @@ public:
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
     {
+        sortComponentIndices_(compIIdx, compJIdx);
         assert(phaseIdx < numPhases);
-        assert(compIIdx != compJIdx);
         assert(compIIdx < numComponents);
         assert(compJIdx < numComponents);
-        assert(compIIdx < compJIdx);
+        assert(compIIdx <= compJIdx);
         return diffCoeff_[getIndex_(phaseIdx, compJIdx)];
     }
 
 private:
     std::array<Scalar, numPhases*numComponents> diffCoeff_;
-    int getIndex_(int phaseIdx, int compJIdx) const
-    { return phaseIdx*numComponents + compJIdx; }
+
+    constexpr int getIndex_(int phaseIdx, int compJIdx) const
+    { return phaseIdx * numComponents + compJIdx; }
+
+    void sortComponentIndices_(int& compIIdx, int& compJIdx) const
+    { if (compIIdx > compJIdx) std::swap(compIIdx, compJIdx); }
 };
 
 } // end namespace Dumux
