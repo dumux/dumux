@@ -1,0 +1,24 @@
+[Problem]
+Name = bowl
+BowlDepthAtCenter = 0.03 # [m]
+BowlParaboloidRadius = 1.6 # [m]
+BowlInitialWaterElevationAtCenter = 0.005 # [m]
+Gravity = 9.81 # [m/s^2]
+
+[FluxLimiterLET]
+UpperWaterDepth = 1.0E-5
+LowerWaterDepth = 1.0E-7
+UpwindFluxLimiting = true
+
+[TimeLoop]
+MaxTimeStepSize = 0.1 # [s]
+DtInitial = 0.1 # [s]
+
+[Grid]
+Positions0 = -2.0 2.0
+Positions1 = -2.0 2.0
+Cells0 = 40
+Cells1 = 40
+
+[Newton]
+EnableDynamicOutput = false
