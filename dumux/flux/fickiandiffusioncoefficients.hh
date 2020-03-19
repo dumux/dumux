@@ -69,10 +69,13 @@ public:
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
     {
+        std::cout << phaseIdx << " " << compIIdx << " " << compJIdx << " | " << getIndex_(phaseIdx, compIIdx, compJIdx) << " | ";
         sortComponentIndices_(compIIdx, compJIdx);
-        assert(phaseIdx != compJIdx);
+        std::cout << phaseIdx << " " << compIIdx << " " << compJIdx << " | " << getIndex_(phaseIdx, compIIdx, compJIdx) << " | ";
+
         return diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)];
     }
+
 
 private:
     /*
@@ -116,13 +119,13 @@ public:
 
     const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
     {
-        sortComponentIndices_(compIIdx, compJIdx);
         assert(phaseIdx == 0);
         assert(phaseIdx != compJIdx);
         assert(compIIdx != compJIdx);
         assert(compIIdx < numComponents);
         assert(compJIdx < numComponents);
         assert(compIIdx <= compJIdx);
+        sortComponentIndices_(compIIdx, compJIdx);
         return diffCoeff_[compJIdx-1];
     }
 
