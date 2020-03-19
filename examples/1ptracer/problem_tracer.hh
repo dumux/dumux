@@ -202,7 +202,8 @@ public:
             if (useMoles)
                 initialValues = 1e-9;
             else
-                initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(globalPos);
+                initialValues = 1e-9*FluidSystem::molarMass(0)
+                                    /this->spatialParams().fluidMolarMassAtPos(globalPos);
         }
         return initialValues;
     }
