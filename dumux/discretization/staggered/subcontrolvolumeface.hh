@@ -201,7 +201,6 @@ public:
     }
 
     //! Index of the outside sub control volume
-    // This results in undefined behaviour if boundary is true
     GridIndexType outsideScvIdx() const
     {
         return scvIndices_[1];
