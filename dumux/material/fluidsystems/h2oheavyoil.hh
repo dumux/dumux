@@ -389,9 +389,7 @@ public:
      * \brief Calculate the binary molecular diffusion coefficient for
      *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
      * \param fluidState The fluid state
-     * \param paramCache mutable parameters
      * \param phaseIdx Index of the fluid phase
-     * \param compIdx Index of the component
      * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *

@@ -256,8 +256,8 @@ auto integrateL2Error(const GridView& gv,
 /*!
  * \brief Integrate a scalar function
  * \param f the integrand (invocable with a single scalar)
- * \param a lower integral bound
- * \param b upper integral bound
+ * \param lowerBound lower integral bound
+ * \param upperBound upper integral bound
  * \param targetAbsoluteError desired absolute error in the result
  * \return The value of the integral
  */

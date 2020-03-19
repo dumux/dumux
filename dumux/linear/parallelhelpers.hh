@@ -759,7 +759,7 @@ public:
     /*!
      * \brief communicates values for the sparsity pattern of the new matrix.
      * \param A Matrix to operate on.
-     * \param helper ParallelelISTLHelper.
+     * \param isGhost Function returning if is ghost.
      */
     template<class IsGhostFunc>
     void extendMatrix(Matrix& A, const IsGhostFunc& isGhost)
