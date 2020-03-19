@@ -937,15 +937,15 @@ protected:
     /*!
      * \brief Returns the molecular diffusion coefficient within the free flow domain.
      */
-    Scalar diffusionCoefficientMS_(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIIdx, int compJIdx) const
+    Scalar diffusionCoefficientMS_(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compKIdx, int compLIdx) const
     {
-         return volVars.effectiveDiffusivity(compIIdx, compJIdx);
+         return volVars.effectiveDiffusivity(compKIdx, compLIdx);
     }
 
     /*!
      * \brief Returns the effective diffusion coefficient within the porous medium.
      */
-    Scalar diffusionCoefficientMS_(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compIIdx, int compJIdx) const
+    Scalar diffusionCoefficientMS_(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compKIdx, int compLIdx) const
     {
         using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
         auto fluidState = volVars.fluidState();
@@ -954,8 +954,8 @@ protected:
         auto diffCoeff = FluidSystem<darcyIdx>::binaryDiffusionCoefficient(fluidState,
                                                                             paramCache,
                                                                             phaseIdx,
-                                                                            compIIdx,
-                                                                            compJIdx);
+                                                                            compKIdx,
+                                                                            compLIdx);
         return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
                                                   volVars.saturation(phaseIdx),
                                                   diffCoeff);
@@ -1010,67 +1010,67 @@ protected:
             moleFracOutside[domainICompIdx] = xOutside;
         }
 
-        //now we have to do the tpfa: J_i = -J_j which leads to: J_i = -rho_i Bi^-1 omegai(x*-xi) with x* = (omegai rho_i Bi^-1 + omegaj rho_j Bj^-1)^-1 (xi omegai rho_i Bi^-1 + xj omegaj rho_j Bj^-1) with i inside and j outside
+        //now we have to do the tpfa: J_i = -J_j which leads to: J_i = -rho_i Bi^-1 omegai(x*-xi) with x* = (omegai rho_i Bi^-1 + omegaj rho_j Bj^-1)^-1 (xi omegai rho_i Bi^-1 + xj omegaj rho_j Bj^-1) with i inside and j outside.
 
-        //first set up the matrices containing the diffusion coefficients and mole fractions
+        //first set up the matrices containing the binary diffusion coefficients and mole fractions
 
-        //inside matrix
-        for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
+        //inside matrix. KIdx and LIdx are the indices for the k and l-th component, N for the n-th component
+        for (int compKIdx = 0; compKIdx < numComponents-1; compKIdx++)
         {
-            const int domainICompIIdx = couplingCompIdx(domainI, compIIdx);
-            const Scalar xi = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIIdx);
+            const int domainICompKIdx = couplingCompIdx(domainI, compKIdx);
+            const Scalar xk = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompKIdx);
             const Scalar avgMolarMass = volVarsI.averageMolarMass(couplingPhaseIdx(domainI));
             const Scalar Mn = FluidSystem<i>::molarMass(numComponents-1);
-            const Scalar tin = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompIIdx, couplingCompIdx(domainI, numComponents-1));
+            const Scalar tkn = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompKIdx, couplingCompIdx(domainI, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xi*avgMolarMass/(tin*Mn);
+            reducedDiffusionMatrixInside[domainICompKIdx][domainICompKIdx] += xk*avgMolarMass/(tkn*Mn);
 
-            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
+            for (int compLIdx = 0; compLIdx < numComponents; compLIdx++)
             {
-                const int domainICompJIdx = couplingCompIdx(domainI, compJIdx);
+                const int domainICompLIdx = couplingCompIdx(domainI, compLIdx);
 
                 // we don't want to calculate e.g. water in water diffusion
-                if (domainICompIIdx == domainICompJIdx)
+                if (domainICompKIdx == domainICompLIdx)
                     continue;
 
-                const Scalar xj = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompJIdx);
-                const Scalar Mi = FluidSystem<i>::molarMass(domainICompIIdx);
-                const Scalar Mj = FluidSystem<i>::molarMass(domainICompJIdx);
-                const Scalar tij = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompIIdx, domainICompJIdx);
-                reducedDiffusionMatrixInside[domainICompIIdx][domainICompIIdx] += xj*avgMolarMass/(tij*Mi);
-                reducedDiffusionMatrixInside[domainICompIIdx][domainICompJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
+                const Scalar xl = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompLIdx);
+                const Scalar Mk = FluidSystem<i>::molarMass(domainICompKIdx);
+                const Scalar Ml = FluidSystem<i>::molarMass(domainICompLIdx);
+                const Scalar tkl = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompKIdx, domainICompLIdx);
+                reducedDiffusionMatrixInside[domainICompKIdx][domainICompKIdx] += xl*avgMolarMass/(tkl*Mk);
+                reducedDiffusionMatrixInside[domainICompKIdx][domainICompLIdx] += xk*(avgMolarMass/(tkn*Mn) - avgMolarMass/(tkl*Ml));
             }
         }
         //outside matrix
-        for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
+        for (int compKIdx = 0; compKIdx < numComponents-1; compKIdx++)
         {
-            const int domainJCompIIdx = couplingCompIdx(domainJ, compIIdx);
-            const int domainICompIIdx = couplingCompIdx(domainI, compIIdx);
+            const int domainJCompKIdx = couplingCompIdx(domainJ, compKIdx);
+            const int domainICompKIdx = couplingCompIdx(domainI, compKIdx);
 
-            const Scalar xi = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIIdx);
+            const Scalar xk = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompKIdx);
             const Scalar avgMolarMass = volVarsJ.averageMolarMass(couplingPhaseIdx(domainJ));
             const Scalar Mn = FluidSystem<j>::molarMass(numComponents-1);
-            const Scalar tin = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, couplingCompIdx(domainJ, numComponents-1));
+            const Scalar tkn = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompKIdx, couplingCompIdx(domainJ, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] +=  xi*avgMolarMass/(tin*Mn);
+            reducedDiffusionMatrixOutside[domainICompKIdx][domainICompKIdx] +=  xk*avgMolarMass/(tkn*Mn);
 
-            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
+            for (int compLIdx = 0; compLIdx < numComponents; compLIdx++)
             {
-                const int domainJCompJIdx = couplingCompIdx(domainJ, compJIdx);
-                const int domainICompJIdx = couplingCompIdx(domainI, compJIdx);
+                const int domainJCompLIdx = couplingCompIdx(domainJ, compLIdx);
+                const int domainICompLIdx = couplingCompIdx(domainI, compLIdx);
 
                 // we don't want to calculate e.g. water in water diffusion
-                if (domainJCompJIdx == domainJCompIIdx)
+                if (domainJCompLIdx == domainJCompKIdx)
                     continue;
 
-                const Scalar xj = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompJIdx);
-                const Scalar Mi = FluidSystem<j>::molarMass(domainJCompIIdx);
-                const Scalar Mj = FluidSystem<j>::molarMass(domainJCompJIdx);
-                const Scalar tij = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIIdx, domainJCompJIdx);
-                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompIIdx] += xj*avgMolarMass/(tij*Mi);
-                reducedDiffusionMatrixOutside[domainICompIIdx][domainICompJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
+                const Scalar xl = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompLIdx);
+                const Scalar Mk = FluidSystem<j>::molarMass(domainJCompKIdx);
+                const Scalar Ml = FluidSystem<j>::molarMass(domainJCompLIdx);
+                const Scalar tkl = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompKIdx, domainJCompLIdx);
+                reducedDiffusionMatrixOutside[domainICompKIdx][domainICompKIdx] += xl*avgMolarMass/(tkl*Mk);
+                reducedDiffusionMatrixOutside[domainICompKIdx][domainICompLIdx] += xk*(avgMolarMass/(tkn*Mn) - avgMolarMass/(tkl*Ml));
             }
         }
 
