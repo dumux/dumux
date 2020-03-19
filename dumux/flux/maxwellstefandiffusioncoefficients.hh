@@ -23,9 +23,10 @@
  *        Stefan diffusion law. Uses the minimal possible container size and
  *        provides unified access.
  */
-#ifndef DUMUX_DISCRETIZATION_MAXWELLSTEFAN_DIFFUSION_COEFFICIENTS_HH
-#define DUMUX_DISCRETIZATION_MAXWELLSTEFAN_DIFFUSION_COEFFICIENTS_HH
+#ifndef DUMUX_FLUX_MAXWELLSTEFAN_DIFFUSION_COEFFICIENTS_HH
+#define DUMUX_FLUX_MAXWELLSTEFAN_DIFFUSION_COEFFICIENTS_HH
 
+#include <array>
 #include <cassert>
 
 namespace Dumux {
@@ -44,19 +45,19 @@ class MaxwellStefanDiffusionCoefficients
 {
 public:
     template<class DiffCoeffFunc>
-    void update(DiffCoeffFunc& computeDiffCoeff)
+    void update(const DiffCoeffFunc& computeDiffCoeff)
     {
-        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
-            for (unsigned int compIIdx = 0; compIIdx < numComponents; ++compIIdx)
-                for (unsigned int compJIdx = compIIdx+1; compJIdx < numComponents; ++compJIdx)
-                    diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)] = computeDiffCoeff(phaseIdx,
-                                                                                           compIIdx,
-                                                                                           compJIdx);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
+            for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx)
+                for (int compJIdx = compIIdx+1; compJIdx < numComponents; ++compJIdx)
+                    diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)]
+                        = computeDiffCoeff(phaseIdx, compIIdx, compJIdx);
     }
 
-    const Scalar& operator()(int phaseIdx, int compIIdx, int compJIdx) const
+    Scalar operator() (int phaseIdx, int compIIdx, int compJIdx) const
     {
         sortComponentIndices_(compIIdx, compJIdx);
+        assert(compIIdx != compJIdx);
         return diffCoeff_[getIndex_(phaseIdx, compIIdx, compJIdx)];
     }
 
@@ -71,7 +72,7 @@ private:
      *        The diagonal is not used and removed " - numComponents)".
      *        The matrix is symmetrical, but only the upper triangle is required " / 2))".
      */
-    std::array<Scalar, (numPhases * (((numComponents * numComponents) - numComponents)/2))> diffCoeff_;
+    std::array<Scalar, (numPhases * ((numComponents * (numComponents - 1)) / 2))> diffCoeff_;
 
     /*!
      * \brief Index logic for collecting the correct diffusion coefficient from the container.
