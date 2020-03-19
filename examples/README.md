@@ -10,9 +10,10 @@ We first solve the pressure field, compute the steady state flow field, and then
 You learn how to
 
 * generate a randomly distributed permeability field
-* solve a one-phase flow in porous media problem
-* compute the flow field from a pressure solution to pass to a tracer problem
-* sequentially solve two types of problems after each other
+* sequentially solve two types of problems after each other:
+    * solve a one-phase flow in porous media problem
+    * compute the flow field from a pressure solution to pass to a tracer problem
+    * solve an instationary tracer transport problem with a given flow field
 
 ### [:open_file_folder: Example 2: Two-phase flow with infiltration and adaptive grid](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples/2pinfiltration)
 
