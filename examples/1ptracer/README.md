@@ -39,7 +39,7 @@ The transport of the contaminant component $`\kappa`$ is based on the previously
 
 where $`X^\kappa`$ is the mass fraction of the contaminant component $`\kappa`$ and $` D^\kappa_\text{pm} `$ is the effective diffusivity.
 
-The effective diffusivity is a function of the diffusion coefficient of the component $`D^\kappa`$ and the porosity and tortuosity $`\tau`$ of the porous medium:
+The effective diffusivity is a function of the diffusion coefficient of the component $`D^\kappa`$ and the porosity and tortuosity $`\tau`$ of the porous medium (see [dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh)):
 
 ```math
 D^\kappa_\text{pm}= \phi \tau D^\kappa.
