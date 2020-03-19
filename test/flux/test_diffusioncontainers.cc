@@ -24,8 +24,11 @@
  */
 
 #include <config.h>
+#include <iostream>
+#include <algorithm>
+
 #include <dune/common/exceptions.hh>
-#include <dumux/common/parameters.hh>
+#include <dune/common/classname.hh>
 
 // include all diffusioncoefficient containers
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
@@ -34,112 +37,122 @@
 template<int nP, int nC>
 struct TestFluidSystem
 {
-     static constexpr int numPhases = nP;
-     static constexpr int numComponents = nC;
+    static constexpr int numPhases = nP;
+    static constexpr int numComponents = nC;
 
-     int binaryDiffusionCoefficient(const int phaseIdx, const int compIIdx, const int compJIdx) const
-     { return phaseIdx*10000 + compIIdx*100 + compJIdx; }
+    int binaryDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    {
+        if (compIIdx < compJIdx) std::swap(compIIdx, compJIdx);
+        return phaseIdx*10000 + compIIdx*100 + compJIdx;
+    }
 };
 
-int main()
+template<class Container, int numPhases, int numComponents, bool onlyTracers = false>
+void testFickianContainer()
 {
-    using namespace Dumux;
-    using Scalar = int;
+    TestFluidSystem<numPhases, numComponents> fs;
+    Container diffCoeff;
 
-    const int numPhases = 3;
-    const int numComponents = 8;
+    std::cout << "Testing " << Dune::className(diffCoeff) << std::endl;
 
-    TestFluidSystem<numPhases,numComponents> fluidSystem;
+    // fill the container with coefficients
+    diffCoeff.update([fs](int phaseIdx, int compIIdx, int compJIdx) {
+        return fs.binaryDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
+    });
 
-    // temporary for debugging
-    // {
-    for (int phaseIdx = 0; phaseIdx < fluidSystem.numPhases; ++ phaseIdx)
+    // we test that the internal mapping is unique and that the interface is symmetric
+    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
-        int compIIdx = phaseIdx;
-        for (int compJIdx = 0; compJIdx < fluidSystem.numComponents; ++compJIdx)
+        for (int compIIdx = std::min(phaseIdx, numComponents-1), compJIdx = 0; compJIdx < numComponents; ++compJIdx)
         {
-            std::cout << fluidSystem.binaryDiffusionCoefficient(phaseIdx,compIIdx,compJIdx) << "  ";
-        }
-        std::cout << "\n";
-    }
-    // }
-
-    const bool onlyTracers = false;
-    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
-                                                                        numPhases,
-                                                                        numComponents,
-                                                                        onlyTracers>;
-
-    auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-    {
-        return fluidSystem.binaryDiffusionCoefficient(phaseIdx,
-                                                      compIIdx,
-                                                      compJIdx);
-    };
-
-    DiffusionCoefficientsContainer mpncDiffCoeffs;
-    mpncDiffCoeffs.update(getDiffusionCoefficient);
-
-    for (int phaseIdx = 0; phaseIdx < fluidSystem.numPhases; ++ phaseIdx)
-    {
-        int compIIdx = phaseIdx;
-        std::cout << phaseIdx << " : \n";
-        for (int compJIdx = 0; compJIdx < fluidSystem.numComponents; ++compJIdx)
-        {
-            if (compIIdx == compJIdx)
-                continue;
-            int binaryCoeff = fluidSystem.binaryDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
-            int containerCoeff = mpncDiffCoeffs(phaseIdx, compIIdx, compJIdx);
-            if (containerCoeff != binaryCoeff)
-                DUNE_THROW(Dune::InvalidStateException, "Coefficients differ! " << "fluidSystem: " << binaryCoeff << " and "
-                                                                                << "container: " << containerCoeff <<
-                                                        ", for indicies (p,cI,cJ): (" << phaseIdx << ","
-                                                                                      << compIIdx << ","
-                                                                                      << compJIdx<<")" );
-            std::cout << " \n";
+            if (onlyTracers || compIIdx != compJIdx)
+            {
+                const auto refD = fs.binaryDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
+                const auto D = diffCoeff(phaseIdx, compIIdx, compJIdx);
+                const auto D2 = diffCoeff(phaseIdx, compJIdx, compIIdx);
+                if (D != refD)
+                    DUNE_THROW(Dune::Exception,
+                        "Retrieved incorrect diffusion coefficient for (p,c0,c1) = ("
+                        << phaseIdx << "," << compIIdx << "," << compJIdx << "). "
+                        << "Result: " << D << ", expected result: " << refD);
+                if (D2 != D)
+                    DUNE_THROW(Dune::Exception,
+                        "Diffusion coefficient interface not symmetric in component indices for (p,c0,c1) = ("
+                        << phaseIdx << "," << compIIdx << "," << compJIdx << "). "
+                        << "Result: " << D2 << ", expected result: " << D);
+            }
         }
     }
+};
 
-    for (int phaseIdx = 0; phaseIdx < fluidSystem.numPhases; ++ phaseIdx)
+template<class Container, int numPhases, int numComponents>
+void testMSContainer()
+{
+    TestFluidSystem<numPhases, numComponents> fs;
+    Container diffCoeff;
+
+    std::cout << "Testing " << Dune::className(diffCoeff) << std::endl;
+
+    // fill the container with coefficients
+    diffCoeff.update([fs](int phaseIdx, int compIIdx, int compJIdx) {
+        return fs.binaryDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
+    });
+
+    // we test that the internal mapping is unique and that the interface is symmetric
+    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
-        int compJIdx = phaseIdx;
-        std::cout << phaseIdx << " : \n";
-        for (int compIIdx = 0; compIIdx < fluidSystem.numComponents; ++compIIdx)
+        for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx)
         {
-            if (compJIdx == compIIdx)
-                continue;
-            int binaryCoeff = fluidSystem.binaryDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
-            int containerCoeff = mpncDiffCoeffs(phaseIdx, compIIdx, compJIdx);
-            if (containerCoeff != binaryCoeff)
-                DUNE_THROW(Dune::InvalidStateException, "Coefficients differ! " << "fluidSystem: " << binaryCoeff << " and "
-                                                                                << "container: " << containerCoeff <<
-                                                        ", for indicies (p,cI,cJ): (" << phaseIdx << ","
-                                                                                      << compIIdx << ","
-                                                                                      << compJIdx<<")" );
-            std::cout << " \n";
+            for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+            {
+                if (compIIdx != compJIdx)
+                {
+                    const auto refD = fs.binaryDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
+                    const auto D = diffCoeff(phaseIdx, compIIdx, compJIdx);
+                    if (D != refD)
+                        DUNE_THROW(Dune::Exception,
+                            "Retrieved incorrect diffusion coefficient for (p,c0,c1) = ("
+                            << phaseIdx << "," << compIIdx << "," << compJIdx << "). "
+                            << "Result: " << D << ", expected result: " << refD);
+                }
+            }
         }
     }
+};
 
+template<int numComponents, int numPhases>
+using FickDC = Dumux::FickianDiffusionCoefficients<int, numComponents, numPhases>;
 
-//     // test 1pnc
-//     template <class Scalar, int numComponents>
-//     class FickianDiffusionCoefficients<Scalar, 1, numComponents>
+template<int numComponents, int numPhases>
+using FickDCTracer = Dumux::FickianDiffusionCoefficients<int, numComponents, numPhases, true>;
 
-//     // test 2p2c
-//     template <class Scalar>
-//     class FickianDiffusionCoefficients<Scalar, 2, 2>
+template<int numComponents, int numPhases>
+using MSDC = Dumux::MaxwellStefanDiffusionCoefficients<int, numComponents, numPhases>;
 
-//     // test 3p2c
-//     template <class Scalar>
-//     class FickianDiffusionCoefficients<Scalar, 3, 2>
+int main(int argc, char* argv[]) try
+{
+    testFickianContainer<FickDC<1, 5>, 1, 5>();
+    testFickianContainer<FickDC<2, 2>, 2, 2>();
+    testFickianContainer<FickDC<2, 3>, 2, 3>();
+    testFickianContainer<FickDC<3, 3>, 3, 3>();
+    testFickianContainer<FickDC<3, 8>, 3, 8>();
+    testFickianContainer<FickDC<3, 2>, 3, 2>();
 
-//     // test tracer mpnc
-//     template <class Scalar, int numPhases, int numComponents>
-//     class FickianDiffusionCoefficients<Scalar, numPhases, numComponents, true>
+    testFickianContainer<FickDCTracer<1, 1>, 1, 1, true>();
+    testFickianContainer<FickDCTracer<1, 2>, 1, 2, true>();
+    testFickianContainer<FickDCTracer<1, 3>, 1, 3, true>();
 
-//     // test max stef
-//     template <class Scalar, int numPhases, int numComponents>
-//     class MaxwellStefanDiffusionCoefficients
+    testMSContainer<MSDC<1, 1>, 1, 1>();
+    testMSContainer<MSDC<1, 2>, 1, 2>();
+    testMSContainer<MSDC<1, 3>, 1, 3>();
+    testMSContainer<MSDC<2, 2>, 2, 2>();
+    testMSContainer<MSDC<3, 8>, 3, 8>();
+    testMSContainer<MSDC<3, 2>, 3, 2>();
 
-    return 0.0;
+    return 0;
+}
+catch (const Dune::Exception& e)
+{
+    std::cout << e << std::endl;
+    return 1;
 }
