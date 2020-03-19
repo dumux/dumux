@@ -23,7 +23,7 @@
 
 //Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
-// Again, we have to include the dune grid interface:
+// Again, we use YaspGrid, the implementation of the dune grid interface for structured grids:
 #include <dune/grid/yaspgrid.hh>
 // and the cell centered, two-point-flux discretization.
 #include <dumux/discretization/cctpfa.hh>
@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/tracer/model.hh>
 // We include again the porous medium problem class that this class is derived from:
 #include <dumux/porousmediumflow/problem.hh>
-// and the base fluidsystem
+// and the base fluidsystem. We will define a custom fluid system that inherits from that class.
 #include <dumux/material/fluidsystems/base.hh>
 // We include the header that specifies all spatially variable parameters for the tracer problem:
 #include "spatialparams_tracer.hh"
@@ -73,25 +73,29 @@ struct Problem<TypeTag, TTag::TracerTest> { using type = TracerTestProblem<TypeT
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TracerTest>
 {
+private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
     using type = TracerTestSpatialParams<GridGeometry, Scalar>;
 };
 
-// We define that mass fractions are used to define the concentrations
+// One can choose between a formulation in terms of mass or mole fractions. Here, we are using mass fractions.
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = false; };
-// We do not use a solution dependent molecular diffusion coefficient:
+// We use solution-independent molecular diffusion coefficients. Per default, solution-dependent
+// diffusion coefficients are assumed during the computation of the jacobian matrix entries. Specifying
+// solution-independent diffusion coefficients can speed up computations:
 template<class TypeTag>
-struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTestCC> { static constexpr bool value = false; };
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTestCC>
+{ static constexpr bool value = false; };
 
-// In the following, we create a new tracer fluid system and derive it from the base fluid system.
+// In the following, we create a new tracer fluid system and derive from the base fluid system.
 template<class TypeTag>
 class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>,
                                                                TracerFluidSystem<TypeTag>>
 {
-    // We define convenient shortcuts to the properties `Scalar`, `Problem`, `GridView`,
-    // `Element`, `FVElementGeometry` and `SubControlVolume`:
+    // We define some convenience aliases:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -100,31 +104,35 @@ class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Propert
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
-    // We specify, that the fluid system only contains tracer components,
+    // We specify that the fluid system only contains tracer components,
     static constexpr bool isTracerFluidSystem()
     { return true; }
 
-    // that no component is the main component
+    // and that no component is the main component
     static constexpr int getMainComponent(int phaseIdx)
     { return -1; }
 
-    // and the number of components
+    // We define the number of components of this fluid system (one single tracer component)
     static constexpr int numComponents = 1;
 
-    // We set the component name for the component index (`compIdx`) for the vtk output:
-    static std::string componentName(int compIdx)
+    // This interface is designed to define the names of the components of the fluid system.
+    // Here, we only have a single component, so `compIdx` should always be 0.
+    // The component name is used for the vtk output.
+    static std::string componentName(int compIdx = 0)
     { return "tracer_" + std::to_string(compIdx); }
 
-    //We set the phase name for the phase index (`phaseIdx`) for velocity vtk output:
+    // We set the phase name for the phase index (`phaseIdx`) for velocity vtk output:
+    // Here, we only have a single phase, so `phaseIdx` should always be zero.
     static std::string phaseName(int phaseIdx = 0)
     { return "Groundwater"; }
 
-    // We set the molar mass of the tracer component with index `compIdx`.
-    static Scalar molarMass(unsigned int compIdx)
+    // We set the molar mass of the tracer component with index `compIdx` (should again always be zero here).
+    static Scalar molarMass(unsigned int compIdx = 0)
     { return 0.300; }
 
     // We set the value for the binary diffusion coefficient. This
-    // might depend on spatial parameters like pressure / temperature. But for our case it is 0.0:
+    // might depend on spatial parameters like pressure / temperature.
+    // But, in this case we neglect diffusion and return 0.0:
     static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
                                              const Element& element,
@@ -142,7 +150,7 @@ struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<T
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As this is a porous medium problem, we inherit from the basic `PorousMediumFlowProblem`.
+// As this is a porous medium problem, we inherit from the base class `PorousMediumFlowProblem`.
 template <class TypeTag>
 class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
@@ -164,9 +172,9 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    //We create a bool saying whether mole or mass fractions are used
+    // We create a convenience bool stating whether mole or mass fractions are used
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
-    //We create additional int to make dimWorld and numComponents available in the problem
+    // We create additional convenience integers to make dimWorld and numComponents available in the problem
     static constexpr int dimWorld = GridView::dimensionworld;
     static const int numComponents = FluidSystem::numComponents;
 
@@ -175,7 +183,7 @@ public:
     TracerTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        // We print out whether mole or mass fractions are used
+        // We print to the terminal whether mole or mass fractions are used
         if(useMoles)
             std::cout<<"problem uses mole fractions" << '\n';
         else
@@ -195,10 +203,12 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables initialValues(0.0);
-        // The tracer concentration is located on the domain bottom:
+
+        // The initial contamination is located at the bottom of the domain:
         if (globalPos[1] < 0.1 + eps_)
         {
-            // We assign different values, depending on wether mole concentrations or mass concentrations are used:
+            // We chose a mole fraction of $`1e-9`$, but in case the mass fractions
+            // are used by the model, we have to convert this value:
             if (useMoles)
                 initialValues = 1e-9;
             else
@@ -208,32 +218,32 @@ public:
         return initialValues;
     }
 
-        //We implement an outflow boundary on the top of the domain and prescribe zero-flux Neumann boundary conditions on all other boundaries.
-        NumEqVector neumann(const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const ElementFluxVariablesCache& elemFluxVarsCache,
-                            const SubControlVolumeFace& scvf) const
+    // We implement an outflow boundary on the top of the domain and prescribe zero-flux Neumann boundary conditions on all other boundaries.
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+        const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& globalPos = scvf.center();
+
+        // This is the outflow boundary, where tracer is transported by advection with the given flux field.
+        if (globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps_)
         {
-            NumEqVector values(0.0);
-            const auto& volVars = elemVolVars[scvf.insideScvIdx()];
-            const auto& globalPos = scvf.center();
-
-            // This is the outflow boundary, where tracer is transported by advection
-            // with the given flux field and diffusive flux is enforced to be zero
-            if (globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps_)
-            {
-                values = this->spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf)
-                         * volVars.massFraction(0, 0) * volVars.density(0)
-                         / scvf.area();
-                assert(values>=0.0 && "Volume flux at outflow boundary is expected to have a positive sign");
-            }
-            //prescribe zero-flux Neumann boundary conditions elsewhere
-            else
-                values = 0.0;
-
-            return values;
+            values = this->spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf)
+                     * volVars.massFraction(0, 0) * volVars.density(0)
+                     / scvf.area();
+            assert(values>=0.0 && "Volume flux at outflow boundary is expected to have a positive sign");
         }
+
+        // Prescribe zero-flux Neumann boundary conditions elsewhere
+        else
+            values = 0.0;
+
+        return values;
+    }
 
 private:
 // We assign a private global variable for the epsilon:
