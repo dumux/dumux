@@ -8,43 +8,44 @@ This example contains a contaminant transported by a base groundwater flow in a 
 ![](./img/setup.png)
 
 ## Model description
-Two different models are applied to simulate the system: In a first step, the groundwater velocity is evaluated under stationary conditions. Therefore the single phase model is applied.
-In a second step, the contaminant gets transported based on the groundwater velocity field. It is assumed, that the dissolved contaminant does not affect density and viscosity of the groundwater and thus, it is handled as a tracer by the tracer model. The tracer model is then solved instationarily.
+Two different models are applied to simulate the system: In a first step, the groundwater velocity is evaluated under stationary conditions using the single phase model.
+In a second step, the contaminant is transported with the groundwater velocity field. It is assumed, that the dissolved contaminant does not affect density and viscosity of the groundwater, and thus, it is handled as a tracer by the tracer model. The tracer model is then solved instationarily.
 
 ### 1p Model
 The single phase model uses Darcy's law as the equation for the momentum conservation:
 
 ```math
-\textbf v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
+\textbf v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right),
 ```
 
-With the darcy velocity $` \textbf v `$, the permeability $` \textbf K`$, the dynamic viscosity $` \mu`$, the pressure $`p`$, the density $`\rho`$ and the gravity $`\textbf g`$.
+with the darcy velocity $` \textbf v `$, the permeability $` \textbf K`$, the dynamic viscosity $` \mu`$, the pressure $`p`$, the density $`\rho`$ and the gravity $`\textbf g`$.
 
-Darcy's law is inserted into the continuity equation:
+Darcy's law is inserted into the mass balance equation:
 
 ```math
 \phi \frac{\partial \varrho}{\partial t} + \text{div} \textbf v = 0
 ```
 
-with porosity $`\phi`$.
+where $`\phi`$ is the porosity.
 
 The equation is discretized using a cell-centered finite volume scheme as spatial discretization for the pressure as primary variable. For details on the discretization scheme, have a look at the dumux [handbook](https://dumux.org/handbook).
 
 ### Tracer Model
-The transport of the contaminant component $`\kappa`$ is based on the previously evaluated velocity field $`\textbf v`$  with the help the following mass balance equation:
+The transport of the contaminant component $`\kappa`$ is based on the previously evaluated velocity field $`\textbf v`$  with the help of the following mass balance equation:
 
 ```math
-\phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa {\textbf v} + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = 0
+\phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa {\textbf v} + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = 0,
 ```
 
-With the porosity $`\phi`$, the mass fraction of the contaminant component $`\kappa`$: $`X^\kappa`$, the porous medium diffusivity $` D^\kappa_\text{pm} `$ and the density of the fluid phase $`\varrho`$.
+where $`X^\kappa`$ is the mass fraction of the contaminant component $`\kappa`$ and $` D^\kappa_\text{pm} `$ is the effective diffusivity.
 
-The porous medium diffusivity is a function of the diffusion coefficient of the component $`D^\kappa`$, the porosity $`\phi`$ and the porous medium tortuosity $`\tau`$ by the following equation:
+The effective diffusivity is a function of the diffusion coefficient of the component $`D^\kappa`$ and the porosity and tortuosity $`\tau`$ of the porous medium:
 
 ```math
-D^\kappa_\text{pm}= \phi \tau D^\kappa
+D^\kappa_\text{pm}= \phi \tau D^\kappa.
 ```
 
-The primary variable of this model is the mass fraction $`X^\kappa`$. We apply the same spatial discretization as in the single phase model and use the implicit Euler method for time discretization. For more information, have a look at the dumux handbook.
+The primary variable of this model is the mass fraction $`X^\kappa`$. We apply the same spatial discretization as in the single phase model and use the implicit Euler method for time discretization. For more information, have a look at the dumux [handbook](https://dumux.org/handbook).
 
-In the following, we take a close look at the files containing the set-up: At first, boundary conditions and spatially distributed parameters are set in `problem_1p.hh` and `spatialparams_1p.hh`, respectively, for the single phase model and subsequently in `problem_tracer.hh` and `spatialparams_tracer.hh` for the tracer model. Afterwards, we show the different steps for solving the model in the source file `main.cc`. At the end, we show some simulation results.
+In the following, we take a close look at the files containing the set-up: The boundary conditions and spatially distributed parameters for the single phase model are set in `problem_1p.hh` and `spatialparams_1p.hh`.
+For the tracer model, this is done in the files `problem_tracer.hh` and `spatialparams_tracer.hh`, respectively. Afterwards, we show the different steps for solving the model in the source file `main.cc`. Finally, some simulation results are shown.
