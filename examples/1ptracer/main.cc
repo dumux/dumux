@@ -30,15 +30,19 @@
 // and another one for in- and output.
 #include <iostream>
 
-// Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and linear solvers. So we need some includes from that.
+// Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and linear solvers.
+// Here, we include classes related to parallel computations, time measurements and file I/O.
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-// In Dumux, a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file `properties.hh`.
+// In Dumux, the property system is used to specify classes and compile-time options to be used by the model.
+// For this, different properties are defined containing type definitions, values and methods.
+// All properties are declared in the file `properties.hh`.
 #include <dumux/common/properties.hh>
-// The following file contains the parameter class, which manages the definition of input parameters by a default value, the inputfile or the command line.
+// The following file contains the parameter class, which manages the definition and retrieval of input
+// parameters by a default value, the inputfile or the command line.
 #include <dumux/common/parameters.hh>
 // The file `dumuxmessage.hh` contains the class defining the start and end message of the simulation.
 #include <dumux/common/dumuxmessage.hh>
@@ -60,7 +64,7 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // We define the type tags for the two problems. They are created in the individual problem files.
+    // Convenience aliases for the type tags of the two problems, which are defined in the individual problem files.
     using OnePTypeTag = Properties::TTag::IncompressibleTest;
     using TracerTypeTag = Properties::TTag::TracerTestCC;
 
@@ -75,7 +79,11 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // ### Create the grid
-    // A gridmanager tries to create the grid either from a grid file or the input file. We solve both problems on the same grid. Hence, the grid is only created once using the type tag of the 1p problem.
+    // The `GridManager` class creates the grid from information given in the input file.
+    // This can either be a grid file, or in the case of structured grids, by specifying the coordinates
+    // of the corners of the grid and the number of cells to be used to discretize each spatial direction.
+    // Here, we solve both the single-phase and the tracer problem on the same grid.
+    // Hence, the grid is only created once using the grid type defined by the type tag of the 1p problem.
     GridManager<GetPropType<OnePTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
@@ -83,7 +91,7 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // ### Set-up and solving of the 1p problem
-    // In the following section, we set up and solve the 1p problem. As the result of this problem, we obtain the pressure distribution in the problem domain.
+    // In the following section, we set up and solve the 1p problem. As the result of this problem, we obtain the pressure distribution in the domain.
     // #### Set-up
     // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
     // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
@@ -103,13 +111,13 @@ int main(int argc, char** argv) try
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
 
-    // The grid variables store variables on scv and scvf (volume and flux variables).
+    // The grid variables store variables (primary and secondary variables) on sub-control volumes and faces (volume and flux variables).
     using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
     auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, gridGeometry);
     onePGridVariables->init(p);
 
     // #### Assembling the linear system
-    // We created and inizialize the assembler.
+    // We create and inizialize the assembler.
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, gridGeometry, onePGridVariables);
     assemblerOneP->setLinearSystem(A, r);
@@ -157,16 +165,17 @@ int main(int argc, char** argv) try
 
     // ### Computation of the volume fluxes
     // We use the results of the 1p problem to calculate the volume fluxes in the model domain.
-
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>;
     std::vector<Scalar> volumeFlux(gridGeometry->numScvf(), 0.0);
 
     using FluxVariables =  GetPropType<OnePTypeTag, Properties::FluxVariables>;
     auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
 
-    // We iterate over all elements.
+    // We iterate over all elements
     for (const auto& element : elements(leafGridView))
     {
+        // Compute the element-local views on geometry, primary and secondary variables
+        // as well as variables needed for flux computations
         auto fvGeometry = localView(*gridGeometry);
         fvGeometry.bind(element);
 
@@ -176,28 +185,17 @@ int main(int argc, char** argv) try
         auto elemFluxVars = localView(onePGridVariables->gridFluxVarsCache());
         elemFluxVars.bind(element, fvGeometry, elemVolVars);
 
-        // We calculate the volume flux for every subcontrolvolume face, which is not on a Neumann boundary (is not on the boundary or is on a Dirichlet boundary).
-
+        // We calculate the volume fluxes for all sub-control volume faces except for Neumann boundary faces
         for (const auto& scvf : scvfs(fvGeometry))
         {
-            const auto idx = scvf.index();
+            // skip Neumann boundary faces
+            if (scvf.boundary() && problemOneP->boundaryTypes(element, scvf).hasNeumann())
+                continue;
 
-            if (!scvf.boundary())
-            {
-                FluxVariables fluxVars;
-                fluxVars.init(*problemOneP, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
-                volumeFlux[idx] = fluxVars.advectiveFlux(0, upwindTerm);
-            }
-            else
-            {
-                const auto bcTypes = problemOneP->boundaryTypes(element, scvf);
-                if (bcTypes.hasOnlyDirichlet())
-                {
-                    FluxVariables fluxVars;
-                    fluxVars.init(*problemOneP, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
-                    volumeFlux[idx] = fluxVars.advectiveFlux(0, upwindTerm);
-                }
-            }
+            // let the `FluxVariables` class do the flux computation.
+            FluxVariables fluxVars;
+            fluxVars.init(*problemOneP, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
+            volumeFlux[scvf.index()] = fluxVars.advectiveFlux(0, upwindTerm);
         }
     }
 
@@ -244,7 +242,7 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
 
 
-    // For the time loop we set a check point.
+    // We define 10 check points in the time loop at which we will write the solution to vtk files.
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 
     // #### The time loop
@@ -302,13 +300,15 @@ int main(int argc, char** argv) try
 
 
     // ### Final Output
-
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/false);
 
     return 0;
 
 }
+// ### Exception handling
+// In this part of the main file we catch and print possible exceptions that could
+// occur during the simulation.
 catch (Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;

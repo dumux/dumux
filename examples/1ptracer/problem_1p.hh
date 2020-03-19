@@ -19,12 +19,12 @@
 
 
 // ### Header guard
-#ifndef DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
-#define DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
+#ifndef DUMUX_ONEP_TEST_PROBLEM_HH
+#define DUMUX_ONEP_TEST_PROBLEM_HH
 
-//Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
+// Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
-// The dune grid interphase is included here:
+// We use `YaspGrid`, an implementation of the dune grid interface for structured grids:
 #include <dune/grid/yaspgrid.hh>
 
 // The cell centered, two-point-flux discretization scheme is included:
@@ -34,7 +34,7 @@
 // This is the porous medium problem class that this class is derived from:
 #include <dumux/porousmediumflow/problem.hh>
 
-// The fluid properties are specified in the following headers:
+// The fluid properties are specified in the following headers (we use liquid water as the fluid phase):
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
@@ -78,11 +78,11 @@ struct SpatialParams<TypeTag, TTag::IncompressibleTest>
     using type = OnePTestSpatialParams<GridGeometry, Scalar>;
 };
 
-// The local residual contains analytic derivative methods for incompressible flow:
+// We use the local residual that contains analytic derivative methods for incompressible flow:
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
-  // In the following we define our fluid properties.
+// In the following we define the fluid properties.
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::IncompressibleTest>
 {
@@ -102,13 +102,13 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static 
 // We enable caching for the FV grid geometry
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-//The cache stores values that were already calculated for later usage. This makes the simulation faster.
+// The cache stores values that were already calculated for later usage. This increases the memory demand but makes the simulation faster.
 // We leave the namespace Properties.
 }
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As this is a porous medium problem, we inherit from the basic `PorousMediumFlowProblem`.
+// As this is a porous medium problem, we inherit from the base class `PorousMediumFlowProblem`.
 template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
@@ -130,24 +130,25 @@ public:
     OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry) {}
 
-    // First, we define the type of boundary conditions depending on location. Two types of boundary  conditions
+    // First, we define the type of boundary conditions depending on the location. Two types of boundary  conditions
     // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
     // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
-    // Mixed boundary conditions (different types for different equations on the same boundary) are not accepted.
+    // Mixed boundary conditions (different types for different equations on the same boundary) are not accepted for
+    // cell-centered finite volume schemes.
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const
     {
         BoundaryTypes values;
-        // we retreive the global position, i.e. the  vector  including  the  global  coordinates
-        // of  the  finite  volume
+        // we retrieve the global position, i.e. the vector with the global coordinates,
+        // of the integration point on the boundary sub-control volume face `scvf`
         const auto globalPos = scvf.ipGlobal();
         // we define a small epsilon value
         Scalar eps = 1.0e-6;
         // We specify Dirichlet boundaries on the top and bottom of our domain:
         if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
+        // The top and bottom of our domain are Neumann boundaries:
         else
-            // The top and bottom of our domain are Neumann boundaries:
             values.setAllNeumann();
 
         return values;
@@ -160,7 +161,7 @@ public:
         // we retreive again the global position
         const auto& pos = scvf.ipGlobal();
         PrimaryVariables values(0);
-        // we assign pressure values in [Pa] according to a pressure gradient to 1e5 Pa at the top and 1.1e5 Pa at the bottom.
+        // and assign pressure values in [Pa] according to a pressure gradient to 1e5 Pa at the top and 1.1e5 Pa at the bottom.
         values[0] = 1.0e+5*(1.1 - pos[dimWorld-1]*0.1);
         return values;
     }
