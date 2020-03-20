@@ -149,8 +149,11 @@ class EnergyVolumeVariablesImplementation<Traits, Impl, true>
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EffCondModel = typename Traits::EffectiveThermalConductivityModel;
 
-    static const int temperatureIdx = Idx::temperatureIdx;
-    static const int numEnergyEq = Traits::ModelTraits::numEnergyEq();
+    static constexpr int temperatureIdx = Idx::temperatureIdx;
+    static constexpr int numEnergyEq = Traits::ModelTraits::numEnergyEq();
+
+    static constexpr bool fullThermalEquilibrium = (numEnergyEq == 1);
+    static constexpr bool fluidThermalEquilibrium = (numEnergyEq == 2);
 
 public:
     // export the fluidstate
@@ -169,7 +172,7 @@ public:
                            FluidState& fluidState,
                            SolidState& solidState)
     {
-        if (numEnergyEq == 1)
+        if constexpr (fullThermalEquilibrium)
         {
             // retrieve temperature from solution vector, all phases have the same temperature
             const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
@@ -182,8 +185,8 @@ public:
 
         else
         {
-            // if numEnergyEq == 2 this means we have 1 temp for fluid phase, one for solid
-            if (numEnergyEq == 2)
+            // this means we have 1 temp for fluid phase, one for solid
+            if constexpr (fluidThermalEquilibrium)
             {
                 const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
                 for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
@@ -226,7 +229,28 @@ public:
     // updates the effective thermal conductivity
     void updateEffectiveThermalConductivity()
     {
-        lambdaEff_ = EffCondModel::effectiveThermalConductivity(asImp_());
+        if constexpr (fullThermalEquilibrium)
+        {
+            // Full Thermal Equilibirum: One effectiveThermalConductivity value for all phases (solid & fluid).
+            lambdaEff_[0] = EffCondModel::effectiveThermalConductivity(asImp_());
+        }
+        else if constexpr (fluidThermalEquilibrium)
+        {
+            // Fluid Thermal Equilibrium (Partial Nonequilibrium): One effectiveThermalConductivity for the fluids, one for the solids.
+            Scalar fluidLambda = 0.0;
+            for (int phaseIdx = 0; phaseIdx < FluidSystem::numPhases; phaseIdx++)
+                fluidLambda += fluidThermalConductivity(phaseIdx) * asImp_().saturation(phaseIdx) * asImp_().porosity();
+
+            lambdaEff_[0] = fluidLambda;
+            lambdaEff_[numEnergyEq-1] = solidThermalConductivity() * (1.0 - asImp_().porosity());
+        }
+        else
+        {
+            // Full Thermal Nonequilibrium: One effectiveThermal Conductivity per phase (solid & fluid).
+            for (int phaseIdx = 0; phaseIdx < FluidSystem::numPhases; phaseIdx++)
+                lambdaEff_[phaseIdx] = fluidThermalConductivity(phaseIdx) * asImp_().saturation(phaseIdx) * asImp_().porosity();
+            lambdaEff_[numEnergyEq-1] = solidThermalConductivity() * (1.0 - asImp_().porosity());
+        }
     }
 
     /*!
@@ -278,24 +302,56 @@ public:
     {  return  asImp_().solidState().density(); }
 
     /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the solid phase in the sub-control volume.
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the solid phase in the sub-control volume.
      */
     Scalar solidThermalConductivity() const
     { return asImp_().solidState().thermalConductivity(); }
 
     /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of a fluid phase in
-     *        the sub-control volume.
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of a fluid phase in the sub-control volume.
      */
     Scalar fluidThermalConductivity(const int phaseIdx) const
     { return FluidSystem::thermalConductivity(asImp_().fluidState(), phaseIdx); }
 
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ in
-     *        the sub-control volume.
+     *        the sub-control volume. Specific to equilibirum models (case fullThermalEquilibrium).
      */
+    template< bool enable = fullThermalEquilibrium,
+              std::enable_if_t<enable, int> = 0>
     Scalar effectiveThermalConductivity() const
-    { return lambdaEff_; }
+    { return lambdaEff_[0]; }
+
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the fluids in
+     *        the sub-control volume. Specific to partially nonequilibrium models (case fluidThermalEquilibrium).
+     */
+    template< bool enable = fluidThermalEquilibrium,
+              std::enable_if_t<enable, int> = 0>
+    Scalar effectiveFluidThermalConductivity() const
+    { return lambdaEff_[0]; }
+
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the solid phase in the sub-control volume.
+     *        Specific to partially nonequilibrium models (case fluidThermalEquilibrium)
+     */
+    template< bool enable = fluidThermalEquilibrium,
+              std::enable_if_t<enable, int> = 0>
+    Scalar effectiveSolidThermalConductivity() const
+    { return lambdaEff_[numEnergyEq-1]; }
+
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        per fluid phase in the sub-control volume.
+     *        Specific to nonequilibrium models (case full non-equilibrium)
+     */
+    template< bool enable = (!fullThermalEquilibrium && !fluidThermalEquilibrium),
+              std::enable_if_t<enable, int> = 0>
+    Scalar effectivePhaseThermalConductivity(const int phaseIdx) const
+    { return lambdaEff_[phaseIdx]; }
 
     //! The phase enthalpy is zero for isothermal models
     //! This is needed for completing the fluid state
@@ -473,7 +529,7 @@ private:
         return problem.spatialParams().solidThermalConductivity(element, scv, elemSol, solidState);
     }
 
-    Scalar lambdaEff_;
+    std::array<Scalar, numEnergyEq> lambdaEff_;
     // \}
 
 };

@@ -59,7 +59,9 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Element = typename GridView::template Codim<0>::Entity;
 
+    static constexpr auto numEnergyEqSolid = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
     static constexpr auto numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr auto numEnergyEq = numEnergyEqSolid + numEnergyEqFluid;
     static constexpr auto sPhaseIdx = ModelTraits::numFluidPhases();
 
 public:
@@ -76,29 +78,19 @@ public:
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[outsideScv];
-        Scalar insideLambda = 0.0;
-        Scalar outsideLambda = 0.0;
-       // effective diffusion tensors
-        if (phaseIdx != sPhaseIdx)
-        {
-            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-            if (numEnergyEqFluid < ModelTraits::numFluidPhases())
-            {
-                insideLambda += insideVolVars.effectiveThermalConductivity();
-                outsideLambda += outsideVolVars.effectiveThermalConductivity();
-            }
+        const auto computeLambda = [&](const auto& v){
+            if constexpr (numEnergyEq == 1)
+                return v.effectiveThermalConductivity();
+            else if constexpr (numEnergyEqFluid == 1)
+                return (phaseIdx != sPhaseIdx)
+                        ? v.effectiveFluidThermalConductivity()
+                        : v.effectiveSolidThermalConductivity();
             else
-            {
-                insideLambda += insideVolVars.fluidThermalConductivity(phaseIdx)*insideVolVars.saturation(phaseIdx)*insideVolVars.porosity();
-                outsideLambda += outsideVolVars.fluidThermalConductivity(phaseIdx)*outsideVolVars.saturation(phaseIdx)*outsideVolVars.porosity();
-            }
-        }
-        //solid phase
-        else
-        {
-            insideLambda += insideVolVars.solidThermalConductivity()*(1.0-insideVolVars.porosity());
-            outsideLambda += outsideVolVars.solidThermalConductivity()*(1.0-outsideVolVars.porosity());
-        }
+                return v.effectivePhaseThermalConductivity(phaseIdx);
+        };
+
+        auto insideLambda = computeLambda(insideVolVars);
+        auto outsideLambda = computeLambda(outsideVolVars);
 
         // scale by extrusion factor
         insideLambda *= insideVolVars.extrusionFactor();
