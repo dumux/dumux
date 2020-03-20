@@ -1063,6 +1063,8 @@ protected:
 
         for (int compIdx = 1; compIdx < numComponents; ++compIdx)
         {
+            const int domainIMainCompIdx = couplingPhaseIdx(domainI);
+            const int domainJMainCompIdx = couplingPhaseIdx(domainJ);
             const int domainICompIdx = couplingCompIdx(domainI, compIdx);
             const int domainJCompIdx = couplingCompIdx(domainJ, compIdx);
 
@@ -1076,8 +1078,8 @@ protected:
                                                        domainJ,
                                                        insideDistance,
                                                        outsideDistance,
-                                                       Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsI, couplingPhaseIdx(domainI), domainICompIdx, domainICompIdx),
-                                                       Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsJ, couplingPhaseIdx(domainJ), domainICompIdx, domainJCompIdx),
+                                                       Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsI, couplingPhaseIdx(domainI), domainIMainCompIdx, domainICompIdx),
+                                                       Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsJ, couplingPhaseIdx(domainJ), domainJMainCompIdx, domainJCompIdx),
                                                        diffCoeffAvgType);
             diffusiveFlux[domainICompIdx] += -avgDensity * tij * deltaMassOrMoleFrac;
         }
