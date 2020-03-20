@@ -234,7 +234,8 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isDirichlet(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isDirichlet; }
+    { return boundaryInfo_[eqIdx].isDirichlet ||
+             boundaryInfo_[eqIdx].isCouplingDirichlet; }
 
     /*!
      * \brief Returns true if all equations are used to specify a
@@ -257,7 +258,8 @@ public:
     {
         return std::any_of(boundaryInfo_.begin(),
                            boundaryInfo_.end(),
-                           [](const BoundaryInfo& b){ return b.isDirichlet; }
+                           [](const BoundaryInfo& b){ return b.isDirichlet ||
+                                                             b.isCouplingDirichlet; }
                            );
     }
 
