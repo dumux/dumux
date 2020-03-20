@@ -63,7 +63,7 @@ void testFickianContainer()
     // we test that the internal mapping is unique and that the interface is symmetric
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
-        for (int compIIdx = std::min(phaseIdx, numComponents), compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+        for (int compIIdx = std::min(phaseIdx, numComponents-1), compJIdx = 0; compJIdx < numComponents; ++compJIdx)
         {
             if (onlyTracers || compIIdx != compJIdx)
             {
