@@ -235,7 +235,8 @@ public:
      */
     bool isDirichlet(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isDirichlet ||
-             boundaryInfo_[eqIdx].isCouplingDirichlet; }
+             boundaryInfo_[eqIdx].isCouplingDirichlet;
+    }
 
     /*!
      * \brief Returns true if all equations are used to specify a
@@ -270,7 +271,10 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isNeumann(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isNeumann; }
+    {
+        return boundaryInfo_[eqIdx].isNeumann ||
+               boundaryInfo_[eqIdx].isCouplingNeumann;
+    }
 
     /*!
      * \brief Returns true if all equations are used to specify a
@@ -280,7 +284,8 @@ public:
     {
         return std::all_of(boundaryInfo_.begin(),
                            boundaryInfo_.end(),
-                           [](const BoundaryInfo& b){ return b.isNeumann; }
+                           [](const BoundaryInfo& b){ return b.isNeumann ||
+                                                             b.isCouplingNeumann; }
                            );
     }
 
@@ -292,7 +297,8 @@ public:
     {
         return std::any_of(boundaryInfo_.begin(),
                            boundaryInfo_.end(),
-                           [](const BoundaryInfo& b){ return b.isNeumann; }
+                           [](const BoundaryInfo& b){ return b.isNeumann ||
+                                                             b.isCouplingNeumann; }
                            );
     }
 
