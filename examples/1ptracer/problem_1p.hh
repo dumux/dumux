@@ -22,94 +22,21 @@
 
 // ## The file `problem_1p.hh`
 //
+// This file contains the __problem class__ which defines the initial and boundary
+// conditions for the single-phase flow simulation.
 //
-// Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
-// We use `YaspGrid`, an implementation of the dune grid interface for structured grids:
-#include <dune/grid/yaspgrid.hh>
-
-// The cell centered, two-point-flux discretization scheme is included:
-#include <dumux/discretization/cctpfa.hh>
-// The one-phase flow model is included:
-#include <dumux/porousmediumflow/1p/model.hh>
-// This is the porous medium problem class that this class is derived from:
+// This header contains the porous medium problem class that this class is derived from:
 #include <dumux/porousmediumflow/problem.hh>
-
-// The fluid properties are specified in the following headers (we use liquid water as the fluid phase):
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-
-// The local residual for incompressible flow is included:
-#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
-
-// We include the header that specifies all spatially variable parameters:
+// This header contains the class that specifies all spatially variable parameters
+// related to this problem.
 #include "spatialparams_1p.hh"
-
-// ### Define basic properties for our simulation
-// We enter the namespace Dumux in order to import the entire Dumux namespace for general use
-namespace Dumux {
-
-// The problem class is forward declared:
-template<class TypeTag>
-class OnePTestProblem;
-
-// We enter the namespace Properties, which is a sub-namespace of the namespace Dumux:
-namespace Properties {
-// A `TypeTag` for our simulation is created which inherits from the one-phase flow model and the cell centered, two-point-flux discretization scheme.
-namespace TTag {
-struct IncompressibleTest { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
-}
-
-// We use a structured 2D grid:
-template<class TypeTag>
-struct Grid<TypeTag, TTag::IncompressibleTest> { using type = Dune::YaspGrid<2>; };
-
-// The problem class specifies initial and boundary conditions:
-template<class TypeTag>
-struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem<TypeTag>; };
-
-// We define the spatial parameters for our simulation:
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::IncompressibleTest>
-{
-    // We define convenient shortcuts to the properties `GridGeometry` and `Scalar`:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    // Finally, we set the spatial parameters:
-    using type = OnePTestSpatialParams<GridGeometry, Scalar>;
-};
-
-// We use the local residual that contains analytic derivative methods for incompressible flow:
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-
-// In the following we define the fluid properties.
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::IncompressibleTest>
-{
-    // We define a convenient shortcut to the property Scalar:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    // We create a fluid system that consists of one liquid water phase. We use the simple
-    // description of water, which means we do not use tabulated values but more general equations of state.
-    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-};
-
-// We enable caching for the grid volume variables.
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-// We enable caching for the grid flux variables.
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-// We enable caching for the FV grid geometry
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-// The cache stores values that were already calculated for later usage. This increases the memory demand but makes the simulation faster.
-// We leave the namespace Properties.
-}
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As this is a porous medium problem, we inherit from the base class `PorousMediumFlowProblem`.
+// As this is a porous medium flow problem, we inherit from the base class `PorousMediumFlowProblem`.
+namespace Dumux {
+
 template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {

@@ -25,91 +25,89 @@
 // is computed from that pressure distribution, which is then passed to a tracer problem to solve
 // the transport of an initial contamination through the model domain.
 // ### Included header files
+// Some generic includes.
 #include <config.h>
-
-// We include both problems in the main file, the `problem_1p.hh` and the `problem_tracer.hh`.
-#include "problem_1p.hh"
-#include "problem_tracer.hh"
-
-// Further, we include a standard header file for C++, to get time and date information
 #include <ctime>
-// and another one for in- and output.
 #include <iostream>
 
-// Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and linear solvers.
-// Here, we include classes related to parallel computations, time measurements and file I/O.
+// These are DUNE helper classes related to parallel computations, time measurements and file I/O
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-// In Dumux, the property system is used to specify classes and compile-time options to be used by the model.
-// For this, different properties are defined containing type definitions, values and methods.
-// All properties are declared in the file `properties.hh`.
+// The following headers include functionality related to property definition or retrieval, as well as
+// the retrieval of input parameters specified in the input file or via the command line.
 #include <dumux/common/properties.hh>
-// The following file contains the parameter class, which manages the definition and retrieval of input
-// parameters by a default value, the inputfile or the command line.
 #include <dumux/common/parameters.hh>
-// The file `dumuxmessage.hh` contains the class defining the start and end message of the simulation.
-#include <dumux/common/dumuxmessage.hh>
 
-// The following file contains the class, which defines the sequential linear solver backends.
+// The following files contains the available linear solver backends and the assembler for the linear
+// systems arising from finite volume discretizations (box-scheme, tpfa-approximation, mpfa-approximation).
 #include <dumux/linear/seqsolverbackend.hh>
-// Further we include the assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation).
 #include <dumux/assembly/fvassembler.hh>
-// The containing class in the following file defines the different differentiation methods used to compute the derivatives of the residual.
-#include <dumux/assembly/diffmethod.hh>
+#include <dumux/assembly/diffmethod.hh> // analytic or numeric differentiation
 
-// We need the following class to simplify the writing of dumux simulation data to VTK format.
+// The following class provides a convenient way of writing of dumux simulation results to VTK format.
 #include <dumux/io/vtkoutputmodule.hh>
-// The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the different supported grid managers.
+// The gridmanager constructs a grid from the information in the input or grid file.
+// Many different Dune grid implementations are supported, of which a list can be found
+// in `gridmanager.hh`.
 #include <dumux/io/grid/gridmanager.hh>
 
-// ### Beginning of the main function
+// For both the single-phase and the tracer problem, `TypeTags` are defined, which collect
+// the properties that are required for the simulation. These type tags are defined
+// in the headers that we include here. For detailed information, please have a look
+// at the documentation provided therein.
+#include "properties_1p.hh"
+#include "properties_tracer.hh"
+
+// ### The main function
+// We will now discuss the main program flow implemented within the `main` function.
+// At the beginning of each program using Dune, an instance `Dune::MPIHelper` has to
+// be created. Moreover, we parse the run-time arguments from the command line and the
+// input file:
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // Convenience aliases for the type tags of the two problems, which are defined in the individual problem files.
+    // The Dune MPIHelper must be instantiated for each program using Dune
+    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+
+    // parse command line arguments and input file
+    Parameters::init(argc, argv);
+
+    // We define convenience aliases for the type tags of the two problems. The type
+    // tags contain all the properties that are needed to run the simulations. Throughout
+    // the main file, we will obtain types defined for these type tags using the property
+    // system, i.e. with `GetPropType`.
     using OnePTypeTag = Properties::TTag::IncompressibleTest;
     using TracerTypeTag = Properties::TTag::TracerTestCC;
 
-    // We initialize MPI. Finalization is done automatically on exit.
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
-
-    // We print the dumux start message.
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
-
-    // We parse the command line arguments.
-    Parameters::init(argc, argv);
-
-    // ### Create the grid
+    // ### Step 1: Create the grid
     // The `GridManager` class creates the grid from information given in the input file.
-    // This can either be a grid file, or in the case of structured grids, by specifying the coordinates
+    // This can either be a grid file, or in the case of structured grids, one can specify the coordinates
     // of the corners of the grid and the number of cells to be used to discretize each spatial direction.
-    // Here, we solve both the single-phase and the tracer problem on the same grid.
-    // Hence, the grid is only created once using the grid type defined by the type tag of the 1p problem.
+    // Here, we solve both the single-phase and the tracer problem on the same grid, and thus,
+    // the grid is only created once using the grid type defined by the type tag of the 1p problem.
     GridManager<GetPropType<OnePTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     // We compute on the leaf grid view.
     const auto& leafGridView = gridManager.grid().leafGridView();
 
-    // ### Set-up and solving of the 1p problem
-    // In the following section, we set up and solve the 1p problem. As the result of this problem, we obtain the pressure distribution in the domain.
-    // #### Set-up
-    // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-    // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
+    // ### Step 2: Set-up and solving of the 1p problem
+    // First, a finite volume grid geometry is constructed from the grid that was created above.
+    // This builds the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element
+    // of the grid partition.
     using GridGeometry = GetPropType<OnePTypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
 
-    // In the problem, we define the boundary and initial conditions.
+    // We now instantiate the problem, in which we define the boundary and initial conditions.
     using OnePProblem = GetPropType<OnePTypeTag, Properties::Problem>;
     auto problemOneP = std::make_shared<OnePProblem>(gridGeometry);
 
-    // The jacobian matrix (`A`), the solution vector (`p`) and the residual (`r`) are parts of the linear system.
+    // The jacobian matrix (`A`), the solution vector (`p`) and the residual (`r`) make up the linear system.
     using JacobianMatrix = GetPropType<OnePTypeTag, Properties::JacobianMatrix>;
     using SolutionVector = GetPropType<OnePTypeTag, Properties::SolutionVector>;
     SolutionVector p(leafGridView.size(0));
@@ -117,61 +115,59 @@ int main(int argc, char** argv) try
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
 
-    // The grid variables store variables (primary and secondary variables) on sub-control volumes and faces (volume and flux variables).
+    // The grid variables are used store variables (primary and secondary variables) on sub-control volumes and faces (volume and flux variables).
     using OnePGridVariables = GetPropType<OnePTypeTag, Properties::GridVariables>;
     auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, gridGeometry);
     onePGridVariables->init(p);
 
-    // #### Assembling the linear system
-    // We create and inizialize the assembler.
+    // We now instantiate the assembler class, assemble the linear system and solve it with the linear
+    // solver UMFPack. Besides that, the time needed for assembly and solve is measured and printed.
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, gridGeometry, onePGridVariables);
-    assemblerOneP->setLinearSystem(A, r);
+    assemblerOneP->setLinearSystem(A, r); // tell assembler to use our previously defined system
 
-    // We assemble the local jacobian and the residual and stop the time needed, which is displayed in the terminal output, using the `assemblyTimer`. Further, we start the timer to evaluate the total time of the assembly, solving and updating.
     Dune::Timer timer;
     Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
-    assemblerOneP->assembleJacobianAndResidual(p);
+    assemblerOneP->assembleJacobianAndResidual(p); // assemble linear system around current solution
     assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
-    // We want to solve `Ax = -r`.
-    (*r) *= -1.0;
+    (*r) *= -1.0; // We want to solve `Ax = -r`.
 
-    // #### Solution
-    // We set the linear solver "UMFPack" as the linear solver. Afterwards we solve the linear system. The time needed to solve the system is recorded by the `solverTimer` and displayed in the terminal output.
     using LinearSolver = UMFPackBackend;
     Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
     auto linearSolver = std::make_shared<LinearSolver>();
     linearSolver->solve(*A, p, *r);
     solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
 
-    // #### Update and output
-    // We update the grid variables with the new solution.
     Dune::Timer updateTimer; std::cout << "Updating variables ..." << std::flush;
-    onePGridVariables->update(p);
+    onePGridVariables->update(p); // update grid variables to new pressure distribution
     updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
 
-
-    // We initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model. We add the pressure data from the solution vector (`p`) and the permeability field as output data.
-    using GridView = typename GetPropType<OnePTypeTag, Properties::GridGeometry>::GridView;
+    // The solution vector `p` now contains the pressure field that is the solution to the single-phase
+    // problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file using the Dune
+    // `VTKWriter`. Moreover, we add the permeability distribution to the writer.
+    using GridView = GetPropType<OnePTypeTag, Properties::GridView>;
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
     onepWriter.addCellData(p, "p");
-    const auto& k = problemOneP->spatialParams().getKField();
-    onepWriter.addCellData(k, "permeability");
-    onepWriter.write("1p");
 
-    // We stop the timer and display the total time of the simulation as well as the cumulative CPU time.
+    const auto& k = problemOneP->spatialParams().getKField(); // defined in spatialparams_1p.hh
+    onepWriter.addCellData(k, "permeability"); // add permeability to writer
+    onepWriter.write("1p");  // write the file "1p.vtk"
+
+    // print overall CPU time required for assembling and solving the 1p problem.
     timer.stop();
-
     const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
 
-    // ### Computation of the volume fluxes
-    // We use the results of the 1p problem to calculate the volume fluxes in the model domain.
-    using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>;
+    // ### Step 3: Computation of the volume fluxes
+    // We use the results of the 1p problem to calculate the volume fluxes across all sub-control volume
+    // faces of the discretization and store them in the vector `volumeFlux`. In order to do so, we iterate
+    // over all elements of the grid, and in each element compute the volume fluxes for all sub-control volume
+    // faces embeded in that element.
+    using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>; // type for scalar values
     std::vector<Scalar> volumeFlux(gridGeometry->numScvf(), 0.0);
 
     using FluxVariables =  GetPropType<OnePTypeTag, Properties::FluxVariables>;
@@ -181,14 +177,16 @@ int main(int argc, char** argv) try
     for (const auto& element : elements(leafGridView))
     {
         // Compute the element-local views on geometry, primary and secondary variables
-        // as well as variables needed for flux computations
+        // as well as variables needed for flux computations.
+
+        // This creates instances of the local views
         auto fvGeometry = localView(*gridGeometry);
-        fvGeometry.bind(element);
-
         auto elemVolVars = localView(onePGridVariables->curGridVolVars());
-        elemVolVars.bind(element, fvGeometry, p);
-
         auto elemFluxVars = localView(onePGridVariables->gridFluxVarsCache());
+
+        // we now have to bind the views to the current element
+        fvGeometry.bind(element);
+        elemVolVars.bind(element, fvGeometry, p);
         elemFluxVars.bind(element, fvGeometry, elemVolVars);
 
         // We calculate the volume fluxes for all sub-control volume faces except for Neumann boundary faces
@@ -198,34 +196,35 @@ int main(int argc, char** argv) try
             if (scvf.boundary() && problemOneP->boundaryTypes(element, scvf).hasNeumann())
                 continue;
 
-            // let the `FluxVariables` class do the flux computation.
+            // let the FluxVariables class do the flux computation.
             FluxVariables fluxVars;
             fluxVars.init(*problemOneP, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
             volumeFlux[scvf.index()] = fluxVars.advectiveFlux(0, upwindTerm);
         }
     }
 
-
-    // ### Set-up and solving of the tracer problem
-    // #### Set-up
-    // Similar to the 1p problem, we first create and initialize the problem.
+    // ### Step 4: Set-up and solving of the tracer problem
+    // First, we instantiate the tracer problem containing initial and boundary conditions,
+    // and pass to it the previously computed volume fluxes (see the documentation of the
+    // file `spatialparams_tracer.hh` for more details).
     using TracerProblem = GetPropType<TracerTypeTag, Properties::Problem>;
     auto tracerProblem = std::make_shared<TracerProblem>(gridGeometry);
-
-    // We use the volume fluxes calculated in the previous section as input for the tracer model.
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux);
 
-    // We create and initialize the solution vector. As the tracer problem is transient, the initial solution defined in the problem is applied to the solution vector.
+    // We create and initialize the solution vector. As, in contrast to the steady-state single-phase problem,
+    // the tracer problem is transient, the initial solution defined in the problem is applied to the solution vector.
+    // On the basis of this solution, we initialize then the grid variables.
     SolutionVector x(leafGridView.size(0));
     tracerProblem->applyInitialSolution(x);
     auto xOld = x;
 
-    // We create and initialize the grid variables.
     using GridVariables = GetPropType<TracerTypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(tracerProblem, gridGeometry);
     gridVariables->init(x);
 
-    // We read in some time loop parameters from the input file. The parameter `tEnd` defines the duration of the simulation, dt the initial time step size and `maxDt` the maximal time step size.
+    // Let us now instantiate the time loop. Therefore, we read in some time loop parameters from the input file.
+    // The parameter `tEnd` defines the duration of the simulation, `dt` the initial time step size and `maxDt` the maximal time step size.
+    // Moreover, we define 10 check points in the time loop at which we will write the solution to vtk files.
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
@@ -233,26 +232,35 @@ int main(int argc, char** argv) try
     // We instantiate the time loop.
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+    timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 
-    // We create and inizialize the assembler with time loop for the instationary problem.
+    // We create and initialize the assembler with a time loop for the transient problem.
+    // Within the time loop, we will use this assembler in each time step to assemble the linear system.
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop);
     assembler->setLinearSystem(A, r);
 
-    // We initialize the vtk output module and add a velocity output.
+    // The following lines of code initialize the vtk output module, add the velocity output facility
+    // and write out the initial solution. At each checkpoint, we will use the output module to write
+    // the solution of a time step into a corresponding vtk file.
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, tracerProblem->name());
+
+    // add model-specific output fields to the writer
     using IOFields = GetPropType<TracerTypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter);
+
+    // add velocity output facility
     using VelocityOutput = GetPropType<TracerTypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
+
+    // write initial solution
     vtkWriter.write(0.0);
 
-
-    // We define 10 check points in the time loop at which we will write the solution to vtk files.
-    timeLoop->setPeriodicCheckPoint(tEnd/10.0);
-
     // #### The time loop
-    // We start the time loop and calculate a new time step as long as `tEnd` is not reached. In every single time step, the problem is assembled and solved.
+    // We start the time loop and solve a new time step as long as `tEnd` is not reached. In every time step,
+    // the problem is assembled and solved, the solution is updated, and when a checkpoint is reached the solution
+    // is written to a new vtk file. In addition, statistics related to CPU time, the current simulation time
+    // and the time step sizes used is printed to the terminal.
     timeLoop->start(); do
     {
         // First we define the old solution as the solution of the previous time step for storage evaluations.
@@ -269,13 +277,13 @@ int main(int argc, char** argv) try
         linearSolver->solve(*A, xDelta, *r);
         solveTimer.stop();
 
-        // We calculate the actual solution and update it in the grid variables.
+        // update the solution vector and the grid variables.
         updateTimer.reset();
         x -= xDelta;
         gridVariables->update(x);
         updateTimer.stop();
 
-        // We display the statistics of the actual time step.
+        // display the statistics of the actual time step.
         const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
         std::cout << "Assemble/solve/update time: "
                   <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
@@ -283,43 +291,39 @@ int main(int argc, char** argv) try
                   <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
                   <<  std::endl;
 
-        // The new solution is defined as the old solution.
+        // Update the old solution with the one computed in this time step and move to the next one
         xOld = x;
         gridVariables->advanceTimeStep();
-
-        // We advance the time loop to the next time step.
         timeLoop->advanceTimeStep();
 
-        // We write the Vtk output on check points.
+        // Write the Vtk output on check points.
         if (timeLoop->isCheckPoint())
             vtkWriter.write(timeLoop->time());
 
-        // We report the statistics of this time step.
+        // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // We set the time step size dt of the next time step.
+        // set the time step size for the next time step
         timeLoop->setTimeStepSize(dt);
 
     } while (!timeLoop->finished());
 
+    // The following piece of code prints a final status report of the time loop
+    //  before the program is terminated.
     timeLoop->finalize(leafGridView.comm());
 
-
-    // ### Final Output
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/false);
-
     return 0;
-
 }
 // ### Exception handling
 // In this part of the main file we catch and print possible exceptions that could
 // occur during the simulation.
+// errors related to run-time parameters
 catch (Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
+// errors related to the parsing of Dune grid files
 catch (Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
@@ -329,11 +333,13 @@ catch (Dune::DGFException & e)
                  << " ---> Abort!" << std::endl;
     return 2;
 }
+// generic error handling with Dune::Exception
 catch (Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;
 }
+// other exceptions
 catch (...)
 {
     std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;

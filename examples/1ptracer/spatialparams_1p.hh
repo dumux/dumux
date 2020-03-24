@@ -23,26 +23,30 @@
 // ## The file `spatialparams_1p.hh`
 //
 //
-// In this file, we generate a random permeability field in the constructor of the `OnePTestSpatialParams` class.
-// For this, we use the random number generation facilities provided by the C++ standard library.
+// This file contains the __spatial parameters class__ which defines the
+// distributions for the porous medium parameters permeability and porosity
+// over the computational grid
+//
+// In this example, we use a randomly generated and element-wise distributed
+// permeability field. For this, we use the random number generation facilitie
+// provided by the C++ standard library.
 #include <random>
 
-// We use the properties for porous medium flow models, declared in the file `properties.hh`.
-#include <dumux/porousmediumflow/properties.hh>
-
-// We include the spatial parameters class for single-phase models discretized by finite volume schemes.
-// The spatial parameters defined for this example will inherit from those.
+// We include the spatial parameters class for single-phase models discretized
+// by finite volume schemes, from which the spatial parameters defined for this
+// example will inherit.
 #include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux {
 
-// In the `OnePTestSpatialParams` class, we define all functions needed to describe the porous medium, e.g. porosity and permeability for the 1p_problem.
+// In the `OnePTestSpatialParams` class, we define all functions needed to describe
+// the porous medium, e.g. porosity and permeability, for the 1p_problem.
 template<class GridGeometry, class Scalar>
 class OnePTestSpatialParams
 : public FVSpatialParamsOneP<GridGeometry, Scalar,
                              OnePTestSpatialParams<GridGeometry, Scalar>>
 {
-    // We declare aliases for types that we are going to need in this class.
+    // The following convenience aliases will be used throughout this class:
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -58,15 +62,17 @@ public:
     // The spatial parameters must export the type used to define permeabilities.
     // Here, we are using scalar permeabilities, but tensors are also supported.
     using PermeabilityType = Scalar;
+
+    // ### Generation of the random permeability field
+    // We generate the random permeability field upon construction of the spatial parameters class
     OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry), K_(gridGeometry->gridView().size(0), 0.0)
     {
-        // ### Generation of the random permeability field
-        // We get the permeability of the domain and the lens from the `params.input` file.
+        // The permeability of the domain and the lens are obtained from the `params.input` file.
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
 
-        // Furthermore, we get the position of the lens, which is defined by the position of the lower left and the upper right corner.
+        // Furthermore, the position of the lens, which is defined by the position of the lower left and the upper right corners, are obtained from the input file.
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ =getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
@@ -92,12 +98,12 @@ public:
                                          const SubControlVolume& scv,
                                          const ElementSolution& elemSol) const
     {
-        return K_[scv.dofIndex()];
+        return K_[scv.elementIndex()];
     }
 
 
     // We set the porosity $`[-]`$ for the whole domain to a value of $`20 \%`$.
-    Scalar porosityAtPos(const GlobalPosition &globalPos) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.2; }
 
     // We reference to the permeability field. This is used in the main function to write an output for the permeability field.
@@ -105,24 +111,23 @@ public:
     { return K_; }
 
 private:
-    // We have a convenient definition of the position of the lens.
-    bool isInLens_(const GlobalPosition &globalPos) const
+    // The following function returns true if a given position is inside the lens.
+    // We use an epsilon of 1.5e-7 here for floating point comparisons.
+    bool isInLens_(const GlobalPosition& globalPos) const
     {
-        for (int i = 0; i < dimWorld; ++i) {
-            if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i] - eps_)
+        for (int i = 0; i < dimWorld; ++i)
+        {
+            if (globalPos[i] < lensLowerLeft_[i] + 1.5e-7
+                || globalPos[i] > lensUpperRight_[i] - 1.5e-7)
                 return false;
         }
+
         return true;
     }
 
-    GlobalPosition lensLowerLeft_;
-    GlobalPosition lensUpperRight_;
-
+    GlobalPosition lensLowerLeft_, lensUpperRight_;
     Scalar permeability_, permeabilityLens_;
-
     std::vector<Scalar> K_;
-
-    static constexpr Scalar eps_ = 1.5e-7;
 };
 
 } // end namespace Dumux

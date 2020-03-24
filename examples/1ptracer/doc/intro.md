@@ -21,22 +21,22 @@ with the darcy velocity $` \textbf v `$, the permeability $` \textbf K`$, the dy
 Darcy's law is inserted into the mass balance equation:
 
 ```math
-\phi \frac{\partial \varrho}{\partial t} + \text{div} \textbf v = 0
+\phi \frac{\partial \varrho}{\partial t} + \text{div} \textbf v = 0,
 ```
 
 where $`\phi`$ is the porosity.
 
-The equation is discretized using a cell-centered finite volume scheme as spatial discretization for the pressure as primary variable. For details on the discretization scheme, have a look at the dumux [handbook](https://dumux.org/handbook).
+The equation is discretized using cell-centered finite volumes with two-point flux approximation as spatial discretization scheme for the pressure as primary variable. For details on the discretization schemes available in DuMuX, have a look at the [handbook](https://dumux.org/handbook).
 
 ### Tracer Model
-The transport of the contaminant component $`\kappa`$ is based on the previously evaluated velocity field $`\textbf v`$  with the help of the following mass balance equation:
+The transport of the contaminant component $`\kappa`$ occurs with the velocity field $`\textbf v`$
+that is computed with the __1p model__ (see above):
 
 ```math
 \phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa {\textbf v} + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = 0,
 ```
 
 where $`X^\kappa`$ is the mass fraction of the contaminant component $`\kappa`$ and $` D^\kappa_\text{pm} `$ is the effective diffusivity.
-
 The effective diffusivity is a function of the diffusion coefficient of the component $`D^\kappa`$ and the porosity and tortuosity $`\tau`$ of the porous medium (see [dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh)):
 
 ```math
