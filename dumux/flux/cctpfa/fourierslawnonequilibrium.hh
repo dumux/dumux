@@ -59,7 +59,9 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cct
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
+    static constexpr auto numEnergyEqSolid = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
     static constexpr auto numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr auto numEnergyEq = numEnergyEqSolid + numEnergyEqFluid;
     static constexpr auto sPhaseIdx = ModelTraits::numFluidPhases();
 
 public:
@@ -112,16 +114,14 @@ public:
         Scalar outsideLambda = 0.0;
 
         // effective diffusion tensors
-        if (phaseIdx != sPhaseIdx)
-        {
-            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-            if (numEnergyEqFluid < ModelTraits::numFluidPhases())
-                insideLambda += insideVolVars.effectiveThermalConductivity();
-            else // numEnergyEqFluid >1
-                insideLambda += insideVolVars.fluidThermalConductivity(phaseIdx)*insideVolVars.saturation(phaseIdx)*insideVolVars.porosity();
-        }
-        else // solid phase
-            insideLambda += insideVolVars.solidThermalConductivity()*(1.0-insideVolVars.porosity());
+        if constexpr (numEnergyEq == 1)
+            insideLambda += insideVolVars.effectiveThermalConductivity();
+        else if (numEnergyEqFluid == 1)
+            insideLambda += (phaseIdx != sPhaseIdx)
+                            ? insideVolVars.effectiveFluidThermalConductivity()
+                            : insideVolVars.effectiveSolidThermalConductivity();
+        else
+            insideLambda += insideVolVars.effectivePhaseThermalConductivity(phaseIdx);
 
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
 
@@ -135,16 +135,14 @@ public:
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
             // effective diffusion tensors
-            if (phaseIdx != sPhaseIdx)
-            {
-                //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-                if (numEnergyEqFluid < ModelTraits::numFluidPhases())
-                    outsideLambda += outsideVolVars.effectiveThermalConductivity();
-                else
-                    outsideLambda += outsideVolVars.fluidThermalConductivity(phaseIdx)*outsideVolVars.saturation(phaseIdx)*outsideVolVars.porosity();
-            }
-            else //solid phase
-                outsideLambda +=outsideVolVars.solidThermalConductivity()*(1.0-outsideVolVars.porosity());
+            if constexpr (numEnergyEq == 1)
+                outsideLambda += outsideVolVars.effectiveThermalConductivity();
+            else if (numEnergyEqFluid == 1)
+                outsideLambda += (phaseIdx != sPhaseIdx)
+                                ? outsideVolVars.effectiveFluidThermalConductivity()
+                                : outsideVolVars.effectiveSolidThermalConductivity();
+            else
+                outsideLambda += outsideVolVars.effectivePhaseThermalConductivity(phaseIdx);
 
             Scalar tj;
             if (dim == dimWorld)
