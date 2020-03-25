@@ -138,7 +138,10 @@ public:
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
 #if HAVE_MPI
-        solveSequentialOrParallel_(A, x, b);
+        if constexpr (isMultiTypeBlockMatrix<Matrix>::value)
+            solveSequential_(A, x, b);
+        else
+            solveSequentialOrParallel_(A, x, b);
 #else
         solveSequential_(A, x, b);
 #endif
@@ -248,7 +251,11 @@ private:
 
         if (firstCall_)
         {
-            Dune::initSolverFactories<LinearOperator>();
+            if constexpr (isMultiTypeBlockMatrix<Matrix>::value)
+                initSolverFactoriesForMultiTypeBlockMatrix<LinearOperator>();
+            else
+                Dune::initSolverFactories<LinearOperator>();
+
             parallelHelper_->initGhostsAndOwners();
         }
 
