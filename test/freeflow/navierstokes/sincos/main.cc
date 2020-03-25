@@ -41,9 +41,10 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/valgrind.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolverfactorybackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include "problem.hh"

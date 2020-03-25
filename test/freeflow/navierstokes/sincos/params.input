@@ -35,3 +35,12 @@ AddProcessRank = false
 
 [Flux]
 UpwindWeight = 0.5
+
+[LinearSolver]
+Type = restartedgmressolver
+Verbose = 0
+GMResRestart = 20
+
+[LinearSolver.Preconditioner]
+Type = suzawa
+Verbose = 0
