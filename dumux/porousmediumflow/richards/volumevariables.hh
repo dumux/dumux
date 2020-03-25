@@ -496,7 +496,7 @@ public:
      * \param phaseIdx The phase index
      * \param compIdx The component index
      */
-    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
+    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         assert(enableWaterDiffusionInAir() && phaseIdx == FluidSystem::gasPhaseIdx && compIdx == FluidSystem::comp0Idx);

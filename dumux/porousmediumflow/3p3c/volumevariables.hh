@@ -713,7 +713,7 @@ public:
     /*!
      * \brief Returns the diffusion coefficient
      */
-    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
+    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         if (compIdx != phaseIdx)

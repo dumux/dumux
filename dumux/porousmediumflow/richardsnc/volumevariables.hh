@@ -410,7 +410,7 @@ public:
      * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component
      */
-    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
+    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(const int phaseIdx, const int compIdx) const
     { return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);}
 

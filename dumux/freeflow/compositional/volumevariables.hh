@@ -255,7 +255,7 @@ public:
      * \param compIIdx the index of the component which diffusive
      * \param compJIdx the index of the component with respect to which compIIdx diffuses
      */
-    [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
+    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int compIIdx, int compJIdx = 0) const
     {
        if (compIIdx == compJIdx)
