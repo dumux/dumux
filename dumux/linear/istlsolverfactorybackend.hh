@@ -134,7 +134,7 @@ public:
      * \param x the seeked solution vector, containing the initial solution upon entry
      * \param b the right hand side vector
      */
-    template<class Matrix, class Vector>
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
 #if HAVE_MPI
