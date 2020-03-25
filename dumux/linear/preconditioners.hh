@@ -75,7 +75,11 @@ public:
      *   \param w The relaxation factor.
      */
     NewSeqUzawa (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& mat, const ParameterTree& params)
-    : _A_(mat->getmat()), _n(3)
+    : _A_(mat->getmat())
+    , _n(params.get<std::size_t>("iterations"))
+    , _w(params.get<scalar_field_type>("relaxation"))
+    , paramGroup_(params.get<std::string>("ParameterGroup"))
+    , inexact_ (Dumux::getParamFromGroup<bool>(paramGroup_, "LinearSolver.InexactVelocitySolver", false))
     {
         init_(params);
     }
@@ -158,19 +162,17 @@ private:
     void init_(const ParameterTree& params)
     {
         using namespace Dune::Indices;
-        // inexact_ = params.get<bool>("preconditioner.InexactVelocitySolver");
-        inexact_ = Dumux::getParam<bool>("LinearSolver.InexactVelocitySolver", false);
 
         if (inexact_)
         {
             linearOperator_ = std::make_shared<LinearOperator>(_A_[_0][_0]);
             velocityAMG_ = std::make_unique<VelocityAMG>(linearOperator_, params);
 
-            static auto determineOmega = Dumux::getParam<bool>("LinearSolver.PreconditionerDetermineOmega", false);
+            static auto determineOmega = Dumux::getParamFromGroup<bool>(paramGroup_, "LinearSolver.PreconditionerDetermineOmega", false);
             if (determineOmega)
                 _w = estimateOmega_();
             else
-                _w = Dumux::getParam<double>("LinearSolver.PreconditionerRelaxation", 1);
+                _w = params.get<scalar_field_type>("relaxation");
         }
         else
             velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[_0][_0]);
@@ -188,7 +190,7 @@ private:
 
         scalar_field_type omega = 0.0;
 
-        static const auto iterations = Dumux::getParam<std::size_t>("LinearSolver.PreconditionerPowerLawIterations", 5);
+        static const auto iterations = Dumux::getParamFromGroup<std::size_t>(paramGroup_, "LinearSolver.PreconditionerPowerLawIterations", 5);
 
         // apply power iteration x_k+1 = M*x_k/|M*x_k| for the matrix M = -B*Ainv*Bt
         for (std::size_t i = 0; i < iterations; ++i)
@@ -226,7 +228,7 @@ private:
     //! \brief The matrix we operate on.
     const M& _A_;
     //! \brief The number of steps to do in apply
-    int _n;
+    const int _n;
     //! \brief The relaxation factor to use
     scalar_field_type _w;
 
@@ -234,7 +236,8 @@ private:
     std::shared_ptr<LinearOperator> linearOperator_;
     std::unique_ptr<VelocityAMG> velocityAMG_;
     std::unique_ptr<VelocityUMFPack> velocityUMFPack_;
-    bool inexact_;
+    const std::string paramGroup_;
+    const bool inexact_;
 };
 DUMUX_REGISTER_PRECONDITIONER("suzawa", Dune::defaultPreconditionerBlockLevelCreator<NewSeqUzawa, 2>());
 
