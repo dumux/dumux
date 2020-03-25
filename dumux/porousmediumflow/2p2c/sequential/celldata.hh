@@ -129,17 +129,6 @@ public:
     }
 
     /*!
-     * \brief Modify the phase pressure
-     * \param phaseIdx index of the Phase
-     * \param value Value to be stored
-     */
-    [[deprecated("cellData.setPressure is deprecated and will be removed after release 3.1. Use cellData.manipulateFluidState() and set pressure in fluid state directly")]]
-    void setPressure(int phaseIdx, Scalar value)
-    {
-        manipulateFluidState().setPressure(phaseIdx, value);
-    }
-
-    /*!
      * \brief Returns the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
      *
      * This is equivalent to the sum of the component concentrations for all
@@ -295,25 +284,11 @@ public:
     /*** b) from fluidstate ***/
 
     //! DOC ME!
-    [[deprecated("cellData.setSaturation is deprecated and will be removed after release 3.1. Use cellData.manipulateFluidState() and set saturation in fluid state directly")]]
-    void setSaturation(int phaseIdx, Scalar value)
-    {
-        fluidState_->setSaturation(phaseIdx, value);
-        fluidState_->setSaturation(1-phaseIdx, 1.0-value);
-    }
-
-    //! DOC ME!
     const Scalar saturation(int phaseIdx) const
     {
         return fluidState_->saturation(phaseIdx);
     }
 
-    //! DOC ME!
-    [[deprecated("cellData.setViscosity is deprecated and will be removed after release 3.1. Use cellData.manipulateFluidState() and set viscosity in fluid state directly")]]
-    void setViscosity(int phaseIdx, Scalar value)
-    {
-        fluidState_->setViscosity(phaseIdx, value);
-    }
     //! DOC ME!
     const Scalar viscosity(int phaseIdx) const
     {

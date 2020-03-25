@@ -85,15 +85,6 @@ public:
         prevGridVolVars_ = curGridVolVars_;
     }
 
-    //! initialize all variables (instationary case)
-    template<class SolutionVector>
-    [[deprecated("Use init(sol) instead. The class now works without modification for stationary and instationary cases.")]]
-    void init(const SolutionVector& curSol, const SolutionVector& initSol)
-    {
-        // initialize current volvars and the flux var cache
-        init(initSol);
-    }
-
     //! update all variables
     template<class SolutionVector>
     void update(const SolutionVector& curSol, bool forceFluxCacheUpdate = false)
