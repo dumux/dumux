@@ -171,6 +171,9 @@ public:
         params_["preconditioner.iterations"] = "1";
         params_["preconditioner.relaxation"] = "1.0";
         params_["preconditioner.verbosity"] = "0";
+        params_["preconditioner.defaultAggregationDimension"] = std::to_string(LinearSolverTraits::GridView::dimension);
+        params_["ParameterGroup"] = paramGroup_;
+        params_["preconditioner.ParameterGroup"] = paramGroup_;
     }
 
     const Dune::InverseOperatorResult& result() const
