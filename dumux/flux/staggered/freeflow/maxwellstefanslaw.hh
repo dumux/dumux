@@ -246,7 +246,8 @@ private:
     static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
     {
         if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
-            return volVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+            return volVars.effectiveDiffusionCoefficient(phaseIdx,
+                    VolumeVariables::FluidSystem::getMainComponent(phaseIdx), compIdx);
         else
         {
             // TODO: remove this else clause after release 3.2!

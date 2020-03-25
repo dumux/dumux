@@ -141,8 +141,9 @@ public:
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
-                continue;
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    continue;
 
             // diffusion tensors are always solution dependent
             Scalar tij = elemFluxVarsCache[scvf].diffusionTij(phaseIdx, compIdx);
@@ -165,8 +166,9 @@ public:
                                                         : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = rho*tij*(xInside - xOutside);
-            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
-                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
 
         return componentFlux;
@@ -180,12 +182,21 @@ public:
                                             const SubControlVolumeFace& scvf,
                                             const int phaseIdx, const int compIdx)
     {
-        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+
 
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVolVars, phaseIdx, phaseIdx, compIdx);
+        const auto getDiffCoeff = [&](const auto& vv)
+        {
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            if constexpr (FluidSystem::isTracerFluidSystem())
+                return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(vv, 0, 0, compIdx);
+            else
+                return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(vv, phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+        };
+
+        const auto insideD = getDiffCoeff(insideVolVars);
 
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideD, insideVolVars.extrusionFactor());
 
@@ -200,7 +211,7 @@ public:
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVolVars, phaseIdx, phaseIdx, compIdx);
+            const auto outsideD = getDiffCoeff(outsideVolVars);
 
             Scalar tj;
             if (dim == dimWorld)

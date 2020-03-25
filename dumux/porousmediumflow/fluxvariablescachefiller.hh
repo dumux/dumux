@@ -156,10 +156,15 @@ private:
         static constexpr int numComponents = ModelTraits::numFluidComponents();
 
         // forward to the filler of the diffusive quantities
-        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
-                if (compIdx != FluidSystem::getMainComponent(phaseIdx))
+        if constexpr (FluidSystem::isTracerFluidSystem())
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
                     DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element, fvGeometry, elemVolVars, scvf, *this);
+        else
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    if (compIdx != FluidSystem::getMainComponent(phaseIdx))
+                        DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element, fvGeometry, elemVolVars, scvf, *this);
     }
 
     //! method to fill the quantities related to heat conduction
@@ -447,8 +452,9 @@ private:
             for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
-                    continue;
+                if constexpr (!FluidSystem::isTracerFluidSystem())
+                    if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                        continue;
 
                 // fill diffusion caches
                 for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
@@ -592,8 +598,9 @@ private:
             {
                 // skip main component
                 using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
-                    continue;
+                if constexpr (!FluidSystem::isTracerFluidSystem())
+                    if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                        continue;
 
                 // fill data in the handle
                 handle.diffusionHandle().setPhaseIndex(phaseIdx);
@@ -607,13 +614,18 @@ private:
                 using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
                 IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
-                // lambda to obtain diffusion coefficient
-                auto getD = [phaseIdx, compIdx] (const auto& volVars)
-                { return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVars, phaseIdx, phaseIdx, compIdx); };
-
                 // maybe (re-)assemble matrices
                 if (forceUpdateAll || diffusionIsSolDependent)
                 {
+                    // lambda to obtain diffusion coefficient
+                    const auto getD = [phaseIdx, compIdx] (const auto& volVars)
+                    {
+                        if constexpr (FluidSystem::isTracerFluidSystem())
+                            return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVars, 0, 0, compIdx);
+                        else
+                            return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVars, phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+                    };
+
                     // Effective diffusion coefficients might get zero if saturation = 0.
                     // Compute epsilon to detect obsolete rows in the iv-local matrices during assembly
                     if constexpr (ModelTraits::numFluidPhases() > 1)
@@ -621,9 +633,8 @@ private:
                         const auto& scv = *scvs(fvGeometry()).begin();
                         const auto& scvf = *scvfs(fvGeometry()).begin();
                         const auto& vv = elemVolVars()[scv];
-                        const auto& D = vv.diffusionCoefficient(phaseIdx, phaseIdx, compIdx);
+                        const auto& D = vv.diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
                         const auto tij = computeTpfaTransmissibility(scvf, scv, D, vv.extrusionFactor())*scvf.area();
-
                         // use transmissibility with molecular coefficient for epsilon estimate
                         localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD, tij*1e-7);
                     }

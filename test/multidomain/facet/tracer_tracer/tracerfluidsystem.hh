@@ -47,10 +47,6 @@ public:
     static constexpr bool isTracerFluidSystem()
     { return true; }
 
-    //! No component is the main component
-    static constexpr int getMainComponent(int phaseIdx)
-    { return -1; }
-
     //! The number of components
     static constexpr int numComponents = 1;
 
@@ -68,8 +64,7 @@ public:
 
     //! Binary diffusion coefficient
     //! (might depend on spatial parameters like pressure / temperature)
-    static Scalar binaryDiffusionCoefficient(unsigned int compIIdx,
-                                             unsigned int compJIdx,
+    static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
                                              const Element& element,
                                              const SubControlVolume& scv)

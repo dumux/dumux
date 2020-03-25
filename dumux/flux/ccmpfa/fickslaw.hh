@@ -190,8 +190,9 @@ public:
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
-                continue;
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    continue;
 
             // calculate the density at the interface
             const auto rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
@@ -210,9 +211,10 @@ public:
         }
 
         // accumulate the phase component flux
-        for(int compIdx = 0; compIdx < numComponents; compIdx++)
-            if(compIdx != FluidSystem::getMainComponent(phaseIdx) && BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
-                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx != FluidSystem::getMainComponent(phaseIdx) && BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
 
         return componentFlux;
     }

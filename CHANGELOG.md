@@ -68,6 +68,8 @@ ffSol = partial(sol, ffFaceIdx, ffCellCenterIdx);
 Regarding changes made to the effective laws and diffusionCoefficient containters, Backwards-compatibility is maintined for a large extent, barring any volumevariable classes defined externally that inherit from the non-isothermal volumevariables.
 If you use a self defined volumevariables class that inherits from the non-isothermal volumevariables, please adapt the your volumevariables class to fit to the non-isothermal volumevariables, and include the new methods for accessing the diffusion and effective diffusion coefficients.
 
+- Tracer model: tracer fluid systems do no longer provide a `getMainComponent` function since this simply doesn't make sense -- the main bulk component is not modeled.
+
 ### Deprecated properties, to be removed after 3.2:
 
 ### Deprecated classes/files, to be removed after 3.2:

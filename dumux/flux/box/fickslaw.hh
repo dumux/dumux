@@ -88,8 +88,6 @@ public:
                                     const int phaseIdx,
                                     const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        ComponentFluxVector componentFlux(0.0);
-
         // get inside and outside diffusion tensors and calculate the harmonic mean
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -103,32 +101,23 @@ public:
         for (auto&& scv : scvs(fvGeometry))
             rho += massOrMolarDensity(elemVolVars[scv], referenceSystem, phaseIdx)*shapeValues[scv.indexInElement()][0];
 
+        ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if (compIdx == FluidSystem::getMainComponent(phaseIdx))
-                continue;
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    continue;
 
-            // effective diffusion tensors
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-            auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVolVars, phaseIdx, phaseIdx, compIdx);
-            auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVolVars, phaseIdx, phaseIdx, compIdx);
-
-            // scale by extrusion factor
-            insideD *= insideVolVars.extrusionFactor();
-            outsideD *= outsideVolVars.extrusionFactor();
-
-            // the resulting averaged diffusion tensor
-            const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
-
-            // the mole/mass fraction gradient
-            Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
-            for (auto&& scv : scvs(fvGeometry))
-                gradX.axpy(massOrMoleFraction(elemVolVars[scv], referenceSystem, phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
+            const auto D = averageDiffusionCoefficient_(phaseIdx, compIdx, insideVolVars, outsideVolVars, problem, scvf);
 
             // compute the diffusive flux
-            componentFlux[compIdx] = -1.0*rho*vtmv(scvf.unitOuterNormal(), D, gradX)*scvf.area();
-            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
-                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+            const auto massOrMoleFrac = [&](const SubControlVolume& scv){ return massOrMoleFraction(elemVolVars[scv], referenceSystem, phaseIdx, compIdx); };
+            componentFlux[compIdx] = discreteFlux_(fvGeometry, scvf, fluxVarsCache, massOrMoleFrac, D, rho);
+
+            // if the main component is balanced subtract the same flux from there (conservation)
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
         return componentFlux;
     }
@@ -154,20 +143,11 @@ public:
         std::array<std::vector<Scalar>, numComponents> ti;
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
-                continue;
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    continue;
 
-            // effective diffusion tensors
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-            auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVolVars, phaseIdx, phaseIdx, compIdx);
-            auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVolVars, phaseIdx, phaseIdx, compIdx);
-
-            // scale by extrusion factor
-            insideD *= insideVolVars.extrusionFactor();
-            outsideD *= outsideVolVars.extrusionFactor();
-
-            // the resulting averaged diffusion tensor
-            const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
+            const auto D = averageDiffusionCoefficient_(phaseIdx, compIdx, insideVolVars, outsideVolVars, problem, scvf);
 
             ti[compIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
@@ -175,6 +155,57 @@ public:
         }
 
         return ti;
+    }
+
+private:
+    static Scalar averageDiffusionCoefficient_(const int phaseIdx, const int compIdx,
+                                               const VolumeVariables& insideVV, const VolumeVariables& outsideVV,
+                                               const Problem& problem,
+                                               const SubControlVolumeFace& scvf)
+    {
+        // effective diffusion tensors
+        auto [insideD, outsideD] = diffusionCoefficientsAtInterface_(phaseIdx, compIdx, insideVV, outsideVV);
+
+        // scale by extrusion factor
+        insideD *= insideVV.extrusionFactor();
+        outsideD *= outsideVV.extrusionFactor();
+
+        // the resulting averaged diffusion tensor
+        return problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
+    }
+
+    static std::pair<Scalar, Scalar>
+    diffusionCoefficientsAtInterface_(const int phaseIdx, const int compIdx,
+                                      const VolumeVariables& insideVV, const VolumeVariables& outsideVV)
+    {
+        if constexpr (!FluidSystem::isTracerFluidSystem())
+        {
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            const auto mainCompIdx = FluidSystem::getMainComponent(phaseIdx);
+            const auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVV, phaseIdx, mainCompIdx, compIdx);
+            const auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVV, phaseIdx, mainCompIdx, compIdx);
+            return { std::move(insideD), std::move(outsideD) };
+        }
+        else
+        {
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            const auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVV, 0, 0, compIdx);
+            const auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVV, 0, 0, compIdx);
+            return { std::move(insideD), std::move(outsideD) };
+        }
+    }
+
+    template<class EvaluateVariable, class Tensor>
+    static Scalar discreteFlux_(const FVElementGeometry& fvGeometry,
+                                const SubControlVolumeFace& scvf,
+                                const FluxVarCache& fluxVarsCache,
+                                const EvaluateVariable& massOrMoleFraction,
+                                const Tensor& D, const Scalar preFactor)
+    {
+        Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
+        for (auto&& scv : scvs(fvGeometry))
+            gradX.axpy(massOrMoleFraction(scv), fluxVarsCache.gradN(scv.indexInElement()));
+        return -1.0*preFactor*vtmv(scvf.unitOuterNormal(), D, gradX)*scvf.area();
     }
 };
 
