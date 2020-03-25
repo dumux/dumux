@@ -26,6 +26,7 @@
 #ifndef DUMUX_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 #define DUMUX_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 
+#include <cmath>
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/nonequilibrium/thermal/localresidual.hh>
 
@@ -60,11 +61,10 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, false>: public GetPropT
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using Indices = typename ModelTraits::Indices;
 
     static constexpr int numPhases = ModelTraits::numFluidPhases();
     static constexpr int numComponents = ModelTraits::numFluidComponents();
-    enum { conti0EqIdx = Indices::conti0EqIdx };
+    static constexpr auto conti0EqIdx = ModelTraits::Indices::conti0EqIdx;
 public:
     using ParentType::ParentType;
 
@@ -92,7 +92,6 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        // get upwind weights into local scope
         NumEqVector flux(0.0);
 
         const auto moleDensity = [](const auto& volVars, const int phaseIdx)
@@ -150,6 +149,7 @@ public:
         source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
         // Call the (kinetic) Energy module, for the source term.
         // it has to be called from here, because the mass transfered has to be known.
+        // TODO: check for thermal non-eq ?
         EnergyLocalResidual::computeSourceEnergy(source,
                                                  element,
                                                  fvGeometry,
@@ -161,13 +161,12 @@ public:
 };
 
 /*!
- * \brief The mass conservation part of the nonequilibrium model for a model assuming chemical non-equilibrium and two phases but assuming thermal equilibrium
+ * \brief The mass conservation part of the nonequilibrium model for a model assuming chemical non-equilibrium
  */
 template<class TypeTag>
 class NonEquilibriumLocalResidualImplementation<TypeTag, true>: public GetPropType<TypeTag, Properties::EquilibriumLocalResidual>
 {
     using ParentType = GetPropType<TypeTag, Properties::EquilibriumLocalResidual>;
-    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -182,14 +181,13 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true>: public GetPropTy
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     static constexpr int numPhases = ModelTraits::numFluidPhases();
     static constexpr int numComponents = ModelTraits::numFluidComponents();
-    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
     static constexpr auto conti0EqIdx = Indices::conti0EqIdx;
     static constexpr auto comp1Idx = FluidSystem::comp1Idx;
@@ -197,6 +195,8 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true>: public GetPropTy
     static constexpr auto phase0Idx = FluidSystem::phase0Idx;
     static constexpr auto phase1Idx = FluidSystem::phase1Idx;
 
+    static_assert(numPhases > 1,
+                  "chemical non-equlibrium only makes sense for multiple phases");
     static_assert(numPhases == numComponents,
                   "currently chemical non-equilibrium is only available when numPhases equals numComponents");
     static_assert(useMoles == true,
@@ -255,7 +255,6 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        // get upwind weights into local scope
         NumEqVector flux(0.0);
 
         // advective fluxes
@@ -343,7 +342,7 @@ public:
                     const Scalar compFluxIntoOtherPhase = factorMassTransfer * (xEquil-xNonEquil)/characteristicLength * awn * volVars.molarDensity(phaseIdx) * diffCoeff * sherwoodNumber;
 
                     componentIntoPhaseMassTransfer[phaseIdx][compIdx] += compFluxIntoOtherPhase;
-                    componentIntoPhaseMassTransfer[compIdx][compIdx] += -compFluxIntoOtherPhase;
+                    componentIntoPhaseMassTransfer[compIdx][compIdx] -= compFluxIntoOtherPhase;
                 }
             }
         }
@@ -363,7 +362,7 @@ public:
             }
         }
 
-        if (ModelTraits::enableThermalNonEquilibrium())
+        if constexpr (ModelTraits::enableThermalNonEquilibrium())
         {
             // Call the (kinetic) Energy module, for the source term.
             // it has to be called from here, because the mass transfered has to be known.
