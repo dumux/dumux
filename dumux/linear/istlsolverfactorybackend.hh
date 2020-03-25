@@ -30,6 +30,8 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 
+#include "linearsolverparameters.hh"
+
 // preconditioners
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -92,8 +94,6 @@ template <class LinearSolverTraits>
 class IstlSolverFactoryBackend : public LinearSolver
 {
 public:
-    //! translation table for solver parameters
-    static std::vector<std::array<std::string, 2>> dumuxToIstlSolverParams;
 
     /*!
      * \brief Construct the backend for the sequential case only
@@ -153,27 +153,11 @@ public:
     void reset()
     {
         firstCall_ = true;
-        resetDefaultParameters();
-        convertParameterTree_(paramGroup_);
+        params_ = LinearSolverParameters<LinearSolverTraits>::createParameterTree(paramGroup_);
         checkMandatoryParameters_();
         name_ = params_.get<std::string>("preconditioner.type") + "-preconditioned " + params_.get<std::string>("type");
         if (params_.get<int>("verbose", 0) > 0)
             std::cout << "Initialized linear solver of type: " << name_ << std::endl;
-    }
-
-    //! reset some defaults for the solver parameters
-    void resetDefaultParameters()
-    {
-        params_["restart"] = "10";
-        params_["maxit"] = "250";
-        params_["reduction"] = "1e-13";
-        params_["verbose"] = "0";
-        params_["preconditioner.iterations"] = "1";
-        params_["preconditioner.relaxation"] = "1.0";
-        params_["preconditioner.verbosity"] = "0";
-        params_["preconditioner.defaultAggregationDimension"] = std::to_string(LinearSolverTraits::GridView::dimension);
-        params_["ParameterGroup"] = paramGroup_;
-        params_["preconditioner.ParameterGroup"] = paramGroup_;
     }
 
     const Dune::InverseOperatorResult& result() const
@@ -187,26 +171,6 @@ public:
     }
 
 private:
-    void convertParameterTree_(const std::string& paramGroup="")
-    {
-        auto linearSolverGroups = getParamSubGroups("LinearSolver", paramGroup);
-        if (linearSolverGroups.empty()) // no linear solver parameters were specified
-            return;
-
-        for (const auto& [dumuxKey, istlKey] : dumuxToIstlSolverParams)
-        {
-            for (const auto& group : linearSolverGroups)
-            {
-                const auto fullDumuxKey = group + "." + dumuxKey;
-                const auto value = getParam<std::string>(fullDumuxKey, "");
-                if (!value.empty())
-                {
-                    params_[istlKey] = value;
-                    break; // skip groups with smaller depth in the tree
-                }
-            }
-        }
-    }
 
     void checkMandatoryParameters_()
     {
@@ -318,57 +282,6 @@ private:
     Dune::InverseOperatorResult result_;
     Dune::ParameterTree params_;
     std::string name_;
-};
-
-//! translation table for solver parameters
-template<class LinearSolverTraits>
-std::vector<std::array<std::string, 2>>
-IstlSolverFactoryBackend<LinearSolverTraits>::dumuxToIstlSolverParams =
-{
-    // solver params
-    {"Verbosity", "verbose"},
-    {"MaxIterations", "maxit"},
-    {"ResidualReduction", "reduction"},
-    {"Type", "type"},
-    {"GMResRestart", "restart"}, // cycles before restarting
-    {"Restart", "restart"}, // cycles before restarting
-    {"MaxOrthogonalizationVectors", "mmax"},
-
-    // preconditioner params
-    // we expect parameters in the subgroup "Preconditioner"
-    // there are some legacy param names that are still supported
-    // subgroup parameters overwrite legacy parameters
-    {"PreconditionerVerbosity", "preconditioner.verbosity"},
-    {"Preconditioner.Verbosity", "preconditioner.verbosity"},
-    {"PreconditionerType", "preconditioner.type"},
-    {"Preconditioner.Type", "preconditioner.type"},
-    {"PreconditionerIterations", "preconditioner.iterations"},
-    {"Preconditioner.Iterations", "preconditioner.iterations"},
-    {"PreconditionerRelaxation", "preconditioner.relaxation"},
-    {"Preconditioner.Relaxation", "preconditioner.relaxation"},
-    {"Preconditioner.ILUOrder", "preconditioner.n"},
-    {"Preconditioner.ILUResort", "preconditioner.resort"},
-    {"Preconditioner.AmgSmootherRelaxation", "preconditioner.smootherRelaxation"},
-    {"Preconditioner.AmgSmootherIterations", "preconditioner.smootherIterations"},
-    {"Preconditioner.AmgMaxLevel", "preconditioner.maxLevel"},
-    {"Preconditioner.AmgCoarsenTarget", "preconditioner.coarsenTarget"},
-    {"Preconditioner.AmgMinCoarseningRate", "preconditioner.minCoarseningRate"},
-    {"Preconditioner.AmgAccumulationMode", "preconditioner.accumulationMode"},
-    {"Preconditioner.AmgProlongationDampingFactor", "preconditioner.prolongationDampingFactor"},
-    {"Preconditioner.AmgAlpha", "preconditioner.alpha"},
-    {"Preconditioner.AmgBeta", "preconditioner.beta"},
-    {"Preconditioner.AmgAdditive", "preconditioner.additive"},
-    {"Preconditioner.AmgGamma", "preconditioner.gamma"},
-    {"Preconditioner.AmgPreSmoothingSteps", "preconditioner.preSteps"},
-    {"Preconditioner.AmgPostSmoothingSteps", "preconditioner.postSteps"},
-    {"Preconditioner.AmgCriterionSymmetric", "preconditioner.criterionSymmetric"},
-    {"Preconditioner.AmgStrengthMeasure", "preconditioner.strengthMeasure"},
-    {"Preconditioner.AmgDiagonalRowIndex", "preconditioner.diagonalRowIndex"},
-    {"Preconditioner.AmgDefaultAggregationSizeMode", "preconditioner.defaultAggregationSizeMode"},
-    {"Preconditioner.AmgDefaultAggregationDimension", "preconditioner.defaultAggregationDimension"},
-    {"Preconditioner.AmgMaxAggregateDistance", "preconditioner.maxAggregateDistance"},
-    {"Preconditioner.AmgMinAggregateSize", "preconditioner.minAggregateSize"},
-    {"Preconditioner.AmgMaxAggregateSize", "preconditioner.maxAggregateSize"}
 };
 
 } // end namespace Dumux
