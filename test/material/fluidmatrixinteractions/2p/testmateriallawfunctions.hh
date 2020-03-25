@@ -99,6 +99,21 @@ void runTest(const std::string& name, const typename RegLaw::Params& params,
     writeContainerToFile(pc, "test_pcsw_" + name + ".dat", 100);
 }
 
+
+template<class EffLaw, class AbsLaw>
+void runEffToAbsTest(const std::string& name, const typename EffLaw::Params& effParams, const typename AbsLaw::Params& absParams,
+             const std::vector<typename EffLaw::Scalar>& sw)
+
+{
+    testValueEqualRange("Checking 1.0 == Abs::swToSwe(1-snr)", sw, [](auto sw){ return 1.0; }, [&](auto sw) { return AbsLaw::swToSwe(absParams, 1-absParams.snr()); });
+    testValueEqualRange("Checking 0.0 == Abs::swToSwe(snr)", sw, [](auto sw){ return 0.0; }, [&](auto sw) { return AbsLaw::swToSwe(absParams, absParams.snr()); });
+    testValueEqualRange("Checking 1.0 == Abs::snToSne(1-swr)", sw, [](auto sw){ return 1.0; }, [&](auto sw) { return AbsLaw::snToSne(absParams, 1-absParams.swr()); });
+    testValueEqualRange("Checking 0.0 == Abs::snToSne(swr)", sw, [](auto sw){ return 0.0; }, [&](auto sw) { return AbsLaw::snToSne(absParams, absParams.swr()); });
+
+    testValueEqualRange("Checking Abs::pc(1-snr) == Eff::pc(1.0)", sw, [&](auto pc){ return AbsLaw::pc(absParams, 1-absParams.snr()); }, [&](auto pc) { return EffLaw::pc(effParams, 1.0); });
+    testValueEqualRange("Checking Abs::endPointPc == Eff::pc(1.0)", sw, [&](auto pc){ return AbsLaw::endPointPc(absParams); }, [&](auto pc) { return EffLaw::pc(absParams, 1.0); });
+}
+
 } // end namespace Dumux
 
 #endif

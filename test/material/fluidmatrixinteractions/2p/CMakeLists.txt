@@ -23,3 +23,8 @@ dumux_add_test(SOURCES test_material_2p_brookscorey.cc
                         --files  ${CMAKE_SOURCE_DIR}/test/references/test_pcsw_brookscorey.dat
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_pcsw_brookscorey.dat
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_material_2p_brookscorey")
+
+dumux_add_test(SOURCES test_material_2p_efftoabslaw.cc
+               LABELS unit material
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_material_2p_efftoabslaw")
