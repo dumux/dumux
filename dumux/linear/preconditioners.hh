@@ -42,7 +42,7 @@ struct DumuxPreconditionerTag {};
 
 namespace Dune {
 
-template<class M, class X, class Y, int l = 1, int dim = 2>
+template<class M, class X, class Y, int l = 1>
 class NewSeqUzawa : public Dune::Preconditioner<X,Y>
 {
     using VelocityMatrix = typename std::remove_reference<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>::type;
@@ -75,11 +75,11 @@ public:
      *   \param w The relaxation factor.
      */
     NewSeqUzawa (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& mat, const ParameterTree& params)
-    : _A_(mat->getmat())
-    , _n(params.get<std::size_t>("iterations"))
-    , _w(params.get<scalar_field_type>("relaxation"))
+    : A_(mat->getmat())
+    , n_(params.get<std::size_t>("iterations"))
+    , w_(params.get<scalar_field_type>("relaxation"))
     , paramGroup_(params.get<std::string>("ParameterGroup"))
-    , inexact_ (Dumux::getParamFromGroup<bool>(paramGroup_, "LinearSolver.InexactVelocitySolver", false))
+    , inexact_(Dumux::getParamFromGroup<bool>(paramGroup_, "LinearSolver.InexactVelocitySolver", false))
     {
         init_(params);
     }
@@ -100,10 +100,10 @@ public:
     {
         using namespace Dune::Indices;
 
-        auto& A = _A_[_0][_0];
-        auto& Bt = _A_[_0][_1];
-        auto& B = _A_[_1][_0];
-        auto& C = _A_[_1][_1];
+        auto& A = A_[_0][_0];
+        auto& Bt = A_[_0][_1];
+        auto& B = A_[_1][_0];
+        auto& C = A_[_1][_1];
 
         const auto& f = d[_0];
         const auto& g = d[_1];
@@ -115,7 +115,7 @@ public:
                 pressure[i] = g[i];
         }
 
-        for (int k = 0; k < _n; ++k)
+        for (int k = 0; k < n_; ++k)
         {
             // u_k+1 = u_k + Q_A^−1*(f − (A*u_k + Bt*p_k)),
             auto vrhs = f;
@@ -139,7 +139,7 @@ public:
             auto pUpdate = g;
             B.mmv(velocity, pUpdate);
             C.mmv(pressure, pUpdate);
-            pUpdate *= _w;
+            pUpdate *= w_;
             pressure += pUpdate;
         }
     }
@@ -165,25 +165,23 @@ private:
 
         if (inexact_)
         {
-            linearOperator_ = std::make_shared<LinearOperator>(_A_[_0][_0]);
+            linearOperator_ = std::make_shared<LinearOperator>(A_[_0][_0]);
             velocityAMG_ = std::make_unique<VelocityAMG>(linearOperator_, params);
 
-            static auto determineOmega = Dumux::getParamFromGroup<bool>(paramGroup_, "LinearSolver.PreconditionerDetermineOmega", false);
+            static const auto determineOmega = Dumux::getParamFromGroup<bool>(paramGroup_, "LinearSolver.PreconditionerDetermineOmega", false);
             if (determineOmega)
-                _w = estimateOmega_();
-            else
-                _w = params.get<scalar_field_type>("relaxation");
+                w_ = estimateOmega_();
         }
         else
-            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(_A_[_0][_0]);
+            velocityUMFPack_ = std::make_unique<VelocityUMFPack>(A_[_0][_0]);
     }
 
     scalar_field_type estimateOmega_() const
     {
         using namespace Dune::Indices;
-        auto& A = _A_[_0][_0];
-        auto& Bt = _A_[_0][_1];
-        auto& B = _A_[_1][_0];
+        auto& A = A_[_0][_0];
+        auto& Bt = A_[_0][_1];
+        auto& B = A_[_1][_0];
 
         VelocityVector x(A.M());
         x = 1.0;
@@ -226,11 +224,11 @@ private:
     }
 
     //! \brief The matrix we operate on.
-    const M& _A_;
+    const M& A_;
     //! \brief The number of steps to do in apply
-    const int _n;
+    const int n_;
     //! \brief The relaxation factor to use
-    scalar_field_type _w;
+    scalar_field_type w_;
 
     Comm comm_;
     std::shared_ptr<LinearOperator> linearOperator_;
