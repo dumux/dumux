@@ -92,7 +92,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 
-
 #include "volumevariables.hh"
 
 namespace Dumux {
@@ -281,15 +280,11 @@ public:
     using type = TwoPTwoCUnconstrainedModelTraits<EquilibriumTraits>;
 };
 
-//! In case we do not assume full thermal non-equilibrium (e.g. only an energy balance for the solid phase and a fluid mixture) one needs a law for calculating the thermal conductivity of the fluid mixture
+//! In case we do not assume full thermal non-equilibrium (e.g. only an energy balance for the solid phase and a fluid mixture)
+//! one needs a law for calculating the thermal conductivity of the fluid mixture
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNonEquil>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = ThermalConductivitySimpleFluidLumping<Scalar, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>;
-};
+{ using type = ThermalConductivitySimpleFluidLumping<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Use the nonequilibrium volume variables together with the 2p2c vol vars
 template<class TypeTag>
@@ -398,7 +393,8 @@ public:
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
-struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNINonEquil> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNINonEquil>
+{ using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux

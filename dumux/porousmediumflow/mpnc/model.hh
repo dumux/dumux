@@ -328,7 +328,7 @@ private:
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using BaseTraits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
 
-    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties::ThermalConductivityModel>;
     template<class BaseTraits, class ETCM>
     struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
 public:
@@ -338,12 +338,7 @@ public:
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::MPNCNI>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = ThermalConductivitySomerton<Scalar>;
-};
+{ using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 /////////////////////////////////////////////////
 // Properties for the non-equilibrium mpnc model
@@ -392,12 +387,7 @@ public:
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::MPNCNonequil>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = ThermalConductivitySimpleFluidLumping<Scalar, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>;
-};
+{ using type = ThermalConductivitySimpleFluidLumping<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! use the mineralization volume variables together with the 2pnc vol vars
 template<class TypeTag>
