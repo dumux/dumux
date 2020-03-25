@@ -126,15 +126,14 @@ public:
 
     //! Binary diffusion coefficient
     //! (might depend on spatial parameters like pressure / temperature)
-    static Scalar binaryDiffusionCoefficient(unsigned int compIIdx,
-                                             unsigned int compJIdx,
+    static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
                                              const Element& element,
                                              const SubControlVolume& scv)
     {
         static const Scalar D = getParam<Scalar>("Problem.D");
         static const Scalar D2 = getParam<Scalar>("Problem.D2");
-        if (compJIdx == 0)
+        if (compIdx == 0)
             return D;
         else
             return D2;

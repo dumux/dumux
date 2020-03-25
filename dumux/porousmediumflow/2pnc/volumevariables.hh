@@ -91,7 +91,7 @@ class TwoPNCVolumeVariables
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FS>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FS>;
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
 public:
     //! Export fluid state type

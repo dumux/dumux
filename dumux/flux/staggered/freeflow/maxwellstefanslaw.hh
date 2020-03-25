@@ -84,7 +84,6 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
-    template <bool onlyTracers = false>
     using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents>;
 
     template<class ElementVolumeVariables>

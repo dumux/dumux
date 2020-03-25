@@ -80,11 +80,7 @@ public:
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
-    template <bool onlyTracers = false>
-    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
-                                                                        numPhases,
-                                                                        numComponents,
-                                                                        onlyTracers>;
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
 
     template<class Problem, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,

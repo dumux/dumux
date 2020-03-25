@@ -47,7 +47,7 @@ struct TestFluidSystem
     }
 };
 
-template<class Container, int numPhases, int numComponents, bool onlyTracers = false>
+template<class Container, int numPhases, int numComponents>
 void testFickianContainer()
 {
     TestFluidSystem<numPhases, numComponents> fs;
@@ -65,7 +65,7 @@ void testFickianContainer()
     {
         for (int compIIdx = std::min(phaseIdx, numComponents-1), compJIdx = 0; compJIdx < numComponents; ++compJIdx)
         {
-            if (onlyTracers || compIIdx != compJIdx)
+            if (compIIdx != compJIdx)
             {
                 const auto refD = fs.binaryDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
                 const auto D = diffCoeff(phaseIdx, compIIdx, compJIdx);
@@ -124,9 +124,6 @@ template<int numComponents, int numPhases>
 using FickDC = Dumux::FickianDiffusionCoefficients<int, numComponents, numPhases>;
 
 template<int numComponents, int numPhases>
-using FickDCTracer = Dumux::FickianDiffusionCoefficients<int, numComponents, numPhases, true>;
-
-template<int numComponents, int numPhases>
 using MSDC = Dumux::MaxwellStefanDiffusionCoefficients<int, numComponents, numPhases>;
 
 int main(int argc, char* argv[]) try
@@ -137,10 +134,6 @@ int main(int argc, char* argv[]) try
     testFickianContainer<FickDC<3, 3>, 3, 3>();
     testFickianContainer<FickDC<3, 8>, 3, 8>();
     testFickianContainer<FickDC<3, 2>, 3, 2>();
-
-    testFickianContainer<FickDCTracer<1, 1>, 1, 1, true>();
-    testFickianContainer<FickDCTracer<1, 2>, 1, 2, true>();
-    testFickianContainer<FickDCTracer<1, 3>, 1, 3, true>();
 
     testMSContainer<MSDC<1, 1>, 1, 1>();
     testMSContainer<MSDC<1, 2>, 1, 2>();

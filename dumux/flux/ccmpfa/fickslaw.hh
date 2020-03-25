@@ -172,12 +172,8 @@ public:
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;
 
-    //export the diffusion container
-    template <bool onlyTracers = false>
-    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar,
-                                                                        numPhases,
-                                                                        numComponents,
-                                                                        onlyTracers>;
+    // export the diffusion container
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
 
     //! Compute the diffusive flux across an scvf
     static ComponentFluxVector flux(const Problem& problem,

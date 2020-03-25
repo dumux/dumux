@@ -38,20 +38,9 @@ namespace Dumux {
  * \tparam Scalar The type used for scalar values
  * \tparam numPhases Number of phases in the fluid composition
  * \tparam numComponents Number of components in the fluid composition
- * \tparam onlyTracers If false, this means that the main component of
- *                     a phase is part of the components. In this case,
- *                     the storage container is optimized with respect to
- *                     memory consumption as diffusion coefficients of the
- *                     main component of a phase in itself are not stored.
- *                     If true, all diffusion coefficients of all components
- *                     are stored
  */
-template <class Scalar, int numPhases, int numComponents, bool onlyTracers = false>
-class FickianDiffusionCoefficients;
-
-//! General case (mpnc), for compositions containing the phases' main components
 template <class Scalar, int numPhases, int numComponents>
-class FickianDiffusionCoefficients<Scalar, numPhases, numComponents>
+class FickianDiffusionCoefficients
 {
 public:
     template<class DiffCoeffFunc>
@@ -101,36 +90,6 @@ private:
 
     void sortComponentIndices_(int phaseIdx, int& compIIdx, int& compJIdx) const
     { if (compIIdx != std::min(phaseIdx, numComponents-1)) std::swap(compIIdx, compJIdx); }
-};
-
-//! Specialization for mpnc & compositions that only contain tracers
-template <class Scalar, int numPhases, int numComponents>
-class FickianDiffusionCoefficients<Scalar, numPhases, numComponents, true>
-{
-public:
-    template<class DiffCoeffFunc>
-    void update(const DiffCoeffFunc& computeDiffCoeff)
-    {
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffCoeff_[getIndex_(phaseIdx, compIdx)]
-                    = computeDiffCoeff(phaseIdx, phaseIdx, compIdx);
-    }
-
-    Scalar operator() (int phaseIdx, int compIIdx, int compJIdx) const
-    {
-        sortComponentIndices_(phaseIdx, compIIdx, compJIdx);
-        return diffCoeff_[getIndex_(phaseIdx, compJIdx)];
-    }
-
-private:
-    std::array<Scalar, numPhases*numComponents> diffCoeff_;
-
-    constexpr int getIndex_(int phaseIdx, int compJIdx) const
-    { return phaseIdx * numComponents + compJIdx; }
-
-    void sortComponentIndices_(int phaseIdx, int& compIIdx, int& compJIdx) const
-    { if (compIIdx != phaseIdx) std::swap(compIIdx, compJIdx); }
 };
 
 } // end namespace Dumux

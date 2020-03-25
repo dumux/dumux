@@ -86,7 +86,7 @@ class ThreePThreeCVolumeVariables
     };
 
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<>;
+    using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
 public:
     //! export fluid state type

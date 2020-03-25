@@ -105,8 +105,7 @@ public:
 
     //! Binary diffusion coefficient
     //! (might depend on spatial parameters like pressure / temperature)
-    static Scalar binaryDiffusionCoefficient(unsigned int compIIdx,
-                                             unsigned int compJIdx,
+    static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
                                              const Element& element,
                                              const SubControlVolume& scv)

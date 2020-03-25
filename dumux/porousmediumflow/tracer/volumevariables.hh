@@ -60,9 +60,6 @@ class TracerVolumeVariables
     using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
-    static constexpr bool onlyTracerComponents = true;
-    using DiffusionCoefficients = typename Traits::DiffusionType::template DiffusionCoefficientsContainer<onlyTracerComponents>;
-
 public:
     //! Export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
@@ -86,36 +83,21 @@ public:
         // update parent type sets primary variables
         ParentType::update(elemSol, problem, element, scv);
 
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numFluidComponents());
-        // dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
 
         // the spatial params special to the tracer model
         fluidDensity_ = problem.spatialParams().fluidDensity(element, scv);
         fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
-        fluidSaturation_ = saturation_(problem, element, scv);
+
+        if constexpr (Detail::hasSaturation<Problem, Element, Scv>())
+            fluidSaturation_ = problem.spatialParams().saturation(element, scv);
 
         for (int compIdx = 0; compIdx < ParentType::numFluidComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
+            diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
+            effectiveDiffCoeff_[compIdx] = EffDiffModel::effectiveDiffusionCoefficient(*this, 0, 0, compIdx);
         }
-
-        // Update the binary diffusion and effective diffusion coefficients.
-        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return FluidSystem::binaryDiffusionCoefficient(compIIdx,
-                                                           compJIdx,
-                                                           problem,
-                                                           element,
-                                                           scv);
-        };
-
-        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
-        };
-
-        diffCoeff_.update(getDiffusionCoefficient);
-        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
     }
 
     /*!
@@ -206,26 +188,28 @@ public:
      */
     [[deprecated("Signature deprecated. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    { return diffCoeff_(0, 0, compIdx); }
+    { return diffCoeff_[compIdx]; }
 
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    {
+        if (phaseIdx != compIIdx) std::swap(compIIdx, compJIdx);
+        assert(phaseIdx == 0);
+        assert(phaseIdx == compIIdx);
+        return diffCoeff_[compJIdx]; }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
-
-    // /*!
-    //  * \brief Returns the dispersivity of the fluid's streamlines.
-    //  * \todo implement me
-    //  */
-    // const DispersivityType &dispersivity() const
-    // { return dispersivity_; }
+    {
+        if (phaseIdx != compIIdx) std::swap(compIIdx, compJIdx);
+        assert(phaseIdx == 0);
+        assert(phaseIdx == compIIdx);
+        return effectiveDiffCoeff_[compJIdx];
+    }
 
     /*!
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
@@ -237,45 +221,10 @@ protected:
     SolidState solidState_;
     Scalar fluidDensity_, fluidMolarMass_;
     Scalar fluidSaturation_ = 1.0;
-    /*!
-     * \brief Gets the saturation in an scv.
-     *
-     * \param problem the problem to solve
-     * \param element the element (codim-0-entity) the scv belongs to
-     * \param scv the sub control volume
-     * \note this gets selected if the user uses the multiphase tracer
-     */
-     template<class Problem, class Element, class Scv,
-              std::enable_if_t<Detail::hasSaturation<Problem, Element, Scv>(), int> = 0>
-     Scalar saturation_(const Problem& problem,
-                        const Element& element,
-                        const Scv& scv)
-     { return problem.spatialParams().saturation(element, scv); }
 
-    /*!
-     * \brief Gets the saturation in an scv.
-     *
-     * \param problem the problem to solve
-     * \param element the element (codim-0-entity) the scv belongs to
-     * \param scv the sub control volume
-     * \note this gets selected if the user a single phase tracer
-     */
-    template<class Problem, class Element, class Scv,
-             std::enable_if_t<!Detail::hasSaturation<Problem, Element, Scv>(), int> = 0>
-    Scalar saturation_(const Problem& problem,
-                       const Element &element,
-                       const Scv &scv)
-    { return 1.0; }
-
-    // DispersivityType dispersivity_;
-
-    // Binary diffusion coefficient
-    DiffusionCoefficients diffCoeff_;
-
-    // Effective diffusion coefficients for the phases
-    DiffusionCoefficients effectiveDiffCoeff_;
-
-    std::array<Scalar, ParentType::numFluidComponents()> moleOrMassFraction_;
+    std::array<Scalar, numFluidComps> diffCoeff_;
+    std::array<Scalar, numFluidComps> effectiveDiffCoeff_;
+    std::array<Scalar, numFluidComps> moleOrMassFraction_;
 };
 
 } // end namespace Dumux
