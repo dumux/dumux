@@ -41,7 +41,7 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag>
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using ParentType = OneModelProblem<TypeTag>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Grid = typename GridView::Grid;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 

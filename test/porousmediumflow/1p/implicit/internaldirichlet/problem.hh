@@ -55,7 +55,7 @@ template<class TypeTag>
 class OnePTestProblemInternalDirichlet : public OnePTestProblem<TypeTag>
 {
     using ParentType = OnePTestProblem<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;

@@ -62,7 +62,7 @@ class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;

@@ -118,7 +118,7 @@ int main(int argc, char** argv) try
                     SolutionVector,
                     GetPropType<TypeTag, Properties::ModelTraits>,
                     GetPropType<TypeTag, Properties::LocalResidual>> flux(*gridVariables, x);
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 

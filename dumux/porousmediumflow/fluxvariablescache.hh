@@ -95,7 +95,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 , public DiffusionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableMolecularDiffusion()>
 , public EnergyCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>
 {
-    using GridIndexType = typename GetPropType<TypeTag, Properties::GridView>::IndexSet::IndexType;
+    using GridIndexType = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::IndexSet::IndexType;
 
     using MpfaHelper = typename GetPropType<TypeTag, Properties::GridGeometry>::MpfaHelper;
     static constexpr bool considerSecondary = MpfaHelper::considerSecondaryIVs();

@@ -80,7 +80,7 @@ template<class TypeTag> class FV2dPressure2P2CAdaptive
     using Implementation = GetPropType<TypeTag, Properties::PressureModel>;
     using BaseType = FVPressure<TypeTag>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 

@@ -28,6 +28,8 @@
 #ifndef DUMUX_STAGGERD_FREE_FLOW_PROPERTIES_HH
 #define DUMUX_STAGGERD_FREE_FLOW_PROPERTIES_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/intersectionmapper.hh>
 #include <dumux/common/defaultmappertraits.hh>
@@ -68,7 +70,7 @@ template<class TypeTag>
 struct NumEqCellCenter<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     static constexpr auto dim = GridView::dimension;
     static constexpr auto numEq = ModelTraits::numEq();
@@ -83,7 +85,9 @@ struct GridGeometry<TypeTag, TTag::StaggeredFreeFlowModel>
 private:
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    DUNE_NO_DEPRECATED_BEGIN
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    DUNE_NO_DEPRECATED_END
     using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView, upwindSchemeOrder>;
 public:
     using type = StaggeredFVGridGeometry<GridView, enableCache, Traits>;
@@ -95,7 +99,7 @@ struct FaceVariables<TypeTag, TTag::StaggeredFreeFlowModel>
 {
 private:
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
 public:
     using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension, upwindSchemeOrder>;

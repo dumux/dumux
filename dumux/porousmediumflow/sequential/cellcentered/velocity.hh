@@ -46,7 +46,7 @@ namespace Dumux
  */
 template<class TypeTag, class Velocity> class FVVelocity
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using CellData = GetPropType<TypeTag, Properties::CellData>;

@@ -48,7 +48,7 @@ template<class TypeTag>
 class VariableClass
 {
 private:
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using CellData = GetPropType<TypeTag, Properties::CellData>;
 

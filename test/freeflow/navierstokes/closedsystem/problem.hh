@@ -92,7 +92,7 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

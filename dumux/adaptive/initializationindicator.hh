@@ -45,7 +45,7 @@ class GridAdaptInitializationIndicator
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;

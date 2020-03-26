@@ -55,7 +55,7 @@ namespace Dumux {
 template<class TypeTag>
 class FV2dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 

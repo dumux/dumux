@@ -25,6 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/properties.hh>
@@ -61,7 +62,9 @@ template<class TypeTag>
 struct DualGridNodalIndexSet<TypeTag, TTag::CCMpfaModel>
 {
 private:
+    DUNE_NO_DEPRECATED_BEGIN
     using GV = GetPropType<TypeTag, Properties::GridView>;
+    DUNE_NO_DEPRECATED_END
     using Traits = NodalIndexSetDefaultTraits< GV >;
 
 public:
@@ -101,7 +104,9 @@ template<class TypeTag>
 struct GridGeometry<TypeTag, TTag::CCMpfaModel>
 {
 private:
+    DUNE_NO_DEPRECATED_BEGIN
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    DUNE_NO_DEPRECATED_END
     using PrimaryIV = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
     using SecondaryIV = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
     using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;

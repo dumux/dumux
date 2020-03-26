@@ -63,7 +63,7 @@ class CellData2P<TypeTag, false>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using FluxData = FluxData2P<TypeTag>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
@@ -405,7 +405,7 @@ class CellData2P<TypeTag, true>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using FluxData = FluxData2P<TypeTag>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 

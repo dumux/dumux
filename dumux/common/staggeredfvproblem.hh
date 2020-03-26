@@ -45,7 +45,7 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;

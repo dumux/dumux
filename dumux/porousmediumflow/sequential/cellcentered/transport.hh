@@ -52,7 +52,7 @@ class FVTransport
 {
     using Implementation = GetPropType<TypeTag, Properties::TransportModel>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum
         {

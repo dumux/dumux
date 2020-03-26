@@ -46,7 +46,7 @@ class FVLocalResidual
     using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;

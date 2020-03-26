@@ -98,7 +98,7 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using DimVector = GlobalPosition;

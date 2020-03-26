@@ -42,7 +42,7 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
 {
     using ParentType = FVLocalResidual<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
+    using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;

@@ -39,7 +39,7 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum {
         dim = GridView::dimension,

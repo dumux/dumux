@@ -117,7 +117,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;

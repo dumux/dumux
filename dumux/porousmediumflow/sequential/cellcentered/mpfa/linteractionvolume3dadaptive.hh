@@ -194,7 +194,7 @@ private:
     using ParentType = FvMpfaL3dInteractionVolume<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Grid = GetPropType<TypeTag, Properties::Grid>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     enum

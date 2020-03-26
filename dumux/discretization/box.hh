@@ -25,6 +25,7 @@
 #ifndef DUMUX_DISCRETIZTAION_BOX_HH
 #define DUMUX_DISCRETIZTAION_BOX_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
@@ -57,7 +58,9 @@ struct GridGeometry<TypeTag, TTag::BoxModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    DUNE_NO_DEPRECATED_BEGIN
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    DUNE_NO_DEPRECATED_END
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache>;

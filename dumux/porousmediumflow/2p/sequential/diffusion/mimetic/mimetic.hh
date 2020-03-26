@@ -51,7 +51,7 @@ namespace Dumux {
 template<class TypeTag>
 class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 

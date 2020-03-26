@@ -114,7 +114,7 @@ class EnergyLocalResidualImplementation<TypeTag, true>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

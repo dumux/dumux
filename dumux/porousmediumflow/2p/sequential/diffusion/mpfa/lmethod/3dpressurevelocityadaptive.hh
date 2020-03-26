@@ -47,7 +47,7 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2pAdaptive: public FvMpfa
     using ParentType = FvMpfaL3dPressure2pAdaptive<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum
     {

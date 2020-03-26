@@ -49,7 +49,7 @@ private:
     using ParentType = VariableClass<TypeTag>;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using CellData = GetPropType<TypeTag, Properties::CellData>;
     using AdaptedValues = typename CellData::AdaptedValues;
 

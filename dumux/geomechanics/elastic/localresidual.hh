@@ -41,7 +41,7 @@ class ElasticLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalRe
 {
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;

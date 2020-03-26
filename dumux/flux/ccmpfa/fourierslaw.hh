@@ -45,7 +45,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static constexpr int dim = GridView::dimension;

@@ -53,7 +53,7 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
 {
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -191,7 +191,7 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
 {
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

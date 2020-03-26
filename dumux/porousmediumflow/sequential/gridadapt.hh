@@ -47,7 +47,7 @@ class GridAdapt
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     using Grid = typename GridView::Grid;
     using LeafGridView = typename Grid::LeafGridView;

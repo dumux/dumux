@@ -47,7 +47,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
 {
     friend class FvMpfaL3dInteractionVolumeContainer<TypeTag>;
     using ParentType = FvMpfaL3dInteractionVolumeContainer<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum
         {

@@ -38,7 +38,7 @@ template<class TypeTag>
 class ConvectivePart
 {
 private:
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
       using Problem = GetPropType<TypeTag, Properties::Problem>;
 

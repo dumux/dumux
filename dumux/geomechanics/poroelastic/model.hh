@@ -82,7 +82,8 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::PoroElastic>
 {
 private:
-    static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    static constexpr int dim = GridView::dimension;
     static constexpr int numSC = GetPropType<TypeTag, Properties::SolidSystem>::numComponents;
     static constexpr int numFP = GetPropType<TypeTag, Properties::FluidSystem>::numPhases;
     static constexpr int numFC = GetPropType<TypeTag, Properties::FluidSystem>::numComponents;
@@ -96,7 +97,8 @@ template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::PoroElastic>
 {
 private:
-    static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    static constexpr int dim = GridView::dimension;
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using DV = Dune::FieldVector<typename PV::value_type, dim>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;

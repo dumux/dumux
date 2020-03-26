@@ -118,7 +118,7 @@ template<class TypeTag = Properties::TTag::Adaptive2p2c2d>
 class Adaptive2p2c2d: public IMPETProblem2P2C<TypeTag>
 {
 using ParentType = IMPETProblem2P2C<TypeTag>;
-using GridView = GetPropType<TypeTag, Properties::GridView>;
+using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 using Grid = GetPropType<TypeTag, Properties::Grid>;
 using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 

@@ -46,7 +46,7 @@ template<class TypeTag>
 class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>
 {
     using ParentType = FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum
     {

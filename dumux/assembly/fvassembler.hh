@@ -50,7 +50,7 @@ namespace Dumux {
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;

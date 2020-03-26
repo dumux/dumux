@@ -254,7 +254,7 @@ namespace Dumux {
  */
 template<class TypeTag>
 using AMGBackend [[deprecated("Use AMGBiCGSTABBackend instead. Will be removed after 3.2!")]]
-= ParallelAMGBackend<GetPropType<TypeTag, Properties::GridView>,
+= ParallelAMGBackend<typename GetPropType<TypeTag, Properties::GridGeometry>::GridView,
                      LinearSolverTraits<GetPropType<TypeTag, Properties::GridGeometry>>>;
 
 } // namespace Dumux
