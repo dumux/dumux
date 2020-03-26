@@ -152,9 +152,9 @@ class EnergyVolumeVariablesImplementation<Traits, Impl, true>
     static const int temperatureIdx = Idx::temperatureIdx;
     static const int numEnergyEqFluid = Traits::ModelTraits::numEnergyEqFluid();
     static const int numEnergyEqSolid = Traits::ModelTraits::numEnergyEqSolid();
-    static const int numEnergyEq = numEnergyEqFluid + numEnergyEqSolid;
+    static const int numEnergyEq = Traits::ModelTraits::numEnergyEq();
     static const bool equilibrium = (numEnergyEq == 1);
-    static const bool fluidEquilibrium = (numEnergyEqFluid <= 0);
+    static const bool fluidEquilibrium = (numEnergyEq == 2);
 
 public:
     // export the fluidstate

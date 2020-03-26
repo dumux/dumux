@@ -276,6 +276,8 @@ template<class TypeTag, class MyTypeTag>
 struct NumEnergyEqFluid { using type = UndefinedProperty; };
 template<class TypeTag, class MyTypeTag>
 struct NumEnergyEqSolid { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct NumEnergyEq { using type = UndefinedProperty; };
 
 template<class TypeTag, class MyTypeTag>
 struct NusseltFormulation { using type = UndefinedProperty; };

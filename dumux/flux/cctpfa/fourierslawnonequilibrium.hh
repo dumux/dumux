@@ -59,9 +59,9 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cct
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    static constexpr auto numEnergyEqSolid = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
-    static constexpr auto numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
-    static constexpr auto numEnergyEq = numEnergyEqSolid + numEnergyEqFluid;
+    static constexpr int numEnergyEqSolid = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
+    static constexpr int numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr int numEnergyEq = getPropValue<TypeTag, Properties::NumEnergyEq>();
     static constexpr auto sPhaseIdx = ModelTraits::numFluidPhases();
 
 public:

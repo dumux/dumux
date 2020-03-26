@@ -59,14 +59,14 @@ struct NonEquilibriumModelTraits : public ET
     static constexpr int numEq() { return numEnergyEqFluid()+numEnergyEqSolid()+numTransportEq()+ET::numConstraintEq(); }
     static constexpr int numTransportEq() { return chem ? ET::numFluidPhases()*ET::numFluidComponents() : ET::numFluidComponents(); }
 
-    static constexpr int numEnergyEqFluid() { return therm ? numEF : 0; }
-    static constexpr int numEnergyEqSolid() { return therm ? numES : 0; }
-    static constexpr int numEnergyEq() { return numEnergyEqFluid()+numEnergyEqSolid(); }
-    static constexpr int numSolidComps() {return ET::SolidSystem::numComponents(); }
-
     static constexpr bool enableEnergyBalance() { return ET::enableEnergyBalance() || therm; }
     static constexpr bool enableThermalNonEquilibrium() { return therm; }
     static constexpr bool enableChemicalNonEquilibrium() { return chem; }
+
+    static constexpr int numEnergyEqFluid() { return therm ? numEF : 0; }
+    static constexpr int numEnergyEqSolid() { return therm ? numES : 0; }
+    static constexpr int numEnergyEq() { return enableEnergyBalance() ? (therm ? numEnergyEqFluid() + numEnergyEqSolid() : 1) : 0; }
+    static constexpr int numSolidComps() {return ET::SolidSystem::numComponents(); }
 
     static constexpr NusseltFormulation nusseltFormulation() { return nf; }
     static constexpr SherwoodFormulation sherwoodFormulation() { return sf; }
