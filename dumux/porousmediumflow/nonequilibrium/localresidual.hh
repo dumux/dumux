@@ -26,6 +26,7 @@
 #ifndef DUMUX_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 #define DUMUX_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 
+#include <cmath>
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/nonequilibrium/thermal/localresidual.hh>
 
@@ -40,101 +41,35 @@ using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<Ty
 
 /*!
  * \ingroup NonEquilibriumModel
- * \brief The mass conservation part of the nonequilibrium model for a model without chemical non-equilibrium
+ * \brief The local residual for a model without chemical non-equilibrium
+ *        but potentially with thermal non-equilibrium
  */
 template<class TypeTag>
 class NonEquilibriumLocalResidualImplementation<TypeTag, false>: public GetPropType<TypeTag, Properties::EquilibriumLocalResidual>
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ParentType = GetPropType<TypeTag, Properties::EquilibriumLocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using Indices = typename ModelTraits::Indices;
 
-    static constexpr int numPhases = ModelTraits::numFluidPhases();
-    static constexpr int numComponents = ModelTraits::numFluidComponents();
-    enum { conti0EqIdx = Indices::conti0EqIdx };
 public:
     using ParentType::ParentType;
 
     /*!
      * \brief Calculates the source term of the equation.
      *
-     * \param problem The object specifying the problem which ought to be simulated
+     * \param problem The source term
      * \param element An element which contains part of the control volume
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars The volume variables of the current element
-     * \param scvf The sub control volume face to compute the flux on
-     * \param elemFluxVarsCache The cache related to flux compuation
-     *
-     * \note This is the default implementation for all models as sources are computed
-     *       in the user interface of the problem
-     *
+     * \param scv The sub-control volume over which we integrate the source term
      */
-
-    NumEqVector computeFlux(const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolumeFace& scvf,
-                            const ElementFluxVariablesCache& elemFluxVarsCache) const
-    {
-        FluxVariables fluxVars;
-        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        // get upwind weights into local scope
-        NumEqVector flux(0.0);
-
-        const auto moleDensity = [](const auto& volVars, const int phaseIdx)
-        { return volVars.molarDensity(phaseIdx); };
-
-        const auto moleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
-        { return  volVars.moleFraction(phaseIdx, compIdx); };
-
-        // advective fluxes
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                // get equation index
-                const auto eqIdx = conti0EqIdx + compIdx;
-
-                // the physical quantities for which we perform upwinding
-                const auto upwindTerm = [&moleDensity, &moleFraction, phaseIdx, compIdx] (const auto& volVars)
-                { return moleDensity(volVars, phaseIdx)*moleFraction(volVars, phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
-
-                    flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-
-                // diffusive fluxes (only for the component balances)
-                //check for the reference system and adapt units of the diffusive flux accordingly.
-                if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
-                    flux[eqIdx] += diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx);
-                else
-                    flux[eqIdx] += diffusiveFluxes[compIdx];
-            }
-
-            //! Add advective and diffusive phase energy fluxes
-            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
-        }
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
-
-        return flux;
-
-
-    }
-
     NumEqVector computeSource(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
@@ -148,26 +83,31 @@ public:
 
         // add contribution from possible point sources
         source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
+
         // Call the (kinetic) Energy module, for the source term.
         // it has to be called from here, because the mass transfered has to be known.
-        EnergyLocalResidual::computeSourceEnergy(source,
-                                                 element,
-                                                 fvGeometry,
-                                                 elemVolVars,
-                                                 scv);
+        if constexpr(ModelTraits::enableThermalNonEquilibrium())
+        {
+            EnergyLocalResidual::computeSourceEnergy(source,
+                                                     element,
+                                                     fvGeometry,
+                                                     elemVolVars,
+                                                     scv);
+        }
+
         return source;
     }
 
 };
 
 /*!
- * \brief The mass conservation part of the nonequilibrium model for a model assuming chemical non-equilibrium and two phases but assuming thermal equilibrium
+ * \brief The local residual for a model assuming chemical non-equilibrium
+ *        and potentially thermal non-equilibrium
  */
 template<class TypeTag>
 class NonEquilibriumLocalResidualImplementation<TypeTag, true>: public GetPropType<TypeTag, Properties::EquilibriumLocalResidual>
 {
     using ParentType = GetPropType<TypeTag, Properties::EquilibriumLocalResidual>;
-    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -182,24 +122,23 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true>: public GetPropTy
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using MolecularDiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
     static constexpr int numPhases = ModelTraits::numFluidPhases();
     static constexpr int numComponents = ModelTraits::numFluidComponents();
-    static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
     static constexpr auto conti0EqIdx = Indices::conti0EqIdx;
-    static constexpr auto comp1Idx = FluidSystem::comp1Idx;
     static constexpr auto comp0Idx = FluidSystem::comp0Idx;
     static constexpr auto phase0Idx = FluidSystem::phase0Idx;
     static constexpr auto phase1Idx = FluidSystem::phase1Idx;
 
+    static_assert(numPhases > 1,
+                  "chemical non-equlibrium only makes sense for multiple phases");
     static_assert(numPhases == numComponents,
                   "currently chemical non-equilibrium is only available when numPhases equals numComponents");
-    static_assert(useMoles == true,
+    static_assert(ModelTraits::useMoles(),
                   "chemical nonequilibrium can only be calculated based on mole fractions not mass fractions");
 
 public:
@@ -255,7 +194,6 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        // get upwind weights into local scope
         NumEqVector flux(0.0);
 
         // advective fluxes
@@ -343,7 +281,7 @@ public:
                     const Scalar compFluxIntoOtherPhase = factorMassTransfer * (xEquil-xNonEquil)/characteristicLength * awn * volVars.molarDensity(phaseIdx) * diffCoeff * sherwoodNumber;
 
                     componentIntoPhaseMassTransfer[phaseIdx][compIdx] += compFluxIntoOtherPhase;
-                    componentIntoPhaseMassTransfer[compIdx][compIdx] += -compFluxIntoOtherPhase;
+                    componentIntoPhaseMassTransfer[compIdx][compIdx] -= compFluxIntoOtherPhase;
                 }
             }
         }
@@ -363,7 +301,7 @@ public:
             }
         }
 
-        if (ModelTraits::enableThermalNonEquilibrium())
+        if constexpr (ModelTraits::enableThermalNonEquilibrium())
         {
             // Call the (kinetic) Energy module, for the source term.
             // it has to be called from here, because the mass transfered has to be known.
