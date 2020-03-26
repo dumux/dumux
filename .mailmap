@@ -1,3 +1,16 @@
+# This file maps users that have used several mail adresses and user names
+# throughout their contribution history to a unique name-email pair.
+#
+# In each line, the second argument (email or name-email pair) is mapped to the
+# first argument (name-email pair). For example, to unify contributions by the
+# user "Albert Einstein", who commited with the following name-email pairs:
+#
+# Albert Einstein <albert.einstein@genius.com>
+# Albert <albert@smartguys.de>
+#
+# you would have to write:
+# Albert Einstein <albert.einstein@genius.com> Albert <albert@smartguys.de>
+
 Ahmad Bilal <ahmadbilal@outlook.de> Bilal <ahmadbilal@outlook.de>
 
 Andrea Vescovini <vescovini.andrea@gmail.com> <andrea.vescovini@mail.polimi.it>
