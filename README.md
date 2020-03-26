@@ -8,8 +8,9 @@ processes in porous media. DuMuX is based on the [DUNE][1]
 framework and aims to provide a multitude of numerical models as well
 as flexible discretization methods for complex non-linear phenomena,
 such as CO2 sequestration, soil remediation, drug delivery in cancer
-therapy and more. See [our publication][2] for a more detailed
-description of the goals and motivations behind DuMuX.
+therapy and more. Have a look at our publications
+(see below: [How to cite](#how-to-cite))
+for a more detailed description of the goals and motivations behind DuMuX.
 
 
 Installation
@@ -48,6 +49,35 @@ this is unacceptable to you, please [contact us][6] for a commercial
 license.
 
 See the file [LICENSE.md](LICENSE.md) for full copying permissions.
+
+How to cite
+============
+
+DuMux is research software and developed at research institutions.
+If you are using DuMux in scientific publications and in
+the academic context, please cite (at least one)
+of our publications:
+
+* [Koch, T., Gläser, D., Weishaupt, K., Ackermann, S., Beck, M., Becker, B.,
+  Burbulla, S., Class, H., Coltman, E., Emmert, S., Fetzer, T., Grüninger, C.,
+  Heck, K., Hommel, J., Kurz, T., Lipp, M., Mohammadi, F., Scherrer, S.,
+  Schneider, M., Seitz, G., Stadler, L., Utz, M., Weinhardt, F.
+  & Flemisch, B. (_2020_). __DuMux 3 – an open-source simulator for solving flow
+  and transport problems in porous media with a focus on model coupling.__
+  _Computers & Mathematics with Applications_,
+  https://doi.org/10.1016/j.camwa.2020.02.012][7]
+
+* [Flemisch, B., Darcis, M., Erbertseder, K., Faigle, B., Lauser, A.,
+  Mosthaf, K., Müthing, S., Nuske, P., Tatomir, A., Wolff, M.,
+  & Helmig, R. (_2011_). __DuMux: DUNE for multi-{phase,component,scale,physics,…}
+  flow and transport in porous media__.
+  _Advances in Water Resources_, 34(9), 1102–1112.
+  https://doi.org/10.1016/j.advwatres.2011.03.007][2]
+
+You can also cite specific releases published on Zenodo:
+[![zenodo badge](https://zenodo.org/badge/DOI/10.5281/zenodo.2479594.svg)](https://doi.org/10.5281/zenodo.2479594)
+
+
 
 Automated Testing
 ==================
@@ -108,3 +138,4 @@ on how to update an application to the new version.
 [4]: https://dumux.org/documents/dumux-handbook-master.pdf
 [5]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [6]: https://www.iws.uni-stuttgart.de/en/lh2/
+[7]: https://doi.org/10.1016/j.camwa.2020.02.012
