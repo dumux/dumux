@@ -82,7 +82,7 @@ Major version update, 2.12 to 3.0
 With the version update to version 3, many features have been added and a lot has been improved in DuMuX. See the
 [changelog](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CHANGELOG.md) for a list of changes.
 If you decide to update from version 2.12, please have a look at our small
-[guide](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/wikis/Updating-programs-from-version-2.12-to-version-3.0)
+[guide](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/wikis/Hints/Upgrade-to-Dumux-3)
 on how to update an application to the new version.
 
 [0]: https://dumux.org
@@ -91,4 +91,4 @@ on how to update an application to the new version.
 [3]: https://dumux.org/installation
 [4]: https://dumux.org/documents/dumux-handbook-master.pdf
 [5]: https://www.gnu.org/licenses/gpl-3.0.en.html
-[6]: http://www.hydrosys.uni-stuttgart.de/index.en.php
+[6]: https://www.iws.uni-stuttgart.de/en/lh2/
