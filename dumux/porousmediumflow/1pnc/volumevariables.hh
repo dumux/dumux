@@ -52,8 +52,10 @@ class OnePNCVolumeVariables
     using EnergyVolVars = EnergyVolumeVariables<Traits, OnePNCVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
     using Idx = typename Traits::ModelTraits::Indices;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
+    using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
     enum
     {
@@ -99,6 +101,7 @@ public:
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -107,18 +110,22 @@ public:
 
         paramCache.updatePhase(fluidState_, 0);
 
-        for (unsigned int compIIdx = 0; compIIdx < numFluidComps; ++compIIdx)
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
-            {
-                if(compIIdx != compJIdx)
-                    diffCoeff_[compIIdx][compJIdx] = FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                paramCache,
-                                                                                0,
-                                                                                compIIdx,
-                                                                                compJIdx);
-            }
-        }
+            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                            paramCache,
+                                                            0,
+                                                            compIIdx,
+                                                            compJIdx);
+        };
+
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+        };
+
+        diffCoeff_.update(getDiffusionCoefficient);
+        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
     }
 
     /*!
@@ -322,13 +329,23 @@ public:
     { return solidState_.porosity(); }
 
     /*!
-     * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
+    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    {
-        assert(compIdx < numFluidComps);
-        return diffCoeff_[phaseIdx][compIdx];
-    }
+    { return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx); }
+
+    /*!
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     /*!
      * \brief Returns the molarity of a component in the phase.
@@ -364,7 +381,12 @@ protected:
 
 private:
     PermeabilityType permeability_;
-    std::array<std::array<Scalar, numFluidComps>, numFluidComps> diffCoeff_;
+
+    // Binary diffusion coefficient
+    DiffusionCoefficients diffCoeff_;
+
+    // Effective diffusion coefficients for the phases
+    DiffusionCoefficients effectiveDiffCoeff_;
 };
 
 } // end namespace Dumux

@@ -233,20 +233,6 @@ public:
                                          GridVariables& gridVariables)
     { BulkFacetManager::evalAdditionalDomainDerivatives(facetId, facetLocalAssembler, origResiduals, A, gridVariables); }
 
-    // Overload required for compatibility with mpfa
-    template<class GetTensor, bool mpfa = usesMpfa(bulkId), std::enable_if_t<mpfa, int> = 0>
-    auto getLowDimTensor(const Element<bulkId>& element,
-                         const SubControlVolumeFace<bulkId>& scvf,
-                         const GetTensor& getT) const
-    { return BulkFacetManager::getLowDimTensor(element, scvf, getT); }
-
-    // Overload required for compatibility with mpfa
-    template<class GetTensor, bool mpfa = usesMpfa(facetId), std::enable_if_t<mpfa, int> = 0>
-    auto getLowDimTensor(const Element<facetId>& element,
-                         const SubControlVolumeFace<facetId>& scvf,
-                         const GetTensor& getT) const
-    { return FacetEdgeManager::getLowDimTensor(element, scvf, getT); }
-
     /*!
      * \brief The coupling stencil of the bulk with the edge domain (empty stencil).
      */

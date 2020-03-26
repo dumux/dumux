@@ -94,7 +94,7 @@ struct OnePNCMinNI { using InheritsFrom = std::tuple<OnePNCMin>; };
 } // end namespace TTag
 
 //////////////////////////////////////////////////////////////////
-// Property tags for the isothermal 2pncmin model
+// Property tags for the isothermal 1pncmin model
 //////////////////////////////////////////////////////////////////
 
 //! use the mineralization volume variables together with the 1pnc vol vars
@@ -109,16 +109,24 @@ private:
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
-
     static_assert(FSY::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
     static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 
-    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
-    using NonMinVolVars = OnePNCVolumeVariables<Traits>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    template<class BaseTraits, class DT, class EDM>
+    struct NCTraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+    };
+
+    using NonMinVolVars = OnePNCVolumeVariables<NCTraits<BaseTraits, DT, EDM>>;
 public:
-    using type = MineralizationVolumeVariables<Traits, NonMinVolVars>;
+    using type = MineralizationVolumeVariables<NCTraits<BaseTraits, DT, EDM>, NonMinVolVars>;
 };
 
 // Use the mineralization local residual
@@ -152,7 +160,7 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::OnePNCMin> { using type = MineralizationIOFields<OnePNCIOFields>; };
 
 //////////////////////////////////////////////////////////////////
-// Properties for the non-isothermal 2pncmin model
+// Properties for the non-isothermal 1pncmin model
 //////////////////////////////////////////////////////////////////
 
 //! Non-isothermal vtk output
@@ -175,6 +183,38 @@ public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
+//! use the mineralization volume variables together with the 1pnc vol vars
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OnePNCMinNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    static_assert(FSY::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid system");
+    static_assert(FST::numComponents == MT::numFluidComponents(), "Number of components mismatch between model and fluid state");
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+    template<class BaseTraits, class DT, class EDM, class ETCM>
+    struct NCNITraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+        using EffectiveThermalConductivityModel = ETCM;
+    };
+    using NonMinVolVars = OnePNCVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>>;
+public:
+    using type = MineralizationVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>, NonMinVolVars>;
+};
 //! Use the average for effective conductivities
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::OnePNCMinNI>

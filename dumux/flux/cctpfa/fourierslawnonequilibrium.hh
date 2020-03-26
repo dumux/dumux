@@ -57,10 +57,11 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cct
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
+    static constexpr auto numEnergyEqSolid = getPropValue<TypeTag, Properties::NumEnergyEqSolid>();
     static constexpr auto numEnergyEqFluid = getPropValue<TypeTag, Properties::NumEnergyEqFluid>();
+    static constexpr auto numEnergyEq = numEnergyEqSolid + numEnergyEqFluid;
     static constexpr auto sPhaseIdx = ModelTraits::numFluidPhases();
 
 public:
@@ -104,67 +105,33 @@ public:
                                             const SubControlVolumeFace& scvf,
                                             const int phaseIdx)
     {
-        Scalar tij;
-
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        Scalar insideLambda = 0.0;
-        Scalar outsideLambda = 0.0;
+        const auto computeLambda = [&](const auto& v){
+            if constexpr (numEnergyEq == 1)
+                return v.effectiveThermalConductivity();
+            else if constexpr (numEnergyEqFluid == 1)
+                return (phaseIdx != sPhaseIdx)
+                        ? v.effectiveFluidThermalConductivity()
+                        : v.effectiveSolidThermalConductivity();
+            else
+                return v.effectivePhaseThermalConductivity(phaseIdx);
+        };
 
-        // effective diffusion tensors
-        if (phaseIdx != sPhaseIdx)
-        {
-            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-           if (numEnergyEqFluid < ModelTraits::numFluidPhases())
-            {
-                insideLambda += Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                                  insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-            }
-            else //numEnergyEqFluid >1
-            {
-                insideLambda += insideVolVars.fluidThermalConductivity(phaseIdx)*insideVolVars.saturation(phaseIdx)*insideVolVars.porosity();
-            }
-        }
-        //solid phase
-        else
-        {
-            insideLambda += insideVolVars.solidThermalConductivity()*(1.0-insideVolVars.porosity());
-        }
-
+        const auto insideLambda = computeLambda(insideVolVars);
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-        {
-            tij = scvf.area()*ti;
-        }
-        // otherwise we compute a tpfa harmonic mean
-        else
+            return scvf.area()*ti;
+        else // otherwise we compute a tpfa harmonic mean
         {
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const auto outsideLambda = computeLambda(outsideVolVars);
 
-       // effective diffusion tensors
-        if (phaseIdx != sPhaseIdx)
-        {
-            //when number of energyEq for the fluid are smaller than numPhases that means that we need an effecitve law
-           if (numEnergyEqFluid < ModelTraits::numFluidPhases())
-            {
-                outsideLambda += Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                                   outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
-            }
-            else
-            {
-                outsideLambda += outsideVolVars.fluidThermalConductivity(phaseIdx)*outsideVolVars.saturation(phaseIdx)*outsideVolVars.porosity();
-            }
-        }
-        //solid phase
-        else
-        {
-            outsideLambda +=outsideVolVars.solidThermalConductivity()*(1.0-outsideVolVars.porosity());
-        }
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
@@ -174,11 +141,10 @@ public:
 
             // check for division by zero!
             if (ti*tj <= 0.0)
-                tij = 0;
+                return 0.0;
             else
-                tij = scvf.area()*(ti * tj)/(ti + tj);
+                return scvf.area()*(ti * tj)/(ti + tj);
         }
-        return tij;
     }
 };
 

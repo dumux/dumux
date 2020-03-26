@@ -108,10 +108,6 @@ public:
     static constexpr bool isTracerFluidSystem()
     { return true; }
 
-    // and that no component is the main component
-    static constexpr int getMainComponent(int phaseIdx)
-    { return -1; }
-
     // We define the number of components of this fluid system (one single tracer component)
     static constexpr int numComponents = 1;
 

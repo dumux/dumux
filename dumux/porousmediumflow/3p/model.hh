@@ -214,6 +214,27 @@ public:
    using type = PorousMediumFlowNIModelTraits<ThreePModelTraits>;
 };
 
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::ThreePNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using BaseTraits = ThreePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    template<class BaseTraits, class ETCM>
+    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+public:
+    using type = ThreePVolumeVariables<NITraits<BaseTraits, ETCM>>;
+};
+
 } // end namespace Properties
 } // end namespace Dumux
 

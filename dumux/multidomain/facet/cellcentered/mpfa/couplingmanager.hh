@@ -130,34 +130,6 @@ public:
                               const SubControlVolumeFace<bulkId>& scvf) const
     { return bulkScvfIsOnFacetElement_[scvf.index()]; }
 
-    /*!
-     * \brief returns the tensor within the low dim element coinciding with
-     *        the given bulk scvf according to the provided lambda to obtain
-     *        the tensor.
-     *
-     * \tparam TensorFunc lambda to obtain a tensorial or scalar spatial parameter.
-     */
-    template<class TensorFunc>
-    auto getLowDimTensor(const Element<bulkId>& element,
-                         const SubControlVolumeFace<bulkId>& scvf,
-                         const TensorFunc& getT) const
-    {
-        const auto lowDimElemIdx = this->getLowDimElementIndex(element, scvf);
-
-        const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
-        const auto& s = map.find(this->bulkCouplingContext().elementIdx)->second.couplingElementStencil;
-        const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
-        assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
-
-        const auto& lowDimProblem = this->problem(lowDimId);
-        const auto& lowDimElement = lowDimProblem.gridGeometry().element(lowDimElemIdx);
-        const auto& lowDimVolVars = this->bulkCouplingContext().lowDimVolVars[idxInContext];
-        const auto& lowDimFvGeometry = this->bulkCouplingContext().lowDimFvGeometries[idxInContext];
-
-        // we assume constant parameters on the element and use the first scv within the low dim element.
-        return getT(lowDimProblem, lowDimElement, lowDimVolVars, lowDimFvGeometry, *scvs(lowDimFvGeometry).begin());
-    }
-
     using ParentType::evalCouplingResidual;
     /*!
      * \brief Evaluates the coupling element residual of a lower-dimensional domain element

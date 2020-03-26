@@ -49,29 +49,6 @@
  *
  */
 namespace Dumux {
-
-/*!
- * \ingroup CO2Model
- * \brief Traits class for the two-phase two-component CO2 model.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam PT The type used for permeabilities
- * \tparam MT The model traits
- */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
-struct TwoPTwoCCO2VolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using FluidSystem = FSY;
-    using FluidState = FST;
-    using SolidSystem = SSY;
-    using SolidState = SST;
-    using PermeabilityType = PT;
-    using ModelTraits = MT;
-};
-
 namespace Properties {
 
 // Create new type tags
@@ -90,12 +67,25 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+    using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 
-    using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    template<class BaseTraits, class DT, class EDM>
+    struct NCTraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+    };
+
 public:
-    using type = TwoPTwoCCO2VolumeVariables< Traits >;
+    using type = TwoPTwoCCO2VolumeVariables<NCTraits<BaseTraits, DT, EDM>>;
 };
 
 template<class TypeTag>
@@ -107,12 +97,27 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+    using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 
-    using Traits = TwoPTwoCCO2VolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+    template<class BaseTraits, class DT, class EDM, class ETCM>
+    struct NCNITraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+        using EffectiveThermalConductivityModel = ETCM;
+    };
+
 public:
-    using type = TwoPTwoCCO2VolumeVariables< Traits >;
+    using type = TwoPTwoCCO2VolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>>;
 };
 
 } // end namespace Properties

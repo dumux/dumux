@@ -113,7 +113,7 @@ struct TwoPModelTraits
  * \tparam SR The class used for reconstruction of
  *            non-wetting phase saturations in scvs
  */
-template<class PV, class FSY, class FST,class SSY, class SST, class PT, class MT, class SR>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class SR>
 struct TwoPVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -209,6 +209,33 @@ public:
 //! The non-isothermal model traits class
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::TwoPNI> { using type = PorousMediumFlowNIModelTraits<GetPropType<TypeTag, Properties::BaseModelTraits>>; };
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+    using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
+
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    template<class BaseTraits, class ETCM>
+    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+
+public:
+    using type = TwoPVolumeVariables<NITraits<BaseTraits, ETCM>>;
+};
 
 //! Set the vtk output fields specific to the non-isothermal twop model
 template<class TypeTag>

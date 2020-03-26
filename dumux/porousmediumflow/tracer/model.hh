@@ -94,7 +94,7 @@ struct TracerModelTraits
  * \tparam FSY The fluid system type
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class SSY, class SST, class MT>
+template<class PV, class FSY, class SSY, class SST, class MT, class DT, class EDM>
 struct TracerVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -102,6 +102,8 @@ struct TracerVolumeVariablesTraits
     using SolidSystem = SSY;
     using SolidState = SST;
     using ModelTraits = MT;
+    using DiffusionType = DT;
+    using EffectiveDiffusivityModel = EDM;
 };
 
 // \{
@@ -153,8 +155,10 @@ private:
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
-    using Traits = TracerVolumeVariablesTraits<PV, FSY, SSY, SST, MT>;
+    using Traits = TracerVolumeVariablesTraits<PV, FSY, SSY, SST, MT, DT, EDM>;
 public:
     using type = TracerVolumeVariables<Traits>;
 };

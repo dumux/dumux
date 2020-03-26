@@ -1,5 +1,3 @@
-This tutorial was copied from dumux/test/porousmediumflow/tracer/1ptracer.
-
 # One-phase flow with random permeability distribution and a tracer model
 
 ## Problem set-up

@@ -34,7 +34,9 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
+#include <dumux/flux/fickiandiffusioncoefficients.hh>
 #include <dumux/flux/referencesystemformulation.hh>
+
 
 namespace Dumux {
 
@@ -53,14 +55,16 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, reference
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     static constexpr int numComponents = ModelTraits::numFluidComponents();
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+
     using NumEqVector = Dune::FieldVector<Scalar, numComponents>;
 
     static_assert(ModelTraits::numFluidPhases() == 1, "Only one phase supported!");
@@ -76,7 +80,9 @@ public:
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
-    template<class Problem>
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
+
+    template<class Problem, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
@@ -107,8 +113,7 @@ public:
 
             const Scalar massOrMoleFractionInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
             const Scalar massOrMoleFractionOutside =  massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
-
-            const Scalar insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx) * insideVolVars.extrusionFactor();
+            const Scalar insideD = getEffectiveDiffusionCoefficient_(insideVolVars, phaseIdx, compIdx) * insideVolVars.extrusionFactor();
 
             if (scvf.boundary())
             {
@@ -118,7 +123,8 @@ public:
             else
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const Scalar outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx) * outsideVolVars.extrusionFactor();
+                const Scalar outsideD = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx)
+                                      * outsideVolVars.extrusionFactor();
                 const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
                 const Scalar outsideDensity = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
 
@@ -137,6 +143,19 @@ public:
         flux *= scvf.area();
 
         return flux;
+    }
+
+private:
+    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
+    {
+        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
+            return volVars.effectiveDiffusionCoefficient(phaseIdx,
+                    VolumeVariables::FluidSystem::getMainComponent(phaseIdx), compIdx);
+        else
+        {
+            // TODO: remove this else clause after release 3.2!
+            return volVars.effectiveDiffusivity(phaseIdx, compIdx);
+        }
     }
 };
 } // end namespace

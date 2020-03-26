@@ -29,6 +29,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
@@ -83,6 +84,9 @@ class ThreePThreeCVolumeVariables
         gPhaseOnly  = Idx::gPhaseOnly,
         wgPhaseOnly = Idx::wgPhaseOnly
     };
+
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
+    using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
 public:
     //! export fluid state type
@@ -557,18 +561,25 @@ public:
          *       We can then add a normalized tensorial component
          *       e.g. obtained from DTI from the spatial params (currently not implemented)
          */
-        setDiffusionCoefficient_(gPhaseIdx, wCompIdx, FluidSystem::diffusionCoefficient(fluidState_, paramCache, gPhaseIdx, wCompIdx));
-        setDiffusionCoefficient_(gPhaseIdx, nCompIdx, FluidSystem::diffusionCoefficient(fluidState_, paramCache, gPhaseIdx, nCompIdx));
-        setDiffusionCoefficient_(wPhaseIdx, gCompIdx, FluidSystem::diffusionCoefficient(fluidState_, paramCache, wPhaseIdx, gCompIdx));
-        setDiffusionCoefficient_(wPhaseIdx, nCompIdx, FluidSystem::diffusionCoefficient(fluidState_, paramCache, wPhaseIdx, nCompIdx));
-        // no diffusion in NAPL phase considered  at the moment
-        setDiffusionCoefficient_(nPhaseIdx, wCompIdx, 0.0);
-        setDiffusionCoefficient_(nPhaseIdx, gCompIdx, 0.0);
+         auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return FluidSystem::diffusionCoefficient(fluidState_, paramCache, phaseIdx, compJIdx);
+        };
+
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+        };
 
         // porosity & permeabilty
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+
+        diffCoeff_.update(getDiffusionCoefficient);
+        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
+
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
 
         // compute and set the enthalpy
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
@@ -702,15 +713,26 @@ public:
     /*!
      * \brief Returns the diffusion coefficient
      */
+    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
-        if (compIdx < phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx];
-        else if (compIdx > phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx-1];
+        if (compIdx != phaseIdx)
+            return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
+
+    /*
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
 protected:
     FluidState fluidState_;
@@ -727,19 +749,8 @@ private:
     Scalar mobility_[ModelTraits::numFluidPhases()];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
 
-    void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
-    {
-        if (compIdx < phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
-        else if (compIdx > phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
-        else if (phaseIdx == nPhaseIdx)
-            diffCoefficient_[phaseIdx][compIdx-1] = 0;
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
-    }
-
-    std::array<std::array<Scalar, ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> diffCoefficient_;
+    DiffusionCoefficients diffCoeff_;
+    DiffusionCoefficients effectiveDiffCoeff_;
 };
 
 } // end namespace Dumux

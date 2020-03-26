@@ -346,7 +346,7 @@ public:
             if (moleFracH2OInside - moleFracRefH2O > 0)
             {
                 evaporationRateMole = massTransferCoefficient
-                                        * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
+                                        * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
                                         * (moleFracH2OInside - moleFracRefH2O)
                                         / boundaryLayerThickness
                                         * volVars.molarDensity(gasPhaseIdx);
@@ -354,7 +354,7 @@ public:
             else
             {
                 evaporationRateMole = massTransferCoefficient
-                                        * volVars.diffusionCoefficient(gasPhaseIdx, H2OIdx)
+                                        * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
                                         * (moleFracH2OInside - moleFracRefH2O)
                                         / boundaryLayerThickness
                                         * 1.2;

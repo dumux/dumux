@@ -12,6 +12,9 @@ Differences Between DuMuX 3.2 and DuMuX 3.1
 
 - __Runtime variable output precision e.g. Float64__: The VtkOutputModule has been adapted to allow easy changes of the vtk output precision. It is now possible to specify output precision in the input file using `Vtk.Precision` followed by either `Float32`, `Float64`, `UInt32`, `UInt8` or `Int32`. `Float32` stays the default. We especially advice the use of `Float64` when working with restart files.
 An additional new option is `Vtk.CoordPrecision` which changes the precision of the coordinates only and uses the default of `Vtk.Precision`.
+
+- __Effective Laws and Diffusion Coefficients__: The effective laws interface has been changed within !1684. The interface for these laws has been unified, and all coefficents are to be stored in containers that fit to the model. These quantities should then be added in the volumeVariables, meaning all effective quantities would be accessible from the volumevariables.
+
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
@@ -62,6 +65,11 @@ ffSol = partial(sol, ffFaceIdx, ffCellCenterIdx);
 // Not changing the argument will rise a compiler error which makes the MR not fully backwards-compatible.
 ```
 
+Regarding changes made to the effective laws and diffusionCoefficient containters, Backwards-compatibility is maintined for a large extent, barring any volumevariable classes defined externally that inherit from the non-isothermal volumevariables.
+If you use a self defined volumevariables class that inherits from the non-isothermal volumevariables, please adapt the your volumevariables class to fit to the non-isothermal volumevariables, and include the new methods for accessing the diffusion and effective diffusion coefficients.
+
+- Tracer model: tracer fluid systems do no longer provide a `getMainComponent` function since this simply doesn't make sense -- the main bulk component is not modeled.
+
 ### Deprecated properties, to be removed after 3.2:
 
 ### Deprecated classes/files, to be removed after 3.2:
@@ -69,6 +77,8 @@ ffSol = partial(sol, ffFaceIdx, ffCellCenterIdx);
 - __AMGTraits__: AMGTraits are deprecated, are to be replaced by LinearSolverTraits and restructured internally. As they were only used by the AMGBackend, we did not make the internal changes backwards-compatible
 
 ### Deprecated member functions, to be removed after 3.2:
+- __DiffusionCoefficient(various arguments)__: These coefficients are now defined in the volvars and stored in a container fit to the model. To access these values, use the unified ```c++ diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) ```
+- __EffectiveDiffusivity(various arguments)__: These values are now defined in the volvars and stored in a container fit to the model. To access these values, use the unified ```c++ effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) ```
 
 ### Deleted classes/files, property names, constants/enums
 

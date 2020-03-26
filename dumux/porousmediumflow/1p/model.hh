@@ -86,13 +86,7 @@ struct OnePModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  */
-template<class PV,
-         class FSY,
-         class FST,
-         class SSY,
-         class SST,
-         class PT,
-         class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
 struct OnePVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -136,8 +130,8 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
 
     using Traits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -172,6 +166,28 @@ struct IOFields<TypeTag, TTag::OnePNI> { using type = EnergyIOFields<OnePIOField
 //! The model traits of the non-isothermal model
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::OnePNI> { using type = PorousMediumFlowNIModelTraits<OnePModelTraits>; };
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::OnePNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+
+    using ETCM = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
+    template<class BaseTraits, class ETCM>
+    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+
+public:
+    using type = OnePVolumeVariables<NITraits<BaseTraits, ETCM>>;
+};
 
 //! Use the average for effective conductivities
 template<class TypeTag>

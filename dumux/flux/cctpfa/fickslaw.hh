@@ -26,9 +26,11 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/deprecated.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+#include <dumux/flux/fickiandiffusioncoefficients.hh>
 
 #include <dumux/flux/referencesystemformulation.hh>
 
@@ -125,6 +127,8 @@ public:
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;
 
+    using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
+
     //! return diffusive fluxes for all components in a phase
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
@@ -137,8 +141,9 @@ public:
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
-                continue;
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    continue;
 
             // diffusion tensors are always solution dependent
             Scalar tij = elemFluxVarsCache[scvf].diffusionTij(phaseIdx, compIdx);
@@ -161,8 +166,9 @@ public:
                                                         : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = rho*tij*(xInside - xOutside);
-            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
-                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
 
         return componentFlux;
@@ -176,33 +182,36 @@ public:
                                             const SubControlVolumeFace& scvf,
                                             const int phaseIdx, const int compIdx)
     {
-        Scalar tij;
+
 
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
+        const auto getDiffCoeff = [&](const auto& vv)
+        {
+            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+            if constexpr (FluidSystem::isTracerFluidSystem())
+                return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(vv, 0, 0, compIdx);
+            else
+                return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(vv, phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+        };
 
-        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-        const auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
-                                                                insideVolVars.saturation(phaseIdx),
-                                                                insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+        const auto insideD = getDiffCoeff(insideVolVars);
+
         const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideD, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
+        Scalar tij;
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-        {
             tij = scvf.area()*ti;
-        }
+
         // otherwise we compute a tpfa harmonic mean
         else
         {
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-
-            const auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
-                                                                     outsideVolVars.saturation(phaseIdx),
-                                                                     outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+            const auto outsideD = getDiffCoeff(outsideVolVars);
 
             Scalar tj;
             if (dim == dimWorld)

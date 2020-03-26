@@ -31,6 +31,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+
+#include <dumux/flux/maxwellstefandiffusioncoefficients.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
@@ -68,8 +70,9 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
 
     static_assert(referenceSystem == ReferenceSystemFormulation::massAveraged, "only the mass averaged reference system is supported for the Maxwell-Stefan formulation");
 
-
 public:
+    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numFluidPhases, numComponents>;
+
     //return the reference system
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }
@@ -148,6 +151,7 @@ private:
                                                  const ComponentFluxVector moleFrac,
                                                  const Scalar avgMolarMass)
     {
+        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -155,22 +159,18 @@ private:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto outsideScvIdx = scvf.outsideScvIdx();
 
-        //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusivity becomes zero due to that
+        //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
         if(Dune::FloatCmp::eq<Scalar>(insideVolVars.saturation(phaseIdx), 0) || Dune::FloatCmp::eq<Scalar>(outsideVolVars.saturation(phaseIdx), 0))
             return reducedDiffusionMatrix;
 
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
-            // effective diffusion tensors
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-
             //calculate diffusivity for i,numComponents
             const auto xi = moleFrac[compIIdx];
             const auto Mn = FluidSystem::molarMass(numComponents-1);
-            auto tinInside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
-            tinInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tinInside);
-            auto tinOutside = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
-            tinOutside = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), tinOutside);
+
+            auto tinInside = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(insideVolVars, phaseIdx, compIIdx, numComponents-1, problem, element, fvGeometry.scv(insideScvIdx));
+            auto tinOutside = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(outsideVolVars, phaseIdx, compIIdx, numComponents-1, problem, element, fvGeometry.scv(outsideScvIdx));
 
             // scale by extrusion factor
             tinInside *= insideVolVars.extrusionFactor();
@@ -193,10 +193,11 @@ private:
                 const auto xj = moleFrac[compJIdx];
                 const auto Mi = FluidSystem::molarMass(compIIdx);
                 const auto Mj = FluidSystem::molarMass(compJIdx);
-                auto tijInside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, insideVolVars, fvGeometry.scv(insideScvIdx));
-                tijInside = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), tijInside);
-                auto tijOutside = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, outsideVolVars, fvGeometry.scv(outsideScvIdx));
-                tijOutside = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), tijOutside);
+
+                // effective diffusion tensors
+                auto tijInside = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(insideVolVars, phaseIdx, compIIdx, compJIdx, problem, element, fvGeometry.scv(insideScvIdx));
+
+                auto tijOutside = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(outsideVolVars, phaseIdx, compIIdx, compJIdx, problem, element, fvGeometry.scv(outsideScvIdx));
 
                 // scale by extrusion factor
                 tijInside *= insideVolVars.extrusionFactor();
@@ -211,42 +212,6 @@ private:
             }
         }
         return reducedDiffusionMatrix;
-    }
-
-private:
-    template <class T = TypeTag, typename std::enable_if_t<GetPropType<T, Properties::FluidSystem>::isTracerFluidSystem(), int> =0 >
-    static Scalar getDiffusionCoefficient(const int phaseIdx,
-                            const int compIIdx,
-                            const int compJIdx,
-                            const Problem& problem,
-                            const Element& element,
-                            const VolumeVariables& volVars,
-                            const SubControlVolume& scv)
-    {
-        return FluidSystem::binaryDiffusionCoefficient(compIIdx,
-                                                       compJIdx,
-                                                       problem,
-                                                       element,
-                                                       scv);
-    }
-
-    template <class T = TypeTag, typename std::enable_if_t<!GetPropType<T, Properties::FluidSystem>::isTracerFluidSystem(), int> =0 >
-    static Scalar getDiffusionCoefficient(const int phaseIdx,
-                            const int compIIdx,
-                            const int compJIdx,
-                            const Problem& problem,
-                            const Element& element,
-                            const VolumeVariables& volVars,
-                            const SubControlVolume& scv)
-    {
-        auto fluidState = volVars.fluidState();
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState);
-        return FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                       paramCache,
-                                                       phaseIdx,
-                                                       compIIdx,
-                                                       compJIdx);
     }
 
 };

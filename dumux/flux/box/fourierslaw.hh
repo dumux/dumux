@@ -45,9 +45,10 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -68,10 +69,8 @@ public:
         const auto& outsideVolVars = elemVolVars[outsideScv];
 
         // effective diffusion tensors
-        auto insideLambda = Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                              insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-        auto outsideLambda = Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                              outsideVolVars, problem.spatialParams(), element, fvGeometry, outsideScv);
+        auto insideLambda = insideVolVars.effectiveThermalConductivity();
+        auto outsideLambda = outsideVolVars.effectiveThermalConductivity();
 
         // scale by extrusion factor
         insideLambda *= insideVolVars.extrusionFactor();

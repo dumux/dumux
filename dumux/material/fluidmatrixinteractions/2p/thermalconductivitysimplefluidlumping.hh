@@ -32,19 +32,16 @@ namespace Dumux {
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
- * \todo This shouldn't depend on TypeTag!!
  */
-template<class Scalar, int numEnergyEquationsFluid>
+template<class Scalar>
 class ThermalConductivitySimpleFluidLumping
 {
-
 public:
     /*!
      * \brief Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      *
      * \param volVars volume variables
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
-     * \todo TODO: Fix this law for changing wettability
      */
     template<class VolumeVariables>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
@@ -56,9 +53,10 @@ public:
         const Scalar lambdaSolid = volVars.solidThermalConductivity();
         const Scalar porosity = volVars.porosity();
 
-        return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity);
+        return effectiveThermalConductivity_(sw, lambdaW, lambdaN, lambdaSolid, porosity);
     }
 
+private:
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
      *
@@ -67,36 +65,19 @@ public:
      * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$
      * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
      * \param porosity The porosity
-     * \param rhoSolid The density of the solid phase in \f$\mathrm{[kg/m^3]}\f$
      *
      * \return Effective thermal conductivity of the fluid phases
      */
-    static Scalar effectiveThermalConductivity(const Scalar sw,
-                                               const Scalar lambdaW,
-                                               const Scalar lambdaN,
-                                               const Scalar lambdaSolid,
-                                               const Scalar porosity,
-                                               const Scalar rhoSolid = 0.0 /*unused*/)
+    static Scalar effectiveThermalConductivity_(const Scalar sw,
+                                                const Scalar lambdaW,
+                                                const Scalar lambdaN,
+                                                const Scalar lambdaSolid,
+                                                const Scalar porosity)
     {
-        assert(numEnergyEquationsFluid != 2) ;
-
         // Franz Lindner / Shi & Wang 2011
         using std::max;
         const Scalar satW = max<Scalar>(0.0, sw);
-
-        const Scalar kfeff = porosity *((1.-satW)*lambdaN + satW*lambdaW) ; // arithmetic
-
-        Scalar keff ;
-
-        if (numEnergyEquationsFluid == 1){ // solid dealed with individually (extra balance equation)
-            keff = kfeff ;
-        }
-        else {
-            const Scalar kseff = (1.0-porosity)  * lambdaSolid ;
-            keff = kfeff  + kseff;
-        }
-
-        return keff ;
+        return porosity * ( (1. - satW) * lambdaN + satW * lambdaW ) + (1.0 - porosity) * lambdaSolid ; ; // arithmetic
     }
 };
 } // end namespace Dumux

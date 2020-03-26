@@ -25,13 +25,14 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_MAXWELL_STEFAN_LAW_HH
 
 #include <dune/common/float_cmp.hh>
-
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/referencesystemformulation.hh>
+#include <dumux/flux/maxwellstefandiffusioncoefficients.hh>
 
 namespace Dumux {
 
@@ -53,7 +54,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered, 
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -62,6 +62,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered, 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static const int numComponents = ModelTraits::numFluidComponents();
+    static const int numPhases = ModelTraits::numFluidPhases();
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
 
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
@@ -83,6 +84,9 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
+    using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents>;
+
+    template<class ElementVolumeVariables>
     static CellCenterPrimaryVariables flux(const Problem& problem,
                                            const Element& element,
                                            const FVElementGeometry& fvGeometry,
@@ -216,7 +220,7 @@ private:
             const auto xi = volVars.moleFraction(compIIdx);
             const auto avgMolarMass = volVars.averageMolarMass(0);
             const auto Mn = FluidSystem::molarMass(numComponents-1);
-            const Scalar tin = volVars.effectiveDiffusivity(compIIdx, numComponents-1);
+            const Scalar tin = getEffectiveDiffusionCoefficient_(volVars, compIIdx, numComponents-1);
 
             // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] +=  xi*avgMolarMass/(tin*Mn);
@@ -230,13 +234,25 @@ private:
                 const auto xj = volVars.moleFraction(compJIdx);
                 const auto Mi = FluidSystem::molarMass(compIIdx);
                 const auto Mj = FluidSystem::molarMass(compJIdx);
-                const Scalar tij = volVars.effectiveDiffusivity(compIIdx, compJIdx);
+                const Scalar tij = getEffectiveDiffusionCoefficient_(volVars, compIIdx, compJIdx);
                 reducedDiffusionMatrix[compIIdx][compIIdx] +=  xj*avgMolarMass/(tij*Mi);
                 if (compJIdx < numComponents-1)
                     reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
             }
         }
         return reducedDiffusionMatrix;
+    }
+
+    static Scalar getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
+    {
+        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
+            return volVars.effectiveDiffusionCoefficient(phaseIdx,
+                    VolumeVariables::FluidSystem::getMainComponent(phaseIdx), compIdx);
+        else
+        {
+            // TODO: remove this else clause after release 3.2!
+            return volVars.effectiveDiffusivity(phaseIdx, compIdx);
+        }
     }
 };
 } // end namespace

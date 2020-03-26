@@ -232,15 +232,10 @@ public:
     { return eddyThermalConductivity_; }
 
     /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-     *
-     * \param compIIdx the index of the component which diffusive
-     * \param compJIdx the index of the component with respect to which compIIdx diffuses
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    Scalar effectiveDiffusivity(int compIIdx, int compJIdx) const
-    {
-        return NavierStokesParentType::diffusionCoefficient(compIIdx, compJIdx) + eddyDiffusivity();
-    }
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return NavierStokesParentType::diffusionCoefficient(0, compIIdx, compJIdx) + eddyDiffusivity(); }
 
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$

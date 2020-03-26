@@ -409,36 +409,11 @@ protected:
                                              domainJ,
                                              insideDistance,
                                              outsideDistance,
-                                             thermalConductivity_(volVarsI, fvGeometryI, scvI),
-                                             thermalConductivity_(volVarsJ, fvGeometryJ, scvJ),
+                                             volVarsI.effectiveThermalConductivity(),
+                                             volVarsJ.effectiveThermalConductivity(),
                                              diffCoeffAvgType);
 
         return -tij * deltaT;
-    }
-
-    /*!
-     * \brief Returns the effective thermal conductivity (lumped parameter) within the porous medium.
-     */
-    template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
-    Scalar thermalConductivity_(const VolumeVariables<darcyIdx>& volVars,
-                                const FVElementGeometry<darcyIdx>& fvGeometry,
-                                const SubControlVolume<darcyIdx>& scv) const
-    {
-        using ThermalConductivityModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::ThermalConductivityModel>;
-        const auto& problem = this->couplingManager().problem(darcyIdx);
-        return Deprecated::template effectiveThermalConductivity<ThermalConductivityModel>(
-                 volVars, problem.spatialParams(), fvGeometry.gridGeometry().element(scv.elementIndex()), fvGeometry, scv);
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity of the fluid phase within the free flow domain.
-     */
-    template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
-    Scalar thermalConductivity_(const VolumeVariables<stokesIdx>& volVars,
-                                const FVElementGeometry<stokesIdx>& fvGeometry,
-                                const SubControlVolume<stokesIdx>& scv) const
-    {
-        return  volVars.effectiveThermalConductivity();
     }
 
     /*!
@@ -742,7 +717,6 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
 
     using MolecularDiffusionType = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::MolecularDiffusionType>;
-
 public:
     using ParentType::ParentType;
     using ParentType::couplingPhaseIdx;
@@ -915,52 +889,6 @@ protected:
         return flux;
     }
 
-    /*!
-     * \brief Returns the molecular diffusion coefficient within the free flow domain.
-     */
-    Scalar diffusionCoefficient_(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIdx) const
-    {
-         return volVars.effectiveDiffusivity(phaseIdx, compIdx);
-    }
-
-    /*!
-     * \brief Returns the effective diffusion coefficient within the porous medium.
-     */
-    Scalar diffusionCoefficient_(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compIdx) const
-    {
-        using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
-        return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
-                                                  volVars.saturation(phaseIdx),
-                                                  volVars.diffusionCoefficient(phaseIdx, compIdx));
-    }
-
-    /*!
-     * \brief Returns the molecular diffusion coefficient within the free flow domain.
-     */
-    Scalar diffusionCoefficientMS_(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compKIdx, int compLIdx) const
-    {
-         return volVars.effectiveDiffusivity(compKIdx, compLIdx);
-    }
-
-    /*!
-     * \brief Returns the effective diffusion coefficient within the porous medium.
-     */
-    Scalar diffusionCoefficientMS_(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compKIdx, int compLIdx) const
-    {
-        using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
-        auto fluidState = volVars.fluidState();
-        typename FluidSystem<darcyIdx>::ParameterCache paramCache;
-        paramCache.updateAll(fluidState);
-        auto diffCoeff = FluidSystem<darcyIdx>::binaryDiffusionCoefficient(fluidState,
-                                                                            paramCache,
-                                                                            phaseIdx,
-                                                                            compKIdx,
-                                                                            compLIdx);
-        return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
-                                                  volVars.saturation(phaseIdx),
-                                                  diffCoeff);
-    }
-
     Scalar getComponentEnthalpy(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIdx) const
     {
         return FluidSystem<stokesIdx>::componentEnthalpy(volVars.fluidState(), 0, compIdx);
@@ -983,6 +911,7 @@ protected:
                                                      const VolumeVariables<i>& volVarsI,
                                                      const VolumeVariables<j>& volVarsJ) const
     {
+        using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
         NumEqVector diffusiveFlux(0.0);
 
         const Scalar insideDistance = this->getDistance_(scvI, scvfI);
@@ -1021,7 +950,7 @@ protected:
             const Scalar xk = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompKIdx);
             const Scalar avgMolarMass = volVarsI.averageMolarMass(couplingPhaseIdx(domainI));
             const Scalar Mn = FluidSystem<i>::molarMass(numComponents-1);
-            const Scalar tkn = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompKIdx, couplingCompIdx(domainI, numComponents-1));
+            const Scalar tkn = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsI, couplingPhaseIdx(domainI), domainICompKIdx, couplingCompIdx(domainI, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrixInside[domainICompKIdx][domainICompKIdx] += xk*avgMolarMass/(tkn*Mn);
@@ -1037,7 +966,7 @@ protected:
                 const Scalar xl = volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompLIdx);
                 const Scalar Mk = FluidSystem<i>::molarMass(domainICompKIdx);
                 const Scalar Ml = FluidSystem<i>::molarMass(domainICompLIdx);
-                const Scalar tkl = diffusionCoefficientMS_(volVarsI, couplingPhaseIdx(domainI), domainICompKIdx, domainICompLIdx);
+                const Scalar tkl = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsI, couplingPhaseIdx(domainI), domainICompKIdx, domainICompLIdx);
                 reducedDiffusionMatrixInside[domainICompKIdx][domainICompKIdx] += xl*avgMolarMass/(tkl*Mk);
                 reducedDiffusionMatrixInside[domainICompKIdx][domainICompLIdx] += xk*(avgMolarMass/(tkn*Mn) - avgMolarMass/(tkl*Ml));
             }
@@ -1051,7 +980,7 @@ protected:
             const Scalar xk = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompKIdx);
             const Scalar avgMolarMass = volVarsJ.averageMolarMass(couplingPhaseIdx(domainJ));
             const Scalar Mn = FluidSystem<j>::molarMass(numComponents-1);
-            const Scalar tkn = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompKIdx, couplingCompIdx(domainJ, numComponents-1));
+            const Scalar tkn = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsJ, couplingPhaseIdx(domainJ), domainJCompKIdx, couplingCompIdx(domainJ, numComponents-1));
 
             // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrixOutside[domainICompKIdx][domainICompKIdx] +=  xk*avgMolarMass/(tkn*Mn);
@@ -1068,7 +997,7 @@ protected:
                 const Scalar xl = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompLIdx);
                 const Scalar Mk = FluidSystem<j>::molarMass(domainJCompKIdx);
                 const Scalar Ml = FluidSystem<j>::molarMass(domainJCompLIdx);
-                const Scalar tkl = diffusionCoefficientMS_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompKIdx, domainJCompLIdx);
+                const Scalar tkl = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsJ, couplingPhaseIdx(domainJ), domainJCompKIdx, domainJCompLIdx);
                 reducedDiffusionMatrixOutside[domainICompKIdx][domainICompKIdx] += xl*avgMolarMass/(tkl*Mk);
                 reducedDiffusionMatrixOutside[domainICompKIdx][domainICompLIdx] += xk*(avgMolarMass/(tkn*Mn) - avgMolarMass/(tkl*Ml));
             }
@@ -1122,6 +1051,7 @@ protected:
                                                 const VolumeVariables<j>& volVarsJ,
                                                 const DiffusionCoefficientAveragingType diffCoeffAvgType) const
     {
+        using EffDiffModel = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::EffectiveDiffusivityModel>;
         NumEqVector diffusiveFlux(0.0);
 
         const Scalar rhoInside = massOrMolarDensity(volVarsI, referenceSystemFormulation, couplingPhaseIdx(domainI));
@@ -1133,6 +1063,8 @@ protected:
 
         for (int compIdx = 1; compIdx < numComponents; ++compIdx)
         {
+            const int domainIMainCompIdx = couplingPhaseIdx(domainI);
+            const int domainJMainCompIdx = couplingPhaseIdx(domainJ);
             const int domainICompIdx = couplingCompIdx(domainI, compIdx);
             const int domainJCompIdx = couplingCompIdx(domainJ, compIdx);
 
@@ -1146,8 +1078,8 @@ protected:
                                                        domainJ,
                                                        insideDistance,
                                                        outsideDistance,
-                                                       diffusionCoefficient_(volVarsI, couplingPhaseIdx(domainI), domainICompIdx),
-                                                       diffusionCoefficient_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIdx),
+                                                       Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsI, couplingPhaseIdx(domainI), domainIMainCompIdx, domainICompIdx),
+                                                       Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVarsJ, couplingPhaseIdx(domainJ), domainJMainCompIdx, domainJCompIdx),
                                                        diffCoeffAvgType);
             diffusiveFlux[domainICompIdx] += -avgDensity * tij * deltaMassOrMoleFrac;
         }

@@ -90,7 +90,8 @@ class TwoPNCVolumeVariables
 
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FS>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FS>;
-
+    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
+    using DiffusionCoefficients = typename Traits::DiffusionType::DiffusionCoefficientsContainer;
 
 public:
     //! Export fluid state type
@@ -144,37 +145,36 @@ public:
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
-        const int nPhaseIdx = 1 - wPhaseIdx;
+        const int nPhaseIdx = 1 - wPhaseIdx_;
 
         // mobilities -> require wetting phase saturation as parameter!
-        mobility_[wPhaseIdx] = MaterialLaw::krw(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(wPhaseIdx);
-        mobility_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(nPhaseIdx);
+        mobility_[wPhaseIdx_] = MaterialLaw::krw(matParams, saturation(wPhaseIdx_))/fluidState_.viscosity(wPhaseIdx_);
+        mobility_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx_))/fluidState_.viscosity(nPhaseIdx);
 
-        // binary diffusion coefficients
-        for (unsigned int compJIdx = 0; compJIdx <  ModelTraits::numFluidComponents(); ++compJIdx)
+        //update porosity before calculating the effective properties depending on it
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+
+        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
-            if(compJIdx != comp0Idx)
-                setDiffusionCoefficient_( phase0Idx, compJIdx,
-                                          FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                  paramCache,
-                                                                                  phase0Idx,
-                                                                                  comp0Idx,
-                                                                                  compJIdx) );
-            if(compJIdx != comp1Idx)
-                setDiffusionCoefficient_( phase1Idx, compJIdx,
-                                          FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                  paramCache,
-                                                                                  phase1Idx,
-                                                                                  comp1Idx,
-                                                                                  compJIdx) );
-        }
+            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                            paramCache,
+                                                            phaseIdx,
+                                                            compIIdx,
+                                                            compJIdx);
+        };
+
+        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        {
+            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+        };
+
+        diffCoeff_.update(getDiffusionCoefficient);
+        effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
 
         // calculate the remaining quantities
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+        EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!
@@ -204,8 +204,8 @@ public:
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
-        fluidState.setWettingPhase(wPhaseIdx);
+        wPhaseIdx_ = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx_);
 
         // set the saturations
         if (phasePresence == secondPhaseOnly)
@@ -235,17 +235,17 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
 
         // set pressures of the fluid phases
-        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
         if (formulation == TwoPFormulation::p0s1)
         {
             fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase1Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] + pc_
+            fluidState.setPressure(phase1Idx, (wPhaseIdx_ == phase0Idx) ? priVars[pressureIdx] + pc_
                                                                        : priVars[pressureIdx] - pc_);
         }
         else
         {
             fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
+            fluidState.setPressure(phase0Idx, (wPhaseIdx_ == phase0Idx) ? priVars[pressureIdx] - pc_
                                                                        : priVars[pressureIdx] + pc_);
         }
 
@@ -453,15 +453,26 @@ public:
     /*!
      * \brief Returns the diffusion coefficient
      */
+    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
-        if (compIdx < phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx];
-        else if (compIdx > phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx-1];
+        if (compIdx != phaseIdx)
+            return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
+
+    /*!
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+
+    /*!
+     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     */
+    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
+    { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
      /*!
       * \brief Returns the mass fraction of a component in the phase
@@ -481,26 +492,25 @@ public:
      Scalar moleFraction(int phaseIdx, int compIdx) const
      { return fluidState_.moleFraction(phaseIdx, compIdx); }
 
+    /*!
+     * \brief Returns the wetting phase index
+     */
+    const int wettingPhaseIdx() const
+    {  return wPhaseIdx_; }
+
 protected:
     FluidState fluidState_;
     SolidState solidState_;
 
 private:
-    void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
-    {
-        if (compIdx < phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
-        else if (compIdx > phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
-    }
 
     Scalar pc_;                     // The capillary pressure
     Scalar porosity_;               // Effective porosity within the control volume
     PermeabilityType permeability_; // Effective permeability within the control volume
     Scalar mobility_[ModelTraits::numFluidPhases()]; // Effective mobility within the control volume
-    std::array<std::array<Scalar,  ModelTraits::numFluidComponents()-1>, ModelTraits::numFluidPhases()> diffCoefficient_;
+    DiffusionCoefficients diffCoeff_;
+    DiffusionCoefficients effectiveDiffCoeff_;
+    int wPhaseIdx_;
 
 };
 

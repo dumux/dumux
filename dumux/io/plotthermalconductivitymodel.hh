@@ -37,9 +37,10 @@ template<class Scalar> class GnuplotInterface;
  * \ingroup InputOutput
  * \brief Interface for plotting the non-isothermal two-phase fluid-matrix-interaction laws
  */
-template<class Scalar, class ThermalConductivityModel, class FluidSystem>
+template<class Scalar, class ThermalConductivityModel, class FS>
 class PlotThermalConductivityModel
 {
+    using FluidSystem = FS;
     using FluidState = CompositionalFluidState<Scalar, FluidSystem>;
 
     // phase indices
@@ -98,17 +99,66 @@ public:
         for (int i = 0; i <= numIntervals_; i++)
         {
             sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            lambda[i] = ThermalConductivityModel::effectiveThermalConductivity(sw[i], lambdaW_,
-                                                                               lambdaN_, lambdaSolid,
-                                                                               porosity, rhoSolid);
+            VolumeVariables volVars(sw[i], lambdaN_, lambdaW_, lambdaSolid, porosity, rhoSolid);
+            lambda[i] = ThermalConductivityModel::effectiveThermalConductivity(volVars);
         }
 
-        gnuplot.setXlabel("wetting phase saturation [-]");
-        gnuplot.setYlabel("effective thermal conductivity [W/(m K)]");
         gnuplot.addDataSetToPlot(sw, lambda, curveName, curveOptions);
     }
 
 private:
+
+    class VolumeVariables
+    {
+    public:
+        VolumeVariables(Scalar saturation, Scalar lambdaN, Scalar lambdaW, Scalar lambdaSolid, Scalar porosity, Scalar rhoSolid)
+        : saturation_(saturation)
+        , lambdaN_(lambdaN)
+        , lambdaW_(lambdaW)
+        , lambdaSolid_(lambdaSolid)
+        , porosity_(porosity)
+        , rhoSolid_(rhoSolid)
+        {}
+
+        using FluidSystem = typename PlotThermalConductivityModel::FluidSystem;
+
+        Scalar saturation(int phaseIdx) const
+        {
+            if (phaseIdx == wettingPhaseIdx())
+                return saturation_;
+            else
+                return 1.0 - saturation_;
+        }
+
+        Scalar fluidThermalConductivity(const int phaseIdx) const
+        {
+            if (phaseIdx == wettingPhaseIdx())
+                return lambdaW_;
+            else
+                return lambdaN_;
+        }
+
+        Scalar wettingPhaseIdx() const
+        { return phase0Idx;}
+
+        Scalar porosity() const
+        { return porosity_; }
+
+        Scalar solidThermalConductivity() const
+        { return lambdaSolid_; }
+
+        Scalar solidDensity() const
+        { return rhoSolid_;}
+
+    private:
+        Scalar saturation_;
+        Scalar lambdaN_;
+        Scalar lambdaW_;
+        Scalar lambdaSolid_;
+        Scalar porosity_;
+        Scalar rhoSolid_;
+    };
+
     int numIntervals_;
     Scalar lambdaN_;
     Scalar lambdaW_;

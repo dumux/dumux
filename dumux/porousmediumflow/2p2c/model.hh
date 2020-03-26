@@ -92,7 +92,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 
-
 #include "volumevariables.hh"
 
 namespace Dumux {
@@ -143,17 +142,27 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
-
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+    using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    template<class BaseTraits, class DT, class EDM>
+    struct NCTraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+    };
     static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
-
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
-    using type = TwoPTwoCVolumeVariables<Traits, useConstraintSolver>;
+    using type = TwoPTwoCVolumeVariables<NCTraits<BaseTraits, DT, EDM>, useConstraintSolver>;
 };
 
 //! Determines whether the constraint solver is used
@@ -173,6 +182,40 @@ private:
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+    using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
+
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    template<class BaseTraits, class DT, class EDM, class ETCM>
+    struct NCNITraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+        using EffectiveThermalConductivityModel = ETCM;
+    };
+public:
+    using type = TwoPTwoCVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>>;
+};
+
 
 //! Set non-isothermal output fields
 template<class TypeTag>
@@ -237,15 +280,11 @@ public:
     using type = TwoPTwoCUnconstrainedModelTraits<EquilibriumTraits>;
 };
 
-//! In case we do not assume full thermal non-equilibrium (e.g. only an energy balance for the solid phase and a fluid mixture) one needs a law for calculating the thermal conductivity of the fluid mixture
+//! In case we do not assume full thermal non-equilibrium (e.g. only an energy balance for the solid phase and a fluid mixture)
+//! one needs a law for calculating the thermal conductivity of the fluid mixture
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNonEquil>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = ThermalConductivitySimpleFluidLumping<Scalar, getPropValue<TypeTag, Properties::NumEnergyEqFluid>()>;
-};
+{ using type = ThermalConductivitySimpleFluidLumping<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Use the nonequilibrium volume variables together with the 2p2c vol vars
 template<class TypeTag>
@@ -257,15 +296,27 @@ private:
     using FST = GetPropType<TypeTag, Properties::FluidState>;
     using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
     using SST = GetPropType<TypeTag, Properties::SolidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+    using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
+
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    template<class BaseTraits, class DT, class EDM>
+    struct NCTraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+    };
 
     static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
-
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
-    using EquilibriumVolVars = TwoPTwoCVolumeVariables<Traits, useConstraintSolver>;
+    using EquilibriumVolVars = TwoPTwoCVolumeVariables<NCTraits<BaseTraits, DT, EDM>, useConstraintSolver>;
 public:
-    using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
+    using type = NonEquilibriumVolumeVariables<NCTraits<BaseTraits, DT, EDM>, EquilibriumVolVars>;
 };
 
 /////////////////////////////////////////////////
@@ -305,9 +356,45 @@ public:
     using type = NonisothermalIOFields;
 };
 
+//! Use the nonequilibrium volume variables together with the 2p2c vol vars
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPTwoCNINonEquil>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    static constexpr auto DM = GetPropType<TypeTag, Properties::GridGeometry>::discMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+    using BaseTraits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
+
+    using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
+    using ETCM = GetPropType< TypeTag, Properties:: ThermalConductivityModel>;
+
+    template<class BaseTraits, class DT, class EDM, class ETCM>
+    struct NCNITraits : public BaseTraits
+    {
+        using DiffusionType = DT;
+        using EffectiveDiffusivityModel = EDM;
+        using EffectiveThermalConductivityModel = ETCM;
+    };
+    static constexpr bool useConstraintSolver = getPropValue<TypeTag, Properties::UseConstraintSolver>();
+    using EquilibriumVolVars = TwoPTwoCVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>, useConstraintSolver>;
+public:
+    using type = NonEquilibriumVolumeVariables<NCNITraits<BaseTraits, DT, EDM, ETCM>, EquilibriumVolVars>;
+};
+
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
-struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNINonEquil> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNINonEquil>
+{ using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux
