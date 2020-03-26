@@ -3,6 +3,7 @@ amgbackend.hh
 amgparallelhelpers.hh
 amgtraits.hh
 istlsolverfactorybackend.hh
+linearsolverparameters.hh
 linearsolvertraits.hh
 linearsolveracceptsmultitypematrix.hh
 matrixconverter.hh
