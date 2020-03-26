@@ -127,15 +127,15 @@ public:
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
-            const auto& inside = is.inside(0);
+            const auto& inside = is.targetEntity(0);
             const auto intersectionGeometry = is.geometry();
             const std::size_t lowDimElementIdx = this->problem(lowDimIdx).gridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
-            for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+            for (std::size_t outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
             {
-                const auto& outside = is.outside(outsideIdx);
+                const auto& outside = is.domainEntity(outsideIdx);
                 const std::size_t bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
@@ -500,15 +500,15 @@ public:
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
-            const auto& inside = is.inside(0);
+            const auto& inside = is.targetEntity(0);
             const auto intersectionGeometry = is.geometry();
             const std::size_t lowDimElementIdx = this->problem(lowDimIdx).gridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
-            for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+            for (std::size_t outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
             {
-                const auto& outside = is.outside(outsideIdx);
+                const auto& outside = is.domainEntity(outsideIdx);
                 const std::size_t bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
@@ -778,15 +778,15 @@ public:
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
-            const auto& inside = is.inside(0);
+            const auto& inside = is.targetEntity(0);
             const auto intersectionGeometry = is.geometry();
             const std::size_t lowDimElementIdx = this->problem(lowDimIdx).gridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
-            for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+            for (std::size_t outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
             {
-                const auto& outside = is.outside(outsideIdx);
+                const auto& outside = is.domainEntity(outsideIdx);
                 const std::size_t bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
@@ -952,7 +952,7 @@ public:
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
-            const auto& inside = is.inside(0);
+            const auto& inside = is.targetEntity(0);
             // get the intersection geometry for integrating over it
             const auto intersectionGeometry = is.geometry();
 
@@ -966,9 +966,9 @@ public:
             for (auto&& qp : quad)
             {
                 // compute the coupling stencils
-                for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+                for (std::size_t outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
                 {
-                    const auto& outside = is.outside(outsideIdx);
+                    const auto& outside = is.domainEntity(outsideIdx);
                     const std::size_t bulkElementIdx = bulkFvGridGeometry.elementMapper().index(outside);
 
                     // each quadrature point will be a point source for the sub problem
@@ -977,8 +977,8 @@ public:
                     const auto qpweight = qp.weight();
                     const auto ie = intersectionGeometry.integrationElement(qp.position());
                     this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({lowDimElementIdx}));
-                    this->pointSources(lowDimIdx).back().setEmbeddings(is.neighbor(0));
-                    computeBulkSource(globalPos, kernelWidth, id, lowDimElementIdx, bulkElementIdx, qpweight*ie/is.neighbor(0));
+                    this->pointSources(lowDimIdx).back().setEmbeddings(is.numDomainNeighbors());
+                    computeBulkSource(globalPos, kernelWidth, id, lowDimElementIdx, bulkElementIdx, qpweight*ie/is.numDomainNeighbors());
 
                     // pre compute additional data used for the evaluation of
                     // the actual solution dependent source term
@@ -1083,15 +1083,15 @@ public:
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
-            const auto& inside = is.inside(0);
+            const auto& inside = is.targetEntity(0);
             const auto intersectionGeometry = is.geometry();
             const std::size_t lowDimElementIdx = this->problem(lowDimIdx).gridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
-            for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+            for (std::size_t outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
             {
-                const auto& outside = is.outside(outsideIdx);
+                const auto& outside = is.domainEntity(outsideIdx);
                 const std::size_t bulkElementIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
