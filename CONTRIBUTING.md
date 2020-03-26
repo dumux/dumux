@@ -60,7 +60,7 @@ If you have any questions or complaints about this workflow of contributing to D
 * If continuous integration (GitLabCI / BuildBot) is enabled for merge requests, the pipeline has to pass before merging anything to master.
 
 ## Backwards Compatibility
-As a general rule, all changes added to the dumux master version should be made 
+As a general rule, all changes added to the dumux master version should be made
 such that:
 *  all tests and modules using dumux will still compile, and
 *  the user is warned at compile time of any interface changes.
@@ -74,9 +74,9 @@ int oldMethod(const int x, const int y) const
 
 int newMethod(const int x, const int y, const int z) const
 { return x + y > z ? x + y : z; }
-``` 
+```
 
-or by adding intermediate method calls with warnings guarded by isValid 
+or by adding intermediate method calls with warnings guarded by isValid
 in the [`dumux/common/deprecated.hh`](dumux/common/deprecated.hh) header: (example 2)
 
 ```c++
@@ -87,9 +87,9 @@ struct HasNewCoolMethodIF
 
 template<class A, class B
          typename std::enable_if_t<!decltype(isValid(HasNewCoolMethodIF<B>()).template check<A>())::value, int> = 0>
-auto DUNE_DEPRECATED_MSG("Use new coolMethod() interface that additionally receives 
-                          the object b! This will be removed after 3.n release")
-coolMethod(const A a, const B b)
+[[deprecated("Use new coolMethod() interface that additionally receives
+              the object b! This will be removed after 3.n release")]]
+auto coolMethod(const A a, const B b)
 { return a.coolMethod(); }
 
 template<class A, class B,
@@ -98,7 +98,7 @@ auto coolMethod(const A a, const B b)
 { return a.coolMethod(b); }
 
 ```
-and replace the call with: 
+and replace the call with:
 
 ``` c++
 Deprecated::template coolMethod(a, b); //TODO: Replace this after release 3.n
@@ -112,14 +112,14 @@ In addition, please be sure to:
 *  mark all deprecated interfaces with the release after which the deprecated interface will be removed, and
 *  add a detailed description of the changes made to the [changelog](CHANGELOG.md)
 
-**In some more complicated cases,** guaranteeing backwards compatibility for all possible 
+**In some more complicated cases,** guaranteeing backwards compatibility for all possible
 cases is not feasible, or would require enormous intrusive changes.  In this case, we recommend you do the following:
 1.  Organize all changes neatly in a merge request.
 2.  Include a detailed description of the changes in the changelog.
 3.  Within the comments section of the merge request, mark one of the core developers,
- and document the reasons why guaranteeing backwards compatibility would not be feasible, and which cases will likely be effected. 
-4.  The core developers will decide if the changes and efforts are sufficient during the next monthly core developers meeting (aka DumuxDay). 
-5.  Should your efforts be deemed sufficient, continue with the standard MR procedure. 
+ and document the reasons why guaranteeing backwards compatibility would not be feasible, and which cases will likely be effected.
+4.  The core developers will decide if the changes and efforts are sufficient during the next monthly core developers meeting (aka DumuxDay).
+5.  Should your efforts be deemed sufficient, continue with the standard MR procedure.
 
 ## Patches
 
