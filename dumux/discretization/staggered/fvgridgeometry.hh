@@ -99,13 +99,6 @@ public:
     /*!
      * \brief Returns the actual gridGeometry we are a restriction of
      */
-    [[deprecated("Use actualGridGeometry instead")]]
-    const ActualGridGeometry& actualfvGridGeometry() const
-    { return actualGridGeometry(); }
-
-    /*!
-     * \brief Returns the actual gridGeometry we are a restriction of
-     */
     const ActualGridGeometry& actualGridGeometry() const
     { return *gridGeometry_; }
 

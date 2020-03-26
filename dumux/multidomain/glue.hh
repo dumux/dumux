@@ -153,21 +153,6 @@ public:
     TargetElement targetEntity(unsigned int n = 0) const
     { return targetTree_.entitySet().entity(std::get<targetIdx>(neighbors_)[n]); }
 
-    //! get the number of neigbors
-    [[deprecated("neighbor is deprecated and will be removed after release 3.1. Use numDomainNeighbors() / numTargetNeighbors()")]]
-    std::size_t neighbor(unsigned int side) const
-    { return std::max(std::get<domainIdx>(neighbors_).size(), std::get<targetIdx>(neighbors_).size()); }
-
-    //! get the inside (domain) neighbor
-    [[deprecated("outside is deprecated and will be removed after release 3.1. Use domainIdx(uint)")]]
-    DomainElement outside(unsigned int n) const
-    { return domainTree_.entitySet().entity(std::get<domainIdx>(neighbors_)[n]); }
-
-    //! get the outside (target) neighbor
-    [[deprecated("inside is deprecated and will be removed after release 3.1. Use targetIdx(uint)")]]
-    TargetElement inside(unsigned int n) const
-    { return targetTree_.entitySet().entity(std::get<targetIdx>(neighbors_)[n]); }
-
 private:
     IndexStorage neighbors_;
     std::vector<GlobalPosition> corners_;
