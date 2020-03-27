@@ -35,6 +35,8 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/algebratraits.hh>
 
+#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -144,9 +146,13 @@ int main(int argc, char** argv)
                                                   couplingManager);
 
     // the linear solver
-    using LinearSolver = ILUBiCGSTABIstlSolver<SeqLinearSolverTraits,
-                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolverTraits = std::tuple<LinearSolverTraits<OnePFVGridGeometry>,
+                                          LinearSolverTraits<PoroMechFVGridGeometry>>;
+    using LinearSolver = BlockDiagAMGBiCGSTABSolver<LinearSolverTraits>;
+    auto views = std::make_tuple(std::cref(leafGridView), std::cref(leafGridView));
+    auto mappers = std::make_tuple(onePFvGridGeometry->dofMapper(), poroMechFvGridGeometry->dofMapper());
+    auto groups = std::make_tuple(std::string("OneP"), std::string("PoroElastic"));
+    auto linearSolver = std::make_shared<LinearSolver>(views, mappers, groups);
 
     // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
