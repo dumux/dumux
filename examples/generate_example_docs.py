@@ -1,38 +1,49 @@
 #!/usr/bin/env python3
+
 import os
 import argparse
-import subprocess
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--directory", help="The folder to look for examples", default=".")
-parser.add_argument("-m", "--markdowngenerator", help="The markdown generator script taking a list of files", default="../bin/doc/cpp_to_md.sh")
-args = vars(parser.parse_args())
+from convert_code_to_doc import *
 
 def convertToMarkdownAndMerge(dir, includeList):
-    script = os.path.join(os.path.abspath(args["markdowngenerator"]))
     with open(os.path.join(dir, "README.md"), "w") as readme:
-        for include in includeList:
-            if os.path.splitext(include)[1] == ".md":
-                with open(include, "r") as markdown:
+        for include, description in includeList:
+            fileExtension = os.path.splitext(include)[1]
+            if fileExtension == ".md":
+                with open(os.path.join(dir, include), "r") as markdown:
                     readme.write(markdown.read())
+            elif fileExtension == ".hh" or fileExtension == ".cc":
+                title = description if description else "The file "
+                readme.write("\n\n## " + title + "`{}`\n\n\n".format(os.path.split(include)[1]))
+                with open(os.path.join(dir, include), "r") as cppCode:
+                    readme.write(transformCode(cppCode.read(), cppRules()) + "\n")
             else:
-                readme.write("\n\n## The file `{}`\n\n".format(os.path.split(include)[1]))
-                markdown = subprocess.check_output(["bash", script, include], encoding="utf-8")
-                readme.write(markdown + "\n")
+                raise IOError("Unsupported or unknown file extension *{}".format(fileExtension))
 
 def generateReadme(dir):
     includeList = None
+    # look for .doc_config, if not found we pass
     try:
         configname = os.path.join(dir, ".doc_config")
         with open(configname, 'r') as config:
-            includeList = [os.path.join(dir, include) for include in config.read().splitlines()]
+            def readline(line):
+                line = line.split()
+                if len(line) == 1:
+                    return [line[0], ""]
+                else:
+                    return [line[0], line[1]]
+            includeList = [readline(line) for line in config.read().splitlines()]
     except FileNotFoundError:
-        print("Error: The example directory {} does not contain a .doc_config file! Could not generate README.md!".format(dir))
-        raise
+        pass
     if includeList is not None:
         convertToMarkdownAndMerge(dir, includeList)
 
-for path in os.listdir(args["directory"]):
-    abspath = os.path.join(os.path.abspath(args["directory"]), path)
-    if os.path.isdir(abspath):
-        generateReadme(abspath)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--directory", help="The folder to look for examples", default=".")
+    args = vars(parser.parse_args())
+
+    for path in os.listdir(args["directory"]):
+        abspath = os.path.join(os.path.abspath(args["directory"]), path)
+        if os.path.isdir(abspath):
+            generateReadme(abspath)
