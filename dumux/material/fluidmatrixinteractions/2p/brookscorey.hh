@@ -269,10 +269,8 @@ public:
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        return 2.0*(swe - 1)*(1 + pow(swe, 2.0/params.lambda())*(1.0/params.lambda() + 1.0/2
-                                                                 - swe*(1.0/params.lambda() + 1.0/2)
-                                                                )
-                             );
+        return 2.0*(swe - 1)*(1 + (0.5 + 1/params.lambda())*pow(swe, 2.0/params.lambda())
+                                - (3.0/2.0 + 1/params.lambda())*pow(swe, 2.0/params.lambda()+1));
     }
 
 };
