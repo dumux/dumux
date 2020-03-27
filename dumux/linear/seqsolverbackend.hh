@@ -43,6 +43,7 @@
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/linear/preconditioners.hh>
 #include <dumux/linear/linearsolverparameters.hh>
+#include <dumux/linear/parallelhelpers.hh>
 
 namespace Dumux {
 
@@ -1212,6 +1213,7 @@ private:
  * | A  B |
  * | C  D |
  */
+template <class LinearSolverTraitsTuple>
 class BlockDiagAMGBiCGSTABSolver : public LinearSolver
 {
     template<class M, std::size_t i>
@@ -1229,24 +1231,154 @@ class BlockDiagAMGBiCGSTABSolver : public LinearSolver
     template<class M, std::size_t i>
     using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<DiagBlockType<M, i>, Dune::Amg::FirstDiagonal>>;
 
+    template<std::size_t i>
+    using LinearSolverTraits = typename std::tuple_element<i, LinearSolverTraitsTuple>::type;
+
     template<class M, class X, std::size_t i>
-    using LinearOperator = Dune::MatrixAdapter<DiagBlockType<M, i>, VecBlockType<X, i>, VecBlockType<X, i>>;
+    using SequentialLinearOperator = typename LinearSolverTraits<i>::template Sequential<DiagBlockType<M, i>, VecBlockType<X, i>>::LinearOperator;
+
+    template<class M, class X, std::size_t i>
+    using ParallelTraits = typename LinearSolverTraits<i>::template ParallelOverlapping<DiagBlockType<M, i>, VecBlockType<X, i>>;
+
+    template<class M, class X, std::size_t i>
+    using ParallelLinearOperator = typename ParallelTraits<M, X, i>::LinearOperator;
+
+    template<class M, class X, std::size_t i>
+    using ScalarProduct = typename ParallelTraits<M, X, i>::ScalarProduct;
+
+    template<class M, class X, std::size_t i>
+    using Comm = typename ParallelTraits<M, X, i>::Comm;
+
+    template<std::size_t i>
+    using ParallelHelperSP = std::shared_ptr<ParallelISTLHelper<typename std::tuple_element<i, LinearSolverTraitsTuple>::type>>;
+
+    template<std::size_t i>
+    using ParallelHelper = ParallelISTLHelper<typename std::tuple_element<i, LinearSolverTraitsTuple>::type>;
+
+    static constexpr auto numBlocks = std::tuple_size_v<LinearSolverTraitsTuple>;
+    using ParallelHelperTuple = typename makeFromIndexedType<std::tuple,
+                                                             ParallelHelperSP,
+                                                             std::make_index_sequence<numBlocks>
+                                                            >::type;
 
 public:
     using LinearSolver::LinearSolver;
+
+    template<class GridView, class DofMapper, class String>
+    BlockDiagAMGBiCGSTABSolver(const GridView& gridView,
+                               const DofMapper& dofMapper,
+                               const String& paramGroup = "")
+    : BlockDiagAMGBiCGSTABSolver(gridView, dofMapper, paramGroup, std::make_index_sequence<numBlocks>{})
+    {}
 
     // Solve saddle-point problem using a Schur complement based preconditioner
     template<class Matrix, class Vector>
     bool solve(const Matrix& m, Vector& x, const Vector& b)
     {
-        //! \todo Check whether the default accumulation mode atOnceAccu is needed.
-        //! \todo make parameters changeable at runtime from input file / parameter tree
+#if HAVE_MPI
+        solveSequentialOrParallel_(A, x, b);
+#else
+        solveSequential_(A, x, b);
+#endif
+        firstCall_ = false;
+        return result_.converged;
+    }
+
+    const Dune::InverseOperatorResult& result() const
+    {
+      return result_;
+    }
+
+    void reset()
+    {
+        firstCall_ = true;
+    }
+
+    std::string name() const
+    { return "block-diagonal AMG preconditioned BiCGSTAB solver"; }
+
+private:
+
+#if HAVE_MPI
+    template<class Matrix, class Vector>
+    void solveSequentialOrParallel_(const Matrix& m, Vector& x, const Vector& b)
+    {
+        using LSTraits = typename std::tuple_element<0, LinearSolverTraitsTuple>::type;
+
+        if (LSTraits::canCommunicate && isParallel_)
+        {
+            solveParallel_(m, x, b);
+        }
+        else
+        {
+            solveSequential_(m, x, b);
+        }
+    }
+
+    template<class Matrix, class Vector>
+    void solveParallel_(const Matrix& m, Vector& x, const Vector& b)
+    {
+        if (firstCall_)
+        {
+            using namespace Dune::Hybrid;
+            forEach(integralRange(Dune::Hybrid::size(m)), [&](const auto i)
+            {
+                std::get<i>(phelper_)->initGhostsAndOwners();
+            });
+        }
+
+        using LSTraits = typename std::tuple_element<0, LinearSolverTraitsTuple>::type;
+
         Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
-        params.setDefaultValuesIsotropic(3);
+        params.setDefaultValuesIsotropic(LSTraits::GridView::dimension);
         params.setDebugLevel(this->verbosity());
 
-        auto criterion = makeCriterion_<Criterion, Matrix>(params, std::make_index_sequence<Matrix::N()>{});
-        auto smootherArgs = makeSmootherArgs_<SmootherArgs, Matrix, Vector>(std::make_index_sequence<Matrix::N()>{});
+        auto criterion = makeCriterion_<Criterion, Matrix>(params, std::make_index_sequence<numBlocks>{});
+        auto smootherArgs = makeSmootherArgs_<SmootherArgs, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
+
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(m)), [&](const auto i)
+        {
+            auto& args = std::get<decltype(i)::value>(smootherArgs);
+            args->iterations = 1;
+            args->relaxationFactor = 1;
+        });
+
+        auto linearOperator = makeLOPSP_<ParallelLinearOperator, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
+        auto scalarProduct = makeSPSP_<ScalarProduct, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
+        auto comm = makeLOPSP_<Comm, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
+        forEach(integralRange(Dune::Hybrid::size(m)), [&](const auto i)
+        {
+            auto& ai = m[Dune::index_constant<i>{}][Dune::index_constant<i>{}];
+            auto& bi = b[Dune::index_constant<i>{}];
+            auto& c = std::get<i>(comm);
+            auto& lop = std::get<i>(linearOperator);
+            auto& sp = std::get<i>(scalarProduct);
+            auto& ph = *std::get<i>(phelper_);
+            prepareLinearAlgebraParallel<LinearSolverTraits<i>, ParallelTraits>(ai, bi, c, lop, sp, ph);
+        });
+
+//         BlockDiagAMGPreconditioner<Matrix, Vector, Vector> preconditioner(linearOperator, criterion, smootherArgs);
+//
+//         Dune::MatrixAdapter<Matrix, Vector, Vector> op(m);
+//         Dune::BiCGSTABSolver<Vector> solver(op, preconditioner, this->residReduction(),
+//                                             this->maxIter(), this->verbosity());
+//         auto bTmp(b);
+//         solver.apply(x, bTmp, result_);
+    }
+#endif
+
+    template<class Matrix, class Vector>
+    void solveSequential_(const Matrix& m, Vector& x, const Vector& b)
+    {
+        using LSTraits = typename std::tuple_element<0, LinearSolverTraitsTuple>::type;
+
+        Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
+        params.setDefaultValuesIsotropic(LSTraits::GridView::dimension);
+        params.setDebugLevel(this->verbosity());
+
+        auto criterion = makeCriterion_<Criterion, Matrix>(params, std::make_index_sequence<numBlocks>{});
+        auto smootherArgs = makeSmootherArgs_<SmootherArgs, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
 
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Matrix::N()>{}, [&](const auto i)
@@ -1256,7 +1388,7 @@ public:
             args->relaxationFactor = 1;
         });
 
-        auto linearOperator = makeLinearOperator_<LinearOperator, Matrix, Vector>(m, std::make_index_sequence<Matrix::N()>{});
+        auto linearOperator = makeLinearOperator_<SequentialLinearOperator, Matrix, Vector>(m, std::make_index_sequence<numBlocks>{});
 
         BlockDiagAMGPreconditioner<Matrix, Vector, Vector> preconditioner(linearOperator, criterion, smootherArgs);
 
@@ -1265,19 +1397,8 @@ public:
                                             this->maxIter(), this->verbosity());
         auto bTmp(b);
         solver.apply(x, bTmp, result_);
-
-        return result_.converged;
     }
 
-    const Dune::InverseOperatorResult& result() const
-    {
-      return result_;
-    }
-
-    std::string name() const
-    { return "block-diagonal AMG-preconditioned BiCGSTAB solver"; }
-
-private:
     template<template<class M, std::size_t i> class Criterion, class Matrix, class Params, std::size_t... Is>
     auto makeCriterion_(const Params& p, std::index_sequence<Is...>)
     {
@@ -1296,7 +1417,39 @@ private:
         return std::make_tuple(std::make_shared<LinearOperator<Matrix, Vector, Is>>(m[Dune::index_constant<Is>{}][Dune::index_constant<Is>{}])...);
     }
 
+    template<template<class M, class X, std::size_t i> class LinearOperator, class Matrix, class Vector, std::size_t... Is>
+    auto makeLOPSP_(std::index_sequence<Is...>)
+    {
+        return std::make_tuple(std::shared_ptr<LinearOperator<Matrix, Vector, Is>>()...);
+    }
+
+    template<template<class M, class X, std::size_t i> class ScalarProduct, class Matrix, class Vector, std::size_t... Is>
+    auto makeSPSP_(std::index_sequence<Is...>)
+    {
+        return std::make_tuple(std::shared_ptr<ScalarProduct<Matrix, Vector, Is>>()...);
+    }
+
+    template<template<class M, class X, std::size_t i> class Comm, class Matrix, class Vector, std::size_t... Is>
+    auto makeCommSP_(std::index_sequence<Is...>)
+    {
+        return std::make_tuple(std::shared_ptr<Comm<Matrix, Vector, Is>>()...);
+    }
+
+    template<class GridView, class DofMapper, class String, std::size_t... Is>
+    BlockDiagAMGBiCGSTABSolver(const GridView& gridView,
+                               const DofMapper& dofMapper,
+                               const String& paramGroup,
+                               std::index_sequence<Is...> is)
+    : phelper_(std::make_tuple(std::make_shared<ParallelHelper<Is>>(std::get<Is>(gridView), std::get<Is>(dofMapper))...))
+    , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+    {
+        reset();
+    }
+
+    ParallelHelperTuple phelper_;
     Dune::InverseOperatorResult result_;
+    bool isParallel_;
+    bool firstCall_;
 };
 
 // \}
