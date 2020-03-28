@@ -34,7 +34,7 @@ def cppRules():
     """
     Define a list of rules to apply for cpp source code
     """
-    suppressHeader = Suppress(Combine("// -*-" + SkipTo("*******/" + LineEnd()) + "*******/"))
+    suppressHeader = Suppress(Combine("// -*-" + SkipTo("*******/" + LineEnd(), include=True)))
     suppressHeaderGuard = Suppress("#ifndef" + Optional(restOfLine) + LineEnd() + "#define" + Optional(restOfLine))
     suppressEndHeaderGuard = Suppress("#endif" + Optional(restOfLine))
 
