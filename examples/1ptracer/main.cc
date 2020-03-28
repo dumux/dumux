@@ -68,6 +68,7 @@
 // At the beginning of each program using Dune, an instance `Dune::MPIHelper` has to
 // be created. Moreover, we parse the run-time arguments from the command line and the
 // input file:
+// [[codeblock]]
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -77,6 +78,7 @@ int main(int argc, char** argv) try
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);
+    // [[/codeblock]]
 
     // We define convenience aliases for the type tags of the two problems. The type
     // tags contain all the properties that are needed to run the simulations. Throughout
@@ -91,11 +93,13 @@ int main(int argc, char** argv) try
     // of the corners of the grid and the number of cells to be used to discretize each spatial direction.
     // Here, we solve both the single-phase and the tracer problem on the same grid, and thus,
     // the grid is only created once using the grid type defined by the type tag of the 1p problem.
+    // [[codeblock]]
     GridManager<GetPropType<OnePTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     // We compute on the leaf grid view.
     const auto& leafGridView = gridManager.grid().leafGridView();
+    // [[/codeblock]]
 
     // ### Step 2: Set-up and solving of the 1p problem
     // First, a finite volume grid geometry is constructed from the grid that was created above.
@@ -148,6 +152,7 @@ int main(int argc, char** argv) try
     // The solution vector `p` now contains the pressure field that is the solution to the single-phase
     // problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file using the Dune
     // `VTKWriter`. Moreover, we add the permeability distribution to the writer.
+    // [[codeblock]]
     using GridView = GetPropType<OnePTypeTag, Properties::GridView>;
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
     onepWriter.addCellData(p, "p");
@@ -162,13 +167,14 @@ int main(int argc, char** argv) try
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
-
+    // [[/codeblock]]
 
     // ### Step 3: Computation of the volume fluxes
     // We use the results of the 1p problem to calculate the volume fluxes across all sub-control volume
     // faces of the discretization and store them in the vector `volumeFlux`. In order to do so, we iterate
     // over all elements of the grid, and in each element compute the volume fluxes for all sub-control volume
     // faces embeded in that element.
+    // [[codeblock]]
     using Scalar =  GetPropType<OnePTypeTag, Properties::Scalar>; // type for scalar values
     std::vector<Scalar> volumeFlux(gridGeometry->numScvf(), 0.0);
 
@@ -204,6 +210,7 @@ int main(int argc, char** argv) try
             volumeFlux[scvf.index()] = fluxVars.advectiveFlux(0, upwindTerm);
         }
     }
+    // [[/codeblock]]
 
     // ### Step 4: Set-up and solving of the tracer problem
     // First, we instantiate the tracer problem containing initial and boundary conditions,
@@ -227,6 +234,7 @@ int main(int argc, char** argv) try
     // Let us now instantiate the time loop. Therefore, we read in some time loop parameters from the input file.
     // The parameter `tEnd` defines the duration of the simulation, `dt` the initial time step size and `maxDt` the maximal time step size.
     // Moreover, we define 10 check points in the time loop at which we will write the solution to vtk files.
+    // [[codeblock]]
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
@@ -235,6 +243,7 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
+    // [[/codeblock]]
 
     // We create and initialize the assembler with a time loop for the transient problem.
     // Within the time loop, we will use this assembler in each time step to assemble the linear system.
@@ -245,6 +254,7 @@ int main(int argc, char** argv) try
     // The following lines of code initialize the vtk output module, add the velocity output facility
     // and write out the initial solution. At each checkpoint, we will use the output module to write
     // the solution of a time step into a corresponding vtk file.
+    // [[codeblock]]
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, tracerProblem->name());
 
     // add model-specific output fields to the writer
@@ -257,12 +267,14 @@ int main(int argc, char** argv) try
 
     // write initial solution
     vtkWriter.write(0.0);
+    // [[/codeblock]]
 
     // #### The time loop
     // We start the time loop and solve a new time step as long as `tEnd` is not reached. In every time step,
     // the problem is assembled and solved, the solution is updated, and when a checkpoint is reached the solution
     // is written to a new vtk file. In addition, statistics related to CPU time, the current simulation time
     // and the time step sizes used is printed to the terminal.
+    // [[codeblock]]
     timeLoop->start(); do
     {
         // First we define the old solution as the solution of the previous time step for storage evaluations.
@@ -309,6 +321,7 @@ int main(int argc, char** argv) try
         timeLoop->setTimeStepSize(dt);
 
     } while (!timeLoop->finished());
+    // [[/codeblock]]
 
     // The following piece of code prints a final status report of the time loop
     //  before the program is terminated.
@@ -319,6 +332,7 @@ int main(int argc, char** argv) try
 // ### Exception handling
 // In this part of the main file we catch and print possible exceptions that could
 // occur during the simulation.
+// [[codeblock]]
 // errors related to run-time parameters
 catch (Dumux::ParameterException &e)
 {
@@ -347,3 +361,4 @@ catch (...)
     std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
     return 4;
 }
+// [[/codeblock]]
