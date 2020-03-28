@@ -13,8 +13,9 @@ def convertToMarkdownAndMerge(dir, includeList):
                 with open(os.path.join(dir, include), "r") as markdown:
                     readme.write(markdown.read())
             elif fileExtension == ".hh" or fileExtension == ".cc":
-                title = description if description else "The file "
-                readme.write("\n\n## " + title + "`{}`\n\n\n".format(os.path.split(include)[1]))
+                title = description + " (`{}`)\n\n\n" if description else "The file `{}`\n\n\n"
+                title = title.format(os.path.split(include)[1])
+                readme.write("\n\n## " + title)
                 with open(os.path.join(dir, include), "r") as cppCode:
                     readme.write(transformCode(cppCode.read(), cppRules()) + "\n")
             else:
@@ -27,7 +28,7 @@ def generateReadme(dir):
         configname = os.path.join(dir, ".doc_config")
         with open(configname, 'r') as config:
             def readline(line):
-                line = line.split()
+                line = line.split(' ', 1)
                 if len(line) == 1:
                     return [line[0], ""]
                 else:
