@@ -10,7 +10,7 @@ from pyparsing import *
 # tell pyparsing to never ignore white space characters
 ParserElement.setDefaultWhitespaceChars('')
 
-def taggedContent(keyname, action, open="[[", close="]]", endTag="/"):
+def parseTaggedContent(keyname, action, open="[[", close="]]", endTag="/"):
     """
     Match content between [[keyname]] and [[/keyname]] and apply the action on it
     """
@@ -39,11 +39,11 @@ def cppRules():
     endHeaderGuard = Suppress(Literal("#endif") + Optional(restOfLine))
 
     # exclude stuff between [[exclude]] and [[/exclude]]
-    exclude = taggedContent("exclude", action=replaceWith(""))
+    exclude = parseTaggedContent("exclude", action=replaceWith(""))
 
     # make a code block (possibly containing comments) between [[codeblock]] and [[/codeblock]]
     action = createMarkdownCode("cpp")
-    codeblock = taggedContent("codeblock", action=action)
+    codeblock = parseTaggedContent("codeblock", action=action)
 
     # treat doc and code line
     doc = LineStart() + Suppress(ZeroOrMore(" ") + Literal("//") + ZeroOrMore(" ")) + Optional(restOfLine)
