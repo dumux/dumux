@@ -25,10 +25,12 @@
 // is computed from that pressure distribution, which is then passed to a tracer problem to solve
 // the transport of an initial contamination through the model domain.
 // ### Included header files
+// [[exclude]]
 // Some generic includes.
 #include <config.h>
 #include <ctime>
 #include <iostream>
+// [[/exclude]]
 
 // These are DUNE helper classes related to parallel computations, time measurements and file I/O
 #include <dune/common/parallel/mpihelper.hh>
