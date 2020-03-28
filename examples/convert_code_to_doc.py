@@ -38,9 +38,6 @@ def cppRules():
     headerGuard = Suppress(Literal("#ifndef") + Optional(restOfLine) + LineEnd() + Literal("#define") + Optional(restOfLine))
     endHeaderGuard = Suppress(Literal("#endif") + Optional(restOfLine))
 
-    # exclude stuff between [[exclude]] and [[/exclude]]
-    exclude = parseTaggedContent("exclude", action=replaceWith(""))
-
     # make a code block (possibly containing comments) between [[codeblock]] and [[/codeblock]]
     action = createMarkdownCode("cpp")
     codeblock = parseTaggedContent("codeblock", action=action)
@@ -51,9 +48,14 @@ def cppRules():
     code.setParseAction(action)
     docTransforms = codeblock | doc | code
 
-    return [header, headerGuard, endHeaderGuard, exclude, docTransforms]
+    return [header, headerGuard, endHeaderGuard, docTransforms]
 
 def transformCode(code, rules):
+
+    # exclude stuff between [[exclude]] and [[/exclude]]
+    exclude = parseTaggedContent("exclude", action=replaceWith(""))
+    code = exclude.transformString(code)
+
     for transform in rules:
         code = transform.transformString(code)
     return code
