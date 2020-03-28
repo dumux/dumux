@@ -27,7 +27,7 @@ def createMarkdownCode(markDownToken):
         if not token[0].rstrip():
             return ""
         else:
-            return "```" + markDownToken + "\n" + token[0].rstrip() + "\n```\n"
+            return "\n```" + markDownToken + "\n" + token[0].rstrip() + "\n```\n\n"
     return action
 
 def cppRules():
