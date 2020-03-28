@@ -34,21 +34,21 @@ def cppRules():
     """
     Define a list of rules to apply for cpp source code
     """
-    header = Suppress(Combine("// -*-" + SkipTo("*******/" + LineEnd()) + "*******/"))
-    headerGuard = Suppress("#ifndef" + Optional(restOfLine) + LineEnd() + "#define" + Optional(restOfLine))
-    endHeaderGuard = Suppress("#endif" + Optional(restOfLine))
+    suppressHeader = Suppress(Combine("// -*-" + SkipTo("*******/" + LineEnd()) + "*******/"))
+    suppressHeaderGuard = Suppress("#ifndef" + Optional(restOfLine) + LineEnd() + "#define" + Optional(restOfLine))
+    suppressEndHeaderGuard = Suppress("#endif" + Optional(restOfLine))
 
     # make a code block (possibly containing comments) between [[codeblock]] and [[/codeblock]]
-    action = createMarkdownCode("cpp")
-    codeblock = parseTaggedContent("codeblock", action=action)
+    createCppBlock = createMarkdownCode("cpp")
+    parseCodeblock = parseTaggedContent("codeblock", action=createCppBlock)
 
     # treat doc and code line
-    doc = LineStart() + Suppress(ZeroOrMore(" ") + "//" + ZeroOrMore(" ")) + Optional(restOfLine)
-    code = LineStart() + ~(ZeroOrMore(" ") + "//") + (SkipTo(doc) | SkipTo(StringEnd()))
-    code.setParseAction(action)
-    docTransforms = codeblock | doc | code
+    parseDoc = LineStart() + Suppress(ZeroOrMore(" ") + "//" + ZeroOrMore(" ")) + Optional(restOfLine)
+    parseCode = LineStart() + ~(ZeroOrMore(" ") + "//") + (SkipTo(parseDoc) | SkipTo(StringEnd()))
+    parseCode.setParseAction(createCppBlock)
+    docTransforms = parseCodeblock | parseDoc | parseCode
 
-    return [header, headerGuard, endHeaderGuard, docTransforms]
+    return [suppressHeader, suppressHeaderGuard, suppressEndHeaderGuard, docTransforms]
 
 def transformCode(code, rules):
 
