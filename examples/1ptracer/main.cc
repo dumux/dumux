@@ -25,6 +25,7 @@
 // is computed from that pressure distribution, which is then passed to a tracer problem to solve
 // the transport of an initial contamination through the model domain.
 // ### Included header files
+// <details>
 // [[exclude]]
 // Some generic includes.
 #include <config.h>
@@ -62,6 +63,8 @@
 // at the documentation provided therein.
 #include "properties_1p.hh"
 #include "properties_tracer.hh"
+// </details>
+//
 
 // ### The main function
 // We will now discuss the main program flow implemented within the `main` function.
@@ -332,6 +335,7 @@ int main(int argc, char** argv) try
 // ### Exception handling
 // In this part of the main file we catch and print possible exceptions that could
 // occur during the simulation.
+// <details>
 // [[codeblock]]
 // errors related to run-time parameters
 catch (Dumux::ParameterException &e)
@@ -362,3 +366,4 @@ catch (...)
     return 4;
 }
 // [[/codeblock]]
+// </details>
