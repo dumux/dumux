@@ -14,8 +14,8 @@ def parseTaggedContent(keyname, action, open="[[", close="]]", endTag="/"):
     """
     Match content between [[keyname]] and [[/keyname]] and apply the action on it
     """
-    start = LineStart() + ZeroOrMore(" ") + Literal("//") + ZeroOrMore(" ") + Literal(open + str(keyname) + close)
-    end = LineStart() + ZeroOrMore(" ") + Literal("//") + ZeroOrMore(" ") + Literal(open + endTag + str(keyname) + close)
+    start = LineStart() + ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + Literal(open + str(keyname) + close)
+    end = LineStart() + ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + Literal(open + endTag + str(keyname) + close)
     return start.suppress() + SkipTo(end).setParseAction(action) + end.suppress()
 
 def createMarkdownCode(markDownToken):
@@ -34,17 +34,17 @@ def cppRules():
     """
     Define a list of rules to apply for cpp source code
     """
-    header = Suppress(Combine(Literal("// -*-") + SkipTo(Literal("*******/") + LineEnd()) + Literal("*******/")))
-    headerGuard = Suppress(Literal("#ifndef") + Optional(restOfLine) + LineEnd() + Literal("#define") + Optional(restOfLine))
-    endHeaderGuard = Suppress(Literal("#endif") + Optional(restOfLine))
+    header = Suppress(Combine("// -*-" + SkipTo("*******/" + LineEnd()) + "*******/"))
+    headerGuard = Suppress("#ifndef" + Optional(restOfLine) + LineEnd() + "#define" + Optional(restOfLine))
+    endHeaderGuard = Suppress("#endif" + Optional(restOfLine))
 
     # make a code block (possibly containing comments) between [[codeblock]] and [[/codeblock]]
     action = createMarkdownCode("cpp")
     codeblock = parseTaggedContent("codeblock", action=action)
 
     # treat doc and code line
-    doc = LineStart() + Suppress(ZeroOrMore(" ") + Literal("//") + ZeroOrMore(" ")) + Optional(restOfLine)
-    code = LineStart() + ~(ZeroOrMore(" ") + Literal("//")) + (SkipTo(doc) | SkipTo(StringEnd()))
+    doc = LineStart() + Suppress(ZeroOrMore(" ") + "//" + ZeroOrMore(" ")) + Optional(restOfLine)
+    code = LineStart() + ~(ZeroOrMore(" ") + "//") + (SkipTo(doc) | SkipTo(StringEnd()))
     code.setParseAction(action)
     docTransforms = codeblock | doc | code
 
