@@ -14,8 +14,8 @@ def parseTaggedContent(keyname, action, open="[[", close="]]", endTag="/"):
     """
     Match content between [[keyname]] and [[/keyname]] and apply the action on it
     """
-    start = LineStart() + ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + Literal(open + str(keyname) + close)
-    end = LineStart() + ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + Literal(open + endTag + str(keyname) + close)
+    start = LineStart() + ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + Literal(open + str(keyname) + close) + LineEnd()
+    end = LineStart() + ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + Literal(open + endTag + str(keyname) + close) + LineEnd()
     return start.suppress() + SkipTo(end).setParseAction(action) + end.suppress()
 
 def createMarkdownCode(markDownToken):
