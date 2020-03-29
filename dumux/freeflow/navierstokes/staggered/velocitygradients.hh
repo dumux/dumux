@@ -24,7 +24,7 @@
 #ifndef DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYGRADIENTS_HH
 #define DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYGRADIENTS_HH
 
-#include <dune/common/std/optional.hh>
+#include <optional>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
@@ -100,8 +100,8 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const SubControlVolumeFace& scvf,
                                  const FaceVariables& faceVars,
-                                 const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                 const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                 const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                 const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                  const std::size_t localSubFaceIdx)
     {
         const auto eIdx = scvf.insideScvIdx();
@@ -174,8 +174,8 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const SubControlVolumeFace& scvf,
                                  const FaceVariables& faceVars,
-                                 const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                 const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                 const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                 const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                  const std::size_t localSubFaceIdx)
     {
         const auto eIdx = scvf.insideScvIdx();
@@ -243,8 +243,8 @@ public:
                                                      const FVElementGeometry& fvGeometry,
                                                      const SubControlVolumeFace& scvf,
                                                      const FaceVariables& faceVars,
-                                                     const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                     const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                     const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                     const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                      const std::size_t localSubFaceIdx)
     {
         const auto eIdx = scvf.insideScvIdx();
@@ -303,8 +303,8 @@ public:
                                                      const FVElementGeometry& fvGeometry,
                                                      const SubControlVolumeFace& scvf,
                                                      const FaceVariables& faceVars,
-                                                     const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                     const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                     const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                     const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                      const std::size_t localSubFaceIdx)
     {
         const auto eIdx = scvf.insideScvIdx();
