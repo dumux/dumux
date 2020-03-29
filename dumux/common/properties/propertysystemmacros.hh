@@ -45,6 +45,8 @@ DUMUX_ENABLE_OLD_PROPERTY_MACROS defaults to 1 (true) until release 3.1. \
 After release 3.1 it will default to 0 (false) so you will have to manually \
 enable property macros in order to use them."
 
+#include <cstddef>
+
 #include <dumux/common/properties/propertysystem.hh>
 
 namespace Dumux {
