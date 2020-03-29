@@ -30,7 +30,6 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
