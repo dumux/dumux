@@ -122,9 +122,9 @@ private:
 
         using FluidSystem = typename PlotThermalConductivityModel::FluidSystem;
 
-        Scalar saturation(int phaseIdx) const
+        Scalar saturation(const int phaseIdx) const
         {
-            if (phaseIdx == wettingPhaseIdx())
+            if (phaseIdx == wettingPhase())
                 return saturation_;
             else
                 return 1.0 - saturation_;
@@ -132,14 +132,14 @@ private:
 
         Scalar fluidThermalConductivity(const int phaseIdx) const
         {
-            if (phaseIdx == wettingPhaseIdx())
+            if (phaseIdx == wettingPhase())
                 return lambdaW_;
             else
                 return lambdaN_;
         }
 
-        Scalar wettingPhaseIdx() const
-        { return phase0Idx;}
+        int wettingPhase() const
+        { return phase0Idx; }
 
         Scalar porosity() const
         { return porosity_; }

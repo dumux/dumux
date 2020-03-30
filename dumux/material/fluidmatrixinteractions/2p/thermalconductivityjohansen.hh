@@ -82,8 +82,8 @@ public:
         // TODO: there should be an assertion that the indices are correct and 0 is actually the wetting phase!
 
         const Scalar sw = volVars.saturation(volVars.wettingPhaseIdx());
-        const Scalar lambdaW = volVars.fluidThermalConductivity(volVars.wettingPhaseIdx());
-        const Scalar lambdaN = volVars.fluidThermalConductivity(1-volVars.wettingPhaseIdx());
+        const Scalar lambdaW = volVars.fluidThermalConductivity(volVars.wettingPhase());
+        const Scalar lambdaN = volVars.fluidThermalConductivity(1-volVars.wettingPhase());
         const Scalar lambdaSolid = volVars.solidThermalConductivity();
         const Scalar porosity = volVars.porosity();
         const Scalar rhoSolid = volVars.solidDensity();

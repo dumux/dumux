@@ -287,7 +287,7 @@ public:
     /*!
      * \brief Returns the wetting phase index
      */
-    const int wettingPhaseIdx() const
+    int wettingPhase() const
     {  return wPhaseIdx_; }
 
 protected:
