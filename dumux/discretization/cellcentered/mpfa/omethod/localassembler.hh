@@ -25,6 +25,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
+#include <algorithm>
+
 #include <dumux/discretization/cellcentered/mpfa/localassemblerbase.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerhelper.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
@@ -104,6 +106,14 @@ public:
                 A[zeroRowIndices.first] = 0.0;
                 handle.CA()[faceIdx] = 0.0;
                 handle.T()[faceIdx] = 0.0;
+
+                // reset outside transmissibilities on surface grids
+                static constexpr int dim = IV::Traits::GridView::dimension;
+                static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
+                if constexpr (dim < dimWorld)
+                    std::for_each( handle.tijOutside()[faceIdx].begin(),
+                                   handle.tijOutside()[faceIdx].end(),
+                                   [] (auto& outsideTij) { outsideTij = 0.0; } );
             }
         }
     }
