@@ -24,12 +24,12 @@ In the following, we take a close look at the files containing the set-up: At fi
 ## The file `problem.hh`
 
 
-
 ### The problem class
 We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
 
 As this is a Stokes problem, we inherit from the basic <code>NavierStokesProblem</code>.
 <details><summary>Toggle to expand code:</summary>
+
 ```cpp
 
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -40,11 +40,13 @@ template <class TypeTag>
 class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
 {
 ```
+
 </details>
 
 We use convenient declarations that we derive from the property system.
 <details>
 <summary>Toggle to expand code (convenient declarations)</summary>
+
 
 ```cpp
     using ParentType = NavierStokesProblem<TypeTag>;
@@ -62,6 +64,7 @@ We use convenient declarations that we derive from the property system.
 
 public:
 ```
+
 </details>
 
 There follows the constructor of our problem class:
@@ -69,6 +72,7 @@ Within the constructor, we set the inlet velocity to a run-time specified value.
 As no run-time value is specified, we set the outlet pressure to 1.1e5 Pa.
 <details>
 <summary>Toggle to expand code (constructor)</summary>
+
 
 ```cpp
     ChannelExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -78,6 +82,7 @@ As no run-time value is specified, we set the outlet pressure to 1.1e5 Pa.
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
     }
 ```
+
 </details>
 
 Now, we define the type of initial and boundary conditions depending on location.
@@ -93,6 +98,7 @@ if isOutlet_ is true and specify Dirichlet boundaries for velocity on the top an
 of our domain else.
 <details>
 <summary>Toggle to expand code (<code>boundaryTypesAtPos</code>)</summary>
+
 
 ```cpp
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -117,6 +123,7 @@ of our domain else.
         return values;
     }
 ```
+
 </details>
 
 Second, we specify the values for the Dirichlet boundaries. We need to fix the values of our primary variables.
@@ -124,6 +131,7 @@ To ensure a no-slip boundary condition at the top and bottom of the channel, the
 in x-direction is set to zero if not at the inlet.
 <details>
 <summary>Toggle to expand code (<code>dirichletAtPos</code>)</summary>
+
 
 ```cpp
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
@@ -138,12 +146,14 @@ in x-direction is set to zero if not at the inlet.
         return values;
     }
 ```
+
 </details>
 
 We specify the values for the initial conditions.
 We assign constant values for pressure and velocity components.
 <details>
 <summary>Toggle to expand code (<code>initialAtPos</code>)</summary>
+
 
 ```cpp
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
@@ -157,6 +167,7 @@ We assign constant values for pressure and velocity components.
         return values;
     }
 ```
+
 </details>
 
 We need to specify a constant temperature for our isothermal problem.
@@ -164,16 +175,19 @@ We set it to 10°C.
 <details>
 <summary>Toggle to expand code (<code>temperature</code>)</summary>
 
+
 ```cpp
     Scalar temperature() const
     { return 273.15 + 10; }
 private:
 ```
+
 </details>
 
 The inlet is at the left side of the physical domain.
 <details>
 <summary>Toggle to expand code (<code>isInlet_</code>)</summary>
+
 
 ```cpp
     bool isInlet_(const GlobalPosition& globalPos) const
@@ -181,11 +195,13 @@ The inlet is at the left side of the physical domain.
         return globalPos[0] < eps_;
     }
 ```
+
 </details>
 
 The outlet is at the right side of the physical domain.
 <details>
 <summary>Toggle to expand code (<code>isOutlet_</code>)</summary>
+
 
 ```cpp
     bool isOutlet_(const GlobalPosition& globalPos) const
@@ -193,11 +209,13 @@ The outlet is at the right side of the physical domain.
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 ```
+
 </details>
 
 Finally, private variables are declared:
 <details>
 <summary>Toggle to expand code (private variables)</summary>
+
 
 ```cpp
     static constexpr Scalar eps_=1e-6;
@@ -205,9 +223,10 @@ Finally, private variables are declared:
     Scalar outletPressure_;
 };
 }
-#endif
 ```
+
 </details>
+
 
 
 
@@ -226,18 +245,21 @@ and another standard header for in- and output.
 <details>
 <summary>Toggle to expand code (includes of problem file and of standard headers)</summary>
 
+
 ```cpp
 #include <config.h>
 
 #include <ctime>
 #include <iostream>
 ```
+
 </details>
 
 Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and
 linear solvers. So we need some includes from that.
 <details>
 <summary>Toggle to expand code (dune includes)</summary>
+
 
 ```cpp
 #include <dune/common/parallel/mpihelper.hh>
@@ -246,6 +268,7 @@ linear solvers. So we need some includes from that.
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 ```
+
 </details>
 
 In Dumux, a property system is used to specify the model. For this, different properties are defined containing
@@ -266,6 +289,7 @@ different supported grid managers.
 The following class contains functionality for additional flux output to the console.
 <details>
 <summary>Toggle to expand code (dumux includes)</summary>
+
 
 ```cpp
 #include <dumux/common/properties.hh>
@@ -290,6 +314,7 @@ The following class contains functionality for additional flux output to the con
 
 #include "problem.hh"
 ```
+
 </details>
 </details>
 
@@ -301,6 +326,7 @@ We setup the DuMux properties for our simulation (click [here](https://git.iws.u
 3. We set the `FluidSystem` to be a one-phase liquid with a single component. The class `Component::Constant` refers to a component with constant fluid properties (density, viscosity, ...) that can be set via the input file in the group `[0.Component]` where the number is the identifier given as template argument to the class template `Component::Constant`.
 4. The problem class `ChannelExampleProblem`, which is forward declared before we enter `namespace Dumux` and defined later in this file, is defined to be the problem used in this test problem (charaterized by the TypeTag `ChannelExample`). The fluid system, which contains information about the properties such as density, viscosity or diffusion coefficient of the fluid we're simulating, is set to a constant one phase liquid.
 5. We enable caching for the following classes (which stores values that were already calculated for later usage and thus results in higher memory usage but improved CPU speed): the grid volume variables, the grid flux variables, the finite volume grid geometry.
+
 
 ```cpp
 namespace Dumux::Properties {
@@ -334,10 +360,12 @@ struct EnableGridGeometryCache<TypeTag, TTag::ChannelExample> { static constexpr
 ```
 
 
+
 ### Beginning of the main function
 We begin the main function by making the type tag `ChannelExample`, that we defined in `problem.hh` for this test problem available here.
 Then we initializing the message passing interface (MPI), even if we do not plan to run the application in parallel. Finalizing of the MPI is done automatically on exit.
 We continue by printing the dumux start message and parsing the command line arguments and runtimeparameters from the input file in the init function.
+
 
 ```cpp
 int main(int argc, char** argv) try
@@ -354,6 +382,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 ```
 
+
 ### Set-up and solving of the problem
 
 A gridmanager tries to create the grid either from a grid file or the input file. You can learn more about grids in
@@ -369,6 +398,7 @@ and then use the solution vector to intialize the `gridVariables`. Grid variable
 primary variables (velocities, pressures) as well as secondary variables (density, viscosity, ...).
 We then initialize the vtkoutput. Each model has a predefined model-specific output with relevant parameters
 for that model. Here, it is pressure, velocity, density and process rank (relevant in the case of parallelisation).
+
 
 ```cpp
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -399,6 +429,7 @@ for that model. Here, it is pressure, velocity, density and process rank (releva
     vtkWriter.write(0.0);
 ```
 
+
 We set up two surfaces over which fluxes are calculated.
 We determine the extensions [xMin,xMax]x[yMin,yMax] of the physical domain.
 The first surface (added by the first call of addSurface) shall be placed at the middle of the channel.
@@ -407,6 +438,7 @@ at the position of the surface (which is required for the flux calculation).
 In this case, we add half a cell-width to the x-position in order to make sure that
 the cell faces lie on the surface. This assumes a regular cartesian grid.
 The second surface (second call of addSurface) is placed at the outlet of the channel.
+
 
 ```cpp
     FluxOverSurface<GridVariables,
@@ -442,6 +474,7 @@ The second surface (second call of addSurface) is placed at the outlet of the ch
     flux.addSurface("outlet", p0outlet, p1outlet);
 ```
 
+
 The incompressible Stokes equation depends only linearly on the velocity, so we could use a linear solver to solve the problem.
 Here, we use the show the more general case which would also work for incompressible fluids or the
 Navier-Stokes equation. We use non-linear Newton solver for the solution.
@@ -450,6 +483,7 @@ In each step of the Newton solver, we assemble the respective linear system, inc
 As a postprocessing, we calculate mass and volume fluxes over the planes specified above.
 <details>
 <summary>Toggle to expand code (assembly, solution process, postprocessing)</summary>
+
 
 ```cpp
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
@@ -466,6 +500,7 @@ As a postprocessing, we calculate mass and volume fluxes over the planes specifi
     flux.calculateMassOrMoleFluxes();
     flux.calculateVolumeFluxes();
 ```
+
 </details>
 
 ### Final Output
@@ -474,6 +509,7 @@ We conclude by printing the dumux end message. After the end of the main functio
 possibly catched error messages are printed.
 <details>
 <summary>Toggle to expand code (final output)</summary>
+
 
 ```cpp
     vtkWriter.write(1.0);
@@ -525,6 +561,7 @@ catch (...)
     return 4;
 }
 ```
+
 </details>
 
 
