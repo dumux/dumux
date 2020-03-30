@@ -250,9 +250,11 @@ private:
                     {
                         if (abs(wijk[faceIdx][0][localDir]) < wijZeroThresh)
                         {
-                            insideZeroWij = !curGlobalScvf.boundary();
                             if (!curIsDirichlet)
+                            {
+                                insideZeroWij = true;
                                 faceMarkers.emplace_back( std::make_pair(curLocalDofIdx, faceIdx) );
+                            }
                         }
                     }
 
@@ -308,7 +310,8 @@ private:
                             const auto& otherLocalScvf = iv.localScvf(otherLocalScvfIdx);
                             const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
 
-                            if (otherLocalDofIdx == curLocalDofIdx && insideZeroWij)
+                            // check for zero transmissibilities (skip if inside has been zero already)
+                            if (otherLocalDofIdx == curLocalDofIdx && !insideZeroWij)
                                 if (abs(wijk[faceIdx][idxOnScvf][localDir]) < wijZeroThresh)
                                     faceMarkers.emplace_back( std::make_pair(curLocalDofIdx, faceIdx) );
 
