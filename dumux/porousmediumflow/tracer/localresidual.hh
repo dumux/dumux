@@ -192,9 +192,10 @@ public:
                                const VolumeVariables& curVolVars,
                                const SubControlVolume& scv) const
     {
+        const auto saturation = curVolVars.saturation(phaseIdx);
         const auto porosity = curVolVars.porosity();
         const auto rho = useMoles ? curVolVars.molarDensity() : curVolVars.density();
-        const auto d_storage = scv.volume()*porosity*rho/this->timeLoop().timeStepSize();
+        const auto d_storage = scv.volume()*porosity*rho*saturation/this->timeLoop().timeStepSize();
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             partialDerivatives[compIdx][compIdx] += d_storage;
