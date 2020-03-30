@@ -628,22 +628,30 @@ private:
 
                     // Effective diffusion coefficients might get zero if saturation = 0.
                     // Compute epsilon to detect obsolete rows in the iv-local matrices during assembly
-                    if constexpr (ModelTraits::numFluidPhases() > 1)
+                    const auto& scv = *scvs(fvGeometry()).begin();
+                    const auto& scvf = *scvfs(fvGeometry()).begin();
+                    const auto& vv = elemVolVars()[scv];
+                    const auto D = [&] ()
                     {
-                        const auto& scv = *scvs(fvGeometry()).begin();
-                        const auto& scvf = *scvfs(fvGeometry()).begin();
-                        const auto& vv = elemVolVars()[scv];
-                        const auto& D = vv.diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
-                        const auto tij = computeTpfaTransmissibility(scvf, scv, D, vv.extrusionFactor())*scvf.area();
-                        // use transmissibility with molecular coefficient for epsilon estimate
-                        localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD, tij*1e-7);
-                    }
-                    else
-                        localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD);
+                        // diffusion coefficients below 1e-20 are treated as zeroes!!
+                        using std::max;
+                        if constexpr (!FluidSystem::isTracerFluidSystem())
+                            return max(1e-20, vv.diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx));
+                        else
+                            return max(1e-20, vv.diffusionCoefficient(0, 0, compIdx));
+                    } ();
+
+                    auto eps = 1e-7*computeTpfaTransmissibility(scvf, scv, D, vv.extrusionFactor())*scvf.area();
+                    localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD, eps);
                 }
 
                 // assemble vector of mole fractions
-                auto getMassOrMoleFraction = [phaseIdx, compIdx] (const auto& volVars) { return  (DiffusionType::referenceSystemFormulation()  == ReferenceSystemFormulation::massAveraged) ?volVars.massFraction(phaseIdx, compIdx) : volVars.moleFraction(phaseIdx, compIdx); };
+                auto getMassOrMoleFraction = [phaseIdx, compIdx] (const auto& volVars)
+                {
+                    return (DiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged) ? volVars.massFraction(phaseIdx, compIdx) :
+                                                                                                                       volVars.moleFraction(phaseIdx, compIdx);
+                };
+
                 localAssembler.assembleU(handle.diffusionHandle(), iv, getMassOrMoleFraction);
             }
         }
