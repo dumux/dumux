@@ -17,10 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// the header guard
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
+// ## The file `spatialparams_1p.hh`
+//
+//
 // In this file, we generate a random permeability field in the constructor of the `OnePTestSpatialParams` class.
 // For this, we use the random number generation facilities provided by the C++ standard library.
 #include <random>

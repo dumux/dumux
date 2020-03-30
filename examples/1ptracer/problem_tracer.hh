@@ -17,10 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// ### Header guard
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
+// ## The file `problem_tracer.hh`
+//
+//
 //Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
 // Again, we use YaspGrid, the implementation of the dune grid interface for structured grids:

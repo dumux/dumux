@@ -17,13 +17,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// ## Header guard
-// The header guard (or include guard) prevents compilation errors due to duplicate definitions.
-// Here, a unique name needs to be defined for the header file:
 #ifndef DUMUX_LENSPROBLEM_POINTSOURCE_ADAPTIVE_HH
 #define DUMUX_LENSPROBLEM_POINTSOURCE_ADAPTIVE_HH
 
-// ## Include files
+// ## The file `problem.hh`
+//
+//
+// ### Include files
 // The grid we use
 #include <dune/alugrid/grid.hh>
 
@@ -125,7 +125,7 @@ namespace Dumux {
   //We leave the namespace Properties.
   }
 
-// ## The problem class
+// ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 // As this is a porous medium problem, we inherit from the basic PorousMediumFlowProblem.
 template <class TypeTag >

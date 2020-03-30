@@ -16,7 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-// ## The main file
+// ## The file `main.cc`
+//
+//
 // This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method
 // ### Includes
 #include <config.h>
@@ -110,7 +112,7 @@ int main(int argc, char** argv) try
     // In the problem, we define the boundary and initial conditions.
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
-    // We call the `computePointSourceMap` method  to compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the `dumux/common/fvproblem.hh`. It calls the `addPointSources` method specified in the `problem.hh` file.
+    // We call the `computePointSourceMap` method to compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the `dumux/common/fvproblem.hh`. It calls the `addPointSources` method specified in the `problem.hh` file.
     problem->computePointSourceMap();
 
     // We initialize the solution vector,
@@ -160,7 +162,7 @@ int main(int argc, char** argv) try
         }
     }
 
-    // Depending on the initial conditions, another grid adaptation might be        necessary. The gridadaptindicator uses the input parameters `Adaptive.RefineTolerance` and `Adaptive.CoarsenTolerance` for this step.
+    // Depending on the initial conditions, another grid adaptation might be necessary. The gridadaptindicator uses the input parameters `Adaptive.RefineTolerance` and `Adaptive.CoarsenTolerance` for this step.
     indicator.calculate(x, refineTol, coarsenTol);
 
     //we mark the elements that were adapted

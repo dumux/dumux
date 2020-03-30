@@ -17,11 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-
-// ### Header guard
 #ifndef DUMUX_ONEP_TEST_PROBLEM_HH
 #define DUMUX_ONEP_TEST_PROBLEM_HH
 
+// ## The file `problem_1p.hh`
+//
+//
 // Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
 // ### Include files
 // We use `YaspGrid`, an implementation of the dune grid interface for structured grids:
@@ -130,7 +131,7 @@ public:
     OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry) {}
 
-    // First, we define the type of boundary conditions depending on the location. Two types of boundary  conditions
+    // First, we define the type of boundary conditions depending on the location. Two types of boundary conditions
     // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
     // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
     // Mixed boundary conditions (different types for different equations on the same boundary) are not accepted for
@@ -154,7 +155,7 @@ public:
         return values;
     }
 
-    // Second, we specify the values for the Dirichlet boundaries. We need to fix values of our  primary variable
+    // Second, we specify the values for the Dirichlet boundaries. We need to fix values of our primary variable
     PrimaryVariables dirichlet(const Element &element,
                                const SubControlVolumeFace &scvf) const
     {

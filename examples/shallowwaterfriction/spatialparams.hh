@@ -17,10 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// the header guard
 #ifndef DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 #define DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 
+// ## The file `spatialparams.hh`
+//
+//
 // We include the basic spatial parameters for finite volumes file from which we will inherit
 #include <dumux/material/spatialparams/fv.hh>
 // The parameters header is needed to retrieve run-time parameters.

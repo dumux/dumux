@@ -17,10 +17,11 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// ### Header guard
 #ifndef DUMUX_CHANNEL_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_TEST_PROBLEM_HH
 
+// ## The file `problem.hh`
+//
 //
 // ### The problem class
 // We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
@@ -72,11 +73,11 @@ public:
     // </details>
     //
     // Now, we define the type of initial and boundary conditions depending on location.
-    // Two types of boundary  conditions can be specified: Dirichlet and Neumann. On a Dirichlet boundary,
+    // Two types of boundary conditions can be specified: Dirichlet and Neumann. On a Dirichlet boundary,
     // the values of the primary variables need to be fixed.
     // On a Neumann boundary condition, values for derivatives need to be fixed.
     // When Dirichlet conditions are set for the pressure, the derivative of the velocity
-    // vector with respect to the  direction normal to the boundary is automatically set to
+    // vector with respect to the direction normal to the boundary is automatically set to
     // zero. This boundary condition is called in-/outflow boundary condition in Dumux.
     // In the following we specify Dirichlet boundaries for velocity on the left of our domain
     // if isInlet_ is true, Dirichlet boundaries for pressure on the right of our domain

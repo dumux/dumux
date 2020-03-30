@@ -17,10 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// the header guard
 #ifndef DUMUX_TWOP_INCOMPRESSIBLE_EXAMPLE_SPATIAL_PARAMS_HH
 #define DUMUX_TWOP_INCOMPRESSIBLE_EXAMPLE_SPATIAL_PARAMS_HH
 
+// ## The file `spatialparams.hh`
+//
+//
 //we include the basic spatial parameters for finite volumes file from which we will inherit
 #include <dumux/material/spatialparams/fv.hh>
 

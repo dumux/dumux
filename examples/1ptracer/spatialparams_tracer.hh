@@ -17,12 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-
-
-// the header guard
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 
+// ## The file `spatialparams_tracer.hh`
+//
+//
 // In this file, we define spatial properties of the porous medium such as the permeability and the porosity in various functions for the tracer problem.
 // Furthermore, spatial dependent properties of the tracer fluid system are defined and in the end two functions handle the calculated volume fluxes from the solution of the 1p problem.
 // We use the properties for porous medium flow models, declared in the file `properties.hh`.

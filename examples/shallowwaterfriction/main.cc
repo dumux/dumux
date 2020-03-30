@@ -16,7 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-// ## The main file
+
+// ## The file `main.cc`
+//
+//
 // This is the main file for the shallow water example. Here we can see the programme sequence and how the system is solved using newton's method.
 // ### Includes
 #include <config.h>
