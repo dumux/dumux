@@ -26,6 +26,8 @@
 #ifndef DUMUX_TRACER_LOCAL_RESIDUAL_HH
 #define DUMUX_TRACER_LOCAL_RESIDUAL_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
@@ -229,6 +231,9 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        const SubControlVolumeFace& scvf) const
     {
+        if constexpr (FVElementGeometry::GridGeometry::discMethod != DiscretizationMethod::cctpfa)
+            DUNE_THROW(Dune::NotImplemented, "Analytic flux differentiation only implemented for tpfa");
+
         // advective term: we do the same for all tracer components
         auto rho = [](const VolumeVariables& volVars)
         { return useMoles ? volVars.molarDensity() : volVars.density(); };
