@@ -361,6 +361,8 @@ private:
         case Sn:
             sat = cellData.saturation(nPhaseIdx);
             break;
+        default:
+            DUNE_THROW(Dune::NotImplemented, "Only saturation formulation Sw and Sn are implemented!");
         }
 
         Scalar error = (sat > 1.0) ? sat - 1.0 : 0.0;
@@ -641,6 +643,8 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
                     fracFlow = -cellData.fracFlowFunc(wPhaseIdx);
                     break;
                 }
+                default:
+                    DUNE_THROW(Dune::NotImplemented, "Only pressure formulation pw and pn are implemented!");
                 }
 
 
@@ -669,6 +673,8 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
                         fracFlow = -cellData.fracFlowFunc(wPhaseIdx);
                         break;
                     }
+                    default:
+                        DUNE_THROW(Dune::NotImplemented, "Only pressure formulation pw and pn are implemented!");
                     }
                 }
                 else if (flux < 0. && bctype.isDirichlet(satEqIdx))
@@ -695,6 +701,8 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
                                 / (krw / viscosity_[wPhaseIdx] + krn / viscosity_[nPhaseIdx]);
                         break;
                     }
+                    default:
+                        DUNE_THROW(Dune::NotImplemented, "Only pressure formulation pw and pn are implemented!");
                     }
                 }
 
