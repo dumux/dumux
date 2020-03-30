@@ -26,8 +26,7 @@
 
 #include <cmath>
 #include <limits>
-
-#include <dune/common/std/type_traits.hh>
+#include <type_traits>
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
@@ -43,11 +42,10 @@ namespace Dumux {
  * \param derivative Derivative of the residual
  * \param tol Relative shift tolerance
  * \param maxIter Maximum number of iterations
- * \todo replace std::result_of by std::invoke_result for C++17
  */
 template<class Scalar, class ResFunc, class DerivFunc,
-         typename std::enable_if_t<Dune::Std::is_invocable<ResFunc, Scalar>::value &&
-                                   Dune::Std::is_invocable<DerivFunc, Scalar>::value>...>
+         typename std::enable_if_t<std::is_invocable_r_v<Scalar, ResFunc, Scalar> &&
+                                   std::is_invocable_r_v<Scalar, DerivFunc, Scalar>>...>
 Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual, const DerivFunc& derivative,
                             const Scalar tol = 1e-13, const int maxIter = 200)
 {
@@ -87,7 +85,7 @@ Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual, const DerivFun
  * \param maxIter Maximum number of iterations
  */
 template<class Scalar, class ResFunc,
-          typename std::enable_if_t<Dune::Std::is_invocable<ResFunc, Scalar>::value>...>
+          typename std::enable_if_t<std::is_invocable_r_v<Scalar, ResFunc, Scalar>>...>
 Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual,
                             const Scalar tol = 1e-13, const int maxIter = 200)
 {
@@ -109,7 +107,7 @@ Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual,
  * \param maxIter Maximum number of iterations
  */
 template<class Scalar, class ResFunc,
-         typename std::enable_if_t<Dune::Std::is_invocable<ResFunc, Scalar>::value>...>
+         typename std::enable_if_t<std::is_invocable_r_v<Scalar, ResFunc, Scalar>>...>
 Scalar findScalarRootBrent(Scalar a, Scalar b, const ResFunc& residual,
                            const Scalar tol = 1e-13, const int maxIter = 200)
 {
