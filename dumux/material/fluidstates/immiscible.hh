@@ -67,6 +67,12 @@ public:
      *****************************************************/
 
     /*!
+     * \brief Returns the index of the most wetting phase in the
+     *        fluid-solid configuration (for porous medium systems).
+     */
+    int wettingPhase() const { return wPhaseIdx_; }
+
+    /*!
      * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
      *
      * The saturation is defined as the pore space occupied by the fluid divided by the total pore space:
@@ -333,6 +339,12 @@ public:
      */
     void setViscosity(int phaseIdx, Scalar value)
     { viscosity_[phaseIdx] = value; }
+
+    /*!
+     * \brief Set the index of the most wetting phase
+     */
+    void setWettingPhase(int phaseIdx)
+    { wPhaseIdx_ = phaseIdx; }
 protected:
     //! zero-initialize all data members with braces syntax
     Scalar pressure_[numPhases] = {};
@@ -342,6 +354,8 @@ protected:
     Scalar enthalpy_[numPhases] = {};
     Scalar viscosity_[numPhases] = {};
     Scalar temperature_[numPhases] = {};
+
+    int wPhaseIdx_{0};
 };
 
 } // end namespace Dumux
