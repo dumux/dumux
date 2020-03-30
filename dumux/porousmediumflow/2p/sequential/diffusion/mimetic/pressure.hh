@@ -24,6 +24,8 @@
 #ifndef DUMUX_MIMETICPRESSURE2P_HH
 #define DUMUX_MIMETICPRESSURE2P_HH
 
+#include <dune/common/exceptions.hh>
+
 // dumux environment
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
@@ -136,6 +138,8 @@ template<class TypeTag> class MimeticPressure2P
             case sn:
                 sat = problem_.variables().cellData(i).saturation(nPhaseIdx);
                 break;
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Only saturation formulation sw and sn are implemented!");
             }
             if (sat > 1.0)
             {
