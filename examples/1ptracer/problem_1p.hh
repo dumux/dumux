@@ -20,21 +20,23 @@
 #ifndef DUMUX_ONEP_TEST_PROBLEM_HH
 #define DUMUX_ONEP_TEST_PROBLEM_HH
 
-// ## The file `problem_1p.hh`
+// ## Initial and boundary conditions (`problem_1p.hh`)
 //
 // This file contains the __problem class__ which defines the initial and boundary
 // conditions for the single-phase flow simulation.
 //
 // ### Include files
+// [[codeblock]]
 // This header contains the porous medium problem class that this class is derived from:
 #include <dumux/porousmediumflow/problem.hh>
-// This header contains the class that specifies all spatially variable parameters
-// related to this problem.
+// This header contains the class that specifies all spatially variable parameters related to this problem.
 #include "spatialparams_1p.hh"
+// [[/codeblock]]
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 // As this is a porous medium flow problem, we inherit from the base class `PorousMediumFlowProblem`.
+// [[codeblock]]
 namespace Dumux {
 
 template<class TypeTag>
@@ -44,6 +46,8 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -57,53 +61,58 @@ public:
     // This is the constructor of our problem class:
     OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry) {}
+    // [[/codeblock]]
 
-    // First, we define the type of boundary conditions depending on the location. Two types of boundary conditions
+    // #### Boundary conditions
+    // With the following function we define the type of boundary conditions depending on the location. Two types of boundary conditions
     // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
     // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
     // Mixed boundary conditions (different types for different equations on the same boundary) are not accepted for
     // cell-centered finite volume schemes.
-    BoundaryTypes boundaryTypes(const Element &element,
-                                const SubControlVolumeFace &scvf) const
+    // [[codeblock]]
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
-        BoundaryTypes values;
-        // we retrieve the global position, i.e. the vector with the global coordinates,
-        // of the integration point on the boundary sub-control volume face `scvf`
-        const auto globalPos = scvf.ipGlobal();
         // we define a small epsilon value
         Scalar eps = 1.0e-6;
-        // We specify Dirichlet boundaries on the top and bottom of our domain:
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps)
+
+        // Initially, set Neumann boundary conditions for all equations
+        BoundaryTypes values;
+        values.setAllNeumann();
+
+        // On the top and bottom, use Dirichlet boundary conditions.
+        const auto yMax = this->gridGeometry().bBoxMax()[dimWorld-1];
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > yMax - eps)
             values.setAllDirichlet();
-        // The top and bottom of our domain are Neumann boundaries:
-        else
-            values.setAllNeumann();
 
         return values;
     }
+    // [[/codeblock]]
 
-    // Second, we specify the values for the Dirichlet boundaries. We need to fix values of our primary variable
-    PrimaryVariables dirichlet(const Element &element,
-                               const SubControlVolumeFace &scvf) const
+    // The following function specifies the values for the Dirichlet boundaries.
+    // We need to define values for the primary variable (pressure), for which we
+    // use a linear pressure gradiant from bottom to top. This results in a pressure
+    // of 1 bar at the top, and a pressure of 1.1 bar at the bottom boundary.
+    // [[codeblock]]
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        // we retreive again the global position
-        const auto& pos = scvf.ipGlobal();
+        // initialize the primary variable to zero
         PrimaryVariables values(0);
+
         // and assign pressure values in [Pa] according to a pressure gradient to 1e5 Pa at the top and 1.1e5 Pa at the bottom.
-        values[0] = 1.0e+5*(1.1 - pos[dimWorld-1]*0.1);
+        values[0] = 1.0e+5*(1.1 - globalPos[dimWorld-1]*0.1);
         return values;
     }
+    // [[/codeblock]]
 
+    // #### Temperature distribution
     // We need to specify a constant temperature for our isothermal problem.
     // Fluid properties that depend on temperature will be calculated with this value.
+    // [[codeblock]]
     Scalar temperature() const
-    {
-        return 283.15; // 10°C
-    }
+    { return 283.15; /*10°C*/ }
 
-    // This is everything the one phase problem class contains.
-};
-
-// We leave the namespace Dumux.
+}; // end class definition of OnePTestProblem
 } // end namespace Dumux
+// [[/codeblock]]
+
 #endif

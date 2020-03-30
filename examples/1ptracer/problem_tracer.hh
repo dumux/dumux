@@ -20,21 +20,24 @@
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
-// ## The file `problem_tracer.hh`
+// ## Initial and boundary conditions (`problem_tracer.hh`)
 //
 // This file contains the __problem class__ which defines the initial and boundary
 // conditions for the tracer transport simulation.
 //
 // ### Include files
+// [[codeblock]]
 // This header contains the porous medium problem class that this class is derived from:
 #include <dumux/porousmediumflow/problem.hh>
 // This header contains the class that specifies all spatially variable parameters
 // related to this problem.
 #include "spatialparams_tracer.hh"
+// [[/codeblock]]
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 // As this is a porous medium flow problem, we inherit from the base class `PorousMediumFlowProblem`.
+// [[codeblock]]
 namespace Dumux {
 
 template <class TypeTag>
@@ -75,36 +78,24 @@ public:
         else
             std::cout<<"problem uses mass fractions" << '\n';
     }
+    // [[/codeblock]]
 
+    // #### Boundary conditions
     // We define the type of boundary conditions depending on the location.
     // All boundaries are set to a neumann-type flow boundary condition.
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    // [[codeblock]]
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
         values.setAllNeumann();
         return values;
     }
+    // [[/codeblock]]
 
-    // We specify the initial conditions for the primary variable (tracer concentration) depending on the location.
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables initialValues(0.0);
-
-        // The initial contamination is located at the bottom of the domain:
-        if (globalPos[1] < 0.1 + eps_)
-        {
-            // We chose a mole fraction of $`1e-9`$, but in case the mass fractions
-            // are used by the model, we have to convert this value:
-            if (useMoles)
-                initialValues = 1e-9;
-            else
-                initialValues = 1e-9*FluidSystem::molarMass(0)
-                                    /this->spatialParams().fluidMolarMassAtPos(globalPos);
-        }
-        return initialValues;
-    }
-
-    // We implement an outflow boundary on the top of the domain and prescribe zero-flux Neumann boundary conditions on all other boundaries.
+    // In the following function we implement the Neumann boundary conditions.
+    // Here, we define an outflow boundary on the top of the domain and prescribe zero-flux
+    // Neumann boundary conditions on all other boundaries.
+    // [[codeblock]]
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -130,15 +121,41 @@ public:
 
         return values;
     }
+    // [[/codeblock]]
 
+    // #### Initial conditions
+    // We specify the initial conditions for the primary variable (tracer concentration) depending
+    // on the location. Here, we set zero model fractions everywhere in the domain except for a strip
+    // at the bottom of the domain where we set an initial mole fraction of $`1e-9`$.
+    // [[codeblock]]
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    {
+        // initialize the mole fraction to zero
+        PrimaryVariables initialValues(0.0);
+
+        // The initial contamination is located at the bottom of the domain
+        if (globalPos[1] < 0.1 + eps_)
+        {
+            // We chose a mole fraction of 1e-9, but in case the mass fractions
+            // are used by the model, we have to convert this value:
+            if (useMoles)
+                initialValues = 1e-9;
+            else
+                initialValues = 1e-9*FluidSystem::molarMass(0)
+                                    /this->spatialParams().fluidMolarMassAtPos(globalPos);
+        }
+        return initialValues;
+    }
+    // [[/codeblock]]
+    //
+    // The remainder of the class contains an epsilon value used for floating point comparisons.
+    // [[codeblock]]
 private:
     // We assign a private global variable for the epsilon:
     static constexpr Scalar eps_ = 1e-6;
 
-// This is everything the tracer problem class contains.
-};
-
-// We leave the namespace Dumux here.
+}; // end class definition TracerTestProblem
 } // end namespace Dumux
+// [[/codeblock]]
 
 #endif

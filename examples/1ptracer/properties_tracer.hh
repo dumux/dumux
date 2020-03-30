@@ -17,14 +17,16 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// ### Header guard
 #ifndef DUMUX_TRACER_TEST_PROPERTIES_HH
 #define DUMUX_TRACER_TEST_PROPERTIES_HH
 
+// ## Property definitions (`properties_tracer.hh`)
+//
 // This file defines the `TypeTag` used for the tracer transport simulation, for
 // which we then define the necessary properties.
 //
 // ### Include files
+// <details>
 // As for the single-phase problem, a`TypeTag` is defined for this simulation.
 // Here, we inherit all properties from the `Tracer` type tag, a convenience type tag
 // that predefines most of the required properties for tracer transport flow simulations in DuMuX.
@@ -38,12 +40,17 @@
 // system that inherits from that class.
 #include <dumux/material/fluidsystems/base.hh>
 
-// We include the problem and spatial parameters headers used for this simulation.
+// We include the problem and spatial parameters FiniteVolumeModelheaders used for this simulation.
 #include "problem_tracer.hh"
 #include "spatialparams_tracer.hh"
-
-// ### Basic property definitions for the tracer transport problem
-// We enter the namespace Dumux
+// </details>
+//
+// ### Definition of a custom fluid system
+//
+// In the following, we define a new tracer fluid system that contains a single component
+// with a molar mass of 0.3 kg/mol. This fluid system derives from the base class for
+// fluid systems `FluidSystems::Base`.
+// [[codeblock]]
 namespace Dumux {
 
 // In the following, we create a new tracer fluid system and derive from the base fluid system.
@@ -63,10 +70,6 @@ public:
     // We specify that the fluid system only contains tracer components,
     static constexpr bool isTracerFluidSystem()
     { return true; }
-
-    // and that no component is the main component
-    static constexpr int getMainComponent(int phaseIdx)
-    { return -1; }
 
     // We define the number of components of this fluid system (one single tracer component)
     static constexpr int numComponents = 1;
@@ -95,17 +98,29 @@ public:
                                              const SubControlVolume& scv)
     { return 0.0; }
 };
-
-// We enter the namespace Properties
-namespace Properties {
-
+// [[/codeblock]]
+//
+// ### Definition of the `TypeTag` used for the tracer transport problem
 // A `TypeTag` for our simulation is created which inherits from the tracer model and the
 // cell centered discretization scheme using two-point flux approximation.
-namespace TTag {
-struct TracerTest { using InheritsFrom = std::tuple<Tracer>; };
-struct TracerTestCC { using InheritsFrom = std::tuple<TracerTest, CCTpfaModel>; };
-}
+// The `Tracer` type tag defines most of the required properties for tracer transport flow
+// simulations in DuMuX, apart from those that must be user-defined and for which no meaningful
+// defaults can be chosen. As for the single-phase problem, we again also inherit from the
+//  CCTpfaModel` type tag with which we choose to use a cell centered finite volume discretization
+// with two-point-flux approximation.
+// [[codeblock]]
+namespace Properties {
 
+// Type tag definitions
+namespace TTag {
+struct TracerTest { using InheritsFrom = std::tuple<Tracer, CCTpfaModel>; };
+}
+// [[/codeblock]]
+//
+// ### Property definitions for type tag `TracerTest`
+// With the type tag `TracerTest` that we defined for this single-phase problem,
+// we can now define several required compile-time `properties`.
+// [[codeblock]]
 // We enable caching for the grid volume variables, the flux variables and the FV grid geometry.
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
@@ -142,15 +157,15 @@ struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = false
 // diffusion coefficients are assumed during the computation of the jacobian matrix entries. Specifying
 // solution-independent diffusion coefficients can speed up computations:
 template<class TypeTag>
-struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTestCC>
+struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTest>
 { static constexpr bool value = false; };
 
 // We set the above created tracer fluid system:
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<TypeTag>; };
 
-// We leave the namespace Properties and Dumux.
 } // end namespace Properties
 } // end namespace Dumux
+// [[/codeblock]]
 
 #endif

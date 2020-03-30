@@ -77,7 +77,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // The Dune MPIHelper must be instantiated for each program using Dune
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    Dune::MPIHelper::instance(argc, argv);
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);
@@ -86,9 +86,10 @@ int main(int argc, char** argv) try
     // We define convenience aliases for the type tags of the two problems. The type
     // tags contain all the properties that are needed to run the simulations. Throughout
     // the main file, we will obtain types defined for these type tags using the property
-    // system, i.e. with `GetPropType`.
+    // system, i.e. with `GetPropType`. A more detailed documentation for the type tags
+    // and properties will be given at the end of this section.
     using OnePTypeTag = Properties::TTag::IncompressibleTest;
-    using TracerTypeTag = Properties::TTag::TracerTestCC;
+    using TracerTypeTag = Properties::TTag::TracerTest;
 
     // ### Step 1: Create the grid
     // The `GridManager` class creates the grid from information given in the input file.
