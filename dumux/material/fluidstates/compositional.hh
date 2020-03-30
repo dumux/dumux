@@ -71,7 +71,7 @@ public:
      * on thermodynamic equilibrium required)
      *****************************************************/
     /*!
-     * \brief Returns the index of the wetting phase in the
+     * \brief Returns the index of the most wetting phase in the
      *        fluid-solid configuration (for porous medium systems).
      */
     int wettingPhase() const { return wPhaseIdx_; }
@@ -441,7 +441,7 @@ public:
     { viscosity_[phaseIdx] = value; }
 
     /*!
-     * \brief Set the index of the wetting phase
+     * \brief Set the index of the most wetting phase
      */
     void setWettingPhase(int phaseIdx)
     { wPhaseIdx_ = phaseIdx; }
@@ -460,8 +460,6 @@ protected:
     std::array<Scalar, numPhases> viscosity_ = {};
     std::array<Scalar, numPhases> temperature_ = {};
 
-    // For porous medium flow models, here we ... the index of the wetting
-    // phase (needed for vapor pressure evaluation if kelvin equation is used)
     int wPhaseIdx_{0};
 };
 

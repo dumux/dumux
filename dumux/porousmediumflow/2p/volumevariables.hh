@@ -94,14 +94,15 @@ public:
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        const int nPhaseIdx = 1 - wPhaseIdx_;
+        const int wPhaseIdx = fluidState_.wettingPhase();
+        const int nPhaseIdx = 1 - wPhaseIdx;
 
-        mobility_[wPhaseIdx_] =
-            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx_))
-            / fluidState_.viscosity(wPhaseIdx_);
+        mobility_[wPhaseIdx] =
+            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
+            / fluidState_.viscosity(wPhaseIdx);
 
         mobility_[nPhaseIdx] =
-            MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx_))
+            MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
             / fluidState_.viscosity(nPhaseIdx);
 
         // porosity calculation over inert volumefraction
@@ -137,15 +138,16 @@ public:
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = elemSol[scv.localDofIndex()];
 
-        wPhaseIdx_ = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        const auto wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx);
         if (formulation == TwoPFormulation::p0s1)
         {
             fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
-            if (wPhaseIdx_ == phase1Idx)
+            if (fluidState.wettingPhase() == phase1Idx)
             {
                 fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
                 fluidState.setSaturation(phase0Idx, 1 - priVars[saturationIdx]);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
+                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase1Idx, priVars[pressureIdx] - pc_);
             }
             else
@@ -154,27 +156,27 @@ public:
                                                                                 scv, elemSol, priVars[saturationIdx]);
                 fluidState.setSaturation(phase1Idx, Sn);
                 fluidState.setSaturation(phase0Idx, 1 - Sn);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
+                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase1Idx, priVars[pressureIdx] + pc_);
             }
         }
         else if (formulation == TwoPFormulation::p1s0)
         {
             fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
-            if (wPhaseIdx_ == phase1Idx)
+            if (wPhaseIdx == phase1Idx)
             {
                 const auto Sn = Traits::SaturationReconstruction::reconstructSn(problem.spatialParams(), element,
                                                                                 scv, elemSol, priVars[saturationIdx]);
                 fluidState.setSaturation(phase0Idx, Sn);
                 fluidState.setSaturation(phase1Idx, 1 - Sn);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
+                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase0Idx, priVars[pressureIdx] + pc_);
             }
             else
             {
                 fluidState.setSaturation(phase0Idx, priVars[saturationIdx]);
                 fluidState.setSaturation(phase1Idx, 1 - priVars[saturationIdx]);
-                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
+                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase0Idx, priVars[pressureIdx] - pc_);
             }
         }
@@ -287,15 +289,14 @@ public:
     /*!
      * \brief Returns the wetting phase index
      */
-    const int wettingPhaseIdx() const
-    {  return wPhaseIdx_; }
+    int wettingPhase() const
+    {  return fluidState_.wettingPhase(); }
 
 protected:
     FluidState fluidState_;
     SolidState solidState_;
 
 private:
-    int wPhaseIdx_;
     Scalar pc_;
     Scalar porosity_;
     PermeabilityType permeability_;

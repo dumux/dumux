@@ -147,11 +147,12 @@ public:
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        const int nPhaseIdx = 1 - wPhaseIdx_;
+        const int wPhaseIdx = fluidState_.wettingPhase();
+        const int nPhaseIdx = 1 - wPhaseIdx;
 
         // relative permeabilities -> require wetting phase saturation as parameter!
-        relativePermeability_[wPhaseIdx_] = MaterialLaw::krw(matParams, saturation(wPhaseIdx_));
-        relativePermeability_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx_));
+        relativePermeability_[wPhaseIdx] = MaterialLaw::krw(matParams, saturation(wPhaseIdx));
+        relativePermeability_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx));
 
         // porosity & permeabilty
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
@@ -206,8 +207,8 @@ public:
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        wPhaseIdx_ = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
-        fluidState.setWettingPhase(wPhaseIdx_);
+        const auto wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx);
 
         // set the saturations
         if (phasePresence == firstPhaseOnly)
@@ -237,17 +238,17 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase presence.");
 
         // set pressures of the fluid phases
-        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
         if (formulation == TwoPFormulation::p0s1)
         {
             fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase1Idx, (wPhaseIdx_ == phase0Idx) ? priVars[pressureIdx] + pc_
+            fluidState.setPressure(phase1Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] + pc_
                                                                        : priVars[pressureIdx] - pc_);
         }
         else
         {
             fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase0Idx, (wPhaseIdx_ == phase0Idx) ? priVars[pressureIdx] - pc_
+            fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
                                                                        : priVars[pressureIdx] + pc_);
         }
    }
@@ -406,14 +407,12 @@ public:
     /*!
      * \brief Returns the wetting phase index
      */
-    const int wettingPhaseIdx() const
-    { return wPhaseIdx_; }
+    int wettingPhase() const
+    { return fluidState_.wettingPhase(); }
 
 private:
     FluidState fluidState_;
     SolidState solidState_;
-
-    int wPhaseIdx_;
 
     Scalar pc_;                     // The capillary pressure
     PermeabilityType permeability_; // Effective permeability within the control volume
