@@ -17,8 +17,14 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// We look now at the main file for the tracer problem. We set up two problems in this file and solve them sequentially, first the 1p problem and afterwards the tracer problem. The result of the 1p problem is the pressure distribution in the problem domain. We use it to calculate the volume fluxes, which act as an input for the tracer problem. Based on this volume fluxes, we calculate the transport of a tracer in the following tracer problem.
-// ### Includes
+// ## Main program flow (`main.cc`)
+//
+//
+// This file contains the main program flow. In this example, we solve a single-phase flow problem
+// to obtain a pressure distribution on the domain. Subsequently, the distribution of volume fluxes
+// is computed from that pressure distribution, which is then passed to a tracer problem to solve
+// the transport of an initial contamination through the model domain.
+// ### Included header files
 #include <config.h>
 
 // We include both problems in the main file, the `problem_1p.hh` and the `problem_tracer.hh`.

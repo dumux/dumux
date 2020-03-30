@@ -17,11 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// ## Header guard
-// The header guard (or include guard) prevents compilation errors due to duplicate definitions. Here, a unique name needs to be defined for the header file:
 #ifndef DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
 #define DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
 
+// ## The file `problem.hh`
+//
+//
 // ## Include files
 // We use the dune yasp grid.
 #include <dune/grid/yaspgrid.hh>
@@ -222,7 +223,11 @@ public:
         return bcTypes;
     }
 
-     // We specify the neumann boundary. Due to the weak imposition we calculate the flux at the boundary, with a  Rieman solver. For this the state of a virtual cell outside of the boundary is needed (`boundaryStateVariables`), wich is calculated with the Riemann invariants (see Yoon and Kang, Finite Volume Model for Two-Dimensional Shallow Water Flows on Unstructured Grids) . The calculation of the Riemann invariants differ depending on the type of the boundary (h, q or no-flow boundary).
+     // We specify the neumann boundary. Due to the weak imposition we calculate the flux at the
+     // boundary, with a  Rieman solver. For this the state of a virtual cell outside of the boundary
+     // is needed (`boundaryStateVariables`), wich is calculated with the Riemann invariants
+     // (see Yoon and Kang, Finite Volume Model for Two-Dimensional Shallow Water Flows on Unstructured Grids).
+     // The calculation of the Riemann invariants differ depending on the type of the boundary (h, q or no-flow boundary).
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,

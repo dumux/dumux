@@ -17,6 +17,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
+// ## The file `main.cc`
+//
+//
 // We look now at the main file for the channel problem.
 // ### Includes
 // Necessary files are included.
