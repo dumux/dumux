@@ -145,11 +145,12 @@ public:
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const int nPhaseIdx = 1 - wPhaseIdx_;
+        const int wPhaseIdx = fluidState_.wettingPhase();
+        const int nPhaseIdx = 1 - wPhaseIdx;
 
         // mobilities -> require wetting phase saturation as parameter!
-        mobility_[wPhaseIdx_] = MaterialLaw::krw(matParams, saturation(wPhaseIdx_))/fluidState_.viscosity(wPhaseIdx_);
-        mobility_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx_))/fluidState_.viscosity(nPhaseIdx);
+        mobility_[wPhaseIdx] = MaterialLaw::krw(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(wPhaseIdx);
+        mobility_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(nPhaseIdx);
 
         //update porosity before calculating the effective properties depending on it
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
@@ -204,8 +205,8 @@ public:
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        wPhaseIdx_ = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
-        fluidState.setWettingPhase(wPhaseIdx_);
+        const auto wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx);
 
         // set the saturations
         if (phasePresence == secondPhaseOnly)
@@ -235,17 +236,17 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
 
         // set pressures of the fluid phases
-        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx_));
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
         if (formulation == TwoPFormulation::p0s1)
         {
             fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase1Idx, (wPhaseIdx_ == phase0Idx) ? priVars[pressureIdx] + pc_
+            fluidState.setPressure(phase1Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] + pc_
                                                                        : priVars[pressureIdx] - pc_);
         }
         else
         {
             fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase0Idx, (wPhaseIdx_ == phase0Idx) ? priVars[pressureIdx] - pc_
+            fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
                                                                        : priVars[pressureIdx] + pc_);
         }
 
@@ -496,7 +497,7 @@ public:
      * \brief Returns the wetting phase index
      */
     int wettingPhase() const
-    {  return wPhaseIdx_; }
+    {  return fluidState_.wettingPhase(); }
 
 protected:
     FluidState fluidState_;
@@ -510,7 +511,6 @@ private:
     Scalar mobility_[ModelTraits::numFluidPhases()]; // Effective mobility within the control volume
     DiffusionCoefficients diffCoeff_;
     DiffusionCoefficients effectiveDiffCoeff_;
-    int wPhaseIdx_;
 
 };
 
