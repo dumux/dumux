@@ -1,0 +1,20 @@
+[TimeLoop]
+Dt = 10000 # [s]
+TEnd = 1e7 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 50 50
+
+[Problem]
+Name = tracer
+D = 0
+D2 = 1e-8
+FrontVelocity = 1e-7
+Porosity = 0.5
+
+[Vtk]
+AddVelocity = true
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1
