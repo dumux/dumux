@@ -1,43 +1,45 @@
 #!/usr/bin/env python3
 
 import os
+import json
 import argparse
 
 from convert_code_to_doc import *
 
-def convertToMarkdownAndMerge(dir, includeList):
-    with open(os.path.join(dir, "README.md"), "w") as readme:
-        for include, description in includeList:
-            fileExtension = os.path.splitext(include)[1]
-            if fileExtension == ".md":
-                with open(os.path.join(dir, include), "r") as markdown:
-                    readme.write(markdown.read())
-            elif fileExtension == ".hh" or fileExtension == ".cc":
-                title = description + " (`{}`)\n\n\n" if description else "The file `{}`\n\n\n"
-                title = title.format(os.path.split(include)[1])
-                readme.write("\n\n## " + title)
-                with open(os.path.join(dir, include), "r") as cppCode:
-                    readme.write(transformCode(cppCode.read(), cppRules()) + "\n")
-            else:
-                raise IOError("Unsupported or unknown file extension *{}".format(fileExtension))
+def convertToMarkdownAndMerge(dir, config):
+
+    for target, sources in config.items():
+
+        targetExtension = os.path.splitext(target)[1]
+        if not targetExtension == ".md":
+            raise IOError("Markdown files expected as targets! Given target: {}".format(target))
+
+        targetPath = os.path.join(dir, target)
+        os.makedirs(os.path.dirname(targetPath), exist_ok=True)
+
+        with open(targetPath, "w") as targetFile:
+            for source in sources:
+                fileExtension = os.path.splitext(source)[1]
+                if fileExtension == ".md":
+                    with open(os.path.join(dir, source), "r") as markdown:
+                        targetFile.write(markdown.read())
+                elif fileExtension == ".hh" or fileExtension == ".cc":
+                    with open(os.path.join(dir, source), "r") as cppCode:
+                        targetFile.write("\n\n" + transformCode(cppCode.read(), cppRules()) + "\n")
+                else:
+                    raise IOError("Unsupported or unknown file extension *{}".format(fileExtension))
 
 def generateReadme(dir):
-    includeList = None
+    config = None
     # look for .doc_config, if not found we pass
     try:
         configname = os.path.join(dir, ".doc_config")
-        with open(configname, 'r') as config:
-            def readline(line):
-                line = line.split(' ', 1)
-                if len(line) == 1:
-                    return [line[0], ""]
-                else:
-                    return [line[0], line[1]]
-            includeList = [readline(line) for line in config.read().splitlines()]
+        with open(configname, 'r') as configFile:
+            config = json.load(configFile)
     except FileNotFoundError:
         pass
-    if includeList is not None:
-        convertToMarkdownAndMerge(dir, includeList)
+    if config is not None:
+        convertToMarkdownAndMerge(dir, config)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

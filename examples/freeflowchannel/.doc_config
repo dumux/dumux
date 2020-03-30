@@ -1,4 +1,8 @@
-doc/intro.md
-problem.hh
-main.cc
-doc/results.md
+{
+    "README.md" : [
+        "doc/intro.md",
+        "problem.hh",
+        "main.cc",
+        "doc/results.md"
+    ]
+}
