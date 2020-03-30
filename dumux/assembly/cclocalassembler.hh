@@ -344,7 +344,7 @@ public:
 
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
-        const auto storageResidual = this->evalLocalStorageResidual();
+        const auto storageResidual = this->evalLocalStorageResidual()[0];
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -386,7 +386,7 @@ public:
                 // the residual with the deflected primary variables
                 elemSol[0][pvIdx] = priVar;
                 curVolVars.update(elemSol, this->problem(), element, scv);
-                return this->evalLocalStorageResidual();
+                return this->evalLocalStorageResidual()[0];
             };
 
             // for non-ghosts compute the derivative numerically
