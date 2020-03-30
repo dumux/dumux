@@ -10,12 +10,12 @@ from pyparsing import *
 # tell pyparsing to never ignore white space characters
 ParserElement.setDefaultWhitespaceChars('')
 
-def taggedContent(keyname, action, open="[[", close="]]", endTag="/"):
+def parseTaggedContent(keyname, action, open="[[", close="]]", endTag="/"):
     """
     Match content between [[keyname]] and [[/keyname]] and apply the action on it
     """
-    start = LineStart() + ZeroOrMore(" ") + Literal("//") + ZeroOrMore(" ") + Literal(open + str(keyname) + close)
-    end = LineStart() + ZeroOrMore(" ") + Literal("//") + ZeroOrMore(" ") + Literal(open + endTag + str(keyname) + close)
+    start = LineStart() + ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + (open + str(keyname) + close) + LineEnd()
+    end = LineStart() + ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + (open + endTag + str(keyname) + close) + LineEnd()
     return start.suppress() + SkipTo(end).setParseAction(action) + end.suppress()
 
 def createMarkdownCode(markDownToken):
@@ -27,33 +27,35 @@ def createMarkdownCode(markDownToken):
         if not token[0].rstrip():
             return ""
         else:
-            return "```" + markDownToken + "\n" + token[0].rstrip() + "\n```\n"
+            return "\n```" + markDownToken + "\n" + token[0].rstrip() + "\n```\n\n"
     return action
 
 def cppRules():
     """
     Define a list of rules to apply for cpp source code
     """
-    header = Suppress(Combine(Literal("// -*-") + SkipTo(Literal("*******/") + LineEnd()) + Literal("*******/")))
-    headerGuard = Suppress(Literal("#ifndef") + Optional(restOfLine) + LineEnd() + Literal("#define") + Optional(restOfLine))
-    endHeaderGuard = Suppress(Literal("#endif") + Optional(restOfLine))
-
-    # exclude stuff between [[exclude]] and [[/exclude]]
-    exclude = taggedContent("exclude", action=replaceWith(""))
+    suppressHeader = Suppress(Combine("// -*-" + SkipTo("*******/" + LineEnd(), include=True)))
+    suppressHeaderGuard = Suppress("#ifndef" + Optional(restOfLine) + LineEnd() + "#define" + Optional(restOfLine))
+    suppressEndHeaderGuard = Suppress("#endif" + Optional(restOfLine))
 
     # make a code block (possibly containing comments) between [[codeblock]] and [[/codeblock]]
-    action = createMarkdownCode("cpp")
-    codeblock = taggedContent("codeblock", action=action)
+    createCppBlock = createMarkdownCode("cpp")
+    parseCodeblock = parseTaggedContent("codeblock", action=createCppBlock)
 
     # treat doc and code line
-    doc = LineStart() + Suppress(ZeroOrMore(" ") + Literal("//") + ZeroOrMore(" ")) + Optional(restOfLine)
-    code = LineStart() + ~(ZeroOrMore(" ") + Literal("//")) + (SkipTo(doc) | SkipTo(StringEnd()))
-    code.setParseAction(action)
-    docTransforms = codeblock | doc | code
+    parseDoc = LineStart() + Suppress(ZeroOrMore(" ") + "//" + ZeroOrMore(" ")) + Optional(restOfLine)
+    parseCode = LineStart() + ~(ZeroOrMore(" ") + "//") + (SkipTo(parseDoc) | SkipTo(StringEnd()))
+    parseCode.setParseAction(createCppBlock)
+    docTransforms = parseCodeblock | parseDoc | parseCode
 
-    return [header, headerGuard, endHeaderGuard, exclude, docTransforms]
+    return [suppressHeader, suppressHeaderGuard, suppressEndHeaderGuard, docTransforms]
 
 def transformCode(code, rules):
+
+    # exclude stuff between [[exclude]] and [[/exclude]]
+    exclude = parseTaggedContent("exclude", action=replaceWith(""))
+    code = exclude.transformString(code)
+
     for transform in rules:
         code = transform.transformString(code)
     return code
