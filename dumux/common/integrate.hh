@@ -29,7 +29,6 @@
 
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/common/concept.hh>
-#include <dune/common/std/type_traits.hh>
 
 #if HAVE_DUNE_FUNCTIONS
 #include <dune/functions/gridfunctions/gridfunction.hh>
@@ -262,7 +261,7 @@ auto integrateL2Error(const GridView& gv,
  * \return The value of the integral
  */
 template<class Scalar, class Function,
-          typename std::enable_if_t<Dune::Std::is_invocable<Function, Scalar>::value>...>
+          typename std::enable_if_t<std::is_invocable_r_v<Scalar, Function, Scalar>>...>
 Scalar integrateScalarFunction(const Function& f,
                                const Scalar lowerBound,
                                const Scalar upperBound,
