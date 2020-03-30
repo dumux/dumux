@@ -54,8 +54,8 @@
 
 #include <cmath>
 #include <limits>
+#include <type_traits>
 
-#include <dune/common/std/type_traits.hh>
 #include <dumux/common/doubleexpintegrationconstants.hh>
 
 namespace Dumux {
@@ -78,7 +78,7 @@ public:
      * \return The value of the integral
      */
     template<class Function,
-             typename std::enable_if_t<Dune::Std::is_invocable<Function, Scalar>::value>...>
+             typename std::enable_if_t<std::is_invocable_r_v<Scalar, Function, Scalar>>...>
     static Scalar integrate(const Function& f,
                             const Scalar a,
                             const Scalar b,
@@ -107,7 +107,7 @@ public:
      * \return The value of the integral.
      */
     template<class Function,
-             typename std::enable_if_t<Dune::Std::is_invocable<Function, Scalar>::value>...>
+             typename std::enable_if_t<std::is_invocable_r_v<Scalar, Function, Scalar>>...>
     static Scalar integrate(const Function& f,
                             const Scalar a,
                             const Scalar b,
