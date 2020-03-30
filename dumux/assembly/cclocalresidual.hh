@@ -97,7 +97,7 @@ public:
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = Deprecated::neumann(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
