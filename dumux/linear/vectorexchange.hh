@@ -24,7 +24,7 @@
 #ifndef DUMUX_VECTOR_EXCHANGE_HH
 #define DUMUX_VECTOR_EXCHANGE_HH
 
-#warning "This header is deprecated and will be removed after release 3.2. Use linearsolver/linearsolvertraits.hh"
+#warning "This header is deprecated and will be removed after release 3.2. Use parallel/vectorcommdatahandle.hh"
 
 #include <dumux/parallel/vectorcommdatahandle.hh>
 
