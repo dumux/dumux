@@ -25,7 +25,7 @@
 #define DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
 
 #include <array>
-#include <dune/common/std/optional.hh>
+#include <optional>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
@@ -278,7 +278,7 @@ public:
 
         // If the current scvf is on a boundary, check if there is a Neumann BC for the stress in tangential direction.
         // Create a boundaryTypes object (will be empty if not at a boundary).
-        Dune::Std::optional<BoundaryTypes> currentScvfBoundaryTypes;
+        std::optional<BoundaryTypes> currentScvfBoundaryTypes;
         if (scvf.boundary())
             currentScvfBoundaryTypes.emplace(problem.boundaryTypes(element, scvf));
 
@@ -290,7 +290,7 @@ public:
             const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
             // Create a boundaryTypes object (will be empty if not at a boundary).
-            Dune::Std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
+            std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
 
             // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
             // we are on a boundary where we have to check for boundary conditions.
@@ -477,8 +477,8 @@ private:
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
                                                                     const GridFluxVariablesCache& gridFluxVarsCache,
-                                                                    const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                                    const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                                    const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                                    const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                                     const int localSubFaceIdx)
     {
         const auto eIdx = scvf.insideScvIdx();
@@ -545,8 +545,8 @@ private:
                                                                     const SubControlVolumeFace& scvf,
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
-                                                                    const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                                    const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                                    const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                                    const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                                     const int localSubFaceIdx)
     {
         const auto eIdx = scvf.insideScvIdx();

@@ -25,6 +25,7 @@
 #define DUMUX_NAVIERSTOKES_STAGGERED_UPWINDVARIABLES_HH
 
 #include <array>
+#include <optional>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
@@ -123,8 +124,8 @@ public:
                                                                const FaceVariables& faceVars,
                                                                const GridFluxVariablesCache& gridFluxVarsCache,
                                                                const int localSubFaceIdx,
-                                                               const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                               const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
+                                                               const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                               const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
     {
         const auto eIdx = scvf.insideScvIdx();
         const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
@@ -368,8 +369,8 @@ private:
                                                              const FaceVariables& faceVars,
                                                              const Scalar transportingVelocity,
                                                              const int localSubFaceIdx,
-                                                             const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                             const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                             const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                             const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                              std::true_type)
     {
         const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
@@ -451,8 +452,8 @@ private:
                                                              const FaceVariables& faceVars,
                                                              const Scalar transportingVelocity,
                                                              const int localSubFaceIdx,
-                                                             const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                             const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                             const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                             const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                              std::false_type)
     {
          // Check whether the own or the neighboring element is upstream.
@@ -575,8 +576,8 @@ private:
                                                    const FVElementGeometry& fvGeometry,
                                                    const SubControlVolumeFace& scvf,
                                                    const FaceVariables& faceVars,
-                                                   const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                   const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                   const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                   const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                    const int localSubFaceIdx)
     {
         // Find out what boundary type is set on the lateral face
@@ -630,7 +631,7 @@ private:
                                                            const FVElementGeometry& fvGeometry,
                                                            const SubControlVolumeFace& scvf,
                                                            const FaceVariables& faceVars,
-                                                           const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                           const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                            const int localOppositeSubFaceIdx)
     {
         // A ghost subface at the boundary is created, featuring the location of the sub face's center
