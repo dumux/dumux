@@ -125,11 +125,13 @@ struct LinearSolverTraitsBase
     template<class Matrix, class Vector>
     using Sequential = SequentialSolverTraits<Matrix, Vector>;
 
+#if HAVE_MPI
     template<class Matrix, class Vector>
     using ParallelOverlapping = OverlappingSolverTraits<Matrix, Vector>;
 
     template<class Matrix, class Vector>
     using ParallelNonoverlapping = NonoverlappingSolverTraits<Matrix, Vector>;
+#endif
 };
 
 //! Box: use overlapping or non-overlapping model depending on the grid

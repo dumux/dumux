@@ -82,8 +82,10 @@ public:
                        const typename LinearSolverTraits::DofMapper& dofMapper,
                        const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
-    , phelper_(std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
+#if HAVE_MPI
+    , phelper_(std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
     , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+#endif
     {
         reset();
     }
@@ -224,9 +226,11 @@ private:
         solver.apply(x, b, result_);
     }
 
-    std::shared_ptr<ParallelISTLHelper<LinearSolverTraits>> phelper_;
+#if HAVE_MPI
+    std::unique_ptr<ParallelISTLHelper<LinearSolverTraits>> phelper_;
+#endif
     Dune::InverseOperatorResult result_;
-    bool isParallel_;
+    bool isParallel_ = false;
     bool firstCall_;
 };
 
