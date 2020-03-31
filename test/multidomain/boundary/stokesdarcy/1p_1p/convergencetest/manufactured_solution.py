@@ -1,6 +1,18 @@
+#!/usr/bin/env python
+
+"""
+This script determines the source terms needed for analytical solutions for coupled Stokes/Darcy problems.
+Given an analytical solution, it evaluates the momentum and mass balance equations and outputs source terms
+such that the balance equations are fulfilled. It furthermore calculates the Darcy velocity from a given pressure solution.
+"""
+
 import sympy as sp
 import numpy as np
 from sympy import *
+
+# case = "Rybak"
+# case = "Shiue_1"
+case = "Shiue_2"
 
 # divergence of a matrix
 def div(M):
@@ -26,7 +38,7 @@ def analyticalSolutionStokes(case):
         pFF = 2.0*x + y - 1.0
     return [vFF, pFF]
 
-vFF, pFF = analyticalSolutionStokes("Rybak")
+vFF, pFF = analyticalSolutionStokes(case)
 
 # individual terms of the Navier-Stokes eq.
 vvT = np.outer(vFF, vFF)
@@ -39,13 +51,15 @@ pI = np.array([[pFF,  0], [0,  pFF]])
 momentumFlux = - (gradV + gradVT) +pI # only Stokes
 divMomentumFlux = div(momentumFlux)
 
-# solution for source term
-print("Stokes:")
-print("divV", sp.diff(vFF[0],x) + sp.diff(vFF[1], y))
-print("divMomentumFlux x:", divMomentumFlux[0])
-print("divMomentumFlux y:", divMomentumFlux[1])
+print("Source terms for case", case)
 
-# analytical solutions for v and p in arcydomain (see reference given in problems)
+# solution for source term
+print(" \nStokes:")
+print("Source term mass:", sp.diff(vFF[0],x) + sp.diff(vFF[1], y))
+print("Source term momentum x:", divMomentumFlux[0])
+print("Source term momentum y:", divMomentumFlux[1])
+
+# analytical solutions for p in Darcy domain (see reference given in problems)
 def analyticalSolutionDarcy(case):
     if case == "Rybak":
         pD = 0.5*y*y*sp.sin(sp.pi*x)
@@ -55,16 +69,13 @@ def analyticalSolutionDarcy(case):
         pD = x*(1.0-x)*(y-1.0) + pow(y-1.0, 3)/3.0 + 2.0*x + 2.0*y + 4.0
     return pD
 
-pD = analyticalSolutionDarcy("Rybak")
+pD = analyticalSolutionDarcy(case)
 
 gradPdK = np.array([sp.diff(pD,x), sp.diff(pD,y)])
 vD = -gradPdK
 divVd = sp.diff(vD[0],x) + sp.diff(vD[1],y)
 
 print("\nDarcy:")
-print("divVd_", simplify(divVd))
+print("Source term mass:", simplify(divVd))
 print("v x:", simplify(vD[0]))
 print("v_y", simplify(vD[1]))
-
-print("\nInterface:")
-print("vD[1]_y=1 * n[1]", simplify(-1*vD[1].subs(y, 1)))
