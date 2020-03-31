@@ -31,8 +31,10 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    using VGReg = EffToAbsLaw<RegularizedVanGenuchten<double>>;
-    using VG = EffToAbsLaw<VanGenuchten<double>, VGReg::Params>;
+    using VGRegEff = RegularizedVanGenuchten<double>;
+    using VGEff = VanGenuchten<double>;
+    using VGReg = EffToAbsLaw<VGRegEff>;
+    using VG = EffToAbsLaw<VGEff, VGReg::Params>;
 
     // set some parameters
     VGReg::Params params;
@@ -52,7 +54,8 @@ int main(int argc, char** argv) try
     const auto sw = Dumux::linspace(0.0, 1.0, 100);
     const auto swNonReg = Dumux::linspace(VGReg::sweToSw_(params, params.pcLowSw()), VGReg::sweToSw_(params, params.pcHighSw()), 100);
 
-    Test::runTest<VG, VGReg>("vangenuchten", params, sw, swNonReg);
+    Test::runMaterialLawTest<VG, VGReg>("vangenuchten", params, sw, swNonReg);
+    Test::runEffToAbsTest<VGRegEff, VGReg>("vangenuchten-efftoabs", params, sw);
 
     return 0;
 }

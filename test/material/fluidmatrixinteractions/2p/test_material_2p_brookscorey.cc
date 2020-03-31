@@ -34,8 +34,10 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    using BCReg = EffToAbsLaw<RegularizedBrooksCorey<double>>;
-    using BC = EffToAbsLaw<BrooksCorey<double>, BCReg::Params>;
+    using BCRegEff = RegularizedBrooksCorey<double>;
+    using BCEff = BrooksCorey<double>;
+    using BCReg = EffToAbsLaw<BCRegEff>;
+    using BC = EffToAbsLaw<BCEff, BCReg::Params>;
 
     // set some parameters
     BCReg::Params params;
@@ -51,7 +53,8 @@ int main(int argc, char** argv) try
     const auto sw = Dumux::linspace(0.0, 1.0, 100);
     const auto swNonReg = Dumux::linspace(BCReg::sweToSw_(params, params.thresholdSw()), BCReg::sweToSw_(params, 1.0), 100);
 
-    Test::runTest<BC, BCReg>("brookscorey", params, sw, swNonReg);
+    Test::runMaterialLawTest<BC, BCReg>("brookscorey", params, sw, swNonReg);
+    Test::runEffToAbsTest<BCRegEff, BCReg>("brookscorey-efftoabs", params, sw);
 
     return 0;
 }
