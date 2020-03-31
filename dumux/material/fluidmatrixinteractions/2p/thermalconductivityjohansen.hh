@@ -81,7 +81,7 @@ public:
         static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomerton only works for two-phase fluid systems!");
         // TODO: there should be an assertion that the indices are correct and 0 is actually the wetting phase!
 
-        const Scalar sw = volVars.saturation(volVars.wettingPhaseIdx());
+        const Scalar sw = volVars.saturation(volVars.wettingPhase());
         const Scalar lambdaW = volVars.fluidThermalConductivity(volVars.wettingPhase());
         const Scalar lambdaN = volVars.fluidThermalConductivity(1-volVars.wettingPhase());
         const Scalar lambdaSolid = volVars.solidThermalConductivity();
