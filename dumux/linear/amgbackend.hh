@@ -83,7 +83,7 @@ public:
                        const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
 #if HAVE_MPI
-    , phelper_(std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
+    , phelper_(std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
     , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
 #endif
     {
@@ -227,7 +227,7 @@ private:
     }
 
 #if HAVE_MPI
-    std::shared_ptr<ParallelISTLHelper<LinearSolverTraits>> phelper_;
+    std::unique_ptr<ParallelISTLHelper<LinearSolverTraits>> phelper_;
 #endif
     Dune::InverseOperatorResult result_;
     bool isParallel_ = false;
