@@ -3,7 +3,6 @@
         "doc/intro.md",
         "spatialparams.hh",
         "problem.hh",
-        "main.cc",
-        "doc/results.md"
+        "main.cc"
     ]
 }
