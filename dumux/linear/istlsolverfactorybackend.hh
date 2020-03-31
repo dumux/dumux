@@ -85,8 +85,10 @@ public:
                              const typename LinearSolverTraits::DofMapper& dofMapper,
                              const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
+#if HAVE_MPI
     , parallelHelper_(std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
     , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+#endif
     {
         reset();
     }
@@ -227,8 +229,10 @@ private:
     }
 
     const std::string paramGroup_;
+#if HAVE_MPI
     std::unique_ptr<ParallelISTLHelper<LinearSolverTraits>> parallelHelper_;
-    bool isParallel_;
+#endif
+    bool isParallel_ = false;
     bool firstCall_;
 
     Dune::InverseOperatorResult result_;
