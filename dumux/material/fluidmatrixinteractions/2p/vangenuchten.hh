@@ -280,7 +280,7 @@ public:
 
         const auto sne = 1.0 - swe;
         const auto x = 1.0 - pow(swe, 1.0/params.vgm());
-        return -pow(sne, params.vgl()-1.0) * pow(x, 2*params.vgm() - 1.0) * ( params.vgl()*x - 2.0*sne/swe*(1.0 - x) );
+        return -pow(sne, params.vgl()-1.0) * pow(x, 2*params.vgm() - 1.0) * ( params.vgl()*x + 2.0*sne/swe*(1.0 - x) );
     }
 
 };
