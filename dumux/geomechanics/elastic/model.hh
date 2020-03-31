@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup Elastic
  * \brief Defines a type tag and some properties for the elastic geomechanical model
  */
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
@@ -39,7 +39,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup Elastic
  * \brief Specifies a number properties of the elastic model
  */
 template< int dim, int numSolidComp >
@@ -61,7 +61,7 @@ struct ElasticModelTraits
 };
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup Elastic
  * \brief Traits class for the volume variables of the elastic model.
  *
  * \tparam PV The type used for primary variables

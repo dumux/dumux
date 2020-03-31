@@ -213,24 +213,24 @@
          * \defgroup TwoEqModel 2-Eq. Models
          * \brief Two-equation turbulence models
          */
-        /*!
-         * \ingroup TwoEqModel
-         * \defgroup KEpsilonModel K-epsilon model
-         * \brief K-epsilon model
-         * For a detailed model decription see freeflow/rans/twoeq/kepsilon/model.hh
-         */
-        /*!
-         * \ingroup TwoEqModel
-         * \defgroup KOmegaModel K-omega model
-         * \brief K-omega model
-         * For a detailed model decription see freeflow/rans/twoeq/komega/model.hh
-         */
-        /*!
-         * \ingroup TwoEqModel
-         * \defgroup LowReKEpsilonModel Low-Re k-epsilon model
-         * \brief Low-Re k-epsilon model
-         * For a detailed model decription see freeflow/rans/twoeq/lowrekepsilon/model.hh
-         */
+            /*!
+             * \ingroup TwoEqModel
+             * \defgroup KEpsilonModel K-epsilon model
+             * \brief K-epsilon model
+             * For a detailed model decription see freeflow/rans/twoeq/kepsilon/model.hh
+             */
+            /*!
+             * \ingroup TwoEqModel
+             * \defgroup KOmegaModel K-omega model
+             * \brief K-omega model
+             * For a detailed model decription see freeflow/rans/twoeq/komega/model.hh
+             */
+            /*!
+             * \ingroup TwoEqModel
+             * \defgroup LowReKEpsilonModel Low-Re k-epsilon model
+             * \brief Low-Re k-epsilon model
+             * For a detailed model decription see freeflow/rans/twoeq/lowrekepsilon/model.hh
+             */
     /*!
      * \ingroup FreeflowModels
      * \defgroup FreeflowNCModel Compositional
@@ -352,6 +352,11 @@
          * \brief A multi-component transport problem in the unsaturated zone using the RichardsNCModel. The files are listed below.
          */
         /*!
+         * \ingroup SolidEnergyTests
+         * \defgroup SolidEnergyTests Solid energy tests
+         * \brief Tests for the solid energy model.
+         */
+        /*!
          * \ingroup PorousmediumflowTests
          * \defgroup TracerTests Tracer benchmarks and tests
          * \brief Various tests using a TracerModel. The files are listed below.
@@ -464,7 +469,7 @@
  */
     /*!
      * \ingroup Flux
-     * \defgroup BoxFlux Flux related to the Box scheme
+     * \defgroup BoxFlux Flux related to the box scheme
      * \brief Flux related to the box scheme
      */
     /*!
@@ -654,27 +659,26 @@
  * \defgroup AssemblyAndSolvers Assembly and Solvers
  * \brief Assembling matrices and vectors, solvers for linear and nonlinear equations
  */
-
-/* ***************** Assembly ******************/
-/*!
- * \ingroup AssemblyAndSolvers
- * \defgroup Assembly Assembly
- * \brief Assembly of linear systems (Jacobian and residual)
- */
-
-/* ***************** Linear ******************/
-/*!
- * \ingroup AssemblyAndSolvers
- * \defgroup Linear Linear
- * \brief Linear solvers and helpers
- */
-
-/* ***************** Nonlinear ******************/
-/*!
- * \ingroup AssemblyAndSolvers
- * \defgroup Nonlinear Nonlinear
- * \brief Nonlinear solvers: Newton method
- */
+    /*!
+     * \ingroup AssemblyAndSolvers
+     * \defgroup Assembly Assembly
+     * \brief Assembly of linear systems (Jacobian and residual)
+     */
+    /*!
+     * \ingroup AssemblyAndSolvers
+     * \defgroup Linear Linear
+     * \brief Linear solvers and helpers
+     */
+    /*!
+     * \ingroup AssemblyAndSolvers
+     * \defgroup Nonlinear Nonlinear
+     * \brief Nonlinear solvers: Newton method
+     */
+    /*!
+     * \ingroup AssemblyAndSolvers
+     * \defgroup Parallel Parallel
+     * \brief Files for communication of parallel solvers
+     */
 
  /* ***************** Common ******************/
 /*!

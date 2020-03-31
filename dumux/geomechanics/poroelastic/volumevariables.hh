@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Quantities required by the poroelastic model defined on a sub-control volume.
  */
 #ifndef DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Contains the quantities which are constant within a
  *        finite volume in the poroelastic model.
  *

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Assembly
+ * \ingroup Parallel
  * \brief Provides data handles for parallel communication which operate on vertices
  * \note This is useful for schemes with degrees of freedom on vertices (box scheme)
  */

@@ -55,6 +55,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup InputOutput
  * \brief The grid manager (this is the class used by the user) for all supported grid managers that constructs a grid
  *        from information in the input file and handles the data.
  * \note  This class is specialised below for all supported grid managers. It inherits the functionality of the base class Dumux::GridManagerBase.

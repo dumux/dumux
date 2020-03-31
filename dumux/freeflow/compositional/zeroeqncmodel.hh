@@ -57,6 +57,7 @@ struct ZeroEqNC { using InheritsFrom = std::tuple<NavierStokesNC>; };
 ///////////////////////////////////////////////////////////////////////////
 
 /*!
+ * \ingroup FreeflowNCModel
  * \ingroup ZeroEqModel
  * \brief Traits for the Reynolds-averaged Navier-Stokes 0-Eq. model
  */

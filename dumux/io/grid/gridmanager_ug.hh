@@ -38,6 +38,7 @@ namespace Dumux {
 #if HAVE_UG
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for UGGrids
  *        from information in the input file
  *

@@ -41,7 +41,7 @@ template <class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawNonEquilibriumImplementation;
 
 /*!
- * \ingroup BoxFouriersLaw
+ * \ingroup BoxFlux
  * \brief Specialization of Fourier's Law for the box method for thermal nonequilibrium models.
  */
 template <class TypeTag>

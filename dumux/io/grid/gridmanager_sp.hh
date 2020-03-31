@@ -39,6 +39,7 @@ namespace Dumux {
 #if HAVE_DUNE_SPGRID
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for SPGrid
  *
  * The following keys are recognized:

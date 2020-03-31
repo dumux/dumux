@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Linear
+ * \ingroup Parallel
  * \brief Contains a class to exchange entries of a vector
  */
 #ifndef DUMUX_VECTOR_COMM_DATA_HANDLE_HH
@@ -69,7 +69,7 @@ namespace Detail {
 } // end namespace Detail
 
 /*!
- * \ingroup Linear
+ * \ingroup Parallel
  * \brief A data handle class to exchange entries of a vector
  */
 template<class Mapper, class Vector, int entityCodim, class ScatterOperator>
