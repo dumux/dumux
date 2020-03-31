@@ -251,6 +251,20 @@ public:
     { return sweToSw(params, swe); }
 
     /*!
+     * \brief Convert an effective non-wetting saturation to an absolute one.
+     *
+     * \param sne Effective saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     *                  Therefore, in the (problem specific) spatialParameters first, the material law is chosen,
+     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
+     * \return Absolute saturation of the non-wetting phase.
+     */
+    static Scalar sneToSn(const Params &params, Scalar sne)
+    {
+        return sne*(1. - params.swr() - params.snr()) + params.snr();
+    }
+
+    /*!
      * \brief Derivative of the effective saturation w.r.t. the absolute saturation.
      *
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
