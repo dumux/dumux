@@ -1,3 +1,5 @@
+add_subdirectory(convergencetest)
+
 add_input_file_links()
 
 add_executable(test_md_boundary_darcy1p_stokes1p EXCLUDE_FROM_ALL main.cc)
