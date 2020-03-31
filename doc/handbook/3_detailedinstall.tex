@@ -303,3 +303,17 @@ depending on which modules of \Dune and which external libraries you use.
   Intel \Cplusplus compiler. C and Fortran compilers are needed for some external libraries. As code of
   different compilers is linked together, they have to be be compatible with each other.
 \end{itemize}
+
+\section{Backwards Compatibility}
+\label{sec:backwardscompatibility}
+
+Dumux Releases are split into major (e.g. 2.0, 3.0) and minor (e.g. 3.1, 3.2, 3.3) releases.
+Major releases are not required to maintain backwards compatibility, 
+but would provide a detailed guide on how to update dependent modules.
+For each minor release, maintaining backwards compatibility is strongly encouraged and recommended.
+
+Maintaining backwards compatibility means for all changes made to the dumux master, each tests and all dumux dependent modules should still compile. In addition, the user should be warned at compile time of any relevant interface changes. This can be done by deprecating the old method with a deprecation message and forwarding it to the new method. Examples of this are shown in the \href{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md}{contribution guide}. Each of these deprecation messages should also include the release in which the interface will be removed, and all changes should be documented thoroughly in the \href{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/CHANGELOG.md}{changelog.md}.
+
+Despite the goal of maintaining backwards compatibility across minor releases,
+for more complicated changes, this is to be decided upon on a case-by-case basis, due to limited developer resources.
+In the case that implementing full backwards compatibility for an update is not feasible, or would require unreasonable resources, the degree of backwards compatibility be decided by a vote in one of the monthly core developer meetings.
