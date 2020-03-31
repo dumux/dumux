@@ -29,7 +29,7 @@
 //
 // ### Include files
 // In this example, we use a randomly generated and element-wise distributed
-// permeability field. For this, we use the random number generation facilitie
+// permeability field. For this, we use the random number generation facilities
 // provided by the C++ standard library.
 #include <random>
 
@@ -39,8 +39,12 @@
 #include <dumux/material/spatialparams/fv1p.hh>
 //
 // ### The spatial parameters class
+//
 // In the `OnePTestSpatialParams` class, we define all functions needed to describe
 // the porous medium, e.g. porosity and permeability, for the single-phase problem.
+// We inherit from the `FVSpatialParamsOneP` class here, which is the base class
+// for spatial parameters in the context of single-phase porous medium flow
+// applications using finite volume discretization schemes.
 // [[codeblock]]
 namespace Dumux {
 
@@ -49,7 +53,7 @@ class OnePTestSpatialParams
 : public FVSpatialParamsOneP<GridGeometry, Scalar,
                              OnePTestSpatialParams<GridGeometry, Scalar>>
 {
-    // The following convenience aliases will be used throughout this class:
+    // The following convenience aliases will be used throughout this class
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -67,11 +71,12 @@ public:
     // [[/codeblock]]
     //
     // #### Generation of the random permeability field
-    // We generate the random permeability field upon construction of the spatial parameters class
+    // We generate a random permeability field upon construction of the spatial parameters class
     // using lognormal distributions. The mean values for the permeability inside and outside of a
     // low-permeable lens (given by the coorinates `lensLowerLeft_` and `lensUpperRight_`) are defined
-    // in the variables  `permeabilityLens_` and `permeability_`. We use a standard deviarion of 10% here
-    // and compute permeabily values for all elements of the computational grid.
+    // in the variables  `permeabilityLens_` and `permeability_`. The respective values are obtained
+    // from the input file making use of the free function `getParam`. We use a standard deviarion
+    // of 10% here and compute permeabily values for all elements of the computational grid.
     // [[codeblock]]
     OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry), K_(gridGeometry->gridView().size(0), 0.0)
@@ -91,6 +96,8 @@ public:
         std::mt19937 rand(0);
         std::lognormal_distribution<Scalar> K(std::log(permeability_), std::log(permeability_)*0.1);
         std::lognormal_distribution<Scalar> KLens(std::log(permeabilityLens_), std::log(permeabilityLens_)*0.1);
+
+        // loop over all elements and compute a permeability value
         for (const auto& element : elements(gridGeometry->gridView()))
         {
             const auto eIdx = gridGeometry->elementMapper().index(element);
@@ -102,8 +109,9 @@ public:
 
     // #### Properties of the porous matrix
     // This function returns the permeability $`[m^2]`$ to be used within a sub-control volume (`scv`) inside the element `element`.
-    // One can define the permeability as function of the primary variables on the element, which are given in the provided `ElementSolution`.
-    // Here, we use element-wise distributed permeabilities that were randomly generated in the constructor (see above).
+    // One can define the permeability as function of the primary variables on the element, which are given in the provided
+    // instance of `ElementSolution`. Here, we use element-wise distributed permeabilities that were randomly generated in
+    // the constructor and stored in the vector `K_`(see above).
     template<class ElementSolution>
     const PermeabilityType& permeability(const Element& element,
                                          const SubControlVolume& scv,
@@ -113,9 +121,11 @@ public:
     }
 
     // We set the porosity $`[-]`$ for the whole domain to a value of $`20 \%`$.
-    // Note that for the porosity the function `porosity(const Element&, const SubControlVolume&, const ElementSolution&)`
-    // is also defined in the base class `FVSpatialParamsOneP`. However, this fowards
-    // to the `porosityAtPos` function per default, which we overload here.
+    // Note that in case you want to use solution-dependent porosities, you can
+    // use the overload
+    // `porosity(const Element&, const SubControlVolume&, const ElementSolution&)`
+    // that is defined in the base class `FVSpatialParamsOneP`. Per default, this
+    // fowards to the `porosityAtPos` function per default, which we overload here.
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.2; }
 
@@ -125,6 +135,7 @@ public:
 
     // The remainder of this class contains a convenient function to determine if
     // a position is inside the lens and defines the data members.
+    // <details>
     // [[codeblock]]
 private:
     // The following function returns true if a given position is inside the lens.
@@ -147,4 +158,5 @@ private:
 }; // end class definition of OnePTestSpatialParams
 } // end namespace Dumux
 // [[/codeblock]]
+// </details>
 #endif

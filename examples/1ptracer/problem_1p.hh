@@ -26,23 +26,21 @@
 // conditions for the single-phase flow simulation.
 //
 // ### Include files
-// [[codeblock]]
-// This header contains the porous medium problem class that this class is derived from:
+//
+// The only include we need here is the `PorousMediumFlowProblem` class, the base
+// class from which we will derive.
 #include <dumux/porousmediumflow/problem.hh>
-// This header contains the class that specifies all spatially variable parameters related to this problem.
-#include "spatialparams_1p.hh"
-// [[/codeblock]]
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As this is a porous medium flow problem, we inherit from the base class `PorousMediumFlowProblem`.
+// As we are solving a problem related to flow in porous media, we inherit from the base class `PorousMediumFlowProblem`.
 // [[codeblock]]
 namespace Dumux {
 
 template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    // We use convenient declarations that we derive from the property system.
+    // A few convenience aliases used throughout this class.
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -64,11 +62,11 @@ public:
     // [[/codeblock]]
 
     // #### Boundary conditions
-    // With the following function we define the type of boundary conditions depending on the location. Two types of boundary conditions
-    // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
-    // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
-    // Mixed boundary conditions (different types for different equations on the same boundary) are not accepted for
-    // cell-centered finite volume schemes.
+    // With the following function we define the __type of boundary conditions__ depending on the location.
+    // Two types of boundary conditions can be specified: Dirichlet or Neumann boundary conditions. On
+    // Dirichlet boundaries, the values of the primary variables need to be fixed. On a Neumann boundaries,
+    // values for derivatives need to be fixed. Mixed boundary conditions (different types for different
+    // equations on the same boundary) are not accepted for cell-centered finite volume schemes.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
@@ -79,7 +77,7 @@ public:
         BoundaryTypes values;
         values.setAllNeumann();
 
-        // On the top and bottom, use Dirichlet boundary conditions.
+        // On the top and bottom, use Dirichlet boundary conditions to prescribe pressures later.
         const auto yMax = this->gridGeometry().bBoxMax()[dimWorld-1];
         if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > yMax - eps)
             values.setAllDirichlet();
@@ -88,18 +86,18 @@ public:
     }
     // [[/codeblock]]
 
-    // The following function specifies the values for the Dirichlet boundaries.
+    // The following function specifies the __values on Dirichlet boundaries__.
     // We need to define values for the primary variable (pressure), for which we
-    // use a linear pressure gradiant from bottom to top. This results in a pressure
-    // of 1 bar at the top, and a pressure of 1.1 bar at the bottom boundary.
+    // set a pressure of 1.1 bar and 1 bar at the bottom and top boundaries, respectively.
     // [[codeblock]]
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        // initialize the primary variable to zero
-        PrimaryVariables values(0);
+        // instantiate a primary variables object
+        PrimaryVariables values;
 
-        // and assign pressure values in [Pa] according to a pressure gradient to 1e5 Pa at the top and 1.1e5 Pa at the bottom.
-        values[0] = 1.0e+5*(1.1 - globalPos[dimWorld-1]*0.1);
+        // and assign a pressure value in [Pa] such that at the bottom boundary
+        // a pressure of 1.1 bar is set, and on the top boundary a pressure of 1 bar.
+        values[0] = 1.0e5*(1.1 - globalPos[dimWorld-1]*0.1);
         return values;
     }
     // [[/codeblock]]

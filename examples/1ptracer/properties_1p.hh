@@ -20,16 +20,18 @@
 #ifndef DUMUX_ONEP_TEST_PROPERTIES_HH
 #define DUMUX_ONEP_TEST_PROPERTIES_HH
 
-// ## Property definitions (`properties_1p.hh`)
+// ## Compile-time settings (`properties_1p.hh`)
 //
-// This file defines the `TypeTag` used for the single-phase flow simulation,
-// for which we then define the necessary properties.
+// In this file, the type tag used for the single-phase flow simulation is defined,
+// for which we then specialize `properties` to the needs of the desired setup.
 //
 // ### Include files
 // <details>
-// The `TypeTag` defined for this simulation will inherit all properties from the
-// `OneP` type tag, a convenience type tag that predefines most of the required
-// properties for single-phase flow simulations in DuMuX.
+//
+// The `OneP` type tag specializes most of the `properties` required for single-
+// phase flow simulations in DuMuX. We will use this in the following to inherit the
+// respective properties and subsequently specialize those `properties` for our
+// type tag, which we want to modify or for which no meaningful default can be set.
 #include <dumux/porousmediumflow/1p/model.hh>
 
 // We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
@@ -49,14 +51,15 @@
 #include "spatialparams_1p.hh"
 // </details>
 //
-// ### Definition of the `TypeTag` used for the single-phase problem
+// ### Type tag definition
 //
-// A `TypeTag` for our simulation is created which inherits from the one-phase flow model
-// (defined by the type tag `OneP`) and the cell centered finite volume scheme using two-point-flux
-// approximation (defined by the type tag `CCTpfaModel`).
-// The `OneP` type tag predefines most of the required properties for single-phase flow simulations
-// in DuMuX. However, some properties depend on user choices and no meaningful default value can be set.
-// Those properties will be defined later in this file.
+// We define a type tag for our simulation with the name `IncompressibleTest`
+// and inherit the `properties` specialized for the type tags `OneP` and `CCTpfaModel`.
+// This way, most of the `properties` required for single-phase flow simulations
+// using the cell centered finite volume scheme with two-point-flux approximation
+// are conveniently specialized for our new type tag.
+// However, some properties depend on user choices and no meaningful default value can be set.
+// Those properties will be adressed later in this file.
 // [[codeblock]]
 // We enter the namespace Dumux::Properties in order to import the entire Dumux namespace for general use:
 namespace Dumux::Properties {
@@ -67,20 +70,21 @@ struct IncompressibleTest { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; 
 }
 // [[/codeblock]]
 
-// ### Property definitions for the type tag `IncompressibleTest`
+// ### Property specializations
 //
-// With the type tag `IncompressibleTest` that we have declared for this single-phase problem,
-// we can now define several required compile-time `properties`.
+// In the following piece of code, mandatory `properties` for which no meaningful
+// default can be set, are specialized for our type tag `IncompressibleTest`.
 // [[codeblock]]
-// We use a structured 2D grid:
+// This sets the grid type used for the simulation. Here, we use a structured 2D grid.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::IncompressibleTest> { using type = Dune::YaspGrid<2>; };
 
-// The problem class specifies initial and boundary conditions:
+// This sets our problem class (see problem_1p.hh) containing initial and boundary conditions.
 template<class TypeTag>
 struct Problem<TypeTag, TTag::IncompressibleTest> { using type = OnePTestProblem<TypeTag>; };
 
-// We define the spatial parameters for our simulation:
+// This sets our spatial parameters class (see spatialparams_1p.hh) in which we define
+// the distributions for porosity and permeability to be used.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::IncompressibleTest>
 {
@@ -91,7 +95,7 @@ public:
     using type = OnePTestSpatialParams<GridGeometry, Scalar>;
 };
 
-// In the following we define the fluid system to be used (here: liquid water):
+// This sets the fluid system to be used. Here, we use liquid water as fluid phase.
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::IncompressibleTest>
 {
@@ -100,9 +104,32 @@ private:
 public:
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
+// [[/codeblock]]
+//
+// These are all mandatory `properties`. However, we also want to specialize the
+// `LocalResidual` property, as we want to use analytic differentation (see `main.cc`).
+// The default for the `LocalResidual` property, specialized by the type tag `OneP`,
+// is the implementation of the local residual for compressible single-phase flow.
+// Therein, the functionality required for analytic derivatives is not implemented
+// as for compressible fluids this would require the derivatives of the fluid properties
+// (eg density and viscosity) with respect to pressure. For the case of an incompressible
+// fluid phase, a specialized local residual is available that contains the required
+// functionality, and we set this with the following piece of code:
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
-// Here, we enable grid-wide caching of geometries and variables. The caches store values
-// that were already calculated for later usage. This increases the memory demand but makes the simulation faster.
+// Apart from that, we also set some properties related to memory management
+// throughout the simulation.
+// <details>
+//
+// In Dumux, one has the option to activate/deactive the grid-wide caching of
+// geometries and variables. If active, the CPU time can be significantly reduced
+// as less dynamic memory allocation procedures are necessary. Per default, grid-wide
+// caching is disabled to ensure minimal memory requirements, however, in this example we
+// want to active all available caches, which significanlty increases the memory
+// demand but makes the simulation faster.
+//
+// [[codeblock]]
 // This enables grid-wide caching of the volume variables.
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
@@ -112,19 +139,9 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::IncompressibleTest> { static 
 // This enables grid-wide caching for the finite volume grid geometry
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static constexpr bool value = true; };
-// [[/codeblock]]
-
-// We use the local residual that contains analytic derivative methods for incompressible flow.
-// The one-phase flow model (defined with the `OneP` type tag) uses a default implementation of the
-// local residual for single-phase flow. However, in this example we are using an
-// incompressible fluid phase. Therefore, we are including the specialized local
-// residual which contains functionality to analytically compute the entries of
-// the Jacobian matrix for the case of an incompressible fluid phase. We will use this in the main file.
-// [[codeblock]]
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 } // end namespace Dumux::Properties
 // [[/codeblock]]
+// </details>
 
 #endif
