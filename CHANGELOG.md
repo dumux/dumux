@@ -20,6 +20,7 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
 - __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the non-wetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
 - __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
+- __Brooks-Corey__: Corrected Brooks-Corey implementation of `dkrn/dSw` and added the derivatives for the regularized version
 - __AMGBackend__: The internal structure of the AMGBackend and the ParallelISTLHelper has been overhauled, as only used by the AMG, we did not make the changes backwards-compatible
 - The global default parameters for linear solvers have been removed and moved to the class `LinearSolver`.
 This only affects users that directly obtain this parameter via `getParam` somewhere in the code.
