@@ -264,6 +264,25 @@ public:
     }
 
     /*!
+     * \brief A regularized version of the derivative of the relative
+     *        permeability for the wetting phase in regard to the wetting
+     *        saturation of the medium implied by the Brooks-Corey parameterization.
+     *
+     * \copydetails BrooksCorey::dkrw_dswe()
+     */
+    static Scalar dkrw_dswe(const Params &params, Scalar swe)
+    {
+        // derivative of the regularization
+        // the slope is zero below sw=0.0 and above sw=1.0
+        if (swe <= 0.0)
+            return 0.0;
+        else if (swe >= 1.0)
+            return 0.0;
+
+        return BrooksCorey::dkrw_dswe(params, swe);
+    }
+
+    /*!
      * \brief   Regularized version of the  relative permeability
      *          for the non-wetting phase of
      *          the medium implied by the Brooks-Corey
@@ -285,6 +304,25 @@ public:
             return 1.0;
 
         return BrooksCorey::krn(params, swe);
+    }
+
+    /*!
+     * \brief A regularized version of the derivative of the relative permeability
+     *        for the non-wetting phase in regard to the wetting saturation of
+     *        the medium as implied by the Brooks-Corey parameterization.
+     *
+     * \copydetails BrooksCorey::dkrn_dswe()
+     */
+    static Scalar dkrn_dswe(const Params &params, Scalar swe)
+    {
+        // derivative of the regularization
+        // the slope is zero below sw=0.0 and above sw=1.0
+        if (swe <= 0)
+            return 0.0;
+        else if (swe >= 1)
+            return 0.0;
+
+        return BrooksCorey::dkrn_dswe(params, swe);
     }
 };
 } // end namespace Dumux
