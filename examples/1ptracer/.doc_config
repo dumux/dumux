@@ -1,9 +1,6 @@
 {
     "README.md" : [
-        "doc/intro.md",
-        "main.cc",
-        "doc/problems.md",
-        "doc/results.md"
+        "doc/intro.md"
     ],
 
     "doc/1pmodel.md" : [
@@ -18,5 +15,9 @@
         "properties_tracer.hh",
         "problem_tracer.hh",
         "spatialparams_tracer.hh"
+    ],
+
+    "doc/main.md" : [
+        "main.cc"
     ]
 }
