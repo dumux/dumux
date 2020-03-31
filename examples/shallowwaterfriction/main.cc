@@ -54,8 +54,8 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 // Further we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation)
 #include <dumux/assembly/fvassembler.hh>
-// We include the problem file which defines initial and boundary conditions to describe our example problem
-#include "problem.hh"
+// We include the properties
+#include "properties.hh"
 
 // ### Beginning of the main function
 int main(int argc, char** argv) try

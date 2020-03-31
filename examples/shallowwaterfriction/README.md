@@ -95,6 +95,89 @@ for the simulation are given in the file `params.input`.
 # Implementation
 
 
+## The file `properties.hh`
+
+The header includes will be mentioned in the text below.
+<details><summary>Click to show the header includes</summary>
+
+```cpp
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/freeflow/shallowwater/model.hh>
+
+#include "spatialparams.hh"
+#include "problem.hh"
+```
+
+</details>
+
+Let's define the properties for our simulation
+
+```cpp
+namespace Dumux::Properties {
+```
+
+First, a so-called TypeTag is created. Properties are traits specialized for this TypeTag (a simple `struct`).
+The properties of two other TypeTags are inherited by adding the alias `InheritsFrom`.
+Here, properties from the shallow water model (`TTag::ShallowWater`) and the
+cell-centered finite volume scheme with two-point-flux approximation (`TTag::CCTpfaModel`)
+are inherited. These other TypeTag definitions can be found in the included
+headers `dumux/freeflow/shallowwater/model.hh` and `dumux/discretization/cctpfa.hh`.
+
+```cpp
+namespace TTag {
+struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
+}
+```
+
+We use a structured Cartesian grid with tensor product structure.
+`Dune::YaspGrid` (Yet Another Structure Parallel Grid) is defined in `dune/grid/yaspgrid.hh`
+in the Dune module `dune-grid`.
+
+```cpp
+template<class TypeTag>
+struct Grid<TypeTag, TTag::RoughChannel>
+{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+```
+
+Next, we specialize the properties `Problem` and `SpatialParams` for our new TypeTag and
+set the type to our problem and spatial parameter classes implemented
+in `problem.hh` and `spatialparams.hh`.
+
+```cpp
+template<class TypeTag>
+struct Problem<TypeTag, TTag::RoughChannel>
+{ using type = Dumux::RoughChannelProblem<TypeTag>; };
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::RoughChannel>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
+
+    using type = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
+};
+```
+
+Finally, we enable caching for the grid geometry. The cache
+stores values that were already calculated for later usage.
+This makes the simulation run faster but it uses more memory.
+
+```cpp
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
+{ static constexpr bool value = true; };
+
+} // end namespace Dumux::Properties
+```
+
+
+
+
 ## The file `spatialparams.hh`
 
 
@@ -238,136 +321,21 @@ end of namespace Dumux.
 
 
 ## The file `problem.hh`
-
-
-## Include files
-We use the dune yasp grid.
-
-```cpp
-#include <dune/grid/yaspgrid.hh>
-```
-
-We include the cell centered, two-point-flux discretization scheme.
-
-```cpp
-#include <dumux/discretization/cctpfa.hh>
-```
-
-The parameters header is needed to retrieve run-time parameters.
+We start with includes
 
 ```cpp
 #include <dumux/common/parameters.hh>
-```
-
-We include the header which are needed for shallow water models.
-
-```cpp
-#include <dumux/freeflow/shallowwater/model.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 ```
 
-We include the header that specifies all spatially variable parameters.
-
-```cpp
-#include "spatialparams.hh"
-```
-
-## Define basic properties for our simulation
-We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don't clash with symbols from other libraries you may want to use in conjunction with Dumux. One could use these functions and classes by prefixing every use of these names by ::, but that would quickly become cumbersome and annoying. Rather, we simply import the entire Dumux namespace for general use.
-
-```cpp
-namespace Dumux {
-```
-
-The problem class is forward declared.
-
-```cpp
-template <class TypeTag>
-class RoughChannelProblem;
-```
-
-We enter the namespace Properties, which is a sub-namespace of the namespace Dumux.
-
-```cpp
-namespace Properties {
-```
-
-A TypeTag for our simulation is created which inherits from the shallow water model and the
-cell centered, two-point-flux discretization scheme.
-
-```cpp
-namespace TTag {
-struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-}
-```
-
-We define the grid of our simulation. We use a two-dimensional Yasp Grid.
-
-```cpp
-template<class TypeTag>
-struct Grid<TypeTag, TTag::RoughChannel>
-{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-```
-
-We set the problem. The problem class specifies initial and boundary conditions and is defined below.
-
-```cpp
-template<class TypeTag>
-struct Problem<TypeTag, TTag::RoughChannel>
-{ using type = Dumux::RoughChannelProblem<TypeTag>; };
-```
-
-We define the spatial parameters for our simulation. The values are specified in the corresponding spatialparameters header file, which is included above.
-
-```cpp
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::RoughChannel>
-{
-private:
-```
-
-We define convenient shortcuts to the properties GridGeometry, Scalar, ElementVolumeVariables and VolumeVariables:
-
-```cpp
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-```
-
-Finally we set the spatial parameters:
-
-```cpp
-public:
-    using type = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-};
-```
-
-We enable caching for the FV grid geometry and the grid volume variables. The cache
-stores values that were already calculated for later usage. This makes the simulation faster.
-
-```cpp
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
-{ static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::RoughChannel>
-{ static constexpr bool value = false; };
-```
-
-We leave the namespace Properties.
-
-```cpp
-}
-```
-
-## The problem class
 We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 As this is a shallow water problem, we inherit from the basic ShallowWaterProblem.
 
 ```cpp
+namespace Dumux {
+
 template <class TypeTag>
 class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 {
@@ -711,12 +679,8 @@ eps is used as a small value for the definition of the boundry conditions
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
 };
-```
 
-We leave the namespace Dumux.
-
-```cpp
-}
+} // end namespace Dumux
 ```
 
 
@@ -803,10 +767,10 @@ Further we include assembler, which assembles the linear systems for finite volu
 #include <dumux/assembly/fvassembler.hh>
 ```
 
-We include the problem file which defines initial and boundary conditions to describe our example problem
+We include the properties
 
 ```cpp
-#include "problem.hh"
+#include "properties.hh"
 ```
 
 ### Beginning of the main function
