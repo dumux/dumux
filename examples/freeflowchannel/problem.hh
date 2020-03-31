@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-#ifndef DUMUX_CHANNEL_TEST_PROBLEM_HH
-#define DUMUX_CHANNEL_TEST_PROBLEM_HH
+#ifndef DUMUX_EXAMPLES_FREEFLOW_CHANNEL_PROBLEM_HH
+#define DUMUX_EXAMPLES_FREEFLOW_CHANNEL_PROBLEM_HH
 
 // ## The file `problem.hh`
 //
@@ -27,8 +27,8 @@
 // We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
 //
 // As this is a Stokes problem, we inherit from the basic <code>NavierStokesProblem</code>.
-// <details><summary>Toggle to expand code:</summary>
-
+// <details><summary>Toggle to show code:</summary>
+#include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
 namespace Dumux {
@@ -40,7 +40,7 @@ class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
     //
     // We use convenient declarations that we derive from the property system.
     //<details>
-    //  <summary>Toggle to expand code (convenient declarations)</summary>
+    //  <summary>Toggle to show code (convenient declarations)</summary>
     //
     using ParentType = NavierStokesProblem<TypeTag>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;

@@ -42,6 +42,67 @@ In the following, we take a close look at the files containing the set-up: At fi
 # Implementation
 
 
+## The file `properties.hh`
+In the following, we set the properties for our simulation
+(click [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/blob/master/slides/dumux-course-properties.pdf) for DuMux course slides on the property system).
+We start with includes
+<details><summary>Click to show the header includes</summary>
+
+```cpp
+#include <dune/grid/yaspgrid.hh>
+
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/components/constant.hh>
+
+#include "problem.hh"
+```
+
+</details>
+
+Then we start setting the properties.
+1. For every test problem, a new `TypeTag` has to be created, which is done within the namespace `TTag` (subnamespace of `Properties`). It inherits from the Navier-Stokes flow model and the staggered-grid discretization scheme.
+2. The grid is chosen to be a two-dimensional Cartesian structured grid (`YaspGrid`).
+3. We set the `FluidSystem` to be a one-phase liquid with a single component. The class `Component::Constant` refers to a component with constant fluid properties (density, viscosity, ...) that can be set via the input file in the group `[0.Component]` where the number is the identifier given as template argument to the class template `Component::Constant`.
+4. The problem class `ChannelExampleProblem`, which is forward declared before we enter `namespace Dumux` and defined later in this file, is defined to be the problem used in this test problem (charaterized by the TypeTag `ChannelExample`). The fluid system, which contains information about the properties such as density, viscosity or diffusion coefficient of the fluid we're simulating, is set to a constant one phase liquid.
+5. We enable caching for the following classes (which stores values that were already calculated for later usage and thus results in higher memory usage but improved CPU speed): the grid volume variables, the grid flux variables, the finite volume grid geometry.
+
+```cpp
+namespace Dumux::Properties {
+
+namespace TTag {
+struct ChannelExample { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+} // namespace TTag
+
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ChannelExample> { using type = Dune::YaspGrid<2>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ChannelExample> { using type = Dumux::ChannelExampleProblem<TypeTag> ; };
+
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::ChannelExample>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+};
+
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
+} // end namespace Dumux::Properties
+```
+
+
+
+
 ## The file `problem.hh`
 
 
@@ -49,10 +110,10 @@ In the following, we take a close look at the files containing the set-up: At fi
 We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
 
 As this is a Stokes problem, we inherit from the basic <code>NavierStokesProblem</code>.
-<details><summary>Toggle to expand code:</summary>
+<details><summary>Toggle to show code:</summary>
 
 ```cpp
-
+#include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
 namespace Dumux {
@@ -66,7 +127,7 @@ class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
 
 We use convenient declarations that we derive from the property system.
 <details>
-<summary>Toggle to expand code (convenient declarations)</summary>
+<summary>Toggle to show code (convenient declarations)</summary>
 
 
 ```cpp
@@ -297,7 +358,6 @@ type definitions, values and methods. All properties are declared in the file `p
 The file `parameters.hh` contains the parameter class, which manages the definition of input parameters by a default
 value, the inputfile or the command line.
 The file `dumuxmessage.hh` contains the class defining the start and end message of the simulation.
-The file `valgrind.hh` contains debugging funcionality.
 
 The file `seqsolverbackend.hh` contains the class, which defines the sequential linear solver backends.
 The nonlinear Newton's method is included, as well as the assembler, which assembles the linear systems for staggered-grid finite volume schemes.
@@ -316,7 +376,6 @@ The following class contains functionality for additional flux output to the con
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/valgrind.hh>
 #include <dune/common/deprecated.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
@@ -327,61 +386,13 @@ The following class contains functionality for additional flux output to the con
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/constant.hh>
-
-#include "problem.hh"
+#include "properties.hh"
 ```
 
 </details>
 </details>
-
-
-### Setup basic properties for our simulation
-We setup the DuMux properties for our simulation (click [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/blob/master/slides/dumux-course-properties.pdf) for DuMux course slides on the property system) within the namespace Properties, which is a sub-namespace of Dumux.
-1. For every test problem, a new `TypeTag` has to be created, which is done within the namespace `TTag` (subnamespace of `Properties`). It inherits from the Navier-Stokes flow model and the staggered-grid discretization scheme.
-2. The grid is chosen to be a two-dimensional YASP grid.
-3. We set the `FluidSystem` to be a one-phase liquid with a single component. The class `Component::Constant` refers to a component with constant fluid properties (density, viscosity, ...) that can be set via the input file in the group `[0.Component]` where the number is the identifier given as template argument to the class template `Component::Constant`.
-4. The problem class `ChannelExampleProblem`, which is forward declared before we enter `namespace Dumux` and defined later in this file, is defined to be the problem used in this test problem (charaterized by the TypeTag `ChannelExample`). The fluid system, which contains information about the properties such as density, viscosity or diffusion coefficient of the fluid we're simulating, is set to a constant one phase liquid.
-5. We enable caching for the following classes (which stores values that were already calculated for later usage and thus results in higher memory usage but improved CPU speed): the grid volume variables, the grid flux variables, the finite volume grid geometry.
-
-
-```cpp
-namespace Dumux::Properties {
-
-namespace TTag {
-struct ChannelExample { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
-} // namespace TTag
-
-template<class TypeTag>
-struct Grid<TypeTag, TTag::ChannelExample> { using type = Dune::YaspGrid<2>; };
-
-template<class TypeTag>
-struct Problem<TypeTag, TTag::ChannelExample> { using type = Dumux::ChannelExampleProblem<TypeTag> ; };
-
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::ChannelExample>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-};
-
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::ChannelExample> { static constexpr bool value = true; };
-} // end namespace Dumux::Properties
-```
-
-
 
 ### Beginning of the main function
 We begin the main function by making the type tag `ChannelExample`, that we defined in `problem.hh` for this test problem available here.
@@ -587,5 +598,3 @@ catch (...)
 ```
 
 </details>
-
-
