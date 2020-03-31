@@ -17,7 +17,7 @@ namespace Dumux::Test {
 template<class Law>
 void checkEndPointPc(const typename Law::Params& params)
 {
-    const auto pcSat = Law::pc(params, Law::sweToSw_(params, 1.0));
+    const auto pcSat = Law::pc(params, Law::sweToSw(params, 1.0));
     const auto endPointPc = Law::endPointPc(params);
     const auto entryPressure = params.pe();
     static constexpr double eps = 1e-10;
@@ -51,7 +51,7 @@ int main(int argc, char** argv) try
     Test::checkEndPointPc<BCReg>(params);
 
     const auto sw = Dumux::linspace(0.0, 1.0, 100);
-    const auto swNonReg = Dumux::linspace(BCReg::sweToSw_(params, params.thresholdSw()), BCReg::sweToSw_(params, 1.0), 100);
+    const auto swNonReg = Dumux::linspace(BCReg::sweToSw(params, params.thresholdSw()), BCReg::sweToSw(params, 1.0), 100);
 
     Test::runMaterialLawTest<BC, BCReg>("brookscorey", params, sw, swNonReg);
     Test::runEffToAbsTest<BCRegEff, BCReg>("brookscorey-efftoabs", params, sw);

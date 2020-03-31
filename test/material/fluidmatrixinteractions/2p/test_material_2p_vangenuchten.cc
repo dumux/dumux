@@ -17,7 +17,7 @@ namespace Dumux::Test {
 template<class Law>
 void checkEndPointPc(const typename Law::Params& params)
 {
-    const auto pcSat = Law::pc(params, Law::sweToSw_(params, 1.0));
+    const auto pcSat = Law::pc(params, Law::sweToSw(params, 1.0));
     const auto endPointPc = Law::endPointPc(params);
     static constexpr double eps = 1e-10;
 
@@ -52,7 +52,7 @@ int main(int argc, char** argv) try
     Test::checkEndPointPc<VGReg>(params);
 
     const auto sw = Dumux::linspace(0.0, 1.0, 100);
-    const auto swNonReg = Dumux::linspace(VGReg::sweToSw_(params, params.pcLowSw()), VGReg::sweToSw_(params, params.pcHighSw()), 100);
+    const auto swNonReg = Dumux::linspace(VGReg::sweToSw(params, params.pcLowSw()), VGReg::sweToSw(params, params.pcHighSw()), 100);
 
     Test::runMaterialLawTest<VG, VGReg>("vangenuchten", params, sw, swNonReg);
     Test::runEffToAbsTest<VGRegEff, VGReg>("vangenuchten-efftoabs", params, sw);
