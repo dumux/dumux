@@ -68,8 +68,8 @@
 #include <dumux/porousmediumflow/2p/griddatatransfer.hh>
 #include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 
-//We include the problem file which defines initial and boundary conditions to describe our example problem
-#include "problem.hh"
+// Finally, we include the properties which configure the simulation
+#include "properties.hh"
 
 // ### Beginning of the main function
 int main(int argc, char** argv) try
