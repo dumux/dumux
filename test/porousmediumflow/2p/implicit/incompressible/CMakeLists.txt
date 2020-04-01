@@ -46,7 +46,7 @@ dumux_add_test(NAME test_2p_incompressible_box_ifsolver
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_box_ifsolver-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_ifsolver-00018.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_ifsolver-00017.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_ifsolver params.input
                                                                                                   -Problem.Name test_2p_incompressible_box_ifsolver
                                                                                                   -Problem.UseNonConformingOutput true")
