@@ -1,6 +1,7 @@
 # Two-phase flow infiltration problem with adaptive grid
 
-In this example, you will learn how to
+__In this example, you will learn how to__
+
 * solve a two-phase flow in porous media problem with two immiscible phases
 * set boundary conditions and a simple injection well
 * specify a lens with different porous material parameters
@@ -8,25 +9,15 @@ In this example, you will learn how to
 * specify a point source
 * read the initial solution from a text file
 
-__Prerequisites:__ You need [dune-alugrid](https://gitlab.dune-project.org/extensions/dune-alugrid) in order to compile and run this example.
+__Prerequisites__. You need [dune-alugrid](https://gitlab.dune-project.org/extensions/dune-alugrid) in order to compile and run this example.
 
-__Result:__ The resulting saturation distribution in this example will look like this:
+__Result__. The resulting saturation distribution in this example will look like this:
 
 ![](./img/test_2p_pointsource_adaptive.png)
 
+__Table of contents__. This description is structured as follows:
 
-## Folder layout and files
-
-```
-└── 2pinfiltration/
-    ├── CMakeLists.txt          -> build system file
-    ├── main.cc                 -> main program flow
-    ├── params.input            -> runtime parameters
-    ├── properties.hh           -> compile time configuration
-    ├── problem.hh              -> boundary & initial conditions
-    ├── spatialparams.hh        -> spatial parameter fields
-    └── initialsolutioncc.txt   -> text file with initial solution
-```
+[[_TOC_]]
 
 ## Scenario and mathematical model
 
@@ -65,3 +56,16 @@ The grid is adapitvely refined around the injection. The adaptive behaviour can 
 For more information about the discretization please have a look at the [handbook](https://dumux.org/handbook).
 
 # Implementation
+
+## Folder layout and files
+
+```
+└── 2pinfiltration/
+    ├── CMakeLists.txt          -> build system file
+    ├── main.cc                 -> main program flow
+    ├── params.input            -> runtime parameters
+    ├── properties.hh           -> compile time configuration
+    ├── problem.hh              -> boundary & initial conditions
+    ├── spatialparams.hh        -> spatial parameter fields
+    └── initialsolutioncc.txt   -> text file with initial solution
+```

@@ -1,23 +1,17 @@
 # Freeflow through a channel
 
-You learn how to:
+__You learn how to__
+
 * solve a free flow channel problem
 * set outflow boundary conditions in the free-flow context
 
-__Results:__ In this example we will obtain the following stationary velocity profile:
+__Results__. In this example we will obtain the following stationary velocity profile:
 
 ![](./img/velocity.png)
 
-## Folder layout and files
+__Table of contents__. This description is structured as follows:
 
-```
-└── freeflowchannel/
-    ├── CMakeLists.txt          -> build system file
-    ├── main.cc                 -> main program flow
-    ├── params.input            -> runtime parameters
-    ├── properties.hh           -> compile time configuration
-    └── problem.hh              -> boundary & initial conditions
-```
+[[_TOC_]]
 
 ## Mathematical model
 The Stokes model without gravitation and without sources or sinks for a stationary, incompressible, laminar, single phase, one-component, isothermal ($`T=10^\circ C`$) flow is considered assuming a Newtonian fluid of constant density $` \varrho = 1~\frac{\text{kg}}{\text{m}^3} `$ and constant kinematic viscosity $` \nu = 1~\frac{\text{m}^2}{\text{s}} `$. The momentum balance
@@ -38,3 +32,14 @@ This example contains a stationary free flow of a fluid through two parallel sol
 In the following, we take a close look at the files containing the set-up: At first, boundary conditions are set in `problem.hh` for the Navier-Stokes model. Afterwards, we show the different steps for solving the model in the source file `main.cc`.
 
 # Implementation
+
+## Folder layout and files
+
+```
+└── freeflowchannel/
+    ├── CMakeLists.txt          -> build system file
+    ├── main.cc                 -> main program flow
+    ├── params.input            -> runtime parameters
+    ├── properties.hh           -> compile time configuration
+    └── problem.hh              -> boundary & initial conditions
+```

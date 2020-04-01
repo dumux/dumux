@@ -5,26 +5,18 @@ This example shows how the shallow water flow model can be
 applied to simulate steady subcritical flow including
 bottom friction (bed shear stress).
 
-You will learn how to:
+__You will learn how to__
 
 * solve a shallow water flow problem including bottom friction
 * compute and output (VTK) an analytical reference solution
 
-__Result:__ The numerical and analytical solutions for the problem will look like this:
+__Result__. The numerical and analytical solutions for the problem will look like this:
 
 ![Result Logo](img/result.png)
 
-## Folder layout and files
+__Table of contents__. This description is structured as follows:
 
-```
-└── shallowwaterfriction/
-    ├── CMakeLists.txt          -> build system file
-    ├── main.cc                 -> main program flow
-    ├── params.input            -> runtime parameters
-    ├── properties.hh           -> compile time configuration
-    ├── problem.hh              -> boundary & initial conditions
-    └── spatialparams.hh        -> spatial parameter fields
-```
+[[_TOC_]]
 
 ## Mathematical model
 The 2D shallow water equations (SWEs) are given by
@@ -93,6 +85,18 @@ The formula of Gaukler Manning and Strickler is also used to calculate the analy
 for the simulation are given in the file `params.input`.
 
 # Implementation
+
+## Folder layout and files
+
+```
+└── shallowwaterfriction/
+    ├── CMakeLists.txt          -> build system file
+    ├── main.cc                 -> main program flow
+    ├── params.input            -> runtime parameters
+    ├── properties.hh           -> compile time configuration
+    ├── problem.hh              -> boundary & initial conditions
+    └── spatialparams.hh        -> spatial parameter fields
+```
 
 
 ## The file `properties.hh`
