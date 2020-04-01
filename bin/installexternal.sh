@@ -53,37 +53,6 @@ installAluGrid()
     fi
 }
 
-installEcl()
-{
-    cd $TOPDIR
-
-    if [ ! -e libecl ]; then
-        git clone -b 2018.10 https://github.com/Statoil/libecl.git
-    fi
-
-    if  test "$DOWNLOAD_ONLY" == "y"; then
-        return
-    fi
-
-    if  test "$CLEANUP" == "y"; then
-        rm -rf libecl
-        return
-    fi
-
-    # building libecl
-    echo "Building libecl"
-    cd $TOPDIR/libecl
-    mkdir build
-    cd build
-    cmake ..
-    make
-
-    # show additional information
-    echo "Ecl has been built in directory libecl/build."
-
-    cd $TOPDIR
-}
-
 installFoamGrid()
 {
     cd $TOPDIR
@@ -288,11 +257,17 @@ installOPM()
     fi
 
     if [ ! -e opm-common ]; then
-        git clone -b release/2018.10 https://github.com/OPM/opm-common
+        git clone https://github.com/OPM/opm-common
+        cd opm-common
+        git reset --hard d3817e2fc2f79014d3cb0c01325a6e8a5dcc0cf3
+        cd $TOPDIR
     fi
 
     if [ ! -e opm-grid ]; then
-        git clone -b release/2018.10 https://github.com/OPM/opm-grid
+        git clone https://github.com/OPM/opm-grid
+        cd opm-grid
+        git reset --hard f3421419412dc326b2ffe566b0c405447f7bf1dc
+        cd $TOPDIR
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -308,7 +283,6 @@ installOPM()
     # show additional information
     echo "In addition, it might be necessary to set manually some"
     echo "CMake variables in the CMAKE_FLAGS section of the .opts-file:"
-    echo "  -Decl_DIR=$TOPDIR/libecl/build"
     echo "  -DUSE_MPI=ON"
 
     # show some opm prerequisites
@@ -430,7 +404,6 @@ usage()
     echo "Where PACKAGES is one or more of the following"
     echo "  all              Install everything and the kitchen sink."
     echo "  alugrid          Download dune-alugrid."
-    echo "  ecl              Download and build ecl."
     echo "  foamgrid         Download dune-foamgrid."
     echo "  glpk             Download and install glpk."
     echo "  gstat            Download and install gstat."
@@ -498,7 +471,6 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             createExternalDirectory
             installAluGrid
-            installEcl
             installFoamGrid
             installGLPK
             installGStat
@@ -514,10 +486,6 @@ for TMP in "$@"; do
         alugrid|dune-alugrid)
             SOMETHING_DONE="y"
             installAluGrid
-            ;;
-        ecl)
-            SOMETHING_DONE="y"
-            installEcl
             ;;
         foamgrid|dune-foamgrid)
             SOMETHING_DONE="y"
