@@ -1,4 +1,5 @@
 dumux_add_test(SOURCES test_0d1d_intersection.cc LABELS unit)
+dumux_add_test(SOURCES test_0d3d_intersection.cc LABELS unit)
 dumux_add_test(SOURCES test_1d1d_intersection.cc LABELS unit)
 dumux_add_test(SOURCES test_1d3d_intersection.cc LABELS unit)
 dumux_add_test(SOURCES test_1d2d_intersection.cc LABELS unit)
