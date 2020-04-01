@@ -23,21 +23,23 @@
 // ## Parameter distributions (`spatialparams_tracer.hh`)
 //
 //
-// In this file, we define spatial properties of the porous medium such as the permeability
-// and the porosity in various functions for the tracer problem. Furthermore, spatially-dependent
-// properties of the tracer fluid system are defined as well as functions related to setting and retrieving
-// the volume fluxes calculated from the solution of the 1p problem.
+// In this file, we define spatial properties of the porous medium such as permeability
+// and porosity in various functions for the tracer problem. Furthermore, spatially-dependent
+// properties of the tracer fluid system are defined as well as functions related to setting
+// and retrieving the volume fluxes calculated from the solution of the 1p problem.
 //
 // ### Include files
-// We use the properties for porous medium flow models, declared in the file `properties.hh`.
-#include <dumux/porousmediumflow/properties.hh>
-// As in the 1p spatialparams, we inherit from the spatial parameters for single-phase models using finite volumes, which we include here.
+// We include the spatial parameters class for single-phase models discretized by
+// finite volume schemes, from which the spatial parameters defined for this example will inherit.
 #include <dumux/material/spatialparams/fv1p.hh>
 
 // ### The spatial parameters class
 //
-// In the `TracerTestSpatialParams` class, we define all functions needed to describe
-// spatially-dependent parameters for the tracer_problem.
+// In the OnePTestSpatialParams class, we define all functions needed to define
+// the spatially-dependent parameters for the tracer problem.
+// We inherit from the FVSpatialParamsOneP class here, which is the base class for
+// spatial parameters in the context of single-phase porous medium flow applications
+// using finite volume discretization schemes.
 // [[codeblock]]
 namespace Dumux {
 
@@ -76,24 +78,25 @@ public:
                         const ElementSolution& elemSol) const
     { return 0; }
 
-    // #### Properties of the fluid system
-    // In the following, we define fluid properties that are spatial parameters in the tracer model.
+    // #### Properties of the fluid phase
+    // In the following, we define fluid phase properties that are spatial parameters
+    // in the tracer model.
     // They can possible vary in space but are usually constants.
-    // Furthermore, spatially constant values of the fluid system are defined in the `TracerFluidSystem`
-    // class in `proerties_tracer.hh`. We define the fluid density to a constant value of 1000 $`\frac{kg}{m^3}`$.
+    // We define the fluid density to a constant value of 1000 $`\frac{kg}{m^3}`$ (liquid water).
     Scalar fluidDensity(const Element &element,
                         const SubControlVolume& scv) const
     { return 1000; }
 
-    // The following functions define the molar mass of the fluid in function of the
+    // The following functions define the molar mass of the fluid phase as function of the
     // elements of the computational grid and the position in the domain.
     // [[codeblock]]
-    // This interface defines the fluid molar mass within the sub-control volume `scv`.
+    // This interface defines the fluid phase's molar mass within the sub-control volume `scv`
+    // inside an `element` of the computational grid.
     Scalar fluidMolarMass(const Element& element,
                           const SubControlVolume& scv) const
     { return fluidMolarMassAtPos(scv.dofPosition()); }
 
-    // This interface defines the fluid molar mass depending on the position in the domain.
+    // This interface defines the fluid phase's molar mass depending on the position in the domain.
     Scalar fluidMolarMassAtPos(const GlobalPosition& globalPos) const
     { return 18.0; }
     // [[/codeblock]]

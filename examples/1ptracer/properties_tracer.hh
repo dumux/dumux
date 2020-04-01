@@ -20,27 +20,28 @@
 #ifndef DUMUX_TRACER_TEST_PROPERTIES_HH
 #define DUMUX_TRACER_TEST_PROPERTIES_HH
 
-// ## Property definitions (`properties_tracer.hh`)
+// ## Compile-time settings (`properties_tracer.hh`)
 //
-// This file defines the `TypeTag` used for the tracer transport simulation, for
-// which we then define the necessary properties.
+// This file defines the type tag used for the tracer transport simulation, for
+// which we then specialize `properties` to the needs of the desired setup.
 //
 // ### Include files
 // <details>
-// As for the single-phase problem, a`TypeTag` is defined for this simulation.
-// Here, we inherit all properties from the `Tracer` type tag, a convenience type tag
-// that predefines most of the required properties for tracer transport flow simulations in DuMuX.
+// As for the single-phase problem, atype tag is defined also for this simulation.
+// Here, we inherit all properties of the `Tracer` type tag, a convenience type tag
+// that specializes most of the required properties for tracer transport flow simulations in DuMuX.
 #include <dumux/porousmediumflow/tracer/model.hh>
 
-// Again, we use YaspGrid, an implementation of the dune grid interface for structured grids:
+// We use YaspGrid, an implementation of the dune grid interface for structured grids.
 #include <dune/grid/yaspgrid.hh>
-// and the cell centered, two-point-flux discretization.
+// We want to discretize the equations with the cell centered finite volume scheme using
+// two-point-flux approximation.
 #include <dumux/discretization/cctpfa.hh>
 // This includes the base class for fluid systems. We will define a custom fluid
 // system that inherits from that class.
 #include <dumux/material/fluidsystems/base.hh>
 
-// We include the problem and spatial parameters FiniteVolumeModelheaders used for this simulation.
+// We include the problem and spatial parameter headers used for this simulation.
 #include "problem_tracer.hh"
 #include "spatialparams_tracer.hh"
 // </details>
@@ -58,7 +59,7 @@ template<class TypeTag>
 class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>,
                                                                TracerFluidSystem<TypeTag>>
 {
-    // We define some convenience aliases to be used inside this class.
+    // Some convenience aliases to be used inside this class.
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -91,7 +92,7 @@ public:
 
     // We set the value for the binary diffusion coefficient. This
     // might depend on spatial parameters like pressure / temperature.
-    // But, in this case we neglect diffusion and return 0.0:
+    // But, in this case we neglect diffusion and return 0.0.
     static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
                                              const Element& element,
@@ -100,44 +101,38 @@ public:
 };
 // [[/codeblock]]
 //
-// ### Definition of the `TypeTag` used for the tracer transport problem
-// A `TypeTag` for our simulation is created which inherits from the tracer model and the
-// cell centered discretization scheme using two-point flux approximation.
-// The `Tracer` type tag defines most of the required properties for tracer transport flow
-// simulations in DuMuX, apart from those that must be user-defined and for which no meaningful
-// defaults can be chosen. As for the single-phase problem, we again also inherit from the
-//  CCTpfaModel` type tag with which we choose to use a cell centered finite volume discretization
-// with two-point-flux approximation.
+// ### Type tag definition
+//
+// We define a type tag for our simulation with the name `TracerTest` and inherit
+// the properties specialized for the type tags `Tracer` and `CCTpfaModel`.
+// This way, most of the properties required for tracer transport simulations using
+// the cell centered finite volume scheme with two-point-flux approximation are
+// conveniently specialized for our new type tag.
+// However, some properties depend on user choices and no meaningful default value
+// can be set. Those properties will be adressed later in this file.
 // [[codeblock]]
 namespace Properties {
 
-// Type tag definitions
+// declaration of the `TracerTest` type tag for the tracer transport problem
 namespace TTag {
 struct TracerTest { using InheritsFrom = std::tuple<Tracer, CCTpfaModel>; };
 }
 // [[/codeblock]]
 //
-// ### Property definitions for type tag `TracerTest`
-// With the type tag `TracerTest` that we defined for this single-phase problem,
-// we can now define several required compile-time `properties`.
+// ### Property specializations
+//
+// In the following piece of code, mandatory properties for which no meaningful
+// default can be set, are specialized for our type tag `TracerTest`.
 // [[codeblock]]
-// We enable caching for the grid volume variables, the flux variables and the FV grid geometry.
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
-
-// We use the same grid as in the stationary one-phase model, a structured 2D grid:
+// We use the same grid type as in the stationary one-phase model, a structured 2D grid.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::TracerTest> { using type = Dune::YaspGrid<2>; };
 
-// The problem class that specifies initial and boundary conditions:
+// This sets our problem class (see problem_tracer.hh) that specifies initial and boundary conditions.
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TracerTest> { using type = TracerTestProblem<TypeTag>; };
 
-// We define the spatial parameters for our tracer simulation:
+// This defines the spatial parameters class (spatialparams_tracer.hh) for our tracer simulation.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TracerTest>
 {
@@ -148,24 +143,44 @@ public:
     using type = TracerTestSpatialParams<GridGeometry, Scalar>;
 };
 
-// One can choose between a formulation in terms of mass or mole fractions.
-// Here, we are using mass fractions.
+// We set the tracer fluid system that we have defined above.
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<TypeTag>; };
+// [[/codeblock]]
+//
+// The above are all mandatory properties, however, we also specialize the `UseMoles`
+// property, which can be used to switch between mole or mass balances to be solved
+// in compositional models. It defaults to `true`, and thus, to a molar formulation,
+// and we set it to `false` here to specify that we want to solve the mass balance
+// equation for the tracer component.
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = false; };
 
+// Moreover, we specialize several properties related to efficiency optimizations
+// <details>
+// [[codeblock]]
+// In Dumux, one has the option to activate/deactive the grid-wide caching of geometries
+// and variables. If active, the CPU time can be significantly reduced as less dynamic
+// memory allocation procedures are necessary. Per default, grid-wide caching is disabled
+// to ensure minimal memory requirements, however, in this example we want to active all
+// available caches, which significanlty increases the memory demand but makes the simulation faster
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+
 // We use solution-independent molecular diffusion coefficients. Per default, solution-dependent
 // diffusion coefficients are assumed during the computation of the jacobian matrix entries. Specifying
-// solution-independent diffusion coefficients can speed up computations:
+// solution-independent diffusion coefficients can speed up computations significantly.
 template<class TypeTag>
 struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTest>
 { static constexpr bool value = false; };
 
-// We set the above created tracer fluid system:
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<TypeTag>; };
-
 } // end namespace Properties
 } // end namespace Dumux
 // [[/codeblock]]
+// </details>
 
 #endif

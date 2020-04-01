@@ -26,24 +26,22 @@
 // conditions for the tracer transport simulation.
 //
 // ### Include files
-// [[codeblock]]
-// This header contains the porous medium problem class that this class is derived from:
+// The only include we need here is the `PorousMediumFlowProblem` class, the base
+// class for Problems from which we will derive.
 #include <dumux/porousmediumflow/problem.hh>
-// This header contains the class that specifies all spatially variable parameters
-// related to this problem.
-#include "spatialparams_tracer.hh"
-// [[/codeblock]]
 
 // ### The problem class
-// We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As this is a porous medium flow problem, we inherit from the base class `PorousMediumFlowProblem`.
+//
+// We enter the problem class where all necessary boundary conditions and initial
+// conditions are set for our simulation. As we are solving a problem related to
+// flow in porous media, we inherit from the base class `PorousMediumFlowProblem`.
 // [[codeblock]]
 namespace Dumux {
 
 template <class TypeTag>
 class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    // We use convenient declarations that we derive from the property system.
+    // A few convenience aliases used throughout this class.
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -81,7 +79,8 @@ public:
     // [[/codeblock]]
 
     // #### Boundary conditions
-    // We define the type of boundary conditions depending on the location.
+    //
+    // We define the __type of boundary conditions__ depending on the location.
     // All boundaries are set to a neumann-type flow boundary condition.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
@@ -92,7 +91,7 @@ public:
     }
     // [[/codeblock]]
 
-    // In the following function we implement the Neumann boundary conditions.
+    // In the following function we implement the __Neumann boundary conditions__.
     // Here, we define an outflow boundary on the top of the domain and prescribe zero-flux
     // Neumann boundary conditions on all other boundaries.
     // [[codeblock]]
@@ -124,9 +123,10 @@ public:
     // [[/codeblock]]
 
     // #### Initial conditions
-    // We specify the initial conditions for the primary variable (tracer concentration) depending
-    // on the location. Here, we set zero model fractions everywhere in the domain except for a strip
-    // at the bottom of the domain where we set an initial mole fraction of $`1e-9`$.
+    //
+    // We specify the initial conditions for the primary variable (tracer mass fraction) depending
+    // on the location. Here, we set zero mass fractions everywhere in the domain except for a strip
+    // at the bottom of the domain where we set an initial mole fraction of $`10^{-9}`$.
     // [[codeblock]]
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
@@ -144,6 +144,7 @@ public:
                 initialValues = 1e-9*FluidSystem::molarMass(0)
                                     /this->spatialParams().fluidMolarMassAtPos(globalPos);
         }
+
         return initialValues;
     }
     // [[/codeblock]]
