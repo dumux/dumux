@@ -55,7 +55,7 @@ public:
         deck_ = std::make_shared<Opm::Deck>(Opm::Parser().parseFile(fileName));
         Opm::EclipseGrid eclGrid(*deck_);
         grid_ = std::make_shared<Grid>();
-        grid_->processEclipseFormat(eclGrid, false, false);
+        grid_->processEclipseFormat(&eclGrid, false, false, false);
         loadBalance();
     }
 
