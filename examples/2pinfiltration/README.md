@@ -478,7 +478,12 @@ namespace Dumux::Properties {
 ```
 
 First, a so-called TypeTag is created. Properties are traits specialized for this TypeTag (a simple `struct`).
-The properties of two other TypeTags are inherited by adding the alias `InheritsFrom`.
+
+>>>
+:white_check_mark: The properties of other TypeTags are inherited if the alias `InheritsFrom` is present.
+These other TypeTags are listed in form of a `std::tuple` in order of importance.
+>>>
+
 Here, properties from the two-phase flow model (`TTag::Twop`) and the
 cell-centered finite volume scheme with two-point-flux approximation (`TTag::CCTpfaModel`)
 are inherited. These other TypeTag definitions can be found in the included
