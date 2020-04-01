@@ -75,7 +75,11 @@ For more information about the discretization please have a look at the [handboo
 
 ## The file `spatialparams.hh`
 
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](spatialparams.hh))</summary>
 
+
+### Includes
 we include the basic spatial parameters for finite volumes file from which we will inherit
 
 ```cpp
@@ -94,7 +98,6 @@ namespace Dumux {
 In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability
 
 ```cpp
-
 template<class GridGeometry, class Scalar>
 class TwoPTestSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar>>
@@ -235,9 +238,18 @@ we have a convenience definition of the position of the lens
 ```
 
 
+</details>
+
+----------
 
 
 ## The file `problem.hh`
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](problem.hh))</summary>
+
+
+### Includes
 We start with includes for `PorousMediumFlowProblem` and `readFileToContainer` (used below).
 
 ```cpp
@@ -245,6 +257,7 @@ We start with includes for `PorousMediumFlowProblem` and `readFileToContainer` (
 #include <dumux/io/container.hh>
 ```
 
+### Problem class
 The problem class `PointSourceProblem` implements boundary and initial conditions.
 It derives from the `PorousMediumFlowProblem` class.
 
@@ -444,10 +457,18 @@ private:
 
 </details>
 
+</details>
+
+----------
 
 
 ## The file `properties.hh`
 
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](properties.hh))</summary>
+
+
+### Includes
 The header includes will be mentioned in the text below.
 <details><summary>Click to show the header includes</summary>
 
@@ -564,9 +585,15 @@ struct Formulation<TypeTag, TTag::PointSourceExample>
 ```
 
 
+</details>
+
+----------
 
 
 ## The file `main.cc`
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](main.cc))</summary>
 
 
 This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method
@@ -1090,3 +1117,6 @@ catch (...)
 ```
 
 
+</details>
+
+----------

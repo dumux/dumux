@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 // ## The file `main.cc`
-//
+// [[content]]
 //
 // This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method
 // ### Includes
@@ -303,3 +303,4 @@ catch (...)
     std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
     return 4;
 }
+// [[/content]]

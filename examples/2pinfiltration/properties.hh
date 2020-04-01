@@ -21,7 +21,9 @@
 #define DUMUX_EXAMPLE_TWOP_INFILTRATION_PROPERTIES_HH
 
 // ## The file `properties.hh`
+// [[content]]
 //
+// ### Includes
 // The header includes will be mentioned in the text below.
 // <details><summary>Click to show the header includes</summary>
 #include <dune/alugrid/grid.hh>
@@ -117,5 +119,5 @@ struct Formulation<TypeTag, TTag::PointSourceExample>
 { static constexpr auto value = TwoPFormulation::p0s1; };
 
 } // end namespace Dumux::Properties
-
+// [[/content]]
 #endif

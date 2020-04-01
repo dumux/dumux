@@ -21,10 +21,14 @@
 #define DUMUX_EXAMPLE_TWOP_INFILTRATION_PROBLEM_HH
 
 // ## The file `problem.hh`
+// [[content]]
+//
+// ### Includes
 // We start with includes for `PorousMediumFlowProblem` and `readFileToContainer` (used below).
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/io/container.hh>
 
+// ### Problem class
 // The problem class `PointSourceProblem` implements boundary and initial conditions.
 // It derives from the `PorousMediumFlowProblem` class.
 namespace Dumux {
@@ -198,5 +202,5 @@ private:
 
 } // end namespace Dumux
 // </details>
-
+// [[/content]]
 #endif

@@ -21,9 +21,10 @@
 #define DUMUX_TWOP_INCOMPRESSIBLE_EXAMPLE_SPATIAL_PARAMS_HH
 
 // ## The file `spatialparams.hh`
+// [[content]]
 //
-//
-//we include the basic spatial parameters for finite volumes file from which we will inherit
+// ### Includes
+// we include the basic spatial parameters for finite volumes file from which we will inherit
 #include <dumux/material/spatialparams/fv.hh>
 
 // we include all laws which are needed to define the interaction between the solid matrix and the fluids, e.g. laws for capillary pressure saturation relationships.
@@ -32,8 +33,7 @@
 
 namespace Dumux {
 
-//In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability
-
+// In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability
 template<class GridGeometry, class Scalar>
 class TwoPTestSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar>>
@@ -139,5 +139,5 @@ private:
 };
 
 } // end namespace Dumux
-
+// [[/content]]
 #endif
