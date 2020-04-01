@@ -21,7 +21,7 @@
 //
 //
 // This file contains the main program flow. In this example, we solve a single-phase flow problem
-// to obtain a pressure distribution on the domain. Subsequently, the distribution of volume fluxes
+// to obtain a pressure distribution in the domain. Subsequently, the distribution of volume fluxes
 // is computed from that pressure distribution, which is then passed to a tracer problem to solve
 // the transport of an initial contamination through the model domain.
 // ### Included header files
@@ -68,7 +68,7 @@
 
 // ### The main function
 // We will now discuss the main program flow implemented within the `main` function.
-// At the beginning of each program using Dune, an instance `Dune::MPIHelper` has to
+// At the beginning of each program using Dune, an instance of `Dune::MPIHelper` has to
 // be created. Moreover, we parse the run-time arguments from the command line and the
 // input file:
 // [[codeblock]]
@@ -84,10 +84,11 @@ int main(int argc, char** argv) try
     // [[/codeblock]]
 
     // We define convenience aliases for the type tags of the two problems. The type
-    // tags contain all the properties that are needed to run the simulations. Throughout
-    // the main file, we will obtain types defined for these type tags using the property
-    // system, i.e. with `GetPropType`. A more detailed documentation for the type tags
-    // and properties will be given at the end of this section.
+    // tags contain all the properties that are needed to define the model and the problem
+    // setup. Throughout the main file, we will obtain types defined for these type tags
+    // using the property system, i.e. with `GetPropType`. A more detailed documentation
+    // for the type tags and properties can be found in the documentation of the single-phase
+    // and the tracer transport setups, respectively.
     using OnePTypeTag = Properties::TTag::IncompressibleTest;
     using TracerTypeTag = Properties::TTag::TracerTest;
 
@@ -96,7 +97,7 @@ int main(int argc, char** argv) try
     // This can either be a grid file, or in the case of structured grids, one can specify the coordinates
     // of the corners of the grid and the number of cells to be used to discretize each spatial direction.
     // Here, we solve both the single-phase and the tracer problem on the same grid, and thus,
-    // the grid is only created once using the grid type defined by the type tag of the 1p problem.
+    // the grid is only created once using the grid type defined by the `OnePTypeTag` of the single-phase problem.
     // [[codeblock]]
     GridManager<GetPropType<OnePTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
@@ -105,9 +106,9 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
     // [[/codeblock]]
 
-    // ### Step 2: Set-up and solving of the 1p problem
+    // ### Step 2: Solving the single-phase problem
     // First, a finite volume grid geometry is constructed from the grid that was created above.
-    // This builds the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element
+    // This builds the sub-control volumes (scv) and sub-control volume faces (scvf) for each element
     // of the grid partition.
     using GridGeometry = GetPropType<OnePTypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
@@ -153,7 +154,7 @@ int main(int argc, char** argv) try
     onePGridVariables->update(p); // update grid variables to new pressure distribution
     updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
 
-    // The solution vector `p` now contains the pressure field that is the solution to the single-phase
+    // The solution vector `p` now contains the pressure field, i.e.the solution to the single-phase
     // problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file using the Dune
     // `VTKWriter`. Moreover, we add the permeability distribution to the writer.
     // [[codeblock]]
@@ -216,7 +217,7 @@ int main(int argc, char** argv) try
     }
     // [[/codeblock]]
 
-    // ### Step 4: Set-up and solving of the tracer problem
+    // ### Step 4: Solving the tracer transport problem
     // First, we instantiate the tracer problem containing initial and boundary conditions,
     // and pass to it the previously computed volume fluxes (see the documentation of the
     // file `spatialparams_tracer.hh` for more details).
@@ -224,9 +225,9 @@ int main(int argc, char** argv) try
     auto tracerProblem = std::make_shared<TracerProblem>(gridGeometry);
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux);
 
-    // We create and initialize the solution vector. As, in contrast to the steady-state single-phase problem,
-    // the tracer problem is transient, the initial solution defined in the problem is applied to the solution vector.
-    // On the basis of this solution, we initialize then the grid variables.
+    // We create and initialize the solution vector. In contrast to the steady-state single-phase problem,
+    // the tracer problem is transient, and the initial solution defined in the problem is applied to the
+    // solution vector. On the basis of this solution, we initialize then the grid variables.
     SolutionVector x(leafGridView.size(0));
     tracerProblem->applyInitialSolution(x);
     auto xOld = x;
