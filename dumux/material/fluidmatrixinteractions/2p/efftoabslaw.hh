@@ -91,7 +91,7 @@ public:
      */
     static Scalar sw(const Params &params, Scalar pc)
     {
-        return sweToSw_(params, EffLaw::sw(params, pc));
+        return sweToSw(params, EffLaw::sw(params, pc));
     }
 
     /*!
@@ -122,7 +122,7 @@ public:
      */
     static Scalar dpc_dsw(const Params &params, Scalar sw)
     {
-        return EffLaw::dpc_dswe(params, swToSwe(params, sw) )*dswe_dsw_(params);
+        return EffLaw::dpc_dswe(params, swToSwe(params, sw) )*dswe_dsw(params);
     }
 
     /*!
@@ -145,7 +145,7 @@ public:
      */
     static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
-        return EffLaw::dswe_dpc(params, pc)*dsw_dswe_(params);
+        return EffLaw::dswe_dpc(params, pc)*dsw_dswe(params);
     }
 
     /*!
@@ -174,7 +174,7 @@ public:
      */
     static Scalar dkrw_dsw(const Params &params, Scalar sw)
     {
-        return EffLaw::dkrw_dswe(params, swToSwe(params, sw))*dswe_dsw_(params);
+        return EffLaw::dkrw_dswe(params, swToSwe(params, sw))*dswe_dsw(params);
     }
 
     /*!
@@ -203,7 +203,7 @@ public:
      */
     static Scalar dkrn_dsw(const Params &params, Scalar sw)
     {
-        return EffLaw::dkrn_dswe(params, swToSwe(params, sw))*dswe_dsw_(params);
+        return EffLaw::dkrn_dswe(params, swToSwe(params, sw))*dswe_dsw(params);
     }
 
     /*!
