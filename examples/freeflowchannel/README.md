@@ -106,6 +106,7 @@ struct EnableGridGeometryCache<TypeTag, TTag::ChannelExample> { static constexpr
 ```
 
 
+----------
 
 
 ## The file `problem.hh`
@@ -315,6 +316,7 @@ Finally, private variables are declared:
 </details>
 
 
+----------
 
 
 ## The file `main.cc`
@@ -603,3 +605,6 @@ catch (...)
 ```
 
 </details>
+
+
+----------

@@ -28,7 +28,7 @@ def convertToMarkdownAndMerge(dir, config):
                 elif fileExtension == ".hh" or fileExtension == ".cc":
                     with open(os.path.join(dir, source), "r") as cppCode:
                         sourceRelPath = os.path.relpath(os.path.abspath(os.path.join(dir, source)), os.path.split(os.path.abspath(targetPath))[0])
-                        targetFile.write("\n\n" + transformCode(cppCode.read(), cppRules(), sourceRelPath) + "\n")
+                        targetFile.write("\n\n" + transformCode(cppCode.read(), cppRules(), sourceRelPath) + "\n----------\n")
                 else:
                     raise IOError("Unsupported or unknown file extension *{}".format(fileExtension))
 
