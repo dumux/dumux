@@ -116,7 +116,7 @@ class MPNCComparisonProblem
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;

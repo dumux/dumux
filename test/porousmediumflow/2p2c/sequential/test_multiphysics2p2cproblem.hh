@@ -109,7 +109,7 @@ template<class TypeTag>
 class TestMultTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
 using ParentType = IMPETProblem2P2C<TypeTag>;
-using GridView = GetPropType<TypeTag, Properties::GridView>;
+using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 using Grid = typename GridView::Grid;
 using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

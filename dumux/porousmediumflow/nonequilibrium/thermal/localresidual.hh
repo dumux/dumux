@@ -52,7 +52,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -216,7 +216,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2/*numEnergyEqFluid*/>
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

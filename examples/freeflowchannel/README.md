@@ -298,6 +298,7 @@ The following class contains functionality for additional flux output to the con
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/valgrind.hh>
+#include <dune/common/deprecated.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
@@ -463,7 +464,9 @@ The second surface (second call of addSurface) is placed at the outlet of the ch
 
     const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
 
+    DUNE_NO_DEPRECATED_BEGIN
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    DUNE_NO_DEPRECATED_END
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

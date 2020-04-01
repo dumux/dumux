@@ -67,7 +67,7 @@ template<class TypeTag>
 class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
 {
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     enum { dim = GridView::dimension };

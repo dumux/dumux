@@ -46,7 +46,7 @@ class OneModelProblem
 {
 private:
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Grid = typename GridView::Grid;
 
     using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;

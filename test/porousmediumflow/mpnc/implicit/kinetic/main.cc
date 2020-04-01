@@ -118,7 +118,7 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(leafGridView.size(GridView::dimension));
     problem->applyInitialSolution(x);

@@ -41,7 +41,7 @@ template <class TypeTag >
 class TwoPTestProblemAdaptive : public TwoPTestProblem<TypeTag>
 {
     using ParentType = TwoPTestProblem<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimensionworld>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

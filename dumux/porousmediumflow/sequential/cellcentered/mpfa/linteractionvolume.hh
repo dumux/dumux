@@ -42,7 +42,7 @@ class FVMPFALInteractionVolume
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Grid = GetPropType<TypeTag, Properties::Grid>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum
         {

@@ -40,7 +40,7 @@ class GridAdaptionIndicator2PLocal
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 

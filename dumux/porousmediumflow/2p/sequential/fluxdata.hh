@@ -41,7 +41,7 @@ class FluxData2P
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum
     {

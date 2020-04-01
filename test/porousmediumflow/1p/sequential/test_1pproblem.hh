@@ -83,7 +83,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
     using ParentType = DiffusionProblem1P<TypeTag>;
     using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Grid = typename GridView::Grid;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;

@@ -273,7 +273,7 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
+    enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
 
     static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
 
@@ -392,7 +392,7 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
+    enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
 
 public:
 

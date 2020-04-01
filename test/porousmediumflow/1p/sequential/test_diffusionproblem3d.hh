@@ -114,7 +114,7 @@ template<class TypeTag>
 class TestDiffusion3DProblem: public DiffusionProblem2P<TypeTag>
 {
     using ParentType = DiffusionProblem2P<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Grid = typename GridView::Grid;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

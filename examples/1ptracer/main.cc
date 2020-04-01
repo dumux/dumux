@@ -153,7 +153,7 @@ int main(int argc, char** argv) try
 
 
     // We initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model. We add the pressure data from the solution vector (`p`) and the permeability field as output data.
-    using GridView = GetPropType<OnePTypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<OnePTypeTag, Properties::GridGeometry>::GridView;
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
     onepWriter.addCellData(p, "p");
     const auto& k = problemOneP->spatialParams().getKField();

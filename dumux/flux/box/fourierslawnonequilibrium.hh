@@ -54,7 +54,7 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Element = typename GridView::template Codim<0>::Entity;

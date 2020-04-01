@@ -66,7 +66,7 @@ template<class TypeTag>
 class FvMpfaO2dPressure2p: public FVPressure<TypeTag>
 {
     using ParentType = FVPressure<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum
     {

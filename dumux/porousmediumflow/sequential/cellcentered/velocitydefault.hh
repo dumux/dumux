@@ -41,7 +41,7 @@ template<class TypeTag>
 class FVVelocityDefault
 {
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     using CellData = GetPropType<TypeTag, Properties::CellData>;
     using Intersection = typename GridView::Intersection;

@@ -58,7 +58,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static constexpr auto numFluidPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();

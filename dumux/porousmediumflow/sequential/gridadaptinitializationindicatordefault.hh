@@ -41,7 +41,7 @@ template<class TypeTag>
 class GridAdaptInitializationIndicatorDefault
 {
 private:
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using AdaptionIndicator = GetPropType<TypeTag, Properties::AdaptionIndicator>;

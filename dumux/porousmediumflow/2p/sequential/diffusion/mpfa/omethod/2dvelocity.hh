@@ -54,7 +54,7 @@ namespace Dumux {
  */
 template<class TypeTag> class FvMpfaO2dVelocity2P
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld

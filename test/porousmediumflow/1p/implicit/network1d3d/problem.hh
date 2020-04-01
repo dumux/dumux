@@ -72,7 +72,9 @@ struct GridGeometry<TypeTag, TTag::TubesTestCCTpfa>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    DUNE_NO_DEPRECATED_BEGIN
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    DUNE_NO_DEPRECATED_END
 
     using ElementMapper = ReorderingDofMapper<GridView>;
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
@@ -87,7 +89,9 @@ struct GridGeometry<TypeTag, TTag::TubesTestBox>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    DUNE_NO_DEPRECATED_BEGIN
     using GridView = GetPropType<TypeTag, Properties::GridView>;
+    DUNE_NO_DEPRECATED_END
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
@@ -128,7 +132,7 @@ template <class TypeTag>
 class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 

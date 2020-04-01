@@ -115,7 +115,7 @@ class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

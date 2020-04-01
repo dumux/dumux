@@ -56,7 +56,7 @@ class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
     using FluxVarCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

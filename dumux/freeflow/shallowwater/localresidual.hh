@@ -38,7 +38,7 @@ class ShallowWaterResidual
 {
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;

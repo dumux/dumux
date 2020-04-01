@@ -207,11 +207,11 @@ private:
  * \brief A point source class for time dependent point sources
  */
 template<class TypeTag>
-class SolDependentPointSource : public PointSource<Dune::FieldVector<typename GetPropType<TypeTag, Properties::GridView>::ctype,
-                                                           GetPropType<TypeTag, Properties::GridView>::dimensionworld>,
+class SolDependentPointSource : public PointSource<Dune::FieldVector<typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::ctype,
+                                                   GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld>,
                                                    GetPropType<TypeTag, Properties::NumEqVector>>
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;

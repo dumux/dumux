@@ -42,7 +42,7 @@ class SequentialFVSpatialParamsOneP
 {
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Implementation = GetPropType<TypeTag, Properties::SpatialParams>;
 
     enum

@@ -48,7 +48,7 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::oneeq> : public RANSProblemBase<
 
     using ParentType = RANSProblemBase<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Grid = typename GridView::Grid;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

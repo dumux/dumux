@@ -24,6 +24,7 @@
 #ifndef DUMUX_GRID_PROPERTIES_HH
 #define DUMUX_GRID_PROPERTIES_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/properties.hh>
@@ -37,9 +38,11 @@ namespace TTag {
 struct GridProperties {};
 }
 
+DUNE_NO_DEPRECATED_BEGIN
 //! Use the leaf grid view if not defined otherwise
 template<class TypeTag>
 struct GridView<TypeTag, TTag::GridProperties> { using type = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView; };
+DUNE_NO_DEPRECATED_END
 
 //! Use the minimal point source implementation as default
 template<class TypeTag>
@@ -47,7 +50,7 @@ struct PointSource<TypeTag, TTag::GridProperties>
 {
 private:
     using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
 public:
     using type = Dumux::PointSource<GlobalPosition, SourceValues>;

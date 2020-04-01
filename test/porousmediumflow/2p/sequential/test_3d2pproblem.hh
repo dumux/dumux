@@ -120,7 +120,7 @@ class Test3D2PProblem: public IMPESProblem2P<TypeTag>
 {
 using ThisType = Test3D2PProblem<TypeTag>;
 using ParentType = IMPESProblem2P<TypeTag>;
-using GridView = GetPropType<TypeTag, Properties::GridView>;
+using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 using Grid = typename GridView::Grid;
 
 using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

@@ -199,7 +199,7 @@ int main(int argc, char** argv) try
                      GetPropType<StokesTypeTag, Properties::ModelTraits>,
                      GetPropType<StokesTypeTag, Properties::LocalResidual>> flux(*stokesGridVariables, stokesSol);
 
-     using StokesGridView = GetPropType<StokesTypeTag, Properties::GridView>;
+     using StokesGridView = typename GetPropType<StokesTypeTag, Properties::GridGeometry>::GridView;
      using StokesElement = typename StokesGridView::template Codim<0>::Entity;
 
      using GlobalPosition = typename StokesElement::Geometry::GlobalCoordinate;

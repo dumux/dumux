@@ -95,7 +95,7 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
 {
     using ParentType = IMPESProblem2P<TypeTag>;
     using Grid = GetPropType<TypeTag, Properties::Grid>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 

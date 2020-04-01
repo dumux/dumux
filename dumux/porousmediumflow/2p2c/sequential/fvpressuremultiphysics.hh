@@ -69,7 +69,7 @@ template<class TypeTag>
 class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
 {
     using ParentType = FVPressure2P2C<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;

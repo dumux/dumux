@@ -44,7 +44,7 @@ namespace Dumux {
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeContainer
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Implementation = GetPropType<TypeTag, Properties::MPFAInteractionVolumeContainer>;
 
     enum

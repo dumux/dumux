@@ -110,7 +110,7 @@ class TracerBulkProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using FVElementGeometry = typename GridGeometry::LocalView;

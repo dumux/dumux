@@ -70,7 +70,7 @@ class TestDiffusionSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using ParentType = SequentialFVSpatialParams<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Grid = GetPropType<TypeTag, Properties::Grid>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using IndexSet = typename GridView::IndexSet;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CoordScalar = typename Grid::ctype;

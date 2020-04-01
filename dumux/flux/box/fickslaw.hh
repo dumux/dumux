@@ -58,7 +58,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVarCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
     using BalanceEqOpts = GetPropType<TypeTag, Properties::BalanceEqOpts>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;

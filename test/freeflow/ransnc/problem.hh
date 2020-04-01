@@ -137,7 +137,7 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
-    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
     static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
 

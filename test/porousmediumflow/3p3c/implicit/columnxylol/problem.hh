@@ -130,7 +130,7 @@ template <class TypeTag >
 class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;

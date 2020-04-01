@@ -43,7 +43,7 @@ template<typename TypeTag>
 class McWhorterAnalytic
 {
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;

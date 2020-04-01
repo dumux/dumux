@@ -48,7 +48,7 @@ template<class TypeTag>
 class CapillaryDiffusion: public DiffusivePart<TypeTag>
 {
 private:
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
       using Problem = GetPropType<TypeTag, Properties::Problem>;
       using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

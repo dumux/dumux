@@ -65,7 +65,7 @@ template <class TypeTag>
 class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTag>
 {
     using ParentType = OnePSingularityProblem<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;

@@ -40,7 +40,7 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
 {
     using ParentType = FVVelocity2P<TypeTag>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
      using Scalar = GetPropType<TypeTag, Properties::Scalar>;
      using Problem = GetPropType<TypeTag, Properties::Problem>;
 

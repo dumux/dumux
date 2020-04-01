@@ -44,7 +44,7 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2p: public FvMpfaL3dPress
 {
     using ParentType = FvMpfaL3dPressure2p<TypeTag>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     enum

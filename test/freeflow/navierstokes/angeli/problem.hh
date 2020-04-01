@@ -96,7 +96,7 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 
-    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridView>::dimensionworld;
+    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;

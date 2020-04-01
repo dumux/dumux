@@ -56,7 +56,7 @@ template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -136,14 +136,14 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
+    using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
+    enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
 
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
     static constexpr int maxElementStencilSize = GridGeometry::maxElementStencilSize;
@@ -322,7 +322,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using Element = typename GetPropType<TypeTag, Properties::GridView>::template Codim<0>::Entity;
+    using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 

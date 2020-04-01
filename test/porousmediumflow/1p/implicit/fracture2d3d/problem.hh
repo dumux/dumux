@@ -102,7 +102,7 @@ template <class TypeTag>
 class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     enum { dimWorld = GridView::dimensionworld };

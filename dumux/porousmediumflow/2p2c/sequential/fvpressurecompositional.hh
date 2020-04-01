@@ -69,7 +69,7 @@ template<class TypeTag> class FVPressureCompositional
     using Implementation = GetPropType<TypeTag, Properties::PressureModel>;
     using ParentType = FVPressure<TypeTag>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using TransportSolutionType = GetPropType<TypeTag, Properties::TransportSolutionType>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;

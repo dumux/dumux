@@ -78,7 +78,7 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
 {
     using ParentType = FvMpfaL3dPressure2p<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::PressureModel>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     enum
         {

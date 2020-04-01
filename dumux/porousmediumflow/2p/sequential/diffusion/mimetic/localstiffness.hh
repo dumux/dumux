@@ -58,7 +58,7 @@ namespace Dumux {
 template<class TypeTag, int m>
 class LocalStiffness
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     // grid types
     using Entity = typename GridView::template Codim<0>::Entity;
@@ -266,7 +266,7 @@ protected:
 template<class TypeTag, int m>
 class LinearLocalStiffness : public LocalStiffness<TypeTag,m>
 {
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     // grid types

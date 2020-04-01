@@ -51,7 +51,7 @@ template<class TypeTag>
 class EvalCflFlux
 {
 private:
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
       using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Intersection = typename GridView::Intersection;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
