@@ -209,7 +209,6 @@ struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTest>
 
 </details>
 
-----------
 
 
 ## Initial and boundary conditions (`problem_tracer.hh`)
@@ -361,7 +360,6 @@ private:
 ```
 
 
-----------
 
 
 ## Parameter distributions (`spatialparams_tracer.hh`)
@@ -497,4 +495,3 @@ private:
 ```
 
 
-----------

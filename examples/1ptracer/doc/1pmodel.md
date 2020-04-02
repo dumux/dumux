@@ -170,7 +170,6 @@ struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static const
 
 </details>
 
-----------
 
 
 ## Initial and boundary conditions (`problem_1p.hh`)
@@ -274,7 +273,6 @@ Fluid properties that depend on temperature will be calculated with this value.
 ```
 
 
-----------
 
 
 ## Parameter distributions (`spatialparams_1p.hh`)
@@ -438,4 +436,3 @@ private:
 
 </details>
 
-----------
