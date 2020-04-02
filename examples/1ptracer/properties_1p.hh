@@ -122,7 +122,7 @@ struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncom
 
 // Apart from that, we also set some properties related to memory management
 // throughout the simulation.
-// <details>
+// [[details]] caching properties
 //
 // In Dumux, one has the option to activate/deactive the grid-wide caching of
 // geometries and variables. If active, the CPU time can be significantly reduced
@@ -144,6 +144,6 @@ struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static const
 
 } // end namespace Dumux::Properties
 // [[/codeblock]]
-// </details>
+// [[/details]]
 // [[/content]]
 #endif

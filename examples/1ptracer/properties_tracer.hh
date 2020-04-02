@@ -27,8 +27,8 @@
 //
 // [[content]]
 //
-// ### Include files
-// <details>
+// ### Includes
+// [[details]] includes
 // As for the single-phase problem, atype tag is defined also for this simulation.
 // Here, we inherit all properties of the `Tracer` type tag, a convenience type tag
 // that specializes most of the required properties for tracer transport flow simulations in DuMuX.
@@ -46,7 +46,7 @@
 // We include the problem and spatial parameter headers used for this simulation.
 #include "problem_tracer.hh"
 #include "spatialparams_tracer.hh"
-// </details>
+// [[/details]]
 //
 // ### Definition of a custom fluid system
 //
@@ -159,7 +159,7 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = false; };
 
 // Moreover, we specialize several properties related to efficiency optimizations
-// <details>
+// [[details]] caching properties
 // [[codeblock]]
 // In Dumux, one has the option to activate/deactive the grid-wide caching of geometries
 // and variables. If active, the CPU time can be significantly reduced as less dynamic
@@ -183,6 +183,6 @@ struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTest>
 } // end namespace Properties
 } // end namespace Dumux
 // [[/codeblock]]
-// </details>
+// [[/details]]
 // [[/content]]
 #endif

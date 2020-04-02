@@ -136,7 +136,7 @@ public:
 
     // The remainder of this class contains a convenient function to determine if
     // a position is inside the lens and defines the data members.
-    // <details>
+    // [[details]] private data members and member functions
     // [[codeblock]]
 private:
     // The following function returns true if a given position is inside the lens.
@@ -159,6 +159,6 @@ private:
 }; // end class definition of OnePTestSpatialParams
 } // end namespace Dumux
 // [[/codeblock]]
-// </details>
+// [[/details]]
 // [[/content]]
 #endif

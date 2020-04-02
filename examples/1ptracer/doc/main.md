@@ -21,7 +21,7 @@ the transport of an initial contamination through the model domain.
 
 
 ## Included header files
-<details>
+<details><summary> Click to show includes</summary>
 These are DUNE helper classes related to parallel computations, time measurements and file I/O
 
 ```cpp
@@ -383,7 +383,7 @@ before the program is terminated.
 ### Exception handling
 In this part of the main file we catch and print possible exceptions that could
 occur during the simulation.
-<details>
+<details><summary> Click to show exception handler</summary>
 
 ```cpp
 // errors related to run-time parameters

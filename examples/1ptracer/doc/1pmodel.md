@@ -153,7 +153,7 @@ struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncom
 
 Apart from that, we also set some properties related to memory management
 throughout the simulation.
-<details>
+<details><summary> Click to show caching properties</summary>
 
 In Dumux, one has the option to activate/deactive the grid-wide caching of
 geometries and variables. If active, the CPU time can be significantly reduced
@@ -431,7 +431,7 @@ We reference to the permeability field. This is used in the main function to wri
 
 The remainder of this class contains a convenient function to determine if
 a position is inside the lens and defines the data members.
-<details>
+<details><summary> Click to show private data members and member functions</summary>
 
 ```cpp
 private:

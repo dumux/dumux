@@ -31,8 +31,8 @@ which we then specialize `properties` to the needs of the desired setup.
 <summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../properties_tracer.hh))</summary>
 
 
-### Include files
-<details>
+### Includes
+<details><summary> Click to show includes</summary>
 As for the single-phase problem, atype tag is defined also for this simulation.
 Here, we inherit all properties of the `Tracer` type tag, a convenience type tag
 that specializes most of the required properties for tracer transport flow simulations in DuMuX.
@@ -190,7 +190,7 @@ struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = false
 ```
 
 Moreover, we specialize several properties related to efficiency optimizations
-<details>
+<details><summary> Click to show caching properties</summary>
 
 ```cpp
 // In Dumux, one has the option to activate/deactive the grid-wide caching of geometries

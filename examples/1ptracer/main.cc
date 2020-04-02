@@ -28,7 +28,7 @@
 // [[content]]
 //
 // ## Included header files
-// <details>
+// [[details]] includes
 // [[exclude]]
 // Some generic includes.
 #include <config.h>
@@ -66,7 +66,7 @@
 // at the documentation provided therein.
 #include "properties_1p.hh"
 #include "properties_tracer.hh"
-// </details>
+// [[/details]]
 //
 
 // ## The main function
@@ -340,7 +340,7 @@ int main(int argc, char** argv) try
 // ### Exception handling
 // In this part of the main file we catch and print possible exceptions that could
 // occur during the simulation.
-// <details>
+// [[details]] exception handler
 // [[codeblock]]
 // errors related to run-time parameters
 catch (Dumux::ParameterException &e)
@@ -371,5 +371,5 @@ catch (...)
     return 4;
 }
 // [[/codeblock]]
-// </details>
+// [[/details]]
 // [[/content]]
