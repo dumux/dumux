@@ -16,8 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
-// # Main program flow (`main.cc`)
+// | [:arrow_left: Back to the main documentation](../README.md) |
+// |---:|
+//
+// # Part 3: Main program flow (`main.cc`)
 //
 // [[_TOC_]]
 //

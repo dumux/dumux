@@ -108,8 +108,17 @@ In the documentations behind the links provided in the following, you will find 
 mentioned settings and classes are realized in this example. Finally, it is discussed how the two
 simulations are solved sequentially in the main file (`main.cc`).
 
-## [Implementation of the single-phase flow simulation setup](doc/1pmodel.md)
+## Part 1: Single-phase flow simulation setup
 
-## [Implementation of the tracer transport simulation setup](doc/tracermodel.md)
+| [:arrow_right: Click to continue with part 1 of the code documentation](doc/1pmodel.md) |
+|---:|
 
-## [Main program flow](doc/main.md)
+## Part 2: Tracer transport simulation setup
+
+| [:arrow_right: Click to continue with part 2 of the code documentation](doc/tracermodel.md) |
+|---:|
+
+## Part 3: Main program flow
+
+| [:arrow_right: Click to continue with part 3 of the code documentation](doc/main.md) |
+|---:|
