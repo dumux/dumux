@@ -25,8 +25,8 @@
 // In this file, the type tag used for the single-phase flow simulation is defined,
 // for which we then specialize `properties` to the needs of the desired setup.
 //
-// ### Include files
-// <details>
+// ### Includes
+// [[details]] includes
 //
 // The `OneP` type tag specializes most of the `properties` required for single-
 // phase flow simulations in DuMuX. We will use this in the following to inherit the
@@ -49,7 +49,7 @@
 // We include the problem and spatial parameters headers used for this simulation.
 #include "problem_1p.hh"
 #include "spatialparams_1p.hh"
-// </details>
+// [[/details]]
 //
 // ### Type tag definition
 //

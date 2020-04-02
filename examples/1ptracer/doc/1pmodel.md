@@ -26,8 +26,8 @@ The documentation provided in the sequel is structured as follows:
 In this file, the type tag used for the single-phase flow simulation is defined,
 for which we then specialize `properties` to the needs of the desired setup.
 
-### Include files
-<details>
+### Includes
+<details><summary> Click to show includes</summary>
 
 The `OneP` type tag specializes most of the `properties` required for single-
 phase flow simulations in DuMuX. We will use this in the following to inherit the
