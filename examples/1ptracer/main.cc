@@ -24,6 +24,9 @@
 // to obtain a pressure distribution in the domain. Subsequently, the distribution of volume fluxes
 // is computed from that pressure distribution, which is then passed to a tracer problem to solve
 // the transport of an initial contamination through the model domain.
+//
+// [[content]]
+//
 // ## Included header files
 // <details>
 // [[exclude]]
@@ -369,3 +372,4 @@ catch (...)
 }
 // [[/codeblock]]
 // </details>
+// [[/content]]

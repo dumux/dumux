@@ -26,6 +26,11 @@ The documentation provided in the sequel is structured as follows:
 This file defines the type tag used for the tracer transport simulation, for
 which we then specialize `properties` to the needs of the desired setup.
 
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../properties_tracer.hh))</summary>
+
+
 ### Include files
 <details>
 As for the single-phase problem, atype tag is defined also for this simulation.
@@ -213,12 +218,19 @@ struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTest>
 
 </details>
 
+</details>
+
 
 
 ## Initial and boundary conditions (`problem_tracer.hh`)
 
 This file contains the __problem class__ which defines the initial and boundary
 conditions for the tracer transport simulation.
+
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../problem_tracer.hh))</summary>
+
 
 ### Include files
 The only include we need here is the `PorousMediumFlowProblem` class, the base
@@ -364,6 +376,8 @@ private:
 ```
 
 
+</details>
+
 
 
 ## Parameter distributions (`spatialparams_tracer.hh`)
@@ -373,6 +387,11 @@ In this file, we define spatial properties of the porous medium such as permeabi
 and porosity in various functions for the tracer problem. Furthermore, spatially-dependent
 properties of the tracer fluid system are defined as well as functions related to setting
 and retrieving the volume fluxes calculated from the solution of the 1p problem.
+
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../spatialparams_tracer.hh))</summary>
+
 
 ### Include files
 We include the spatial parameters class for single-phase models discretized by
@@ -498,6 +517,8 @@ private:
 } // end namespace Dumux
 ```
 
+
+</details>
 
 
 | [:arrow_left: Back to the main documentation](../README.md) | [:arrow_left: Go back to part 1](1pmodel.md) | [:arrow_right: Continue with part 3](main.md) |

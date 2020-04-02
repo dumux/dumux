@@ -25,6 +25,8 @@
 // This file contains the __problem class__ which defines the initial and boundary
 // conditions for the single-phase flow simulation.
 //
+// [[content]]
+//
 // ### Include files
 //
 // The only include we need here is the `PorousMediumFlowProblem` class, the base
@@ -112,5 +114,5 @@ public:
 }; // end class definition of OnePTestProblem
 } // end namespace Dumux
 // [[/codeblock]]
-
+// [[/content]]
 #endif

@@ -28,6 +28,8 @@
 // properties of the tracer fluid system are defined as well as functions related to setting
 // and retrieving the volume fluxes calculated from the solution of the 1p problem.
 //
+// [[content]]
+//
 // ### Include files
 // We include the spatial parameters class for single-phase models discretized by
 // finite volume schemes, from which the spatial parameters defined for this example will inherit.
@@ -128,5 +130,5 @@ private:
 }; // end class definition TracerTestSpatialParams
 } // end namespace Dumux
 // [[/codeblock]]
-
+// [[/content]]
 #endif

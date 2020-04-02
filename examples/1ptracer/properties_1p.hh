@@ -25,6 +25,8 @@
 // In this file, the type tag used for the single-phase flow simulation is defined,
 // for which we then specialize `properties` to the needs of the desired setup.
 //
+// [[content]]
+//
 // ### Includes
 // [[details]] includes
 //
@@ -143,5 +145,5 @@ struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static const
 } // end namespace Dumux::Properties
 // [[/codeblock]]
 // </details>
-
+// [[/content]]
 #endif

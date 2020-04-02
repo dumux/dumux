@@ -25,6 +25,8 @@
 // This file contains the __problem class__ which defines the initial and boundary
 // conditions for the tracer transport simulation.
 //
+// [[content]]
+//
 // ### Include files
 // The only include we need here is the `PorousMediumFlowProblem` class, the base
 // class for Problems from which we will derive.
@@ -158,5 +160,5 @@ private:
 }; // end class definition TracerTestProblem
 } // end namespace Dumux
 // [[/codeblock]]
-
+// [[/content]]
 #endif

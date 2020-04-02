@@ -25,6 +25,8 @@
 // This file defines the type tag used for the tracer transport simulation, for
 // which we then specialize `properties` to the needs of the desired setup.
 //
+// [[content]]
+//
 // ### Include files
 // <details>
 // As for the single-phase problem, atype tag is defined also for this simulation.
@@ -182,5 +184,5 @@ struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTest>
 } // end namespace Dumux
 // [[/codeblock]]
 // </details>
-
+// [[/content]]
 #endif

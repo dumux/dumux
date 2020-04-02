@@ -26,6 +26,11 @@ The documentation provided in the sequel is structured as follows:
 In this file, the type tag used for the single-phase flow simulation is defined,
 for which we then specialize `properties` to the needs of the desired setup.
 
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../properties_1p.hh))</summary>
+
+
 ### Includes
 <details><summary> Click to show includes</summary>
 
@@ -174,12 +179,19 @@ struct EnableGridGeometryCache<TypeTag, TTag::IncompressibleTest> { static const
 
 </details>
 
+</details>
+
 
 
 ## Initial and boundary conditions (`problem_1p.hh`)
 
 This file contains the __problem class__ which defines the initial and boundary
 conditions for the single-phase flow simulation.
+
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../problem_1p.hh))</summary>
+
 
 ### Include files
 
@@ -277,14 +289,20 @@ Fluid properties that depend on temperature will be calculated with this value.
 ```
 
 
+</details>
+
 
 
 ## Parameter distributions (`spatialparams_1p.hh`)
 
-
 This file contains the __spatial parameters class__ which defines the
 distributions for the porous medium parameters permeability and porosity
 over the computational grid
+
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../spatialparams_1p.hh))</summary>
+
 
 ### Include files
 In this example, we use a randomly generated and element-wise distributed
@@ -437,6 +455,8 @@ private:
 }; // end class definition of OnePTestSpatialParams
 } // end namespace Dumux
 ```
+
+</details>
 
 </details>
 

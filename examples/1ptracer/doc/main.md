@@ -14,6 +14,12 @@ This file contains the main program flow. In this example, we solve a single-pha
 to obtain a pressure distribution in the domain. Subsequently, the distribution of volume fluxes
 is computed from that pressure distribution, which is then passed to a tracer problem to solve
 the transport of an initial contamination through the model domain.
+
+
+<details open>
+<summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../main.cc))</summary>
+
+
 ## Included header files
 <details>
 These are DUNE helper classes related to parallel computations, time measurements and file I/O
@@ -409,6 +415,8 @@ catch (...)
     return 4;
 }
 ```
+
+</details>
 
 </details>
 

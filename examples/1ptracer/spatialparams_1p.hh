@@ -22,10 +22,11 @@
 
 // ## Parameter distributions (`spatialparams_1p.hh`)
 //
-//
 // This file contains the __spatial parameters class__ which defines the
 // distributions for the porous medium parameters permeability and porosity
 // over the computational grid
+//
+// [[content]]
 //
 // ### Include files
 // In this example, we use a randomly generated and element-wise distributed
@@ -159,4 +160,5 @@ private:
 } // end namespace Dumux
 // [[/codeblock]]
 // </details>
+// [[/content]]
 #endif
