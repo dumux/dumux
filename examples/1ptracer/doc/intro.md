@@ -93,7 +93,7 @@ In the following, we take a closer look at the source files for this example:
     ├── properties._1p.hh       -> compile time settings for the single-phase flow simulation
     ├── problem_1p.hh           -> boundary & initial conditions for the single-phase flow simulation
     ├── spatialparams_1p.hh     -> parameter distributions for the single-phase flow simulation
-    ├── properties._tracer.hh   -> compile time settings for the tracer transport simulation
+    ├── properties_tracer.hh    -> compile time settings for the tracer transport simulation
     ├── problem_tracer.hh       -> boundary & initial conditions for the tracer transport simulation
     └── spatialparams_tracer.hh -> parameter distributions for the tracer transport simulation
 ```
