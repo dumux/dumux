@@ -35,7 +35,6 @@ SPECIFIC_GENERATOR=""
 OPM_FLAGS=""
 # to build opm it might be necessary to set manually the following variables (comment the above line)
 #OPM_FLAGS="
-#-Decl_DIR=[/path/to]/libecl/build
 #-DUSE_MPI=ON
 #"
 
