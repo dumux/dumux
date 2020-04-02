@@ -1,9 +1,9 @@
 {
     "README.md" : [
         "doc/intro.md",
+        "properties.hh",
         "spatialparams.hh",
         "problem.hh",
-        "main.cc",
-        "doc/results.md"
+        "main.cc"
     ]
 }

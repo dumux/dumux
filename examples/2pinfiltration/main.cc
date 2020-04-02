@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 // ## The file `main.cc`
-//
+// [[content]]
 //
 // This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method
 // ### Includes
@@ -68,8 +68,8 @@
 #include <dumux/porousmediumflow/2p/griddatatransfer.hh>
 #include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 
-//We include the problem file which defines initial and boundary conditions to describe our example problem
-#include "problem.hh"
+// Finally, we include the properties which configure the simulation
+#include "properties.hh"
 
 // ### Beginning of the main function
 int main(int argc, char** argv) try
@@ -303,3 +303,4 @@ catch (...)
     std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
     return 4;
 }
+// [[/content]]

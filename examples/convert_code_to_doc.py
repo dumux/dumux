@@ -50,11 +50,20 @@ def cppRules():
 
     return [suppressHeader, suppressHeaderGuard, suppressEndHeaderGuard, docTransforms]
 
-def transformCode(code, rules):
+def transformCode(code, rules, codeFileName):
 
     # exclude stuff between [[exclude]] and [[/exclude]]
     exclude = parseTaggedContent("exclude", action=replaceWith(""))
     code = exclude.transformString(code)
+
+    # Enable toggling content between [[content]] and [[/content]]
+    def wrapContentIntoDetails(token):
+        beginDetails = "//\n// <details open>\n"
+        summmary = "// <summary><b>Click to hide/show the file documentation</b> (or inspect the [source code]({}))</summary>\n//\n".format(codeFileName)
+        endDetails = "\n//\n// </details>\n"
+        return beginDetails + summmary + token[0] + endDetails
+    wrapContent = parseTaggedContent("content", action=wrapContentIntoDetails)
+    code = wrapContent.transformString(code)
 
     for transform in rules:
         code = transform.transformString(code)

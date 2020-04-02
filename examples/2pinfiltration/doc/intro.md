@@ -1,11 +1,27 @@
-This tutorial is similar to tests/porousmediumflow/2p/adaptive and restricted to the cell-centered finite volume TPFA discretization scheme.
-You need [ALUGrid][0] in order to compile and run it.
+# Two-phase flow infiltration problem with adaptive grid
 
-# Two-phase flow with infiltration and adaptive grid
+__In this example, you will learn how to__
 
-## Problem set-up
-In this example we model a soil contamination problem where DNAPL infiltrates a porous medium. The initial distribution of DNAPL is known and we can read it from a txt-file.
+* solve a two-phase flow in porous media problem with two immiscible phases
+* set boundary conditions and a simple injection well
+* specify a lens with different porous material parameters
+* use adaptive grid refinement around the saturation front
+* specify a point source
+* read the initial solution from a text file
 
+__Prerequisites__. You need [dune-alugrid](https://gitlab.dune-project.org/extensions/dune-alugrid) in order to compile and run this example.
+
+__Result__. The resulting saturation distribution in this example will look like this:
+
+![](./img/test_2p_pointsource_adaptive.png)
+
+__Table of contents__. This description is structured as follows:
+
+[[_TOC_]]
+
+## Scenario and mathematical model
+
+We model a soil contamination problem where DNAPL infiltrates a porous medium. The initial distribution of DNAPL is known and we can read it from a txt-file.
 To describe that problem we use a two phase model of two immiscible fluids with the multiphase Darcy's law as the description of momentum, i.e.:
 
 ```math
@@ -31,16 +47,25 @@ The lens and the initial saturation can be seen in Figures 1 and 2.
 
 ![](./img/test_2p_pointsource_lens.png)
 
-![](./img/test_2p_pointsource_initial.png)
-
 At the left and the right boundary of the domain we set a linear pressure gradient as a Dirichlet boundary condition. On the upper and lower boundary we set Neumann boundary conditions.
 DNAPL enters the model domain at the upper boundary between 1.75m ≤ x ≤ 2m with a rate of 0.04 kg/ms. That means that we set the value for the Neumann boundary flux to that rate in between 1.75m and 2m. On the rest of the Neumann boundary we set the flux to zero, which means we define it as a no-flow boundary.
-In addition, the DNAPL is injected at a point source at x = 0.502 and y = 3.02 with a rate of 0.1 kg/s.
+In addition, the DNAPL is injected at a point source at x = 0.502m and y = 3.02m with a rate of 0.1 kg/s.
 
-## Discretization
-We discretize the equations with a cell-centered finite volume TPFA scheme in space and an implicit Euler scheme in time. We use Newton's method to solve the system of nonlinear equations. For more information about the discretization please have a look at the [handbook](https://dumux.org/handbook).
-
-## Adaptive grid
+We discretize the equations with a cell-centered finite volume TPFA scheme in space and an implicit Euler scheme in time. We use Newton's method to solve the system of nonlinear equations.
 The grid is adapitvely refined around the injection. The adaptive behaviour can be changed with input parameters in the `params.input` file.
+For more information about the discretization please have a look at the [handbook](https://dumux.org/handbook).
 
-[0]: https://gitlab.dune-project.org/extensions/dune-alugrid
+# Implementation
+
+## Folder layout and files
+
+```
+└── 2pinfiltration/
+    ├── CMakeLists.txt          -> build system file
+    ├── main.cc                 -> main program flow
+    ├── params.input            -> runtime parameters
+    ├── properties.hh           -> compile time configuration
+    ├── problem.hh              -> boundary & initial conditions
+    ├── spatialparams.hh        -> spatial parameter fields
+    └── initialsolutioncc.txt   -> text file with initial solution
+```

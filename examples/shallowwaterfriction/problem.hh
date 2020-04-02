@@ -17,84 +17,20 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-#ifndef DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
-#define DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
+#ifndef DUMUX_EXAMPLE_SHALLOWWATER_FRICTION_PROBLEM_HH
+#define DUMUX_EXAMPLE_SHALLOWWATER_FRICTION_PROBLEM_HH
 
 // ## The file `problem.hh`
-//
-//
-// ## Include files
-// We use the dune yasp grid.
-#include <dune/grid/yaspgrid.hh>
-// We include the cell centered, two-point-flux discretization scheme.
-#include <dumux/discretization/cctpfa.hh>
-// The parameters header is needed to retrieve run-time parameters.
+// We start with includes
 #include <dumux/common/parameters.hh>
-
-// We include the header which are needed for shallow water models.
-#include <dumux/freeflow/shallowwater/model.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 
-// We include the header that specifies all spatially variable parameters.
-#include "spatialparams.hh"
-
-// ## Define basic properties for our simulation
-// We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don't clash with symbols from other libraries you may want to use in conjunction with Dumux. One could use these functions and classes by prefixing every use of these names by ::, but that would quickly become cumbersome and annoying. Rather, we simply import the entire Dumux namespace for general use.
-namespace Dumux {
-// The problem class is forward declared.
-template <class TypeTag>
-class RoughChannelProblem;
-
-// We enter the namespace Properties, which is a sub-namespace of the namespace Dumux.
-namespace Properties {
-
-// A TypeTag for our simulation is created which inherits from the shallow water model and the
-// cell centered, two-point-flux discretization scheme.
-namespace TTag {
-struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-}
-// We define the grid of our simulation. We use a two-dimensional Yasp Grid.
-template<class TypeTag>
-struct Grid<TypeTag, TTag::RoughChannel>
-{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
-
-// We set the problem. The problem class specifies initial and boundary conditions and is defined below.
-template<class TypeTag>
-struct Problem<TypeTag, TTag::RoughChannel>
-{ using type = Dumux::RoughChannelProblem<TypeTag>; };
-
-// We define the spatial parameters for our simulation. The values are specified in the corresponding spatialparameters header file, which is included above.
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::RoughChannel>
-{
-private:
-    // We define convenient shortcuts to the properties GridGeometry, Scalar, ElementVolumeVariables and VolumeVariables:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-    // Finally we set the spatial parameters:
-public:
-    using type = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
-};
-
-// We enable caching for the FV grid geometry and the grid volume variables. The cache
-// stores values that were already calculated for later usage. This makes the simulation faster.
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
-{ static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::RoughChannel>
-{ static constexpr bool value = false; };
-
-// We leave the namespace Properties.
-}
-
-// ## The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 // As this is a shallow water problem, we inherit from the basic ShallowWaterProblem.
+namespace Dumux {
+
 template <class TypeTag>
 class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 {
@@ -321,7 +257,7 @@ private:
     static constexpr Scalar eps_ = 1.0e-6;
     std::string name_;
 };
-// We leave the namespace Dumux.
-}
+
+} // end namespace Dumux
 
 #endif
