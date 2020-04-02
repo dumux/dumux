@@ -6,10 +6,15 @@ is obtained from the solution of a stationary single-phase problem, and subseque
 this velocity field is used for the simulation of the transport of tracer through the
 domain.
 
-The main points illustrated in this example are:
-* Setting up and solving a stationary single-phase flow problem
-* Setting up and solving a tracer transport problem
-* Solving two problems sequentially and realizing the data transfer
+__The main points illustrated in this example are__
+* setting up and solving a stationary single-phase flow problem
+* setting up and solving a tracer transport problem
+* solving two problems sequentially and realizing the data transfer
+* using a simple method to generate a random permeability field
+
+__Table of contents__. This description is structured as follows:
+
+[[_TOC_]]
 
 ## Problem set-up
 A domain with an extent of $`10 \, \mathrm{m} \times 10 \, \mathrm{m}`$ is considered,
