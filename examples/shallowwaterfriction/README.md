@@ -180,7 +180,6 @@ struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
 ```
 
 
-----------
 
 
 ## The file `spatialparams.hh`
@@ -323,7 +322,6 @@ end of namespace Dumux.
 ```
 
 
-----------
 
 
 ## The file `problem.hh`
@@ -690,7 +688,6 @@ eps is used as a small value for the definition of the boundry conditions
 ```
 
 
-----------
 
 
 ## The file `main.cc`
@@ -1023,4 +1020,3 @@ catch (...)
 ```
 
 
-----------

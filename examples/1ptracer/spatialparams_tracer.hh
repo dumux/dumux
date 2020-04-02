@@ -20,19 +20,31 @@
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 
-// ## The file `spatialparams_tracer.hh`
+// ## Parameter distributions (`spatialparams_tracer.hh`)
 //
 //
-// In this file, we define spatial properties of the porous medium such as the permeability and the porosity in various functions for the tracer problem.
-// Furthermore, spatial dependent properties of the tracer fluid system are defined and in the end two functions handle the calculated volume fluxes from the solution of the 1p problem.
-// We use the properties for porous medium flow models, declared in the file `properties.hh`.
-#include <dumux/porousmediumflow/properties.hh>
-// As in the 1p spatialparams, we inherit from the spatial parameters for single-phase models using finite volumes, which we include here.
+// In this file, we define spatial properties of the porous medium such as permeability
+// and porosity in various functions for the tracer problem. Furthermore, spatially-dependent
+// properties of the tracer fluid system are defined as well as functions related to setting
+// and retrieving the volume fluxes calculated from the solution of the 1p problem.
+//
+// [[content]]
+//
+// ### Include files
+// We include the spatial parameters class for single-phase models discretized by
+// finite volume schemes, from which the spatial parameters defined for this example will inherit.
 #include <dumux/material/spatialparams/fv1p.hh>
-// We enter the namespace Dumux
+
+// ### The spatial parameters class
+//
+// In the OnePTestSpatialParams class, we define all functions needed to define
+// the spatially-dependent parameters for the tracer problem.
+// We inherit from the FVSpatialParamsOneP class here, which is the base class for
+// spatial parameters in the context of single-phase porous medium flow applications
+// using finite volume discretization schemes.
+// [[codeblock]]
 namespace Dumux {
 
-// In the `TracerTestSpatialParams` class, we define all functions needed to describe spatially dependent parameters for the `tracer_problem`.
 template<class GridGeometry, class Scalar>
 class TracerTestSpatialParams
 : public FVSpatialParamsOneP<GridGeometry, Scalar,
@@ -53,41 +65,48 @@ public:
 
     TracerTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry) {}
-
-    // ### Properties of the porous matrix
+    // [[/codeblock]]
+    //
+    // #### Properties of the porous matrix
     // We define the same porosity for the whole domain as in the 1p spatialparams.
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.2; }
 
-    // We do not consider dispersivity for the tracer transport. So we set the dispersivity coefficient to zero.
+    // We do not consider dispersivity for the tracer transport. Thus, we set the
+    // dispersivity coefficient to zero.
     template<class ElementSolution>
     Scalar dispersivity(const Element &element,
                         const SubControlVolume& scv,
                         const ElementSolution& elemSol) const
     { return 0; }
 
-    // ### Properties of the fluid system
-    // In the following, we define fluid properties that are spatial parameters in the tracer model.
+    // #### Properties of the fluid phase
+    // In the following, we define fluid phase properties that are spatial parameters
+    // in the tracer model.
     // They can possible vary in space but are usually constants.
-    // Furthermore, spatially constant values of the fluid system are defined in the `TracerFluidSystem` class in `problem.hh`.
-    // We define the fluid density to a constant value of 1000 $`\frac{kg}{m^3}`$.
+    // We define the fluid density to a constant value of 1000 $`\frac{kg}{m^3}`$ (liquid water).
     Scalar fluidDensity(const Element &element,
                         const SubControlVolume& scv) const
     { return 1000; }
 
-    // This interface defines the fluid molar mass within the sub-control volume `scv`.
-    Scalar fluidMolarMass(const Element &element,
+    // The following functions define the molar mass of the fluid phase as function of the
+    // elements of the computational grid and the position in the domain.
+    // [[codeblock]]
+    // This interface defines the fluid phase's molar mass within the sub-control volume `scv`
+    // inside an `element` of the computational grid.
+    Scalar fluidMolarMass(const Element& element,
                           const SubControlVolume& scv) const
     { return fluidMolarMassAtPos(scv.dofPosition()); }
 
-    // This interface defines the fluid molar mass depending on the position in the domain.
-    Scalar fluidMolarMassAtPos(const GlobalPosition &globalPos) const
+    // This interface defines the fluid phase's molar mass depending on the position in the domain.
+    Scalar fluidMolarMassAtPos(const GlobalPosition& globalPos) const
     { return 18.0; }
-
-    // ### The volume fluxes
-    // We define a function which returns the volume flux across the given sub-control volume face `scvf`.
-    // This flux is obtained from the vector `volumeFlux_` that contains the fluxes across al sub-control volume faces of the discretization.
-    // This vector can be set using the `setVolumeFlux` function.
+    // [[/codeblock]]
+    //
+    // #### The volume fluxes
+    // The following function returns the volume flux across the given sub-control volume face `scvf`.
+    // This flux is obtained from the vector `volumeFlux_` that contains the fluxes across al sub-control
+    // volume faces of the discretization. This vector can be set using the `setVolumeFlux` function.
     template<class ElementVolumeVariables>
     Scalar volumeFlux(const Element &element,
                       const FVElementGeometry& fvGeometry,
@@ -97,15 +116,19 @@ public:
         return volumeFlux_[scvf.index()];
     }
 
-    // We define a function that allows setting the volume fluxes for all sub-control volume faces of the discretization.
-    // This is used in the main function after these fluxes have been based on the pressure solution obtained with the single-phase model.
+    // This function allows setting the volume fluxes for all sub-control volume faces of the discretization.
+    // This is used in the main function after these fluxes have been based on the pressure solution obtained
+    // with the single-phase model.
     void setVolumeFlux(const std::vector<Scalar>& f)
     { volumeFlux_ = f; }
 
+    // The remainder of the class contains the private data members, which in this case
+    // are only the volume fluxes across the sub-control volume faces of the discretization.
+    // [[codeblock]]
 private:
     std::vector<Scalar> volumeFlux_;
-};
-
+}; // end class definition TracerTestSpatialParams
 } // end namespace Dumux
-
+// [[/codeblock]]
+// [[/content]]
 #endif

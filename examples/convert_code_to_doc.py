@@ -65,6 +65,16 @@ def transformCode(code, rules, codeFileName):
     wrapContent = parseTaggedContent("content", action=wrapContentIntoDetails)
     code = wrapContent.transformString(code)
 
+    # Transform "[[details]] content" and "[[/details]]" to HTML
+    transformDetailsBegin = LineStart() + Suppress(ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + "[[details]]" + ZeroOrMore(" ")) + Optional(restOfLine)
+    def detailBeginHTML(token):
+        return "// <details><summary> Click to show " + token[0] + "</summary>\n"
+    transformDetailsBegin.setParseAction(detailBeginHTML)
+    code = transformDetailsBegin.transformString(code)
+    transformDetailsEnd = LineStart() + Suppress(ZeroOrMore(" ") + "//" + ZeroOrMore(" ") + "[[/details]]") + Optional(restOfLine)
+    transformDetailsEnd.setParseAction(replaceWith("// </details>\n"))
+    code = transformDetailsEnd.transformString(code)
+
     for transform in rules:
         code = transform.transformString(code)
     return code

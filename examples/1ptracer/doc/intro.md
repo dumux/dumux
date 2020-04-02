@@ -1,13 +1,47 @@
-# One-phase flow with random permeability distribution and a tracer model
+# Single-phase flow and tracer transport
+
+In this example, single-phase flow and tracer transport through a domain with a
+heterogeneous permeability distribution is considered. A velocity distribution
+is obtained from the solution of a stationary single-phase problem, and subsequently,
+this velocity field is used for the simulation of the transport of tracer through the
+domain.
+
+__The main points illustrated in this example are__
+* setting up and solving a stationary single-phase flow problem
+* setting up and solving a tracer transport problem
+* solving two problems sequentially and realizing the data transfer
+* using a simple method to generate a random permeability field
+
+__Table of contents__. This description is structured as follows:
+
+[[_TOC_]]
 
 ## Problem set-up
-This example contains a contaminant transported by a base groundwater flow in a randomly distributed permeability field. The figure below shows the simulation set-up. The permeability values range between 6.12e-15 and 1.5 e-7 $`m^2`$. A pressure gradient between the top and the bottom boundary leads to a groundwater flux from the bottom to the top. Neumann no-flow boundaries are assigned to the left and right boundary. Initially, there is a contaminant concentration at the bottom of the domain.
+A domain with an extent of $`10 \, \mathrm{m} \times 10 \, \mathrm{m}`$ is considered,
+in which a heterogeneous permeability distribution is generated randomly. The problem
+set-up is shown in the figure below. In the stationary single-phase simulation,
+a pressure difference between the bottom and the top boundaries is prescribed (see left figure),
+resulting in a non-uniform velocity distribution due to the heterogeneous medium.
+Neumann no-flow conditions are used on the lateral sides. On the basis of the resulting
+velocity field, the transport of an initial tracer concentration distribution through
+the domain is simulated (see right figure). Initially, non-zero tracer concentrations
+are prescribed on a small strip close to the bottom boundary.
 
-![](./img/setup.png)
+<figure>
+    <center>
+        <img src="img/1p_setup.png" alt="Single-phase setup" width="47%"/> <img src="img/xtracer.gif" alt="Tracer result" width="47%"/>
+        <figcaption> <b> Fig.1 </b> - Setup for the single-phase problem (left) and tracer mass fraction over time as computed with the tracer model (right).</figcaption>
+    </center>
+</figure>
+
 
 ## Model description
-Two different models are applied to simulate the system: In a first step, the groundwater velocity is evaluated under stationary conditions using the single phase model.
-In a second step, the contaminant is transported with the groundwater velocity field. It is assumed, that the dissolved contaminant does not affect density and viscosity of the groundwater, and thus, it is handled as a tracer by the tracer model. The tracer model is then solved instationarily.
+
+As mentioned above, two models are solved sequentially in this example. A single-phase
+model (_1p model_) is used to solve for the stationary velocity distribution of a fluid phase
+in the domain. The tracer transport is solved with the _tracer model_, which solves an advection-diffusion
+equation for a tracer component, which is assumed not to affect the density and viscosity
+of the fluid phase.
 
 ### 1p Model
 The single phase model uses Darcy's law as the equation for the momentum conservation:
@@ -21,29 +55,60 @@ with the darcy velocity $` \textbf v `$, the permeability $` \textbf K`$, the dy
 Darcy's law is inserted into the mass balance equation:
 
 ```math
-\phi \frac{\partial \varrho}{\partial t} + \text{div} \textbf v = 0
+\phi \frac{\partial \varrho}{\partial t} + \text{div} \textbf v = 0,
 ```
 
-where $`\phi`$ is the porosity.
-
-The equation is discretized using a cell-centered finite volume scheme as spatial discretization for the pressure as primary variable. For details on the discretization scheme, have a look at the dumux [handbook](https://dumux.org/handbook).
+where $`\phi`$ is the porosity. The primary variable used in this model is the pressure $`p`$.
 
 ### Tracer Model
-The transport of the contaminant component $`\kappa`$ is based on the previously evaluated velocity field $`\textbf v`$  with the help of the following mass balance equation:
+The tracer model solves the mass conservation equation of a tracer component $`\kappa`$,
+in which both advective and diffusive transport mechanisms are considered:
 
 ```math
-\phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa {\textbf v} + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = 0,
+\phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa {\textbf v} + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = 0.
 ```
 
-where $`X^\kappa`$ is the mass fraction of the contaminant component $`\kappa`$ and $` D^\kappa_\text{pm} `$ is the effective diffusivity.
-
-The effective diffusivity is a function of the diffusion coefficient of the component $`D^\kappa`$ and the porosity and tortuosity $`\tau`$ of the porous medium (see [dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh)):
+Here, $`\textbf v`$ is a velocity field, which in this example is computed using the _1p model_ (see above). Moreover, $`X^\kappa`$ is the tracer mass fraction and $` D^\kappa_\text{pm} `$ is the
+effective diffusivity. In this example, the effective diffusivity is a function of the diffusion
+coefficient of the tracer component $`D^\kappa`$ and the porosity and tortuosity $`\tau`$ of the porous
+medium (see [dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh)):
 
 ```math
 D^\kappa_\text{pm}= \phi \tau D^\kappa.
 ```
 
-The primary variable of this model is the mass fraction $`X^\kappa`$. We apply the same spatial discretization as in the single phase model and use the implicit Euler method for time discretization. For more information, have a look at the dumux [handbook](https://dumux.org/handbook).
+The primary variable used in this model is the tracer mass fraction $`X^\kappa`$.
 
-In the following, we take a close look at the files containing the set-up: The boundary conditions and spatially distributed parameters for the single phase model are set in `problem_1p.hh` and `spatialparams_1p.hh`.
-For the tracer model, this is done in the files `problem_tracer.hh` and `spatialparams_tracer.hh`, respectively. Afterwards, we show the different steps for solving the model in the source file `main.cc`. Finally, some simulation results are shown.
+### Discretization
+
+In this example, all equations are discretized using cell-centered finite volumes with two-point flux
+approximation as spatial discretization scheme. For details on the discretization schemes available in
+DuMuX, have a look at the [handbook](https://dumux.org/handbook). We use the implicit Euler method as
+time discretization scheme for the tracer component balance equation solved in the _tracer model_.
+
+# Implementation
+
+In the following, we take a closer look at the source files for this example:
+
+```
+└── 1ptracer/
+    ├── CMakeLists.txt          -> build system file
+    ├── main.cc                 -> main program flow
+    ├── params.input            -> runtime parameters
+    ├── properties._1p.hh       -> compile time settings for the single-phase flow simulation
+    ├── problem_1p.hh           -> boundary & initial conditions for the single-phase flow simulation
+    ├── spatialparams_1p.hh     -> parameter distributions for the single-phase flow simulation
+    ├── properties_tracer.hh    -> compile time settings for the tracer transport simulation
+    ├── problem_tracer.hh       -> boundary & initial conditions for the tracer transport simulation
+    └── spatialparams_tracer.hh -> parameter distributions for the tracer transport simulation
+```
+
+In order to define a simulation setup in DuMuX, you need to implement compile-time settings,
+where you specify the classes and compile-time options that DuMuX should use for the simulation.
+Moreover, a `Problem` class needs to be implemented, in which the initial and boundary conditions
+are specified. Finally, spatially-distributed values for the parameters required by the used model
+are implemented in a `SpatialParams` class.
+
+In the documentations behind the links provided in the following, you will find how the above-
+mentioned settings and classes are realized in this example. Finally, it is discussed how the two
+simulations are solved sequentially in the main file (`main.cc`).

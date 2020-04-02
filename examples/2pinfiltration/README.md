@@ -240,7 +240,6 @@ we have a convenience definition of the position of the lens
 
 </details>
 
-----------
 
 
 ## The file `problem.hh`
@@ -459,7 +458,6 @@ private:
 
 </details>
 
-----------
 
 
 ## The file `properties.hh`
@@ -587,7 +585,6 @@ struct Formulation<TypeTag, TTag::PointSourceExample>
 
 </details>
 
-----------
 
 
 ## The file `main.cc`
@@ -1119,4 +1116,3 @@ catch (...)
 
 </details>
 
-----------

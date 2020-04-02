@@ -20,139 +20,30 @@
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
-// ## The file `problem_tracer.hh`
+// ## Initial and boundary conditions (`problem_tracer.hh`)
 //
+// This file contains the __problem class__ which defines the initial and boundary
+// conditions for the tracer transport simulation.
 //
-//Before we enter the problem class containing initial and boundary conditions, we include necessary files and introduce properties.
+// [[content]]
+//
 // ### Include files
-// Again, we use YaspGrid, the implementation of the dune grid interface for structured grids:
-#include <dune/grid/yaspgrid.hh>
-// and the cell centered, two-point-flux discretization.
-#include <dumux/discretization/cctpfa.hh>
-// Here, we include the tracer model:
-#include <dumux/porousmediumflow/tracer/model.hh>
-// We include again the porous medium problem class that this class is derived from:
+// The only include we need here is the `PorousMediumFlowProblem` class, the base
+// class for Problems from which we will derive.
 #include <dumux/porousmediumflow/problem.hh>
-// and the base fluidsystem. We will define a custom fluid system that inherits from that class.
-#include <dumux/material/fluidsystems/base.hh>
-// We include the header that specifies all spatially variable parameters for the tracer problem:
-#include "spatialparams_tracer.hh"
-
-// ### Define basic properties for our simulation
-// We enter the namespace Dumux
-namespace Dumux {
-
-// The problem class is forward declared:
-template <class TypeTag>
-class TracerTestProblem;
-
-// We enter the namespace Properties,
-namespace Properties {
-// A `TypeTag` for our simulation is created which inherits from the tracer model and the
-// cell centered, two-point-flux discretization scheme.
-namespace TTag {
-struct TracerTest { using InheritsFrom = std::tuple<Tracer>; };
-struct TracerTestCC { using InheritsFrom = std::tuple<TracerTest, CCTpfaModel>; };
-}
-
-// We enable caching for the grid volume variables, the flux variables and the FV grid geometry.
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
-
-// We use the same grid as in the stationary one-phase model, a structured 2D grid:
-template<class TypeTag>
-struct Grid<TypeTag, TTag::TracerTest> { using type = Dune::YaspGrid<2>; };
-
-// The problem class specifies initial and boundary conditions:
-template<class TypeTag>
-struct Problem<TypeTag, TTag::TracerTest> { using type = TracerTestProblem<TypeTag>; };
-
-// We define the spatial parameters for our tracer simulation:
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::TracerTest>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = TracerTestSpatialParams<GridGeometry, Scalar>;
-};
-
-// One can choose between a formulation in terms of mass or mole fractions. Here, we are using mass fractions.
-template<class TypeTag>
-struct UseMoles<TypeTag, TTag::TracerTest> { static constexpr bool value = false; };
-// We use solution-independent molecular diffusion coefficients. Per default, solution-dependent
-// diffusion coefficients are assumed during the computation of the jacobian matrix entries. Specifying
-// solution-independent diffusion coefficients can speed up computations:
-template<class TypeTag>
-struct SolutionDependentMolecularDiffusion<TypeTag, TTag::TracerTestCC>
-{ static constexpr bool value = false; };
-
-// In the following, we create a new tracer fluid system and derive from the base fluid system.
-template<class TypeTag>
-class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>,
-                                                               TracerFluidSystem<TypeTag>>
-{
-    // We define some convenience aliases:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-
-public:
-    // We specify that the fluid system only contains tracer components,
-    static constexpr bool isTracerFluidSystem()
-    { return true; }
-
-    // We define the number of components of this fluid system (one single tracer component)
-    static constexpr int numComponents = 1;
-
-    // This interface is designed to define the names of the components of the fluid system.
-    // Here, we only have a single component, so `compIdx` should always be 0.
-    // The component name is used for the vtk output.
-    static std::string componentName(int compIdx = 0)
-    { return "tracer_" + std::to_string(compIdx); }
-
-    // We set the phase name for the phase index (`phaseIdx`) for velocity vtk output:
-    // Here, we only have a single phase, so `phaseIdx` should always be zero.
-    static std::string phaseName(int phaseIdx = 0)
-    { return "Groundwater"; }
-
-    // We set the molar mass of the tracer component with index `compIdx` (should again always be zero here).
-    static Scalar molarMass(unsigned int compIdx = 0)
-    { return 0.300; }
-
-    // We set the value for the binary diffusion coefficient. This
-    // might depend on spatial parameters like pressure / temperature.
-    // But, in this case we neglect diffusion and return 0.0:
-    static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
-                                             const Problem& problem,
-                                             const Element& element,
-                                             const SubControlVolume& scv)
-    { return 0.0; }
-};
-
-// We set the above created tracer fluid system:
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<TypeTag>; };
-
-// We leave the namespace Properties.
-}
-
 
 // ### The problem class
-// We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As this is a porous medium problem, we inherit from the base class `PorousMediumFlowProblem`.
+//
+// We enter the problem class where all necessary boundary conditions and initial
+// conditions are set for our simulation. As we are solving a problem related to
+// flow in porous media, we inherit from the base class `PorousMediumFlowProblem`.
+// [[codeblock]]
+namespace Dumux {
+
 template <class TypeTag>
 class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    // We use convenient declarations that we derive from the property system.
+    // A few convenience aliases used throughout this class.
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -187,36 +78,25 @@ public:
         else
             std::cout<<"problem uses mass fractions" << '\n';
     }
+    // [[/codeblock]]
 
-    // We define the type of boundary conditions depending on the location.
+    // #### Boundary conditions
+    //
+    // We define the __type of boundary conditions__ depending on the location.
     // All boundaries are set to a neumann-type flow boundary condition.
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    // [[codeblock]]
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
         values.setAllNeumann();
         return values;
     }
+    // [[/codeblock]]
 
-    // We specify the initial conditions for the primary variable (tracer concentration) depending on the location.
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables initialValues(0.0);
-
-        // The initial contamination is located at the bottom of the domain:
-        if (globalPos[1] < 0.1 + eps_)
-        {
-            // We chose a mole fraction of $`1e-9`$, but in case the mass fractions
-            // are used by the model, we have to convert this value:
-            if (useMoles)
-                initialValues = 1e-9;
-            else
-                initialValues = 1e-9*FluidSystem::molarMass(0)
-                                    /this->spatialParams().fluidMolarMassAtPos(globalPos);
-        }
-        return initialValues;
-    }
-
-    // We implement an outflow boundary on the top of the domain and prescribe zero-flux Neumann boundary conditions on all other boundaries.
+    // In the following function we implement the __Neumann boundary conditions__.
+    // Here, we define an outflow boundary on the top of the domain and prescribe zero-flux
+    // Neumann boundary conditions on all other boundaries.
+    // [[codeblock]]
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -242,15 +122,43 @@ public:
 
         return values;
     }
+    // [[/codeblock]]
 
+    // #### Initial conditions
+    //
+    // We specify the initial conditions for the primary variable (tracer mass fraction) depending
+    // on the location. Here, we set zero mass fractions everywhere in the domain except for a strip
+    // at the bottom of the domain where we set an initial mole fraction of $`10^{-9}`$.
+    // [[codeblock]]
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    {
+        // initialize the mole fraction to zero
+        PrimaryVariables initialValues(0.0);
+
+        // The initial contamination is located at the bottom of the domain
+        if (globalPos[1] < 0.1 + eps_)
+        {
+            // We chose a mole fraction of 1e-9, but in case the mass fractions
+            // are used by the model, we have to convert this value:
+            if (useMoles)
+                initialValues = 1e-9;
+            else
+                initialValues = 1e-9*FluidSystem::molarMass(0)
+                                    /this->spatialParams().fluidMolarMassAtPos(globalPos);
+        }
+
+        return initialValues;
+    }
+    // [[/codeblock]]
+    //
+    // The remainder of the class contains an epsilon value used for floating point comparisons.
+    // [[codeblock]]
 private:
-// We assign a private global variable for the epsilon:
+    // We assign a private global variable for the epsilon:
     static constexpr Scalar eps_ = 1e-6;
 
-// This is everything the tracer problem class contains.
-};
-
-// We leave the namespace Dumux here.
+}; // end class definition TracerTestProblem
 } // end namespace Dumux
-
+// [[/codeblock]]
+// [[/content]]
 #endif
