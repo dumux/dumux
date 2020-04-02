@@ -19,5 +19,19 @@
 
     "doc/main.md" : [
         "main.cc"
-    ]
+    ],
+
+    "navigation" : {
+        "mainpage" : "README.md",
+        "subpages" : [
+            "doc/1pmodel.md",
+            "doc/tracermodel.md",
+            "doc/main.md"
+        ],
+        "subtitles" : [
+            "Single-phase flow simulation setup",
+            "Tracer transport simulation setup",
+            "Main program flow"
+        ]
+    }
 }

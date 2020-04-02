@@ -1,6 +1,3 @@
-| [:arrow_left: Back to the main documentation](../README.md) | [:arrow_right: Continue with part 3](main.md) |
-|---|---:|
-
 # Part 2: Implementation of the tracer transport simulation setup
 
 The tracer transport setup is implemented in the files `properties_tracer.hh`,
