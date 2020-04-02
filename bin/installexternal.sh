@@ -287,7 +287,7 @@ installOPM()
 
     # show some opm prerequisites
     echo "Maybe you also have to install the following packages (see the opm prerequisites at opm-project.org): "
-    echo "  BLAS, LAPACK, Boost, SuperLU, SuiteSparse"
+    echo "  BLAS, LAPACK, Boost, SuiteSparse, Zoltan"
 
     cd $TOPDIR
 }
