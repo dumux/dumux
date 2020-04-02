@@ -17,14 +17,15 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// ## Main program flow (`main.cc`)
+// # Main program flow (`main.cc`)
 //
+// [[_TOC_]]
 //
 // This file contains the main program flow. In this example, we solve a single-phase flow problem
 // to obtain a pressure distribution in the domain. Subsequently, the distribution of volume fluxes
 // is computed from that pressure distribution, which is then passed to a tracer problem to solve
 // the transport of an initial contamination through the model domain.
-// ### Included header files
+// ## Included header files
 // <details>
 // [[exclude]]
 // Some generic includes.
@@ -66,7 +67,7 @@
 // </details>
 //
 
-// ### The main function
+// ## The main function
 // We will now discuss the main program flow implemented within the `main` function.
 // At the beginning of each program using Dune, an instance of `Dune::MPIHelper` has to
 // be created. Moreover, we parse the run-time arguments from the command line and the

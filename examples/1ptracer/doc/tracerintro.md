@@ -8,4 +8,8 @@ settings for the simulation. Two exemplary `properties`, that are mandatory to b
 specialized, are `Problem` and `SpatialParams`. With the first, one sets the
 `Problem` class to be used, in which users can define initial and boundary conditions.
 Similarly, in the `SpatialParams` class one implements the parameter distributions
-(e.g. porosity and permeability) that should be used.
+(e.g. porosity and permeability) that should be used by the model.
+
+The documentation provided in the sequel is structured as follows:
+
+[[_TOC_]]
