@@ -1079,10 +1079,10 @@ private:
 
 /*!
  * \ingroup Linear
- * \brief A simple ilu0 block diagonal preconditioner
+ * \brief A sequential AMG block diagonal preconditioner
  */
 template<class M, class X, class Y, int blockLevel = 2>
-class BlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
+class SeqBlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
 {
     template<std::size_t i>
     using DiagBlockType = std::decay_t<decltype(std::declval<M>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
@@ -1122,8 +1122,8 @@ public:
        \param sa The smoother arguments
      */
     template<class LOP, class Criterion, class SmootherArgs>
-    BlockDiagAMGPreconditioner(const LOP& lop, const Criterion& c, const SmootherArgs& sa)
-    : BlockDiagAMGPreconditioner(lop, c, sa, std::make_index_sequence<M::N()>{})
+    SeqBlockDiagAMGPreconditioner(const LOP& lop, const Criterion& c, const SmootherArgs& sa)
+    : SeqBlockDiagAMGPreconditioner(lop, c, sa, std::make_index_sequence<M::N()>{})
     {
         static_assert(blockLevel >= 2, "Only makes sense for MultiTypeBlockMatrix!");
     }
@@ -1199,8 +1199,145 @@ public:
 
 private:
     template<class LOP, class Criterion, class SmootherArgs, std::size_t... Is>
-    BlockDiagAMGPreconditioner (const LOP& lop, const Criterion& c, const SmootherArgs& sa, std::index_sequence<Is...> is)
+    SeqBlockDiagAMGPreconditioner (const LOP& lop, const Criterion& c, const SmootherArgs& sa, std::index_sequence<Is...> is)
     : amg_(std::make_tuple(BlockAMG<Is>(*std::get<Is>(lop), *std::get<Is>(c), *std::get<Is>(sa))...))
+    {}
+
+    AMGTuple amg_;
+};
+
+
+
+/*!
+ * \ingroup Linear
+ * \brief A parallel AMG block diagonal preconditioner
+ */
+template<class M, class X, class Y, class LinearSolverTraitsTuple, int blockLevel = 2>
+class ParallelBlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
+{
+    template<std::size_t i>
+    using DiagBlockType = std::decay_t<decltype(std::declval<M>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
+
+    template<std::size_t i>
+    using VecBlockType = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
+
+    template<std::size_t i>
+    using Smoother = Dune::SeqSSOR<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
+
+    template<std::size_t i>
+    using LinearSolverTraits = std::tuple_element_t<i, LinearSolverTraitsTuple>;
+
+    template<std::size_t i>
+    using ParallelTraits = typename LinearSolverTraits<i>::template ParallelOverlapping<DiagBlockType<i>, VecBlockType<i>>;
+
+    template<std::size_t i>
+    using LinearOperator = typename ParallelTraits<i>::LinearOperator;
+
+    template<std::size_t i>
+    using Comm = typename ParallelTraits<i>::Comm;
+
+    template<std::size_t i>
+    using BlockAMG = Dune::Amg::AMG<LinearOperator<i>, VecBlockType<i>, Smoother<i>, Comm<i>>;
+
+    using AMGTuple = typename makeFromIndexedType<std::tuple, BlockAMG, std::make_index_sequence<M::N()> >::type;
+
+public:
+    //! \brief The matrix type the preconditioner is for.
+    using matrix_type = typename std::decay_t<M>;
+    //! \brief The domain type of the preconditioner.
+    using domain_type = X;
+    //! \brief The range type of the preconditioner.
+    using range_type = Y;
+    //! \brief The field type of the preconditioner.
+    using field_type = typename X::field_type;
+
+    /*! \brief Constructor.
+
+       Constructor gets all parameters to operate the prec.
+       \param lop The linear operator
+       \param c The criterion
+       \param sa The smoother arguments
+     */
+    template<class LOP, class Criterion, class SmootherArgs, class C>
+    ParallelBlockDiagAMGPreconditioner(const LOP& lop, const Criterion& c, const SmootherArgs& sa, const C& comm)
+    : ParallelBlockDiagAMGPreconditioner(lop, c, sa, comm, std::make_index_sequence<M::N()>{})
+    {
+        static_assert(blockLevel >= 2, "Only makes sense for MultiTypeBlockMatrix!");
+    }
+
+    /*!
+     * \brief Prepare the preconditioner.
+     *
+     * A solver solves a linear operator equation A(v)=d by applying
+     * one or several steps of the preconditioner. The method pre()
+     * is called before the first apply operation.
+     * d and v are right hand side and solution vector of the linear
+     * system respectively. It may. e.g., scale the system, allocate memory or
+     * compute a (I)LU decomposition.
+     * Note: The ILU decomposition could also be computed in the constructor
+     * or with a separate method of the derived method if several
+     * linear systems with the same matrix are to be solved.
+     *
+     * \param v The left hand side of the equation.
+     * \param d The right hand side of the equation.
+     */
+    void pre (X& v, Y& d) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(amg_)), [&](const auto i)
+        {
+            std::get<decltype(i)::value>(amg_).pre(v[i], d[i]);
+        });
+    }
+
+    /*!
+     * \brief Apply one step of the preconditioner to the system A(v)=d.
+     *
+     * On entry v=0 and d=b-A(x) (although this might not be
+     * computed in that way. On exit v contains the update, i.e
+     * one step computes \f$ v = M^{-1} d \f$ where \f$ M \f$ is the
+     * approximate inverse of the operator \f$ A \f$ characterizing
+     * the preconditioner.
+     * \param v The update to be computed
+     * \param d The current defect.
+     */
+    void apply (X& v, const Y& d) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(amg_)), [&](const auto i)
+        {
+            std::get<decltype(i)::value>(amg_).apply(v[i], d[i]);
+        });
+    }
+
+    /*!
+     * \brief Clean up.
+     *
+     * This method is called after the last apply call for the
+     * linear system to be solved. Memory may be deallocated safely
+     * here. v is the solution of the linear equation.
+     *
+     * \param v The right hand side of the equation.
+     */
+    void post (X& v) final
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(amg_)), [&](const auto i)
+        {
+            std::get<decltype(i)::value>(amg_).post(v[i]);
+        });
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const final
+    {
+        return Dune::SolverCategory::sequential;
+    }
+
+private:
+    template<class LOP, class Criterion, class SmootherArgs, class C, std::size_t... Is>
+    ParallelBlockDiagAMGPreconditioner (const LOP& lop, const Criterion& c, const SmootherArgs& sa, const C& comm, std::index_sequence<Is...> is)
+    : amg_(std::make_tuple(BlockAMG<Is>(*std::get<Is>(lop), *std::get<Is>(c), *std::get<Is>(sa), *std::get<Is>(comm))...))
     {}
 
     AMGTuple amg_;
@@ -1232,7 +1369,7 @@ class BlockDiagAMGBiCGSTABSolver : public LinearSolver
     using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<DiagBlockType<M, i>, Dune::Amg::FirstDiagonal>>;
 
     template<std::size_t i>
-    using LinearSolverTraits = typename std::tuple_element<i, LinearSolverTraitsTuple>::type;
+    using LinearSolverTraits = std::tuple_element_t<i, LinearSolverTraitsTuple>;
 
     template<class M, class X, std::size_t i>
     using SequentialLinearOperator = typename LinearSolverTraits<i>::template Sequential<DiagBlockType<M, i>, VecBlockType<X, i>>::LinearOperator;
@@ -1250,10 +1387,10 @@ class BlockDiagAMGBiCGSTABSolver : public LinearSolver
     using Comm = typename ParallelTraits<M, X, i>::Comm;
 
     template<std::size_t i>
-    using ParallelHelperSP = std::shared_ptr<ParallelISTLHelper<typename std::tuple_element<i, LinearSolverTraitsTuple>::type>>;
+    using ParallelHelperSP = std::shared_ptr<ParallelISTLHelper<LinearSolverTraits<i>>>;
 
     template<std::size_t i>
-    using ParallelHelper = ParallelISTLHelper<typename std::tuple_element<i, LinearSolverTraitsTuple>::type>;
+    using ParallelHelper = ParallelISTLHelper<LinearSolverTraits<i>>;
 
     static constexpr auto numBlocks = std::tuple_size_v<LinearSolverTraitsTuple>;
     using ParallelHelperTuple = typename makeFromIndexedType<std::tuple,
@@ -1301,9 +1438,9 @@ private:
 
 #if HAVE_MPI
     template<class Matrix, class Vector>
-    void solveSequentialOrParallel_(const Matrix& m, Vector& x, const Vector& b)
+    void solveSequentialOrParallel_(Matrix& m, Vector& x, Vector& b)
     {
-        using LSTraits = typename std::tuple_element<0, LinearSolverTraitsTuple>::type;
+        using LSTraits = std::tuple_element_t<0, LinearSolverTraitsTuple>;
 
         if (LSTraits::canCommunicate && isParallel_)
         {
@@ -1316,7 +1453,7 @@ private:
     }
 
     template<class Matrix, class Vector>
-    void solveParallel_(const Matrix& m, Vector& x, const Vector& b)
+    void solveParallel_(Matrix& m, Vector& x, Vector& b)
     {
         if (firstCall_)
         {
@@ -1327,7 +1464,7 @@ private:
             });
         }
 
-        using LSTraits = typename std::tuple_element<0, LinearSolverTraitsTuple>::type;
+        using LSTraits = std::tuple_element_t<0, LinearSolverTraitsTuple>;
 
         Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
         params.setDefaultValuesIsotropic(LSTraits::GridView::dimension);
@@ -1346,7 +1483,7 @@ private:
 
         auto linearOperator = makeLOPSP_<ParallelLinearOperator, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
         auto scalarProduct = makeSPSP_<ScalarProduct, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
-        auto comm = makeLOPSP_<Comm, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
+        auto comm = makeCommSP_<Comm, Matrix, Vector>(std::make_index_sequence<numBlocks>{});
         forEach(integralRange(Dune::Hybrid::size(m)), [&](const auto i)
         {
             auto& ai = m[Dune::index_constant<i>{}][Dune::index_constant<i>{}];
@@ -1355,23 +1492,32 @@ private:
             auto& lop = std::get<i>(linearOperator);
             auto& sp = std::get<i>(scalarProduct);
             auto& ph = *std::get<i>(phelper_);
-            prepareLinearAlgebraParallel<LinearSolverTraits<i>, ParallelTraits>(ai, bi, c, lop, sp, ph);
+            prepareLinearAlgebraParallel<LinearSolverTraits<i>, ParallelTraits<Matrix, Vector, i>>(ai, bi, c, lop, sp, ph);
         });
 
-//         BlockDiagAMGPreconditioner<Matrix, Vector, Vector> preconditioner(linearOperator, criterion, smootherArgs);
-//
-//         Dune::MatrixAdapter<Matrix, Vector, Vector> op(m);
-//         Dune::BiCGSTABSolver<Vector> solver(op, preconditioner, this->residReduction(),
-//                                             this->maxIter(), this->verbosity());
-//         auto bTmp(b);
-//         solver.apply(x, bTmp, result_);
+        using Preconditioner = ParallelBlockDiagAMGPreconditioner<Matrix, Vector, Vector, LinearSolverTraitsTuple>;
+        Preconditioner preconditioner(linearOperator, criterion, smootherArgs, comm);
+
+        using C = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+        using LOP = Dune::OverlappingSchwarzOperator<Matrix, Vector, Vector, C>;
+        using SP = Dune::OverlappingSchwarzScalarProduct<Vector, C>;
+        const auto category = Dune::SolverCategory::overlapping;
+        C c(std::get<0>(phelper_)->gridView().comm(), category);
+        auto op = std::make_shared<LOP>(m, c);
+        auto sp = std::make_shared<SP>(c);
+
+        Dune::BiCGSTABSolver<Vector> solver(*op, *sp, preconditioner, this->residReduction(),
+                                            this->maxIter(), this->verbosity());
+        std::cout << "Apply solver with parallel preconditioner!" << std::endl;
+        auto bTmp(b);
+        solver.apply(x, bTmp, result_);
     }
 #endif
 
     template<class Matrix, class Vector>
-    void solveSequential_(const Matrix& m, Vector& x, const Vector& b)
+    void solveSequential_(Matrix& m, Vector& x, Vector& b)
     {
-        using LSTraits = typename std::tuple_element<0, LinearSolverTraitsTuple>::type;
+        using LSTraits = std::tuple_element_t<0, LinearSolverTraitsTuple>;
 
         Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
         params.setDefaultValuesIsotropic(LSTraits::GridView::dimension);
@@ -1390,7 +1536,7 @@ private:
 
         auto linearOperator = makeLinearOperator_<SequentialLinearOperator, Matrix, Vector>(m, std::make_index_sequence<numBlocks>{});
 
-        BlockDiagAMGPreconditioner<Matrix, Vector, Vector> preconditioner(linearOperator, criterion, smootherArgs);
+        SeqBlockDiagAMGPreconditioner<Matrix, Vector, Vector> preconditioner(linearOperator, criterion, smootherArgs);
 
         Dune::MatrixAdapter<Matrix, Vector, Vector> op(m);
         Dune::BiCGSTABSolver<Vector> solver(op, preconditioner, this->residReduction(),

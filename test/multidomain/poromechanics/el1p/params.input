@@ -20,6 +20,7 @@ InitialPorosity = 0.2 # [-]
 [LinearSolver]
 ResidualReduction = 1e-20
 MaxIterations = 2000
+Verbosity = 2
 
 [Newton]
 MaxRelativeShift = 1e-10
