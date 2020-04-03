@@ -27,6 +27,8 @@
 #define DUMUX_LINEAR_ISTL_SOLVERFACTORYBACKEND_HH
 
 #include <dune/common/version.hh>
+#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
+
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 
@@ -42,8 +44,6 @@
 
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/parallelhelpers.hh>
-
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 
 namespace Dumux {
 
