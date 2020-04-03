@@ -24,8 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_MAXWELL_STEFAN_LAW_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_MAXWELL_STEFAN_LAW_HH
 
-#include <dune/common/float_cmp.hh>
-#include <dumux/common/math.hh>
+#include <dune/common/fmatrix.hh>
+
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>

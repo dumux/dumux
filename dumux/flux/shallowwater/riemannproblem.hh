@@ -25,6 +25,7 @@
 #ifndef DUMUX_FLUX_SHALLOW_WATER_RIEMANN_PROBLEM_HH
 #define DUMUX_FLUX_SHALLOW_WATER_RIEMANN_PROBLEM_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/flux/shallowwater/fluxlimiterlet.hh>
 #include <dumux/flux/shallowwater/exactriemann.hh>
 

@@ -27,7 +27,6 @@
 
 #include <dune/common/fmatrix.hh>
 
-#include <dumux/common/math.hh>
 #include <dumux/flux/hookeslaw.hh>
 #include <dumux/discretization/method.hh>
 
@@ -43,7 +42,6 @@ template<class ScalarType, class GridGeometry>
 class HookesLaw<ScalarType, GridGeometry, DiscretizationMethod::box>
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using GridView = typename GridGeometry::GridView;

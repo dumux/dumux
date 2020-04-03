@@ -54,7 +54,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
 
 /*!
  * \ingroup BoxFlux
- * \brief Darcy's law for box schemes
+ * \brief Darcy's law for the box scheme
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridGeometry the grid geometry
  */
@@ -62,16 +62,12 @@ template<class Scalar, class GridGeometry>
 class BoxDarcysLaw
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using CoordScalar = typename GridView::ctype;
 
     enum { dim = GridView::dimension};
     enum { dimWorld = GridView::dimensionworld};
-
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
 

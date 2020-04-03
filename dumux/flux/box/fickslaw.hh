@@ -25,6 +25,9 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/deprecated.hh>
@@ -53,7 +56,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVarCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
@@ -61,7 +63,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Indices = typename ModelTraits::Indices;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;

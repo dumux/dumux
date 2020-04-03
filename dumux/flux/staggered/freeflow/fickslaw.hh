@@ -28,6 +28,7 @@
 #include <numeric>
 #include <dune/common/fvector.hh>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>

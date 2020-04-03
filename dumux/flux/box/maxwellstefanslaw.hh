@@ -26,8 +26,9 @@
 #define DUMUX_DISCRETIZATION_BOX_MAXWELL_STEFAN_LAW_HH
 
 #include <dune/common/float_cmp.hh>
+#include <dune/common/fmatrix.hh>
 
-#include <dumux/common/math.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
@@ -54,7 +55,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
