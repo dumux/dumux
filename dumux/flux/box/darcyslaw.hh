@@ -54,7 +54,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
 
 /*!
  * \ingroup BoxFlux
- * \brief Darcy's law for box schemes
+ * \brief Darcy's law for the box scheme
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridGeometry the grid geometry
  */
