@@ -25,6 +25,7 @@
 #define DUMUX_FREEFLOW_NC_IO_FIELDS_HH
 
 #include <dumux/io/name.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/freeflow/navierstokes/iofields.hh>
 
 namespace Dumux {

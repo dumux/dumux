@@ -25,6 +25,8 @@
 #define DUMUX_VECTOR_COMM_DATA_HANDLE_HH
 
 #include <algorithm>
+
+#include <dune/common/version.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 namespace Dumux {

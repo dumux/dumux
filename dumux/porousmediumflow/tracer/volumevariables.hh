@@ -24,8 +24,10 @@
 #ifndef DUMUX_TRACER_VOLUME_VARIABLES_HH
 #define DUMUX_TRACER_VOLUME_VARIABLES_HH
 
-#include <type_traits>
+#include <cassert>
 #include <array>
+#include <type_traits>
+
 #include <dune/common/std/type_traits.hh>
 
 #include <dumux/porousmediumflow/volumevariables.hh>
