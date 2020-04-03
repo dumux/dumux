@@ -24,7 +24,9 @@
 #ifndef DUMUX_IO_VTK_PRECISION_HH
 #define DUMUX_IO_VTK_PRECISION_HH
 
+#include <array>
 #include <string_view>
+
 #include <dune/common/version.hh>
 #include <dune/grid/io/file/vtk/common.hh>
 
