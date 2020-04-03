@@ -1,32 +1,32 @@
 {
     "README.md" : [
-        "doc/intro.md"
+        "doc/_intro.md"
     ],
 
-    "doc/1pmodel.md" : [
-        "doc/1pintro.md",
+    "doc/1p.md" : [
+        "doc/1p_intro.md",
         "properties_1p.hh",
         "problem_1p.hh",
         "spatialparams_1p.hh"
     ],
 
-    "doc/tracermodel.md" : [
-        "doc/tracerintro.md",
+    "doc/tracer.md" : [
+        "doc/tracer_intro.md",
         "properties_tracer.hh",
         "problem_tracer.hh",
         "spatialparams_tracer.hh"
     ],
 
     "doc/main.md" : [
-        "doc/mainintro.md",
+        "doc/main_intro.md",
         "main.cc"
     ],
 
     "navigation" : {
         "mainpage" : "README.md",
         "subpages" : [
-            "doc/1pmodel.md",
-            "doc/tracermodel.md",
+            "doc/1p.md",
+            "doc/tracer.md",
             "doc/main.md"
         ],
         "subtitles" : [

@@ -117,13 +117,13 @@ simulations are solved sequentially in the main file (`main.cc`).
 
 ## Part 1: Single-phase flow simulation setup
 
-| [:arrow_right: Click to continue with part 1 of the documentation](doc/1pmodel.md) |
+| [:arrow_right: Click to continue with part 1 of the documentation](doc/1p.md) |
 |---:|
 
 
 ## Part 2: Tracer transport simulation setup
 
-| [:arrow_right: Click to continue with part 2 of the documentation](doc/tracermodel.md) |
+| [:arrow_right: Click to continue with part 2 of the documentation](doc/tracer.md) |
 |---:|
 
 
