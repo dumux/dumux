@@ -25,8 +25,9 @@
 #ifndef DUMUX_TEST_MATERIALLAW_FUNCTIONS_HH
 #define DUMUX_TEST_MATERIALLAW_FUNCTIONS_HH
 
-#include <dune/common/float_cmp.hh>
+#include <iomanip>
 
+#include <dune/common/float_cmp.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/numericdifferentiation.hh>
 

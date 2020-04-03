@@ -25,6 +25,7 @@
 #ifndef DUMUX_TRACER_MULTIPHASE_TEST_FLUIDSYSTEM_HH
 #define DUMUX_TRACER_MULTIPHASE_TEST_FLUIDSYSTEM_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
 namespace Dumux::FluidSystems {
