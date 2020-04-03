@@ -175,9 +175,11 @@ int main(int argc, char** argv) try
                                                   couplingManager);
 
     // the linear solver
-    using LinearSolverTraits = std::tuple<LinearSolverTraits<OnePFVGridGeometry>,
-                                          LinearSolverTraits<PoroMechFVGridGeometry>>;
-    using LinearSolver = BlockDiagAMGBiCGSTABSolver<LinearSolverTraits>;
+//     using LinearSolverTraits = std::tuple<LinearSolverTraits<OnePFVGridGeometry>,
+//                                           LinearSolverTraits<PoroMechFVGridGeometry>>;
+//     using LinearSolver = BlockDiagAMGBiCGSTABSolver<LinearSolverTraits>;
+    using GridGeometries = std::tuple<OnePFVGridGeometry, PoroMechFVGridGeometry>;
+    using LinearSolver = BlockDiagAMGBiCGSTABSolver<GridGeometries>;
     auto views = std::make_tuple(std::cref(leafGridView), std::cref(leafGridView));
     auto mappers = std::make_tuple(onePFvGridGeometry->dofMapper(), poroMechFvGridGeometry->dofMapper());
     auto groups = std::make_tuple(std::string("OneP"), std::string("PoroElastic"));

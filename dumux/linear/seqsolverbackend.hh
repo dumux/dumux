@@ -1212,7 +1212,8 @@ private:
  * \ingroup Linear
  * \brief A parallel AMG block diagonal preconditioner
  */
-template<class M, class X, class Y, class LinearSolverTraitsTuple, int blockLevel = 2>
+//template<class M, class X, class Y, class LinearSolverTraitsTuple, int blockLevel = 2>
+template<class M, class X, class Y, class GridGeometries, int blockLevel = 2>
 class ParallelBlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
 {
     template<std::size_t i>
@@ -1225,10 +1226,18 @@ class ParallelBlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
     using Smoother = Dune::SeqSSOR<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
 
     template<std::size_t i>
-    using LinearSolverTraits = std::tuple_element_t<i, LinearSolverTraitsTuple>;
+    using LinearSolverTraits = LinearSolverTraits<std::tuple_element_t<i, GridGeometries>>;
 
     template<std::size_t i>
-    using ParallelTraits = typename LinearSolverTraits<i>::template ParallelOverlapping<DiagBlockType<i>, VecBlockType<i>>;
+    using OverlappingTraits = typename LinearSolverTraits<i>::template ParallelOverlapping<DiagBlockType<i>, VecBlockType<i>>;
+
+    template<std::size_t i>
+    using NonoverlappingTraits = typename LinearSolverTraits<i>::template ParallelNonoverlapping<DiagBlockType<i>, VecBlockType<i>>;
+
+    template<std::size_t i>
+    using ParallelTraits = std::conditional_t<std::tuple_element_t<i, GridGeometries>::discMethod == DiscretizationMethod::box,
+                                              OverlappingTraits<i>,
+                                              OverlappingTraits<i>>;
 
     template<std::size_t i>
     using LinearOperator = typename ParallelTraits<i>::LinearOperator;
@@ -1331,7 +1340,7 @@ public:
     //! Category of the preconditioner (see SolverCategory::Category)
     Dune::SolverCategory::Category category() const final
     {
-        return Dune::SolverCategory::sequential;
+        return Dune::SolverCategory::overlapping;
     }
 
 private:
@@ -1343,6 +1352,125 @@ private:
     AMGTuple amg_;
 };
 
+} // end namespace Dumux
+
+namespace Dune {
+}
+
+namespace Dumux {
+
+template<class Vector, class LinearOperatorTuple>
+class TupleLinearOperator: public Dune::LinearOperator<Vector, Vector> {
+public:
+    //! The type of the domain of the operator.
+    typedef Vector domain_type;
+    //! The type of the range of the operator.
+    typedef Vector range_type;
+    //! The field type of the operator.
+    typedef typename Vector::field_type field_type;
+
+    TupleLinearOperator (const LinearOperatorTuple& lops)//, SolverCategory::Category cat)
+    : lops_(lops)//, _category(cat)
+    {}
+
+    /*! \brief apply operator to x:  \f$ y = A(x) \f$
+     *          The input vector is consistent and the output must also be
+     *       consistent on the interior+border partition.
+     */
+    void apply (const Vector& x, Vector& y) const
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
+        {
+            std::get<i>(lops_)->apply(x[i], y[i]);
+        });
+    }
+
+    //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+    void applyscaleadd (field_type alpha, const Vector& x, Vector& y) const
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
+        {
+            std::get<i>(lops_)->applyscaleadd(alpha, x[i], y[i]);
+        });
+    }
+
+    //! Category of the scalar product (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const
+    {
+        return Dune::SolverCategory::overlapping;
+    }
+
+private:
+    const LinearOperatorTuple& lops_;
+};
+
+template<class Vector, class Comm>
+class TupleScalarProduct : public Dune::ScalarProduct<Vector>
+{
+public:
+    //! \brief The type of the vector to compute the scalar product on.
+    //!
+    //! E.g. BlockVector or another type fulfilling the ISTL
+    //! vector interface.
+    typedef Vector domain_type;
+    //!  \brief The field type used by the vector type domain_type.
+    typedef typename Vector::field_type field_type;
+    typedef typename Dune::FieldTraits<field_type>::real_type real_type;
+    //! \brief The type of the communication object.
+    //!
+    //! This must either be OwnerOverlapCopyCommunication or a type
+    //! implementing the same interface.
+    typedef Comm communication_type;
+
+    /*!
+     * \param comm The communication object for syncing overlap and copy
+     * data points.
+     * \param cat parallel solver category (nonoverlapping or overlapping)
+     */
+    TupleScalarProduct (const communication_type& comm)//, SolverCategory::Category cat)
+    : comm_(comm)//, _category(cat)
+    {}
+
+    /*! \brief Dot product of two vectors.
+     *       It is assumed that the vectors are consistent on the interior+border
+     *       partition.
+     */
+    virtual field_type dot (const Vector& x, const Vector& y)
+    {
+        field_type result(0);
+
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
+        {
+            field_type localResult(0);
+            std::get<i>(comm_)->dot(x[i], y[i], localResult);
+            result += localResult;
+        });
+
+        return result;
+    }
+
+    /*! \brief Norm of a right-hand side vector.
+     *       The vector must be consistent on the interior+border partition
+     */
+    virtual real_type norm (const Vector& x)
+    {
+        using std::sqrt;
+        return sqrt(dot(x, x));
+    }
+
+    //! Category of the scalar product (see SolverCategory::Category)
+    Dune::SolverCategory::Category category() const
+    {
+        return Dune::SolverCategory::overlapping;
+    }
+
+private:
+    const communication_type& comm_;
+};
+
 /*!
  * \ingroup Linear
  * \brief A simple ilu0 block diagonal preconditioned BiCGSTABSolver
@@ -1350,7 +1478,8 @@ private:
  * | A  B |
  * | C  D |
  */
-template <class LinearSolverTraitsTuple>
+//template <class LinearSolverTraitsTuple>
+template <class GridGeometries>
 class BlockDiagAMGBiCGSTABSolver : public LinearSolver
 {
     template<class M, std::size_t i>
@@ -1369,13 +1498,21 @@ class BlockDiagAMGBiCGSTABSolver : public LinearSolver
     using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<DiagBlockType<M, i>, Dune::Amg::FirstDiagonal>>;
 
     template<std::size_t i>
-    using LinearSolverTraits = std::tuple_element_t<i, LinearSolverTraitsTuple>;
+    using LinearSolverTraits = LinearSolverTraits<std::tuple_element_t<i, GridGeometries>>;
 
     template<class M, class X, std::size_t i>
     using SequentialLinearOperator = typename LinearSolverTraits<i>::template Sequential<DiagBlockType<M, i>, VecBlockType<X, i>>::LinearOperator;
 
     template<class M, class X, std::size_t i>
-    using ParallelTraits = typename LinearSolverTraits<i>::template ParallelOverlapping<DiagBlockType<M, i>, VecBlockType<X, i>>;
+    using OverlappingTraits = typename LinearSolverTraits<i>::template ParallelOverlapping<DiagBlockType<M, i>, VecBlockType<X, i>>;
+
+    template<class M, class X, std::size_t i>
+    using NonoverlappingTraits = typename LinearSolverTraits<i>::template ParallelNonoverlapping<DiagBlockType<M, i>, VecBlockType<X, i>>;
+
+    template<class M, class X, std::size_t i>
+    using ParallelTraits = std::conditional_t<std::tuple_element_t<i, GridGeometries>::discMethod == DiscretizationMethod::box,
+                                              OverlappingTraits<M, X, i>,
+                                              OverlappingTraits<M, X, i>>;
 
     template<class M, class X, std::size_t i>
     using ParallelLinearOperator = typename ParallelTraits<M, X, i>::LinearOperator;
@@ -1392,7 +1529,7 @@ class BlockDiagAMGBiCGSTABSolver : public LinearSolver
     template<std::size_t i>
     using ParallelHelper = ParallelISTLHelper<LinearSolverTraits<i>>;
 
-    static constexpr auto numBlocks = std::tuple_size_v<LinearSolverTraitsTuple>;
+    static constexpr auto numBlocks = std::tuple_size_v<GridGeometries>;
     using ParallelHelperTuple = typename makeFromIndexedType<std::tuple,
                                                              ParallelHelperSP,
                                                              std::make_index_sequence<numBlocks>
@@ -1440,7 +1577,7 @@ private:
     template<class Matrix, class Vector>
     void solveSequentialOrParallel_(Matrix& m, Vector& x, Vector& b)
     {
-        using LSTraits = std::tuple_element_t<0, LinearSolverTraitsTuple>;
+        using LSTraits = LinearSolverTraits<0>;//std::tuple_element_t<0, LinearSolverTraitsTuple>;
 
         if (LSTraits::canCommunicate && isParallel_)
         {
@@ -1464,7 +1601,7 @@ private:
             });
         }
 
-        using LSTraits = std::tuple_element_t<0, LinearSolverTraitsTuple>;
+        using LSTraits = LinearSolverTraits<0>;//std::tuple_element_t<0, LinearSolverTraitsTuple>;
 
         Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
         params.setDefaultValuesIsotropic(LSTraits::GridView::dimension);
@@ -1495,19 +1632,17 @@ private:
             prepareLinearAlgebraParallel<LinearSolverTraits<i>, ParallelTraits<Matrix, Vector, i>>(ai, bi, c, lop, sp, ph);
         });
 
-        using Preconditioner = ParallelBlockDiagAMGPreconditioner<Matrix, Vector, Vector, LinearSolverTraitsTuple>;
-        Preconditioner preconditioner(linearOperator, criterion, smootherArgs, comm);
+        using Preconditioner = ParallelBlockDiagAMGPreconditioner<Matrix, Vector, Vector, GridGeometries>;
+        auto preconditioner = std::make_shared<Preconditioner>(linearOperator, criterion, smootherArgs, comm);
 
-        using C = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
-        using LOP = Dune::OverlappingSchwarzOperator<Matrix, Vector, Vector, C>;
-        using SP = Dune::OverlappingSchwarzScalarProduct<Vector, C>;
-        const auto category = Dune::SolverCategory::overlapping;
-        C c(std::get<0>(phelper_)->gridView().comm(), category);
-        auto op = std::make_shared<LOP>(m, c);
-        auto sp = std::make_shared<SP>(c);
+        using LOP = TupleLinearOperator<Vector, decltype(linearOperator)>;
+        auto op = std::make_shared<LOP>(linearOperator);
 
-        Dune::BiCGSTABSolver<Vector> solver(*op, *sp, preconditioner, this->residReduction(),
-                                            this->maxIter(), this->verbosity());
+        using SP = TupleScalarProduct<Vector, decltype(comm)>;
+        auto sp = std::make_shared<SP>(comm);
+
+        Dune::BiCGSTABSolver<Vector> solver(op, sp, preconditioner, this->residReduction(),
+                                            this->maxIter(), std::get<0>(comm)->communicator().rank() == 0 ? this->verbosity() : 0);
         std::cout << "Apply solver with parallel preconditioner!" << std::endl;
         auto bTmp(b);
         solver.apply(x, bTmp, result_);
@@ -1517,7 +1652,7 @@ private:
     template<class Matrix, class Vector>
     void solveSequential_(Matrix& m, Vector& x, Vector& b)
     {
-        using LSTraits = std::tuple_element_t<0, LinearSolverTraitsTuple>;
+        using LSTraits = LinearSolverTraits<0>;//std::tuple_element_t<0, LinearSolverTraitsTuple>;
 
         Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
         params.setDefaultValuesIsotropic(LSTraits::GridView::dimension);
