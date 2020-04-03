@@ -16,18 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-// # Part 3: Main program flow (`main.cc`)
-//
-// [[_TOC_]]
-//
-// This file contains the main program flow. In this example, we solve a single-phase flow problem
-// to obtain a pressure distribution in the domain. Subsequently, the distribution of volume fluxes
-// is computed from that pressure distribution, which is then passed to a tracer problem to solve
-// the transport of an initial contamination through the model domain.
-//
+// ## The main file (`main.cc`)
 // [[content]]
 //
-// ## Included header files
+// ### Included header files
 // [[details]] includes
 // [[exclude]]
 // Some generic includes.
@@ -69,7 +61,7 @@
 // [[/details]]
 //
 
-// ## The main function
+// ### The main function
 // We will now discuss the main program flow implemented within the `main` function.
 // At the beginning of each program using Dune, an instance of `Dune::MPIHelper` has to
 // be created. Moreover, we parse the run-time arguments from the command line and the
@@ -95,7 +87,7 @@ int main(int argc, char** argv) try
     using OnePTypeTag = Properties::TTag::IncompressibleTest;
     using TracerTypeTag = Properties::TTag::TracerTest;
 
-    // ### Step 1: Create the grid
+    // #### Step 1: Create the grid
     // The `GridManager` class creates the grid from information given in the input file.
     // This can either be a grid file, or in the case of structured grids, one can specify the coordinates
     // of the corners of the grid and the number of cells to be used to discretize each spatial direction.
@@ -109,7 +101,7 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
     // [[/codeblock]]
 
-    // ### Step 2: Solving the single-phase problem
+    // #### Step 2: Solving the single-phase problem
     // First, a finite volume grid geometry is constructed from the grid that was created above.
     // This builds the sub-control volumes (scv) and sub-control volume faces (scvf) for each element
     // of the grid partition.
@@ -177,7 +169,7 @@ int main(int argc, char** argv) try
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
     // [[/codeblock]]
 
-    // ### Step 3: Computation of the volume fluxes
+    // #### Step 3: Computation of the volume fluxes
     // We use the results of the 1p problem to calculate the volume fluxes across all sub-control volume
     // faces of the discretization and store them in the vector `volumeFlux`. In order to do so, we iterate
     // over all elements of the grid, and in each element compute the volume fluxes for all sub-control volume
@@ -220,7 +212,7 @@ int main(int argc, char** argv) try
     }
     // [[/codeblock]]
 
-    // ### Step 4: Solving the tracer transport problem
+    // #### Step 4: Solving the tracer transport problem
     // First, we instantiate the tracer problem containing initial and boundary conditions,
     // and pass to it the previously computed volume fluxes (see the documentation of the
     // file `spatialparams_tracer.hh` for more details).
@@ -277,7 +269,7 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
     // [[/codeblock]]
 
-    // #### The time loop
+    // ##### The time loop
     // We start the time loop and solve a new time step as long as `tEnd` is not reached. In every time step,
     // the problem is assembled and solved, the solution is updated, and when a checkpoint is reached the solution
     // is written to a new vtk file. In addition, statistics related to CPU time, the current simulation time
@@ -337,7 +329,7 @@ int main(int argc, char** argv) try
 
     return 0;
 }
-// ### Exception handling
+// #### Exception handling
 // In this part of the main file we catch and print possible exceptions that could
 // occur during the simulation.
 // [[details]] exception handler

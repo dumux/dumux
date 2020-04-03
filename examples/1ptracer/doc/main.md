@@ -4,23 +4,25 @@
 | [:arrow_left: Back to the main documentation](../README.md) | [:arrow_left: Go back to part 2](tracermodel.md) |
 |---|---:|
 
-
-
-# Part 3: Main program flow (`main.cc`)
-
-[[_TOC_]]
+# Part 3: Main program flow
 
 This file contains the main program flow. In this example, we solve a single-phase flow problem
 to obtain a pressure distribution in the domain. Subsequently, the distribution of volume fluxes
 is computed from that pressure distribution, which is then passed to a tracer problem to solve
 the transport of an initial contamination through the model domain.
 
+The subsequent code documentation is structured as follows:
+
+[[_TOC_]]
+
+
+## The main file (`main.cc`)
 
 <details open>
 <summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../main.cc))</summary>
 
 
-## Included header files
+### Included header files
 <details><summary> Click to show includes</summary>
 These are DUNE helper classes related to parallel computations, time measurements and file I/O
 
@@ -74,7 +76,7 @@ at the documentation provided therein.
 
 </details>
 
-## The main function
+### The main function
 We will now discuss the main program flow implemented within the `main` function.
 At the beginning of each program using Dune, an instance of `Dune::MPIHelper` has to
 be created. Moreover, we parse the run-time arguments from the command line and the
@@ -104,7 +106,7 @@ and the tracer transport setups, respectively.
     using TracerTypeTag = Properties::TTag::TracerTest;
 ```
 
-### Step 1: Create the grid
+#### Step 1: Create the grid
 The `GridManager` class creates the grid from information given in the input file.
 This can either be a grid file, or in the case of structured grids, one can specify the coordinates
 of the corners of the grid and the number of cells to be used to discretize each spatial direction.
@@ -119,7 +121,7 @@ the grid is only created once using the grid type defined by the `OnePTypeTag` o
     const auto& leafGridView = gridManager.grid().leafGridView();
 ```
 
-### Step 2: Solving the single-phase problem
+#### Step 2: Solving the single-phase problem
 First, a finite volume grid geometry is constructed from the grid that was created above.
 This builds the sub-control volumes (scv) and sub-control volume faces (scvf) for each element
 of the grid partition.
@@ -203,7 +205,7 @@ problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 ```
 
-### Step 3: Computation of the volume fluxes
+#### Step 3: Computation of the volume fluxes
 We use the results of the 1p problem to calculate the volume fluxes across all sub-control volume
 faces of the discretization and store them in the vector `volumeFlux`. In order to do so, we iterate
 over all elements of the grid, and in each element compute the volume fluxes for all sub-control volume
@@ -247,7 +249,7 @@ faces embeded in that element.
     }
 ```
 
-### Step 4: Solving the tracer transport problem
+#### Step 4: Solving the tracer transport problem
 First, we instantiate the tracer problem containing initial and boundary conditions,
 and pass to it the previously computed volume fluxes (see the documentation of the
 file `spatialparams_tracer.hh` for more details).
@@ -315,7 +317,7 @@ the solution of a time step into a corresponding vtk file.
     vtkWriter.write(0.0);
 ```
 
-#### The time loop
+##### The time loop
 We start the time loop and solve a new time step as long as `tEnd` is not reached. In every time step,
 the problem is assembled and solved, the solution is updated, and when a checkpoint is reached the solution
 is written to a new vtk file. In addition, statistics related to CPU time, the current simulation time
@@ -380,7 +382,7 @@ before the program is terminated.
 }
 ```
 
-### Exception handling
+#### Exception handling
 In this part of the main file we catch and print possible exceptions that could
 occur during the simulation.
 <details><summary> Click to show exception handler</summary>
