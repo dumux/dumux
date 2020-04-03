@@ -120,13 +120,13 @@ simulations are solved sequentially in the main file (`main.cc`).
 | [:arrow_right: Click to continue with part 1 of the documentation](doc/1pmodel.md) |
 |---:|
 
- 
+
 ## Part 2: Tracer transport simulation setup
 
 | [:arrow_right: Click to continue with part 2 of the documentation](doc/tracermodel.md) |
 |---:|
 
- 
+
 ## Part 3: Main program flow
 
 | [:arrow_right: Click to continue with part 3 of the documentation](doc/main.md) |
