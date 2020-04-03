@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <vector>
+#include <memory>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/referenceelements.hh>

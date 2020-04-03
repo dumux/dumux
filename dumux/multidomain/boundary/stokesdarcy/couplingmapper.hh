@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
