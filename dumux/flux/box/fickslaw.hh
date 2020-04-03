@@ -25,6 +25,9 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/deprecated.hh>

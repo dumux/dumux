@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH
 
-#include <dumux/common/math.hh>
+#include <dune/common/fvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 

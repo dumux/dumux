@@ -25,7 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_FOURIERS_LAW_NONEQUILIBRIUM_HH
 #define DUMUX_DISCRETIZATION_BOX_FOURIERS_LAW_NONEQUILIBRIUM_HH
 
-#include <dune/common/float_cmp.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
