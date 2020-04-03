@@ -34,7 +34,7 @@ class Navigation:
         self.snippets[mainpage] = { "header" : "", "footer" : "" }
         makeHead = lambda t: "\n## {}\n\n".format(t)
         makeEntry = lambda i,l: "| [:arrow_right: Click to continue with part {} of the documentation]({}) |\n|---:|\n\n".format(i,l)
-        self.snippets[mainpage]["footer"] = " ".join(
+        self.snippets[mainpage]["footer"] = "".join(
             [ makeHead(title) + makeEntry(index+1, self.getRelPath(mainpage, subpage)) for index, (subpage, title) in enumerate(zip(subpages, subtitles))]
         ).rstrip("\n")
 
