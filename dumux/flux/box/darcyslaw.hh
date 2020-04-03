@@ -62,16 +62,12 @@ template<class Scalar, class GridGeometry>
 class BoxDarcysLaw
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using CoordScalar = typename GridView::ctype;
 
     enum { dim = GridView::dimension};
     enum { dimWorld = GridView::dimensionworld};
-
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
 

@@ -49,7 +49,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -59,8 +58,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
     //! Class that fills the cache corresponding to tpfa Fick's Law
     class TpfaFouriersLawCacheFiller
