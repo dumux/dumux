@@ -25,7 +25,10 @@
 #ifndef DUMUX_MPNC_IO_FIELDS_HH
 #define DUMUX_MPNC_IO_FIELDS_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/io/name.hh>
+#include "pressureformulation.hh"
 
 namespace Dumux {
 
