@@ -5,7 +5,6 @@
 #include <functional>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
@@ -116,9 +115,6 @@ auto createTransformation(const ctype scale,
 
 int main (int argc, char *argv[]) try
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
-
     // collect returns to determine exit code
     std::vector<bool> returns;
 
