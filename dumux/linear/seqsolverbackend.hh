@@ -151,6 +151,18 @@ public:
 
 /*!
  * \ingroup Linear
+ * \brief Returns the block level for the preconditioner for a given matrix
+ *
+ * \tparam M The matrix.
+ */
+template<class M>
+constexpr std::size_t preconditionerBlockLevel() noexcept
+{
+    return isMultiTypeBlockMatrix<M>::value ? 2 : 1;
+}
+
+/*!
+ * \ingroup Linear
  * \brief Sequential ILU(n)-preconditioned BiCSTAB solver.
  *
  * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
