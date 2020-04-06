@@ -220,7 +220,6 @@ public:
     }
 
     //! compute the residual and return it's vector norm
-    //! TODO: this needs to be adapted in parallel
     [[deprecated("Use norm(curSol) provided by the linear solver class instead. Will be deleted after 3.3")]]
     Scalar residualNorm(const SolutionVector& curSol)
     {
@@ -228,10 +227,45 @@ public:
         setResidualSize(residual);
         assembleResidual(residual, curSol);
 
-        // calculate the square norm of the residual
-        const Scalar result2 = residual.two_norm2();
+        // for box communicate the residual with the neighboring processes
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
+        {
+            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
+            if (GridGeometry<domainId>::discMethod == DiscretizationMethod::box
+                && gridGeometry->gridView().comm().size() > 1)
+            {
+                using VertexMapper = typename GridGeometry<domainId>::VertexMapper;
+                using SolutionVector = std::remove_reference_t<decltype(residual[domainId])>;
+                using DataHandle = VectorCommDataHandleSum<VertexMapper, SolutionVector,
+                                                           GridGeometry<domainId>::GridView::dimension>;
+                DataHandle sumResidualHandle(gridGeometry->vertexMapper(), residual[domainId]);
+                gridGeometry->gridView().communicate(sumResidualHandle,
+                                                     Dune::InteriorBorder_InteriorBorder_Interface,
+                                                     Dune::ForwardCommunication);
+            }
+        });
+
+        // calculate the squared norm of the residual
+        Scalar resultSquared = 0.0;
+
+        // add up the result across processes
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
+        {
+            Scalar localNormSquared = residual[domainId].two_norm2();
+
+            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
+            if (gridGeometry->gridView().comm().size() > 1)
+            {
+                localNormSquared = gridGeometry->gridView().comm().sum(localNormSquared);
+            }
+
+            resultSquared += localNormSquared;
+        });
+
         using std::sqrt;
-        return sqrt(result2);
+        return sqrt(resultSquared);
     }
 
     /*!
