@@ -211,12 +211,12 @@ public:
         // derivative w.r.t. to Sn is the negative of the one w.r.t. Sw
         const auto insideSw = insideVolVars.saturation(0);
         const auto outsideSw = outsideVolVars.saturation(0);
-        const auto dKrw_dSn_inside = MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
-        const auto dKrw_dSn_outside = MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
-        const auto dKrn_dSn_inside = MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
-        const auto dKrn_dSn_outside = MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
-        const auto dpc_dSn_inside = MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
-        const auto dpc_dSn_outside = MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
+        const auto dKrw_dSn_inside = -1.0*MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
+        const auto dKrw_dSn_outside = -1.0*MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
+        const auto dKrn_dSn_inside = -1.0*MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
+        const auto dKrn_dSn_outside = -1.0*MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
+        const auto dpc_dSn_inside = -1.0*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
+        const auto dpc_dSn_outside = -1.0*MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
 
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 
@@ -233,20 +233,20 @@ public:
         dI_dJ[conti0EqIdx+0][pressureIdx] -= tij_up_w;
 
         // partial derivative of the wetting phase flux w.r.t. S_n
-        dI_dI[conti0EqIdx+0][saturationIdx] -= rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
-        dI_dJ[conti0EqIdx+0][saturationIdx] -= rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
+        dI_dI[conti0EqIdx+0][saturationIdx] += rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
+        dI_dJ[conti0EqIdx+0][saturationIdx] += rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
 
         // partial derivative of the non-wetting phase flux w.r.t. p_w
         dI_dI[conti0EqIdx+1][pressureIdx] += tij_up_n;
         dI_dJ[conti0EqIdx+1][pressureIdx] -= tij_up_n;
 
         // partial derivative of the non-wetting phase flux w.r.t. S_n (relative permeability derivative contribution)
-        dI_dI[conti0EqIdx+1][saturationIdx] -= rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
-        dI_dJ[conti0EqIdx+1][saturationIdx] -= rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
+        dI_dI[conti0EqIdx+1][saturationIdx] += rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
+        dI_dJ[conti0EqIdx+1][saturationIdx] += rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
 
         // partial derivative of the non-wetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
-        dI_dI[conti0EqIdx+1][saturationIdx] -= tij_up_n*dpc_dSn_inside;
-        dI_dJ[conti0EqIdx+1][saturationIdx] += tij_up_n*dpc_dSn_outside;
+        dI_dI[conti0EqIdx+1][saturationIdx] += tij_up_n*dpc_dSn_inside;
+        dI_dJ[conti0EqIdx+1][saturationIdx] -= tij_up_n*dpc_dSn_outside;
     }
 
     /*!
