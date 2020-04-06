@@ -373,7 +373,7 @@ public:
                 const auto dKrn_dSn_inside = MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
                 const auto dFluxN_dSnJ_krn = rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
                 dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
-                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxN_dSnJ_krn;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_krn;
 
                 // partial derivative of the non-wetting phase flux w.r.t. S_n (p_c contribution)
                 const auto dFluxN_dSnJ_pc = tj_up_n*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
