@@ -61,7 +61,7 @@ struct FluidSystem<TypeTag, TTag::OnePSub>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePSub> { using type = Dune::UGGrid<2>; };
+struct Grid<TypeTag, TTag::OnePSub> { using type = Dune::YaspGrid<2>; };
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePSub> { using type = OnePSubProblem<TypeTag> ; };
