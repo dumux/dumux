@@ -258,7 +258,7 @@ private:
 
                     if (otherLocalDofIdx == curLocalDofIdx)
                     {
-                        if (abs(wijk[faceIdx][0][localDir]) < wijZeroThresh)
+                        if (abs(wijk[faceIdx][0][localDir]) <= wijZeroThresh)
                         {
                             if (!curIsDirichlet)
                             {
@@ -322,7 +322,7 @@ private:
 
                             // check for zero transmissibilities (skip if inside has been zero already)
                             if (otherLocalDofIdx == curLocalDofIdx && !insideZeroWij)
-                                if (abs(wijk[faceIdx][idxOnScvf][localDir]) < wijZeroThresh)
+                                if (abs(wijk[faceIdx][idxOnScvf][localDir]) <= wijZeroThresh)
                                     faceMarkers.emplace_back( std::make_pair(curLocalDofIdx, faceIdx) );
 
                             if (!otherLocalScvf.isDirichlet())
