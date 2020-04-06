@@ -24,69 +24,9 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_BULKPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_BULKPROBLEM_HH
 
-#include <dune/alugrid/grid.hh>
-#include <dune/foamgrid/foamgrid.hh>
-
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/fluidsystems/1padapter.hh>
-
-#include <dumux/multidomain/facet/box/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1pnc/model.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePNCBulkProblem;
-
-namespace Properties {
-
-// create the type tag nodes
-namespace TTag {
-struct BaseBulk {};
-struct OnePNCBulk { using InheritsFrom = std::tuple<OnePNC, BaseBulk>; };
-struct OnePNCNIBulk { using InheritsFrom = std::tuple<OnePNCNI, BaseBulk>; };
-
-struct OnePNCBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePNCBulk>; };
-struct OnePNCNIBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePNCNIBulk>; };
-
-struct OnePNCBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePNCBulk>; };
-struct OnePNCNIBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePNCNIBulk>; };
-
-struct OnePNCBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePNCBulk>; };
-struct OnePNCNIBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePNCNIBulk>; };
-} // end namespace TTag
-
-// Set the grid type (DIMWORLD is defined in CMakeLists.txt)
-template<class TypeTag>
-struct Grid<TypeTag, TTag::BaseBulk> { using type = Dune::ALUGrid<2, DIMWORLD, Dune::cube, Dune::nonconforming>; };
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::BaseBulk> { using type = OnePNCBulkProblem<TypeTag>; };
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::BaseBulk>
-{
-    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
-                                    GetPropType<TypeTag, Properties::Scalar> >;
-};
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::BaseBulk>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
-public:
-    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
-};
-
-} // end namespace Properties
 
 /*!
  * \ingroup FacetTests

@@ -24,64 +24,9 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_FACETPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_FACETPROBLEM_HH
 
-#include <dune/foamgrid/foamgrid.hh>
-
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/fluidsystems/1padapter.hh>
-
-#include <dumux/discretization/box.hh>
-#include <dumux/discretization/cctpfa.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePNCLowDimProblem;
-
-namespace Properties {
-
-// create the type tag nodes
-namespace TTag {
-struct BaseFacet {};
-struct OnePNCFacet { using InheritsFrom = std::tuple<OnePNC, BaseFacet>; }; // Isothermal case
-struct OnePNCNIFacet { using InheritsFrom = std::tuple<OnePNCNI, BaseFacet>; }; // Non-Isothermal case
-
-struct OnePNCFacetTpfa { using InheritsFrom = std::tuple<OnePNCFacet, CCTpfaModel>; };
-struct OnePNCNIFacetTpfa { using InheritsFrom = std::tuple<OnePNCNIFacet, CCTpfaModel>; };
-
-struct OnePNCFacetBox { using InheritsFrom = std::tuple<OnePNCFacet, BoxModel>; };
-struct OnePNCNIFacetBox { using InheritsFrom = std::tuple<OnePNCNIFacet, BoxModel>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::BaseFacet> { using type = Dune::FoamGrid<1, DIMWORLD>; };
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::BaseFacet> { using type = OnePNCLowDimProblem<TypeTag>; };
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::BaseFacet>
-{
-    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
-                                    GetPropType<TypeTag, Properties::Scalar> >;
-};
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::BaseFacet>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
-public:
-    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
-};
-
-} // end namespace Properties
 
 /*!
  * \ingroup FacetTests
