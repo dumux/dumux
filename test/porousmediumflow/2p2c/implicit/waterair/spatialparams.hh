@@ -44,27 +44,23 @@ class WaterAirSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar,
                          WaterAirSpatialParams<GridGeometry, Scalar>>
 {
+    using ThisType = WaterAirSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       WaterAirSpatialParams<GridGeometry, Scalar>>;
-
     static constexpr int dimWorld = GridView::dimensionworld;
-
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
-
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     //! Export the type used for the permeability
     using PermeabilityType = Scalar;
     //! Export the type used for the material law
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    WaterAirSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
+    WaterAirSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         layerBottom_ = 22.0;
 
