@@ -24,7 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_DARCYS_LAW_HH
 
-#include <vector>
+#include <array>
+#include <cmath>
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
