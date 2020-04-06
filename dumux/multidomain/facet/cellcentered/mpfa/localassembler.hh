@@ -24,6 +24,8 @@
 #ifndef DUMUX_MULTIDOMAIN_FACET_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_FACET_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
+#include <vector>
+
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 
@@ -53,6 +55,9 @@ class MpfaOFacetCouplingInteractionVolumeAssembler
     using ParentType = InteractionVolumeAssemblerBase< P, EG, EV >;
     using Helper = InteractionVolumeAssemblerHelper;
 
+    template< class IV >
+    using Scalar = typename IV::Traits::MatVecTraits::FaceVector::value_type;
+
 public:
     //! Pull up constructor of the base class
     using ParentType::ParentType;
@@ -64,11 +69,16 @@ public:
      * \param handle The data handle in which the matrices are stored
      * \param iv The interaction volume
      * \param getT Lambda to evaluate the scv-wise tensors
+     * \param wijZeroThresh Threshold below which transmissibilities are taken to be zero.
+     *                      On the basis of this threshold, trivial (0 = 0) rows in the
+     *                      A matrix are identified and modified accordingly in order to
+     *                      avoid ending up with singular matrices. This can occur when the
+     *                      tensor is zero in some cells.
      */
     template< class DataHandle, class IV, class TensorFunc >
-    void assembleMatrices(DataHandle& handle, IV& iv, const TensorFunc& getT)
+    void assembleMatrices(DataHandle& handle, IV& iv, const TensorFunc& getT, Scalar<IV> wijZeroThresh = 0.0)
     {
-        assembleLocalMatrices_(handle.A(), handle.AB(), handle.CA(), handle.T(), handle.omegas(), iv, getT);
+        assembleLocalMatrices_(handle.A(), handle.AB(), handle.CA(), handle.T(), handle.omegas(), iv, getT, wijZeroThresh);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -285,7 +295,8 @@ private:
                                 typename IV::Traits::MatVecTraits::CMatrix& C,
                                 typename IV::Traits::MatVecTraits::DMatrix& D,
                                 typename IV::Traits::MatVecTraits::OmegaStorage& wijk,
-                                IV& iv, const TensorFunc& getT)
+                                IV& iv, const TensorFunc& getT,
+                                Scalar<IV> wijZeroThresh)
     {
         using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
@@ -302,7 +313,7 @@ private:
             if (Dune::FloatCmp::ne(xi, 1.0, 1e-6))
                 DUNE_THROW(Dune::InvalidStateException, "Xi != 1.0 cannot be used on surface grids");
 
-        // resize omegas
+        std::vector< std::pair<LocalIndexType, LocalIndexType> > faceMarkers;
         Helper::resizeVector(wijk, iv.numFaces());
 
         // if only Dirichlet faces are present in the iv,
@@ -368,11 +379,26 @@ private:
                 Helper::resizeVector(wijk[faceIdx], neighborScvIndices.size());
                 wijk[faceIdx][0] = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
+                using std::abs;
+                bool isZeroWij = false;
+
                 // go over the coordinate directions in the positive sub volume
                 for (unsigned int localDir = 0; localDir < dim; localDir++)
                 {
                     const auto& otherLocalScvf = iv.localScvf( posLocalScv.localScvfIndex(localDir) );
                     const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
+
+                    if (otherLocalDofIdx == curLocalDofIdx)
+                    {
+                        if (abs(wijk[faceIdx][0][localDir]) <= wijZeroThresh)
+                        {
+                            if (!curIsDirichlet)
+                            {
+                                isZeroWij = true;
+                                faceMarkers.emplace_back( std::make_pair(curLocalDofIdx, faceIdx) );
+                            }
+                        }
+                    }
 
                     // if we are not on a Dirichlet face, add entries associated with unknown face pressures
                     // i.e. in matrix C and maybe A (if current face is not a Dirichlet face)
@@ -412,6 +438,13 @@ private:
 
                     A[curLocalDofIdx][curLocalDofIdx] -= wFacet;
                     B[curLocalDofIdx][curLocalScvf.coupledFacetLocalDofIndex()] -= wFacet;
+
+                    // check for zero transmissibilities (skip if inside has been zero already)
+                    if (!isZeroWij && abs(wFacet) <= wijZeroThresh)
+                    {
+                        isZeroWij = true;
+                        faceMarkers.emplace_back( std::make_pair(curLocalDofIdx, faceIdx) );
+                    }
                 }
 
                 // If we are on an interior face (which isn't coupled via Dirichlet Bs), add values from negative sub volume
@@ -444,6 +477,11 @@ private:
                             const auto otherLocalScvfIdx = negLocalScv.localScvfIndex(localDir);
                             const auto& otherLocalScvf = iv.localScvf(otherLocalScvfIdx);
                             const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
+
+                            // check for zero transmissibilities (skip if inside has been zero already)
+                            if (otherLocalDofIdx == curLocalDofIdx && !isZeroWij)
+                                if (abs(wijk[faceIdx][idxOnScvf][localDir]) <= wijZeroThresh)
+                                    faceMarkers.emplace_back( std::make_pair(curLocalDofIdx, faceIdx) );
 
                             if (!otherLocalScvf.isDirichlet())
                                 A[curLocalDofIdx][otherLocalDofIdx] += curOneMinusXi*wijk[faceIdx][idxOnScvf][localDir];
