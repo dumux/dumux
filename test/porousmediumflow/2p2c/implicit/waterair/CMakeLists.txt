@@ -9,7 +9,7 @@ dumux_add_test(NAME test_2p2cni_waterair_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2cni_waterair_box-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_box-00013.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_box-00012.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_box params.input -Problem.Name test_2p2cni_waterair_box")
 
 dumux_add_test(NAME test_2p2cni_waterair_buoyancy_box
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_2p2cni_waterair_buoyancy_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2cni_waterair_buoyancy_box-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_buoyancy_box-00015.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_buoyancy_box-00013.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_box params.input -Problem.Name test_2p2cni_waterair_buoyancy_box -TimeLoop.DtInitial 100")
 
 dumux_add_test(NAME test_2p2cni_waterair_tpfa
@@ -31,5 +31,5 @@ dumux_add_test(NAME test_2p2cni_waterair_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2cni_waterair_tpfa-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_tpfa-00013.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_tpfa-00012.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_waterair_tpfa params.input -Problem.Name test_2p2cni_waterair_tpfa")

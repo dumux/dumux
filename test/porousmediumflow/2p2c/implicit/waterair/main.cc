@@ -137,8 +137,8 @@ int main(int argc, char** argv) try
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        // set new dt as twice the old time step size
+        timeLoop->setTimeStepSize(2.0*timeLoop->timeStepSize());
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
