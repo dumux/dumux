@@ -5,7 +5,7 @@ dumux_add_test(NAME test_2p2cni_waterair_box
               LABELS porousmediumflow 2p2c  2p2cni
               SOURCES main.cc
               TIMEOUT 1500
-              COMPILE_DEFINITIONS TYPETAG=WaterAirBox ENABLECACHING=0
+              COMPILE_DEFINITIONS TYPETAG=WaterAirBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2cni_waterair_box-reference.vtu
@@ -16,7 +16,7 @@ dumux_add_test(NAME test_2p2cni_waterair_buoyancy_box
               LABELS porousmediumflow 2p2c  2p2cni
               TARGET test_2p2cni_waterair_box
               TIMEOUT 1500
-              COMPILE_DEFINITIONS TYPETAG=WaterAirBox ENABLECACHING=0
+              COMPILE_DEFINITIONS TYPETAG=WaterAirBox
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2cni_waterair_buoyancy_box-reference.vtu
@@ -27,7 +27,7 @@ dumux_add_test(NAME test_2p2cni_waterair_tpfa
               LABELS porousmediumflow 2p2c  2p2cni
               SOURCES main.cc
               TIMEOUT 1500
-              COMPILE_DEFINITIONS TYPETAG=WaterAirCCTpfa ENABLECACHING=0
+              COMPILE_DEFINITIONS TYPETAG=WaterAirCCTpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2cni_waterair_tpfa-reference.vtu
