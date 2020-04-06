@@ -47,6 +47,16 @@ dumux_add_test(NAME test_2p_incompressible_box
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box params.input -Problem.Name test_2p_incompressible_box")
 
+dumux_add_test(NAME test_2p_incompressible_box_analytic
+              LABELS porousmediumflow 2p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox DIFFMETHOD=DiffMethod::analytic
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_box-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_analytic-00007.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box params.input -Problem.Name test_2p_incompressible_box_analytic -Newton.EnablePartialReassembly false")
+
 # using box with interface solver
 dumux_add_test(NAME test_2p_incompressible_box_ifsolver
               LABELS porousmediumflow 2p
