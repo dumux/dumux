@@ -101,7 +101,7 @@ class InteractionVolumeAssemblerBase
     template< class DataHandle, class IV, class TensorFunc >
     void assembleMatrices(DataHandle& handle, IV& iv, const TensorFunc& getT, Scalar<IV> wijZeroThresh = 0.0)
     {
-        DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assembleMatrices() function");
+        DUNE_THROW(Dune::NotImplemented, "Implementation does not provide an assembleMatrices() function");
     }
 
     /*!
@@ -118,7 +118,7 @@ class InteractionVolumeAssemblerBase
     template< class DataHandle, class IV, class GetU >
     void assembleU(DataHandle& handle, const IV& iv, const GetU& getU)
     {
-        DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assemble() function for the cell/Dirichlet unknowns");
+        DUNE_THROW(Dune::NotImplemented, "Implementation does not provide an assemble() function for the cell/Dirichlet unknowns");
     }
 
     /*!
