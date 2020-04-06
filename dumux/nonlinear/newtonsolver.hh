@@ -1086,7 +1086,6 @@ private:
      * Specialization for linear solvers that can handle MultiType matrices.
      *
      */
-
     template<class LS = LinearSolver, class V = SolutionVector>
     typename std::enable_if_t<linearSolverAcceptsMultiTypeMatrix<LS>() &&
                               isMultiTypeBlockVector<V>(), bool>
@@ -1096,9 +1095,7 @@ private:
                            SolutionVector& b)
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
-
-        // TODO: automatically derive the precondBlockLevel
-        return ls.template solve</*precondBlockLevel=*/2>(A, x, b);
+        return ls.solve(A, x, b);
     }
 
     /*!
