@@ -44,6 +44,40 @@
 namespace Dumux {
 
 #if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
+/*!
+ * \ingroup Linear
+ * \brief A preconditioner based on the Uzawa algorithm for saddle-point problems of the form
+ * \f$
+ \begin{pmatrix}
+    A & B \\
+    C & D
+ \end{pmatrix}
+
+ \begin{pmatrix}
+    u\\
+    p
+ \end{pmatrix}
+
+ =
+
+ \begin{pmatrix}
+    f\\
+    g
+ \end{pmatrix}
+  * \f$
+ *
+ * This preconditioner is especially suited for solving the incompressible (Navier-)Stokes equations.
+ * Here, \f$D = 0\f$ and \f$B = C^T\f$ if \f$\rho = 1\f$.
+ * We do not expect good convergence if energy or mass transport is considered.
+ *
+ * See: Benzi, M., Golub, G. H., & Liesen, J. (2005). Numerical solution of saddle point problems. Acta numerica, 14, 1-137 \cite benzi2005 and <BR>
+ *      Ho, N., Olson, S. D., & Walker, H. F. (2017). Accelerating the Uzawa algorithm. SIAM Journal on Scientific Computing, 39(5), S461-S476 \cite ho2017
+ *
+ * \tparam M Type of the matrix.
+ * \tparam X Type of the update.
+ * \tparam Y Type of the defect.
+ * \tparam l Preconditioner block level (for compatibility reasons, unused).
+ */
 template<class M, class X, class Y, int l = 1>
 class SeqUzawa : public Dune::Preconditioner<X,Y>
 {
@@ -189,6 +223,25 @@ private:
 #endif
     }
 
+    /*!
+     * \brief Estimate the relaxation factor omega
+     *
+     * The optimal relaxation factor is omega = 2/(lambdaMin + lambdaMax), where lambdaMin and lambdaMax are the smallest and largest
+     * eigenvalues of the Schur complement -C*Ainv*B (assuming D = 0).
+     * lambdaMax can be easily determined using the power iteration algorithm (https://en.wikipedia.org/wiki/Power_iteration) and lambdaMin
+     * could be estimated in a similar manner. We do not consider lambdaMin because for certain cases, e.g., when C contains some rows of zeroes only,
+     * this estimate will fail.
+     *
+     * Instead we assume that lambdaMin is sufficiently close to lambdaMax such that omega = 1/lambdaMax.
+     * This seems to work rather well for various applications.
+     * We will underestimate omega by a factor of 2 in the worst case (i.e, lambdaMin = 0).
+     *
+     * When facing convergence issues, you may set LinearSolver.Preconditioner.Verbosity = 1 to see the estimate of lambdaMax.
+     * In a new simulation run, you can then set LinearSolver.Preconditioner.DetermineRelaxationFactor = false and set some other value
+     * for LinearSolver.Preconditioner.Relaxation based on the estimate of lambdaMax.
+     *
+     * See: Benzi, M., Golub, G. H., & Liesen, J. (2005). Numerical solution of saddle point problems. Acta numerica, 14, 1-137.
+     */
     scalar_field_type estimateOmega_() const
     {
         using namespace Dune::Indices;
