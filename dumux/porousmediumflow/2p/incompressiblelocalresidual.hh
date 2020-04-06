@@ -103,17 +103,12 @@ public:
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
-        // we know that these values are constant throughout the simulation
         const auto poreVolume = scv.volume()*curVolVars.porosity();
-        static const std::array<Scalar, numPhases> rhos = { curVolVars.density(0), curVolVars.density(1) };
+        const auto dt = this->timeLoop().timeStepSize();
 
-        for (int pIdx = 0; pIdx < ModelTraits::numFluidPhases(); ++pIdx)
-        {
-            // partial derivative of wetting phase storage term w.r.t. p_w
-            partialDerivatives[conti0EqIdx+pIdx][pressureIdx] += 0.0;
-            // partial derivative of wetting phase storage term w.r.t. S_n
-            partialDerivatives[conti0EqIdx+pIdx][saturationIdx] -= poreVolume*rhos[pIdx]/this->timeLoop().timeStepSize();
-        }
+        // partial derivative of the phase storage terms w.r.t. S_n
+        partialDerivatives[conti0EqIdx+0][saturationIdx] -= poreVolume*curVolVars.density(0)/dt;
+        partialDerivatives[conti0EqIdx+1][saturationIdx] += poreVolume*curVolVars.density(1)/dt;
     }
 
     /*!
