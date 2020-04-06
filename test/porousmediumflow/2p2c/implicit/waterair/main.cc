@@ -22,18 +22,14 @@
  * \brief Test for the two-phase two-component CC model.
  */
 #include <config.h>
-#include <ctime>
+
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/amgbackend.hh>
@@ -43,11 +39,8 @@
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
-#include <dumux/discretization/method.hh>
-
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/loadsolution.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
 // the problem definitions
 #include "problem.hh"
@@ -73,10 +66,6 @@ int main(int argc, char** argv) try
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
-
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
@@ -85,34 +74,18 @@ int main(int argc, char** argv) try
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
 
+    ////////////////////////////////////////////////////////////
+    // run instationary non-linear problem on this grid
+    ////////////////////////////////////////////////////////////
+
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
-
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
-    if (restartTime > 0)
-    {
-        using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-        using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-        using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-        const auto fileName = getParam<std::string>("Restart.File");
-        const auto pvName = createPVNameFunction<IOFields, PrimaryVariables, ModelTraits, FluidSystem>();
-        loadSolution(x, fileName, pvName, *gridGeometry);
-    }
-    else
-        problem->applyInitialSolution(x);
+    SolutionVector x;
+    problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
@@ -121,15 +94,19 @@ int main(int argc, char** argv) try
     gridVariables->init(x);
 
     // intialize the vtk output module
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    vtkWriter.write(restartTime);
+    // Add model specific output fields
+    GetPropType<TypeTag, Properties::IOFields>::initOutputModule(vtkWriter);
+    vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    const auto dtInitial = getParam<Scalar>("TimeLoop.DtInitial");
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dtInitial, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
@@ -183,12 +160,12 @@ int main(int argc, char** argv) try
 
     return 0;
 } // end main
-catch (Dumux::ParameterException &e)
+catch (const Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
-catch (Dune::DGFException & e)
+catch (const Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
                  "). Most likely, the DGF file name is wrong "
@@ -197,7 +174,7 @@ catch (Dune::DGFException & e)
                  << " ---> Abort!" << std::endl;
     return 2;
 }
-catch (Dune::Exception &e)
+catch (const Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;

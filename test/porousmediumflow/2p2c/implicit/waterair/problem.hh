@@ -30,7 +30,6 @@
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
-#include <dumux/discretization/method.hh>
 
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
@@ -118,7 +117,8 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
@@ -149,10 +149,6 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
     //! Property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = ModelTraits::useMoles();
