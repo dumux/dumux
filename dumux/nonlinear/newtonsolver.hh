@@ -1095,8 +1095,7 @@ private:
                            SolutionVector& x,
                            SolutionVector& b)
     {
-        // check matrix sizes
-        assert(checkMatrix_(A) && "Sub blocks of MultiType matrix have wrong sizes!");
+        assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
 
         // TODO: automatically derive the precondBlockLevel
         return ls.template solve</*precondBlockLevel=*/2>(A, x, b);
@@ -1120,8 +1119,7 @@ private:
                            SolutionVector& x,
                            SolutionVector& b)
     {
-        // check matrix sizes
-        assert(checkMatrix_(A) && "Sub blocks of MultiType matrix have wrong sizes!");
+        assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
 
         // create the bcrs matrix the IterativeSolver backend can handle
         const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
@@ -1147,27 +1145,6 @@ private:
             VectorConverter<SolutionVector>::retrieveValues(x, y);
 
         return converged;
-    }
-
-    //! helper method to assure the MultiType matrix's sub blocks have the correct sizes
-    template<class M = JacobianMatrix>
-    typename std::enable_if_t<!isBCRSMatrix<M>(), bool>
-    checkMatrix_(const JacobianMatrix& A)
-    {
-        bool matrixHasCorrectSize = true;
-        using namespace Dune::Hybrid;
-        using namespace Dune::Indices;
-        forEach(A, [&matrixHasCorrectSize](const auto& rowOfMultiTypeMatrix)
-        {
-            const auto numRowsLeftMostBlock = rowOfMultiTypeMatrix[_0].N();
-
-            forEach(rowOfMultiTypeMatrix, [&matrixHasCorrectSize, &numRowsLeftMostBlock](const auto& subBlock)
-            {
-                if (subBlock.N() != numRowsLeftMostBlock)
-                    matrixHasCorrectSize = false;
-            });
-        });
-        return matrixHasCorrectSize;
     }
 
     //! initialize the parameters by reading from the parameter tree
