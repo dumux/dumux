@@ -75,6 +75,14 @@ struct SpatialParams<TypeTag, TTag::WaterAir>
 // Define whether mole(true) or mass (false) fractions are used
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
+
+// Enable caching
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::WaterAir> { static constexpr bool value = true; };
 } // end namespace Dumux
 
 /*!
