@@ -13,6 +13,16 @@ dumux_add_test(NAME test_2p_incompressible_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa params.input -Problem.Name test_2p_incompressible_tpfa")
 
+dumux_add_test(NAME test_2p_incompressible_tpfa_analytic
+              SOURCES main.cc
+              LABELS porousmediumflow 2p
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa DIFFMETHOD=DiffMethod::analytic
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_analytic-00007.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_analytic params.input -Problem.Name test_2p_incompressible_tpfa_analytic -Newton.EnablePartialReassembly false")
+
 # using tpfa
 dumux_add_test(NAME test_2p_incompressible_tpfa_restart
               TARGET test_2p_incompressible_tpfa

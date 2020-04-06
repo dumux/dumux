@@ -53,6 +53,10 @@
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/loadsolution.hh>
 
+#ifndef DIFFMETHOD
+#define DIFFMETHOD DiffMethod::numeric
+#endif
+
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
@@ -173,7 +177,7 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = FVAssembler<TypeTag, DIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
