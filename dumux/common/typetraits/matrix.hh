@@ -28,7 +28,7 @@
 
 // Forward declare to avoid includes
 namespace Dune {
-template <class A, class B>
+template <class Block, class Allocator>
 class BCRSMatrix;
 
 template <class FirstRow, class ... Args>
@@ -41,8 +41,8 @@ namespace Dumux {
 template<class T>
 struct isBCRSMatrix : public std::false_type {};
 
-template<class B>
-struct isBCRSMatrix<Dune::BCRSMatrix<B>> : public std::true_type {};
+template<class B, class A>
+struct isBCRSMatrix<Dune::BCRSMatrix<B, A>> : public std::true_type {};
 
 //! Helper type to determine whether a given type is a Dune::MultiTypeBlockMatrix
 template<class... Args>
