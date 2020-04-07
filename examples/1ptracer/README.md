@@ -52,12 +52,12 @@ The single phase model uses Darcy's law as the equation for the momentum conserv
 \textbf v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right),
 ```
 
-with the darcy velocity $` \textbf v `$, the permeability $` \textbf K`$, the dynamic viscosity $` \mu`$, the pressure $`p`$, the density $`\rho`$ and the gravity $`\textbf g`$.
+with the darcy velocity $`\textbf v`$, the permeability $`\textbf K`$, the dynamic viscosity $`\mu`$, the pressure $`p`$, the density $`\varrho`$ and the gravitational acceleration $`\textbf g`$.
 
 Darcy's law is inserted into the mass balance equation:
 
 ```math
-\phi \frac{\partial \varrho}{\partial t} + \text{div} \textbf v = 0,
+\phi \frac{\partial \varrho}{\partial t} + \text{div} \left( \varrho \textbf v \right) = 0,
 ```
 
 where $`\phi`$ is the porosity. The primary variable used in this model is the pressure $`p`$.
