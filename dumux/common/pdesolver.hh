@@ -26,6 +26,7 @@
 
 #include <memory>
 
+#include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/timeloop.hh>
 
 namespace Dumux {
@@ -100,6 +101,26 @@ protected:
      */
     LinearSolver& linearSolver()
     { return *linearSolver_; }
+
+    /*!
+     * \brief Helper function to assure the MultiTypeBlockMatrix's sub-blocks have the correct sizes.
+     */
+    template<class M>
+    bool checkSizesOfSubMatrices(const M& A) const
+    {
+        static_assert(isMultiTypeBlockMatrix<M>::value, "This function can only be used with MultiTypeBlockMatrix");
+
+        bool matrixHasCorrectSize = true;
+        using namespace Dune::Hybrid;
+        forEach(A, [&](const auto& row){
+            const auto numRowsLeftMostBlock = row[Dune::index_constant<0>{}].N();
+            forEach(row, [&](const auto& subBlock){
+                if (subBlock.N() != numRowsLeftMostBlock)
+                    matrixHasCorrectSize = false;
+            });
+        });
+        return matrixHasCorrectSize;
+    }
 
 private:
     std::shared_ptr<Assembler> assembler_;

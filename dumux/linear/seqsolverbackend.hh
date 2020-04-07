@@ -151,6 +151,18 @@ public:
 
 /*!
  * \ingroup Linear
+ * \brief Returns the block level for the preconditioner for a given matrix
+ *
+ * \tparam M The matrix.
+ */
+template<class M>
+constexpr std::size_t preconditionerBlockLevel() noexcept
+{
+    return isMultiTypeBlockMatrix<M>::value ? 2 : 1;
+}
+
+/*!
+ * \ingroup Linear
  * \brief Sequential ILU(n)-preconditioned BiCSTAB solver.
  *
  * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
@@ -171,10 +183,10 @@ class ILUnBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
@@ -209,10 +221,10 @@ class SORBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
@@ -247,10 +259,10 @@ class SSORBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
@@ -285,10 +297,10 @@ class GSBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
@@ -322,10 +334,10 @@ class JacBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
@@ -359,10 +371,10 @@ class ILUnCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
@@ -396,10 +408,10 @@ class SORCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
@@ -433,10 +445,10 @@ class SSORCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
@@ -470,10 +482,10 @@ class GSCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
@@ -506,10 +518,10 @@ class JacCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
@@ -544,10 +556,10 @@ class SSORRestartedGMResBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
@@ -581,10 +593,10 @@ class ILU0BiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
@@ -617,10 +629,10 @@ class ILU0CGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
@@ -654,10 +666,10 @@ class ILU0RestartedGMResBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
@@ -692,10 +704,10 @@ class ILUnRestartedGMResBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
@@ -720,11 +732,11 @@ class ExplicitDiagonalSolver : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         Vector rhs(b);
+        constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
         Dune::SeqJac<Matrix, Vector, Vector, precondBlockLevel> jac(A, 1, 1.0);
         jac.pre(x, rhs);
         jac.apply(x, rhs);
@@ -752,8 +764,7 @@ class SuperLUBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel is unused and just here for compatibility with iterative solvers
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         static_assert(isBCRSMatrix<Matrix>::value, "SuperLU only works with BCRS matrices!");
@@ -813,8 +824,7 @@ class UMFPackBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // precondBlockLevel is unused and just here for compatibility with iterative solvers
-    template<int precondBlockLevel = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         static_assert(isBCRSMatrix<Matrix>::value, "UMFPack only works with BCRS matrices!");
@@ -954,7 +964,7 @@ public:
     using LinearSolver::LinearSolver;
 
     // Solve saddle-point problem using a Schur complement based preconditioner
-    template<int precondBlockLevel = 2, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& M, Vector& x, const Vector& b)
     {
         BlockDiagILU0Preconditioner<Matrix, Vector, Vector> preconditioner(M);
@@ -1139,7 +1149,7 @@ public:
     using LinearSolver::LinearSolver;
 
     // Solve saddle-point problem using a Schur complement based preconditioner
-    template<int precondBlockLevel = 2, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& m, Vector& x, const Vector& b)
     {
         //! \todo Check whether the default accumulation mode atOnceAccu is needed.
