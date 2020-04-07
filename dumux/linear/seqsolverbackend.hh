@@ -1641,7 +1641,7 @@ private:
         using SP = TupleScalarProduct<Vector, decltype(comm)>;
         auto sp = std::make_shared<SP>(comm);
 
-        Dune::BiCGSTABSolver<Vector> solver(op, sp, preconditioner, this->residReduction(),
+        Dune::BiCGSTABSolver<Vector> solver(*op, *sp, *preconditioner, this->residReduction(),
                                             this->maxIter(), std::get<0>(comm)->communicator().rank() == 0 ? this->verbosity() : 0);
         std::cout << "Apply solver with parallel preconditioner!" << std::endl;
         auto bTmp(b);
