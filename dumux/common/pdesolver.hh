@@ -109,15 +109,12 @@ protected:
     bool checkSizesOfSubMatrices(const M& A) const
     {
         static_assert(isMultiTypeBlockMatrix<M>::value, "This function can only be used with MultiTypeBlockMatrix");
+
         bool matrixHasCorrectSize = true;
         using namespace Dune::Hybrid;
-        using namespace Dune::Indices;
-        forEach(A, [&matrixHasCorrectSize](const auto& rowOfMultiTypeBlockMatrix)
-        {
-            const auto numRowsLeftMostBlock = rowOfMultiTypeBlockMatrix[_0].N();
-
-            forEach(rowOfMultiTypeBlockMatrix, [&matrixHasCorrectSize, &numRowsLeftMostBlock](const auto& subBlock)
-            {
+        forEach(A, [&](const auto& row){
+            const auto numRowsLeftMostBlock = row[Dune::index_constant<0>{}].N();
+            forEach(row, [&](const auto& subBlock){
                 if (subBlock.N() != numRowsLeftMostBlock)
                     matrixHasCorrectSize = false;
             });
