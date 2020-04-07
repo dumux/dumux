@@ -25,6 +25,9 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 - The global default parameters for linear solvers have been removed and moved to the class `LinearSolver`.
 This only affects users that directly obtain this parameter via `getParam` somewhere in the code.
 
+- __Sequential linear solver backends__: Remove template argument `precondBlockLevel` from `solve` functions. The preconditioner block level is now determined automatically, assuming a value of
+1 for regular BCRS matrices and a value of 2 for MultiTypeBlock matrices. The respective calls from the `NewtonSolver` and `PDESolver`classes have been adapted.
+
 - __Change matrix block arrangement for staggered models__: The matrix block structure has been adapted such that it complies with the literature standard, i.e., having the velocity block (C) on `M[0][0]`
 rather than on `M[1][1]`. This also requires re-arranging the submodels and properties in dumux-multidomain such that the face-related classes and vector entries now appear before the cell-centered ones.
 
