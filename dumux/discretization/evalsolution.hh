@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <type_traits>
 
-#include <dune/common/hybridutilities.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/typetraits/state.hh>
@@ -124,10 +123,9 @@ PrimaryVariables evalSolution(const Element& element,
         }
 
         // set an arbitrary state if the model requires a state (models constexpr if)
-        Dune::Hybrid::ifElse(HasState{}, [&](auto&& evalLazy){
+        if constexpr (HasState{})
             if (!ignoreState)
-                evalLazy(result).setState(evalLazy(elemSol)[0].state());
-        });
+                result.setState(elemSol[0].state());
 
         return result;
     }
@@ -199,10 +197,9 @@ PrimaryVariables evalSolution(const Element& element,
         }
 
         // set an arbitrary state if the model requires a state (models constexpr if)
-        Dune::Hybrid::ifElse(HasState{}, [&](auto&& evalLazy){
+        if constexpr (HasState{})
             if (!ignoreState)
-                evalLazy(result).setState(evalLazy(elemSol)[0].state());
-        });
+                result.setState(elemSol[0].state());
 
         return result;
     }
