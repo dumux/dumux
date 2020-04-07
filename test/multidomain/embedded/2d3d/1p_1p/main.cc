@@ -112,7 +112,7 @@ void assembleSolveUpdate(Assembler& assembler, LinearSolver& linearSolver, Coupl
     // solve linear system
     solveTimer.start();
     auto deltaSol = sol;
-    const bool converged = linearSolver->template solve<2>(assembler->jacobian(), deltaSol, assembler->residual());
+    const bool converged = linearSolver->solve(assembler->jacobian(), deltaSol, assembler->residual());
     if (!converged) DUNE_THROW(Dune::MathError, "Linear solver did not converge!");
     solveTimer.stop();
 
