@@ -24,61 +24,9 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_BULKPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_BULKPROBLEM_HH
 
-#include <dune/alugrid/grid.hh>
-#include <dune/foamgrid/foamgrid.hh>
-
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/fluidsystems/1padapter.hh>
-
-#include <dumux/multidomain/facet/box/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1pnc/model.hh>
-
-#include "spatialparams.hh"
 
 namespace Dumux {
-// forward declarations
-template<class TypeTag> class OnePNCBulkProblem;
-
-namespace Properties {
-
-// create the type tag nodes
-namespace TTag {
-struct OnePNCBulk { using InheritsFrom = std::tuple<OnePNC>; };
-struct OnePNCBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePNCBulk>; };
-struct OnePNCBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePNCBulk>; };
-struct OnePNCBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePNCBulk>; };
-} // end namespace TTag
-
-// Set the grid type (DIMWORLD is defined in CMakeLists.txt)
-template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePNCBulk> { using type = Dune::ALUGrid<2, DIMWORLD, Dune::cube, Dune::nonconforming>; };
-// Set the problem type
-template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePNCBulk> { using type = OnePNCBulkProblem<TypeTag>; };
-// set the spatial params
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePNCBulk>
-{
-    using type = OnePSpatialParams< GetPropType<TypeTag, Properties::GridGeometry>,
-                                    GetPropType<TypeTag, Properties::Scalar> >;
-};
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePNCBulk>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
-public:
-    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
-};
-
-} // end namespace Properties
 
 /*!
  * \ingroup FacetTests
@@ -107,6 +55,9 @@ class OnePNCBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr bool enableHeatConduction = ModelTraits::enableEnergyBalance();
 
     enum
     {
@@ -164,8 +115,16 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         auto values = initialAtPos(globalPos);
+
         if (globalPos[1] < 1e-6)
+        {
             values[N2Idx] = 1e-3;
+            if constexpr (enableHeatConduction)
+            {
+                values[Indices::temperatureIdx] += 100; // DeltaT = 100 K
+            }
+        }
+
         return values;
     }
 
@@ -175,6 +134,12 @@ public:
         PrimaryVariables values;
         values[pressureIdx] = 1.0e5;
         values[N2Idx] = 0.0;
+
+        if constexpr (enableHeatConduction)
+        {
+            values[Indices::temperatureIdx] = temperature();
+        }
+
         return values;
     }
 

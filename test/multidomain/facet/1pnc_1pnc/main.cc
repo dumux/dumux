@@ -45,8 +45,8 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-#include "problem_bulk.hh"
-#include "problem_facet.hh"
+#include "properties_bulk.hh"
+#include "properties_facet.hh"
 
 using BulkTypeTag = Dumux::Properties::TTag::BULKTYPETAG;
 using FacetTypeTag = Dumux::Properties::TTag::FACETTYPETAG;

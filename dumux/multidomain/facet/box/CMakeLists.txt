@@ -4,6 +4,7 @@ couplingmapper.hh
 darcyslaw.hh
 elementboundarytypes.hh
 fickslaw.hh
+fourierslaw.hh
 fvelementgeometry.hh
 fvgridgeometry.hh
 localresidual.hh
