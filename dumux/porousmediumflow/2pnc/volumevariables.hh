@@ -137,11 +137,6 @@ public:
         /////////////
         // calculate the remaining quantities
         /////////////
-        // Second instance of a parameter cache.
-        // Could be avoided if diffusion coefficients also
-        // became part of the fluid state.
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState_);
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
@@ -155,21 +150,11 @@ public:
         //update porosity before calculating the effective properties depending on it
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
 
-        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
-                                                            paramCache,
-                                                            phaseIdx,
-                                                            compIIdx,
-                                                            compJIdx);
-        };
-
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
             return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
         };
 
-        diffCoeff_.update(getDiffusionCoefficient);
         effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
 
         // calculate the remaining quantities
@@ -458,7 +443,7 @@ public:
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         if (compIdx != phaseIdx)
-            return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+            return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
@@ -467,7 +452,11 @@ public:
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    {
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState_, phaseIdx);
+        return FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phaseIdx, compIIdx, compJIdx);
+    }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
@@ -509,7 +498,6 @@ private:
     Scalar porosity_;               // Effective porosity within the control volume
     PermeabilityType permeability_; // Effective permeability within the control volume
     Scalar mobility_[ModelTraits::numFluidPhases()]; // Effective mobility within the control volume
-    DiffusionCoefficients diffCoeff_;
     DiffusionCoefficients effectiveDiffCoeff_;
 
 };

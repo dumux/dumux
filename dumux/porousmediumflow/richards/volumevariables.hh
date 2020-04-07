@@ -115,15 +115,6 @@ public:
         minPc_ = MaterialLaw::endPointPc(materialParams);
 
         typename FluidSystem::ParameterCache paramCache;
-        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
-                                                            paramCache,
-                                                            phaseIdx,
-                                                            compIIdx,
-                                                            compJIdx);
-        };
-
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
             return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
@@ -172,9 +163,6 @@ public:
 
             //binary diffusion coefficients
             paramCache.updateAll(fluidState_);
-            diffCoeff_ = getDiffusionCoefficient(FluidSystem::gasPhaseIdx,
-                                                 FluidSystem::comp1Idx,
-                                                 FluidSystem::comp0Idx);
             effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(FluidSystem::gasPhaseIdx,
                                                                    FluidSystem::comp1Idx,
                                                                    FluidSystem::comp0Idx);
@@ -201,9 +189,6 @@ public:
 
                 // binary diffusion coefficients
                 paramCache.updateAll(fluidState_);
-                diffCoeff_ = getDiffusionCoefficient(FluidSystem::gasPhaseIdx,
-                                                     FluidSystem::comp1Idx,
-                                                     FluidSystem::comp0Idx);
                 effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(FluidSystem::gasPhaseIdx,
                                                                        FluidSystem::comp1Idx,
                                                                        FluidSystem::comp0Idx);
@@ -223,7 +208,6 @@ public:
                 massFraction_[FluidSystem::gasPhaseIdx] = 0.0;
 
                 // binary diffusion coefficients (none required for liquid phase only)
-                diffCoeff_ = 0.0;
                 effectiveDiffCoeff_ = 0.0;
             }
         }
@@ -500,7 +484,7 @@ public:
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         assert(enableWaterDiffusionInAir() && phaseIdx == FluidSystem::gasPhaseIdx && compIdx == FluidSystem::comp0Idx);
-        return diffCoeff_;
+        return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
     }
 
     /*!
@@ -511,7 +495,9 @@ public:
         assert(enableWaterDiffusionInAir());
         assert(phaseIdx == FluidSystem::gasPhaseIdx);
         assert(compIIdx != compJIdx);
-        return diffCoeff_;
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState_, phaseIdx);
+        return FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phaseIdx, compIIdx, compJIdx);
     }
 
     /*!
@@ -534,9 +520,6 @@ protected:
     Scalar moleFraction_[numPhases]; //!< The water mole fractions in water and air
     Scalar massFraction_[numPhases]; //!< The water mass fractions in water and air
     Scalar molarDensity_[numPhases]; //!< The molar density of water and air
-
-    // Binary diffusion coefficient
-    Scalar diffCoeff_;
 
     // Effective diffusion coefficients for the phases
     Scalar effectiveDiffCoeff_;
