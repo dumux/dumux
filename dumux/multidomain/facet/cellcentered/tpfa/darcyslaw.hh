@@ -24,11 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_DARCYS_LAW_HH
 
-#include <vector>
+#include <array>
+#include <cmath>
 
-#include <dune/common/fmatrix.hh>
-#include <dune/common/dynmatrix.hh>
-#include <dune/common/dynvector.hh>
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
@@ -67,7 +65,7 @@ using CCTpfaFacetCouplingDarcysLaw =
 
 /*!
  * \ingroup FacetCoupling
- * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for non-network grids.
+ * \brief Specialization of FacetCouplingTpfaDarcysLawCache for non-network grids.
  */
 template<class AdvectionType, class GridGeometry>
 class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, GridGeometry, /*isNetwork*/false>
@@ -135,7 +133,7 @@ private:
 
 /*!
  * \ingroup FacetCoupling
- * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
+ * \brief Specialization of CCTpfaFacetCouplingDarcysLawImpl for dim=dimWorld
  */
 template<class ScalarType, class GridGeometry>
 class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/false>
@@ -150,17 +148,6 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    //! Compute the transmissibility associated with the facet element
-    template<class VolumeVariables, class FacetVolVars>
-    static ScalarType computeFacetTransmissibility_(const VolumeVariables& insideVolVars,
-                                                    const FacetVolVars& facetVolVars,
-                                                    const SubControlVolumeFace& scvf)
-    {
-        return 2.0*scvf.area()*insideVolVars.extrusionFactor()
-                              /facetVolVars.extrusionFactor()
-                              *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
-    }
 
   public:
     //! state the scalar type of the law
@@ -285,7 +272,9 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = computeFacetTransmissibility_(insideVolVars, facetVolVars, scvf);
+            const auto wFacet = 2.0*scvf.area()*insideVolVars.extrusionFactor()
+                                   /facetVolVars.extrusionFactor()
+                                   *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
 
             // The fluxes across this face and the outside face can be expressed in matrix form:
             // \f$\mathbf{C} \bar{\mathbf{u}} + \mathbf{D} \mathbf{u} + \mathbf{E} \mathbf{u}_\gamma\f$,
@@ -353,7 +342,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
 
 /*!
  * \ingroup FacetCoupling
- * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for network grids
+ * \brief Specialization of FacetCouplingTpfaDarcysLawCache for network grids
  */
 template<class AdvectionType, class GridGeometry>
 class CCTpfaFacetCouplingDarcysLawCache<AdvectionType, GridGeometry, /*isNetwork*/true>
@@ -408,7 +397,7 @@ private:
 
 /*!
  * \ingroup FacetCoupling
- * \brief Specialization of the CCTpfaDarcysLaw grids where dim<dimWorld
+ * \brief Specialization of CCTpfaFacetCouplingDarcysLawImpl for dim<dimWorld
  */
 template<class ScalarType, class GridGeometry>
 class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/true>
