@@ -44,3 +44,5 @@ MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 PREDEFINED            += "DUNE_DEPRECATED:=/** \deprecated */" \
                          "DUNE_DEPRECATED_MSG(A):=/** \deprecated A */"
+
+DOT_GRAPH_MAX_NODES    = 100
