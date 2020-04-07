@@ -4,7 +4,8 @@ TEnd = 1.0 # [s]
 
 [Grid]
 LowerLeft = 0 0
-UpperRight = 1 1
+UpperRight = 6.28 6.28
+Cells = 20 20
 
 [Problem]
 Name = test_ff_sincos
@@ -34,3 +35,13 @@ AddProcessRank = false
 
 [Flux]
 UpwindWeight = 0.5
+
+[LinearSolver]
+Type = restartedflexiblegmressolver
+Verbosity = 1
+GMResRestart = 50
+
+[LinearSolver.Preconditioner]
+Type = uzawa
+Verbosity = 1
+Iterations = 5

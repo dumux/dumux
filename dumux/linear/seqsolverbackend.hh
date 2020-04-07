@@ -32,6 +32,8 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
 #include <dune/istl/umfpack.hh>
+#include <dune/istl/io.hh>
+#include <dune/common/indices.hh>
 #include <dune/common/version.hh>
 #include <dune/common/hybridutilities.hh>
 
@@ -40,6 +42,8 @@
 #include <dumux/common/typetraits/utility.hh>
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/preconditioners.hh>
+#include <dumux/linear/linearsolverparameters.hh>
 
 namespace Dumux {
 
@@ -147,6 +151,29 @@ public:
 
         return result.converged;
     }
+
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
+    // solve with generic parameter tree
+    template<class Preconditioner, class Solver, class Matrix, class Vector>
+    static bool solveWithParamTree(const Matrix& A, Vector& x, const Vector& b,
+                                   const Dune::ParameterTree& params)
+    {
+
+        // make a linear operator from a matrix
+        using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
+        const auto linearOperator = std::make_shared<MatrixAdapter>(A);
+
+        auto precond = std::make_shared<Preconditioner>(linearOperator, params.sub("preconditioner"));
+        Solver solver(linearOperator, precond, params);
+
+        Vector bTmp(b);
+
+        Dune::InverseOperatorResult result;
+        solver.apply(x, bTmp, result);
+
+        return result.converged;
+    }
+#endif
 };
 
 /*!
@@ -875,6 +902,33 @@ private:
  * \name Solver for MultiTypeBlockMatrix's
  */
 // \{
+
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
+/*!
+ * \ingroup Linear
+ * \brief A Uzawa preconditioned BiCGSTAB solver for saddle-point problems
+ */
+template <class LinearSolverTraits>
+class UzawaBiCGSTABBackend : public LinearSolver
+{
+public:
+    using LinearSolver::LinearSolver;
+
+    template<class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        using Preconditioner = SeqUzawa<Matrix, Vector, Vector>;
+        using Solver = Dune::BiCGSTABSolver<Vector>;
+        static const auto solverParams = LinearSolverParameters<LinearSolverTraits>::createParameterTree(this->paramGroup());
+        return IterativePreconditionedSolverImpl::template solveWithParamTree<Preconditioner, Solver>(A, x, b, solverParams);
+    }
+
+    std::string name() const
+    {
+        return "Uzawa preconditioned BiCGSTAB solver";
+    }
+};
+#endif
 
 /*!
  * \ingroup Linear

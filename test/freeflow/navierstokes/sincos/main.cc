@@ -41,10 +41,15 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/valgrind.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
+
+#include <dune/common/version.hh>
+#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
+#include <dumux/linear/istlsolverfactorybackend.hh>
+#endif
 
 #include "problem.hh"
 
@@ -252,7 +257,7 @@ int main(int argc, char** argv) try
                                   : std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = Dumux::UMFPackBackend;
+    using LinearSolver = LINEARSOLVER;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
