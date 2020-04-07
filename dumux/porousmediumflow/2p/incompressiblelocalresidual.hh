@@ -103,17 +103,12 @@ public:
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
-        // we know that these values are constant throughout the simulation
         const auto poreVolume = scv.volume()*curVolVars.porosity();
-        static const std::array<Scalar, numPhases> rhos = { curVolVars.density(0), curVolVars.density(1) };
+        const auto dt = this->timeLoop().timeStepSize();
 
-        for (int pIdx = 0; pIdx < ModelTraits::numFluidPhases(); ++pIdx)
-        {
-            // partial derivative of wetting phase storage term w.r.t. p_w
-            partialDerivatives[conti0EqIdx+pIdx][pressureIdx] += 0.0;
-            // partial derivative of wetting phase storage term w.r.t. S_n
-            partialDerivatives[conti0EqIdx+pIdx][saturationIdx] -= poreVolume*rhos[pIdx]/this->timeLoop().timeStepSize();
-        }
+        // partial derivative of the phase storage terms w.r.t. S_n
+        partialDerivatives[conti0EqIdx+0][saturationIdx] -= poreVolume*curVolVars.density(0)/dt;
+        partialDerivatives[conti0EqIdx+1][saturationIdx] += poreVolume*curVolVars.density(1)/dt;
     }
 
     /*!
@@ -216,12 +211,12 @@ public:
         // derivative w.r.t. to Sn is the negative of the one w.r.t. Sw
         const auto insideSw = insideVolVars.saturation(0);
         const auto outsideSw = outsideVolVars.saturation(0);
-        const auto dKrw_dSn_inside = MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
-        const auto dKrw_dSn_outside = MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
-        const auto dKrn_dSn_inside = MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
-        const auto dKrn_dSn_outside = MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
-        const auto dpc_dSn_inside = MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
-        const auto dpc_dSn_outside = MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
+        const auto dKrw_dSn_inside = -1.0*MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
+        const auto dKrw_dSn_outside = -1.0*MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
+        const auto dKrn_dSn_inside = -1.0*MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
+        const auto dKrn_dSn_outside = -1.0*MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
+        const auto dpc_dSn_inside = -1.0*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
+        const auto dpc_dSn_outside = -1.0*MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
 
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 
@@ -238,20 +233,20 @@ public:
         dI_dJ[conti0EqIdx+0][pressureIdx] -= tij_up_w;
 
         // partial derivative of the wetting phase flux w.r.t. S_n
-        dI_dI[conti0EqIdx+0][saturationIdx] -= rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
-        dI_dJ[conti0EqIdx+0][saturationIdx] -= rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
+        dI_dI[conti0EqIdx+0][saturationIdx] += rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
+        dI_dJ[conti0EqIdx+0][saturationIdx] += rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
 
         // partial derivative of the non-wetting phase flux w.r.t. p_w
         dI_dI[conti0EqIdx+1][pressureIdx] += tij_up_n;
         dI_dJ[conti0EqIdx+1][pressureIdx] -= tij_up_n;
 
         // partial derivative of the non-wetting phase flux w.r.t. S_n (relative permeability derivative contribution)
-        dI_dI[conti0EqIdx+1][saturationIdx] -= rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
-        dI_dJ[conti0EqIdx+1][saturationIdx] -= rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
+        dI_dI[conti0EqIdx+1][saturationIdx] += rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
+        dI_dJ[conti0EqIdx+1][saturationIdx] += rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
 
         // partial derivative of the non-wetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
-        dI_dI[conti0EqIdx+1][saturationIdx] -= tij_up_n*dpc_dSn_inside;
-        dI_dJ[conti0EqIdx+1][saturationIdx] += tij_up_n*dpc_dSn_outside;
+        dI_dI[conti0EqIdx+1][saturationIdx] += tij_up_n*dpc_dSn_inside;
+        dI_dJ[conti0EqIdx+1][saturationIdx] -= tij_up_n*dpc_dSn_outside;
     }
 
     /*!
@@ -369,39 +364,39 @@ public:
             {
                 // partial derivative of the wetting phase flux w.r.t. S_n
                 const auto insideSw = insideVolVars.saturation(0);
-                const auto dKrw_dSn_inside = MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
+                const auto dKrw_dSn_inside = -1.0*MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
                 const auto dFluxW_dSnJ = rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
-                dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
-                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
+                dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
+                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
 
                 // partial derivative of the non-wetting phase flux w.r.t. S_n (k_rn contribution)
-                const auto dKrn_dSn_inside = MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
+                const auto dKrn_dSn_inside = -1.0*MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
                 const auto dFluxN_dSnJ_krn = rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
-                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
-                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxN_dSnJ_krn;
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_krn;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
 
                 // partial derivative of the non-wetting phase flux w.r.t. S_n (p_c contribution)
-                const auto dFluxN_dSnJ_pc = tj_up_n*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
-                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
-                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
+                const auto dFluxN_dSnJ_pc = -1.0*tj_up_n*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
             }
             else if (localJ == outsideScvIdx)
             {
                 // see comments for (globalJ == insideScvIdx)
                 const auto outsideSw = outsideVolVars.saturation(0);
-                const auto dKrw_dSn_outside = MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
+                const auto dKrw_dSn_outside = -1.0*MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
                 const auto dFluxW_dSnJ = rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
-                dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
-                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
+                dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
+                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
 
-                const auto dKrn_dSn_outside = MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
+                const auto dKrn_dSn_outside = -1.0*MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
                 const auto dFluxN_dSnJ_krn = rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
-                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
-                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_krn;
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_krn;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
 
-                const auto dFluxN_dSnJ_pc = tj_up_n*MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
-                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
-                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
+                const auto dFluxN_dSnJ_pc = -1.0*tj_up_n*MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
             }
             else
             {
