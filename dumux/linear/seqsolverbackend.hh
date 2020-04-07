@@ -183,7 +183,7 @@ class ILUnBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -221,7 +221,7 @@ class SORBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -259,7 +259,7 @@ class SSORBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -297,7 +297,7 @@ class GSBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -334,7 +334,7 @@ class JacBiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -371,7 +371,7 @@ class ILUnCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -408,7 +408,7 @@ class SORCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -445,7 +445,7 @@ class SSORCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -482,7 +482,7 @@ class GSCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -518,7 +518,7 @@ class JacCGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -556,7 +556,7 @@ class SSORRestartedGMResBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -593,7 +593,7 @@ class ILU0BiCGSTABBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -629,7 +629,7 @@ class ILU0CGBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -666,7 +666,7 @@ class ILU0RestartedGMResBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -704,7 +704,7 @@ class ILUnRestartedGMResBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         constexpr auto precondBlockLevel = preconditionerBlockLevel<Matrix>();
@@ -732,7 +732,7 @@ class ExplicitDiagonalSolver : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         Vector rhs(b);
@@ -764,7 +764,7 @@ class SuperLUBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         static_assert(isBCRSMatrix<Matrix>::value, "SuperLU only works with BCRS matrices!");
@@ -824,7 +824,7 @@ class UMFPackBackend : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    template<int pBlDummy = 1, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         static_assert(isBCRSMatrix<Matrix>::value, "UMFPack only works with BCRS matrices!");
@@ -964,7 +964,7 @@ public:
     using LinearSolver::LinearSolver;
 
     // Solve saddle-point problem using a Schur complement based preconditioner
-    template<int pBlDummy = 2, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& M, Vector& x, const Vector& b)
     {
         BlockDiagILU0Preconditioner<Matrix, Vector, Vector> preconditioner(M);
@@ -1149,7 +1149,7 @@ public:
     using LinearSolver::LinearSolver;
 
     // Solve saddle-point problem using a Schur complement based preconditioner
-    template<int pBlDummy = 2, class Matrix, class Vector>
+    template<class Matrix, class Vector>
     bool solve(const Matrix& m, Vector& x, const Vector& b)
     {
         //! \todo Check whether the default accumulation mode atOnceAccu is needed.
