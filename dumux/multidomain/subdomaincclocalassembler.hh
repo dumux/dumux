@@ -227,8 +227,12 @@ public:
         {
             curElemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+            // HACK: tell the coupling manager to temporarily use the previous
+            //       solution if queried, e.g. from the spatial parameters.
+            couplingManager().setUsePrevSol(true);
             if (!this->assembler().isStationaryProblem())
                 this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+            couplingManager().setUsePrevSol(false);
         }
         else
         {
