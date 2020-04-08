@@ -540,7 +540,7 @@ class ParallelBlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
 
     template<std::size_t i>
     using ParallelTraits = std::conditional_t<std::tuple_element_t<i, GridGeometries>::discMethod == DiscretizationMethod::box,
-                                              OverlappingTraits<i>,
+                                              NonoverlappingTraits<i>,
                                               OverlappingTraits<i>>;
 
     template<std::size_t i>
@@ -803,7 +803,7 @@ class BlockDiagAMGBiCGSTABSolver : public LinearSolver
 
     template<class M, class X, std::size_t i>
     using ParallelTraits = std::conditional_t<std::tuple_element_t<i, GridGeometries>::discMethod == DiscretizationMethod::box,
-                                              OverlappingTraits<M, X, i>,
+                                              NonoverlappingTraits<M, X, i>,
                                               OverlappingTraits<M, X, i>>;
 
     template<class M, class X, std::size_t i>
