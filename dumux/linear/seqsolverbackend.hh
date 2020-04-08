@@ -1377,7 +1377,7 @@ public:
      *          The input vector is consistent and the output must also be
      *       consistent on the interior+border partition.
      */
-    void apply (const Vector& x, Vector& y) const
+    void apply (const Vector& x, Vector& y) const override
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
@@ -1387,7 +1387,7 @@ public:
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-    void applyscaleadd (field_type alpha, const Vector& x, Vector& y) const
+    void applyscaleadd (field_type alpha, const Vector& x, Vector& y) const override
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
@@ -1406,47 +1406,35 @@ private:
     const LinearOperatorTuple& lops_;
 };
 
-template<class Vector, class Comm>
+
+template<class Vector, class ScalarProductTuple>
 class TupleScalarProduct : public Dune::ScalarProduct<Vector>
 {
-public:
-    //! \brief The type of the vector to compute the scalar product on.
-    //!
-    //! E.g. BlockVector or another type fulfilling the ISTL
-    //! vector interface.
-    typedef Vector domain_type;
-    //!  \brief The field type used by the vector type domain_type.
-    typedef typename Vector::field_type field_type;
-    typedef typename Dune::FieldTraits<field_type>::real_type real_type;
-    //! \brief The type of the communication object.
-    //!
-    //! This must either be OwnerOverlapCopyCommunication or a type
-    //! implementing the same interface.
-    typedef Comm communication_type;
+    using field_type = typename Dune::ScalarProduct<Vector>::field_type;
+    using real_type = typename Dune::ScalarProduct<Vector>::real_type;
 
+public:
     /*!
      * \param comm The communication object for syncing overlap and copy
      * data points.
      * \param cat parallel solver category (nonoverlapping or overlapping)
      */
-    TupleScalarProduct (const communication_type& comm)//, SolverCategory::Category cat)
-    : comm_(comm)//, _category(cat)
+    TupleScalarProduct (const ScalarProductTuple& sps)//, SolverCategory::Category cat)
+    : sps_(sps)//, _category(cat)
     {}
 
     /*! \brief Dot product of two vectors.
      *       It is assumed that the vectors are consistent on the interior+border
      *       partition.
      */
-    virtual field_type dot (const Vector& x, const Vector& y)
+    field_type dot (const Vector& x, const Vector& y) const override
     {
         field_type result(0);
 
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
         {
-            field_type localResult(0);
-            std::get<i>(comm_)->dot(x[i], y[i], localResult);
-            result += localResult;
+            result += std::get<i>(sps_)->dot(x[i], y[i]);
         });
 
         return result;
@@ -1455,7 +1443,7 @@ public:
     /*! \brief Norm of a right-hand side vector.
      *       The vector must be consistent on the interior+border partition
      */
-    virtual real_type norm (const Vector& x)
+    real_type norm (const Vector& x) const override
     {
         using std::sqrt;
         return sqrt(dot(x, x));
@@ -1468,7 +1456,7 @@ public:
     }
 
 private:
-    const communication_type& comm_;
+    const ScalarProductTuple& sps_;
 };
 
 /*!
@@ -1638,12 +1626,12 @@ private:
         using LOP = TupleLinearOperator<Vector, decltype(linearOperator)>;
         auto op = std::make_shared<LOP>(linearOperator);
 
-        using SP = TupleScalarProduct<Vector, decltype(comm)>;
-        auto sp = std::make_shared<SP>(comm);
+        using SP = TupleScalarProduct<Vector, decltype(scalarProduct)>;
+        auto sp = std::make_shared<SP>(scalarProduct);
 
         Dune::BiCGSTABSolver<Vector> solver(*op, *sp, *preconditioner, this->residReduction(),
                                             this->maxIter(), std::get<0>(comm)->communicator().rank() == 0 ? this->verbosity() : 0);
-        std::cout << "Apply solver with parallel preconditioner!" << std::endl;
+
         auto bTmp(b);
         solver.apply(x, bTmp, result_);
     }
