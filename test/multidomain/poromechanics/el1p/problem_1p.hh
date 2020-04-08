@@ -26,7 +26,12 @@
 #define DUMUX_1P_SUB_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+#if HAVE_UG
 #include <dune/grid/uggrid.hh>
+#endif
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -60,8 +65,15 @@ struct FluidSystem<TypeTag, TTag::OnePSub>
 };
 
 // Set the grid type
+#ifndef GRIDTYPE
+// Use 2d YaspGrid
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePSub> { using type = Dune::YaspGrid<2>; };
+#else
+// Use GRIDTYPE from CMakeLists.txt
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePSub> { using type = GRIDTYPE; };
+#endif
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePSub> { using type = OnePSubProblem<TypeTag> ; };

@@ -26,7 +26,13 @@
 #define DUMUX_POROELASTIC_SUBPROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+#if HAVE_UG
 #include <dune/grid/uggrid.hh>
+#endif
+
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/common/boundarytypes.hh>
@@ -52,8 +58,15 @@ namespace TTag {
 struct PoroElasticSub { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
 } // end namespace TTag
 // Set the grid type
+#ifndef GRIDTYPE
+// Use 2d YaspGrid
 template<class TypeTag>
 struct Grid<TypeTag, TTag::PoroElasticSub> { using type = Dune::YaspGrid<2>; };
+#else
+// Use GRIDTYPE from CMakeLists.txt
+template<class TypeTag>
+struct Grid<TypeTag, TTag::PoroElasticSub> { using type = GRIDTYPE; };
+#endif
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
