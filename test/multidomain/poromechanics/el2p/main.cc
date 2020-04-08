@@ -161,6 +161,9 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
+    // HACK: set the previous solution pointer in the coupling manager
+    couplingManager->setPreviousSolutionPointer(&xOld);
+
     // time loop
     timeLoop->start(); do
     {
