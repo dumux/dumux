@@ -176,6 +176,9 @@ int main(int argc, char** argv)
     using TimeStepper = Experimental::MultiStageTimeStepper<NewtonSolver>;
     TimeStepper timeStepper(nonLinearSolver, timeSteppingMethod);
 
+    // HACK: set the previous solution pointer in the coupling manager
+    couplingManager->setPreviousSolutionPointer(&xOld);
+
     // time loop
     timeLoop->start(); do
     {
