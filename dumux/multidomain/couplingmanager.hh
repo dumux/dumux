@@ -269,6 +269,39 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "The problem pointer was not set or has already expired. Use setSubProblems() before calling this function");
     }
 
+    // PROBLEM: currently, there is no notion of time when accessing data of the
+    //          other, coupled subdomains. We currently simply return data evaluated
+    //          using the current solution. However, if coupling enters the storage
+    //          term, as for example for deformation-dependent porosities in the
+    //          poroelastic models, this causes the non-linear solver to fail because
+    //          the derivatives of the storage term are wrong.
+    // HACK: Here, we introduce the possibility to set a state in the coupling manager,
+    //       which specifies if data is to be evaluated on the current or the previous
+    //       time level.
+    void setUsePrevSol(bool value)
+    {
+        usePrevSol_ = value;
+    }
+
+    // HACK: Allow setting a previous solution
+    void setPreviousSolutionPointer(const SolutionVector* prevSol)
+    {
+        prevSol_ = prevSol;
+    }
+
+    // HACK: Return the usePrevSol_ flag
+    bool usePrevSol() const
+    { return usePrevSol_; }
+
+    // HACK: Return the solution depending on the usePrevSol_ flag
+    const SolutionVector& getSolution() const
+    {
+        if (usePrevSol_)
+            return *prevSol_;
+        else
+            return curSol_;
+    }
+
 protected:
 
     /*!
@@ -291,6 +324,12 @@ private:
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
     SolutionVector curSol_;
+
+    // HACK: pointer to the previous solution (for transient problems)
+    const SolutionVector* prevSol_;
+
+    // HACK: state variable indicating at which time level things should be evaluated
+    bool usePrevSol_ = false;
 
     /*!
      * \brief A tuple of std::weak_ptrs to the sub problems
