@@ -51,6 +51,7 @@ class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reas
 {
     using ParentType = NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>;
     using SolutionVector = typename Assembler::ResidualType;
+    using ScalarProduct = Dune::ScalarProduct<SolutionVector>;
 
     template<std::size_t i>
     using PrimaryVariableSwitch = typename Detail::GetPVSwitchMultiDomain<Assembler, i>::type;
@@ -70,9 +71,10 @@ public:
     MultiDomainNewtonSolver(std::shared_ptr<Assembler> assembler,
                             std::shared_ptr<LinearSolver> linearSolver,
                             std::shared_ptr<CouplingManager> couplingManager,
+                            std::shared_ptr<ScalarProduct> scalarProduct = std::make_shared<ScalarProduct>(),
                             const Comm& comm = Dune::MPIHelper::getCollectiveCommunication(),
                             const std::string& paramGroup = "")
-    : ParentType(assembler, linearSolver, comm, paramGroup)
+    : ParentType(assembler, linearSolver, scalarProduct, comm, paramGroup)
     , couplingManager_(couplingManager)
     {
         using namespace Dune::Hybrid;

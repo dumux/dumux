@@ -178,6 +178,7 @@ class NewtonSolver : public PDESolver<Assembler, LinearSolver>
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
+    using ScalarProduct = Dune::ScalarProduct<SolutionVector>;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
     using TimeLoop = TimeLoopBase<Scalar>;
 
@@ -194,9 +195,11 @@ public:
      */
     NewtonSolver(std::shared_ptr<Assembler> assembler,
                  std::shared_ptr<LinearSolver> linearSolver,
+                 std::shared_ptr<ScalarProduct> scalarProduct = std::make_shared<ScalarProduct>(),
                  const Communication& comm = Dune::MPIHelper::getCollectiveCommunication(),
                  const std::string& paramGroup = "")
     : ParentType(assembler, linearSolver)
+    , scalarProduct_(scalarProduct)
     , endIterMsgStream_(std::ostringstream::out)
     , comm_(comm)
     , paramGroup_(paramGroup)
@@ -441,12 +444,9 @@ public:
         {
             if (numSteps_ == 0)
             {
-                Scalar norm2 = b.two_norm2();
-                if (comm_.size() > 1)
-                    norm2 = comm_.sum(norm2);
+                initialResidual_ = scalarProduct_->norm(b);
 
-                using std::sqrt;
-                initialResidual_ = sqrt(norm2);
+                std::cout << comm_.rank() << ": initialResidual = " << initialResidual_ << std::endl;
             }
 
             // solve by calling the appropriate implementation depending on whether the linear solver
@@ -875,6 +875,8 @@ protected:
     // shift criterion variables
     Scalar shift_;
     Scalar lastShift_;
+
+    std::shared_ptr<ScalarProduct> scalarProduct_;
 
     //! message stream to be displayed at the end of iterations
     std::ostringstream endIterMsgStream_;
