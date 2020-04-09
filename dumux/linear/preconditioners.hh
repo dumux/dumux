@@ -91,7 +91,6 @@ class SeqUzawa : public Dune::Preconditioner<X,Y>
     using LinearOperator = Dune::MatrixAdapter<A, U, U>;
     using Smoother = Dune::SeqSSOR<A, U, U>;
     using AMGSolverForA = Dune::Amg::AMG<LinearOperator, U, Smoother, Comm>;
-    using UMFPackSolverForA = Dune::UMFPack<A>;
 
 public:
     //! \brief The matrix type the preconditioner is for.
@@ -217,7 +216,7 @@ private:
     {
 #if HAVE_UMFPACK
             using namespace Dune::Indices;
-            umfPackSolverForA_ = std::make_unique<UMFPackSolverForA>(matrix_[_0][_0]);
+            umfPackSolverForA_ = std::make_unique<Dune::UMFPack<A>>(matrix_[_0][_0]);
 #else
             DUNE_THROW(Dune::InvalidStateException, "UMFPack not available. Use LinearSolver.Preconditioner.DirectVelocitySolver = false.");
 #endif
@@ -324,7 +323,7 @@ private:
 
     std::unique_ptr<AMGSolverForA> amgSolverForA_;
 #if HAVE_UMFPACK
-    std::unique_ptr<UMFPackSolverForA> umfPackSolverForA_;
+    std::unique_ptr<Dune::UMFPack<A>> umfPackSolverForA_;
 #endif
     const std::string paramGroup_;
     const bool useDirectVelocitySolverForA_;
