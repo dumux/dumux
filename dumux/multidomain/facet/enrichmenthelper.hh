@@ -20,7 +20,7 @@
 /*!
  * \file
  * \ingroup FacetCoupling
- * \brief copydoc Dumux::VertexEnrichmentHelper
+ * \copydoc Dumux::VertexEnrichmentHelper
  */
 #ifndef DUMUX_VERTEX_ENRICHMENT_HELPER_HH
 #define DUMUX_VERTEX_ENRICHMENT_HELPER_HH
