@@ -60,3 +60,6 @@ If there are **function-arguments** that are not self-explanatory, they should b
 **Always explain all params or no params at all!** Otherwise Doxygen will throw an error.
 Template parameters are documented with `\tparam`.
 Additional Doxygen-commands that might be useful are `\note` for giving an important note/hint on what the function does as well as `\return` which specifies the return value (if applicable).
+
+April 2020 note: `\copydoc`,`\copybrief` and `\copydetails`, as well as `@copydoc`,`@copybrief` and `@copydetails` do not work with filenames in the current doxygen version.
+The bug is reported and has been fixed in doxygen pull request #7693. (It will work again in doxygen 1_8_18, probably at the end of 2020.)

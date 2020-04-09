@@ -14,7 +14,7 @@
      * \ingroup PorousmediumflowModels
      * \defgroup OnePModel 1p
      * \brief Single-phase (immiscible) Darcy flow
-     * \copydetails ./porousmediumflow/1p/model.hh
+     * For a detailed model decription see porousmediumflow/1p/model.hh
      */
         /*!
          * \ingroup OnePModel
@@ -31,19 +31,19 @@
      * \ingroup PorousmediumflowModels
      * \defgroup OnePNCModel 1pnc
      * \brief Single-phase, multi-component Darcy flow
-     * \copydetails ./porousmediumflow/1pnc/model.hh
+     * For a detailed model decription see porousmediumflow/1pnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup OnePNCMinModel 1pncmin
      * \brief Single-phase, multi-component Darcy flow with mineralization
-     * \copydetails ./porousmediumflow/1pncmin/model.hh
+     * For a detailed model decription see porousmediumflow/1pncmin/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPModel 2p
      * \brief Two-phase (immiscible) Darcy flow
-     * \copydetails ./porousmediumflow/2p/model.hh
+     * For a detailed model decription see porousmediumflow/2p/model.hh
      */
         /*!
          * \ingroup TwoPModel
@@ -60,13 +60,13 @@
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPOneCModel 2p1c
      * \brief Two-phase, one-component Darcy flow
-     * \copydetails ./porousmediumflow/2p1c/model.hh
+     * For a detailed model decription see porousmediumflow/2p1c/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPTwoCModel 2p2c
      * \brief Two-phase, two-component Darcy flow
-     * \copydetails ./porousmediumflow/2p2c/model.hh
+     * For a detailed model decription see porousmediumflow/2p2c/model.hh
      */
         /*!
          * \ingroup TwoPTwoCModel
@@ -83,100 +83,100 @@
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPNCModel 2pnc
      * \brief two-phase, multi-component Darcy flow
-     * \copydetails ./porousmediumflow/2pnc/model.hh
+     * For a detailed model decription see porousmediumflow/2pnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPNCMinModel 2pncmin
      * \brief Two-phase, multi-component Darcy flow with mineralization
-     * \copydetails ./porousmediumflow/2pncmin/model.hh
+     * For a detailed model decription see porousmediumflow/2pncmin/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup ThreePModel 3p
      * \brief Three-phase (immiscible) Darcy flow
-     * \copydetails ./porousmediumflow/3p/model.hh
+     * For a detailed model decription see porousmediumflow/3p/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup ThreePThreeCModel 3p3c
      * \brief Three-phase, three-component Darcy flow
-     * \copydetails ./porousmediumflow/3p3c/model.hh
+     * For a detailed model decription see porousmediumflow/3p3c/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup ThreePWaterOilModel 3pwateroil
      * \brief Three-phase, two-component Darcy flow with water (liquid & gas) and oil
-     * \copydetails ./porousmediumflow/3pwateroil/model.hh
+     * For a detailed model decription see porousmediumflow/3pwateroil/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup BoxDFMModel boxdfm
      * \brief Vertex-centered, continuous-pressure, conforming lower-dimensional discrete-fracture model
-     * \copydetails ./porousmediumflow/boxdfm/model.hh
+     * For a detailed model decription see porousmediumflow/boxdfm/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup CO2Model CO2
      * \brief Two-phase, two-component Darcy flow specialized for supercritical CO<sub>2</sub> storage
-     * \copydetails ./porousmediumflow/co2/model.hh
+     * For a detailed model decription see porousmediumflow/co2/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup MineralizationModel mineralization
      * \brief Model adding components that can precipitate as a solid phase to a standard Darcy flow model
      *
-     * \copydetails ./porousmediumflow/mineralization/model.hh
+     * For a detailed model decription see porousmediumflow/mineralization/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup MPNCModel mpnc
      * \brief Generalized multi-phase, multi-component Darcy flow
      *
-     * \copydetails ./porousmediumflow/mpnc/model.hh
+     * For a detailed model decription see porousmediumflow/mpnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup NonEquilibriumModel NonEquilibrium
      * \brief Model that adds nonequilibrium equations to another porous medium flow model (only used in MPNCModel currently)
-     * \copydetails ./porousmediumflow/nonequilibrium/model.hh
+     * For a detailed model decription see porousmediumflow/nonequilibrium/model.hh
      */
         /*!
          * \ingroup NonEquilibriumModel
          * \defgroup ThermalNonEquilibriumModel ThermalNonEquilibrium
          * \brief Model that adapts the energy localresidual to thermal nonequilibrium
-         * \copydetails ./porousmediumflow/nonequilibrium/thermal/localresidual.hh
+         * For a detailed model decription see porousmediumflow/nonequilibrium/thermal/localresidual.hh
          */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup NIModel nonisothermal
      * \brief Model that adds an energy equation (thermal equilibrium) to another porous medium flow model
      *
-     * \copydetails ./porousmediumflow/nonisothermal/model.hh
+     * For a detailed model decription see porousmediumflow/nonisothermal/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup RichardsModel Richards
      * \brief Richards flow
-     * \copydetails ./porousmediumflow/richards/model.hh
+     * For a detailed model decription see porousmediumflow/richards/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup RichardsNCModel Richards nc
      * \brief Richards multi-component flow
-     * \copydetails ./porousmediumflow/richardsnc/model.hh
+     * For a detailed model decription see porousmediumflow/richardsnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup SolidEnergyModel Solid energy
      * \brief Energy equation for the solid (general heat equation)
-     * \copydetails ./porousmediumflow/solidenergy/model.hh
+     * For a detailed model decription see porousmediumflow/solidenergy/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TracerModel Tracer
      * \brief Multi-component advection-diffusion-reaction model with given velocity field
-     * \copydetails ./porousmediumflow/tracer/model.hh
+     * For a detailed model decription see porousmediumflow/tracer/model.hh
      */
 
 /* ***************** FreeflowModels ******************/
@@ -188,25 +188,25 @@
      * \ingroup FreeflowModels
      * \defgroup NavierStokesModel Navier-Stokes
      * \brief Single-phase Navier-Stokes flow
-     * \copydetails ./freeflow/navierstokes/model.hh
+     * For a detailed model decription see freeflow/navierstokes/model.hh
      */
     /*!
      * \ingroup FreeflowModels
      * \defgroup RANSModel Reynolds-Averaged Navier-Stokes
      * \brief Single-phase Reynolds-Averaged Navier-Stokes flow
-     * \copydetails ./freeflow/rans/model.hh
+     * For a detailed model decription see freeflow/rans/model.hh
      */
         /*!
          * \ingroup RANSModel
          * \defgroup ZeroEqModel 0-Eq. Models
          * \brief Zero-equation or algebraic turbulence models
-         * \copydetails ./freeflow/rans/zeroeq/model.hh
+         * For a detailed model decription see freeflow/rans/zeroeq/model.hh
          */
         /*!
          * \ingroup RANSModel
          * \defgroup OneEqModel 1-Eq. Models
          * \brief One-equation turbulence model by Spalart-Allmaras
-         * \copydetails ./freeflow/rans/oneeq/model.hh
+         * For a detailed model decription see freeflow/rans/oneeq/model.hh
          */
         /*!
          * \ingroup RANSModel
@@ -217,37 +217,37 @@
          * \ingroup TwoEqModel
          * \defgroup KEpsilonModel K-epsilon model
          * \brief K-epsilon model
-         * \copydetails ./freeflow/rans/twoeq/kepsilon/model.hh
+         * For a detailed model decription see freeflow/rans/twoeq/kepsilon/model.hh
          */
         /*!
          * \ingroup TwoEqModel
          * \defgroup KOmegaModel K-omega model
          * \brief K-omega model
-         * \copydetails ./freeflow/rans/twoeq/komega/model.hh
+         * For a detailed model decription see freeflow/rans/twoeq/komega/model.hh
          */
         /*!
          * \ingroup TwoEqModel
          * \defgroup LowReKEpsilonModel Low-Re k-epsilon model
          * \brief Low-Re k-epsilon model
-         * \copydetails ./freeflow/rans/twoeq/lowrekepsilon/model.hh
+         * For a detailed model decription see freeflow/rans/twoeq/lowrekepsilon/model.hh
          */
     /*!
      * \ingroup FreeflowModels
      * \defgroup FreeflowNCModel Compositional
      * \brief Single-phase multi-component free-flow flow models
-     * \copydetails ./freeflow/compositional/navierstokesncmodel.hh
+     * For a detailed model decription see freeflow/compositional/navierstokesncmodel.hh
      */
     /*!
      * \ingroup FreeflowModels
      * \defgroup FreeflowNIModel Nonisothermal
      * \brief An energy equation adaptor for isothermal free-flow models
-     * \copydetails ./freeflow/nonisothermal/model.hh
+     * For a detailed model decription see freeflow/nonisothermal/model.hh
      */
     /*!
      * \ingroup FreeflowModels
      * \defgroup ShallowWaterModel 2D shallow water model
      * \brief Two-dimensional shallow water flow (depth-averaged)
-     * \copydetails ./freeflow/shallowwater/model.hh
+     * For a detailed model decription see freeflow/shallowwater/model.hh
      */
 /*!
  * \defgroup Geomechanics Geomechanics Models
@@ -257,13 +257,13 @@
      * \ingroup Geomechanics
      * \defgroup Elastic Solid mechanics w/o fluid pressure
      * \brief Models linear elastic deformation of a solid. Disregards fluid pressure.
-     * \copydetails ./geomechanics/elastic/model.hh
+     * For a detailed model decription see geomechanics/elastic/model.hh
      */
     /*!
      * \ingroup Geomechanics
      * \defgroup PoroElastic Solid mechanics with fluid pressure
      * \brief Models linear elastic deformation of a solid. Takes fluid pressure into account.
-     * \copydetails ./geomechanics/poroelastic/model.hh
+     * For a detailed model decription see geomechanics/poroelastic/model.hh
      */
 
 /* ***************** Benchmarks and Tests ******************/
