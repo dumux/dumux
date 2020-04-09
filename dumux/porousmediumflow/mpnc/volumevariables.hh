@@ -122,23 +122,11 @@ public:
         // porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
 
-        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        if constexpr (enableDiffusion)
         {
-            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
-                                                            paramCache,
-                                                            phaseIdx,
-                                                            compIIdx,
-                                                            compJIdx);
-        };
+            auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+            { return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx); };
 
-        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
-        };
-
-        if (enableDiffusion)
-        {
-            diffCoeff_.update(getDiffusionCoefficient);
             effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
         }
 
@@ -438,7 +426,7 @@ public:
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         if (compIdx != phaseIdx)
-            return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+            return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
@@ -447,7 +435,11 @@ public:
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    {
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState_, phaseIdx);
+        return FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phaseIdx, compIIdx, compJIdx);
+    }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
@@ -505,9 +497,6 @@ protected:
     //! Mass fractions of each component within each phase
     FluidState fluidState_;
     SolidState solidState_;
-
-    // Binary diffusion coefficient
-    DiffusionCoefficients diffCoeff_;
 
     // Effective diffusion coefficients for the phases
     DiffusionCoefficients effectiveDiffCoeff_;
@@ -585,22 +574,11 @@ public:
 
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
 
-        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        if constexpr (enableDiffusion)
         {
-            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
-                                                            paramCache,
-                                                            phaseIdx,
-                                                            compIIdx,
-                                                            compJIdx);
-        };
+            auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+            { return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx); };
 
-        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
-        };
-        if (enableDiffusion)
-        {
-            diffCoeff_.update(getDiffusionCoefficient);
             effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
         }
 
@@ -955,7 +933,7 @@ public:
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         if (compIdx != phaseIdx)
-            return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+            return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
@@ -964,7 +942,11 @@ public:
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    {
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState_, phaseIdx);
+        return FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phaseIdx, compIIdx, compJIdx);
+    }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
@@ -1023,8 +1005,6 @@ protected:
     FluidState fluidState_;
     SolidState solidState_;
 
-    // Binary diffusion coefficient
-    DiffusionCoefficients diffCoeff_;
     // Effective diffusion coefficients for the phases
     DiffusionCoefficients effectiveDiffCoeff_;
 };

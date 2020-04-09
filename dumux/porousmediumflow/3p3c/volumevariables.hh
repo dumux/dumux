@@ -561,10 +561,6 @@ public:
          *       We can then add a normalized tensorial component
          *       e.g. obtained from DTI from the spatial params (currently not implemented)
          */
-         auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return FluidSystem::diffusionCoefficient(fluidState_, paramCache, phaseIdx, compJIdx);
-        };
 
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
@@ -574,7 +570,6 @@ public:
         // porosity & permeabilty
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
 
-        diffCoeff_.update(getDiffusionCoefficient);
         effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
 
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
@@ -717,7 +712,7 @@ public:
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         if (compIdx != phaseIdx)
-            return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+            return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
@@ -726,7 +721,11 @@ public:
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    {
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState_, phaseIdx);
+        return FluidSystem::diffusionCoefficient(fluidState_, paramCache, phaseIdx, compJIdx);
+    }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
@@ -749,7 +748,6 @@ private:
     Scalar mobility_[ModelTraits::numFluidPhases()];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
 
-    DiffusionCoefficients diffCoeff_;
     DiffusionCoefficients effectiveDiffCoeff_;
 };
 

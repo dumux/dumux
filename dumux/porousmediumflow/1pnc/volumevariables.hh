@@ -103,28 +103,11 @@ public:
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
         EnergyVolVars::updateEffectiveThermalConductivity();
 
-        // Second instance of a parameter cache.
-        // Could be avoided if diffusion coefficients also
-        // became part of the fluid state.
-        typename FluidSystem::ParameterCache paramCache;
-
-        paramCache.updatePhase(fluidState_, 0);
-
-        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            return FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
-                                                            paramCache,
-                                                            0,
-                                                            compIIdx,
-                                                            compJIdx);
-        };
-
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
             return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
         };
 
-        diffCoeff_.update(getDiffusionCoefficient);
         effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
     }
 
@@ -333,13 +316,17 @@ public:
      */
     [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    { return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx); }
+    { return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx); }
 
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    {
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState_, phaseIdx);
+        return FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phaseIdx, compIIdx, compJIdx);
+    }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
@@ -381,9 +368,6 @@ protected:
 
 private:
     PermeabilityType permeability_;
-
-    // Binary diffusion coefficient
-    DiffusionCoefficients diffCoeff_;
 
     // Effective diffusion coefficients for the phases
     DiffusionCoefficients effectiveDiffCoeff_;

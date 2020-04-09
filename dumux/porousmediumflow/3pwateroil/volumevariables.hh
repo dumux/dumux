@@ -756,20 +756,11 @@ public:
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
 
-        auto getDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-        {
-            if (phaseIdx != nPhaseIdx)
-                return FluidSystem::diffusionCoefficient(fluidState_, phaseIdx);
-            else
-                return 1.e-10;
-        };
-
         auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
         {
             return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
         };
 
-        diffCoeff_.update(getDiffusionCoefficient);
         effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
 
         // permeability
@@ -908,13 +899,18 @@ public:
      */
     [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    { return diffCoeff_(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx); }
+    { return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx); }
 
     /*
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return diffCoeff_(phaseIdx, compIIdx, compJIdx); }
+    {
+        if (phaseIdx != nPhaseIdx)
+            return FluidSystem::diffusionCoefficient(fluidState_, phaseIdx);
+        else
+            return 1.e-10;
+    }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
@@ -960,9 +956,7 @@ private:
     Scalar mobility_[numPs];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
 
-    /* We need a tensor here !! */
     //!< Binary diffusion coefficients of the 3 components in the phases
-    DiffusionCoefficients diffCoeff_;
     DiffusionCoefficients effectiveDiffCoeff_;
 
 };
