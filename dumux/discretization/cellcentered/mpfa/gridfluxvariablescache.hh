@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_GRID_FLUXVARSCACHE_HH
 
-//! make the local view function available whenever we use this class
+// make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
 

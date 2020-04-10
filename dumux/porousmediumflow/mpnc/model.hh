@@ -119,10 +119,6 @@
 #include "localresidual.hh"
 #include "pressureformulation.hh"
 
-/*!
- * \ingroup MPNCModel
- * \brief Defines the properties required for the MpNc fully implicit model.
- */
 namespace Dumux
 {
 

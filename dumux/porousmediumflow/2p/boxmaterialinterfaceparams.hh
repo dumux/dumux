@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPModel
- * \brief copydoc Dumux::BoxMaterialInterfaceParams
+ * \copydoc Dumux::BoxMaterialInterfaceParams
  */
 
 #ifndef DUMUX_2P_BOX_MATERIAL_INTERFACE_PARAMS_HH

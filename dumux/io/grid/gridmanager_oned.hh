@@ -34,6 +34,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for OneDGrids
  *        from information in the input file
  *

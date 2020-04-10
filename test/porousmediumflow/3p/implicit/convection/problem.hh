@@ -38,7 +38,7 @@
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 
-#include "../conduction/spatialparams.hh"  //! reuse the conduction spatialParams
+#include "../conduction/spatialparams.hh"  // reuse the conduction spatialParams
 
 namespace Dumux {
 /**

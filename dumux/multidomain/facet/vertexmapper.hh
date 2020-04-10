@@ -20,7 +20,7 @@
 /*!
  * \file
  * \ingroup FacetCoupling
- * \brief copydoc Dumux::EnrichedVertexDofMapper
+ * \copydoc Dumux::EnrichedVertexDofMapper
  */
 #ifndef DUMUX_ENRICHED_VERTEX_DOF_MAPPER_HH
 #define DUMUX_ENRICHED_VERTEX_DOF_MAPPER_HH

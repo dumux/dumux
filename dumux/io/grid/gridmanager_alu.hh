@@ -43,6 +43,7 @@ namespace Dumux {
 #if HAVE_DUNE_ALUGRID
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for Dune ALUGrids
  *        from information in the input file
  *
@@ -231,6 +232,10 @@ public:
     }
 };
 
+/*!
+ * \ingroup InputOutput
+ * \brief Boundary flag
+ */
 //! alu uses boundary id
 template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
 class BoundaryFlag<Dune::ALUGrid<dim, dimworld, elType, refinementType>>

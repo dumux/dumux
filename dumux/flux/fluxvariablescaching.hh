@@ -57,7 +57,7 @@ struct _EmptyCache
 #endif // DOXYGEN
 
 /*!
- * \ingroup Discretization
+ * \ingroup Flux
  * \brief Empty caches to use in a constitutive flux law/process, e.g. Darcy's law
  */
 struct EmptyAdvectionCache : public _EmptyCache {};

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup Elastic
  * \brief Defines the indices for the elastic model
  */
 #ifndef DUMUX_ELASTIC_INDICES_HH
@@ -27,7 +27,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup Elastic
  * \brief The indices for the linear elasticity model.
  */
 struct ElasticIndices

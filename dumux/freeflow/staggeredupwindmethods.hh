@@ -16,9 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/** \file
-  * \brief This file contains different higher order methods for approximating the velocity.
-  */
+/*!
+ * \file
+ * \ingroup FreeflowModels
+ * \brief This file contains different higher order methods for approximating the velocity.
+ */
 
 #ifndef DUMUX_UPWINDING_METHODS_HH
 #define DUMUX_UPWINDING_METHODS_HH
@@ -33,21 +35,28 @@
 
 namespace Dumux {
 
-//! \brief Available Tvd approaches
+/*!
+ * \ingroup FreeflowModels
+ * \brief Available Tvd approaches
+ */
 enum class TvdApproach
 {
     none, uniform, li, hou
 };
 
-//! \brief Available differencing schemes
+/*!
+ * \ingroup FreeflowModels
+ * \brief Available differencing schemes
+ */
 enum class DifferencingScheme
 {
     none, vanleer, vanalbada, minmod, superbee, umist, mclimiter, wahyd
 };
 
-/**
-  * \brief This file contains different higher order methods for approximating the velocity.
-  */
+/*!
+ * \ingroup FreeflowModels
+ * \brief This file contains different higher order methods for approximating the velocity.
+ */
 template<class Scalar, int upwindSchemeOrder>
 class StaggeredUpwindMethods
 {

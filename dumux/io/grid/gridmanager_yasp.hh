@@ -34,6 +34,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for YaspGrids
  *        from information in the input file
  *
@@ -173,6 +174,7 @@ private:
 };
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for YaspGrids with different zones and grading
  *
  * All keys are expected to be in group GridParameterGroup.

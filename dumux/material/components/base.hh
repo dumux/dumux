@@ -39,9 +39,21 @@
 namespace Dumux {
 namespace Components {
 
+/*!
+ * \ingroup Components
+ * \brief IsAqueous struct
+ */
 template <class Component>
 struct IsAqueous : public std::false_type {};
 
+/*!
+ * \ingroup Components
+ * \brief Base class for all components
+ * Components provide the thermodynamic relations for the liquid,
+ * gaseous and/or solid state of a single
+ * chemical species or a _fixed_ mixture of species.
+ * Fluid systems use components to compute thermodynamic quantities of phases.
+ */
 template <class ScalarType, class Component>
 class Base
 {

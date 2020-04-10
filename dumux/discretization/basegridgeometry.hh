@@ -33,7 +33,7 @@
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/geometricentityset.hh>
 
-//! make the local view function available whenever we use the grid geometry
+// make the local view function available whenever we use the grid geometry
 #include <dumux/discretization/localview.hh>
 
 namespace Dumux {

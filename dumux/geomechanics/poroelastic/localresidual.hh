@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Element-wise calculation of the local residual
  *        for problems using the poroelastic model.
  */
@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Element-wise calculation of the local residual
  *        for problems using the poroelastic model.
  */

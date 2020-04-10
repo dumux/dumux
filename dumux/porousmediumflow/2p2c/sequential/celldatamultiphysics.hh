@@ -95,7 +95,7 @@ public:
         else
             return this->fluidState_->pressure(phaseIdx);
     }
-    //! \copydoc CellData2P2C::setPressure()
+    //! DOC ME!
     void setPressure(int phaseIdx, Scalar value)
     {
         if(fluidStateType_ == simple)

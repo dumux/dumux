@@ -29,6 +29,10 @@
 namespace Dumux {
 namespace Components {
 
+/*!
+ * \ingroup Components
+ * \brief A class for the Ammonia (NH3) component properties
+ */
 template <class Scalar>
 class Ammonia
 : public Components::Base<Scalar, Ammonia<Scalar> >
