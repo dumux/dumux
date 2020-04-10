@@ -17,6 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \file
  * \ingroup TwoPTests
  * \brief The spatial params for the 2p cornerpoint test.
  */

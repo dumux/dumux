@@ -27,7 +27,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/rangeutilities.hh>
 
-//! make the local view function available whenever we use this class
+// make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/discretization/staggered/freeflow/elementvolumevariables.hh>
