@@ -30,6 +30,10 @@
 namespace Dumux {
 namespace Components {
 
+/*!
+ * \ingroup Components
+ * \brief A class for the Glucose component properties
+ */
 template <class Scalar>
 class Glucose
 : public Components::Base<Scalar, Glucose<Scalar> >

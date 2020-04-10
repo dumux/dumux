@@ -48,7 +48,11 @@
  *   EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                      *
  *                                                                           *
  *****************************************************************************/
-
+/*!
+ * \file
+ * \ingroup Common
+ * \brief Exponential integration abcissas
+ */
 #ifndef DUMUX_COMMON_DOUBLEEXP_INTEGRATION_CONSTANTS_HH
 #define DUMUX_COMMON_DOUBLEEXP_INTEGRATION_CONSTANTS_HH
 

@@ -30,7 +30,10 @@
 namespace Dumux {
 namespace Components {
 
-
+/*!
+ * \ingroup Components
+ * \brief A class for the Na+ (Sodium ion) component properties
+ */
 template <class Scalar>
 class SodiumIon
 : public Components::Base<Scalar, SodiumIon<Scalar> >

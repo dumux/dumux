@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Defines a type tag and some properties for the poroelastic geomechanical model
  */
 #ifndef DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
@@ -40,7 +40,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Specifies a number properties of the poroelastic model
  */
 template< int dim, int numSC, int numFP, int numFC >

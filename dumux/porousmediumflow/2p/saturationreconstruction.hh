@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPModel
- * \brief copydoc Dumux::TwoPScvSaturationReconstruction
+ * \copydoc Dumux::TwoPScvSaturationReconstruction
  */
 
 #ifndef DUMUX_2P_SCV_SATURATION_RECONSTRUCTION_HH

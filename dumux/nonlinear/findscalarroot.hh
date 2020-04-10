@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Nonlinear
  * \brief Root finding algorithms for scalar functions
  */
 #ifndef DUMUX_COMMON_SCALAR_ROOT_FINDING_HH
@@ -35,7 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Nonlinear
  * \brief Newton's root finding algorithm for scalar functions (secant method)
  * \param xOld initial guess
  * \param residual Residual function
@@ -76,7 +76,7 @@ Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual, const DerivFun
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Nonlinear
  * \brief Newton's root finding algorithm for scalar functions (secant method)
  * \note The derivative is numerically computed. If the derivative is know use signature with derivative function.
  * \param xOld initial guess
@@ -95,7 +95,7 @@ Scalar findScalarRootNewton(Scalar xOld, const ResFunc& residual,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Nonlinear
  * \brief Brent's root finding algorithm for scalar functions
  * \note Modified from pseudo-code on wikipedia: https://en.wikipedia.org/wiki/Brent%27s_method
  * \note See also R.P. Brent "An algorithm with guaranteed convergence for finding a zero of a function", The Computer Journal (1971).

@@ -34,6 +34,10 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup Components
+ * \brief Component traits, i.e. information extracted from components
+ */
 template<class Component>
 struct ComponentTraits
 {

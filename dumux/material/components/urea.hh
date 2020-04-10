@@ -30,6 +30,9 @@
 namespace Dumux {
 namespace Components {
 
+/*! \ingroup Components
+ * \brief A class for the Urea component properties
+ */
 template <class Scalar>
 class Urea
 : public Components::Base<Scalar, Urea<Scalar> >

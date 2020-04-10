@@ -26,7 +26,7 @@
 
 #include <type_traits>
 
-//! make the local view function available whenever we use this class
+// make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>
 #include <dumux/discretization/box/elementsolution.hh>

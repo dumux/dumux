@@ -30,7 +30,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Common
  * \brief Class for accessing boundary flags
  * \note this works for all grid managers with gmsh meshes.
  */

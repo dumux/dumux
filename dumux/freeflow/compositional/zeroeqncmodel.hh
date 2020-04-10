@@ -22,7 +22,7 @@
  *
  * \brief A single-phase, multi-component Reynolds-Averaged Navier-Stokes 0-Eq. model
  *
- * \copydoc dumux/freeflow/compositional/navierstokesncmodel.hh
+ * For a detailed model decription see dumux/freeflow/compositional/navierstokesncmodel.hh
  */
 
 #ifndef DUMUX_ZEROEQ_NC_MODEL_HH
@@ -57,6 +57,7 @@ struct ZeroEqNC { using InheritsFrom = std::tuple<NavierStokesNC>; };
 ///////////////////////////////////////////////////////////////////////////
 
 /*!
+ * \ingroup FreeflowNCModel
  * \ingroup ZeroEqModel
  * \brief Traits for the Reynolds-averaged Navier-Stokes 0-Eq. model
  */

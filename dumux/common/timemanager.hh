@@ -39,7 +39,6 @@ namespace Dumux {
 
 /*!
  * \ingroup Common
- * \deprecated
  * \brief Manages the handling of time dependent problems.
  *
  * This class facilitates the time management of the simulation.

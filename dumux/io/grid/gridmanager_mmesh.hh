@@ -37,6 +37,7 @@ namespace Dumux {
 #if HAVE_DUNE_MMESH
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for Dune MMesh
  *        from information in the input file
  *

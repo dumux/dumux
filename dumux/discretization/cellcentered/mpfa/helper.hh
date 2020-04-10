@@ -196,7 +196,7 @@ public:
 
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief  Dimension-specific mpfa helper class for dim == 2 & dimWorld == 2.
+ * \brief  Dimension-specific mpfa helper class for dim == 2 & dimWorld == 3.
  *         Reuses some functionality of the specialization for dim = dimWorld = 2
  */
 template<class GridGeometry>

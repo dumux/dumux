@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup Elastic
  * \brief Quantities required by the elastic model defined on a sub-control volume.
  */
 #ifndef DUMUX_ELASTIC_VOLUME_VARIABLES_HH
@@ -33,7 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup Elastic
  * \brief Contains the quantities which are constant within a
  *        finite volume in the elastic model.
  *

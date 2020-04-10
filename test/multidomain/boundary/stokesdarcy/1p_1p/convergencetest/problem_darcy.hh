@@ -221,10 +221,7 @@ public:
      * \brief Evaluates the source term for all phases within a given
      *        sub control volume.
      *
-     * \param element The element for which the source term is set
-     * \param fvGeometry The fvGeometry
-     * \param elemVolVars The element volume variables
-     * \param scv The sub control volume
+     * \param globalPos The global position
      */
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     {
@@ -260,7 +257,6 @@ public:
      * \brief Returns the analytical solution of the problem at a given position.
      *
      * \param globalPos The global position
-     * \param time The current simulation time
      */
     auto analyticalSolution(const GlobalPosition& globalPos) const
     {

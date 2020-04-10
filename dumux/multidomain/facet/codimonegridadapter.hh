@@ -20,7 +20,7 @@
 /*!
  * \file
  * \ingroup FacetCoupling
- * \brief copydoc Dumux::CodimOneGridAdapter
+ * \copydoc Dumux::CodimOneGridAdapter
  */
 #ifndef DUMUX_FACETCOUPLING_CODIM_ONE_GRID_ADAPTER_HH
 #define DUMUX_FACETCOUPLING_CODIM_ONE_GRID_ADAPTER_HH

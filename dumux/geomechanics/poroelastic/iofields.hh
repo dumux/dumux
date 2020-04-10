@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Adds I/O fields specific to the poro-elastic model
  */
 #ifndef DUMUX_POROELASTIC_IO_FIELDS_HH
@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Adds I/O fields specific to the poro-elastic model
  */
 class PoroElasticIOFields
