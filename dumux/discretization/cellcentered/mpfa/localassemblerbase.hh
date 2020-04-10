@@ -90,6 +90,7 @@ class InteractionVolumeAssemblerBase
      *        expressions and the local system of equations
      *        within an mpfa interaction volume.
      *
+     * \tparam DataHandle The data handle
      * \tparam IV The interaction volume type implementation
      * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
      *                    which the local system is to be solved
@@ -97,6 +98,7 @@ class InteractionVolumeAssemblerBase
      * \param handle The data handle in which the matrices are stored
      * \param iv The interaction volume
      * \param getT Lambda to evaluate the scv-wise tensors
+     * \param wijZeroThresh the zero threshold wij
      */
     template< class DataHandle, class IV, class TensorFunc >
     void assembleMatrices(DataHandle& handle, IV& iv, const TensorFunc& getT, Scalar<IV> wijZeroThresh = 0.0)

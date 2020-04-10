@@ -104,6 +104,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
      * \param scvf The sub control volume face
      *
      * Negative values mean influx.
