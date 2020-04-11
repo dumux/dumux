@@ -19,6 +19,7 @@
 /*!
  * \file
  * \ingroup Common
+ * \ingroup StaggeredDiscretization
  * \brief Base class for all staggered fv problems
  */
 #ifndef DUMUX_STAGGERD_FV_PROBLEM_HH
@@ -33,6 +34,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Common
+ * \ingroup StaggeredDiscretization
  * \brief Base class for all staggered finite-volume problems
  *
  * \note All quantities (regarding the units) are specified assuming a

@@ -39,6 +39,7 @@ namespace Dumux {
 #if HAVE_DUNE_FOAMGRID
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for FoamGrids
  *        from information in the input file
  *
@@ -95,6 +96,7 @@ public:
 };
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid manager for FoamGrids of dim 1
  *        from information in the input file
  *

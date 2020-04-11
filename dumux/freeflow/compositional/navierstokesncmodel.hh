@@ -20,9 +20,11 @@
  * \file
  * \ingroup FreeflowNCModel
  *
- * \copydoc dumux/freeflow/navierstokes/model.hh
+ * \brief A single-phase, multi-component free-flow model
  *
- * The system is closed by a <B> component mass/mole balance equation </B> for each component \f$\kappa\f$:
+ * For an equations not specific to multiple components see dumux/freeflow/navierstokes/model.hh
+ *
+ * The multi-component system is closed by a <B> component mass/mole balance equation </B> for each component \f$\kappa\f$:
  * \f[
  *    \frac{\partial \left(\varrho X^\kappa\right)}{\partial t}
  *    + \nabla \cdot \left( \varrho {\boldsymbol{v}} X^\kappa

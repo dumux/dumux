@@ -75,7 +75,8 @@ public:
      *
      * \param volVars The Volume Variables
      * \param phaseIdx the index of the phase
-     * \param compIdx the component index
+     * \param compIdxI the component index i
+     * \param compIdxJ the component index j
      */
     template<class VolumeVariables>
     static Scalar effectiveDiffusionCoefficient(const VolumeVariables& volVars,

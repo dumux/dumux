@@ -35,7 +35,7 @@ namespace Dumux {
 namespace Components {
 
 /*!
- * \ingroup Componentss
+ * \ingroup Components
  * \brief Properties of pure molecular nitrogen \f$N_2\f$.
  *
  * \tparam Scalar The type used for scalar values

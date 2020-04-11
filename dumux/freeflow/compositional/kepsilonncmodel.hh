@@ -22,7 +22,7 @@
  *
  * \brief A single-phase, multi-component k-epsilon model
  *
- * \copydoc dumux/freeflow/compositional/navierstokesncmodel.hh
+ * For a detailed model decription see dumux/freeflow/compositional/navierstokesncmodel.hh
  */
 
 #ifndef DUMUX_KEPSILON_NC_MODEL_HH

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup RANSModel
+ * \ingroup TwoEqModel
  * \copydoc Dumux::RANSTwoEqIndices
  */
 #ifndef DUMUX_RANS_TWO_EQ_INDICES_HH
@@ -30,7 +30,7 @@ namespace Dumux {
 
 // \{
 /*!
- * \ingroup RANSModel
+ * \ingroup TwoEqModel
  * \brief The common indices for isothermal two-equation RANS models.
  *
  * \tparam dimension The dimension of the problem

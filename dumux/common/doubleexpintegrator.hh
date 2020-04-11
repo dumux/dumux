@@ -48,7 +48,11 @@
  *   EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                      *
  *                                                                           *
  *****************************************************************************/
-
+/*!
+ * \file
+ * \ingroup Common
+ * \brief A double exponential integrator
+ */
 #ifndef DUMUX_COMMON_DOUBLEEXP_INTEGRATOR_HH
 #define DUMUX_COMMON_DOUBLEEXP_INTEGRATOR_HH
 

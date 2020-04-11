@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_FACEVARIABLES_HH
 
-//! make the local view function available whenever we use this class
+// make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementfacevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>

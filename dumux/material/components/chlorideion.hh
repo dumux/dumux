@@ -30,6 +30,10 @@
 namespace Dumux {
 namespace Components {
 
+/*!
+ * \ingroup Components
+ * \brief A class for the Cl- (Chloride ion) component properties
+ */
 template <class Scalar>
 class ChlorideIon
 : public Components::Base<Scalar, ChlorideIon<Scalar> >

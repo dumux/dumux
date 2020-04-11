@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Coupling manager for porous medium flow problems coupled to a poro-mechanical problem
  */
 
@@ -37,7 +37,7 @@ namespace Dumux {
 
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Coupling manager for porous medium flow problems coupled to a poro-mechanical problem
  *
  *        Coupling manager for porous medium flow problems coupled to a poro-mechanical
