@@ -37,6 +37,7 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 

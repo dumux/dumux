@@ -44,6 +44,7 @@
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/evalcflfluxcoats.hh>
 
 #include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 
 namespace Dumux
 {
@@ -112,7 +113,12 @@ struct EvalCflFluxFunction<TypeTag, TTag::IMPESTest> { using type = EvalCflFluxC
 
 // use the AMG backend for the corresponding test
 template<class TypeTag>
-struct LinearSolver<TypeTag, TTag::IMPESTestWithAMG> { using type = AMGBackend<TypeTag>; };
+struct LinearSolver<TypeTag, TTag::IMPESTestWithAMG>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using type = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+
+};
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::IMPESTestWithAMG> { using type = Dune::YaspGrid<2>; };
