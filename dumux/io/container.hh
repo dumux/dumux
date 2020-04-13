@@ -33,6 +33,8 @@
 #include <fstream>
 #include <iterator>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 
 /*!
@@ -80,6 +82,8 @@ template<typename Container>
 Container readFileToContainer(const std::string& filename)
 {
     std::ifstream infile(filename, std::ios::in);
+    if (!infile)
+        DUNE_THROW(Dune::IOError, "Could not open file: " << filename);
     return readStreamToContainer<Container>(infile);
 }
 
