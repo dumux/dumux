@@ -50,8 +50,6 @@ struct PrimaryVariables { using type = UndefinedProperty; };       //!< A vector
 template<class TypeTag, class MyTypeTag>
 struct NumEqVector { using type = UndefinedProperty; };            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
 template<class TypeTag, class MyTypeTag>
-struct [[deprecated("Access GridView via 'GridGeometry::GridView' or 'Grid::LeafGridView' instead. Will be removed after 3.2")]] GridView { using type = UndefinedProperty; }; //!< The type of the grid view according to the grid type
-template<class TypeTag, class MyTypeTag>
 struct ModelTraits { using type = UndefinedProperty; };            //!< Traits class encapsulating model specifications
 template<class TypeTag, class MyTypeTag>
 struct BaseModelTraits { using type = UndefinedProperty; };        //!< Model traits to be used as a base for nonisothermal, mineralization ... models

@@ -26,8 +26,6 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_MODEL_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_MODEL_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/discretization/box.hh>
 
 #include "fvgridgeometry.hh"
@@ -48,9 +46,7 @@ struct GridGeometry<TypeTag, TTag::BoxDfmModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
-    DUNE_NO_DEPRECATED_BEGIN
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    DUNE_NO_DEPRECATED_END
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxDfmFVGridGeometry<Scalar, GridView, enableCache>;
