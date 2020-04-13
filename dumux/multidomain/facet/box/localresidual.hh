@@ -27,7 +27,6 @@
 
 #include <dune/geometry/type.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 

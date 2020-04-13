@@ -381,7 +381,6 @@ The following class contains functionality for additional flux output to the con
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dune/common/deprecated.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
