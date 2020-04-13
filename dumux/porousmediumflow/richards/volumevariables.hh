@@ -476,19 +476,6 @@ public:
 
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The component index
-     */
-    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
-    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    {
-        assert(enableWaterDiffusionInAir() && phaseIdx == FluidSystem::gasPhaseIdx && compIdx == FluidSystem::comp0Idx);
-        return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
-    }
-
-    /*!
-     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
     {

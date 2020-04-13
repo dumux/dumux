@@ -373,13 +373,6 @@ public:
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
-    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
-    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    { return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx); }
-
-    /*!
-     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
-     */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
     {
         typename FluidSystem::ParameterCache paramCache;

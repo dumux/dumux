@@ -250,34 +250,10 @@ public:
     { return fluidState_.averageMolarMass(phaseIdx); }
 
     /*!
-     * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-     *
-     * \param compIIdx the index of the component which diffusive
-     * \param compJIdx the index of the component with respect to which compIIdx diffuses
-     */
-    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
-    Scalar diffusionCoefficient(int compIIdx, int compJIdx = 0) const
-    {
-       if (compIIdx == compJIdx)
-           DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for compIIdx = compJIdx");
-       return diffCoefficient_(0, compIIdx, compJIdx);
-    }
-
-    /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
     { return diffCoefficient_(0, compIIdx, compJIdx); }
-
-    /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-     *
-     * \param compIIdx the index of the component which diffusive
-     * \param compJIdx the index of the component with respect to which compIIdx diffuses
-     */
-    [[deprecated("Signature deprecated. Use effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
-    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = 0) const
-    { return diffusionCoefficient(compIIdx, compJIdx); }
 
     /*!
      * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
