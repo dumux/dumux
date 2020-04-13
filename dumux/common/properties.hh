@@ -31,17 +31,6 @@
 // header doesn't need to be opened and checked all the time
 #ifndef DUMUX_PROPERTY_SYSTEM_HH
 #include <dumux/common/properties/propertysystem.hh>
-
-// per default, we do not allow the old property macros
-// remove this after release 3.2
-#ifndef DUMUX_ENABLE_OLD_PROPERTY_MACROS
-#define DUMUX_ENABLE_OLD_PROPERTY_MACROS 0
-#endif
-
-// remove this after release 3.2 to remove macros completely
-#if DUMUX_ENABLE_OLD_PROPERTY_MACROS
-#include <dumux/common/properties/propertysystemmacros.hh>
-#endif // DUMUX_ENABLE_OLD_PROPERTY_MACROS
 #endif // DUMUX_PROPERTY_SYSTEM_HH
 
 namespace Dumux {
