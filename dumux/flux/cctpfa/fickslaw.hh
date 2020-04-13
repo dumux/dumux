@@ -28,7 +28,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/deprecated.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
@@ -186,11 +185,10 @@ public:
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         const auto getDiffCoeff = [&](const auto& vv)
         {
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
             if constexpr (FluidSystem::isTracerFluidSystem())
-                return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(vv, 0, 0, compIdx);
+                return vv.effectiveDiffusionCoefficient(0, 0, compIdx);
             else
-                return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(vv, phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+                return vv.effectiveDiffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
         };
 
         const auto insideD = getDiffCoeff(insideVolVars);

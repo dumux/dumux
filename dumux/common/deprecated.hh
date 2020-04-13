@@ -25,11 +25,7 @@
 #ifndef DUMUX_COMMON_DEPRECATED_HH
 #define DUMUX_COMMON_DEPRECATED_HH
 
-#include <type_traits>
-
 #include <dune/common/deprecated.hh>
-
-#include <dumux/common/typetraits/isvalid.hh>
 
 namespace Dumux {
 
@@ -49,83 +45,9 @@ namespace Deprecated {
 ///////////////////////////////////////////////////////////////
 // Deprecation warnings for effective diffusion coefficients //
 ///////////////////////////////////////////////////////////////
-constexpr auto hasEffDiffCoeffImpl = Dumux::isValid([](auto&& v) -> decltype(v.effectiveDiffusionCoefficient(0,0,0)){return 0;});
-template<class VolumeVariables> constexpr bool hasEffDiffCoeff = decltype(hasEffDiffCoeffImpl(std::declval<VolumeVariables>())){};
-
-template<class EDL, class VV,
-         typename std::enable_if_t<!hasEffDiffCoeff<VV>, int> = 0>
-[[deprecated("The volume variables class used does not have an effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx) function. "
-             "This will become mandatory after the 3.2 release! See e.g. the files /dumux/porousmediumflow/2p2c/volumevariables.hh "
-             "and /dumux/porousmediumflow/2p2c/properties.hh to see how this can be realized.")]]
-decltype(EDL::effectiveDiffusionCoefficient(std::declval<VV>(), int(), int(), int()))
-effectiveDiffusionCoefficient(const VV& volVars, int phaseIdx, int compIIdx, int compJIdx)
-{
-    return EDL::effectiveDiffusionCoefficient(volVars, phaseIdx, compIIdx, compJIdx);
-}
-
-template<class EDL, class VV,
-    typename std::enable_if_t<hasEffDiffCoeff<VV>, int> = 0>
-auto effectiveDiffusionCoefficient(const VV& volVars, int phaseIdx, int compIIdx, int compJIdx)
-{ return volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx); }
-
-    ////////////////////
-    // Maxwell Stefan //
-    ////////////////////
-
-template<class EDL, class FS, class VV, class P, class E, class SCV,
-    typename std::enable_if_t<hasEffDiffCoeff<VV>, int> = 0>
-auto effectiveMSDiffusionCoefficient(const VV& volVars,
-                                     const int phaseIdx,
-                                     const int compIIdx,
-                                     const int compJIdx,
-                                     const P& problem,
-                                     const E& element,
-                                     const SCV& scv)
-{ return volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx); }
-
-template<class EDL, class FS, class VV, class P, class E, class SCV,
-    typename std::enable_if_t<!hasEffDiffCoeff<VV>, int> = 0>
-[[deprecated("The volume variables class used does not have an effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx) function. "
-             "This will become mandatory after the 3.2 release! See e.g. the files /dumux/porousmediumflow/2p2c/volumevariables.hh "
-             "and /dumux/porousmediumflow/2p2c/properties.hh to see how this can be realized.")]]
-auto effectiveMSDiffusionCoefficient(const VV& volVars,
-                                     const int phaseIdx,
-                                     const int compIIdx,
-                                     const int compJIdx,
-                                     const P& problem,
-                                     const E& element,
-                                     const SCV& scv)
-{
-    auto tinInside = 0.0;
-    if constexpr (FS::isTracerFluidSystem())
-    {
-        tinInside = FS::binaryDiffusionCoefficient(compIIdx,
-                                                   compJIdx,
-                                                   problem,
-                                                   element,
-                                                   scv);
-    }
-    else
-    {
-        auto fluidState = volVars.fluidState();
-        typename FS::ParameterCache paramCache;
-        paramCache.updateAll(fluidState);
-        tinInside = FS::binaryDiffusionCoefficient(fluidState,
-                                                   paramCache,
-                                                   phaseIdx,
-                                                   compIIdx,
-                                                   compJIdx);
-    }
-
-    return EDL::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tinInside);
-}
-
-////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////
 
 } // end namespace Deprecated
 #endif
 
 } // end namespace Dumux
-
 #endif

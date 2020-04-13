@@ -28,7 +28,6 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/common/fmatrix.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
@@ -151,7 +150,6 @@ private:
                                                  const ComponentFluxVector moleFrac,
                                                  const Scalar avgMolarMass)
     {
-        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -169,8 +167,8 @@ private:
             const auto xi = moleFrac[compIIdx];
             const auto Mn = FluidSystem::molarMass(numComponents-1);
 
-            auto tinInside = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(insideVolVars, phaseIdx, compIIdx, numComponents-1, problem, element, fvGeometry.scv(insideScvIdx));
-            auto tinOutside = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(outsideVolVars, phaseIdx, compIIdx, numComponents-1, problem, element, fvGeometry.scv(outsideScvIdx));
+            auto tinInside = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1);
+            auto tinOutside = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1);
 
             // scale by extrusion factor
             tinInside *= insideVolVars.extrusionFactor();
@@ -195,9 +193,8 @@ private:
                 const auto Mj = FluidSystem::molarMass(compJIdx);
 
                 // effective diffusion tensors
-                auto tijInside = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(insideVolVars, phaseIdx, compIIdx, compJIdx, problem, element, fvGeometry.scv(insideScvIdx));
-
-                auto tijOutside = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(outsideVolVars, phaseIdx, compIIdx, compJIdx, problem, element, fvGeometry.scv(outsideScvIdx));
+                auto tijInside = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
+                auto tijOutside = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
 
                 // scale by extrusion factor
                 tijInside *= insideVolVars.extrusionFactor();

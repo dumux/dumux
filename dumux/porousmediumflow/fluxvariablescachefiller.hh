@@ -26,7 +26,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/deprecated.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -607,7 +606,6 @@ private:
                 handle.diffusionHandle().setComponentIndex(compIdx);
 
                 using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
-                using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
 
                 // get instance of the interaction volume-local assembler
                 using Traits = typename InteractionVolume::Traits;
@@ -621,9 +619,9 @@ private:
                     const auto getD = [phaseIdx, compIdx] (const auto& volVars)
                     {
                         if constexpr (FluidSystem::isTracerFluidSystem())
-                            return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVars, 0, 0, compIdx);
+                            return volVars.effectiveDiffusionCoefficient(0, 0, compIdx);
                         else
-                            return Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(volVars, phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
+                            return volVars.effectiveDiffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
                     };
 
                     // Effective diffusion coefficients might get zero if saturation = 0.

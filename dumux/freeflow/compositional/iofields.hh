@@ -25,7 +25,6 @@
 #define DUMUX_FREEFLOW_NC_IO_FIELDS_HH
 
 #include <dumux/io/name.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/freeflow/navierstokes/iofields.hh>
 
 namespace Dumux {
@@ -79,17 +78,8 @@ struct FreeflowNCIOFields
     template<class VolumeVariables>
     static double getEffectiveDiffusionCoefficient_(const VolumeVariables& volVars, const int phaseIdx, const int compIdx)
     {
-        if constexpr (Dumux::Deprecated::hasEffDiffCoeff<VolumeVariables>)
-            return volVars.effectiveDiffusionCoefficient(phaseIdx,
-                    VolumeVariables::FluidSystem::getMainComponent(phaseIdx), compIdx);
-        else
-        {
-            // TODO: remove this else clause after release 3.2!
-            return volVars.effectiveDiffusivity(phaseIdx, compIdx);
-        }
+        return volVars.effectiveDiffusionCoefficient(phaseIdx, VolumeVariables::FluidSystem::getMainComponent(phaseIdx), compIdx);
     }
-
-
 };
 
 } // end namespace Dumux
