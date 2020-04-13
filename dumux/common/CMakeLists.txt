@@ -26,7 +26,6 @@ loggingparametertree.hh
 math.hh
 monotonecubicspline.hh
 numericdifferentiation.hh
-optional.hh
 parameters.hh
 partial.hh
 pdesolver.hh
