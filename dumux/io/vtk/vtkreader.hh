@@ -36,8 +36,10 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/capabilities.hh>
 #include <dune/grid/io/file/vtk/common.hh>
-#include <dumux/io/xml/tinyxml2.h>
 #include <dune/grid/common/gridfactory.hh>
+
+#include <dumux/io/container.hh>
+#include <dumux/io/xml/tinyxml2.h>
 
 namespace Dumux {
 
@@ -479,11 +481,8 @@ private:
     template<class Container>
     Container parseDataArray_(const tinyxml2::XMLElement* dataArray) const
     {
-        Container data;
         std::stringstream dataStream(dataArray->GetText());
-        std::istream_iterator<typename Container::value_type> it(dataStream);
-        std::copy(it, std::istream_iterator<typename Container::value_type>(), std::back_inserter(data));
-        return data;
+        return readStreamToContainer<Container>(dataStream);
     }
 
     /*!
