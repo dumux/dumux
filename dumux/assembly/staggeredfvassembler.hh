@@ -84,22 +84,6 @@ public:
     }
 
     //! The constructor for instationary problems
-    [[deprecated("Please use the constructor additionally taking the previous solution. Will be removed after 3.2 release!")]]
-    StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
-                         std::shared_ptr<const GridGeometry> gridGeometry,
-                         std::shared_ptr<GridVariables> gridVariables,
-                         std::shared_ptr<const TimeLoop> timeLoop)
-    : ParentType(std::make_tuple(problem, problem),
-                 std::make_tuple(gridGeometry->faceFVGridGeometryPtr(), gridGeometry->cellCenterFVGridGeometryPtr()),
-                 std::make_tuple(gridVariables->faceGridVariablesPtr(), gridVariables->cellCenterGridVariablesPtr()),
-                 std::make_shared<CouplingManager>(),
-                 timeLoop)
-    {
-        static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
-    }
-
-    //! The constructor for instationary problems
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
                          std::shared_ptr<const GridGeometry> gridGeometry,
                          std::shared_ptr<GridVariables> gridVariables,

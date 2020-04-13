@@ -248,7 +248,7 @@ int main(int argc, char** argv) try
     // We create and initialize the assembler with a time loop for the transient problem.
     // Within the time loop, we will use this assembler in each time step to assemble the linear system.
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
-    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop, xOld);
     assembler->setLinearSystem(A, r);
 
     // The following lines of code initialize the vtk output module, add the velocity output facility
@@ -277,9 +277,6 @@ int main(int argc, char** argv) try
     // [[codeblock]]
     timeLoop->start(); do
     {
-        // First we define the old solution as the solution of the previous time step for storage evaluations.
-        assembler->setPreviousSolution(xOld);
-
         // Then the linear system is assembled.
         Dune::Timer assembleTimer;
         assembler->assembleJacobianAndResidual(x);
