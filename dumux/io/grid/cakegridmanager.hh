@@ -136,14 +136,6 @@ public:
             if (indices[i] < 0)
                 DUNE_THROW(Dune::RangeError, "Please specify Positions Angular and Radial and Axial correctly and unambiguously!" << std::endl);
 
-        if(hasParam("Grid.WellRadius"))
-        {
-            std::cerr << "Deprecation warning: parameter Grid.WellRadius is deprecated. "
-                      << "Specify the WellRadius as the first radial coordinate." << std::endl;
-
-            positions[indices[0]][0] = getParamFromGroup<Scalar>(modelParamGroup, "Grid.WellRadius");
-        }
-
         // the number of cells (has a default)
         std::array<std::vector<int>, dim> cells;
         for (int i = 0; i < dim; ++i)
