@@ -33,7 +33,7 @@
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 #include <dumux/common/math.hh>
-#include <dumux/linear/vectorexchange.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 namespace Dumux {
 /*!
@@ -479,7 +479,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     // communicate updated values
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
-    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
+    using DataHandle = VectorCommDataHandleEqual<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> >, 0/*elementCodim*/>;
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem_.variables().elementMapper(), updateVec[i]);
@@ -490,7 +490,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
     if (localTimeStepping_)
     {
-        using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
+        using TimeDataHandle = VectorCommDataHandleEqual<ElementMapper, std::vector<LocalTimesteppingData>, 0/*elementCodim*/>;
 
         TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
         problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
@@ -1318,7 +1318,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
     // communicate updated values
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
-    using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
+    using TimeDataHandle = VectorCommDataHandleEqual<ElementMapper, std::vector<LocalTimesteppingData>, 0/*elementCodim*/>;
 
     TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
     problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,

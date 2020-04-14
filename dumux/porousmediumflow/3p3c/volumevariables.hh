@@ -705,18 +705,6 @@ public:
     const PermeabilityType& permeability() const
     { return permeability_; }
 
-    /*!
-     * \brief Returns the diffusion coefficient
-     */
-    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
-    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    {
-        if (compIdx != phaseIdx)
-            return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
-    }
-
     /*
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */

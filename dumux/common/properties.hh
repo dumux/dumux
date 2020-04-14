@@ -31,17 +31,6 @@
 // header doesn't need to be opened and checked all the time
 #ifndef DUMUX_PROPERTY_SYSTEM_HH
 #include <dumux/common/properties/propertysystem.hh>
-
-// per default, we do not allow the old property macros
-// remove this after release 3.2
-#ifndef DUMUX_ENABLE_OLD_PROPERTY_MACROS
-#define DUMUX_ENABLE_OLD_PROPERTY_MACROS 0
-#endif
-
-// remove this after release 3.2 to remove macros completely
-#if DUMUX_ENABLE_OLD_PROPERTY_MACROS
-#include <dumux/common/properties/propertysystemmacros.hh>
-#endif // DUMUX_ENABLE_OLD_PROPERTY_MACROS
 #endif // DUMUX_PROPERTY_SYSTEM_HH
 
 namespace Dumux {
@@ -60,8 +49,6 @@ template<class TypeTag, class MyTypeTag>
 struct PrimaryVariables { using type = UndefinedProperty; };       //!< A vector of primary variables
 template<class TypeTag, class MyTypeTag>
 struct NumEqVector { using type = UndefinedProperty; };            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
-template<class TypeTag, class MyTypeTag>
-struct [[deprecated("Access GridView via 'GridGeometry::GridView' or 'Grid::LeafGridView' instead. Will be removed after 3.2")]] GridView { using type = UndefinedProperty; }; //!< The type of the grid view according to the grid type
 template<class TypeTag, class MyTypeTag>
 struct ModelTraits { using type = UndefinedProperty; };            //!< Traits class encapsulating model specifications
 template<class TypeTag, class MyTypeTag>

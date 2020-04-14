@@ -28,7 +28,6 @@
 #include <dune/geometry/type.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {

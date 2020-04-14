@@ -44,6 +44,7 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dune/common/version.hh>

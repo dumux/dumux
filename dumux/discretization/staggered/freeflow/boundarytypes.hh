@@ -96,14 +96,6 @@ public:
 
     /*!
      * \brief Set a boundary condition for a single equation to
-     *        Beavers-Joseph-Saffman (special case of Dirichlet b.c.).
-     */
-    [[deprecated("Use setBeaversJoseph instead. Will be removed after 3.2")]]
-    void setBJS(int eqIdx)
-    { setBeaversJoseph(eqIdx); }
-
-    /*!
-     * \brief Set a boundary condition for a single equation to
      *        Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
      */
     void setBeaversJoseph(unsigned eqIdx)
@@ -115,30 +107,12 @@ public:
 
     /*!
      * \brief Returns true if an equation is used to specify a
-     *        Beavers-Joseph-Saffman boundary condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    [[deprecated("Use isBeaversJoseph instead. Will be removed after 3.2")]]
-    bool isBJS(unsigned eqIdx) const
-    { return isBeaversJoseph(eqIdx); }
-
-    /*!
-     * \brief Returns true if an equation is used to specify a
      *        Beavers-Joseph(-Saffman) boundary condition.
      *
      * \param eqIdx The index of the equation
      */
     bool isBeaversJoseph(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isBeaversJoseph; }
-
-    /*!
-     * \brief Returns true if some equation is used to specify a
-     *        Beavers-Joseph-Saffman boundary condition.
-     */
-    [[deprecated("Use hasBeaversJoseph instead. Will be removed after 3.2")]]
-    bool hasBJS() const
-    { return hasBeaversJoseph(); }
 
     /*!
      * \brief Returns true if some equation is used to specify a

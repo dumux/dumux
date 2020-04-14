@@ -29,8 +29,6 @@
 #ifndef DUMUX_FACETCOUPLING_BOX_PROPERTIES_HH
 #define DUMUX_FACETCOUPLING_BOX_PROPERTIES_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>
 
@@ -100,9 +98,7 @@ struct GridGeometry<TypeTag, TTag::BoxFacetCouplingModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
-    DUNE_NO_DEPRECATED_BEGIN
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    DUNE_NO_DEPRECATED_END
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = BoxFacetCouplingFVGridGeometry<Scalar, GridView, enableCache>;

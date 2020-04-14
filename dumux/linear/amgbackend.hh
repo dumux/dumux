@@ -234,29 +234,6 @@ private:
     bool firstCall_;
 };
 
-// deprecation helper -> will be removed after 3.2
-template<class GridView, class Traits>
-using ParallelAMGBackend
-= AMGBiCGSTABBackend<Traits>;
-
-} // namespace Dumux
-
-#include <dumux/common/properties.hh>
-#include <dumux/linear/linearsolvertraits.hh>
-
-namespace Dumux {
-
-/*!
- * \ingroup Linear
- * \brief A linear solver based on the ISTL AMG preconditioner
- *        and the ISTL BiCGSTAB solver.
- * \note This is an adaptor using a TypeTag
- */
-template<class TypeTag>
-using AMGBackend [[deprecated("Use AMGBiCGSTABBackend instead. Will be removed after 3.2!")]]
-= ParallelAMGBackend<typename GetPropType<TypeTag, Properties::GridGeometry>::GridView,
-                     LinearSolverTraits<GetPropType<TypeTag, Properties::GridGeometry>>>;
-
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif // DUMUX_AMGBACKEND_HH

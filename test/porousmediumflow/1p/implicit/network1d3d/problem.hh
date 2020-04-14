@@ -72,9 +72,7 @@ struct GridGeometry<TypeTag, TTag::TubesTestCCTpfa>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
-    DUNE_NO_DEPRECATED_BEGIN
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    DUNE_NO_DEPRECATED_END
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
 
     using ElementMapper = ReorderingDofMapper<GridView>;
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
@@ -89,9 +87,7 @@ struct GridGeometry<TypeTag, TTag::TubesTestBox>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
-    DUNE_NO_DEPRECATED_BEGIN
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    DUNE_NO_DEPRECATED_END
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;

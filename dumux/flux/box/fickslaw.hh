@@ -30,7 +30,6 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/method.hh>
 
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
@@ -181,17 +180,15 @@ private:
     {
         if constexpr (!FluidSystem::isTracerFluidSystem())
         {
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
             const auto mainCompIdx = FluidSystem::getMainComponent(phaseIdx);
-            const auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVV, phaseIdx, mainCompIdx, compIdx);
-            const auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVV, phaseIdx, mainCompIdx, compIdx);
+            const auto insideD = insideVV.effectiveDiffusionCoefficient(phaseIdx, mainCompIdx, compIdx);
+            const auto outsideD = outsideVV.effectiveDiffusionCoefficient(phaseIdx, mainCompIdx, compIdx);
             return { std::move(insideD), std::move(outsideD) };
         }
         else
         {
-            using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-            const auto insideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(insideVV, 0, 0, compIdx);
-            const auto outsideD = Deprecated::template effectiveDiffusionCoefficient<EffDiffModel>(outsideVV, 0, 0, compIdx);
+            const auto insideD = insideVV.effectiveDiffusionCoefficient(0, 0, compIdx);
+            const auto outsideD = outsideVV.effectiveDiffusionCoefficient(0, 0, compIdx);
             return { std::move(insideD), std::move(outsideD) };
         }
     }

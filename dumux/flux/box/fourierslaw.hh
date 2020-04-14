@@ -28,7 +28,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 

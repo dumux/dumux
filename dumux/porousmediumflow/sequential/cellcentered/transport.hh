@@ -22,7 +22,7 @@
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/porousmediumflow/sequential/transportproperties.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
-#include <dumux/linear/vectorexchange.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 #include <unordered_map>
 
 /**
@@ -416,7 +416,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
     // communicate updated values
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
-    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
+    using DataHandle = VectorCommDataHandleEqual<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> >, 0/*elementCodim*/>;
     DataHandle dataHandle(problem_.elementMapper(), updateVec);
     problem_.gridView().template communicate<DataHandle>(dataHandle,
                                                          Dune::InteriorBorder_All_Interface,
@@ -424,7 +424,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
 
     if (localTimeStepping_)
     {
-    using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
+    using TimeDataHandle = VectorCommDataHandleEqual<ElementMapper, std::vector<LocalTimesteppingData>, 0/*elementCodim*/>;
 
     TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
     problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
@@ -549,7 +549,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
     // communicate updated values
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
-    using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
+    using TimeDataHandle = VectorCommDataHandleEqual<ElementMapper, std::vector<LocalTimesteppingData>, 0/*elementCodim*/>;
 
     TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
     problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,

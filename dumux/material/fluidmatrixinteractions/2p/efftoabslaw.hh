@@ -246,10 +246,6 @@ public:
     static Scalar sweToSw(const Params &params, Scalar swe)
     { return swe*(1. - params.swr() - params.snr()) + params.swr(); }
 
-    [[deprecated("Will be removed after 3.2. Use sweToSw (without underscore suffix) instead!")]]
-    static Scalar sweToSw_(const Params &params, Scalar swe)
-    { return sweToSw(params, swe); }
-
     /*!
      * \brief Convert an effective non-wetting saturation to an absolute one.
      *
@@ -260,9 +256,7 @@ public:
      * \return Absolute saturation of the non-wetting phase.
      */
     static Scalar sneToSn(const Params &params, Scalar sne)
-    {
-        return sne*(1. - params.swr() - params.snr()) + params.snr();
-    }
+    { return sne*(1. - params.swr() - params.snr()) + params.snr(); }
 
     /*!
      * \brief Derivative of the effective saturation w.r.t. the absolute saturation.
@@ -275,10 +269,6 @@ public:
     static Scalar dswe_dsw(const Params &params)
     { return 1.0/(1. - params.swr() - params.snr()); }
 
-    [[deprecated("Will be removed after 3.2. Use dswe_dsw (without underscore suffix) instead!")]]
-    static Scalar dswe_dsw_(const Params &params)
-    { return dswe_dsw(params); }
-
     /*!
      * \brief Derivative of the absolute saturation w.r.t. the effective saturation.
      *
@@ -289,10 +279,6 @@ public:
      */
     static Scalar dsw_dswe(const Params &params)
     { return 1. - params.swr() - params.snr(); }
-
-    [[deprecated("Will be removed after 3.2. Use dsw_dswe (without underscore suffix) instead!")]]
-    static Scalar dsw_dswe_(const Params &params)
-    { return dsw_dswe(params); }
 };
 } // end namespace Dumux
 

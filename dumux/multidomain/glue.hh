@@ -32,23 +32,13 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup MultiDomain
+ * \brief A convenience alias for the IntersectionEntitySet of two GridViewGeometricEntitySets
+ */
 template<class DomainGridView, class TargetGridView, class DomainMapper, class TargetMapper>
-class MultiDomainGlue : public IntersectionEntitySet<GridViewGeometricEntitySet<DomainGridView, 0, DomainMapper>,
-                                                     GridViewGeometricEntitySet<TargetGridView, 0, TargetMapper>>
-{
-    using DomainEntitySet = GridViewGeometricEntitySet<DomainGridView, 0, DomainMapper>;
-    using TargetEntitySet = GridViewGeometricEntitySet<TargetGridView, 0, TargetMapper>;
-    using ParentType = IntersectionEntitySet<DomainEntitySet, TargetEntitySet>;
-    using DomainTree = BoundingBoxTree<DomainEntitySet>;
-    using TargetTree = BoundingBoxTree<TargetEntitySet>;
-public:
-    using ParentType::ParentType;
-
-    // TODO: After the deprecation period (after release 3.2) this class can be replaced by an alias template
-    [[deprecated("Will be removed after 3.2. Use default constructor and call build(domainTree, targetTree)!")]]
-    MultiDomainGlue(const DomainTree& domainTree, const TargetTree& targetTree)
-    { this->build(domainTree, targetTree); }
-};
+using MultiDomainGlue = IntersectionEntitySet<GridViewGeometricEntitySet<DomainGridView, 0, DomainMapper>,
+                                              GridViewGeometricEntitySet<TargetGridView, 0, TargetMapper>>;
 
 /*!
  * \ingroup MultiDomain

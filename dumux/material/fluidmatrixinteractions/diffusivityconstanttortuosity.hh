@@ -51,22 +51,6 @@ public:
     /*!
      * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
      *        on a constant tortuosity value
-     * \param porosity The porosity
-     * \param saturation The saturation of the wetting phase
-     * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
-     */
-    [[deprecated("Signature deprecated. Use effectiveDiffusionCoefficient(volvars, phaseIdx, comp1dxI, compIdxJ)!")]]
-    static Scalar effectiveDiffusivity(const Scalar porosity,
-                                       const Scalar saturation,
-                                       const Scalar diffCoeff)
-    {
-        static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
-        return porosity * saturation * tau * diffCoeff;
-    }
-
-    /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
-     *        on a constant tortuosity value
      * \param volVars The Volume Variables
      * \param phaseIdx the index of the phase
      * \param compIdxI the component index i

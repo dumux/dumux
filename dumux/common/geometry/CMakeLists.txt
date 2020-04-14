@@ -1,6 +1,5 @@
 install(FILES
 boundingboxtree.hh
-boundingboxtreeintersection.hh
 diameter.hh
 geometricentityset.hh
 geometryintersection.hh

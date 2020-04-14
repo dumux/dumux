@@ -19,8 +19,6 @@
 #ifndef DUMUX_SEQUENTIAL_PROPERTIES_HH
 #define DUMUX_SEQUENTIAL_PROPERTIES_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
 #include <dumux/common/properties/grid.hh>
@@ -134,47 +132,27 @@ public:
     using type = DummyTraits;
 };
 
-DUNE_NO_DEPRECATED_BEGIN
-//! Use the leaf grid view if not defined otherwise
-template<class TypeTag>
-struct GridView<TypeTag, TTag::SequentialModel>
-{
-private:
-    using Grid = GetPropType<TypeTag, Properties::Grid>;
-
-public:
-    using type = typename Grid::LeafGridView;
-};
-DUNE_NO_DEPRECATED_END
-
 //! Default number of intersections for quadrilaterals
 template<class TypeTag>
 struct MaxIntersections<TypeTag, TTag::SequentialModel>
 {
 private:
-    DUNE_NO_DEPRECATED_BEGIN
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    DUNE_NO_DEPRECATED_END
-    enum
-    {
-        dim = GridView::dimension
-    };
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 public:
-    static const int value = 2*dim;
+    static constexpr int value = 2*GridView::dimension;
 };
 
 //! A simplified grid geometry for compatibility with new style models
 template<class TypeTag>
 struct GridGeometry<TypeTag, TTag::SequentialModel>
 {
-DUNE_NO_DEPRECATED_BEGIN
+    using GV = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     struct MockFVGridGeometry
-    : public DefaultMapperTraits<GetPropType<TypeTag, Properties::GridView>>
+    : public DefaultMapperTraits<GV>
     {
         static constexpr Dumux::DiscretizationMethod discMethod = Dumux::DiscretizationMethod::cctpfa;
-        using GridView = GetPropType<TypeTag, Properties::GridView>;
+        using GridView = GV;
     };
-DUNE_NO_DEPRECATED_END
 public:
     using type = MockFVGridGeometry;
 };
@@ -196,10 +174,7 @@ template<class TypeTag>
 struct SolutionTypes<TypeTag, TTag::SequentialModel>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    DUNE_NO_DEPRECATED_BEGIN
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    DUNE_NO_DEPRECATED_END
-    using Grid = typename GridView::Grid;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Variables = GetPropType<TypeTag, Properties::Variables>;
 
     enum

@@ -25,7 +25,7 @@
 #define DUMUX_FVTRANSPORT2P2C_MULTIPHYSICS_HH
 
 #include <dumux/porousmediumflow/2p2c/sequential/fvtransport.hh>
-#include <dumux/linear/vectorexchange.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 namespace Dumux {
 /*!
@@ -236,7 +236,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     // communicate updated values
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
-    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
+    using DataHandle = VectorCommDataHandleEqual<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> >, 0/*elementCodim*/>;
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem().variables().elementMapper(), updateVec[i]);

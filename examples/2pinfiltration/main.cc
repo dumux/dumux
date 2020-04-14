@@ -201,7 +201,7 @@ int main(int argc, char** argv) try
 
     //we set the assembler with the time loop because we have an instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // we set the linear solver
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;

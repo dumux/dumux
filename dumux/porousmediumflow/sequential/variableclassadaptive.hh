@@ -21,7 +21,7 @@
 
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
-#include <dumux/linear/vectorexchange.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 #include "variableclass.hh"
 
 /**
@@ -200,7 +200,7 @@ public:
         // communicate ghost data
         using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
         using ElementMapper = typename SolutionTypes::ElementMapper;
-        using DataHandle = VectorExchange<ElementMapper, std::vector<CellData> >;
+        using DataHandle = VectorCommDataHandleEqual<ElementMapper, std::vector<CellData>, 0/*elementCodim*/>;
         DataHandle dataHandle(problem.elementMapper(), this->cellDataGlobal());
         problem.gridView().template communicate<DataHandle>(dataHandle,
                                                             Dune::InteriorBorder_All_Interface,

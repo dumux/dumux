@@ -30,8 +30,6 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
-#include <dumux/common/deprecated.hh> // effective thermal conductivity interface
-
 namespace Dumux {
 
 // forward declaration

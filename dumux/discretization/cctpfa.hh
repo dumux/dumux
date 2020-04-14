@@ -26,8 +26,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
 
@@ -58,9 +56,7 @@ struct GridGeometry<TypeTag, TTag::CCTpfaModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
-    DUNE_NO_DEPRECATED_BEGIN
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    DUNE_NO_DEPRECATED_END
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
 public:
     using type = CCTpfaFVGridGeometry<GridView, enableCache>;
 };

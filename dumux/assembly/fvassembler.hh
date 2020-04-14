@@ -91,22 +91,6 @@ public:
 
     /*!
      * \brief The constructor for instationary problems
-     * \note this constructor is deprecated (use the one receiving the previous solution instead)
-     */
-    [[deprecated("Please use constructor taking the previous solution instead. Will be removed after release 3.2!")]]
-    FVAssembler(std::shared_ptr<const Problem> problem,
-                std::shared_ptr<const GridGeometry> gridGeometry,
-                std::shared_ptr<GridVariables> gridVariables,
-                std::shared_ptr<const TimeLoop> timeLoop)
-    : problem_(problem)
-    , gridGeometry_(gridGeometry)
-    , gridVariables_(gridVariables)
-    , timeLoop_(timeLoop)
-    , isStationaryProblem_(!timeLoop)
-    {}
-
-    /*!
-     * \brief The constructor for instationary problems
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
      *       it is however guaranteed that the state after assembly will be the same as before
      */

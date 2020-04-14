@@ -56,41 +56,9 @@ public:
         verbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity", 0);
         maxIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.MaxIterations", 250);
         residReduction_ = getParamFromGroup<double>(paramGroup, "LinearSolver.ResidualReduction", 1e-13);
-
-        // for deprecation period we ask also for the "old" parameters but print a warning
-        // the "new" style parameter takes precedence
-        // TODO: Remove all this code after 3.2 and use commented code below
-        if (hasParamInGroup(paramGroup, "LinearSolver.PreconditionerRelaxation"))
-        {
-            std::cerr << "Deprecation warning: parameter LinearSolver.PreconditionerRelaxation is deprecated and will be removed after 3.2. "
-                      << "Use LinearSolver.Preconditioner.Relaxation instead (Preconditioner subgroup)." << std::endl;
-            relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.PreconditionerRelaxation");
-        }
-        else
-            relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.Preconditioner.Relaxation", 1);
-
-        if (hasParamInGroup(paramGroup, "LinearSolver.PreconditionerIterations"))
-        {
-            std::cerr << "Deprecation warning: parameter LinearSolver.PreconditionerIterations is deprecated and will be removed after 3.2. "
-                      << "Use LinearSolver.Preconditioner.Iterations instead (Preconditioner subgroup)." << std::endl;
-            precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.PreconditionerIterations");
-        }
-        else
-            precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Preconditioner.Iterations", 1);
-
-        if (hasParamInGroup(paramGroup, "LinearSolver.PreconditionerVerbosity"))
-        {
-            std::cerr << "Deprecation warning: parameter LinearSolver.PreconditionerVerbosity is deprecated and will be removed after 3.2. "
-                      << "Use LinearSolver.Preconditioner.Verbosity instead (Preconditioner subgroup)." << std::endl;
-            precondVerbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.PreconditionerVerbosity");
-        }
-        else
-            precondVerbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Preconditioner.Verbosity", 0);
-
-        // TODO: use this code instead of the above code after release 3.2
-        // relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.Preconditioner.Relaxation", 1);
-        // precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Preconditioner.Iterations", 1);
-        // precondVerbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Preconditioner.Verbosity", 0);
+        relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.Preconditioner.Relaxation", 1);
+        precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Preconditioner.Iterations", 1);
+        precondVerbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Preconditioner.Verbosity", 0);
     }
 
     /*!

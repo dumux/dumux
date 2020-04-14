@@ -395,16 +395,6 @@ public:
     { return phaseIdx == 0 ? this->fluidState_.molarity(phaseIdx, compIdx) : 0.0; }
 
     /*!
-     * \brief Returns the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
-     *
-     * \param phaseIdx The index of the phase.
-     * \param compIdx The index of the component
-     */
-    [[deprecated("Will be removed after release 3.2. Use diffusionCoefficient(phaseIdx, compIIdx, compJIdx)!")]]
-    Scalar diffusionCoefficient(const int phaseIdx, const int compIdx) const
-    { return diffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);}
-
-    /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const

@@ -25,7 +25,6 @@
 #ifndef DUMUX_CC_LOCAL_RESIDUAL_HH
 #define DUMUX_CC_LOCAL_RESIDUAL_HH
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>

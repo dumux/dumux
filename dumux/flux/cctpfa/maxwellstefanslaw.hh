@@ -28,7 +28,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
@@ -52,7 +51,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa, ref
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -218,7 +216,6 @@ private:
                                                  const SubControlVolume& scv,
                                                  const int phaseIdx)
     {
-        using EffDiffModel = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
         //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
@@ -232,7 +229,7 @@ private:
             const auto xi = volVars.moleFraction(phaseIdx, compIIdx);
 
             const auto Mn = FluidSystem::molarMass(numComponents-1);
-            Scalar tin = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(volVars, phaseIdx, compIIdx, numComponents-1, problem, element, scv);
+            Scalar tin = volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1);
 
             // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
@@ -247,7 +244,7 @@ private:
                 const auto xj = volVars.moleFraction(phaseIdx, compJIdx);
                 const auto Mi = FluidSystem::molarMass(compIIdx);
                 const auto Mj = FluidSystem::molarMass(compJIdx);
-                Scalar tij = Deprecated::template effectiveMSDiffusionCoefficient<EffDiffModel, FluidSystem>(volVars, phaseIdx, compIIdx, compJIdx, problem, element, scv);
+                Scalar tij = volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
                 reducedDiffusionMatrix[compIIdx][compIIdx] += xj*avgMolarMass/(tij*Mi);
 
                 if (compJIdx < numComponents-1)
