@@ -1223,7 +1223,7 @@ class ParallelBlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
     using VecBlockType = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
 
     template<std::size_t i>
-    using Smoother = Dune::SeqSSOR<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
+    using SeqSmoother = Dune::SeqSSOR<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
 
     template<std::size_t i>
     using LinearSolverTraits = LinearSolverTraits<std::tuple_element_t<i, GridGeometries>>;
@@ -1244,6 +1244,9 @@ class ParallelBlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
 
     template<std::size_t i>
     using Comm = typename ParallelTraits<i>::Comm;
+
+    template<std::size_t i>
+    using Smoother = typename ParallelTraits<i>::template Preconditioner<SeqSmoother<i>>;
 
     template<std::size_t i>
     using BlockAMG = Dune::Amg::AMG<LinearOperator<i>, VecBlockType<i>, Smoother<i>, Comm<i>>;
