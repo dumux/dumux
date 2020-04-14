@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!-- Simple custom data file -->
+<InputData>
+  <!-- Injection rates are in kg/s -->
+  <InjectionRates>
+  0.1 0.2 0.3 0.4
+  </InjectionRates>
+
+  <!-- BoundaryTypes: -1: no boundary, 0: Dirichlet, 1: Noflow, 2: Infiltration, 3: Outflow -->
+  <BoundaryTypes>
+  0 -1 -1 2
+  </BoundaryTypes>
+</InputData>

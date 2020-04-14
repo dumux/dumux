@@ -33,6 +33,8 @@
 #include <fstream>
 #include <iterator>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 
 /*!
@@ -56,20 +58,35 @@ void writeContainerToFile(const Container& v,
 }
 
 /*!
+ * \brief Read an input stream into a container
+ * \param stream A standard input stream
+ * \tparam Container The container type requires begin(), end(), push_back() functions
+ *                   and Container::value_type requires operator>>.
+ */
+template<typename Container>
+Container readStreamToContainer(std::istream& stream)
+{
+    Container v;
+    std::istream_iterator<typename Container::value_type> it(stream);
+    std::copy(it, std::istream_iterator<typename Container::value_type>(), std::back_inserter(v));
+    return v;
+}
+
+/*!
  * \brief Read a simple text file into a container
  * \param filename The filename to write to
- * \tparam Container  The container type, requires begin(), end(), push_back() method
+ * \tparam Container The container type requires begin(), end(), push_back() functions
+ *                   and Container::value_type requires operator>>.
  *
  * usage: auto v = readFileToContainer<std::vector<double>>("myvector.txt");
  */
 template<typename Container>
 Container readFileToContainer(const std::string& filename)
 {
-    Container v;
     std::ifstream infile(filename, std::ios::in);
-    std::istream_iterator<typename Container::value_type> it(infile);
-    std::copy(it, std::istream_iterator<typename Container::value_type>(), std::back_inserter(v));
-    return v;
+    if (!infile)
+        DUNE_THROW(Dune::IOError, "Could not open file: " << filename);
+    return readStreamToContainer<Container>(infile);
 }
 
 } // end namespace Dumux
