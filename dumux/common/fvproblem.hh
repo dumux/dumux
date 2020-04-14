@@ -32,6 +32,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/discretization/method.hh>
 
 #include <dumux/assembly/initialsolution.hh>
@@ -73,7 +74,7 @@ class FVProblem
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
 
 public:
     //! export traits of this problem
@@ -82,7 +83,6 @@ public:
         using Scalar = FVProblem::Scalar;
         using PrimaryVariables = FVProblem::PrimaryVariables;
         using NumEqVector = FVProblem::NumEqVector;
-        using BoundaryTypes = FVProblem::BoundaryTypes;
     };
 
     /*!
@@ -136,8 +136,8 @@ public:
      * \param element The finite element
      * \param scv The sub control volume
      */
-    BoundaryTypes boundaryTypes(const Element &element,
-                                const SubControlVolume &scv) const
+    auto boundaryTypes(const Element &element,
+                       const SubControlVolume &scv) const
     {
         if (!isBox)
             DUNE_THROW(Dune::InvalidStateException,
@@ -154,8 +154,8 @@ public:
      * \param element The finite element
      * \param scvf The sub control volume face
      */
-    BoundaryTypes boundaryTypes(const Element &element,
-                                const SubControlVolumeFace &scvf) const
+    auto boundaryTypes(const Element &element,
+                       const SubControlVolumeFace &scvf) const
     {
         if (isBox)
             DUNE_THROW(Dune::InvalidStateException,

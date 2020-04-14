@@ -67,7 +67,6 @@ class KEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::sta
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     using CellCenterResidual = CellCenterPrimaryVariables;

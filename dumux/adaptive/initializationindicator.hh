@@ -25,9 +25,11 @@
 #define DUMUX_GRIDADAPTINITIALIZATIONINDICATOR_HH
 
 #include <memory>
+
 #include <dune/geometry/type.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -49,7 +51,6 @@ class GridAdaptInitializationIndicator
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box;
 
@@ -225,6 +226,7 @@ public:
                 else
                 {
                     // container to store bcTypes
+                    using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
                     std::vector<BoundaryTypes> bcTypes(fvGeometry.numScv());
 
                     // Get bcTypes and maybe mark for refinement on Dirichlet boundaries

@@ -65,7 +65,6 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using Problem = typename GridVolumeVariables::Problem;
-    using BoundaryTypes = typename Problem::Traits::BoundaryTypes;
     using VelocityBackend = PorousMediumFlowVelocity<GridVariables, FluxVariables>;
 
 public:

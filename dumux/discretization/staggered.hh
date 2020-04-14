@@ -47,6 +47,7 @@
 
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -138,10 +139,11 @@ struct FacePrimaryVariables<TypeTag, TTag::StaggeredModel>
                                    getPropValue<TypeTag, Properties::NumEqFace>()>;
 };
 
+DUNE_NO_DEPRECATED_BEGIN
 //! Boundary types at a single degree of freedom
 template<class TypeTag>
 struct BoundaryTypes<TypeTag, TTag::StaggeredModel> { using type = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
-
+DUNE_NO_DEPRECATED_END
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 

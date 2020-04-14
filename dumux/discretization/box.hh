@@ -25,6 +25,8 @@
 #ifndef DUMUX_DISCRETIZTAION_BOX_HH
 #define DUMUX_DISCRETIZTAION_BOX_HH
 
+#include <type_traits>
+
 #include <dune/common/fvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
@@ -90,7 +92,14 @@ public:
 
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
-struct ElementBoundaryTypes<TypeTag, TTag::BoxModel> { using type = BoxElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>; };
+struct ElementBoundaryTypes<TypeTag, TTag::BoxModel>
+{
+private:
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
+public:
+    using type = BoxElementBoundaryTypes<BoundaryTypes>;
+};
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 template<class TypeTag>

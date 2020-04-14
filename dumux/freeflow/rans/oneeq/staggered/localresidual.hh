@@ -67,7 +67,6 @@ class OneEqResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::stagge
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr int viscosityTildeEqIdx = Indices::viscosityTildeEqIdx - ModelTraits::dim();

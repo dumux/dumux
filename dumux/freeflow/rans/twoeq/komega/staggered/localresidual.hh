@@ -67,7 +67,6 @@ class KOmegaResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::stagg
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using CellCenterResidual = CellCenterPrimaryVariables;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
