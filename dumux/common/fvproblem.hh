@@ -67,11 +67,6 @@ class FVProblem
     using PointSourceMap = std::map< std::pair<std::size_t, std::size_t>,
                                      std::vector<PointSource> >;
 
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethod::staggered;
 
@@ -280,6 +275,7 @@ public:
      * Negative values mean influx.
      * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -324,6 +320,7 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
+    template<class ElementVolumeVariables>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
@@ -387,6 +384,7 @@ public:
      * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
      */
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
@@ -419,7 +417,7 @@ public:
      * \brief Add source term derivative to the Jacobian
      * \note Only needed in case of analytic differentiation and solution dependent sources
      */
-    template<class MatrixBlock>
+    template<class MatrixBlock, class VolumeVariables>
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
@@ -432,6 +430,7 @@ public:
      *        Caution: Only overload this method in the implementation if you know
      *                 what you are doing.
      */
+    template<class ElementVolumeVariables>
     NumEqVector scvPointSources(const Element &element,
                                 const FVElementGeometry& fvGeometry,
                                 const ElementVolumeVariables& elemVolVars,
