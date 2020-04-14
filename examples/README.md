@@ -29,7 +29,7 @@ You learn how to
 
 ### [:open_file_folder: Example 3: Shallow water model](shallowwaterfriction/README.md)
 
-The shallow water flow model is applied to simulate steady subcritical flow in a river including a bottom friction model.
+The shallow water flow model is applied to simulate steady subcritical flow in a channel including a bottom friction model.
 You learn how to
 
 * solve a shallow water flow problem including bottom friction
