@@ -72,18 +72,18 @@ struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const final
     { return Impl::accessEntry(field_, mycomp, mapper_.index(e)); }
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
@@ -127,13 +127,13 @@ struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const final
     {
         const unsigned int dim = Element::mydimension;
         const unsigned int nVertices = e.subEntities(dim);
@@ -149,7 +149,7 @@ public:
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
@@ -197,13 +197,13 @@ struct VectorP1NonConformingVTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const final
     {
         const unsigned int dim = Element::mydimension;
         const unsigned int nVertices = e.subEntities(dim);
@@ -219,7 +219,7 @@ public:
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
