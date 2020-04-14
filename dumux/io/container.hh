@@ -60,7 +60,8 @@ void writeContainerToFile(const Container& v,
 /*!
  * \brief Read an input stream into a container
  * \param stream A standard input stream
- * \tparam Container The container type, requires begin(), end(), push_back() method
+ * \tparam Container The container type requires begin(), end(), push_back() functions
+ *                   and Container::value_type requires operator>>.
  */
 template<typename Container>
 Container readStreamToContainer(std::istream& stream)
@@ -74,7 +75,8 @@ Container readStreamToContainer(std::istream& stream)
 /*!
  * \brief Read a simple text file into a container
  * \param filename The filename to write to
- * \tparam Container  The container type, requires begin(), end(), push_back() method
+ * \tparam Container The container type requires begin(), end(), push_back() functions
+ *                   and Container::value_type requires operator>>.
  *
  * usage: auto v = readFileToContainer<std::vector<double>>("myvector.txt");
  */
