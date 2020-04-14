@@ -34,6 +34,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 
+#include <dumux/assembly/initialsolution.hh>
+
 namespace Dumux {
 
 /*!
@@ -64,13 +66,6 @@ class FVProblem
     using PointSourceHelper = GetPropType<TypeTag, Properties::PointSourceHelper>;
     using PointSourceMap = std::map< std::pair<std::size_t, std::size_t>,
                                      std::vector<PointSource> >;
-
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethod::staggered;
@@ -280,6 +275,7 @@ public:
      * Negative values mean influx.
      * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -324,6 +320,7 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
+    template<class ElementVolumeVariables>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
@@ -387,6 +384,7 @@ public:
      * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / s ] \f$.
      */
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
@@ -419,7 +417,7 @@ public:
      * \brief Add source term derivative to the Jacobian
      * \note Only needed in case of analytic differentiation and solution dependent sources
      */
-    template<class MatrixBlock>
+    template<class MatrixBlock, class VolumeVariables>
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
@@ -432,6 +430,7 @@ public:
      *        Caution: Only overload this method in the implementation if you know
      *                 what you are doing.
      */
+    template<class ElementVolumeVariables>
     NumEqVector scvPointSources(const Element &element,
                                 const FVElementGeometry& fvGeometry,
                                 const ElementVolumeVariables& elemVolVars,
@@ -508,10 +507,10 @@ public:
      * \brief Applies the initial solution for all degrees of freedom of the grid.
      * \param sol the initial solution vector
      */
+    template<class SolutionVector>
     void applyInitialSolution(SolutionVector& sol) const
     {
-        // set the initial values by forwarding to a specialized method
-        applyInitialSolutionImpl_(sol, std::integral_constant<bool, isBox>());
+        assembleInitialSolution(sol, asImp_());
     }
 
     /*!
@@ -596,60 +595,6 @@ protected:
     { return *static_cast<const Implementation *>(this); }
 
 private:
-    /*!
-     * \brief Applies the initial solution for the box method
-     */
-    void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::true_type) const
-    {
-        const auto numDofs = gridGeometry_->vertexMapper().size();
-        const auto numVert = gridGeometry_->gridView().size(dim);
-        sol.resize(numDofs);
-
-        // if there are more dofs than vertices (enriched nodal dofs), we have to
-        // call initial for all dofs at the nodes, coming from all neighboring elements.
-        if (numDofs != numVert)
-        {
-            std::vector<bool> dofVisited(numDofs, false);
-            for (const auto& element : elements(gridGeometry_->gridView()))
-            {
-                for (int i = 0; i < element.subEntities(dim); ++i)
-                {
-                    const auto dofIdxGlobal = gridGeometry_->vertexMapper().subIndex(element, i, dim);
-
-                    // forward to implementation if value at dof is not set yet
-                    if (!dofVisited[dofIdxGlobal])
-                    {
-                        sol[dofIdxGlobal] = asImp_().initial(element.template subEntity<dim>(i));
-                        dofVisited[dofIdxGlobal] = true;
-                    }
-                }
-            }
-        }
-
-        // otherwise we directly loop over the vertices
-        else
-        {
-            for (const auto& vertex : vertices(gridGeometry_->gridView()))
-            {
-                const auto dofIdxGlobal = gridGeometry_->vertexMapper().index(vertex);
-                sol[dofIdxGlobal] = asImp_().initial(vertex);
-            }
-        }
-    }
-
-    /*!
-     * \brief Applies the initial solution for cell-centered methods
-     */
-    void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::false_type) const
-    {
-        sol.resize(gridGeometry_->numDofs());
-        for (const auto& element : elements(gridGeometry_->gridView()))
-        {
-            const auto dofIdxGlobal = gridGeometry_->elementMapper().index(element);
-            sol[dofIdxGlobal] = asImp_().initial(element);
-        }
-    }
-
     //! The finite volume grid geometry
     std::shared_ptr<const GridGeometry> gridGeometry_;
 
