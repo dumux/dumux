@@ -8,6 +8,7 @@ entitycolor.hh
 fvassembler.hh
 fvlocalassemblerbase.hh
 fvlocalresidual.hh
+initialsolution.hh
 jacobianpattern.hh
 numericepsilon.hh
 partialreassembler.hh

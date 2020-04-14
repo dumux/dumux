@@ -34,6 +34,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 
+#include <dumux/assembly/initialsolution.hh>
+
 namespace Dumux {
 
 /*!
@@ -510,8 +512,7 @@ public:
      */
     void applyInitialSolution(SolutionVector& sol) const
     {
-        // set the initial values by forwarding to a specialized method
-        applyInitialSolutionImpl_(sol, std::integral_constant<bool, isBox>());
+        assembleInitialSolution(sol, asImp_());
     }
 
     /*!
@@ -596,60 +597,6 @@ protected:
     { return *static_cast<const Implementation *>(this); }
 
 private:
-    /*!
-     * \brief Applies the initial solution for the box method
-     */
-    void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::true_type) const
-    {
-        const auto numDofs = gridGeometry_->vertexMapper().size();
-        const auto numVert = gridGeometry_->gridView().size(dim);
-        sol.resize(numDofs);
-
-        // if there are more dofs than vertices (enriched nodal dofs), we have to
-        // call initial for all dofs at the nodes, coming from all neighboring elements.
-        if (numDofs != numVert)
-        {
-            std::vector<bool> dofVisited(numDofs, false);
-            for (const auto& element : elements(gridGeometry_->gridView()))
-            {
-                for (int i = 0; i < element.subEntities(dim); ++i)
-                {
-                    const auto dofIdxGlobal = gridGeometry_->vertexMapper().subIndex(element, i, dim);
-
-                    // forward to implementation if value at dof is not set yet
-                    if (!dofVisited[dofIdxGlobal])
-                    {
-                        sol[dofIdxGlobal] = asImp_().initial(element.template subEntity<dim>(i));
-                        dofVisited[dofIdxGlobal] = true;
-                    }
-                }
-            }
-        }
-
-        // otherwise we directly loop over the vertices
-        else
-        {
-            for (const auto& vertex : vertices(gridGeometry_->gridView()))
-            {
-                const auto dofIdxGlobal = gridGeometry_->vertexMapper().index(vertex);
-                sol[dofIdxGlobal] = asImp_().initial(vertex);
-            }
-        }
-    }
-
-    /*!
-     * \brief Applies the initial solution for cell-centered methods
-     */
-    void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::false_type) const
-    {
-        sol.resize(gridGeometry_->numDofs());
-        for (const auto& element : elements(gridGeometry_->gridView()))
-        {
-            const auto dofIdxGlobal = gridGeometry_->elementMapper().index(element);
-            sol[dofIdxGlobal] = asImp_().initial(element);
-        }
-    }
-
     //! The finite volume grid geometry
     std::shared_ptr<const GridGeometry> gridGeometry_;
 
