@@ -24,6 +24,10 @@
 #ifndef DUMUX_TEST_FACETCOUPLING_ONEPNC_FACET_PROPERTIES_HH
 #define DUMUX_TEST_FACETCOUPLING_ONEPNC_FACET_PROPERTIES_HH
 
+#ifndef DIMWORLD
+#define DIMWORLD 2
+#endif
+
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
@@ -31,7 +35,7 @@
 
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
+#include <dumux/porousmediumflow/1pnc/model.hh>
 
 #include "problem_facet.hh"
 #include "spatialparams.hh"
