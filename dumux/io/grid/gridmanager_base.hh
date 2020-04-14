@@ -213,14 +213,28 @@ protected:
             {
                 std::vector<int> boundaryMarkers, elementMarkers;
                 auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
+#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+                if (boundarySegments)
+                    std::cout << "\n*** Deprecated: Grid.BoundarySegments does not have any effect. Will be removed after 3.3  ***\n " << std::endl;
+
+                Dune::GmshReader<Grid>::read(*gridFactory, fileName, boundaryMarkers, elementMarkers, verbose);
+#else
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, boundaryMarkers, elementMarkers, verbose, boundarySegments);
+#endif
                 gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
                 gridData_ = std::make_shared<GridData>(gridPtr_, std::move(gridFactory), std::move(elementMarkers), std::move(boundaryMarkers));
             }
             else
             {
                 auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
+#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+                if (boundarySegments)
+                    std::cout << "\n*** Deprecated: Grid.BoundarySegments does not have any effect. Will be removed after 3.3  ***\n " << std::endl;
+
+                Dune::GmshReader<Grid>::read(*gridFactory, fileName, verbose);
+#else
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, verbose, boundarySegments);
+#endif
                 gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
             }
         }
