@@ -49,7 +49,7 @@ private:
     using AdaptionIndicator = GetPropType<TypeTag, Properties::AdaptionIndicator>;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 
     enum
         {

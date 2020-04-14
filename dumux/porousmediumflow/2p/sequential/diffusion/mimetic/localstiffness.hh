@@ -69,7 +69,7 @@ public:
     using MBlockType = Dune::FieldMatrix<Scalar, m, m>;                      // one entry in the stiffness matrix
     using VBlockType = Dune::FieldVector<Scalar, m>;                        // one entry in the global vectors
     using BCBlockType = std::array<BoundaryConditions::Flags, m>; // componentwise boundary conditions
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 
     virtual ~LocalStiffness ()
     {

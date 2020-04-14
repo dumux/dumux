@@ -70,7 +70,7 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
     using CellData = GetPropType<TypeTag, Properties::CellData>;
 
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;

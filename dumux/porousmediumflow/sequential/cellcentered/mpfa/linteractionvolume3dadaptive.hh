@@ -206,7 +206,7 @@ private:
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementSeed = typename Grid::template Codim<0>::EntitySeed;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 

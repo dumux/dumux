@@ -125,7 +125,7 @@ using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
 enum

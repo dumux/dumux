@@ -48,7 +48,7 @@ private:
     using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 

@@ -101,7 +101,7 @@ class FVSaturation2P: public FVTransport<TypeTag>
 
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
     using CellData = GetPropType<TypeTag, Properties::CellData>;

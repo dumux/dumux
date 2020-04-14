@@ -62,6 +62,8 @@ template<class TypeTag, class MyTypeTag>
 struct  SolutionTypes { using type = UndefinedProperty; };
 template<class TypeTag, class MyTypeTag>
 struct  Indices { using type = UndefinedProperty; };
+template<class TypeTag, class MyTypeTag>
+struct SequentialBoundaryTypes { using type = UndefinedProperty; };
 
 // Some properties that have been removed from numeric model
 template<class TypeTag, class MyTypeTag>
@@ -231,7 +233,7 @@ struct TimeManager<TypeTag, TTag::SequentialModel> { using type = Dumux::TimeMan
  * \brief Boundary types at a single degree of freedom.
  */
 template<class TypeTag>
-struct BoundaryTypes<TypeTag, TTag::SequentialModel>
+struct SequentialBoundaryTypes<TypeTag, TTag::SequentialModel>
 { private:
     enum { numEq = getPropValue<TypeTag, Properties::NumEq>() };
 public:

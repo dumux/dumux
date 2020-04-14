@@ -139,7 +139,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 
     using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 
     enum
     {

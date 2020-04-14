@@ -78,7 +78,7 @@ private:
     using Intersection = typename GridView::Intersection;
 
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 
     // private!! copy constructor
     OneModelProblem(const OneModelProblem&)
