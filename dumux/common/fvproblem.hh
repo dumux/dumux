@@ -72,8 +72,6 @@ class FVProblem
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
 
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethod::staggered;
 
@@ -510,6 +508,7 @@ public:
      * \brief Applies the initial solution for all degrees of freedom of the grid.
      * \param sol the initial solution vector
      */
+    template<class SolutionVector>
     void applyInitialSolution(SolutionVector& sol) const
     {
         assembleInitialSolution(sol, asImp_());
