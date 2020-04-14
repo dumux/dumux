@@ -229,7 +229,7 @@ public:
 
         // for box communicate the residual with the neighboring processes
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
+        forEach(residual, [&](const auto domainId)
         {
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
             if (GridGeometry<domainId>::discMethod == DiscretizationMethod::box
@@ -251,7 +251,7 @@ public:
 
         // add up the result across processes
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
+        forEach(residual, [&](const auto domainId)
         {
             Scalar localNormSquared = residual[domainId].two_norm2();
 
