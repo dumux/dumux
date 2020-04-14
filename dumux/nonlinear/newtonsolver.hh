@@ -443,11 +443,7 @@ public:
         try
         {
             if (numSteps_ == 0)
-            {
                 initialResidual_ = scalarProduct_->norm(b);
-
-                std::cout << comm_.rank() << ": initialResidual = " << initialResidual_ << std::endl;
-            }
 
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
