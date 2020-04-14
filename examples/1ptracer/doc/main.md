@@ -191,7 +191,7 @@ problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file
 `VTKWriter`. Moreover, we add the permeability distribution to the writer.
 
 ```cpp
-    using GridView = GetPropType<OnePTypeTag, Properties::GridView>;
+    using GridView = typename GridGeometry::GridView;
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
     onepWriter.addCellData(p, "p");
 
@@ -296,7 +296,7 @@ Within the time loop, we will use this assembler in each time step to assemble t
 
 ```cpp
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
-    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop, xOld);
     assembler->setLinearSystem(A, r);
 ```
 
@@ -328,9 +328,6 @@ and the time step sizes used is printed to the terminal.
 ```cpp
     timeLoop->start(); do
     {
-        // First we define the old solution as the solution of the previous time step for storage evaluations.
-        assembler->setPreviousSolution(xOld);
-
         // Then the linear system is assembled.
         Dune::Timer assembleTimer;
         assembler->assembleJacobianAndResidual(x);
