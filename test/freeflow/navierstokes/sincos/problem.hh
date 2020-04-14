@@ -84,6 +84,7 @@ template <class TypeTag>
 class SincosTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -95,6 +96,7 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using FVElementGeometry = typename GridGeometry::LocalView;
 
+    using IndexType = typename GridGeometry::GridView::IndexSet::IndexType;
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -195,6 +197,39 @@ public:
         return (scv.dofIndex() == 0) && pvIdx == Indices::pressureIdx;
     }
 
+    /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     * \param pvIdx The primary variable index in the solution vector
+     */
+    bool isDirichletCell(const SubControlVolume& scv,
+                         int pvIdx) const
+    {
+        // set fixed pressure in one cell
+        return (scv.dofIndex() == 0) && pvIdx == Indices::pressureIdx;
+    }
+
+    std::vector<IndexType> fixedPressureScvsIndexSet() const
+    {
+        std::vector<IndexType> vec;
+
+        const auto boundaryScvsIndexSet = (this->gridGeometry()).boundaryScvsIndexSet();
+        for (auto& scvIdx : boundaryScvsIndexSet)
+        {
+            const auto scv = (this->gridGeometry()).scv(scvIdx);
+            const auto bcTypes = asImp_().boundaryTypesAtPos(scv.center());
+            if (isDirichletCell(scv, Indices::pressureIdx))
+            {
+                vec.push_back(scv.dofIndex());
+            }
+        }
+
+        return vec;
+    }
+
    /*!
      * \brief Returns Dirichlet boundary values at a given position.
      *
@@ -262,12 +297,23 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
+        Scalar eps_ = 1e-6;
+
         if (isStationary_)
         {
             PrimaryVariables values;
-            values[Indices::pressureIdx] = 0.0;
+            values[Indices::pressureIdx] = dirichletAtPos(globalPos)[Indices::pressureIdx];
             values[Indices::velocityXIdx] = 0.0;
             values[Indices::velocityYIdx] = 0.0;
+
+            if (globalPos[0] < (this->gridGeometry().bBoxMin()[0] + eps_) ||
+            globalPos[0] > (this->gridGeometry().bBoxMax()[0] - eps_) ||
+            globalPos[1] < (this->gridGeometry().bBoxMin()[1] + eps_) ||
+            globalPos[1] > (this->gridGeometry().bBoxMax()[1] - eps_))
+            {
+                values[Indices::velocityXIdx] = dirichletAtPos(globalPos)[Indices::velocityXIdx];
+                values[Indices::velocityYIdx] = dirichletAtPos(globalPos)[Indices::velocityYIdx];
+            }
 
             return values;
         }
@@ -294,6 +340,14 @@ public:
     }
 
 private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     Scalar kinematicViscosity_;
     bool enableInertiaTerms_;
     Scalar time_;

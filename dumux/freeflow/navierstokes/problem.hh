@@ -63,6 +63,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
@@ -88,6 +89,22 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    std::vector<IndexType> dirichletBoundaryScvfsIndexSet() const
+    {
+        std::vector<IndexType> vec;
+        const auto boundaryScvfsIndexSet = (this->gridGeometry()).boundaryScvfsIndexSet();
+        for (auto& scvfIdx : boundaryScvfsIndexSet)
+        {
+            const auto scvf = (this->gridGeometry()).boundaryScvf(scvfIdx);
+            const auto bcTypes = asImp_().boundaryTypesAtPos(scvf.center());
+            if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+            {
+                vec.push_back(scvfIdx);
+            }
+        }
+        return vec;
+    }
+
     /*!
      * \brief The constructor
      * \param gridGeometry The finite volume grid geometry

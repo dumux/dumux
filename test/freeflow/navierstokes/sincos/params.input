@@ -12,7 +12,7 @@ Name = test_ff_sincos
 EnableGravity = false
 PrintL2Error = true
 EnableInertiaTerms = true
-IsStationary = false
+IsStationary = true
 
 [Component]
 LiquidDensity = 1.0

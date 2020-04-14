@@ -45,6 +45,7 @@
 #include <dune/common/std/type_traits.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/multitypeblockvector.hh>
+#include <dune/istl/matrixmatrix.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/exceptions.hh>
@@ -54,7 +55,10 @@
 #include <dumux/common/pdesolver.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/partialreassembler.hh>
+
+#include <dumux/freeflow/navierstokes/indices.hh>
 
 #include "newtonconvergencewriter.hh"
 
@@ -98,9 +102,27 @@ class NewtonSolver : public PDESolver<Assembler, LinearSolver>
     using ParentType = PDESolver<Assembler, LinearSolver>;
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using FVGridGeometry = typename Assembler::GridGeometry;
+    using IndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
     using SolutionVector = typename Assembler::ResidualType;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
     using TimeLoop = TimeLoopBase<Scalar>;
+
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+
+    //TODO get pressureIdx from Indices instead (my idea was to have //     template<std::size_t id>
+    //     using Indices = typename LocalResidual<id>::ModelTraits::Indices; in multidomainfvassembler and
+    //     using Indices = typename ParentType::Indices<Dune::index_constant<0>()>; in staggeredfvassembler assembleCoefficientMatrixAndRHS
+    //     enum {
+    //         pressureIdx = Indices::pressureIdx
+    //     };
+    // as well as
+    //     using Indices = typename Assembler::Indices;
+    //here. However, the domainId is still a problem.
+    static constexpr int pressureIdx = FVGridGeometry::GridView::dimension;
 
     using PrimaryVariableSwitch = typename Detail::GetPVSwitch<Assembler>::type;
     using HasPriVarsSwitch = typename Detail::GetPVSwitch<Assembler>::value_t; // std::true_type or std::false_type
@@ -354,15 +376,18 @@ public:
      *
      * \param deltaU The difference between the current and the next solution
      */
-    void solveLinearSystem(SolutionVector& deltaU)
+    template<class Matrix, class Vector>
+    void solveLinearSystem(const Matrix& A,
+                           Vector& x,
+                           const Vector& b)
     {
-        auto& b = this->assembler().residual();
+        auto& res = this->assembler().residual();
 
         try
         {
             if (numSteps_ == 0)
             {
-                Scalar norm2 = b.two_norm2();
+                Scalar norm2 = res.two_norm2();
                 if (comm_.size() > 1)
                     norm2 = comm_.sum(norm2);
 
@@ -372,7 +397,7 @@ public:
 
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
-            bool converged = solveLinearSystem_(deltaU);
+            bool converged = solveLinearSystem_(A, x, b);
 
             // make sure all processes converged
             int convergedRemote = converged;
@@ -802,8 +827,24 @@ private:
      * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
-    bool solve_(SolutionVector& uCurrentIter)
+    virtual bool solve_(SolutionVector& uCurrentIter)
     {
+        auto originalFullU = uCurrentIter;
+
+        // make sure constructFullVectorFromReducedVector_ uses the correct boundary conditions even if the
+        // initial conditions don't
+        auto problem = (this->assembler().problem());
+        for (auto& scvIdx : problem.fixedPressureScvsIndexSet()){
+            SubControlVolume scv = (this->assembler(). gridGeometry()).scv(scvIdx);
+            const auto dirichletAtCc = (this->assembler().problem()).dirichletAtPos(scv.dofPosition());
+            originalFullU[cellCenterIdx][scvIdx] = dirichletAtCc[pressureIdx];
+        }
+        for (auto& scvfDofIdx : problem.dirichletBoundaryScvfsIndexSet()){
+            const auto scvf = (this->assembler().gridGeometry()).boundaryScvf(scvfDofIdx);
+            const auto dirichletAtFace = (this->assembler().problem()).dirichletAtPos(scvf.dofPosition());
+            originalFullU[faceIdx][scvfDofIdx] = dirichletAtFace[scvf.directionIndex()];
+        }
+
         try
         {
             // newtonBegin may manipulate the solution
@@ -844,6 +885,16 @@ private:
                 assembleLinearSystem(uCurrentIter);
                 assembleTimer.stop();
 
+                // reduce uCurrentIter
+                const auto boundaryScvfsIndexSet = (this->assembler().problem()).dirichletBoundaryScvfsIndexSet();
+
+                this->assembler().removeSetOfEntriesFromVector(uCurrentIter[faceIdx], boundaryScvfsIndexSet);
+
+                std::vector<IndexType> fixedPressureScvsIndexSet = (this->assembler().problem()).fixedPressureScvsIndexSet();
+                this->assembler().removeSetOfEntriesFromVector(uCurrentIter[cellCenterIdx], fixedPressureScvsIndexSet);
+
+//                 const auto& reducedULastIter = uCurrentIter;
+
                 ///////////////
                 // linear solve
                 ///////////////
@@ -861,9 +912,10 @@ private:
                 solveTimer.start();
 
                 // set the delta vector to zero before solving the linear system!
+                SolutionVector deltaU(uCurrentIter);
                 deltaU = 0;
 
-                solveLinearSystem(deltaU);
+                solveLinearSystem(this->assembler().reducedCoefficientMatrix(), deltaU, this->assembler().reducedResidual());
                 solveTimer.stop();
 
                 ///////////////
@@ -874,6 +926,22 @@ private:
                               << clearRemainingLine << std::flush;
 
                 updateTimer.start();
+
+                //full vectors from reduced ones
+                //uCurrentIter
+
+                uCurrentIter[faceIdx] = constructFullVectorFromReducedVector_(uCurrentIter[faceIdx], originalFullU[faceIdx], boundaryScvfsIndexSet);
+                uCurrentIter[cellCenterIdx] = constructFullVectorFromReducedVector_(uCurrentIter[cellCenterIdx], originalFullU[cellCenterIdx], fixedPressureScvsIndexSet);
+
+                // deltaU
+                SolutionVector originalDeltaU;
+                originalDeltaU[faceIdx].resize(originalFullU[faceIdx].size());
+                originalDeltaU[cellCenterIdx].resize(originalFullU[cellCenterIdx].size());
+                originalDeltaU = 0.;
+
+                deltaU[faceIdx] = constructFullVectorFromReducedVector_(deltaU[faceIdx], originalDeltaU[faceIdx], boundaryScvfsIndexSet);
+                deltaU[cellCenterIdx] = constructFullVectorFromReducedVector_(deltaU[cellCenterIdx], originalDeltaU[cellCenterIdx], fixedPressureScvsIndexSet);
+
                 // update the current solution (i.e. uOld) with the delta
                 // (i.e. u). The result is stored in u
                 newtonUpdate(uCurrentIter, uLastIter, deltaU);
@@ -930,6 +998,45 @@ private:
             newtonFail(uCurrentIter);
             return false;
         }
+    }
+
+    template<class VectorType, class IndexType>
+    VectorType constructFullVectorFromReducedVector_(const VectorType& currentReducedVector,
+                                                     const VectorType&  originalFullVector,
+                                                     const std::vector<IndexType>& indices){
+        if (indices.size() == 0) { return currentReducedVector; }
+
+        std::vector<IndexType> tmpIndices = indices;
+        std::sort (tmpIndices.begin(), tmpIndices.end());
+
+        if (!(currentReducedVector.size() + indices.size() == originalFullVector.size())){
+            std::cout << "Wrong sizes." << std::endl;
+        }
+
+        VectorType tmpVector;
+        tmpVector.resize(originalFullVector.size());
+
+        //fill intermediate reduced indices for A - delete rows
+        int numBoundaryScvfsAlreadyHandled = 0;
+        //k=0
+        for (unsigned int i = 0; i < tmpIndices[0]; ++i){
+            tmpVector[i] = currentReducedVector[i];
+        }
+        tmpVector[tmpIndices[0]] = originalFullVector[tmpIndices[0]];
+        numBoundaryScvfsAlreadyHandled ++;
+        for (unsigned int k = 1; k < tmpIndices.size(); ++k){
+            //k is related to the boundary scvf up to which I want to go
+            for (unsigned int i = (tmpIndices[k-1]+1); i < tmpIndices[k]; ++i){
+                tmpVector[i]=currentReducedVector[i-numBoundaryScvfsAlreadyHandled];
+            }
+            numBoundaryScvfsAlreadyHandled ++;
+            tmpVector[tmpIndices[k]] = originalFullVector[tmpIndices[k]];
+        }
+        for (unsigned int i = tmpIndices[tmpIndices.size()-1]+1; i < tmpVector.size(); ++i){
+            tmpVector[i] = currentReducedVector[i-numBoundaryScvfsAlreadyHandled];
+        }
+
+        return tmpVector;
     }
 
     //! assembleLinearSystem_ for assemblers that support partial reassembly
@@ -1029,12 +1136,15 @@ private:
                    "Chopped Newton update strategy not implemented.");
     }
 
-    virtual bool solveLinearSystem_(SolutionVector& deltaU)
+    template<class Vector, class Matrix>
+    bool solveLinearSystem_(const Matrix& A,
+                            Vector& x,
+                            const Vector& b)
     {
         return solveLinearSystemImpl_(this->linearSolver(),
-                                      this->assembler().jacobian(),
-                                      deltaU,
-                                      this->assembler().residual());
+                                      A,
+                                      x,
+                                      b);
     }
 
     /*!
@@ -1046,12 +1156,12 @@ private:
      * Specialization for linear solvers that can handle MultiType matrices.
      *
      */
-    template<class V = SolutionVector>
-    typename std::enable_if_t<!isMultiTypeBlockVector<V>(), bool>
+    template<class Vector, class Matrix>
+    typename std::enable_if_t<!isMultiTypeBlockVector<Vector>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
-                           JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           const Matrix& A,
+                           Vector& x,
+                           const Vector& b)
     {
         //! Copy into a standard block vector.
         //! This is necessary for all model _not_ using a FieldVector<Scalar, blockSize> as
@@ -1086,13 +1196,13 @@ private:
      * Specialization for linear solvers that can handle MultiType matrices.
      *
      */
-    template<class LS = LinearSolver, class V = SolutionVector>
+    template<class LS = LinearSolver, class Vector, class Matrix>
     typename std::enable_if_t<linearSolverAcceptsMultiTypeMatrix<LS>() &&
-                              isMultiTypeBlockVector<V>(), bool>
+                              isMultiTypeBlockVector<Vector>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
-                           JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           const Matrix& A,
+                           Vector& x,
+                           const Vector& b)
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
         return ls.solve(A, x, b);
@@ -1108,13 +1218,13 @@ private:
      * We copy the matrix into a 1x1 block BCRS matrix before solving.
      *
      */
-    template<class LS = LinearSolver, class V = SolutionVector>
+    template<class LS = LinearSolver, class Vector, class Matrix>
     typename std::enable_if_t<!linearSolverAcceptsMultiTypeMatrix<LS>() &&
-                              isMultiTypeBlockVector<V>(), bool>
+                              isMultiTypeBlockVector<Vector>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
-                           JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           const Matrix& A,
+                           Vector& x,
+                           const Vector& b)
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
 
@@ -1126,7 +1236,7 @@ private:
         assert(numRows == M.M());
 
         // create the vector the IterativeSolver backend can handle
-        const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
+        const auto bTmp = VectorConverter<Vector>::multiTypeToBlockVector(b);
         assert(bTmp.size() == numRows);
 
         // create a blockvector to which the linear solver writes the solution
@@ -1139,7 +1249,7 @@ private:
 
         // copy back the result y into x
         if(converged)
-            VectorConverter<SolutionVector>::retrieveValues(x, y);
+            VectorConverter<Vector>::retrieveValues(x, y);
 
         return converged;
     }

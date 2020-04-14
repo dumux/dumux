@@ -79,6 +79,9 @@ public:
     using GridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
 
     template<std::size_t id>
+    using IndexType = typename GridGeometry<id>::GridView::IndexSet::IndexType;
+
+    template<std::size_t id>
     using Problem = typename MDTraits::template SubDomain<id>::Problem;
 
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
@@ -194,6 +197,12 @@ public:
             auto& subRes = (*residual_)[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
         });
+
+        resetReducedCoefficientMatrix_();
+        resetReducedRHS_();
+
+        fillReducedCoefficientMatrix_(*jacobian_, *reducedCoefficientMatrix_, *furtherReducedCoefficientMatrix_);
+        fillReducedRHS_(*residual_, *reducedResidual_);
     }
 
     //! compute the residuals using the internal residual
@@ -201,6 +210,9 @@ public:
     {
         resetResidual_();
         assembleResidual(*residual_, curSol);
+
+        resetReducedResidual_();
+        fillReducedResidual_(*residual_, *reducedResidual_);
     }
 
     //! assemble a residual r
@@ -248,6 +260,24 @@ public:
         setJacobianPattern(*jacobian_);
         setResidualSize(*residual_);
     }
+
+     /*!
+     * \brief The version without arguments uses the default constructor to create
+     *        the coefficient matrix and right-hand side objects in this assembler if you don't need them outside this class
+     */
+    void setReducedLinearSystem()
+    {
+        reducedCoefficientMatrix_ = std::make_shared<JacobianMatrix>();
+        furtherReducedCoefficientMatrix_ = std::make_shared<JacobianMatrix>();
+        reducedResidual_ = std::make_shared<SolutionVector>();
+
+        setJacobianBuildMode(*reducedCoefficientMatrix_);
+        setJacobianBuildMode(*furtherReducedCoefficientMatrix_);
+
+        setReducedCoefficientMatrixPattern(*jacobian_, *reducedCoefficientMatrix_, *furtherReducedCoefficientMatrix_);
+        setReducedRHSSize(*reducedResidual_);
+    }
+
 
     /*!
      * \brief The version without arguments uses the default constructor to create
@@ -299,6 +329,45 @@ public:
     }
 
     /*!
+     * \brief Sets the reduced coefficient matrix' sparsity pattern.
+     */
+    void setReducedCoefficientMatrixPattern(const JacobianMatrix& coefficientMatrix, JacobianMatrix& reducedCoefficientMatrix, JacobianMatrix& furtherReducedCoefficientMatrix)
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(coefficientMatrix)), [&](const auto domainI)
+        {
+            forEach(integralRange(Dune::Hybrid::size(coefficientMatrix[domainI])), [&](const auto domainJ)
+            {
+                // determine the dofs that do not take part in intersections
+                auto& matrix = coefficientMatrix[domainI][domainJ];
+                auto& reducedMatrix = reducedCoefficientMatrix[domainI][domainJ];
+
+                std::vector<bool> isVoidRow(matrix.N(), false);
+                const auto& v=(this->reductionIndexSet(domainI));
+
+                for (std::size_t dofIdxTarget = 0; dofIdxTarget < matrix.N(); ++dofIdxTarget)
+                {
+                    if (std::find(v.begin(), v.end(), dofIdxTarget) != v.end())
+                        isVoidRow[dofIdxTarget] = true;
+                }
+
+                //TODO deal with empty isVoidRow or isVoidCol
+                this->setPatternDeleteSetOfRowsFromBCRSMatrix_(matrix, reducedMatrix, isVoidRow);
+
+                const auto& w=(this->reductionIndexSet(domainJ));
+                std::vector<bool> isVoidCol(reducedMatrix.M(), false);
+                for (std::size_t dofIdxTarget = 0; dofIdxTarget < reducedMatrix.M(); ++dofIdxTarget)
+                {
+                    if (std::find(w.begin(), w.end(), dofIdxTarget) != w.end())
+                        isVoidCol[dofIdxTarget] = true;
+                }
+
+                this->setPatternDeleteSetOfColumnsFromBCRSMatrix_(reducedMatrix, furtherReducedCoefficientMatrix[domainI][domainJ], isVoidCol);
+            });
+        });
+    }
+
+    /*!
      * \brief Resizes the residual
      */
     void setResidualSize(SolutionVector& res) const
@@ -327,6 +396,43 @@ public:
         forEach(integralRange(Dune::Hybrid::size(gridVariablesTuple_)), [&](const auto domainId)
         { this->gridVariables(domainId).resetTimeStep(curSol[domainId]); });
     }
+
+     /*!
+     * \brief Resizes the right-hand side
+     */
+    void setRHSSize(SolutionVector& RHS) const
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(RHS)), [&](const auto domainId)
+        { RHS[domainId].resize(this->numDofs(domainId)); });
+    }
+
+    // Get the set of cell center dof indices which should be deleted from the coefficient matrix
+    template<std::size_t i>
+    //TODO: make it std::vector<IndexType>
+    std::vector<unsigned int> reductionIndexSet(Dune::index_constant<i> domainI) const
+    {
+        if (i == 1)
+        {
+            return problem(domainI).fixedPressureScvsIndexSet();
+        }
+        else
+        {
+            // Get the set of face dof indices which should be deleted from the coefficient matri
+            return problem(domainI).dirichletBoundaryScvfsIndexSet();
+        }
+    }
+
+    /*!
+     * \brief Resizes the reduced right-hand side
+     */
+    void setReducedRHSSize(SolutionVector& reducedRHS) const
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(reducedRHS)), [&](const auto domainId)
+        { reducedRHS[domainId].resize(this->numDofs(domainId) - this->reductionIndexSet(domainId).size()); });
+    }
+
 
     //! the number of dof locations of domain i
     template<std::size_t i>
@@ -370,6 +476,13 @@ public:
     SolutionVector& residual()
     { return *residual_; }
 
+    //! the full reduced coefficient matrix
+    JacobianMatrix& reducedCoefficientMatrix()
+    { return *furtherReducedCoefficientMatrix_; }
+
+    SolutionVector& reducedResidual()
+    { return *reducedResidual_; }
+
     //! the solution of the previous time step
     const SolutionVector& prevSol() const
     { return *prevSol_; }
@@ -401,6 +514,50 @@ public:
     LocalResidual<i> localResidual(Dune::index_constant<i> domainId) const
     { return LocalResidual<i>(std::get<domainId>(problemTuple_).get(), timeLoop_.get()); }
 
+    /*!
+    * \tparam indices A set of indices that the to-be-deleted elements have in the vector.
+    */
+        // an example to illustrate the tought behind the loops in the following:
+        // let us assume the scvfs are 0,1,...,10 with 5 and 8 being boundary scvfs
+        // then we would like to delete the fifth and eightth entry of the RHS vector
+        // we do so by copying new[0] = old [0], new[1] = old [1], new[2] = old [2], new[3] = old [3],
+        // new[4] = old [4], new[5] = old [6], new[6] = old [7], new[7] = old [9], new[8] = old[10]
+        // this could be achieved by new[i] = old [i], i=0,1,2,3,4
+        // new [i-1] = old [i], i=6,7
+        // new [i-2] = old [i], i=9,10
+        // this means i should go over everything apart the boundary scvfs
+        // and we need new [i-number of faces that we already left out]
+    template<class VectorType, class IndexType>
+    void removeSetOfEntriesFromVector (VectorType& vector, const std::vector<IndexType>& indices){
+        if (indices.size() == 0) { return ;}
+
+        std::vector<IndexType> tmpIndices = indices;
+        std::sort (tmpIndices.begin(), tmpIndices.end());
+
+        VectorType tmpVector;
+        tmpVector.resize(vector.size() - tmpIndices.size());
+
+        //fill intermediate reduced indices for A - delete rows
+        int numBoundaryScvfsAlreadyHandled = 0;
+        //k=0
+        for (unsigned int i = 0; i < tmpIndices[0]; ++i){
+            tmpVector[i] = vector[i];
+        }
+        numBoundaryScvfsAlreadyHandled ++;
+        for (unsigned int k = 1; k < tmpIndices.size(); ++k){
+            //k is related to the boundary scvf up to which I want to go
+            for (unsigned int i = (tmpIndices[k-1]+1); i < tmpIndices[k]; ++i){
+                tmpVector[i-numBoundaryScvfsAlreadyHandled] = vector[i];
+            }
+            numBoundaryScvfsAlreadyHandled ++;
+        }
+        for (unsigned int i = tmpIndices[tmpIndices.size()-1]+1; i < vector.size(); ++i){
+            tmpVector[i-numBoundaryScvfsAlreadyHandled] = vector[i];
+        }
+
+        vector = tmpVector;
+    }
+
 protected:
     //! the coupling manager coupling the sub domains
     std::shared_ptr<CouplingManager> couplingManager_;
@@ -418,6 +575,30 @@ private:
         (*residual_) = 0.0;
     }
 
+    // reset the reduced right-hand side vector to 0.0
+    void resetReducedRHS_()
+    {
+        if(!reducedResidual_)
+        {
+            reducedResidual_ = std::make_shared<SolutionVector>();
+            setReducedRHSSize(*reducedResidual_);
+        }
+
+        (*reducedResidual_) = 0.0;
+    }
+
+    // reset the reduced right-hand side vector to 0.0
+    void resetReducedResidual_()
+    {
+        if(!reducedResidual_)
+        {
+            reducedResidual_ = std::make_shared<SolutionVector>();
+            setReducedRHSSize(*reducedResidual_);
+        }
+
+        (*reducedResidual_) = 0.0;
+    }
+
     // reset the jacobian vector to 0.0
     void resetJacobian_()
     {
@@ -429,6 +610,32 @@ private:
         }
 
        (*jacobian_)  = 0.0;
+    }
+
+    // reset the reduced coefficient matrix vector to 0.0
+    void resetReducedCoefficientMatrix_()
+    {
+        if(!reducedCoefficientMatrix_ && !furtherReducedCoefficientMatrix_)
+        {
+            reducedCoefficientMatrix_ = std::make_shared<JacobianMatrix>();
+            furtherReducedCoefficientMatrix_ = std::make_shared<JacobianMatrix>();
+
+            setJacobianBuildMode(*reducedCoefficientMatrix_);
+            setJacobianBuildMode(*furtherReducedCoefficientMatrix_);
+
+            setReducedCoefficientMatrixPattern(*jacobian_, *reducedCoefficientMatrix_, *furtherReducedCoefficientMatrix_);
+        }
+        else if (!reducedCoefficientMatrix_ && furtherReducedCoefficientMatrix_)
+        {
+            DUNE_THROW(Dune::InvalidStateException, "Furhter reduced coefficient matrix set but reduced one not");
+        }
+        else if (reducedCoefficientMatrix_ && !furtherReducedCoefficientMatrix_)
+        {
+            DUNE_THROW(Dune::InvalidStateException, "Reduced coefficient matrix set but further reduced one not.");
+        }
+
+       (*reducedCoefficientMatrix_)  = 0.0;
+       (*furtherReducedCoefficientMatrix_) = 0.0;
     }
 
     // check if the assembler is in a correct state for assembly
@@ -499,6 +706,167 @@ private:
                                                         domainJ, gridGeometry(domainJ));
     }
 
+    template<class MatrixType>
+    void setPatternDeleteSetOfRowsFromBCRSMatrix_(const MatrixType& matrixBefore, MatrixType& matrixAfter, const std::vector<bool>& dofIsVoid){
+        const std::size_t numNonVoidDofs = std::count_if(dofIsVoid.begin(), dofIsVoid.end(), [] (bool v) { return !v; });
+
+        // reduce matrices to only dofs that take part and create index map
+        std::vector<std::size_t> reductionMap(matrixBefore.N());
+
+        std::size_t idxInReducedSpace = 0;
+        for (std::size_t dofIdx = 0; dofIdx < dofIsVoid.size(); ++dofIdx)
+            if (!dofIsVoid[dofIdx])
+            {
+                reductionMap[dofIdx] = idxInReducedSpace;
+                idxInReducedSpace++;
+            }
+
+        Dune::MatrixIndexSet occupationPatternA;
+        occupationPatternA.resize(numNonVoidDofs, matrixBefore.M());
+
+        for (auto rowIt = matrixBefore.begin(); rowIt != matrixBefore.end(); ++rowIt)
+            if (!dofIsVoid[rowIt.index()])
+            {
+                const auto reducedRowIdx = reductionMap[rowIt.index()];
+                for (auto colIt = (*rowIt).begin(); colIt != (*rowIt).end(); ++colIt)
+                    occupationPatternA.add(reducedRowIdx, colIt.index());
+            }
+
+        occupationPatternA.exportIdx(matrixAfter);
+    }
+
+    template<class MatrixType>
+    void setPatternDeleteSetOfColumnsFromBCRSMatrix_(const MatrixType& matrixBefore, MatrixType& matrixAfter, const std::vector<bool>& dofIsVoid){
+        const std::size_t numNonVoidDofs = std::count_if(dofIsVoid.begin(), dofIsVoid.end(), [] (bool v) { return !v; });
+
+        // reduce matrices to only dofs that take part and create index map
+        std::vector<std::size_t> reductionMap(matrixBefore.M());
+
+        std::size_t idxInReducedSpace = 0;
+        for (std::size_t dofIdx = 0; dofIdx < dofIsVoid.size(); ++dofIdx)
+            if (!dofIsVoid[dofIdx])
+            {
+                reductionMap[dofIdx] = idxInReducedSpace;
+                idxInReducedSpace++;
+            }
+
+        Dune::MatrixIndexSet occupationPatternA;
+        occupationPatternA.resize(matrixBefore.N(), numNonVoidDofs);
+        for (auto rowIt = matrixBefore.begin(); rowIt != matrixBefore.end(); ++rowIt)
+        {
+            for (auto colIt = (*rowIt).begin(); colIt != (*rowIt).end(); ++colIt)
+            {
+                if (!dofIsVoid[colIt.index()])
+                    occupationPatternA.add(rowIt.index(), reductionMap[colIt.index()]);
+            }
+        }
+
+        occupationPatternA.exportIdx(matrixAfter);
+    }
+
+    //! fill the reduced coefficient matrix to 0.0
+    void fillReducedCoefficientMatrix_(const JacobianMatrix& coefficientMatrix, JacobianMatrix& reducedCoefficientMatrix, JacobianMatrix& furtherReducedCoefficientMatrix)
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(coefficientMatrix)), [&](const auto domainI)
+        {
+            forEach(integralRange(Dune::Hybrid::size(coefficientMatrix[domainI])), [&](const auto domainJ)
+            {
+                // determine the dofs that do not take part in intersections
+                auto& matrix = coefficientMatrix[domainI][domainJ];
+                auto& reducedMatrix = reducedCoefficientMatrix[domainI][domainJ];
+
+                std::vector<bool> isVoidRow(matrix.N(), false);
+                const auto& v=(this->reductionIndexSet(domainI));
+
+                for (std::size_t dofIdxTarget = 0; dofIdxTarget < matrix.N(); ++dofIdxTarget)
+                {
+                    if (std::find(v.begin(), v.end(), dofIdxTarget) != v.end())
+                        isVoidRow[dofIdxTarget] = true;
+                }
+
+                //TODO deal with empty isVoidRow or isVoidCol
+                this->fillDeleteSetOfRowsFromBCRSMatrix_(matrix, reducedMatrix, isVoidRow);
+
+                const auto& w=(this->reductionIndexSet(domainJ));
+                std::vector<bool> isVoidCol(reducedMatrix.M(), false);
+                for (std::size_t dofIdxTarget = 0; dofIdxTarget < reducedMatrix.M(); ++dofIdxTarget)
+                {
+                    if (std::find(w.begin(), w.end(), dofIdxTarget) != w.end())
+                        isVoidCol[dofIdxTarget] = true;
+                }
+
+                this->fillDeleteSetOfColumnsFromBCRSMatrix_(reducedMatrix, furtherReducedCoefficientMatrix[domainI][domainJ], isVoidCol);
+            });
+        });
+    }
+
+    template<class MatrixType>
+    void fillDeleteSetOfRowsFromBCRSMatrix_(const MatrixType& matrixBefore, MatrixType& matrixAfter, const std::vector<bool>& dofIsVoid)
+    {
+        const std::size_t numNonVoidDofs = std::count_if(dofIsVoid.begin(), dofIsVoid.end(), [] (bool v) { return !v; });
+
+        // reduce matrices to only dofs that take part and create index map
+        std::vector<std::size_t> reductionMap(matrixBefore.N());
+
+        std::size_t idxInReducedSpace = 0;
+        for (std::size_t dofIdx = 0; dofIdx < dofIsVoid.size(); ++dofIdx)
+            if (!dofIsVoid[dofIdx])
+            {
+                reductionMap[dofIdx] = idxInReducedSpace;
+                idxInReducedSpace++;
+            }
+
+        for (auto rowIt = matrixBefore.begin(); rowIt != matrixBefore.end(); ++rowIt)
+            if (!dofIsVoid[rowIt.index()])
+            {
+                const auto reducedRowIdx = reductionMap[rowIt.index()];
+                for (auto colIt = (*rowIt).begin(); colIt != (*rowIt).end(); ++colIt)
+                    matrixAfter[reducedRowIdx][colIt.index()] = *colIt;
+            }
+    }
+
+    template<class MatrixType>
+    void fillDeleteSetOfColumnsFromBCRSMatrix_(const MatrixType& matrixBefore, MatrixType& matrixAfter, const std::vector<bool>& dofIsVoid){
+        const std::size_t numNonVoidDofs = std::count_if(dofIsVoid.begin(), dofIsVoid.end(), [] (bool v) { return !v; });
+
+        // reduce matrices to only dofs that take part and create index map
+        std::vector<std::size_t> reductionMap(matrixBefore.M());
+
+        std::size_t idxInReducedSpace = 0;
+        for (std::size_t dofIdx = 0; dofIdx < dofIsVoid.size(); ++dofIdx)
+            if (!dofIsVoid[dofIdx])
+            {
+                reductionMap[dofIdx] = idxInReducedSpace;
+                idxInReducedSpace++;
+            }
+
+        for (auto rowIt = matrixBefore.begin(); rowIt != matrixBefore.end(); ++rowIt)
+        {
+            for (auto colIt = (*rowIt).begin(); colIt != (*rowIt).end(); ++colIt)
+                if (!dofIsVoid[colIt.index()])
+                    matrixAfter[rowIt.index()][reductionMap[colIt.index()]] = *colIt;
+        }
+    }
+
+    void fillReducedRHS_(const SolutionVector& RHS, SolutionVector& reducedRHS)
+    {
+        reducedRHS = RHS;
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(reducedRHS)), [&](const auto domainId)
+        { this->removeSetOfEntriesFromVector(reducedRHS[domainId], this->reductionIndexSet(domainId)); });
+    }
+
+    void fillReducedResidual_(const SolutionVector& residual, SolutionVector& reducedResidual)
+    {
+        reducedResidual = residual;
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(reducedResidual)), [&](const auto domainId)
+        { this->removeSetOfEntriesFromVector(reducedResidual[domainId], this->reductionIndexSet(domainId)); });
+    }
+
+
+
     //! pointer to the problem to be solved
     ProblemTuple problemTuple_;
 
@@ -520,6 +888,9 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
+    std::shared_ptr<JacobianMatrix> reducedCoefficientMatrix_;
+    std::shared_ptr<SolutionVector> reducedResidual_;
+    std::shared_ptr<JacobianMatrix> furtherReducedCoefficientMatrix_;
 };
 
 } // end namespace Dumux

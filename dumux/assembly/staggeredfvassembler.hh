@@ -109,6 +109,8 @@ public:
     const GridGeometry& gridGeometry() const
     { return ParentType::gridGeometry(Dune::index_constant<0>()).actualGridGeometry(); }
 
+    const auto& problem() const
+    { return ParentType::problem(Dune::index_constant<0>()); }
 };
 
 } // namespace Dumux
