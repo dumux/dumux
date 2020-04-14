@@ -498,9 +498,7 @@ The second surface (second call of addSurface) is placed at the outlet of the ch
 
     const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
 
-    DUNE_NO_DEPRECATED_BEGIN
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    DUNE_NO_DEPRECATED_END
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
