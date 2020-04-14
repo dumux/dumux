@@ -26,6 +26,8 @@
 
 #include <memory>
 
+#include <dune/common/hybridutilities.hh>
+
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/timeloop.hh>
 

@@ -24,6 +24,10 @@
 #ifndef DUMUX_TEST_FACETCOUPLING_ONEPNC_BULK_PROPERTIES_HH
 #define DUMUX_TEST_FACETCOUPLING_ONEPNC_BULK_PROPERTIES_HH
 
+#ifndef DIMWORLD
+#define DIMWORLD 2
+#endif
+
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
