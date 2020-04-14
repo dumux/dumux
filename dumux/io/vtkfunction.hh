@@ -36,6 +36,24 @@
 
 namespace Dumux::Vtk {
 
+namespace Impl {
+
+template<class Field>
+double accessEntry(const Field& f, int mycomp, int i)
+{
+    if constexpr (IsIndexable<std::decay_t<decltype(std::declval<Field>()[0])>>{})
+    {
+        if constexpr (IsIndexable<std::decay_t<decltype(std::declval<Field>()[0][0])>>{})
+            DUNE_THROW(Dune::InvalidStateException, "Invalid field type");
+        else
+            return f[i][mycomp];
+    }
+    else
+        return f[i];
+}
+
+} // end namespace Impl
+
 /*!
  * \ingroup InputOutput
  * \brief a VTK function that supports both scalar and vector values for each element
@@ -54,18 +72,18 @@ struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const
-    { return accessChooser_(mycomp, mapper_.index(e), IsIndexable<decltype(field_[0])>()); }
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const final
+    { return Impl::accessEntry(field_, mycomp, mapper_.index(e)); }
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
@@ -84,20 +102,6 @@ public:
     }
 
 private:
-
-    //! access for vectorial fields
-    double accessChooser_(int mycomp, int i, std::true_type) const
-    { return vectorFieldAccess_(mycomp, i, IsIndexable<decltype(field_[0][0])>()); }
-
-    //! access for scalar fields
-    double accessChooser_(int mycomp, int i, std::false_type) const { return field_[i]; }
-
-    //! access to permissive vectorial fields
-    double vectorFieldAccess_(int mycomp, int i, std::false_type) const { return field_[i][mycomp]; }
-
-    //! if the field is indexable more than two times, throw error
-    double vectorFieldAccess_(int mycomp, int i, std::true_type) const { DUNE_THROW(Dune::InvalidStateException, "Invalid field type"); }
-
     const F& field_;
     const std::string name_;
     int nComps_;
@@ -123,20 +127,20 @@ struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const final
     {
         const unsigned int dim = Element::mydimension;
         const unsigned int nVertices = e.subEntities(dim);
 
         std::vector<Dune::FieldVector<ctype, 1>> cornerValues(nVertices);
         for (unsigned i = 0; i < nVertices; ++i)
-            cornerValues[i] = accessChooser_(mycomp, mapper_.subIndex(e, i, dim), IsIndexable<decltype(field_[0])>());
+            cornerValues[i] = Impl::accessEntry(field_, mycomp, mapper_.subIndex(e, i, dim));
 
         // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
         const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));
@@ -145,7 +149,7 @@ public:
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
@@ -164,20 +168,6 @@ public:
                                       << name << " (" << field.size() << ") and mapper (" << mapper.size() << ")");
     }
 private:
-
-    //! access for vectorial fields
-    double accessChooser_(int mycomp, int i, std::true_type) const
-    { return vectorFieldAccess_(mycomp, i, IsIndexable<decltype(field_[0][0])>()); }
-
-    //! access for scalar fields
-    double accessChooser_(int mycomp, int i, std::false_type) const { return field_[i]; }
-
-    //! access to permissive vectorial fields
-    double vectorFieldAccess_(int mycomp, int i, std::false_type) const { return field_[i][mycomp]; }
-
-    //! if the field is indexable more than two times, throw error
-    double vectorFieldAccess_(int mycomp, int i, std::true_type) const { DUNE_THROW(Dune::InvalidStateException, "Invalid field type"); }
-
     const F& field_;
     const std::string name_;
     int nComps_;
@@ -207,20 +197,20 @@ struct VectorP1NonConformingVTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const final
     {
         const unsigned int dim = Element::mydimension;
         const unsigned int nVertices = e.subEntities(dim);
 
         std::vector<Dune::FieldVector<ctype, 1>> cornerValues(nVertices);
         for (unsigned i = 0; i < nVertices; ++i)
-            cornerValues[i] = accessChooser_(mycomp, mapper_.index(e), i, IsIndexable<decltype(field_[0])>());
+            cornerValues[i] = accessEntry_(mycomp, mapper_.index(e), i);
 
         // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
         const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));
@@ -229,7 +219,7 @@ public:
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
@@ -247,22 +237,19 @@ public:
                                       << name << " (" << field.size() << ") and mapper (" << mapper.size() << ")");
     }
 private:
-
     //! access to the field
-    double accessChooser_(int mycomp, int eIdx, int cornerIdx, std::true_type) const
-    { return fieldAccess_(mycomp, eIdx, cornerIdx, IsIndexable<decltype(field_[0][0])>()); }
-
-    //! fields have to be indexable at least twice
-    double accessChooser_(int mycomp, int eIdx, int cornerIdx, std::false_type) const
-    { DUNE_THROW(Dune::InvalidStateException, "Invalid field type"); }
-
-    //! scalar field access
-    double fieldAccess_(int mycomp, int eIdx, int cornerIdx, std::false_type) const
-    { return field_[eIdx][cornerIdx]; }
-
-    //! vectorial field access
-    double fieldAccess_(int mycomp, int eIdx, int cornerIdx, std::true_type) const
-    { return field_[eIdx][cornerIdx][mycomp]; }
+    double accessEntry_(int mycomp, int eIdx, int cornerIdx) const
+    {
+        if constexpr (IsIndexable<decltype(std::declval<F>()[0])>{})
+        {
+            if constexpr (IsIndexable<decltype(std::declval<F>()[0][0])>{})
+                return field_[eIdx][cornerIdx][mycomp];
+            else
+                return field_[eIdx][cornerIdx];
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid field type");
+    }
 
     const F& field_;
     const std::string name_;
@@ -307,16 +294,14 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
     }
 
-    virtual ~Field() {}
-
     //! return the name of this field
-    virtual std::string name () const { return field_->name(); }
+    std::string name () const { return field_->name(); }
 
     //! return the number of components of this field
-    virtual int ncomps() const { return field_->ncomps(); }
+    int ncomps() const { return field_->ncomps(); }
 
     //! return the precision of this field
-    virtual Dumux::Vtk::Precision precision() const
+    Dumux::Vtk::Precision precision() const
     {
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
         return Dumux::Vtk::Precision::float32;
@@ -329,9 +314,9 @@ public:
     int codim() const { return codim_; }
 
     //! element-local evaluation of the field
-    virtual double evaluate(int mycomp,
-                            const Element &element,
-                            const Dune::FieldVector< ctype, dim > &xi) const
+    double evaluate(int mycomp,
+                    const Element &element,
+                    const Dune::FieldVector< ctype, dim > &xi) const
     { return field_->evaluate(mycomp, element, xi); }
 
     //! returns the underlying vtk function
