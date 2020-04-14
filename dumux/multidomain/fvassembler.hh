@@ -247,7 +247,7 @@ public:
 
         // for box communicate the residual with the neighboring processes
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
+        forEach(residual, [&](const auto domainId)
         {
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
             const auto& gridView = gridGeometry->gridView();
