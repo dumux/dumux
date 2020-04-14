@@ -20,7 +20,7 @@ The Stokes model without gravitation and without sources or sinks for a stationa
 ```
 with density  $`\varrho`$, velocity $`\boldsymbol{u}`$, dynamic viscosity  $`\mu=\varrho\nu`$ and pressure $`p`$ and the mass balance
 ```math
-\nabla \cdot \left(\varrho\boldsymbol{u}\right) =0
+\nabla \cdot \left(\boldsymbol{u}\right) =0
 ```
 are discretized using a staggered-grid finite-volume scheme as spatial discretization with pressures and velocity components as primary variables. For details on the discretization scheme, have a look at the Dumux [handbook](https://dumux.org/handbook).
 
