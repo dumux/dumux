@@ -28,6 +28,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/common/indices.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/paamg/amg.hh>
 #include <dune/common/version.hh>
 
 #if HAVE_UMFPACK
