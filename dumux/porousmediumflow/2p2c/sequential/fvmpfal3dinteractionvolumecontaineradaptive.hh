@@ -26,7 +26,6 @@
 
 // dumux environment
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dinteractionvolumecontaineradaptive.hh>
-#include <dumux/linear/vectorexchange.hh>
 
 namespace Dumux {
 

@@ -26,7 +26,7 @@
 
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
-#include <dumux/linear/vectorexchange.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 namespace Dumux {
 
@@ -144,7 +144,7 @@ public:
 
 #if HAVE_MPI
     // communicate updated values
-    using DataHandle = VectorExchange<ElementMapper, ScalarSolutionType>;
+    using DataHandle = VectorCommDataHandleEqual<ElementMapper, ScalarSolutionType, 0/*elementCodim*/>;
     DataHandle dataHandle(problem_.elementMapper(), indicatorVector_);
     problem_.gridView().template communicate<DataHandle>(dataHandle,
                                                          Dune::InteriorBorder_All_Interface,

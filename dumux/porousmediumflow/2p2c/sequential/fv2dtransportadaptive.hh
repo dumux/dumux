@@ -28,7 +28,7 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/linear/vectorexchange.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 #include "adaptiveproperties.hh"
 #include "fvtransport.hh"
@@ -305,7 +305,7 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
     // communicate updated values
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
-    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
+    using DataHandle = VectorCommDataHandleEqual<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> >, 0/*elementCodim*/>;
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem_.variables().elementMapper(), updateVec[i]);

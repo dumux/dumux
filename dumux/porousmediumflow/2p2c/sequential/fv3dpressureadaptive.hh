@@ -35,6 +35,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/adaptiveproperties.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 // include pressure model from Markus
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
@@ -233,7 +234,7 @@ public:
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using ElementMapper = typename SolutionTypes::ElementMapper;
     using PressureSolution = GetPropType<TypeTag, Properties::PressureSolutionVector>;
-    using DataHandle = VectorExchange<ElementMapper, PressureSolution>;
+    using DataHandle = VectorCommDataHandleEqual<ElementMapper, PressureSolution, 0/*elementCodim*/>;
 
         DataHandle dataHandle(problem().variables().elementMapper(), this->pressure());
         problem().gridView().template communicate<DataHandle>(dataHandle,

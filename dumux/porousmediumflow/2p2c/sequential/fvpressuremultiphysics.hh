@@ -28,7 +28,7 @@
 
 // dumux environment
 #include <dumux/porousmediumflow/2p2c/sequential/fvpressure.hh>
-#include <dumux/linear/vectorexchange.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 
 namespace Dumux {
@@ -223,7 +223,7 @@ public:
 protected:
     #if HAVE_MPI
         using ElementMapper = typename SolutionTypes::ElementMapper;
-        using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<int, 1> > >;
+        using DataHandle = VectorCommDataHandleEqual<ElementMapper, Dune::BlockVector<Dune::FieldVector<int, 1> >, 0/*elementCodim*/>;
     #endif
 
     // subdomain map
