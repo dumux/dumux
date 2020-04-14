@@ -294,16 +294,14 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
     }
 
-    virtual ~Field() {}
-
     //! return the name of this field
-    virtual std::string name () const { return field_->name(); }
+    std::string name () const { return field_->name(); }
 
     //! return the number of components of this field
-    virtual int ncomps() const { return field_->ncomps(); }
+    int ncomps() const { return field_->ncomps(); }
 
     //! return the precision of this field
-    virtual Dumux::Vtk::Precision precision() const
+    Dumux::Vtk::Precision precision() const
     {
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
         return Dumux::Vtk::Precision::float32;
@@ -316,9 +314,9 @@ public:
     int codim() const { return codim_; }
 
     //! element-local evaluation of the field
-    virtual double evaluate(int mycomp,
-                            const Element &element,
-                            const Dune::FieldVector< ctype, dim > &xi) const
+    double evaluate(int mycomp,
+                    const Element &element,
+                    const Dune::FieldVector< ctype, dim > &xi) const
     { return field_->evaluate(mycomp, element, xi); }
 
     //! returns the underlying vtk function
