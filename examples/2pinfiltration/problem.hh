@@ -78,7 +78,7 @@ public:
         return 293.15; // 10°C
     }
 
-    // ### 1. Boundary types
+    // #### Boundary types
     // We define the type of boundary conditions depending on location. Two types of boundary conditions
     // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
     // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
@@ -97,7 +97,7 @@ public:
     }
     // [[/codeblock]]
 
-    // ### 2. Dirichlet boundaries
+    // #### Dirichlet boundaries
     // We specify the values for the Dirichlet boundaries, depending on location.
     // We need to fix values for the two primary variables: the water pressure
     // and the DNAPL saturation.
@@ -129,7 +129,7 @@ public:
     }
     // [[/codeblock]]
 
-    // ### 3. Neumann boundaries
+    // #### Neumann boundaries
     // In our case, we need to specify mass fluxes for our two liquid phases.
     // Negative sign means influx and the unit of the boundary flux is $`kg/(m^2 s)`$.
     // On the inlet area, we set a DNAPL influx of $`0.04 kg/(m^2 s)`$. On all other
@@ -145,7 +145,7 @@ public:
     }
     // [[/codeblock]]
 
-    // ### 4. Initial conditions
+    // #### Initial conditions
     // The initial condition needs to be set for all primary variables.
     // Here, we take the data from the file that we read in previously.
     // [[codeblock]]
@@ -163,7 +163,7 @@ public:
     }
     // [[/codeblock]]
 
-    // ### 5. Point source
+    // #### Point source
     // In this scenario, we set a point source (e.g. modeling a well). The point source value can be solution dependent.
     // Point sources are added by pushing them into the vector `pointSources`.
     // The `PointSource` constructor takes two arguments.

@@ -41,7 +41,7 @@
 #include "problem.hh"
 // </details>
 //
-
+// ### Type tag definition
 // All properties are defined in the (nested) namespace
 // `Dumux::Properties`. To get and set properties, we need the definitions and implementations from the
 // header `dumux/common/properties.hh` included above.
@@ -61,7 +61,7 @@ namespace Dumux::Properties {
 namespace TTag {
 struct PointSourceExample { using InheritsFrom = std::tuple<TwoP, CCTpfaModel>; };
 }
-
+// ### Property specializations
 // Next, we specialize the properties `Problem` and `SpatialParams` for our new TypeTag and
 // set the type to our problem and spatial parameter classes implemented
 // in `problem.hh` and `spatialparams.hh`.
