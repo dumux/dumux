@@ -49,6 +49,7 @@ and the assembler for the linear systems arising from finite volume discretizati
 (box-scheme, tpfa-approximation, mpfa-approximation).
 
 ```cpp
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>

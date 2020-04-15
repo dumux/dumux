@@ -43,6 +43,7 @@
 // The following files contains the available linear solver backends, the non linear Newton Solver
 // and the assembler for the linear systems arising from finite volume discretizations
 // (box-scheme, tpfa-approximation, mpfa-approximation).
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
