@@ -27,7 +27,7 @@
 #define DUMUX_LINEAR_ISTL_SOLVERFACTORYBACKEND_HH
 
 #include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
@@ -225,6 +225,7 @@ private:
     template<class ParallelTraits, class Matrix, class Vector>
     void solveParallel_(Matrix& A, Vector& x, Vector& b)
     {
+#if DUNE_VERSION_GT(DUNE_ISTL,2,7)
         using Comm = typename ParallelTraits::Comm;
         using LinearOperator = typename ParallelTraits::LinearOperator;
         using ScalarProduct = typename ParallelTraits::ScalarProduct;
@@ -245,6 +246,9 @@ private:
 
         // solve linear system
         solver->apply(x, b, result_);
+#else
+        DUNE_THROW(Dune::NotImplemented, "Parallel solvers only available for dune-istl > 2.7");
+#endif
     }
 #endif // HAVE_MPI
 
@@ -293,6 +297,6 @@ private:
 } // end namespace Dumux
 
 #else
-#warning "Generic dune-istl solver factory backend needs dune-istl >= 2.7.1!"
+#warning "Generic dune-istl solver factory backend needs dune-istl >= 2.7!"
 #endif // DUNE version check
 #endif // header guard
