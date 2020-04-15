@@ -16,22 +16,42 @@ __Table of contents__. This description is structured as follows:
 [[_TOC_]]
 
 ## Mathematical model
-The Stokes model without gravitation and without sources or sinks for a stationary, incompressible, laminar, single phase, one-component, isothermal ($`T=10^\circ C`$) flow is considered assuming a Newtonian fluid of constant density $` \varrho = 1~\frac{\text{kg}}{\text{m}^3} `$ and constant kinematic viscosity $` \nu = 1~\frac{\text{m}^2}{\text{s}} `$. The momentum balance
+In this example, the Stokes model for stationary and incompressible single phase flow is considered.
+Thus, the momentum balance equations
+
 ```math
 - \nabla\cdot\left(\mu\left(\nabla\boldsymbol{u}+\nabla\boldsymbol{u}^{\text{T}}\right)\right)+ \nabla p = 0
 ```
-with density  $`\varrho`$, velocity $`\boldsymbol{u}`$, dynamic viscosity  $`\mu=\varrho\nu`$ and pressure $`p`$ and the mass balance
+
+and the mass balance
+
 ```math
 \nabla \cdot \left(\boldsymbol{u}\right) =0
 ```
-are discretized using a staggered-grid finite-volume scheme as spatial discretization with pressures and velocity components as primary variables. For details on the discretization scheme, have a look at the Dumux [handbook](https://dumux.org/handbook).
+
+are solved, where $`\varrho`$ and $`\mu`$ are the density and viscosity of the fluid,
+$`\boldsymbol{u}`$ is the fluid velocity and $`p`$ is the pressure. Here, we use constant fluid
+properties with $`\varrho = 1~\frac{\text{kg}}{\text{m}^3}`$ and $`\mu = 1~\text{Pa}\text{s}`$.
+Furthermore, isothermal conditions with a homogeneous temperature distribution of $`T=10^\circ C`$ are assumed.
+
+All equations are discretized with the staggered-grid finite-volume scheme as spatial discretization
+with pressures and velocity components as primary variables. For details on the discretization scheme,
+have a look at the Dumux [handbook](https://dumux.org/handbook).
 
 ## Problem set-up
-This example contains a stationary free flow of a fluid through two parallel solid plates in two dimensions from left to right. The figure below shows the simulation set-up. The fluid flows into the system at the left with a constant velocity of $` v = 1~\frac{\text{m}}{\text{s}} `$. The inflow velocity profile is a block profile. Due to the no-slip, no-flow boundary conditions at the top and bottom plate, the velocity profile gradually assumes a parabolic shape along the channel. At the outlet, the pressure is fixed and a zero velocity gradient in x-direction is assumed. The physical domain, which is modeled is the rectangular domain $`x\in[0,10],~y\in[0,1]`$.
+This example considers stationary flow of a fluid between two parallel solid plates in two dimensions.
+Flow is enforced from left to right by prescribing an inflow velocity of $` v = 1~\frac{\text{m}}{\text{s}} `$
+on the left boundary, while a fixed pressure of $`p = 1.1 \text{bar}`$ and a zero velocity gradient
+in x-direction are prescribed on the right boundary. On the top and bottom boundaries, no-slip
+conditions are applied, which cause a parabolic velocity profile to develop along the channel.
+Take a look at Figure 1 for an illustration of the domain and the boundary conditions.
 
-![](./img/setup.png)
-
-In the following, we take a close look at the files containing the set-up: At first, boundary conditions are set in `problem.hh` for the Navier-Stokes model. Afterwards, we show the different steps for solving the model in the source file `main.cc`.
+<figure>
+    <center>
+        <img src="img/setup.png" alt="Free-flow setup" width="80%"/>
+        <figcaption> <b> Fig.1 </b> - Setup for the free flow problem.</figcaption>
+    </center>
+</figure>
 
 # Implementation
 
@@ -89,12 +109,10 @@ The fluid properties are specified in the following headers (we use a liquid wit
 #include <dumux/material/components/constant.hh>
 ```
 
-We include the problem and spatial parameters headers used for this simulation.
+We include the problem header used for this simulation.
 
 ```cpp
 #include "problem.hh"
-
-#include <dumux/common/properties.hh>
 ```
 
 </details>
@@ -107,6 +125,10 @@ This way, most of the `properties` required for Navier-Stokes single-phase flow 
 using the staggered-grid scheme are conveniently specialized for our new type tag.
 However, some properties depend on user choices and no meaningful default value can be set.
 Those properties will be adressed later in this file.
+Please note that, in this example, we actually want to solve the Stokes instead of the
+Navier-Stokes equations. This can be achieved at runtime by setting the parameter
+`Problem.EnableInertiaTerms = false`. Have a look at the input file `params.input`
+to see how this is done in this example.
 
 ```cpp
 // We enter the namespace Dumux::Properties in order to import the entire Dumux namespace for general use:
@@ -280,7 +302,7 @@ We need to define values for the primary variables (velocity and pressure).
     }
 ```
 
-We specify the values for the initial conditions.
+The following function defines the initial conditions.
 
 ```cpp
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
@@ -306,28 +328,19 @@ This would be important if another fluidsystem was used.
     { return 273.15 + 10; }
 ```
 
-
-```cpp
-
-private:
-```
-
 The inlet is at the left side of the physical domain.
 
 ```cpp
+private:
     bool isInlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
+    { return globalPos[0] < eps_; }
 ```
 
 The outlet is at the right side of the physical domain.
 
 ```cpp
     bool isOutlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
-    }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 ```
 
 Finally, private variables are declared:
@@ -354,13 +367,11 @@ Finally, private variables are declared:
 
 ### Included header files
 <details><summary> Click to show includes</summary>
-These are DUNE helper classes related to parallel computations, time measurements and file I/O
+These are DUNE helper classes related to parallel computations and file I/O
 
 ```cpp
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
 ```
 
 The following headers include functionality related to property definition or retrieval, as well as
@@ -369,12 +380,6 @@ the retrieval of input parameters specified in the input file or via the command
 ```cpp
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-```
-
-This header contains the class defining the start and end message of the simulation.
-
-```cpp
-#include <dumux/common/dumuxmessage.hh>
 ```
 
 The following files contains the non-linear Newton solver, the available linear solver backends and the assembler for the linear
@@ -435,13 +440,9 @@ int main(int argc, char** argv) try
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);
-
-    // Print the initial DuMuX message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
 ```
 
-We define convenience aliases for the type tag of the problem. The type
+We define a convenienc alias for the type tag of the problem. The type
 tag contains all the properties that are needed to define the model and the problem
 setup. Throughout the main file, we will obtain types defined for this type tag
 using the property system, i.e. with `GetPropType`.
@@ -481,8 +482,9 @@ We now instantiate the problem, in which we define the boundary and initial cond
     auto problem = std::make_shared<Problem>(gridGeometry);
 ```
 
-We set a solution vector which has a part (indexed by `cellCenterIdx`) for degrees of freedom (`dofs`) living
-in grid cell centers - pressures - and a part (indexed by `faceIdx`) for degrees of freedom livin on grid cell faces.
+We set a solution vector which consist of two parts: one part (indexed by `cellCenterIdx`)
+is for the pressure degrees of freedom (`dofs`) living in grid cell centers. Another part
+(indexed by `faceIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
 We initialize the solution vector by what was defined as the initial solution of the the problem.
 
 ```cpp
@@ -574,19 +576,20 @@ This example considers a linear problem (incompressible Stokes flow), therefore
 the non-linear Newton solver is not really necessary.
 For sake of generality, we nevertheless use it here such that the example can be easily
 changed to a non-linear problem by switching on the inertia terms in the input file or by choosing a compressible fluid.
+In the following piece of code we instantiate the non-linear newton solver and let it solve
+the problem.
 
 ```cpp
+    // alias for and instantiation of the newton solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
-```
 
-Solve the (potentially non-linear) system.
-
-```cpp
+    // Solve the (potentially non-linear) system.
     nonLinearSolver.solve(x);
 ```
 
-Calculate mass and volume fluxes over the planes specified above
+In the following we calculate mass and volume fluxes over the planes specified above
+(you have to click to unfold the code showing how to set up the surface fluxes).
 
 ```cpp
     flux.calculateMassOrMoleFluxes();
@@ -615,14 +618,7 @@ We conclude by printing the dumux end message.
     std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
     if (mpiHelper.rank() == 0)
-    {
         Parameters::print();
-        DumuxMessage::print(/*firstCall=*/false);
-    }
-```
-
-
-```cpp
 
     return 0;
 } // end main

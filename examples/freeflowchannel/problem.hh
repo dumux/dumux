@@ -119,7 +119,7 @@ public:
     }
     // [[/codeblock]]
 
-    // We specify the values for the initial conditions.
+    // The following function defines the initial conditions.
     // [[codeblock]]
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
@@ -138,29 +138,19 @@ public:
     // We need to specify a constant temperature for our isothermal problem.
     // Fluid properties that depend on temperature will be calculated with this value.
     // This would be important if another fluidsystem was used.
-    // [[codeblock]]
     Scalar temperature() const
     { return 273.15 + 10; }
-    // [[/codeblock]]
 
+// The inlet is at the left side of the physical domain.
+// [[codeblock]]
 private:
-
-    // The inlet is at the left side of the physical domain.
-    // [[codeblock]]
     bool isInlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
+    { return globalPos[0] < eps_; }
     // [[/codeblock]]
-
 
     // The outlet is at the right side of the physical domain.
-    // [[codeblock]]
     bool isOutlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
-    }
-    // [[/codeblock]]
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     // Finally, private variables are declared:
     // [[codeblock]]

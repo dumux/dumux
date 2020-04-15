@@ -29,19 +29,14 @@
 #include <iostream>
 // [[/exclude]]
 
-// These are DUNE helper classes related to parallel computations, time measurements and file I/O
+// These are DUNE helper classes related to parallel computations and file I/O
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
 
 // The following headers include functionality related to property definition or retrieval, as well as
 // the retrieval of input parameters specified in the input file or via the command line.
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-
-// This header contains the class defining the start and end message of the simulation.
-#include <dumux/common/dumuxmessage.hh>
 
 // The following files contains the non-linear Newton solver, the available linear solver backends and the assembler for the linear
 // systems arising from the staggered-grid discretization.
@@ -85,13 +80,9 @@ int main(int argc, char** argv) try
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);
-
-    // Print the initial DuMuX message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
     // [[/codeblock]]
 
-    // We define convenience aliases for the type tag of the problem. The type
+    // We define a convenienc alias for the type tag of the problem. The type
     // tag contains all the properties that are needed to define the model and the problem
     // setup. Throughout the main file, we will obtain types defined for this type tag
     // using the property system, i.e. with `GetPropType`.
@@ -121,8 +112,9 @@ int main(int argc, char** argv) try
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // We set a solution vector which has a part (indexed by `cellCenterIdx`) for degrees of freedom (`dofs`) living
-    // in grid cell centers - pressures - and a part (indexed by `faceIdx`) for degrees of freedom livin on grid cell faces.
+    // We set a solution vector which consist of two parts: one part (indexed by `cellCenterIdx`)
+    // is for the pressure degrees of freedom (`dofs`) living in grid cell centers. Another part
+    // (indexed by `faceIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
     // We initialize the solution vector by what was defined as the initial solution of the the problem.
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x;
@@ -196,13 +188,18 @@ int main(int argc, char** argv) try
     // the non-linear Newton solver is not really necessary.
     // For sake of generality, we nevertheless use it here such that the example can be easily
     // changed to a non-linear problem by switching on the inertia terms in the input file or by choosing a compressible fluid.
+    // In the following piece of code we instantiate the non-linear newton solver and let it solve
+    // the problem.
+    // [[codeblock]]
+    // alias for and instantiation of the newton solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // Solve the (potentially non-linear) system.
     nonLinearSolver.solve(x);
-
-    // Calculate mass and volume fluxes over the planes specified above
+    // [[/codeblock]]
+    // In the following we calculate mass and volume fluxes over the planes specified above
+    // (you have to click to unfold the code showing how to set up the surface fluxes).
     flux.calculateMassOrMoleFluxes();
     flux.calculateVolumeFluxes();
 
@@ -227,14 +224,11 @@ int main(int argc, char** argv) try
     std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
     if (mpiHelper.rank() == 0)
-    {
         Parameters::print();
-        DumuxMessage::print(/*firstCall=*/false);
-    }
-    // [[/codeblock]]
 
     return 0;
 } // end main
+// [[/codeblock]]
 // #### Exception handling
 // In this part of the main file we catch and print possible exceptions that could
 // occur during the simulation.

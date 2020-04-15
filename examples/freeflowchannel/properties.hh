@@ -45,10 +45,8 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
-// We include the problem and spatial parameters headers used for this simulation.
+// We include the problem header used for this simulation.
 #include "problem.hh"
-
-#include <dumux/common/properties.hh>
 // [[/details]]
 //
 // ### Type tag definition
@@ -59,6 +57,10 @@
 // using the staggered-grid scheme are conveniently specialized for our new type tag.
 // However, some properties depend on user choices and no meaningful default value can be set.
 // Those properties will be adressed later in this file.
+// Please note that, in this example, we actually want to solve the Stokes instead of the
+// Navier-Stokes equations. This can be achieved at runtime by setting the parameter
+// `Problem.EnableInertiaTerms = false`. Have a look at the input file `params.input`
+// to see how this is done in this example.
 // [[codeblock]]
 // We enter the namespace Dumux::Properties in order to import the entire Dumux namespace for general use:
 namespace Dumux::Properties {
