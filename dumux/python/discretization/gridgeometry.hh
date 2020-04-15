@@ -1,0 +1,128 @@
+#ifndef DUMUX_PYTHON_DISCRETIZATION_GRIDGEOMETRY_HH
+#define DUMUX_PYTHON_DISCRETIZATION_GRIDGEOMETRY_HH
+
+#include <memory>
+#include <dune/python/pybind11/pybind11.h>
+#include <dune/python/common/typeregistry.hh>
+
+namespace Dumux::Python {
+
+namespace Impl {
+
+template<class SCV>
+void registerSubControlVolume(pybind11::handle scope)
+{
+    using namespace Dune::Python;
+
+    auto [cls, addedToRegistry] = insertClass<SCV>(
+        scope, "SubControlVolume",
+        GenerateTypeName("SubControlVolume"),
+        IncludeFiles{"dumux/python/discretization/gridgeometry.hh"}
+    );
+
+    if (addedToRegistry)
+    {
+        using pybind11::operator""_a;
+
+        cls.def("center", &SCV::center);
+        cls.def("volume", &SCV::volume);
+        cls.def("dofIndex", &SCV::dofIndex);
+        cls.def("localDofIndex", &SCV::localDofIndex);
+        cls.def("dofPosition", &SCV::dofPosition);
+        cls.def("elementIndex", &SCV::elementIndex);
+
+    }
+}
+
+template<class SCVF>
+void registerSubControlVolumeFace(pybind11::handle scope)
+{
+    using namespace Dune::Python;
+
+    auto [cls, addedToRegistry] = insertClass<SCVF>(
+        scope, "SubControlVolumeFace",
+        GenerateTypeName("SubControlVolumeFace"),
+        IncludeFiles{"dumux/python/discretization/gridgeometry.hh"}
+    );
+
+    if (addedToRegistry)
+    {
+        using pybind11::operator""_a;
+
+        cls.def("center", &SCVF::center);
+        cls.def("area", &SCVF::area);
+        cls.def("ipGlobal", &SCVF::ipGlobal);
+        cls.def("boundary", &SCVF::boundary);
+        cls.def("unitOuterNormal", &SCVF::unitOuterNormal);
+        cls.def("insideScvIdx", &SCVF::insideScvIdx);
+        cls.def("outsideScvIdx", [](SCVF& self){ return self.outsideScvIdx(); });
+        cls.def("index", &SCVF::index);
+    }
+}
+
+template<class FVEG>
+void registerFVElementGeometry(pybind11::handle scope)
+{
+    using namespace Dune::Python;
+
+    auto [cls, addedToRegistry] = insertClass<FVEG>(
+        scope, "FVElementGeometry",
+        GenerateTypeName("FVElementGeometry"),
+        IncludeFiles{"dumux/python/discretization/gridgeometry.hh"}
+    );
+
+    if (addedToRegistry)
+    {
+        using pybind11::operator""_a;
+
+        cls.def("numScvf", &FVEG::numScv);
+        cls.def("numScv", &FVEG::numScv);
+        cls.def("bind", &FVEG::bind, "element"_a);
+        cls.def("hasBoundaryScvf", &FVEG::hasBoundaryScvf);
+        cls.def("scvs", [](FVEG& self){
+            const auto range = scvs(self);
+            return pybind11::make_iterator(range.begin(), range.end());
+        }, pybind11::keep_alive<0, 1>());
+        cls.def("scvfs", [](FVEG& self){
+            const auto range = scvfs(self);
+            return pybind11::make_iterator(range.begin(), range.end());
+        }, pybind11::keep_alive<0, 1>());
+    }
+}
+
+} // end namespace Impl
+
+// see python/dumux/discretization/__init__.py for how this is used for JIT compilation
+template <class GG, class... Options>
+void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options...> cls)
+{
+    using pybind11::operator""_a;
+    using namespace Dune::Python;
+
+    using GridView = typename GG::GridView;
+
+    cls.def(pybind11::init([](GridView gridView){
+        return std::make_unique<GG>(gridView);
+    }), "gridView"_a);
+
+    cls.def("update", &GG::update);
+    cls.def("numDofs", &GG::numDofs);
+    cls.def("numScv", &GG::numScv);
+    cls.def("numScvf", &GG::numScvf);
+
+    using SubControlVolume = typename GG::SubControlVolume;
+    Impl::registerSubControlVolume<SubControlVolume>(scope);
+
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
+    Impl::registerSubControlVolumeFace<SubControlVolumeFace>(scope);
+
+    // also compile the corresponding local view
+    using LocalView = typename GG::LocalView;
+    Impl::registerFVElementGeometry<LocalView>(scope);
+    // and make it accessible
+    cls.def("localView", [](GG& self){ return localView(self); });
+}
+
+} // namespace Dumux::Python
+
+#endif
