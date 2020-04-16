@@ -25,27 +25,16 @@
 // [[codeblock]]
 #include <config.h>
 
-// Standard header file for C++, to get time and date information.
-#include <ctime>
-
 // Standard header file for C++, for in- and output.
 #include <iostream>
 // [[/codeblock]]
 
-// Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and linear solvers. So we need some includes from that.
+// A Dune helper class for enabling parallel simulations with MPI
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
 // In Dumux, a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh. Additionally, we include the parameter class, which manages the definition of input parameters by a default value, the inputfile or the command line.
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-
-// The file dumuxmessage.hh contains the class defining the start and end message of the simulation.
-#include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
 
 //We include the linear solver to be used to solve the linear system and the nonlinear  Newton's method
 #include <dumux/linear/amgbackend.hh>
@@ -56,12 +45,10 @@
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
-// We include the spatial discretization methods available in Dumux
-#include <dumux/discretization/method.hh>
 // We need the following class to simplify the writing of dumux simulation data to VTK format.
 #include <dumux/io/vtkoutputmodule.hh>
-// The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the different supported grid managers.
-#include <dumux/io/grid/gridmanager.hh>
+// The gridmanager constructs a grid from the information in the input or grid file.
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 //We include several files which are needed for the adaptive grid
 #include <dumux/adaptive/adapt.hh>
@@ -87,10 +74,6 @@ int main(int argc, char** argv) try
 
     //We initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
-
-    //We print dumux start message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
 
     //We parse command line arguments and input file
     Parameters::init(argc, argv);
@@ -127,7 +110,7 @@ int main(int argc, char** argv) try
 
     // We initialize the solution vector and then use the solution vector to intialize the `gridVariables`.
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
+    SolutionVector x;
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -209,7 +192,7 @@ int main(int argc, char** argv) try
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // and initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model.
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
@@ -269,10 +252,6 @@ int main(int argc, char** argv) try
         // we leave the refinement step
         }
 
-        // Now, we start to calculate the new solution of that time step.
-        //First, we define the old solution as the solution of the previous time step for storage evaluations.
-        assembler->setPreviousSolution(xOld);
-
         // We solve the non-linear system with time step control.
         nonLinearSolver.solve(x, *timeLoop);
 
@@ -302,10 +281,7 @@ int main(int argc, char** argv) try
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
-    {
         Parameters::print();
-        DumuxMessage::print(/*firstCall=*/false);
-    }
 
     return 0;
 } // end main
@@ -316,12 +292,12 @@ int main(int argc, char** argv) try
 // [[details]] exception handler
 // [[codeblock]]
 // errors related to run-time parameters
-catch (Dumux::ParameterException &e)
+catch (const Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
-catch (Dune::DGFException & e)
+catch (const Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
                  "). Most likely, the DGF file name is wrong "
@@ -330,7 +306,7 @@ catch (Dune::DGFException & e)
                  << " ---> Abort!" << std::endl;
     return 2;
 }
-catch (Dune::Exception &e)
+catch (const Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;

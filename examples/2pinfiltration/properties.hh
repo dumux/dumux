@@ -25,7 +25,7 @@
 //
 // ### Includes
 // The header includes will be mentioned in the text below.
-// <details><summary>Click to show the header includes</summary>
+// [[details]] header includes
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/common/properties.hh>
@@ -39,7 +39,7 @@
 
 #include "spatialparams.hh"
 #include "problem.hh"
-// </details>
+// [[/details]]
 //
 // ### Type tag definition
 // All properties are defined in the (nested) namespace
