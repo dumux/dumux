@@ -491,7 +491,6 @@ public:
             // the SIMPLE algorithm
             // 1. Solve A*u + B*p = f for u
             auto uRhs = f;
-            A.mmv(u, uRhs);
             B.mmv(p, uRhs);
             auto uNew = u;
             applySolverForA_(uNew, uRhs);
