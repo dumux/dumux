@@ -400,8 +400,8 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
         //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
         void applyscaleadd (typename U::field_type alpha, const U& x, U& y) const final
         {
-            auto tmp = y;
-            apply(x,tmp);
+            auto tmp = U(y.size());
+            apply(x, tmp);
             tmp *= alpha;
             y += tmp;
         }
