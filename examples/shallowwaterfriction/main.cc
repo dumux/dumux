@@ -25,15 +25,11 @@
 // [[exclude]]
 // Some generic includes.
 #include <config.h>
-#include <ctime>
 #include <iostream>
 // [[/exclude]]
 //
-// These are DUNE helper classes related to parallel computations, time measurements and file I/O
+// DUNE helper class for MPI
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
 
 // The following headers include functionality related to property definition or retrieval, as well as
 // the retrieval of input parameters specified in the input file or via the command line.
@@ -53,7 +49,7 @@
 // The gridmanager constructs a grid from the information in the input or grid file.
 // Many different Dune grid implementations are supported, of which a list can be found
 // in `gridmanager.hh`.
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
 // We include the header file specifing the properties of this example
 #include "properties.hh"
