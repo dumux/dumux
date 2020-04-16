@@ -210,7 +210,7 @@ public:
         std::array<Scalar, 3> boundaryStateVariables;
 
         // Calculate the Riemann invariants for imposed discharge at the left side.
-        if (scvf.center()[0] < 0.0 + eps_)
+        if (scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
         {
             boundaryStateVariables = ShallowWater::fixedDischargeBoundary(discharge_,
                                                                           insideVolVars.waterDepth(),
@@ -220,7 +220,7 @@ public:
                                                                           nxy);
         }
         // Calculate the Riemann invariants for imposed water depth at the right side.
-        else if (scvf.center()[0] > 500.0 - eps_)
+        else if (scvf.center()[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
             boundaryStateVariables =  ShallowWater::fixedWaterDepthBoundary(hBoundary_,
                                                                             insideVolVars.waterDepth(),
