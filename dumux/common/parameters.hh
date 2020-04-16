@@ -29,6 +29,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <fstream>
+#include <functional>
 
 #include <dune/common/parametertree.hh>
 #include <dune/common/parametertreeparser.hh>
