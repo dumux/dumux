@@ -29,6 +29,7 @@
 #include <dune/common/indices.hh>
 #include <dune/common/version.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/operators.hh>
 #include <dune/istl/paamg/amg.hh>
 
 #if HAVE_UMFPACK
@@ -332,6 +333,278 @@ private:
 };
 
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
+
+
+//! See https://www.cs.umd.edu/~elman/papers/tax.pdf
+template<class M, class X, class Y, int l = 1>
+class SeqSimple : public Dune::Preconditioner<X,Y>
+{
+    static_assert(Dumux::isMultiTypeBlockMatrix<M>::value && M::M() == 2 && M::N() == 2, "SeqSimple expects a 2x2 MultiTypeBlockMatrix.");
+    static_assert(l== 1, "SeqSimple expects a block level of 1.");
+
+    using A = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>;
+    using U = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
+
+    using Comm = Dune::Amg::SequentialInformation;
+    using LinearOperator = Dune::MatrixAdapter<A, U, U>;
+    using Smoother = Dune::SeqSSOR<A, U, U>;
+    using AMGSolverForA = Dune::Amg::AMG<LinearOperator, U, Smoother, Comm>;
+
+    class SimpleOperator : public Dune::LinearOperator<U, U>
+    {
+        // using LocalX = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
+    public:
+
+        SimpleOperator(const M& m) : m_(m) {}
+
+        /*! \brief apply operator to x:  \f$ y = A(x) \f$
+              The input vector is consistent and the output must also be
+           consistent on the interior+border partition.
+         */
+        void apply (const U& x, U& y) const final
+        {
+            // convenience variables
+            const auto& deltaP = x;
+            auto& rhs = y;
+
+            using namespace Dune::Indices;
+            auto& A = m_[_0][_0];
+            auto& B = m_[_0][_1];
+            auto& C = m_[_1][_0];
+            auto& D = m_[_1][_1];
+
+            // Apply -(-D + C * diag(A)^-1 * B) * deltaP:
+
+            // B * deltP
+            // rhsTmp has different size as rhs
+            auto rhsTmp = U(B.N());
+            B.mv(deltaP, rhsTmp);
+
+            // diag(A)^-1 * B * deltaP
+            for (std::size_t i = 0; i < A.N(); ++i)
+            {
+                auto tmp = A[i][i];
+                tmp.invert();
+                rhsTmp[i] *= tmp;
+            }
+
+            // C * diag(A)^-1 * B  *deltaP
+            C.mv(rhsTmp, rhs);
+
+            // (-D + C * diag(A)^-1 * B) * deltaP
+            D.mmv(deltaP, rhs);
+
+            rhs *= -1.0;
+        }
+
+        //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+        void applyscaleadd (typename U::field_type alpha, const U& x, U& y) const final
+        {
+            auto tmp = y;
+            apply(x,tmp);
+            tmp *= alpha;
+            y += tmp;
+        }
+
+        //! Category of the linear operator (see SolverCategory::Category)
+        Dune::SolverCategory::Category category() const final
+        {
+           return Dune::SolverCategory::sequential;
+        };
+
+        const M& m_;
+
+    };
+
+public:
+    //! \brief The matrix type the preconditioner is for.
+    using matrix_type = M;
+    //! \brief The domain type of the preconditioner.
+    using domain_type = X;
+    //! \brief The range type of the preconditioner.
+    using range_type = Y;
+    //! \brief The field type of the preconditioner.
+    using field_type = typename X::field_type;
+    //! \brief Scalar type underlying the field_type.
+    using scalar_field_type = Dune::Simd::Scalar<field_type>;
+
+    /*!
+     * \brief Constructor
+     *
+     * \param mat The matrix to operate on.
+     * \param params Collection of paramters.
+     */
+    SeqSimple(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& mat, const Dune::ParameterTree& params)
+    : matrix_(mat->getmat())
+    , numIterations_(params.get<std::size_t>("iterations"))
+    , relaxationFactor_(params.get<scalar_field_type>("relaxation"))
+    , verbosity_(params.get<int>("verbosity"))
+    , paramGroup_(params.get<std::string>("ParameterGroup"))
+    , useDirectVelocitySolverForA_(getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.DirectSolverForA", false))
+    {
+        // AMG is needed for determination of omega
+        if (!useDirectVelocitySolverForA_)
+            initAMG_(params);
+
+        if (useDirectVelocitySolverForA_)
+            initUMFPack_();
+    }
+
+    /*!
+     * \brief Prepare the preconditioner.
+     */
+    virtual void pre(X& x, Y& b) {}
+
+    /*!
+     * \brief Apply the preconditioner
+     *
+     * \param update The update to be computed.
+     * \param currentDefect The current defect.
+     */
+    virtual void apply(X& update, const Y& currentDefect)
+    {
+        using namespace Dune::Indices;
+
+        auto& A = matrix_[_0][_0];
+        auto& B = matrix_[_0][_1];
+        auto& C = matrix_[_1][_0];
+        auto& D = matrix_[_1][_1];
+
+        const auto& f = currentDefect[_0];
+        const auto& g = currentDefect[_1];
+        auto& u = update[_0];
+        auto& p = update[_1];
+
+        // incorporate Dirichlet cell values
+        // TODO: pass Dirichlet constraint handler from outside
+        for (std::size_t i = 0; i < D.N(); ++i)
+        {
+            const auto& block = D[i][i];
+            for (auto rowIt = block.begin(); rowIt != block.end(); ++rowIt)
+                if (Dune::FloatCmp::eq<scalar_field_type>(rowIt->one_norm(), 1.0))
+                    p[i][rowIt.index()] = g[i][rowIt.index()];
+        }
+
+        for (std::size_t k = 0; k < numIterations_; ++k)
+        {
+
+            // the SIMPLE algorithm
+            // 1. Solve A*u + B*p = f for u
+            auto uRhs = f;
+            A.mmv(u, uRhs);
+            B.mmv(p, uRhs);
+            auto uNew = u;
+            applySolverForA_(uNew, uRhs);
+
+            // 2. Solve -(D + C * diag(A)^-1 * B) * deltaP = C * uNew + D*p for deltaP
+            using SimpleSolver = Dune::RestartedGMResSolver<U>;
+            // using SimpleSolverPreconditioner = Dune::SeqSSOR<M, X, X, 1>;
+            using SimpleSolverPreconditioner = Dune::Richardson<U, U>;
+
+            Dune::InverseOperatorResult result;
+            SimpleSolverPreconditioner precond;
+            auto linearOperator = SimpleOperator(matrix_);
+            static const int innersolverVerbosity = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", 0);
+            static const double innersolverResidualReduction = getParamFromGroup<double>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverResidualReduction", 1e-12);
+            static const int innersolverMaxIter = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverMaxIter", 1000);
+            static const int innersolverRestart = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverRestart", 100);
+            SimpleSolver solver(linearOperator, precond, innersolverResidualReduction, innersolverRestart, innersolverMaxIter, innersolverVerbosity);
+
+            auto pRhs = p;
+            pRhs = 0.0;
+            auto deltaP = pRhs;
+            C.mv(uNew, pRhs);
+            D.mmv(p, pRhs);
+
+            solver.apply(deltaP, pRhs, result);
+
+            auto deltaU = U(B.N());
+            B.mv(deltaP, deltaU);
+
+            for (std::size_t i = 0; i < A.N(); ++i)
+            {
+                auto tmp = A[i][i];
+                tmp.invert();
+                deltaU[i] *= -tmp;
+            }
+
+            // 4. Update p
+            auto shift = deltaP;
+            shift *= relaxationFactor_;
+            p += shift;
+
+            // 5. Update u
+            u += deltaU;
+        }
+    }
+
+    /*!
+     * \brief Clean up.
+     */
+    virtual void post(X& x) {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual Dune::SolverCategory::Category category() const
+    {
+        return Dune::SolverCategory::sequential;
+    }
+
+private:
+
+    void initAMG_(const Dune::ParameterTree& params)
+    {
+        using namespace Dune::Indices;
+        auto linearOperator = std::make_shared<LinearOperator>(matrix_[_0][_0]);
+        amgSolverForA_ = std::make_unique<AMGSolverForA>(linearOperator, params);
+    }
+
+    void initUMFPack_()
+    {
+#if HAVE_UMFPACK
+            using namespace Dune::Indices;
+            umfPackSolverForA_ = std::make_unique<Dune::UMFPack<A>>(matrix_[_0][_0]);
+#else
+            DUNE_THROW(Dune::InvalidStateException, "UMFPack not available. Use LinearSolver.Preconditioner.DirectVelocitySolver = false.");
+#endif
+    }
+
+    template<class Sol, class Rhs>
+    void applySolverForA_(Sol& sol, Rhs& rhs) const
+    {
+        if (useDirectVelocitySolverForA_)
+        {
+#if HAVE_UMFPACK
+            Dune::InverseOperatorResult res;
+            umfPackSolverForA_->apply(sol, rhs, res);
+#endif
+        }
+        else
+        {
+            amgSolverForA_->pre(sol, rhs);
+            amgSolverForA_->apply(sol, rhs);
+            amgSolverForA_->post(sol);
+        }
+    }
+
+    //! \brief The matrix we operate on.
+    const M& matrix_;
+    //! \brief The number of steps to do in apply
+    const std::size_t numIterations_;
+    //! \brief The relaxation factor to use
+    scalar_field_type relaxationFactor_;
+    //! \brief The verbosity level
+    const int verbosity_;
+
+    std::unique_ptr<AMGSolverForA> amgSolverForA_;
+#if HAVE_UMFPACK
+    std::unique_ptr<Dune::UMFPack<A>> umfPackSolverForA_;
+#endif
+    const std::string paramGroup_;
+    const bool useDirectVelocitySolverForA_;
+};
+
+DUMUX_REGISTER_PRECONDITIONER("simple", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqSimple, 1>());
+
 
 } // end namespace Dumux
 

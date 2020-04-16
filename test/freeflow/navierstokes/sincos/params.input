@@ -38,10 +38,13 @@ UpwindWeight = 0.5
 
 [LinearSolver]
 Type = restartedflexiblegmressolver
-Verbosity = 1
+Verbosity = 2
 GMResRestart = 50
 
 [LinearSolver.Preconditioner]
-Type = uzawa
-Verbosity = 1
-Iterations = 5
+Type = simple
+Verbosity = 2
+Iterations = 2
+Relaxation = 0.3
+SimpleSolverVerbosity = 1
+SimpleSolverResidualReduction = 1e-18
