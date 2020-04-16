@@ -1,8 +1,8 @@
-# Freeflow through a channel
+# Free flow through a channel
 
 __You learn how to__
 
-* solve a free flow channel problem
+* solve a free-flow channel problem
 * set outflow boundary conditions in the free-flow context
 
 __Results__. In this example we will obtain the following stationary velocity profile:

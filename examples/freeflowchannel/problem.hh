@@ -141,14 +141,14 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; }
 
-// The inlet is at the left side of the physical domain.
+// The inlet is on the left side of the physical domain.
 // [[codeblock]]
 private:
     bool isInlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] < eps_; }
     // [[/codeblock]]
 
-    // The outlet is at the right side of the physical domain.
+    // The outlet is on the right side of the physical domain.
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 

@@ -23,16 +23,16 @@
 // ## Compile-time settings (`properties.hh`)
 //
 // In this file, the type tag used for this simulation is defined,
-// for which we then specialize `properties` to the needs of the desired setup.
+// for which we then specialize properties (compile time options) to the needs of the desired setup.
 //
 // [[content]]
 //
 // ### Includes
 // [[details]] includes
 //
-// The `NavierStokes` type tag specializes most of the `properties` required for Navier-
+// The `NavierStokes` type tag specializes most of the properties required for Navier-
 // Stokes single-phase flow simulations in DuMuX. We will use this in the following to inherit the
-// respective properties and subsequently specialize those `properties` for our
+// respective properties and subsequently specialize those properties for our
 // type tag, which we want to modify or for which no meaningful default can be set.
 #include <dumux/freeflow/navierstokes/model.hh>
 
@@ -52,11 +52,11 @@
 // ### Type tag definition
 //
 // We define a type tag for our simulation with the name `ChannelExample`
-// and inherit the `properties` specialized for the type tags `NavierStokes` and `StaggeredFreeFlowModel`.
-// This way, most of the `properties` required for Navier-Stokes single-phase flow simulations
+// and inherit the properties specialized for the type tags `NavierStokes` and `StaggeredFreeFlowModel`.
+// This way, most of the properties required for Navier-Stokes single-phase flow simulations
 // using the staggered-grid scheme are conveniently specialized for our new type tag.
 // However, some properties depend on user choices and no meaningful default value can be set.
-// Those properties will be adressed later in this file.
+// Those properties will be addressed later in this file.
 // Please note that, in this example, we actually want to solve the Stokes instead of the
 // Navier-Stokes equations. This can be achieved at runtime by setting the parameter
 // `Problem.EnableInertiaTerms = false`. Have a look at the input file `params.input`
@@ -73,7 +73,7 @@ struct ChannelExample { using InheritsFrom = std::tuple<NavierStokes, StaggeredF
 
 // ### Property specializations
 //
-// In the following piece of code, mandatory `properties` for which no meaningful
+// In the following piece of code, mandatory properties for which no meaningful
 // default can be set, are specialized for our type tag `ChannelExample`.
 // [[codeblock]]
 // This sets the grid type used for the simulation. Here, we use a structured 2D grid.
@@ -97,11 +97,11 @@ struct FluidSystem<TypeTag, TTag::ChannelExample>
 // throughout the simulation.
 // [[details]] caching properties
 //
-// In Dumux, one has the option to activate/deactive the grid-wide caching of
+// In Dumux, one has the option to activate/deactivate the grid-wide caching of
 // geometries and variables. If active, the CPU time can be significantly reduced
 // as less dynamic memory allocation procedures are necessary. Per default, grid-wide
 // caching is disabled to ensure minimal memory requirements, however, in this example we
-// want to active all available caches, which significanlty increases the memory
+// want to active all available caches, which significantly increases the memory
 // demand but makes the simulation faster.
 //
 // [[codeblock]]

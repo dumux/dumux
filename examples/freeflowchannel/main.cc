@@ -38,7 +38,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
-// The following files contains the non-linear Newton solver, the available linear solver backends and the assembler for the linear
+// The following files contain the non-linear Newton solver, the available linear solver backends and the assembler for the linear
 // systems arising from the staggered-grid discretization.
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
@@ -82,7 +82,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
     // [[/codeblock]]
 
-    // We define a convenienc alias for the type tag of the problem. The type
+    // We define a convenience alias for the type tag of the problem. The type
     // tag contains all the properties that are needed to define the model and the problem
     // setup. Throughout the main file, we will obtain types defined for this type tag
     // using the property system, i.e. with `GetPropType`.
