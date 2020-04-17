@@ -1344,28 +1344,28 @@ public:
 
         const auto& a = geo1.corner(0);
         const auto& b = geo1.corner(1);
+        const auto ab = b-a;
+
         const auto& p = geo2.corner(0);
         const auto& q = geo2.corner(1);
-
-        const auto ab = b-a;
         const auto pq = q-p;
-        const auto abNorm = ab.two_norm();
-        const auto pqNorm = pq.two_norm();
+
+        const auto abNorm2 = ab.two_norm2();
+        const auto pqNorm2 = pq.two_norm2();
 
         using std::max;
-        const auto maxNorm = max(abNorm, pqNorm);
-        const auto eps2 = eps_*maxNorm*maxNorm;
+        const auto eps2 = eps_*max(abNorm2, pqNorm2);
 
         // if the segment are not parallel there is no segment intersection
         using std::abs;
-        if (!(abs(abs(ab*pq) - abNorm*pqNorm) < eps2))
+        if (crossProduct(ab, pq).two_norm2() > eps2*eps2)
             return false;
 
         const auto ap = (p-a);
         const auto aq = (q-a);
 
         // points have to be colinear
-        if (!(crossProduct(ap, aq).two_norm() < eps2))
+        if (crossProduct(ap, aq).two_norm2() > eps2*eps2)
             return false;
 
         // scaled local coordinates
@@ -1373,7 +1373,6 @@ public:
         // and do it in the very end if we find an intersection
         auto tp = ap*ab;
         auto tq = aq*ab;
-        const auto abnorm2 = abNorm*abNorm;
 
         // make sure they are sorted
         using std::swap;
@@ -1381,13 +1380,13 @@ public:
             swap(tp, tq);
 
         using std::min; using std::max;
-        tp = min(abnorm2, max(0.0, tp));
-        tq = max(0.0, min(abnorm2, tq));
+        tp = min(abNorm2, max(0.0, tp));
+        tq = max(0.0, min(abNorm2, tq));
 
         if (abs(tp-tq) < eps2)
             return false;
 
-        intersection = Intersection({geo1.global(tp/abnorm2), geo1.global(tq/abnorm2)});
+        intersection = Intersection({geo1.global(tp/abNorm2), geo1.global(tq/abNorm2)});
         return true;
     }
 };
