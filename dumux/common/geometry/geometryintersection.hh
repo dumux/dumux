@@ -1280,7 +1280,7 @@ public:
      * \brief Colliding two segments
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store corners of intersection segment
-     * \note this overload is used when segment-like intersections are seeked
+     * \note this overload is used when point-like intersections are seeked
      * \todo implement this query
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
