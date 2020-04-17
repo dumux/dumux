@@ -72,10 +72,9 @@ public:
     static Scalar pc(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const Scalar pc = pow(pow(swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
         return pc;
@@ -142,10 +141,9 @@ public:
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const Scalar powSwe = pow(swe, -1/params.vgm());
         return - 1.0/params.vgAlpha() * pow(powSwe - 1, 1.0/params.vgn() - 1)/params.vgn()
@@ -193,10 +191,9 @@ public:
     static Scalar krw(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.vgm()), params.vgm());
         return pow(swe, params.vgl())*r*r;
@@ -219,10 +216,9 @@ public:
     static Scalar dkrw_dswe(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const Scalar x = 1.0 - pow(swe, 1.0/params.vgm());
         const Scalar xToM = pow(x, params.vgm());
@@ -242,15 +238,14 @@ public:
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
-     * \note See e.g. Dury, Fischer, Schulin (1999) for application of Mualem model to non-wetting rel. perm. 
+     * \note See e.g. Dury, Fischer, Schulin (1999) for application of Mualem model to non-wetting rel. perm.
      */
     static Scalar krn(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return pow(1 - swe, params.vgl()) * pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
     }
@@ -273,10 +268,9 @@ public:
     static Scalar dkrn_dswe(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const auto sne = 1.0 - swe;
         const auto x = 1.0 - pow(swe, 1.0/params.vgm());

@@ -235,13 +235,12 @@ public:
         krn -= pow(1 - pow(ste, 1/params.vgm()), params.vgm());
         krn *= krn;
 
-        using std::max;
-        using std::min;
+        using std::clamp;
         using std::sqrt;
         if (params.krRegardsSnr())
         {
             // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = max(min((sn - params.snr()/ (1-params.swr())), 1.0), 0.0);
+            const Scalar resIncluded = clamp(sn - params.snr()/ (1-params.swr()), 0.0, 1.0);
             krn *= sqrt(resIncluded );
         }
         else
