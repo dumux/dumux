@@ -338,13 +338,53 @@ public:
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store corners of intersection segment
      * \note this overload is used when segment-like intersections are seeked
-     * \todo implement this query
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
-        DUNE_THROW(Dune::NotImplemented, "segment-segment intersection detection for segment-like intersections");
+
+        const auto& a = geo1.corner(0);
+        const auto& b = geo1.corner(1);
+        const auto ab = b - a;
+
+        const auto& p = geo2.corner(0);
+        const auto& q = geo2.corner(1);
+        const auto pq = q - p;
+        Dune::FieldVector<ctype, dimworld> n2{-pq[1], pq[0]};
+
+        using std::max;
+        const auto abNorm2 = ab.two_norm2();
+        const auto pqNorm2 = pq.two_norm2();
+        const auto eps2 = eps_*max(abNorm2, pqNorm2);
+
+        // non-parallel segments do not intersect in a segment.
+        using std::abs;
+        if (abs(n2*ab) > eps2)
+            return false;
+
+        // check if the segments lie on the same line
+        const auto ap = p - a;
+        if (abs(ap*n2) > eps2)
+            return false;
+
+        // compute scaled local coordinates of corner 1/2 of segment2 on segment1
+        auto t1 = ab*ap;
+        auto t2 = ab*(q - a);
+
+        using std::swap;
+        if (t2 > t1)
+            swap(t1, t2);
+
+        using std::min;
+        t1 = min(abNorm2, max(0.0, t1));
+        t2 = max(0.0, min(abNorm2, t2));
+
+        if (abs(t2-t1) < eps2)
+            return false;
+
+        intersection = Intersection({geo1.global(t2/abNorm2), geo1.global(t1/abNorm2)});
+        return true;
     }
 };
 
