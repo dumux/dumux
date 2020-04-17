@@ -98,12 +98,11 @@ template <class GG, class... Options>
 void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options...> cls)
 {
     using pybind11::operator""_a;
-    using namespace Dune::Python;
 
     using GridView = typename GG::GridView;
 
     cls.def(pybind11::init([](GridView gridView){
-        return std::make_unique<GG>(gridView);
+        return std::make_shared<GG>(gridView);
     }), "gridView"_a);
 
     cls.def("update", &GG::update);
