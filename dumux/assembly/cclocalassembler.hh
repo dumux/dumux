@@ -449,7 +449,7 @@ public:
         // treat ghost separately, we always want zero update for ghosts
         if (this->elementIsGhost())
         {
-            const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
+            const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
             for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
                 A[globalI][globalI][pvIdx][pvIdx] = 1.0;
 
@@ -541,7 +541,7 @@ public:
         // treat ghost separately, we always want zero update for ghosts
         if (this->elementIsGhost())
         {
-            const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
+            const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
             for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
                 A[globalI][globalI][pvIdx][pvIdx] = 1.0;
 
