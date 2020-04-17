@@ -2,6 +2,7 @@
 #define DUMUX_PYTHON_DISCRETIZATION_GRIDGEOMETRY_HH
 
 #include <memory>
+#include <dune/common/classname.hh>
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/common/typeregistry.hh>
 
@@ -16,7 +17,7 @@ void registerSubControlVolume(pybind11::handle scope)
 
     auto [cls, addedToRegistry] = insertClass<SCV>(
         scope, "SubControlVolume",
-        GenerateTypeName("SubControlVolume"),
+        GenerateTypeName(Dune::className<SCV>()),
         IncludeFiles{"dumux/python/discretization/gridgeometry.hh"}
     );
 
@@ -41,7 +42,7 @@ void registerSubControlVolumeFace(pybind11::handle scope)
 
     auto [cls, addedToRegistry] = insertClass<SCVF>(
         scope, "SubControlVolumeFace",
-        GenerateTypeName("SubControlVolumeFace"),
+        GenerateTypeName(Dune::className<SCVF>()),
         IncludeFiles{"dumux/python/discretization/gridgeometry.hh"}
     );
 
@@ -67,7 +68,7 @@ void registerFVElementGeometry(pybind11::handle scope)
 
     auto [cls, addedToRegistry] = insertClass<FVEG>(
         scope, "FVElementGeometry",
-        GenerateTypeName("FVElementGeometry"),
+        GenerateTypeName(Dune::className<FVEG>()),
         IncludeFiles{"dumux/python/discretization/gridgeometry.hh"}
     );
 
