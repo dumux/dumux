@@ -6,7 +6,7 @@ Cells = 100 50 # [m]
 Name = example_ff_channel # name passed to the output routines
 InletVelocity = 1 # [m/s]
 EnableGravity = false
-EnableInertiaTerms = false # Stokes, not Navier Stokes, in this example
+EnableInertiaTerms = false # only consider the Stokes equations in this example
 
 [Component]
 LiquidDensity = 1.0 # [kg/m^3]
