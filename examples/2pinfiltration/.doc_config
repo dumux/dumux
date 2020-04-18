@@ -1,9 +1,29 @@
 {
     "README.md" : [
-        "doc/intro.md",
-        "spatialparams.hh",
-        "problem.hh",
+        "doc/_intro.md"
+    ],
+
+    "doc/2p.md" : [
+        "doc/2p_intro.md",
         "properties.hh",
+        "problem.hh",
+        "spatialparams.hh"
+    ],
+
+    "doc/main.md" : [
+        "doc/main_intro.md",
         "main.cc"
-    ]
+    ],
+
+    "navigation" : {
+        "mainpage" : "README.md",
+        "subpages" : [
+            "doc/2p.md",
+            "doc/main.md"
+        ],
+        "subtitles" : [
+            "Two-phase infiltration set-up",
+            "Main program flow"
+        ]
+    }
 }
