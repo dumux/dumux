@@ -76,9 +76,8 @@ public:
         for (int dir = 0; dir < FVGridGeom::GridView::dimension; ++dir)
             divU += gradU[dir][dir];
 
-        using std::min;
-        using std::max;
-        return min( maxPoro, max(minPoro, (refPoro+divU)/(1.0+divU)) );
+        using std::clamp;
+        return clamp((refPoro+divU)/(1.0+divU), minPoro, maxPoro);
     }
 
     /*!

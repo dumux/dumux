@@ -90,10 +90,9 @@ public:
                                        const FluidState &state,
                                        int wPhaseIdx = 0)
     {
-        using std::max;
-        using std::min;
+        using std::clamp;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            values[phaseIdx] = max(min(state.saturation(phaseIdx),1.0),0.0);
+            values[phaseIdx] = clamp(state.saturation(phaseIdx), 0.0, 1.0);
     }
 };
 } // end namespace Dumux

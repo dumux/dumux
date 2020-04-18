@@ -72,10 +72,9 @@ public:
     static Scalar pc(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return params.pe()*pow(swe, -1.0/params.lambda());
     }
@@ -136,10 +135,9 @@ public:
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return - params.pe()/params.lambda() * pow(swe, -1/params.lambda() - 1);
     }
@@ -184,10 +182,9 @@ public:
     static Scalar krw(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return pow(swe, 2.0/params.lambda() + 3);
     }
@@ -210,10 +207,9 @@ public:
     static Scalar dkrw_dswe(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         return (2.0/params.lambda() + 3)*pow(swe, 2.0/params.lambda() + 2);
     }
@@ -235,10 +231,9 @@ public:
     static Scalar krn(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const Scalar exponent = 2.0/params.lambda() + 1;
         const Scalar tmp = 1.0 - swe;
@@ -264,10 +259,9 @@ public:
     static Scalar dkrn_dswe(const Params &params, Scalar swe)
     {
         using std::pow;
-        using std::min;
-        using std::max;
+        using std::clamp;
 
-        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const auto lambdaInv = 1.0/params.lambda();
         const auto swePow = pow(swe, 2*lambdaInv);

@@ -25,6 +25,8 @@
 #ifndef REGULARIZED_PARKERVANGEN_3P_HH
 #define REGULARIZED_PARKERVANGEN_3P_HH
 
+#include <algorithm>
+
 #include "parkervangen3p.hh"
 #include "regularizedparkervangen3pparams.hh"
 
@@ -93,13 +95,9 @@ public:
     static Scalar pcgw(const Params &params, Scalar swe)
     {
         //if specified, a constant value is used for regularization
-        if(params.constRegularization())
-        {
-            if(swe < 0.0)
-                swe = 0.0;
-            if(swe > 1.0)
-                swe = 1.0;
-        }
+        using std::clamp;
+        if (params.constRegularization())
+            swe = clamp(swe, 0.0, 1.0);
 
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
@@ -333,10 +331,9 @@ public:
      */
     static Scalar krn(const Params &params, Scalar swe, Scalar sn, Scalar ste)
     {
-        using std::max;
-        using std::min;
-        swe = max(min(swe, 1.0), 0.0);
-        ste = max(min(ste, 1.0), 0.0);
+        using std::clamp;
+        swe = clamp(swe, 0.0, 1.0);
+        ste = clamp(ste, 0.0, 1.0);
 
         if(ste - swe <= 0.0)
             return 0.0;

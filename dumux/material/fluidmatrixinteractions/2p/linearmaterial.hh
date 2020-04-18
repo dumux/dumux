@@ -144,9 +144,8 @@ public:
      */
     static Scalar krw(const Params &params, Scalar swe)
     {
-        using std::max;
-        using std::min;
-        return max(min(swe,1.0),0.0);
+        using std::clamp;
+        return clamp(swe, 0.0, 1.0);
     }
 
     /*!
@@ -160,10 +159,8 @@ public:
      */
     static Scalar krn(const Params &params, Scalar swe)
     {
-        Scalar sne = 1 - swe;
-        using std::max;
-        using std::min;
-        return max(min(sne,1.0),0.0);
+        using std::clamp;
+        return clamp(1.0-swe, 0.0, 1.0);
     }
 };
 } // end namespace Dumux
