@@ -81,7 +81,10 @@ You can also cite specific releases published on Zenodo:
 
 Automated Testing
 ==================
-[![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-latest-gcc.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
+
+* Dumux 3.2 / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-releases-3.2-dune-releases-2.7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
+* Dumux master / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-releases-2.7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
+* Dumux master / Dune master: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-master-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
 
 DuMu<sup>x</sup> features many tests (some unit tests and test problems) that can
 be run manually. We have experimental support for automated testing with buildbot.
