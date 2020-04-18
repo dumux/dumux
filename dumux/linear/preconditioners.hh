@@ -352,10 +352,13 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
 
     class SimpleOperator : public Dune::LinearOperator<U, U>
     {
-        // using LocalX = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
     public:
 
         SimpleOperator(const M& m) : m_(m) {}
+
+        template<class S>
+        void setSolver(const S& solver)
+        { solver_ = solver; }
 
         /*! \brief apply operator to x:  \f$ y = A(x) \f$
               The input vector is consistent and the output must also be
@@ -376,17 +379,12 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
             // Apply -(-D + C * diag(A)^-1 * B) * deltaP:
 
             // B * deltP
-            // rhsTmp has different size as rhs
+            // rhsTmp has different size than rhs
             auto rhsTmp = U(B.N());
             B.mv(deltaP, rhsTmp);
 
             // diag(A)^-1 * B * deltaP
-            for (std::size_t i = 0; i < A.N(); ++i)
-            {
-                auto tmp = A[i][i];
-                tmp.invert();
-                rhsTmp[i] *= tmp;
-            }
+            solver_(rhsTmp, rhsTmp);
 
             // C * diag(A)^-1 * B  *deltaP
             C.mv(rhsTmp, rhs);
@@ -412,8 +410,13 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
            return Dune::SolverCategory::sequential;
         };
 
+    private:
+
+        //! The system matrix
         const M& m_;
 
+        //! Applies the effect of A^-1 or diag(A)^-1 (depending on what is chosen in setSolver)
+        std::function<void(U&, U&)> solver_;
     };
 
 public:
@@ -437,7 +440,8 @@ public:
     SeqSimple(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& mat, const Dune::ParameterTree& params)
     : matrix_(mat->getmat())
     , numIterations_(params.get<std::size_t>("iterations"))
-    , relaxationFactor_(params.get<scalar_field_type>("relaxation"))
+    , relaxationFactorP_(params.get<scalar_field_type>("relaxation"))
+    , relaxationFactorU_(relaxationFactorP_)
     , verbosity_(params.get<int>("verbosity"))
     , paramGroup_(params.get<std::string>("ParameterGroup"))
     , useDirectVelocitySolverForA_(getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.DirectSolverForA", false))
@@ -448,6 +452,9 @@ public:
 
         if (useDirectVelocitySolverForA_)
             initUMFPack_();
+
+        relaxationFactorP_ = getParamFromGroup<scalar_field_type>(paramGroup_, "LinearSolver.Preconditioner.RelaxationP", relaxationFactorP_);
+        relaxationFactorU_ = getParamFromGroup<scalar_field_type>(paramGroup_, "LinearSolver.Preconditioner.RelaxationU", relaxationFactorU_);
     }
 
     /*!
@@ -465,7 +472,6 @@ public:
     {
         using namespace Dune::Indices;
 
-        auto& A = matrix_[_0][_0];
         auto& B = matrix_[_0][_1];
         auto& C = matrix_[_1][_0];
         auto& D = matrix_[_1][_1];
@@ -485,34 +491,39 @@ public:
                     p[i][rowIt.index()] = g[i][rowIt.index()];
         }
 
+        // the SIMPLE algorithm
         for (std::size_t k = 0; k < numIterations_; ++k)
         {
-
-            // the SIMPLE algorithm
-            // 1. Solve A*u + B*p = f for u
+            // 1. Solve A*uNew + B*p = f for uNew
             auto uRhs = f;
             B.mmv(p, uRhs);
             auto uNew = u;
             applySolverForA_(uNew, uRhs);
 
-            // 2. Solve -(D + C * diag(A)^-1 * B) * deltaP = C * uNew + D*p for deltaP
+            // 2. Solve -(D + C * diag(A)^-1 * B) * deltaP = -g + C * uNew + D*p for deltaP
             using SimpleSolver = Dune::RestartedGMResSolver<U>;
-            // using SimpleSolverPreconditioner = Dune::SeqSSOR<M, X, X, 1>;
             using SimpleSolverPreconditioner = Dune::Richardson<U, U>;
 
             Dune::InverseOperatorResult result;
             SimpleSolverPreconditioner precond;
+
             auto linearOperator = SimpleOperator(matrix_);
+            static const bool invertSchurComplementA = getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.InvertSchurComplementA", false);
+            if (invertSchurComplementA)
+                linearOperator.setSolver([&](U& a, U& b) { applySolverForA_(a, b); });
+            else
+                linearOperator.setSolver([&](U& a, U& b) { applyInverseOfDiagonalOfA_(a); });
+
             static const int innersolverVerbosity = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", 0);
             static const double innersolverResidualReduction = getParamFromGroup<double>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverResidualReduction", 1e-12);
             static const int innersolverMaxIter = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverMaxIter", 1000);
             static const int innersolverRestart = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverRestart", 100);
             SimpleSolver solver(linearOperator, precond, innersolverResidualReduction, innersolverRestart, innersolverMaxIter, innersolverVerbosity);
 
-            auto pRhs = p;
-            pRhs = 0.0;
-            auto deltaP = pRhs;
-            C.mv(uNew, pRhs);
+            auto pRhs = g;
+            pRhs *= -1.0;
+            auto deltaP = p;
+            C.umv(uNew, pRhs);
             D.mmv(p, pRhs);
 
             solver.apply(deltaP, pRhs, result);
@@ -520,19 +531,21 @@ public:
             auto deltaU = U(B.N());
             B.mv(deltaP, deltaU);
 
-            for (std::size_t i = 0; i < A.N(); ++i)
+            if (invertSchurComplementA)
+                applySolverForA_(deltaU, deltaU);
+            else
             {
-                auto tmp = A[i][i];
-                tmp.invert();
-                deltaU[i] *= -tmp;
+                applyInverseOfDiagonalOfA_(deltaU);
+                deltaU *= -1.0;
             }
 
             // 4. Update p
-            auto shift = deltaP;
-            shift *= relaxationFactor_;
-            p += shift;
+            deltaP *= relaxationFactorP_;
+            p += deltaP;
 
             // 5. Update u
+            deltaU += uNew;
+            deltaU *= relaxationFactorU_;
             u += deltaU;
         }
     }
@@ -567,6 +580,19 @@ private:
 #endif
     }
 
+    void applyInverseOfDiagonalOfA_(U& x) const
+    {
+        using namespace Dune::Indices;
+        const auto& A = matrix_[_0][_0];
+
+        for (std::size_t i = 0; i < A.N(); ++i)
+        {
+            auto tmp = A[i][i];
+            tmp.invert();
+            x[i] *= tmp;
+        }
+    }
+
     template<class Sol, class Rhs>
     void applySolverForA_(Sol& sol, Rhs& rhs) const
     {
@@ -590,7 +616,8 @@ private:
     //! \brief The number of steps to do in apply
     const std::size_t numIterations_;
     //! \brief The relaxation factor to use
-    scalar_field_type relaxationFactor_;
+    scalar_field_type relaxationFactorP_;
+    scalar_field_type relaxationFactorU_;
     //! \brief The verbosity level
     const int verbosity_;
 
