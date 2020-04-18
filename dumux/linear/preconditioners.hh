@@ -371,7 +371,6 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
             auto& rhs = y;
 
             using namespace Dune::Indices;
-            auto& A = m_[_0][_0];
             auto& B = m_[_0][_1];
             auto& C = m_[_1][_0];
             auto& D = m_[_1][_1];
