@@ -24,9 +24,10 @@
 // [[content]]
 //
 // ### Includes
-// We start with includes for `PorousMediumFlowProblem` and `readFileToContainer` (used below).
+// We start with includes for `PorousMediumFlowProblem`, `readFileToContainer` and `GetPropType` (used below).
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/io/container.hh>
+#include <dumux/common/properties.hh>
 
 // ### Problem class
 // The problem class `PointSourceProblem` implements boundary and initial conditions.
@@ -37,15 +38,15 @@ template <class TypeTag>
 class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
 {
     // The class implementation starts with some alias declarations and index definitions for convenience
-    // <details><summary>Click to show local alias declarations and indices</summary>
+    // [[details]] local alias declarations and indices
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimensionworld>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using PointSource =  GetPropType<TypeTag, Properties::PointSource>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -59,7 +60,7 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
         waterPhaseIdx = FluidSystem::phase0Idx,
         dnaplPhaseIdx = FluidSystem::phase1Idx
     };
-    // </details>
+    // [[/details]]
     //
     // In the constructor of the class, we call the parent type's constructor
     // and read the intial values for the primary variables from a text file.
@@ -78,7 +79,7 @@ public:
         return 293.15; // 10°C
     }
 
-    // ### 1. Boundary types
+    // #### Boundary types
     // We define the type of boundary conditions depending on location. Two types of boundary conditions
     // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
     // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
@@ -97,7 +98,7 @@ public:
     }
     // [[/codeblock]]
 
-    // ### 2. Dirichlet boundaries
+    // #### Dirichlet boundaries
     // We specify the values for the Dirichlet boundaries, depending on location.
     // We need to fix values for the two primary variables: the water pressure
     // and the DNAPL saturation.
@@ -112,14 +113,14 @@ public:
         fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 
         // The density is then calculated by the fluid system:
-        Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
+        const Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
         // The water phase pressure is the hydrostatic pressure, scaled with a factor:
-        Scalar height = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
-        Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
-        Scalar alpha = 1 + 1.5/height;
-        Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
-        Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
+        const Scalar height = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
+        const Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
+        const Scalar alpha = 1 + 1.5/height;
+        const Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
+        const Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
         values[pressureH2OIdx] = 1e5 - factor*densityW*this->spatialParams().gravity(globalPos)[1]*depth;
         // The saturation of the DNAPL Trichlorethene is zero on our Dirichlet boundary:
@@ -129,7 +130,7 @@ public:
     }
     // [[/codeblock]]
 
-    // ### 3. Neumann boundaries
+    // #### Neumann boundaries
     // In our case, we need to specify mass fluxes for our two liquid phases.
     // Negative sign means influx and the unit of the boundary flux is $`kg/(m^2 s)`$.
     // On the inlet area, we set a DNAPL influx of $`0.04 kg/(m^2 s)`$. On all other
@@ -145,7 +146,7 @@ public:
     }
     // [[/codeblock]]
 
-    // ### 4. Initial conditions
+    // #### Initial conditions
     // The initial condition needs to be set for all primary variables.
     // Here, we take the data from the file that we read in previously.
     // [[codeblock]]
@@ -155,15 +156,15 @@ public:
         // Accordingly, we need to find the index of our cells, depending on the x and y coordinates,
         // that corresponds to the indices of the input data set.
         const auto delta = 0.0625;
-        unsigned int cellsX = this->gridGeometry().bBoxMax()[0]/delta;
+        const unsigned int cellsX = this->gridGeometry().bBoxMax()[0]/delta;
         const auto globalPos = element.geometry().center();
 
-        unsigned int dataIdx = std::trunc(globalPos[1]/delta) * cellsX + std::trunc(globalPos[0]/delta);
+        const unsigned int dataIdx = std::trunc(globalPos[1]/delta) * cellsX + std::trunc(globalPos[0]/delta);
         return initialValues_[dataIdx];
     }
     // [[/codeblock]]
 
-    // ### 5. Point source
+    // #### Point source
     // In this scenario, we set a point source (e.g. modeling a well). The point source value can be solution dependent.
     // Point sources are added by pushing them into the vector `pointSources`.
     // The `PointSource` constructor takes two arguments.
@@ -178,7 +179,7 @@ public:
 
     // In the private part of the class, we define some helper functions for
     // the boundary conditions and local variables.
-    // <details><summary>Click to show private data members and functions</summary>
+    // [[details]] private data members and functions
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
@@ -201,6 +202,6 @@ private:
 };
 
 } // end namespace Dumux
-// </details>
+// [[/details]]
 // [[/content]]
 #endif

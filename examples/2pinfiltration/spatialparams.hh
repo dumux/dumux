@@ -24,16 +24,18 @@
 // [[content]]
 //
 // ### Includes
-// we include the basic spatial parameters for finite volumes file from which we will inherit
+// We include the basic spatial parameters for finite volumes file from which we will inherit
 #include <dumux/material/spatialparams/fv.hh>
 
-// we include all laws which are needed to define the interaction between the solid matrix and the fluids, e.g. laws for capillary pressure saturation relationships.
+// We include all laws which are needed to define the interaction between the solid matrix and the fluids, e.g. laws for capillary pressure saturation relationships.
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
+// ### The spatial parameters class
+// In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability. We inherit from the `FVSpatialParams` class, which is the base class for multiphase porous medium flow applications.
+// [[codeblock]]
 namespace Dumux {
 
-// In the TwoPTestSpatialParams class we define all functions needed to describe the porous matrix, e.g. porosity and permeability
 template<class GridGeometry, class Scalar>
 class TwoPTestSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar, TwoPTestSpatialParams<GridGeometry, Scalar>>
@@ -55,30 +57,39 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
+    // [[/codeblock]]
 
+    //Here, we get parameters for the position of the lens and porosity and permeability from the input file. Additionally, we set the parameters for the Van-Genuchten relationship.
+    // [[codeblock]]
     TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        //we get the position of the lens from the params.input file. The lens is defined by the position of the lower left and the upper right corner
+        // We get the position of the lens from the params.input file.
+        // The lens is defined by the position of the lower left and the upper right corner
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
-        //we set the parameters for the material law (here Van-Genuchten Law). First we set the residual saturations for the wetting phase and the non-wetting phase. lensMaterialParams_ define the material parameters for the lens while outerMaterialParams_ define material params for the rest of the domain.
+        // We set the parameters for the material law (here Van-Genuchten Law).
+        // First we set the residual saturations for the wetting phase and the non-wetting phase.
+        // lensMaterialParams_ define the material parameters for the lens while
+        // outerMaterialParams_ define material params for the rest of the domain.
         lensMaterialParams_.setSwr(0.18);
         lensMaterialParams_.setSnr(0.0);
         outerMaterialParams_.setSwr(0.05);
         outerMaterialParams_.setSnr(0.0);
 
-        //we set the parameters for the Van Genuchten law alpha and n
+        //We set the parameters for the Van Genuchten law alpha and n
         lensMaterialParams_.setVgAlpha(0.00045);
         lensMaterialParams_.setVgn(7.3);
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
 
-        //here we get the permeabilities from the params.input file. In case that no parameter is set, the default parameters (9.05e-12 and 4.6e-10) are used
+        //Here, we get the permeabilities from the params.input file.
+        //In case that no parameter is set, the default parameters (9.05e-12 and 4.6e-10) are used
         lensK_ = getParam<Scalar>("SpatialParams.lensK", 9.05e-12);
         outerK_ = getParam<Scalar>("SpatialParams.outerK", 4.6e-10);
     }
+     // [[/codeblock]]
 
     // We define the (intrinsic) permeability $`[m^2]`$. In this test, we use element-wise distributed permeabilities.
     template<class ElementSolution>
@@ -116,6 +127,10 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     {  return FluidSystem::phase0Idx; }
 
+    // The remainder of this class contains a convenient function to determine if
+    // a position is inside the lens and defines the data members.
+    // [[details]] private data members and member functions
+    // [[codeblock]]
 private:
     // we have a convenience definition of the position of the lens
     bool isInLens_(const GlobalPosition &globalPos) const
@@ -139,5 +154,7 @@ private:
 };
 
 } // end namespace Dumux
+// [[/codeblock]]
+// [[/details]]
 // [[/content]]
 #endif
