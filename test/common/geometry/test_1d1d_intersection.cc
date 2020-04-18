@@ -199,8 +199,8 @@ int main (int argc, char *argv[]) try
     // TODO: implement and test for dimWorld = 3
     // testPointIntersections<3>(returns);
 
-    // TODO: implement and test segment intersection for dimWorld = 2
-    // testSegmentIntersections<2>(returns);
+    // test segment intersection for dimWorld = 2
+    testSegmentIntersections<2>(returns);
 
     // test segment intersection for dimWorld = 3
     testSegmentIntersections<3>(returns);

@@ -338,13 +338,53 @@ public:
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store corners of intersection segment
      * \note this overload is used when segment-like intersections are seeked
-     * \todo implement this query
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
-        DUNE_THROW(Dune::NotImplemented, "segment-segment intersection detection for segment-like intersections");
+
+        const auto& a = geo1.corner(0);
+        const auto& b = geo1.corner(1);
+        const auto ab = b - a;
+
+        const auto& p = geo2.corner(0);
+        const auto& q = geo2.corner(1);
+        const auto pq = q - p;
+        Dune::FieldVector<ctype, dimworld> n2{-pq[1], pq[0]};
+
+        using std::max;
+        const auto abNorm2 = ab.two_norm2();
+        const auto pqNorm2 = pq.two_norm2();
+        const auto eps2 = eps_*max(abNorm2, pqNorm2);
+
+        // non-parallel segments do not intersect in a segment.
+        using std::abs;
+        if (abs(n2*ab) > eps2)
+            return false;
+
+        // check if the segments lie on the same line
+        const auto ap = p - a;
+        if (abs(ap*n2) > eps2)
+            return false;
+
+        // compute scaled local coordinates of corner 1/2 of segment2 on segment1
+        auto t1 = ab*ap;
+        auto t2 = ab*(q - a);
+
+        using std::swap;
+        if (t1 > t2)
+            swap(t1, t2);
+
+        using std::clamp;
+        t1 = clamp(t1, 0.0, abNorm2);
+        t2 = clamp(t2, 0.0, abNorm2);
+
+        if (abs(t2-t1) < eps2)
+            return false;
+
+        intersection = Intersection({geo1.global(t1/abNorm2), geo1.global(t2/abNorm2)});
+        return true;
     }
 };
 
@@ -1280,7 +1320,7 @@ public:
      * \brief Colliding two segments
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store corners of intersection segment
-     * \note this overload is used when segment-like intersections are seeked
+     * \note this overload is used when point-like intersections are seeked
      * \todo implement this query
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 0, int> = 0>
@@ -1304,28 +1344,28 @@ public:
 
         const auto& a = geo1.corner(0);
         const auto& b = geo1.corner(1);
+        const auto ab = b-a;
+
         const auto& p = geo2.corner(0);
         const auto& q = geo2.corner(1);
-
-        const auto ab = b-a;
         const auto pq = q-p;
-        const auto abNorm = ab.two_norm();
-        const auto pqNorm = pq.two_norm();
+
+        const auto abNorm2 = ab.two_norm2();
+        const auto pqNorm2 = pq.two_norm2();
 
         using std::max;
-        const auto maxNorm = max(abNorm, pqNorm);
-        const auto eps2 = eps_*maxNorm*maxNorm;
+        const auto eps2 = eps_*max(abNorm2, pqNorm2);
 
         // if the segment are not parallel there is no segment intersection
         using std::abs;
-        if (!(abs(abs(ab*pq) - abNorm*pqNorm) < eps2))
+        if (crossProduct(ab, pq).two_norm2() > eps2*eps2)
             return false;
 
         const auto ap = (p-a);
         const auto aq = (q-a);
 
         // points have to be colinear
-        if (!(crossProduct(ap, aq).two_norm() < eps2))
+        if (crossProduct(ap, aq).two_norm2() > eps2*eps2)
             return false;
 
         // scaled local coordinates
@@ -1333,21 +1373,20 @@ public:
         // and do it in the very end if we find an intersection
         auto tp = ap*ab;
         auto tq = aq*ab;
-        const auto abnorm2 = abNorm*abNorm;
 
         // make sure they are sorted
         using std::swap;
         if (tp > tq)
             swap(tp, tq);
 
-        using std::min; using std::max;
-        tp = min(abnorm2, max(0.0, tp));
-        tq = max(0.0, min(abnorm2, tq));
+        using std::clamp;
+        tp = clamp(tp, 0.0, abNorm2);
+        tq = clamp(tq, 0.0, abNorm2);
 
         if (abs(tp-tq) < eps2)
             return false;
 
-        intersection = Intersection({geo1.global(tp/abnorm2), geo1.global(tq/abnorm2)});
+        intersection = Intersection({geo1.global(tp/abNorm2), geo1.global(tq/abNorm2)});
         return true;
     }
 };
