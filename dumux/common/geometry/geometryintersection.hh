@@ -373,17 +373,17 @@ public:
         auto t2 = ab*(q - a);
 
         using std::swap;
-        if (t2 > t1)
+        if (t1 > t2)
             swap(t1, t2);
 
-        using std::min;
-        t1 = min(abNorm2, max(0.0, t1));
-        t2 = max(0.0, min(abNorm2, t2));
+        using std::clamp;
+        t1 = clamp(t1, 0.0, abNorm2);
+        t2 = clamp(t2, 0.0, abNorm2);
 
         if (abs(t2-t1) < eps2)
             return false;
 
-        intersection = Intersection({geo1.global(t2/abNorm2), geo1.global(t1/abNorm2)});
+        intersection = Intersection({geo1.global(t1/abNorm2), geo1.global(t2/abNorm2)});
         return true;
     }
 };
@@ -1379,9 +1379,9 @@ public:
         if (tp > tq)
             swap(tp, tq);
 
-        using std::min; using std::max;
-        tp = min(abNorm2, max(0.0, tp));
-        tq = max(0.0, min(abNorm2, tq));
+        using std::clamp;
+        tp = clamp(tp, 0.0, abNorm2);
+        tq = clamp(tq, 0.0, abNorm2);
 
         if (abs(tp-tq) < eps2)
             return false;
