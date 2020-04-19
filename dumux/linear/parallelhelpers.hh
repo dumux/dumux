@@ -27,7 +27,6 @@
 
 #if HAVE_MPI
 
-#include <dune/common/version.hh>
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/partitionset.hh>
@@ -65,15 +64,9 @@ class ParallelISTLHelper
         bool contains(int dim, int codim) const
         { return dofCodim == codim; }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
         { return true; }
-#else
-        //! returns true if size per entity of given dim and codim is a constant
-        bool fixedsize(int dim, int codim) const
-        { return true; }
-#endif
 
         template<class EntityType>
         std::size_t size(EntityType& e) const
@@ -98,11 +91,7 @@ class ParallelISTLHelper
     public:
         using DataType = typename V::block_type;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
-#else
-        using BaseGatherScatter::fixedsize;
-#endif
         using BaseGatherScatter::size;
 
         ConsistencyBoxGatherScatter(V& container, const DofMapper& mapper)
@@ -140,11 +129,7 @@ class ParallelISTLHelper
     public:
         using DataType = std::size_t;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
-#else
-        using BaseGatherScatter::fixedsize;
-#endif
         using BaseGatherScatter::size;
 
         GhostGatherScatter(std::vector<std::size_t>& ranks, const DofMapper& mapper)
@@ -186,11 +171,7 @@ class ParallelISTLHelper
     public:
         using DataType = std::size_t;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
-#else
-        using BaseGatherScatter::fixedsize;
-#endif
         using BaseGatherScatter::size;
 
         InteriorBorderGatherScatter(std::vector<std::size_t>& ranks, const DofMapper& mapper)
@@ -229,11 +210,7 @@ class ParallelISTLHelper
     {
         using DataType = int;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
-#else
-        using BaseGatherScatter::fixedsize;
-#endif
         using BaseGatherScatter::size;
 
         NeighbourGatherScatter(const DofMapper& mapper, int rank, std::set<int>& neighbours)
@@ -269,11 +246,7 @@ class ParallelISTLHelper
     {
         using DataType = int;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
-#else
-        using BaseGatherScatter::fixedsize;
-#endif
         using BaseGatherScatter::size;
 
         SharedGatherScatter(std::vector<int>& shared, const DofMapper& mapper)
@@ -310,11 +283,7 @@ class ParallelISTLHelper
     {
         using DataType = GlobalIndex;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
-#else
-        using BaseGatherScatter::fixedsize;
-#endif
         using BaseGatherScatter::size;
 
         GlobalIndexGatherScatter(std::vector<GlobalIndex>& globalIndices, const DofMapper& mapper)
@@ -490,11 +459,7 @@ private:
     {
         if (isOwned)
             return Dune::OwnerOverlapCopyAttributeSet::owner;
-#if DUNE_VERSION_GTE(DUNE_ISTL, 2, 7)
         else if (isGhost && (comm.category() == static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
-#else
-        else if (isGhost && (comm.getSolverCategory() == static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
-#endif
             return Dune::OwnerOverlapCopyAttributeSet::overlap;
         else
             return Dune::OwnerOverlapCopyAttributeSet::copy;
@@ -567,15 +532,9 @@ class ParallelMatrixHelper
         bool contains (int dim, int codim) const
         { return (codim == dofCodim); }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
         { return false; }
-#else
-        //! returns true if size per entity of given dim and codim is a constant
-        bool fixedsize(int dim, int codim) const
-        { return false; }
-#endif
 
         /*!
          * \brief How many objects of type DataType have to be sent for a given entity
@@ -668,15 +627,9 @@ class ParallelMatrixHelper
         bool contains(int dim, int codim) const
         { return (codim == dofCodim); }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
         { return false; }
-#else
-        //! returns true if size per entity of given dim and codim is a constant
-        bool fixedsize(int dim, int codim) const
-        { return false; }
-#endif
 
         /*!
          * \brief How many objects of type DataType have to be sent for a given entity

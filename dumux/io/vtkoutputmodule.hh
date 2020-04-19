@@ -83,14 +83,7 @@ public:
         const auto precisionString = getParamFromGroup<std::string>(paramGroup, "Vtk.Precision", "Float32");
         precision_ = Dumux::Vtk::stringToPrecision(precisionString);
         const auto coordPrecision = Dumux::Vtk::stringToPrecision(getParamFromGroup<std::string>(paramGroup, "Vtk.CoordPrecision", precisionString));
-#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
-        if (precision_ != Dumux::Vtk::Precision::float32 || coordPrecision != Dumux::Vtk::Precision::float32)
-            std::cerr << "Warning: Specifying VTK output precision other than Float32 is only supported in Dune 2.7 and newer. "
-                      << "Ignoring parameter and defaulting to Float32." << std::endl;
-        writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridGeometry.gridView(), dm);
-#else
         writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridGeometry.gridView(), dm, coordPrecision);
-#endif
         sequenceWriter_ = std::make_unique<Dune::VTKSequenceWriter<GridView>>(writer_, name);
     }
 

@@ -5,7 +5,6 @@
 #include <cmath>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
@@ -22,9 +21,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 #include <dumux/linear/istlsolverfactorybackend.hh>
-#endif
 #include <dumux/linear/amgbackend.hh>
 
 namespace Dumux::Test {
@@ -37,7 +34,6 @@ struct MockGridGeometry
     static constexpr auto discMethod = DiscretizationMethod::box;
 };
 
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 template<class M, class X, class V>
 void solveWithFactory(M& A, X& x, V& b, const std::string& paramGroup)
 {
@@ -51,7 +47,6 @@ void solveWithFactory(M& A, X& x, V& b, const std::string& paramGroup)
     if (!solver.result().converged)
         DUNE_THROW(Dune::Exception, solver.name() << " did not converge!");
 }
-#endif
 
 } // end namespace Dumux::Test
 
@@ -87,11 +82,9 @@ int main(int argc, char* argv[]) try
             DUNE_THROW(Dune::Exception, testSolverName << " did not converge!");
     }
 
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
     // IstlSolverFactoryBackend
     Test::solveWithFactory(A, x, b, "AMGCG");
     Test::solveWithFactory(A, x, b, "SSORCG");
-#endif
 
     return 0;
 }

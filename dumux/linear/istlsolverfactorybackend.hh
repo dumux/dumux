@@ -27,7 +27,6 @@
 #define DUMUX_LINEAR_ISTL_SOLVERFACTORYBACKEND_HH
 
 #include <dune/common/version.hh>
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
@@ -298,5 +297,4 @@ private:
 
 #else
 #warning "Generic dune-istl solver factory backend needs dune-istl >= 2.7!"
-#endif // DUNE version check
 #endif // header guard

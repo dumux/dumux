@@ -34,7 +34,6 @@
 #include <dune/istl/umfpack.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/indices.hh>
-#include <dune/common/version.hh>
 #include <dune/common/hybridutilities.hh>
 
 #include <dumux/common/parameters.hh>
@@ -152,7 +151,6 @@ public:
         return result.converged;
     }
 
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
     // solve with generic parameter tree
     template<class Preconditioner, class Solver, class Matrix, class Vector>
     static bool solveWithParamTree(const Matrix& A, Vector& x, const Vector& b,
@@ -173,7 +171,6 @@ public:
 
         return result.converged;
     }
-#endif
 };
 
 /*!
@@ -903,7 +900,6 @@ private:
  */
 // \{
 
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
 /*!
  * \ingroup Linear
  * \brief A Uzawa preconditioned BiCGSTAB solver for saddle-point problems
@@ -928,7 +924,6 @@ public:
         return "Uzawa preconditioned BiCGSTAB solver";
     }
 };
-#endif
 
 /*!
  * \ingroup Linear
@@ -943,13 +938,8 @@ class BlockDiagILU0Preconditioner : public Dune::Preconditioner<X, Y>
     template<std::size_t i>
     using VecBlockType = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
     template<std::size_t i>
     using BlockILU = Dune::SeqILU<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>, blockLevel-1>;
-#else
-    template<std::size_t i>
-    using BlockILU = Dune::SeqILU0<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>, blockLevel-1>;
-#endif
 
     using ILUTuple = typename makeFromIndexedType<std::tuple, BlockILU, std::make_index_sequence<M::N()> >::type;
 

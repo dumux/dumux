@@ -28,13 +28,7 @@
 #include <algorithm>
 #include <map>
 
-#include <dune/common/version.hh>
-#if DUNE_VERSION_LT(DUNE_COMMON,2,7)
-#include <dune/common/parallel/collectivecommunication.hh>
-#else
 #include <dune/common/parallel/communication.hh>
-#endif
-
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/common/datahandleif.hh>
@@ -103,15 +97,9 @@ struct GmshGridDataHandle : public Dune::CommDataHandleIF<GmshGridDataHandle<Gri
     bool contains (int dim, int codim) const
     { return codim == 0 || codim == 1; }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
     //! returns true if size per entity of given dim and codim is a constant
     bool fixedSize(int dim, int codim) const
     { return true; }
-#else
-    //! returns true if size per entity of given dim and codim is a constant
-    bool fixedsize(int dim, int codim) const
-    { return true; }
-#endif
 
     template<class EntityType>
     std::size_t size (const EntityType& e) const
@@ -188,15 +176,9 @@ struct GmshGridDataHandle<Dune::UGGrid<dimgrid>, GridFactory, Data>
     bool contains (int dim, int codim) const
     { return codim == 0 || codim == 1; }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
     //! returns true if size per entity of given dim and codim is a constant
     bool fixedSize(int dim, int codim) const
     { return true; }
-#else
-    //! returns true if size per entity of given dim and codim is a constant
-    bool fixedsize(int dim, int codim) const
-    { return true; }
-#endif
 
     template<class EntityType>
     std::size_t size (const EntityType& e) const

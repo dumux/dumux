@@ -29,7 +29,6 @@
 
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
-#include <dune/common/version.hh>
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/boundaryflag.hh>
@@ -262,11 +261,7 @@ public:
                                                     "You can do this manually by extract the corners from this scv "
                                                     "and extrude them by the corresponding aperture. ");
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_);
-#else
-        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, Geometry::mydimension), corners_);
-#endif
     }
 
 private:

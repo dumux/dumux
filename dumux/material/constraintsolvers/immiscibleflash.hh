@@ -27,7 +27,6 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/version.hh>
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
@@ -129,10 +128,6 @@ public:
                const typename MaterialLaw::Params &matParams,
                const ComponentVector &globalMolarities)
     {
-#if DUNE_VERSION_LT(DUNE_COMMON, 2, 7)
-        Dune::FMatrixPrecision<Scalar>::set_singular_limit(1e-25);
-#endif
-
         /////////////////////////
         // Check if all fluid phases are incompressible
         /////////////////////////
