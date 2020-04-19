@@ -5,16 +5,12 @@ for all VTK style formats like VTK files. Fuzzy compares numbers by
 using absolute and/or relative difference comparison.
 
 """
-from __future__ import print_function
-from __future__ import absolute_import
 import argparse
 import xml.etree.ElementTree as ET
 from operator import attrgetter, itemgetter
 import json
 import sys
 import math
-from six.moves import range
-from six.moves import zip
 import os
 import re
 import glob
