@@ -67,7 +67,7 @@ public:
     bool contains(int dim, int cd) const
     { return cd == codim; }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
     //! returns true if size per entity of given dim and codim is a constant
     bool fixedSize(int dim, int cd) const
     { return true; }

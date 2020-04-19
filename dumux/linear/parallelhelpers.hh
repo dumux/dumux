@@ -65,7 +65,7 @@ class ParallelISTLHelper
         bool contains(int dim, int codim) const
         { return dofCodim == codim; }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
         { return true; }
@@ -98,7 +98,7 @@ class ParallelISTLHelper
     public:
         using DataType = typename V::block_type;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
 #else
         using BaseGatherScatter::fixedsize;
@@ -140,7 +140,7 @@ class ParallelISTLHelper
     public:
         using DataType = std::size_t;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
 #else
         using BaseGatherScatter::fixedsize;
@@ -186,7 +186,7 @@ class ParallelISTLHelper
     public:
         using DataType = std::size_t;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
 #else
         using BaseGatherScatter::fixedsize;
@@ -229,7 +229,7 @@ class ParallelISTLHelper
     {
         using DataType = int;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
 #else
         using BaseGatherScatter::fixedsize;
@@ -269,7 +269,7 @@ class ParallelISTLHelper
     {
         using DataType = int;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
 #else
         using BaseGatherScatter::fixedsize;
@@ -310,7 +310,7 @@ class ParallelISTLHelper
     {
         using DataType = GlobalIndex;
         using BaseGatherScatter::contains;
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         using BaseGatherScatter::fixedSize;
 #else
         using BaseGatherScatter::fixedsize;
@@ -567,7 +567,7 @@ class ParallelMatrixHelper
         bool contains (int dim, int codim) const
         { return (codim == dofCodim); }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
         { return false; }
@@ -668,7 +668,7 @@ class ParallelMatrixHelper
         bool contains(int dim, int codim) const
         { return (codim == dofCodim); }
 
-#if DUNE_VERSION_GT(DUNE_GRID,2,7)
+#if DUNE_VERSION_GTE(DUNE_GRID,2,7)
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
         { return false; }
