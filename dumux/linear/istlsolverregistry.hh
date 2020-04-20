@@ -25,9 +25,6 @@
 #ifndef DUMUX_LINEAR_ISTL_SOLVER_REGISTRY_HH
 #define DUMUX_LINEAR_ISTL_SOLVER_REGISTRY_HH
 
-#include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
-
 #include <dune/istl/common/registry.hh>
 #include <dune/istl/solverregistry.hh>
 
@@ -52,5 +49,4 @@ struct MultiTypeBlockMatrixDirectSolverTag {};
 } // end namespace
 } // end namespace Dumux
 
-#endif // DUNE version check
 #endif // DUMUX_LINEAR_ISTL_SOLVER_REGISTRY_HH
