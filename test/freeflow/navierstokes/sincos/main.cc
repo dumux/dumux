@@ -47,7 +47,7 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
 #include <dumux/linear/istlsolverfactorybackend.hh>
 #endif
 
