@@ -295,6 +295,4 @@ private:
 
 } // end namespace Dumux
 
-#else
-#warning "Generic dune-istl solver factory backend needs dune-istl >= 2.7!"
 #endif // header guard
