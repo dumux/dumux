@@ -31,6 +31,8 @@
 
 #include "subcontrolvolumeface.hh"
 #include "connectivitymap.hh"
+#include "staggeredsubcontrolvolumeface.hh"
+#include "staggeredhalfsubcontrolvolume.hh"
 #include "staggeredgeometryhelper.hh"
 
 namespace Dumux {
@@ -45,6 +47,8 @@ struct StaggeredFreeFlowDefaultFVGridGeometryTraits
 {
     using SubControlVolume = CCSubControlVolume<GridView>;
     using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView, upwOrder>;
+    using StaggeredSubControlVolumeFace = FreeFlowRealStaggeredSubControlVolumeFace<GridView>;
+    using StaggeredHalfSubControlVolume = FreeFlowStaggeredHalfSubControlVolume<GridView>;
     using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
     using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView, upwOrder>;
     static constexpr int upwindSchemeOrder = upwOrder;
@@ -60,6 +64,9 @@ struct StaggeredFreeFlowDefaultFVGridGeometryTraits
 
     template<class GridGeometry, bool cachingEnabled>
     using LocalView = StaggeredFVElementGeometry<GridGeometry, cachingEnabled>;
+
+    template<class GridGeometry, bool cachingEnabled>
+    using StaggeredLocalView = FaceStaggeredFVElementGeometry<GridGeometry, cachingEnabled>;
 };
 
 } //end namespace Dumux

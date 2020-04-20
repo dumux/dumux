@@ -98,7 +98,7 @@ public:
     : ParentType(assembler,
                  element,
                  curSol,
-                 localView(assembler.gridGeometry(domainId)),
+                 localView(assembler.gridGeometry(domainId).actualGridGeometry()),
                  localView(assembler.gridVariables(domainId).curGridVolVars()),
                  localView(assembler.gridVariables(domainId).prevGridVolVars()),
                  localView(assembler.gridVariables(domainId).gridFluxVarsCache()),
