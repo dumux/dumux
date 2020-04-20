@@ -26,7 +26,6 @@
 #define DUMUX_LINEAR_ISTL_SOLVER_REGISTRY_HH
 
 #include <dune/istl/common/registry.hh>
-#include <dune/istl/solverregistry.hh>
 
 /*!
  * \brief Register a Dumux preconditioner
