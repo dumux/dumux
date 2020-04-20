@@ -32,7 +32,6 @@
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
-#include <dune/common/version.hh>
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -44,10 +43,7 @@
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
-
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
 #include <dumux/linear/linearsolvertraits.hh>
-#endif
 
 #include "problem.hh"
 
@@ -113,11 +109,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
     using LinearSolver = Dumux::UzawaBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
-#else
-    using LinearSolver = Dumux::UMFPackBackend;
-#endif
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

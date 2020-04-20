@@ -45,12 +45,8 @@
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
-
-#include <dune/common/version.hh>
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
 #include <dumux/linear/istlsolverfactorybackend.hh>
-#endif
+#include <dumux/nonlinear/newtonsolver.hh>
 
 #include "problem.hh"
 

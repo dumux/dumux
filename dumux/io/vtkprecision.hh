@@ -26,25 +26,11 @@
 
 #include <array>
 #include <string_view>
-
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/vtk/common.hh>
 
 namespace Dumux::Vtk {
 
-#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
-//! which precision to use when writing out data to vtk files
-enum class Precision
-{
-    int32,
-    uint8,
-    uint32,
-    float32,
-    float64
-};
-#else
 using Dune::VTK::Precision;
-#endif
 
 /*!
  * \ingroup InputOutput

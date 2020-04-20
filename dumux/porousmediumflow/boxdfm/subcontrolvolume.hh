@@ -25,7 +25,6 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_SUBCONTROLVOLUME_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_SUBCONTROLVOLUME_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/reservedvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
@@ -224,11 +223,7 @@ public:
                                                     "You can do this manually by extract the corners from this scv "
                                                     "and extrude them by the corresponding aperture. ");
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Geometry(Dune::GeometryTypes::cube(dim), corners_);
-#else
-        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), corners_);
-#endif
     }
 
     //! Return the corner for the given local index

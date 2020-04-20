@@ -44,7 +44,6 @@
 
 namespace Dumux {
 
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,7)
 /*!
  * \ingroup Linear
  * \brief A preconditioner based on the Uzawa algorithm for saddle-point problems of the form
@@ -329,7 +328,6 @@ private:
     const std::string paramGroup_;
     const bool useDirectVelocitySolverForA_;
 };
-#endif // DUNE_VERSION_GTE(DUNE_ISTL,2,7)
 
 #if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());

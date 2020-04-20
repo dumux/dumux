@@ -24,8 +24,6 @@
 #ifndef DUMUX_IO_GRID_MANAGER_ALU_HH
 #define DUMUX_IO_GRID_MANAGER_ALU_HH
 
-#include <dune/common/version.hh>
-
 // ALUGrid specific includes
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
@@ -162,12 +160,7 @@ public:
                 std::vector<int> boundaryMarkersInsertionIndex, boundaryMarkers, faceMarkers, elementMarkers;
                 auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
 
-// Older versions of Dune(-Alugrid) require that the Gmsh file is read only on process 0
-#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
-                if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
-#endif
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, boundaryMarkersInsertionIndex, elementMarkers, verbose, boundarySegments);
-
                 ParentType::gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
 
                 // reorder boundary markers according to boundarySegmentIndex
@@ -194,10 +187,7 @@ public:
             {
                 auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
 
-// Older versions of Dune(-Alugrid) require that the Gmsh file is read only on process 0
-#if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
                 if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
-#endif
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, verbose, boundarySegments);
 
                 ParentType::gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());

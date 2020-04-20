@@ -27,7 +27,6 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/version.hh>
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
@@ -107,9 +106,7 @@ public:
             solveIdealMix_(fluidState, paramCache, phaseIdx, targetFug);
             return;
         }
-#if DUNE_VERSION_LT(DUNE_COMMON, 2, 7)
-        Dune::FMatrixPrecision<Scalar>::set_singular_limit(1e-25);
-#endif
+
         // save initial composition in case something goes wrong
         Dune::FieldVector<Scalar, numComponents> xInit;
         for (int i = 0; i < numComponents; ++i) {
