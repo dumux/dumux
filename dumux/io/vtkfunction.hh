@@ -54,18 +54,18 @@ struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const final
     { return accessChooser_(mycomp, mapper_.index(e), IsIndexable<decltype(field_[0])>()); }
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
@@ -123,13 +123,13 @@ struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const final
     {
         const unsigned int dim = Element::mydimension;
         const unsigned int nVertices = e.subEntities(dim);
@@ -145,7 +145,7 @@ public:
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
@@ -207,13 +207,13 @@ struct VectorP1NonConformingVTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps() const { return nComps_; }
+    int ncomps() const final { return nComps_; }
 
     //! get name
-    virtual std::string name() const { return name_; }
+    std::string name() const final { return name_; }
 
     //! evaluate
-    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
+    double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const final
     {
         const unsigned int dim = Element::mydimension;
         const unsigned int nVertices = e.subEntities(dim);
@@ -229,7 +229,7 @@ public:
 
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 7)
     //! get output precision for the field
-    Dumux::Vtk::Precision precision() const override
+    Dumux::Vtk::Precision precision() const final
     { return precision_; }
 #endif
 
@@ -307,16 +307,14 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
     }
 
-    virtual ~Field() {}
-
     //! return the name of this field
-    virtual std::string name () const { return field_->name(); }
+    std::string name () const { return field_->name(); }
 
     //! return the number of components of this field
-    virtual int ncomps() const { return field_->ncomps(); }
+    int ncomps() const { return field_->ncomps(); }
 
     //! return the precision of this field
-    virtual Dumux::Vtk::Precision precision() const
+    Dumux::Vtk::Precision precision() const
     {
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 7)
         return Dumux::Vtk::Precision::float32;
@@ -329,9 +327,9 @@ public:
     int codim() const { return codim_; }
 
     //! element-local evaluation of the field
-    virtual double evaluate(int mycomp,
-                            const Element &element,
-                            const Dune::FieldVector< ctype, dim > &xi) const
+    double evaluate(int mycomp,
+                    const Element &element,
+                    const Dune::FieldVector< ctype, dim > &xi) const
     { return field_->evaluate(mycomp, element, xi); }
 
     //! returns the underlying vtk function
