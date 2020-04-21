@@ -63,6 +63,7 @@ public:
         params["preconditioner.verbosity"] = "0";
         params["preconditioner.defaultAggregationSizeMode"] = "isotropic";
         params["preconditioner.defaultAggregationDimension"] = std::to_string(LinearSolverTraits::GridView::dimension);
+        params["preconditioner.maxLevel"] = "100";
         params["ParameterGroup"] = paramGroup;
         params["preconditioner.ParameterGroup"] = paramGroup;
     }
