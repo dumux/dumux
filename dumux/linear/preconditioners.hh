@@ -27,6 +27,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/common/indices.hh>
+#include <dune/common/version.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/paamg/amg.hh>
 
