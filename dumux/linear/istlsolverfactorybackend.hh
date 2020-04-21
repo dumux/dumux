@@ -96,7 +96,15 @@ void initSolverFactories()
     if constexpr (isMultiTypeBlockMatrix<Matrix>::value)
         initSolverFactoriesForMultiTypeBlockMatrix<LinearOperator>();
     else
+#if DUNE_VERSION_GT(DUNE_ISTL,2,7)
         Dune::initSolverFactories<LinearOperator>();
+#else
+    {
+        using X  = typename LinearOperator::range_type;
+        using Y  = typename LinearOperator::domain_type;
+        Dune::initSolverFactories<Matrix, X, Y>();
+    }
+#endif
 }
 
 /*!
