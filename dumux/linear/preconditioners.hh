@@ -29,7 +29,6 @@
 #include <dune/common/indices.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/paamg/amg.hh>
-#include <dune/common/version.hh>
 
 #if HAVE_UMFPACK
 #include <dune/istl/umfpack.hh>
@@ -37,10 +36,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/matrix.hh>
-
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 #include <dumux/linear/istlsolverregistry.hh>
-#endif
 
 namespace Dumux {
 
@@ -110,8 +106,13 @@ public:
      * \param mat The matrix to operate on.
      * \param params Collection of paramters.
      */
-    SeqUzawa(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& mat, const Dune::ParameterTree& params)
-    : matrix_(mat->getmat())
+#if DUNE_VERSION_GT(DUNE_ISTL,2,7)
+    SeqUzawa(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op, const Dune::ParameterTree& params)
+    : matrix_(op->getmat())
+#else
+    SeqUzawa(const M& mat, const Dune::ParameterTree& params)
+    : matrix_(mat)
+#endif
     , numIterations_(params.get<std::size_t>("iterations"))
     , relaxationFactor_(params.get<scalar_field_type>("relaxation"))
     , verbosity_(params.get<int>("verbosity"))
@@ -329,9 +330,7 @@ private:
     const bool useDirectVelocitySolverForA_;
 };
 
-#if DUNE_VERSION_NEWER_REV(DUNE_ISTL,2,7,1)
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
-#endif
 
 } // end namespace Dumux
 

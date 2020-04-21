@@ -26,8 +26,9 @@
 #ifndef DUMUX_LINEAR_ISTL_SOLVERFACTORYBACKEND_HH
 #define DUMUX_LINEAR_ISTL_SOLVERFACTORYBACKEND_HH
 
-#include <dune/common/version.hh>
+#include <memory>
 
+#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 
@@ -70,7 +71,11 @@ int initSolverFactoriesForMultiTypeBlockMatrix()
     using TL = Dune::TypeList<M,X,Y>;
     auto& dsfac = Dune::DirectSolverFactory<M,X,Y>::instance();
     Dune::addRegistryToFactory<TL>(dsfac, Dumux::MultiTypeBlockMatrixDirectSolverTag{});
+#if DUNE_VERSION_GT(DUNE_ISTL,2,7)
     auto& pfac = Dune::PreconditionerFactory<LinearOperator,X,Y>::instance();
+#else
+    auto& pfac = Dune::PreconditionerFactory<M,X,Y>::instance();
+#endif
     Dune::addRegistryToFactory<TL>(pfac, Dumux::MultiTypeBlockMatrixPreconditionerTag{});
     using TLS = Dune::TypeList<X,Y>;
     auto& isfac = Dune::IterativeSolverFactory<X,Y>::instance();
