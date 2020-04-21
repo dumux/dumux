@@ -135,8 +135,11 @@ class FacetCouplingPoroMechanicsCouplingManager
     template<std::size_t id> using GridIndexType = typename IndexTraits<GridView<id>>::GridIndex;
 
     // Glue object between the mechanical and the lagrange-multiplier subdomain
-    using MechLagrangeGlue = MultiDomainGlue<GridView<mechDomainId>, GridView<lagrangeDomainId>>;
-    using MechLagrangeIntersection = typename MechLagrangeGlue::Intersection;
+    using MechLagrangeGlue = MultiDomainGlue< GridView<mechDomainId>,
+                                              GridView<lagrangeDomainId>,
+                                              typename GridGeometry<mechDomainId>::ElementMapper,
+                                              typename GridGeometry<lagrangeDomainId>::ElementMapper>;
+    using MechLagrangeIntersection = typename MechLagrangeGlue::Entity;
 
     // extract grid dimensions
     static constexpr int bulkDim = GridView<matrixFlowDomainId>::dimension;
@@ -294,7 +297,6 @@ public:
         bulkIndexMap_ = bulkIndexMap;
         curSol_ = curSol;
         lagrangeProblemPtr_ = lagrangeProblem;
-        contactIntegrationOrder_ = getParam<Scalar<lagrangeId>>("ContactProblem.ContactForceIntegrationOrder");
 
         BulkFacetFlowManager::init(matrixFlowProblem, facetFlowProblem, bulkFacetFlowMapper, curSol);
         PoroMechManager::init(matrixFlowProblem, mechProblem, curSol, bulkIndexMap);
@@ -343,9 +345,9 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Could not find facet flow embedment (coinciding intersection not found)!");
 
         const auto facetElemIdx = it2->second;
-        const auto facetElement = problem(facetFlowId).fvGridGeometry().element(facetElemIdx);
+        const auto facetElement = problem(facetFlowId).gridGeometry().element(facetElemIdx);
 
-        auto fvGeometry = localView(problem(facetFlowId).fvGridGeometry());
+        auto fvGeometry = localView(problem(facetFlowId).gridGeometry());
         fvGeometry.bindElement(facetElement);
 
         FacetFlowVolumeVariables volVars;
@@ -1217,7 +1219,7 @@ private:
         static constexpr auto facetGridId = BulkFacetFlowMapper::template gridId<facetDim>();
 
         const auto& bulkMechGG = problem(mechanicsId).gridGeometry();
-        const auto& facetFlowGG = problem(facetFlowId).fvGridGeometry();
+        const auto& facetFlowGG = problem(facetFlowId).gridGeometry();
 
         // set up coupling stencils mechanics domain -> facet flow domain
         facetMechCouplingStencils_.resize(facetFlowGG.gridView().size(0));
@@ -1502,9 +1504,6 @@ private:
 
     // Copy of solution vector
     SolutionVector curSol_;
-
-    // Integration order for contact forces
-    Scalar<lagrangeId> contactIntegrationOrder_;
 };
 
 } // end namespace Dumux

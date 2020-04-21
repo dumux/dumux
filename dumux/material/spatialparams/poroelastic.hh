@@ -29,6 +29,9 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/method.hh>
+
+// for hasInertVolumeFractionAtPos & hasPorosityAtPos
+#include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/spatialparams/elastic.hh>
 
 namespace Dumux {

@@ -123,7 +123,7 @@ template<class TypeTag>
 struct SecondaryVariables<TypeTag, TTag::Elastic>
 {
 private:
-    static constexpr int dim = GetPropType<TypeTag, Properties::GridView>::dimension;
+    static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using DV = Dune::FieldVector<typename PV::value_type, dim>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;

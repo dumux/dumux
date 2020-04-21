@@ -57,8 +57,6 @@ template<class TypeTag,
 class FELocalAssemblerBase
 {
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
-    using Element = typename GridView::template Codim<0>::Entity;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
@@ -70,6 +68,9 @@ class FELocalAssemblerBase
 
     using TrialSpaceBasis = typename GridGeometry::TrialSpaceBasis;
     using TrialSpaceBasisLocalView = typename TrialSpaceBasis::LocalView;
+
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;

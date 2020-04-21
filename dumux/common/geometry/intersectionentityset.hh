@@ -72,9 +72,6 @@ class IntersectionEntitySet
      */
     class IntersectionEntity
     {
-        static constexpr int dimIs = std::min(dimDomain, dimTarget);
-        using Geometry = Dune::AffineGeometry<ctype, dimIs, dimWorld>; // geometries are always simplices
-
         // we can only have multiple neighbors in the mixeddimensional case and then only for the side with the largest dimension
         using IndexStorage = std::pair<std::conditional_t<dimDomain <= dimTarget, Dune::ReservedVector<std::size_t, 1>, std::vector<std::size_t>>,
                                        std::conditional_t<dimTarget <= dimDomain, Dune::ReservedVector<std::size_t, 1>, std::vector<std::size_t>>>;
@@ -83,6 +80,9 @@ class IntersectionEntitySet
         static constexpr auto targetIdx = Dune::index_constant<1>{};
 
     public:
+        static constexpr int dimIs = std::min(dimDomain, dimTarget);
+        using Geometry = Dune::AffineGeometry<ctype, dimIs, dimWorld>; // geometries are always simplices
+
         IntersectionEntity(const DomainTree& domainTree, const TargetTree& targetTree)
         : domainTree_(domainTree)
         , targetTree_(targetTree)

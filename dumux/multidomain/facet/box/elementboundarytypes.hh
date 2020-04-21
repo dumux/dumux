@@ -82,7 +82,7 @@ public:
             };
 
             // let the problem decide
-            if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
+            if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
             {
                 this->vertexBCTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
                 updateElemBCInfo(this->vertexBCTypes_[scvIdxLocal]);

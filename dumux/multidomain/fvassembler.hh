@@ -137,7 +137,7 @@ private:
     };
 
     template<std::size_t id>
-    using SubDomainAssembler = typename SubDomainAssemblerType<FVGridGeometry<id>::discMethod, id>::type;
+    using SubDomainAssembler = typename SubDomainAssemblerType<GridGeometry<id>::discMethod, id>::type;
 
 public:
 
@@ -349,11 +349,6 @@ public:
     template<std::size_t i>
     const auto& gridGeometry(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(gridGeometryTuple_); }
-
-    //! the finite volume grid geometry of domain i
-    template<std::size_t i>
-    const auto& gridGeometry(Dune::index_constant<i> domainId) const
-    { return *std::get<domainId>(fvGridGeometryTuple_); }
 
     //! the grid view of domain i
     template<std::size_t i>

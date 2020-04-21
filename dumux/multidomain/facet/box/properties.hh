@@ -113,10 +113,10 @@ struct StressType<TypeTag, TTag::BoxFacetCouplingModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
-    using ElasticStressType = HookesLaw< Scalar, FVGridGeometry >;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ElasticStressType = HookesLaw< Scalar, GridGeometry >;
 public:
-    using type = BoxFacetCouplingEffectiveStressLaw< ElasticStressType, FVGridGeometry >;
+    using type = BoxFacetCouplingEffectiveStressLaw< ElasticStressType, GridGeometry >;
 };
 
 } // namespace Properties

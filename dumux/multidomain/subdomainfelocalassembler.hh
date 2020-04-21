@@ -73,7 +73,7 @@ class SubDomainFELocalAssemblerBase
     using FEElementGeometry = typename GridGeometry::LocalView;
     using ElementSolution = FEElementSolution<FEElementGeometry, PrimaryVariables>;
 
-    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using SolutionVector = typename Assembler::SolutionVector;
