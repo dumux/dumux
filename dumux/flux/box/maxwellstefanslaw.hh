@@ -154,8 +154,6 @@ private:
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-        const auto insideScvIdx = scvf.insideScvIdx();
-        const auto outsideScvIdx = scvf.outsideScvIdx();
 
         //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
         if(Dune::FloatCmp::eq<Scalar>(insideVolVars.saturation(phaseIdx), 0) || Dune::FloatCmp::eq<Scalar>(outsideVolVars.saturation(phaseIdx), 0))
