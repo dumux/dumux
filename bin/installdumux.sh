@@ -6,12 +6,18 @@ echo "(0/3) Checking all prerequistes. (git gcc g++ cmake pkg-config paraview)"
 echo "*********************************************************************************************"
 
 # check some prerequistes
-for PRGRM in git gcc g++ cmake pkg-config paraview; do
+for PRGRM in wget git gcc g++ cmake pkg-config; do
     if ! [ -x "$(command -v $PRGRM)" ]; then
-        echo "Error: $PRGRM is not installed." >&2
+        echo "ERROR: $PRGRM is not installed." >&2
         exit 1
     fi
 done
+
+if ! [ -x "$(command -v paraview)" ]; then
+    echo "*********************************************************************************************"
+    echo "WARNING: paraview seems to be missing. You may not be able to view simulation results!" >&2
+    echo "*********************************************************************************************"
+fi
 
 currentver="$(gcc -dumpversion)"
 requiredver="7"
@@ -33,7 +39,7 @@ fi
 
 
 # make a new folder containing everything
-mkdir $(pwd)/DUMUX
+mkdir -p $(pwd)/DUMUX
 cd DUMUX
 
 echo "*********************************************************************************************"
@@ -42,12 +48,21 @@ echo "**************************************************************************
 DUNE_VERSION=2.7
 DUMUX_VERSION=3.2
 # the core modules
-for MOD in common geometry grid localfunctions istl; do
-    git clone -b releases/$DUNE_VERSION  https://gitlab.dune-project.org/core/dune-$MOD.git
+for MOD in common geometry grid localfunctions istl
+do
+    if [ ! -d "dune-$MOD" ]; then
+        git clone -b releases/$DUNE_VERSION https://gitlab.dune-project.org/core/dune-$MOD.git
+    else
+        echo "Skip cloning dune-$MOD because the folder already exists."
+    fi
 done
 
 # dumux
-git clone -b releases/$DUMUX_VERSION https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+if [ ! -d "dumux" ]; then
+    git clone -b releases/$DUMUX_VERSION https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+else
+    echo "Skip cloning dumux because the folder already exists."
+fi
 
 if [ $? -ne 0 ]; then
     echo "*********************************************************************************************"
@@ -67,6 +82,7 @@ echo "(2/3) Configure and build dune modules and dumux using dunecontrol. This m
 echo "**************************************************************************************************"
 
 # run dunecontrol
+wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.2/cmake.opts
 ./dune-common/bin/dunecontrol --opts=cmake.opts all
 
 if [ $? -ne 0 ]; then
