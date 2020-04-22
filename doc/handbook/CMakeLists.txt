@@ -29,8 +29,7 @@ set(TEX_INPUTS
   6_propertysystem.tex
   6_spatialdiscretizations.tex
   6_stepsofasimulation.tex
-  6_temporaldiscretizations.tex
-  installDumux.sh)
+  6_temporaldiscretizations.tex)
 
 set(TEX_IMAGES
   png/box_disc.png
