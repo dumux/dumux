@@ -4,10 +4,11 @@ __In this example, you will learn how to__
 
 * solve a two-phase flow in porous media problem with two immiscible phases
 * set boundary conditions and a simple injection well
-* specify a lens with different porous material parameters
-* use adaptive grid refinement around the saturation front
 * specify a point source
 * read the initial solution from a text file
+* specify a lens with different porous material parameters
+* use adaptive grid refinement around the saturation front
+
 
 __Prerequisites__. You need [dune-alugrid](https://gitlab.dune-project.org/extensions/dune-alugrid) in order to compile and run this example.
 
@@ -69,3 +70,4 @@ For more information about the discretization please have a look at the [handboo
     ├── spatialparams.hh        -> spatial parameter fields
     └── initialsolutioncc.txt   -> text file with initial solution
 ```
+In the documentations behind the links provided in the following, you will find a detailed description how the the above mentioned set-up is realized in this example.

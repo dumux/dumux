@@ -6,8 +6,6 @@ TEnd = 500 # [s]
 UpperRight = 6 4
 Cells = 48 32
 Refinement = 1
-CellType = Cube
-ClosureType = Green
 
 [SpatialParams]
 LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
