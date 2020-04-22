@@ -6,69 +6,69 @@ Copyright holders
 
 | Year       | Name                       |
 |------------|----------------------------|
-| 2016-2019  | Sina Ackermann             |
+| 2016-2020  | Sina Ackermann             |
 | 2010-2014  | Katherina Baber            |
 | 2015-2018  | Martin Beck                |
-| 2013-2019  | Beatrix Becker             |
+| 2013-2020  | Beatrix Becker             |
 | 2014       | Markus Blatt               |
 | 2010       | Felix Bode                 |
-| 2018       | Samuel Burbulla            |
+| 2018-2020  | Samuel Burbulla            |
 | 2007-2011  | Yufei Cao                  |
-| 2018-2019  | Edward 'Ned' Coltman       |
-| 2011-2019  | Holger Class               |
+| 2018-2020  | Edward 'Ned' Coltman       |
+| 2011-2020  | Holger Class               |
 | 2008-2013  | Melanie Darcis             |
 | 2008-2009  | Onur Dogan                 |
+| 2015-2020  | Simon Emmert               |
 | 2009-2011  | Karin Erbertseder          |
 | 2009-2014  | Benjamin Faigle            |
 | 2013-2018  | Thomas Fetzer              |
-| 2007-2019  | Bernd Flemisch             |
+| 2007-2020  | Bernd Flemisch             |
 | 2007-2010  | Jochen Fritz               |
 | 2015-2016  | Georg Futter               |
-| 2015-2019  | Dennis Gläser              |
-| 2012-2019  | Christoph Grüninger        |
-| 2016-2019  | Katharina Heck             |
+| 2015-2020  | Dennis Gläser              |
+| 2012-2020  | Christoph Grüninger        |
+| 2016-2020  | Katharina Heck             |
 | 2017       | Rainer Helmig              |
-| 2015-2019  | Johannes Hommel            |
+| 2015-2020  | Johannes Hommel            |
 | 2012-2015  | Vishal Jambhekar           |
 | 2013-2014  | Muhammad Adil Javed        |
 | 2012-2017  | Alexander Kissinger        |
-| 2013-2019  | Timo Koch                  |
+| 2013-2020  | Timo Koch                  |
+| 2020       | Tim Jupe                   |
 | 2017       | Kata Kurgyis               |
-| 2018-2019  | Theresa Kurz               |
+| 2018-2020  | Theresa Kurz               |
 | 2008-2012  | Andreas Lauser             |
-| 2018       | Giuliano Lambardo          |
-| 2018-2019  | Melanie Lipp               |
-| 2018-2019  | Farid Mohammadi            |
+| 2018       | Giuliano Lombardo          |
+| 2018-2020  | Melanie Lipp               |
+| 2018-2020  | Farid Mohammadi            |
 | 2008-2014  | Klaus Mosthaf              |
 | 2009-2014  | Philipp Nuske              |
 | 2014       | Mirka Papenheim            |
 | 2013-2014  | Dominik Riesterer          |
 | 2008       | Irina Rybak                |
-| 2019       | Samuel Scherrer            |
-| 2013-2019  | Martin Schneider           |
-| 2015-2019  | Simon Scholz               |
+| 2019-2020  | Samuel Scherrer            |
+| 2013-2020  | Martin Schneider           |
 | 2009       | Anneli Schöniger           |
 | 2015-2016  | Natalie Schröder           |
 | 2010-2016  | Nicolas Schwenck           |
-| 2015-2019  | Gabriele Seitz             |
+| 2015-2020  | Gabriele Seitz             |
 | 2018       | Lincoln Sherpa             |
 | 2011       | Michael Sinsbeck           |
-| 2010,2019  | Leopold Stadler            |
+| 2010,2019-2020  | Leopold Stadler       |
 | 2012-2014  | Alexandru Tatomir          |
-| 2019       | Martin Utz                 |
+| 2013       | Katharina Türk             |
+| 2018-2020  | Martin Utz                 |
 | 2015-2017  | Larissa de Vries           |
 | 2019       | Andrea Vescovini           |
-| 2013       | Katharina Türk             |
-| 2018       | Martin Utz                 |
+| 2020       | Maziar Veyskarami          |
 | 2010-2014  | Lena Walter                |
-| 2018-2019  | Felix Weinhardt            |
-| 2015-2019  | Kilian Weishaupt           |
+| 2018-2020  | Felix Weinhardt            |
+| 2015-2020  | Kilian Weishaupt           |
 | 2010-2011  | David Werner               |
-| 2019       | Roman Winter               |
+| 2019-2020  | Roman Winter               |
 | 2015       | Hao Wu                     |
 | 2008-2013  | Markus Wolff               |
 | 2013       | Tianyuan Zheng             |
-
 
 License
 -------
