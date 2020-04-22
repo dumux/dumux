@@ -1,0 +1,18 @@
+[Problem]
+EnableGravity = 0 # disable gravity
+Name = rotationsymmetry
+P1 = 1e5   # pressure at the inner boundary at r1
+Q1 = -10.0 # mass flux into the domain at r1 in kg/s/m
+
+[Grid]
+LowerLeft = 0.05
+UpperRight = 1
+Cells = 100
+RefinementSteps = 5
+
+[SpatialParams]
+Permeability = 1e-10 # [m^2]
+
+[Component]
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1e3
