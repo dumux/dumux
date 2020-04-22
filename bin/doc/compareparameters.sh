@@ -114,7 +114,7 @@ sort -u old_parameters.csv -o old_parameters.csv
 # 3. compare lists of old and new parameters
 # treat additions
 diff -u old_parameters.csv new_parameters.csv | grep -E "^\+" | grep -v "\++" >added.csv
-if [[ -s added.csv ]]; then
+if [ -s "added.csv" ]; then
   echo ""
   echo "Compared to parameterlist.txt, the following parameters have been _added_:"
   echo ""
@@ -131,7 +131,7 @@ if [[ -s added.csv ]]; then
 fi
 # treat deletions
 diff -u old_parameters.csv new_parameters.csv | grep -E "^\-" | grep -v "\--" >deleted.csv
-if [[ -s deleted.csv ]]; then
+if [ -s "deleted.csv" ]; then
   echo ""
   echo "Compared to parameterlist.txt, the following parameters have been _deleted_:"
   echo ""
@@ -146,7 +146,7 @@ if [[ -s deleted.csv ]]; then
   echo "their name. If so, delete the corresponding rows in doc/doxygen/extradoc/parameterlist.txt."
 fi
 # final remark
-if [[ ! -s added.csv && ! -s deleted.csv ]]; then
+if [ ! -s "added.csv" && ! -s "deleted.csv" ]; then
   echo ""
   echo "Compared to parameterlist.txt, no parameters have been added or deleted."
   echo ""
