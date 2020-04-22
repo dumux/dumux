@@ -158,12 +158,15 @@ public:
     static bool solveWithParamTree(const Matrix& A, Vector& x, const Vector& b,
                                    const Dune::ParameterTree& params)
     {
-
         // make a linear operator from a matrix
         using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
         const auto linearOperator = std::make_shared<MatrixAdapter>(A);
 
+#if DUNE_VERSION_GT(DUNE_ISTL,2,7)
         auto precond = std::make_shared<Preconditioner>(linearOperator, params.sub("preconditioner"));
+#else
+        auto precond = std::make_shared<Preconditioner>(A, params.sub("preconditioner"));
+#endif
         Solver solver(linearOperator, precond, params);
 
         Vector bTmp(b);
