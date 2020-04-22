@@ -20,28 +20,29 @@
 #ifndef DUMUX_EXAMPLES_FREEFLOW_CHANNEL_PROBLEM_HH
 #define DUMUX_EXAMPLES_FREEFLOW_CHANNEL_PROBLEM_HH
 
-// ## The file `problem.hh`
+// ## Initial and boundary conditions (`problem.hh`)
 //
+// This file contains the __problem class__ which defines the initial and boundary
+// conditions for the Navier-Stokes single-phase flow simulation.
 //
-// ### The problem class
-// We enter the problem class where all necessary initial and boundary conditions are set for our simulation.
+// [[content]]
 //
-// As this is a Stokes problem, we inherit from the basic <code>NavierStokesProblem</code>.
-// <details><summary>Toggle to show code:</summary>
-#include <dumux/common/properties.hh>
+// ### Include files
+//
+// The only include we need here is the `NavierStokesProblem` class, the base
+// class from which we will derive.
 #include <dumux/freeflow/navierstokes/problem.hh>
 
+// ### The problem class
+// We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
+// As we are solving a problem related to free flow, we inherit from the base class `NavierStokesProblem`.
+// [[codeblock]]
 namespace Dumux {
 
 template <class TypeTag>
 class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
 {
-    // </details>
-    //
-    // We use convenient declarations that we derive from the property system.
-    //<details>
-    //  <summary>Toggle to show code (convenient declarations)</summary>
-    //
+    // A few convenience aliases used throughout this class.
     using ParentType = NavierStokesProblem<TypeTag>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -56,134 +57,109 @@ class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    // </details>
-    //
-    // There follows the constructor of our problem class:
+    // This is the constructor of our problem class:
     // Within the constructor, we set the inlet velocity to a run-time specified value.
-    // As no run-time value is specified, we set the outlet pressure to 1.1e5 Pa.
-    //<details>
-    //  <summary>Toggle to expand code (constructor)</summary>
-    //
+    // If no run-time value is specified, we set the outlet pressure to 1.1e5 Pa.
     ChannelExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
     }
-    // </details>
-    //
-    // Now, we define the type of initial and boundary conditions depending on location.
-    // Two types of boundary conditions can be specified: Dirichlet and Neumann. On a Dirichlet boundary,
-    // the values of the primary variables need to be fixed.
-    // On a Neumann boundary condition, values for derivatives need to be fixed.
-    // When Dirichlet conditions are set for the pressure, the derivative of the velocity
-    // vector with respect to the direction normal to the boundary is automatically set to
-    // zero. This boundary condition is called in-/outflow boundary condition in Dumux.
-    // In the following we specify Dirichlet boundaries for velocity on the left of our domain
-    // if isInlet_ is true, Dirichlet boundaries for pressure on the right of our domain
-    // if isOutlet_ is true and specify Dirichlet boundaries for velocity on the top and bottom
-    // of our domain else.
-    //<details>
-    //  <summary>Toggle to expand code (<code>boundaryTypesAtPos</code>)</summary>
-    //
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    // [[/codeblock]]
+
+    // #### Boundary conditions
+    // With the following function we define the __type of boundary conditions__ depending on the location.
+    // Three types of boundary conditions can be specified: Dirichlet, Neumann or outflow boundary conditions. On
+    // Dirichlet boundaries, the values of the primary variables need to be fixed. On a Neumann boundaries,
+    // values for derivatives need to be fixed. Outflow conditions set a gradient of zero in normal direction towards the boundary
+    // for the respective primary variables (excluding pressure).
+    // When Dirichlet conditions are set for the pressure, the velocity gradient
+    // with respect to the direction normal to the boundary is automatically set to zero.
+    // [[codeblock]]
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
 
-        if(isInlet_(globalPos))
+        if (isInlet_(globalPos))
         {
+            // We specify Dirichlet boundary conditions for the velocity on the left of our domain
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
         }
-        else if(isOutlet_(globalPos))
+        else if (isOutlet_(globalPos))
         {
+            // We fix the pressure on the right side of the domain
             values.setDirichlet(Indices::pressureIdx);
         }
         else
         {
+            // We specify Dirichlet boundary conditions for the velocity on the remaining boundaries (lower and upper wall)
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
         }
 
         return values;
     }
-    // </details>
-    //
-    // Second, we specify the values for the Dirichlet boundaries. We need to fix the values of our primary variables.
-    // To ensure a no-slip boundary condition at the top and bottom of the channel, the Dirichlet velocity
-    // in x-direction is set to zero if not at the inlet.
-    //<details>
-    //  <summary>Toggle to expand code (<code>dirichletAtPos</code>)</summary>
-    //
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    // [[/codeblock]]
+
+    // The following function specifies the __values on Dirichlet boundaries__.
+    // We need to define values for the primary variables (velocity and pressure).
+    // [[codeblock]]
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
+        // Use the initial values as default Dirichlet values
         PrimaryVariables values = initialAtPos(globalPos);
 
-        if(!isInlet_(globalPos))
-        {
+        // Set a no-slip condition at the top and bottom wall of the channel
+        if (!isInlet_(globalPos))
             values[Indices::velocityXIdx] = 0.0;
-        }
 
         return values;
     }
-    // </details>
-    //
-    // We specify the values for the initial conditions.
-    // We assign constant values for pressure and velocity components.
-    //<details>
-    //  <summary>Toggle to expand code (<code>initialAtPos</code>)</summary>
-    //
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    // [[/codeblock]]
+
+    // The following function defines the initial conditions.
+    // [[codeblock]]
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values;
 
+        // Set the pressure and velocity values
         values[Indices::pressureIdx] = outletPressure_;
         values[Indices::velocityXIdx] = inletVelocity_;
         values[Indices::velocityYIdx] = 0.0;
 
         return values;
     }
-    // </details>
-    //
+    // [[/codeblock]]
+
+    // #### Temperature distribution
     // We need to specify a constant temperature for our isothermal problem.
-    // We set it to 10°C.
-    //<details>
-    //  <summary>Toggle to expand code (<code>temperature</code>)</summary>
-    //
+    // Fluid properties that depend on temperature will be calculated with this value.
+    // This would be important if another fluidsystem was used.
     Scalar temperature() const
     { return 273.15 + 10; }
+
+// The inlet is on the left side of the physical domain.
+// [[codeblock]]
 private:
-    // </details>
-    //
-    // The inlet is at the left side of the physical domain.
-    //<details>
-    //  <summary>Toggle to expand code (<code>isInlet_</code>)</summary>
-    //
     bool isInlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
-    // </details>
-    //
-    // The outlet is at the right side of the physical domain.
-    //<details>
-    //  <summary>Toggle to expand code (<code>isOutlet_</code>)</summary>
-    //
+    { return globalPos[0] < eps_; }
+    // [[/codeblock]]
+
+    // The outlet is on the right side of the physical domain.
     bool isOutlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
-    }
-    // </details>
-    //
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
+
     // Finally, private variables are declared:
-    //<details>
-    //  <summary>Toggle to expand code (private variables)</summary>
-    //
-    static constexpr Scalar eps_=1e-6;
+    // [[codeblock]]
+    static constexpr Scalar eps_ = 1e-6;
     Scalar inletVelocity_;
     Scalar outletPressure_;
-};
-}
+
+}; // end class definition of ChannelExampleProblem
+} // end namespace Dumux
+// [[/codeblock]]
+// [[/content]]
 #endif
-// </details>
-//
