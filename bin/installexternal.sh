@@ -10,6 +10,8 @@ DOWNLOAD_ONLY="n"
 TOPDIR=$(pwd)
 EXTDIR=$(pwd)/external
 
+DUMUX_VERSION=3.2
+
 checkLocationForDuneModules()
 {
     # test for directory dune-common, dune-common-2.4 etc.
@@ -50,6 +52,19 @@ installAluGrid()
     if  test "$CLEANUP" == "y"; then
         rm -rf dune-alugrid
         return
+    fi
+}
+
+installCourse()
+{
+    cd $TOPDIR
+    if [ ! -d "dumux-course" ]; then
+        git clone -b releases/$DUMUX_VERSION https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course.git
+    else
+        echo "Skip cloning dumux-course because the folder already exists."
+        cd dumux-course
+        git checkout releases/$DUMUX_VERSION
+        cd ..
     fi
 }
 
@@ -132,6 +147,19 @@ installGStat()
 
     if [ -e $PWD/src/gstat ]; then
         echo "Successfully installed gstat."
+    fi
+}
+
+installLecture()
+{
+    cd $TOPDIR
+    if [ ! -d "dumux-lecture" ]; then
+        git clone -b releases/$DUMUX_VERSION https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-lecture.git
+    else
+        echo "Skip cloning dumux-lecture because the folder already exists."
+        cd dumux-lecture
+        git checkout releases/$DUMUX_VERSION
+        cd ..
     fi
 }
 
@@ -404,9 +432,11 @@ usage()
     echo "Where PACKAGES is one or more of the following"
     echo "  all              Install everything and the kitchen sink."
     echo "  alugrid          Download dune-alugrid."
+    echo "  course           Download the dumux-course."
     echo "  foamgrid         Download dune-foamgrid."
     echo "  glpk             Download and install glpk."
     echo "  gstat            Download and install gstat."
+    echo "  lecture          Download the dumux-lecture."
     echo "  metis            Install the METIS graph partitioner."
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download and patch dune-multidomaingrid."
@@ -471,9 +501,11 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             createExternalDirectory
             installAluGrid
+            installCourse
             installFoamGrid
             installGLPK
             installGStat
+            installLecture
             installMETIS
             installMultidomain
             installMultidomainGrid
@@ -486,6 +518,10 @@ for TMP in "$@"; do
         alugrid|dune-alugrid)
             SOMETHING_DONE="y"
             installAluGrid
+            ;;
+        course)
+            SOMETHING_DONE="y"
+            installCourse
             ;;
         foamgrid|dune-foamgrid)
             SOMETHING_DONE="y"
@@ -500,6 +536,10 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             createExternalDirectory
             installGStat
+            ;;
+        lecture)
+            SOMETHING_DONE="y"
+            installLecture
             ;;
         metis)
             SOMETHING_DONE="y"
