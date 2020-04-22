@@ -1,0 +1,35 @@
+{
+    "README.md" : [
+        "doc/_intro.md"
+    ],
+
+    "doc/problem.md" : [
+        "doc/problem_intro.md",
+        "properties.hh",
+        "problem.hh",
+        "spatialparams.hh"
+    ],
+
+    "doc/main.md" : [
+        "doc/main_intro.md",
+        "main.cc"
+    ],
+
+    "doc/paraview.md" : [
+        "doc/paraview_doc.md"
+    ],
+
+    "navigation" : {
+        "mainpage" : "README.md",
+        "subpages" : [
+            "doc/problem.md",
+            "doc/main.md",
+            "doc/paraview.md"
+        ],
+        "subtitles" : [
+            "Rotation-symmetric one-phase flow simulation setup",
+            "Main program flow",
+            "Post-processing with ParaView"
+        ]
+    }
+}
