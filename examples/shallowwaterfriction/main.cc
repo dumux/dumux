@@ -17,138 +17,164 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// ## The file `main.cc`
+// ## The main file `main.cc`
+// [[content]]
 //
-//
-// This is the main file for the shallow water example. Here we can see the programme sequence and how the system is solved using newton's method.
-// ### Includes
+// ### Included header files
+// [[details]] includes
+// [[exclude]]
+// Some generic includes.
 #include <config.h>
-
-// Standard header file for C++, to get time and date information.
-#include <ctime>
-
-// Standard header file for C++, for in- and output.
 #include <iostream>
-
-// Dumux is based on DUNE, the Distributed and Unified Numerics Environment, which provides several grid managers and linear solvers. So we need some includes from that.
+// [[/exclude]]
+//
+// DUNE helper class for MPI
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
 
-// We need the following class to simplify the writing of dumux simulation data to VTK format.
-#include <dumux/io/vtkoutputmodule.hh>
-// In Dumux a property system is used to specify the model. For this, different properties are defined containing type definitions, values and methods. All properties are declared in the file properties.hh.
+// The following headers include functionality related to property definition or retrieval, as well as
+// the retrieval of input parameters specified in the input file or via the command line.
 #include <dumux/common/properties.hh>
-// The following file contains the parameter class, which manages the definition of input parameters by a default value, the inputfile or the command line.
 #include <dumux/common/parameters.hh>
-// The file dumuxmessage.hh contains the class defining the start and end message of the simulation.
-#include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
-// The gridmanager constructs a grid from the information in the input or grid file. There is a specification for the different supported grid managers.
-#include <dumux/io/grid/gridmanager.hh>
-// We include the linear solver to be used to solve the linear system
-#include <dumux/linear/amgbackend.hh>
-#include <dumux/linear/linearsolvertraits.hh>
-// We include the nonlinear newtons method
-#include <dumux/nonlinear/newtonsolver.hh>
-// Further we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation)
-#include <dumux/assembly/fvassembler.hh>
-// We include the properties
-#include "properties.hh"
 
-// ### Beginning of the main function
+// The following files contains the available linear solver backends, the non linear Newton Solver
+// and the assembler for the linear systems arising from finite volume discretizations
+// (box-scheme, tpfa-approximation, mpfa-approximation).
+#include <dumux/linear/amgbackend.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/assembly/fvassembler.hh>
+
+// The following class provides a convenient way of writing of dumux simulation results to VTK format.
+#include <dumux/io/vtkoutputmodule.hh>
+// The gridmanager constructs a grid from the information in the input or grid file.
+// Many different Dune grid implementations are supported, of which a list can be found
+// in `gridmanager.hh`.
+#include <dumux/io/grid/gridmanager_yasp.hh>
+
+// We include the header file specifing the properties of this example
+#include "properties.hh"
+// [[/details]]
+//
+
+// ### The main function
+// We will now discuss the main program flow implemented within the `main` function.
+// At the beginning of each program using Dune, an instance of `Dune::MPIHelper` has to
+// be created. Moreover, we parse the run-time arguments from the command line and the
+// input file:
+// [[codeblock]]
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    // We define the type tag for this problem
-    using TypeTag = Properties::TTag::RoughChannel;
-
-    // We initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
-
-    // We print dumux start message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
+    // The Dune MPIHelper must be instantiated for each program using Dune
+    Dune::MPIHelper::instance(argc, argv);
 
     // We parse command line arguments and input file
     Parameters::init(argc, argv);
+    // [[/codeblock]]
 
-    // ### Create the grid
-    // A gridmanager tries to create the grid either from a grid file or the input file.
+    // We define a convenience alias for the type tag of the problem. The type
+    // tag contains all the properties that are needed to define the model and the problem
+    // setup. Throughout the main file, we will obtain types defined for these type tag
+    // using the property system, i.e. with `GetPropType`.
+    using TypeTag = Properties::TTag::RoughChannel;
+
+    // #### Step 1: Create the grid
+    // The `GridManager` class creates the grid from information given in the input file.
+    // This can either be a grid file or, in the case of structured grids, one can specify the coordinates
+    // of the corners of the grid and the number of cells to be used to discretize each spatial direction.
+    //[[codeblock]]
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     // We compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
+    //[[/codeblock]]
 
-    // ### Setup and solving of the problem
-    // #### Setup
-    // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-    // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
+    // #### Step 2: Solving the shallow water problem
+    // First, a finite volume grid geometry is constructed from the grid that was created above.
+    // This builds the sub-control volumes (scv) and sub-control volume faces (scvf) for each element
+    // of the grid partition.
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
 
-    // In the problem, we define the boundary and initial conditions.
+    // We now instantiate the problem, in which we define the boundary and initial conditions.
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // We initialize the solution vector
+    // We initialize the solution vector. The shallow water problem is transient,
+    // therefore the initial solution defined in the problem is applied to the
+    // solution vector. On the basis of this solution, we initialize then the grid variables.
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
-    // And then use the solutionvector to intialize the gridVariables.
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // We get some time loop parameters from the input file.
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    // Let us now instantiate the time loop. Therefore, we read in some time loop parameters from the input file.
+    // The parameter `tEnd` defines the duration of the simulation, `dt` the initial time step size and `maxDt` the maximal time step size.
+    // Moreover, we define the end of the simulation `tEnd` as check point in the time loop at which we will write the solution to vtk files.
+    // [[codeblock]]
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>; // type for scalar values
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // We intialize the vtk output module. Each model has a predefined model specific output with relevant parameters for that model.
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
-    // We add the analytical solution ("exactWaterDepth" and "exactVelocityX") to the predefined specific output.
-    vtkWriter.addField(problem->getExactWaterDepth(), "exactWaterDepth");
-    vtkWriter.addField(problem->getExactVelocityX(), "exactVelocityX");
-    // We calculate the analytic solution.
-    problem->analyticalSolution();
-    IOFields::initOutputModule(vtkWriter);
-    vtkWriter.write(0.0);
-
     // We instantiate time loop.
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+    timeLoop->setCheckPoint(tEnd);
+    // [[/codeblock]]
 
-    //we set the assembler with the time loop because we have an instationary problem.
+    // We initialize the assembler with a time loop for the transient problem.
+    // Within the time loop, we will use this assembler in each time step to assemble the linear system.
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop);
 
-    // We set the linear solver.
+    // We initialize the linear solver.
     using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
-    // Additionaly, we set the non-linear solver.
+    // We initialize the non-linear solver.
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // We set some check point at the end of the time loop. The check point is used to trigger the vtk output.
-    timeLoop->setCheckPoint(tEnd);
+    // The following lines of code initialize the vtk output module, add the velocity output facility
+    // and write out the initial solution. At each checkpoint, we will use the output module to write
+    // the solution of a time step into a corresponding vtk file.
+    // [[codeblock]]
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
 
-    // We start the time loop.
+    // add model-specific output fields to the writer
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+    IOFields::initOutputModule(vtkWriter);
+
+    // We add the analytical solution ("exactWaterDepth" and "exactVelocityX") to the predefined specific output.
+    vtkWriter.addField(problem->getExactWaterDepth(), "exactWaterDepth");
+    vtkWriter.addField(problem->getExactVelocityX(), "exactVelocityX");
+
+    // We calculate the analytic solution.
+    problem->analyticalSolution();
+
+    // write initial solution (including the above calculated analytical solution.
+    vtkWriter.write(0.0);
+    // [[/codeblock]]
+
+    // ##### The time loop
+    // We start the time loop and solve a new time step as long as `tEnd` is not reached. In every time step,
+    // the problem is assembled and solved, the solution is updated, and when a checkpoint is reached the solution
+    // is written to a new vtk file. In addition, statistics related to CPU time, the current simulation time
+    // and the time step sizes used is printed to the terminal.
+    // [[codeblock]]
     timeLoop->start(); do
     {
-        // We start to calculate the new solution of that time step. First we define the old solution as the solution of the previous time step for storage evaluations.
+        // First we define the old solution as the solution of the previous time step for storage evaluations.
         assembler->setPreviousSolution(xOld);
 
-        // We solve the non-linear system with time step control.
+        // We solve the non-linear system with time step control, using Newthon's method.
         nonLinearSolver.solve(x,*timeLoop);
 
         // We make the new solution the old solution.
@@ -170,25 +196,26 @@ int main(int argc, char** argv) try
 
 
     } while (!timeLoop->finished());
+    // [[/codeblock]]
 
+    // The following piece of code prints a final status report of the time loop
+    //  before the program is terminated.
     timeLoop->finalize(leafGridView.comm());
 
-    // ### Final Output
-    // We print dumux end message.
-    if (mpiHelper.rank() == 0)
-    {
-        Parameters::print();
-        DumuxMessage::print(/*firstCall=*/false);
-    }
-
     return 0;
-} // end main
-
+}
+// #### Exception handling
+// In this part of the main file we catch and print possible exceptions that could
+// occur during the simulation.
+// [[details]] exception handler
+// [[codeblock]]
+// errors related to run-time parameters
 catch (const Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
+// errors related to the parsing of Dune grid files
 catch (const Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
@@ -198,13 +225,18 @@ catch (const Dune::DGFException & e)
                  << " ---> Abort!" << std::endl;
     return 2;
 }
+// generic error handling with Dune::Exception
 catch (const Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;
 }
+// other exceptions
 catch (...)
 {
     std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
     return 4;
 }
+// [[/codeblock]]
+// [[/details]]
+// [[/content]]

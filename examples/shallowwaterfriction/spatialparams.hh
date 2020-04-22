@@ -20,28 +20,40 @@
 #ifndef DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 #define DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
 
-// ## The file `spatialparams.hh`
+// ## Parameter distributions (`spatialparams.hh`)
 //
+// This file contains the __spatial parameters class__ which defines the
+// the friction law, including it's friction parameter, the acceleration
+// due to gravity and the altitude of the channel bed surface. In this example only the bed
+// surface has a non constant distribution.
 //
-// We include the basic spatial parameters for finite volumes file from which we will inherit
+// [[content]]
+//
+// ### Include files
+// We include the basic spatial parameters file for finite volumes, from which we will inherit.
 #include <dumux/material/spatialparams/fv.hh>
-// The parameters header is needed to retrieve run-time parameters.
-#include <dumux/common/parameters.hh>
-// We include all friction laws, between we can choose for the calculation of the bottom friction source.
+// We include all friction laws.
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/nofriction.hh>
 
-// We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don`t clash with symbols from other libraries you may want to use in conjunction with Dumux.
+// ### The spatial parameters class
+//
+// In the `RoughChannelSpatialParams` class, we define all functions needed to describe
+// the rough channel for the shallow water problem.
+// We inherit from the `FVSpatialParams` class, which is the base class
+// for spatial parameters in the context of
+// applications using finite volume discretization schemes.
+// [[codeblock]]
 namespace Dumux {
 
-//In the RoughChannelSpatialParams class we define all functions needed to describe the spatial distributed parameters.
 template<class GridGeometry, class Scalar, class VolumeVariables>
 class RoughChannelSpatialParams
 : public FVSpatialParams<GridGeometry, Scalar,
                          RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
-    // We introduce using declarations that are derived from the property system which we need in this class
+    // This convenience aliases will be used throughout this class
     using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
     using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
@@ -49,9 +61,14 @@ class RoughChannelSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    // [[/codeblock]]
 
+    // In the following, the properties of the the rough channel are set. Namely, these are
+    // the friction law, including it's friction parameter, the acceleration
+    // due to gravity and the altitude of the channel bed surface.
+    // [[codeblock]]
 public:
-    // In the constructor be read some values from the `params.input` and initialize the friciton law.
+    // In the constructor we read some values from the `params.input` and initialize the friciton law.
     RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -61,7 +78,8 @@ public:
         initFrictionLaw();
     }
 
-    // We initialize the friction law based on the law specified in `params.input`.
+    // This function handles the initialization of the friction law based on the settings
+    // specified in `params.input`.
     void initFrictionLaw()
     {
       if (frictionLawType_ == "Manning")
@@ -74,45 +92,45 @@ public:
           Scalar ks = getParam<Scalar>("Problem.Ks");
           frictionLaw_ = std::make_unique<FrictionLawNikuradse<VolumeVariables>>(ks);
       }
+      else if (frictionLawType_ == "None")
+      {
+          frictionLaw_ = std::make_unique<FrictionLawNoFriction<VolumeVariables>>();
+      }
       else
       {
-          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are `Manning` and `Nikuradse`!"<<std::endl;
+          std::cout<<"The FrictionLaw in params.input is unknown. Valid entries are `Manning`,"
+                     " `Nikuradse` and `None`!"<<std::endl;
       }
     }
 
-    // Use this function, if you want to vary the value for the gravity.
-    Scalar gravity(const GlobalPosition& globalPos) const
-    {
-        return gravity_;
-    }
-
-    // Use this function for a constant gravity.
-    Scalar gravity() const
-    {
-        return gravity_;
-    }
-
-    // This function returns an object of the friction law class, which is initialized with the appropriate friction values. If you want to use different friciton values or laws, you have to use a vector of unique_ptr for `frictionLaw_` and pick the right friction law instances via the `element` argument.
+    // This function returns an object of the friction law class, already initialized with a friction value.
     const FrictionLaw<VolumeVariables>& frictionLaw(const Element& element,
                                                     const SubControlVolume& scv) const
     {
         return *frictionLaw_;
     }
 
-    // Define the bed surface based on the `bedSlope_`.
+    // This function returns the acceleration due to gravity.
+    Scalar gravity(const GlobalPosition& globalPos) const
+    {
+        return gravity_;
+    }
+
+    // Define the bed surface based on the bed slope and the bed level at the inflow (10 m).
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
     {
         return 10.0 - element.geometry().center()[0] * bedSlope_;
     }
 
+// We declare the private variables of the problem.
 private:
     Scalar gravity_;
     Scalar bedSlope_;
     std::string frictionLawType_;
     std::unique_ptr<FrictionLaw<VolumeVariables>> frictionLaw_;
-};
-// end of namespace Dumux.
-}
-
+}; // end class definition of RoughChannelSpatialParams
+} // end of namespace Dumux.
+// [[/codeblock]]
+// [[/content]]
 #endif
