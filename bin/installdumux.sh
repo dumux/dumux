@@ -82,7 +82,12 @@ echo "(2/3) Configure and build dune modules and dumux using dunecontrol. This m
 echo "**************************************************************************************************"
 
 # run dunecontrol
-wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.2/cmake.opts
+if [ ! -f "cmake.opts" ]; then
+    wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.2/cmake.opts
+else
+    echo "A cmake.opts file already exists. The existing file will be used to configure dumux."
+fi
+
 ./dune-common/bin/dunecontrol --opts=cmake.opts all
 
 if [ $? -ne 0 ]; then
