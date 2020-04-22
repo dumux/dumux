@@ -343,7 +343,22 @@ private:
         const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdx);
 
         // the quadrature point parameterizaion to be used on scvfs
-        static const auto q = getParam<CoordScalar>("Mpfa.Q");
+        static const auto q = []{ // REMOVE deprecated version after release 3.2
+            CoordScalar q = 0.0;
+            bool hasOldParamName = hasParam("Mpfa.Q");
+            if (hasOldParamName) {
+                std::cerr << "Deprecation warning: Parameter Mpfa.Q is deprecated, use MPFA.Q (uppercase MPFA)" << std::endl;
+                q = getParam<CoordScalar>("Mpfa.Q");
+            }
+            bool hasNewParamName = hasParam("MPFA.Q");
+            if (hasNewParamName) {
+                q = getParam<CoordScalar>("MPFA.Q");
+            }
+            if (hasOldParamName | hasNewParamName)
+                return q;
+            else
+            return getParam<CoordScalar>("MPFA.Q");
+        }();
 
         // reserve memory for the scv faces
         const auto numLocalScvf = scvFaceIndices.size();
@@ -430,7 +445,22 @@ private:
         const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdxGlobal);
 
         // the quadrature point parameterizaion to be used on scvfs
-        static const auto q = getParam<CoordScalar>("Mpfa.Q");
+        static const auto q = []{ // REMOVE deprecated version after release 3.2
+            CoordScalar q = 0.0;
+            bool hasOldParamName = hasParam("Mpfa.Q");
+            if (hasOldParamName) {
+                std::cerr << "Deprecation warning: Parameter Mpfa.Q is deprecated, use MPFA.Q (uppercase MPFA)" << std::endl;
+                q = getParam<CoordScalar>("Mpfa.Q");
+            }
+            bool hasNewParamName = hasParam("MPFA.Q");
+            if (hasNewParamName) {
+                q = getParam<CoordScalar>("MPFA.Q");
+            }
+            if (hasOldParamName | hasNewParamName)
+                return q;
+            else
+            return getParam<CoordScalar>("MPFA.Q");
+        }();
 
         // for network grids we only want to do one scvf per half facet
         // this approach assumes conforming grids at branching facets

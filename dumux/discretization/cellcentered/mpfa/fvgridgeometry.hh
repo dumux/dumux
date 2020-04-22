@@ -278,7 +278,22 @@ public:
                         secondaryInteractionVolumeVertices_[vIdxGlobal] = true;
 
                     // the quadrature point parameterizarion to be used on scvfs
-                    static const auto q = getParam<CoordScalar>("Mpfa.Q");
+                    static const auto q = []{ // REMOVE deprecated version after release 3.2
+                        CoordScalar q = 0.0;
+                        bool hasOldParamName = hasParam("Mpfa.Q");
+                        if (hasOldParamName) {
+                            std::cerr << "Deprecation warning: Parameter Mpfa.Q is deprecated, use MPFA.Q (uppercase MPFA)" << std::endl;
+                            q = getParam<CoordScalar>("Mpfa.Q");
+                        }
+                        bool hasNewParamName = hasParam("MPFA.Q");
+                        if (hasNewParamName) {
+                            q = getParam<CoordScalar>("MPFA.Q");
+                        }
+                        if (hasOldParamName | hasNewParamName)
+                            return q;
+                        else
+                        return getParam<CoordScalar>("MPFA.Q");
+                    }();
 
                     // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
                     const auto& outsideScvIndices = [&] ()

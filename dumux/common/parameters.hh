@@ -331,7 +331,8 @@ private:
         defaultParams["Vtk.AddProcessRank"] = "true";
 
         // parameters in the mpfa group
-        defaultParams["Mpfa.Q"] = "0.0";
+        defaultParams["Mpfa.Q"] = "0.0"; // DEPRECATED, REMOVE AFTER 3.2
+        defaultParams["MPFA.Q"] = "0.0";
 
         // merge the global default tree but do not overwrite if the parameter already exists
         mergeTree_(params, defaultParams, false);
