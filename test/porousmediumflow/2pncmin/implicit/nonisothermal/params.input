@@ -3,7 +3,7 @@
 # Type "./test_2pncmin --help" for more information.
 
 [TimeLoop]
-TEnd                    = 80000                 # duration of the simulation [s]
+TEnd                    = 150000                # duration of the simulation [s]
 DtInitial               = 1                     # initial time step size [s]
 MaxTimeStepSize         = 5000                  # maximum time step size
 

@@ -203,7 +203,7 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(2*timeLoop->timeStepSize());
 
     } while (!timeLoop->finished());
 
