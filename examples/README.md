@@ -5,6 +5,8 @@ The description in each folder (best viewed online by following the link) explai
 
 ### [:open_file_folder: Example 1: One-phase flow and tracer transport](1ptracer/README.md)
 
+<table><tr><td>
+
 In this example, we simulate tracer transport through a confined aquifer with a randomly distributed permeability field.
 We first solve the pressure field, compute the steady state flow field, and then solve the tracer transport equation.
 You learn how to
@@ -15,7 +17,15 @@ You learn how to
     * compute the flow field from a pressure solution to pass to a tracer problem
     * solve an instationary tracer transport problem with a given flow field
 
+</td>
+<td width="20%"><a href="1ptracer/README.md">
+<figure><img src="1ptracer/img/xtracer.gif" alt="Tracer result"/></figure>
+</a></td>
+</tr></table>
+
 ### [:open_file_folder: Example 2: Two-phase flow with infiltration and adaptive grid](2pinfiltration/README.md)
+
+<table><tr><td>
 
 In this example we model a soil contamination problem where DNAPL infiltrates a water-saturated porous medium (two-phase flow).
 The initial distribution of DNAPL is read in from a txt-file.
@@ -27,7 +37,15 @@ You learn how to
 * implement a problem with heterogenous material parameters
 * use adaptive grid refinement around the saturation front
 
+</td>
+<td width="30%"><a href="2pinfiltration/README.md">
+<figure><img src="2pinfiltration/img/test_2p_pointsource_adaptive.png" alt="2p result"/></figure>
+</a></td>
+</tr></table>
+
 ### [:open_file_folder: Example 3: Shallow water model](shallowwaterfriction/README.md)
+
+<table><tr><td>
 
 The shallow water flow model is applied to simulate steady subcritical flow in a channel including a bottom friction model.
 You learn how to
@@ -35,9 +53,24 @@ You learn how to
 * solve a shallow water flow problem including bottom friction
 * computate and output (VTK) an analytical reference solution
 
+</td>
+<td width="20%"><a href="shallowwaterfriction/README.md">
+<figure><img src="shallowwaterfriction/img/swe_result.png" alt="swe result"/></figure></td>
+</a></td>
+</tr></table>
+
 ### [:open_file_folder: Example 4: Freeflow channel](freeflowchannel/README.md)
+
+<table><tr><td>
+
 In this example, we simulate a free flow between two plates in two dimensions.
 You learn how to
 
 * solve a free flow problem
 * set outflow boundary conditions in the free-flow context
+
+</td>
+<td width="40%"><a href="freeflowchannel/README.md">
+<figure><img src="freeflowchannel/img/setup.png" alt="freeflow result"/></figure></td>
+</a></td>
+</tr></table>
