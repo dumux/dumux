@@ -278,7 +278,7 @@ public:
                         secondaryInteractionVolumeVertices_[vIdxGlobal] = true;
 
                     // the quadrature point parameterizarion to be used on scvfs
-                    static const auto q = getParam<CoordScalar>("Mpfa.Q");
+                    static const auto q = getParam<CoordScalar>("MPFA.Q");
 
                     // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
                     const auto& outsideScvIndices = [&] ()
