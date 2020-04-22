@@ -180,9 +180,6 @@ int main(int argc, char** argv) try
         problem->setTime( timeLoop->time() + timeLoop->timeStepSize() );
         problem->setTimeStepSize( timeLoop->timeStepSize() );
 
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
 

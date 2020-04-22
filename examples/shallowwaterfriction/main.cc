@@ -172,9 +172,6 @@ int main(int argc, char** argv) try
     // [[codeblock]]
     timeLoop->start(); do
     {
-        // First we define the old solution as the solution of the previous time step for storage evaluations.
-        assembler->setPreviousSolution(xOld);
-
         // We solve the non-linear system with time step control, using Newthon's method.
         nonLinearSolver.solve(x,*timeLoop);
 
