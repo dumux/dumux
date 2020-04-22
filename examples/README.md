@@ -74,24 +74,3 @@ You learn how to
 <figure><img src="freeflowchannel/img/setup.png" alt="freeflow result"/></figure></td>
 </a></td>
 </tr></table>
-
-### [:open_file_folder: Example 5: Biomineralization](biomineralization/README.md)
-
-<table><tr><td>
-
-In this example, we simulate microbially-induced calcite precipitation
-You learn how to
-
-* solve a reactive transport model including
-    * biofilm growth
-    * mineral precipitation and dissolution
-    * changing porosity and permeability
-* use complex fluid and solid systems
-* set a complex time loop with checkpoints, reading the check points from a file
-* set complex injection boundary conditions, reading the check points from a file
-
-</td>
-<td width="20%"><a href="biomineralization/README.md">
-<figure><img src="biomineralization/img/pore_scale_w_processes_named.png" alt="biomin result"/></figure></td>
-</a></td>
-</tr></table>
