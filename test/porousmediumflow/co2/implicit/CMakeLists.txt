@@ -42,9 +42,7 @@ dumux_add_test(NAME test_co2_box_parallel
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100,"porosity":1}
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_box_parallel-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_co2_box_parallel-00028.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_co2_box-reference.vtu
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2_box_parallel-00028.pvtu
                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_box params.input -Problem.Name test_co2_box_parallel")
 
@@ -108,8 +106,6 @@ dumux_add_test(NAME test_co2ni_tpfa_parallel
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_tpfa_parallel-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_co2ni_tpfa_parallel-00028.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_tpfa-reference.vtu
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2ni_tpfa_parallel-00028.pvtu
                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_tpfa paramsni.input -Problem.Name test_co2ni_tpfa_parallel")
