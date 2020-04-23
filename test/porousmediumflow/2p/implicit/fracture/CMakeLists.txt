@@ -33,7 +33,7 @@ dumux_add_test(NAME test_2p_fracture_mpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_mpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa-00001.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa params.input -Problem.Name test_2p_fracture_mpfa")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa params.input -Problem.Name test_2p_fracture_mpfa -TimeLoop.TimeStepInitTime 5000 -TimeLoop.FastTimeStepAdvance 1.5")
 
 # tests with gravity
 dumux_add_test(NAME test_2p_fracture_gravity_box
@@ -44,7 +44,7 @@ dumux_add_test(NAME test_2p_fracture_gravity_box
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_gravity_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_box-00001.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box params.input -Problem.Name test_2p_fracture_gravity_box -Problem.EnableGravity true")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box params.input -Problem.Name test_2p_fracture_gravity_box -Problem.EnableGravity true -MaxRelativeShift 1e-12")
 
 dumux_add_test(NAME test_2p_fracture_gravity_tpfa
               TARGET test_2p_fracture_tpfa
@@ -65,4 +65,4 @@ dumux_add_test(NAME test_2p_fracture_gravity_mpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_gravity_mpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_mpfa-00001.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa params.input -Problem.Name test_2p_fracture_gravity_mpfa -Problem.EnableGravity true")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa params.input -Problem.Name test_2p_fracture_gravity_mpfa -Problem.EnableGravity true -TimeLoop.DtInitial 200 -TimeLoop.TimeStepInitTime 5000 -TimeLoop.SlowTimeStepAdvance 1.0 -TimeLoop.FastTimeStepAdvance 1.2")

@@ -144,6 +144,10 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
+    Scalar timeStepInitTime = getParam<Scalar>("TimeLoop.TimeStepInitTime", 0.0);
+    Scalar slowTimeStepAdvance = getParam<Scalar>("TimeLoop.SlowTimeStepAdvance", 1.1);
+    Scalar fastTimeStepAdvance = getParam<Scalar>("TimeLoop.FastTimeStepAdvance", 2.0);
+
     // time loop
     timeLoop->start(); do
     {
@@ -165,7 +169,10 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        if (timeLoop->time() < timeStepInitTime)
+            timeLoop->setTimeStepSize(slowTimeStepAdvance * timeLoop->timeStepSize());
+        else
+            timeLoop->setTimeStepSize(fastTimeStepAdvance * timeLoop->timeStepSize());
 
     } while (!timeLoop->finished());
 
