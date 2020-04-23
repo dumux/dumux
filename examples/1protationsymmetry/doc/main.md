@@ -36,7 +36,7 @@ and compute the convergence rates.
 #include <dumux/common/parameters.hh> // for getParam
 #include <dumux/common/integrate.hh>  // for integrateL2Error
 
-#include <dumux/linear/seqsolverbackend.hh> // for UMFPackBackend
+#include <dumux/linear/seqsolverbackend.hh> // for ILU0BiCGSTABBackend
 #include <dumux/linear/pdesolver.hh>        // for LinearPDESolver
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -133,7 +133,7 @@ solution and stores the result therein.
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = ILU0BiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
     LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
     solver.setVerbose(false); // suppress output during solve()
