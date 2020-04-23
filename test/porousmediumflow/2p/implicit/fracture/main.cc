@@ -144,9 +144,9 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    Scalar timeStepInitTime = getParam<Scalar>("TimeLoop.TimeStepInitTime", 0.0);
-    Scalar slowTimeStepAdvance = getParam<Scalar>("TimeLoop.SlowTimeStepAdvance", 1.1);
-    Scalar fastTimeStepAdvance = getParam<Scalar>("TimeLoop.FastTimeStepAdvance", 2.0);
+    const Scalar timeStepInitTime = getParam<Scalar>("TimeLoop.TimeStepInitTime", 0.0);
+    const Scalar slowTimeStepAdvance = getParam<Scalar>("TimeLoop.SlowTimeStepAdvance", 1.1);
+    const Scalar fastTimeStepAdvance = getParam<Scalar>("TimeLoop.FastTimeStepAdvance", 2.0);
 
     // time loop
     timeLoop->start(); do
