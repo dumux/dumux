@@ -27,6 +27,12 @@
 #include <cstddef>
 #include <utility>
 
+// Forward declare to avoid includes
+namespace Dune {
+template <class FirstRow, class ... Args>
+class MultiTypeBlockMatrix;
+}
+
 namespace Dumux {
 
 /*
@@ -53,6 +59,12 @@ namespace Detail {
     {
         using type = std::index_sequence<Is1..., (offset + Is2)...>;
     };
+
+    template <class Matrix, class RowType, std::size_t... Is>
+    auto constexpr rowsImpl(Matrix& mat, std::index_sequence<Is...>)
+    {
+        return RowType(std::get<Is>(mat)...);
+    }
 }
 
 /*
@@ -96,6 +108,22 @@ template <std::size_t offset, std::size_t n>
 constexpr auto makeIndexSequenceWithOffset()
 {
     return addOffsetToIndexSequence<offset>(std::make_index_sequence<n>{});
+}
+
+template <class FirstRow, class ... Args>
+auto constexpr rows(const Dune::MultiTypeBlockMatrix<FirstRow, Args...>& matrix)
+{
+    using Type = std::tuple<const FirstRow&, const Args&...>;
+    using Indices = std::index_sequence_for<FirstRow, Args...>;
+    return Detail::rowsImpl<const Dune::MultiTypeBlockMatrix<FirstRow, Args...>&, Type>(matrix, Indices{});
+}
+
+template <class FirstRow, class ... Args>
+auto constexpr rows(Dune::MultiTypeBlockMatrix<FirstRow, Args...>& matrix)
+{
+    using Type = std::tuple<FirstRow&, Args&...>;
+    using Indices = std::index_sequence_for<FirstRow, Args...>;
+    return Detail::rowsImpl<Dune::MultiTypeBlockMatrix<FirstRow, Args...>&, Type>(matrix, Indices{});
 }
 
 } // end namespace Dumux
