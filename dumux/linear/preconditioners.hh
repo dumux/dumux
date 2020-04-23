@@ -349,6 +349,7 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
     using LinearOperator = Dune::MatrixAdapter<A, U, U>;
     using Smoother = Dune::SeqSSOR<A, U, U>;
     using AMGSolverForA = Dune::Amg::AMG<LinearOperator, U, Smoother, Comm>;
+    using SchurComplementSolver = Dune::RestartedGMResSolver<U>;
 
     class SimpleOperator : public Dune::LinearOperator<U, U>
     {
@@ -375,7 +376,7 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
             auto& C = m_[_1][_0];
             auto& D = m_[_1][_1];
 
-            // Apply -(-D + C * diag(A)^-1 * B) * deltaP:
+            // Apply the Schur complement (-D + C * diag(A)^-1 * B) * deltaP:
 
             // B * deltP
             // rhsTmp has different size than rhs
@@ -390,8 +391,6 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
 
             // (-D + C * diag(A)^-1 * B) * deltaP
             D.mmv(deltaP, rhs);
-
-            rhs *= -1.0;
         }
 
         //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
@@ -444,6 +443,8 @@ public:
     , verbosity_(params.get<int>("verbosity"))
     , paramGroup_(params.get<std::string>("ParameterGroup"))
     , useDirectVelocitySolverForA_(getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.DirectSolverForA", false))
+    , useDiagonalInSchurComplement_(getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.UseDiagonalInSchurComplement", false))
+    , useDiagonalInUpdate_(getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.UseDiagonalInUpdate", false))
     {
         // AMG is needed for determination of omega
         if (!useDirectVelocitySolverForA_)
@@ -454,6 +455,8 @@ public:
 
         relaxationFactorP_ = getParamFromGroup<scalar_field_type>(paramGroup_, "LinearSolver.Preconditioner.RelaxationP", relaxationFactorP_);
         relaxationFactorU_ = getParamFromGroup<scalar_field_type>(paramGroup_, "LinearSolver.Preconditioner.RelaxationU", relaxationFactorU_);
+
+        initSchurComplementSolver_();
     }
 
     /*!
@@ -471,6 +474,7 @@ public:
     {
         using namespace Dune::Indices;
 
+        auto& A = matrix_[_0][_0];
         auto& B = matrix_[_0][_1];
         auto& C = matrix_[_1][_0];
         auto& D = matrix_[_1][_1];
@@ -480,8 +484,10 @@ public:
         auto& u = update[_0];
         auto& p = update[_1];
 
+        static const bool dirichletHack = getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.DirichletHack", false);
         // incorporate Dirichlet cell values
         // TODO: pass Dirichlet constraint handler from outside
+        if (dirichletHack)
         for (std::size_t i = 0; i < D.N(); ++i)
         {
             const auto& block = D[i][i];
@@ -499,44 +505,26 @@ public:
             auto uNew = u;
             applySolverForA_(uNew, uRhs);
 
-            // 2. Solve -(D + C * diag(A)^-1 * B) * deltaP = -g + C * uNew + D*p for deltaP
-            using SimpleSolver = Dune::RestartedGMResSolver<U>;
-            using SimpleSolverPreconditioner = Dune::Richardson<U, U>;
-
-            Dune::InverseOperatorResult result;
-            SimpleSolverPreconditioner precond;
-
-            auto linearOperator = SimpleOperator(matrix_);
-            static const bool invertSchurComplementA = getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.InvertSchurComplementA", false);
-            if (invertSchurComplementA)
-                linearOperator.setSolver([&](U& a, U& b) { applySolverForA_(a, b); });
-            else
-                linearOperator.setSolver([&](U& a, U& b) { applyInverseOfDiagonalOfA_(a); });
-
-            static const int innersolverVerbosity = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", 0);
-            static const double innersolverResidualReduction = getParamFromGroup<double>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverResidualReduction", 1e-12);
-            static const int innersolverMaxIter = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverMaxIter", 1000);
-            static const int innersolverRestart = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverRestart", 100);
-            SimpleSolver solver(linearOperator, precond, innersolverResidualReduction, innersolverRestart, innersolverMaxIter, innersolverVerbosity);
-
+            // 2. Solve (D + C * diag(A)^-1 * B) * deltaP = -g + C * uNew + D*p for deltaP
             auto pRhs = g;
             pRhs *= -1.0;
-            auto deltaP = p;
             C.umv(uNew, pRhs);
-            D.mmv(p, pRhs);
+            D.umv(p, pRhs);
+            auto deltaP = p;
+            Dune::InverseOperatorResult result;
+            schurComplementSolver_->apply(deltaP, pRhs, result);
 
-            solver.apply(deltaP, pRhs, result);
-
+            // 3. Calculate correction of u:
+            // deltaU = (-diag(A^-1) * B) * deltaP
             auto deltaU = U(B.N());
             B.mv(deltaP, deltaU);
 
-            if (invertSchurComplementA)
-                applySolverForA_(deltaU, deltaU);
-            else
-            {
+            if (useDiagonalInUpdate_)
                 applyInverseOfDiagonalOfA_(deltaU);
-                deltaU *= -1.0;
-            }
+            else
+                applySolverForA_(deltaU, deltaU);
+
+            deltaU *= -1.0;
 
             // 4. Update p
             deltaP *= relaxationFactorP_;
@@ -562,6 +550,13 @@ public:
 
 private:
 
+    // void apply
+
+    void applyStandardSIMPLE_()
+    {
+
+    }
+
     void initAMG_(const Dune::ParameterTree& params)
     {
         using namespace Dune::Indices;
@@ -577,6 +572,25 @@ private:
 #else
             DUNE_THROW(Dune::InvalidStateException, "UMFPack not available. Use LinearSolver.Preconditioner.DirectVelocitySolver = false.");
 #endif
+    }
+
+    void initSchurComplementSolver_()
+    {
+        auto linearOperator = std::make_shared<SimpleOperator>(matrix_);
+        if (useDiagonalInSchurComplement_)
+            linearOperator->setSolver([&](U& a, U& b) { applyInverseOfDiagonalOfA_(a); });
+        else
+            linearOperator->setSolver([&](U& a, U& b) { applySolverForA_(a, b); });
+
+        Dune::ParameterTree tree;
+        tree["verbose"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", "0");
+        tree["reduction"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverResidualReduction", "1e-12");
+        tree["maxit"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverMaxIter", "1000");
+        tree["restart"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverRestart", "100");
+
+        schurComplementPreconditioner_ = std::make_shared<Dune::Richardson<U, U>>();
+        // schurComplementSolver_ = std::make_unique<SchurComplementSolver>(linearOperator, schurComplementPreconditioner_, tree);
+        schurComplementSolver_ = std::make_unique<SchurComplementSolver>(linearOperator, std::make_shared<Dune::Richardson<U, U>>(), tree);
     }
 
     void applyInverseOfDiagonalOfA_(U& x) const
@@ -599,7 +613,8 @@ private:
         {
 #if HAVE_UMFPACK
             Dune::InverseOperatorResult res;
-            umfPackSolverForA_->apply(sol, rhs, res);
+            auto rhsTmp = rhs;
+            umfPackSolverForA_->apply(sol, rhsTmp, res);
 #endif
         }
         else
@@ -621,11 +636,15 @@ private:
     const int verbosity_;
 
     std::unique_ptr<AMGSolverForA> amgSolverForA_;
+    std::unique_ptr<SchurComplementSolver> schurComplementSolver_;
+    std::shared_ptr<Dune::Preconditioner<U,U>> schurComplementPreconditioner_;
 #if HAVE_UMFPACK
     std::unique_ptr<Dune::UMFPack<A>> umfPackSolverForA_;
 #endif
     const std::string paramGroup_;
     const bool useDirectVelocitySolverForA_;
+    const bool useDiagonalInSchurComplement_;
+    const bool useDiagonalInUpdate_;
 };
 
 DUMUX_REGISTER_PRECONDITIONER("simple", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqSimple, 1>());
