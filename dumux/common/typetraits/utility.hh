@@ -61,18 +61,11 @@ namespace Detail {
         using type = std::index_sequence<Is1..., (offset + Is2)...>;
     };
 
-    template <class FirstRow, class ... Args>
-    struct NumRows
-    {
-        static constexpr auto value = sizeof...(Args)+1;
-    };
-
     template <class M, std::size_t... Is>
     auto constexpr forwardAsTuple(M&& m, std::index_sequence<Is...>)
     {
         return std::forward_as_tuple(std::get<Is>(m)...);
     }
-
 }
 
 /*
@@ -122,7 +115,7 @@ template <class M>
 auto constexpr rows(M&& m)
 {
     return Detail::forwardAsTuple(std::forward<M>(m),
-                                  std::make_index_sequence<Detail::NumRows<M>::value>{});
+                                  std::make_index_sequence<std::decay_t<M>::N()>{});
 }
 
 } // end namespace Dumux
