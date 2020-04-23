@@ -44,7 +44,7 @@ dumux_add_test(NAME test_2p_fracture_gravity_box
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_gravity_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_box-00001.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box params.input -Problem.Name test_2p_fracture_gravity_box -Problem.EnableGravity true -MaxRelativeShift 1e-12")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box params.input -Problem.Name test_2p_fracture_gravity_box -Problem.EnableGravity true -Newton.MaxRelativeShift 1e-12")
 
 dumux_add_test(NAME test_2p_fracture_gravity_tpfa
               TARGET test_2p_fracture_tpfa
