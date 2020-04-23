@@ -26,6 +26,7 @@
 
 #include <cstddef>
 #include <utility>
+#include <dune/common/typelist.hh>
 
 // Forward declare to avoid includes
 namespace Dune {
@@ -60,11 +61,18 @@ namespace Detail {
         using type = std::index_sequence<Is1..., (offset + Is2)...>;
     };
 
-    template <class Matrix, class RowType, std::size_t... Is>
-    auto constexpr rowsImpl(Matrix& mat, std::index_sequence<Is...>)
+    template <class FirstRow, class ... Args>
+    struct NumRows
     {
-        return RowType(std::get<Is>(mat)...);
+        static constexpr auto value = sizeof...(Args)+1;
+    };
+
+    template <class M, std::size_t... Is>
+    auto constexpr forwardAsTuple(M&& m, std::index_sequence<Is...>)
+    {
+        return std::forward_as_tuple(std::get<Is>(m)...);
     }
+
 }
 
 /*
@@ -110,20 +118,11 @@ constexpr auto makeIndexSequenceWithOffset()
     return addOffsetToIndexSequence<offset>(std::make_index_sequence<n>{});
 }
 
-template <class FirstRow, class ... Args>
-auto constexpr rows(const Dune::MultiTypeBlockMatrix<FirstRow, Args...>& matrix)
+template <class M>
+auto constexpr rows(M&& m)
 {
-    using Type = std::tuple<const FirstRow&, const Args&...>;
-    using Indices = std::index_sequence_for<FirstRow, Args...>;
-    return Detail::rowsImpl<const Dune::MultiTypeBlockMatrix<FirstRow, Args...>&, Type>(matrix, Indices{});
-}
-
-template <class FirstRow, class ... Args>
-auto constexpr rows(Dune::MultiTypeBlockMatrix<FirstRow, Args...>& matrix)
-{
-    using Type = std::tuple<FirstRow&, Args&...>;
-    using Indices = std::index_sequence_for<FirstRow, Args...>;
-    return Detail::rowsImpl<Dune::MultiTypeBlockMatrix<FirstRow, Args...>&, Type>(matrix, Indices{});
+    return Detail::forwardAsTuple(std::forward<M>(m),
+                                  std::make_index_sequence<Detail::NumRows<M>::value>{});
 }
 
 } // end namespace Dumux
