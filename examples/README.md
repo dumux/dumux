@@ -74,3 +74,20 @@ You learn how to
 <figure><img src="freeflowchannel/img/setup.png" alt="freeflow result"/></figure></td>
 </a></td>
 </tr></table>
+
+### [:open_file_folder: Example 5: One-phase flow with rotation-symmetric solution](1protationsymmetry/README.md)
+
+<table><tr><td>
+
+In this example, a rotation-symmetric solution for the single-phase flow equation is discussed.
+You learn how to
+
+* solve a rotation-symmetric problem
+* perform a convergence test against an analytical solution
+* do post-processing in [ParaView](https://www.paraview.org/)
+
+</td>
+<td width="30%"><a href="1protationsymmetry/README.md">
+<figure><img src="1protationsymmetry/img/setup.svg" alt="Rotation-symmetric setup"/></figure></td>
+</a></td>
+</tr></table>
