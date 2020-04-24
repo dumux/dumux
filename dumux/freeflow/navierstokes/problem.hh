@@ -24,6 +24,7 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
@@ -214,13 +215,10 @@ public:
 
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
-     * \note This method is deprecated. Use porousMediumVelocity(element, scvf) instead, returning a velocity vector. Will be removed after 3.2
      */
+    [[deprecated("\nvelocityPorousMedium(element, scvf) is deprecated. Use porousMediumVelocity(element, scvf) instead, returning a velocity vector. Will be removed after 3.2")]]
     Scalar velocityPorousMedium(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        // Redirect to helper method to avoid spurious deprecation warnings. TODO: Remove after 3.2!
-        return deprecatedVelocityPorousMedium_();
-    }
+    { return 0.0; }
 
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
@@ -274,9 +272,10 @@ private:
     Scalar getVelPM_(const Element& element, const SubControlVolumeFace& scvf) const
     {
         // Check if the user problem implements the deprecated velocityPorousMedium method
+        DUNE_NO_DEPRECATED_BEGIN
         static constexpr bool implHasVelocityPorousMedium = !std::is_same<decltype(&Implementation::velocityPorousMedium), decltype(&NavierStokesProblem::velocityPorousMedium)>::value;
         // This check would always trigger a spurious deprecation warning if the base class' (NavierStokesProblem) velocityPorousMedium method was equipped with a deprecation warning.
-        // This is why we need another level of redirection there.
+        DUNE_NO_DEPRECATED_END
 
         // Forward either to user impl (thereby raising a deprecation warning) or return 0.0 by default
         return deprecationHelper_(element, scvf, std::integral_constant<bool, implHasVelocityPorousMedium>{});
@@ -288,11 +287,6 @@ private:
 
     // Return 0.0 by default. TODO: Remove this after 3.2
     Scalar deprecationHelper_(const Element& element, const SubControlVolumeFace& scvf, std::false_type) const
-    { return 0.0; }
-
-    // Auxiliary method to trigger a deprecation warning.
-    [[deprecated("\nvelocityPorousMedium(element, scvf) is deprecated. Use porousMediumVelocity(element, scvf) instead, returning a velocity vector. Will be removed after 3.2")]]
-    Scalar deprecatedVelocityPorousMedium_() const
     { return 0.0; }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
