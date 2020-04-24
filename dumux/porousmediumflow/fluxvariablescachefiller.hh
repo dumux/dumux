@@ -616,7 +616,7 @@ private:
                 if (forceUpdateAll || diffusionIsSolDependent)
                 {
                     // lambda to obtain diffusion coefficient
-                    const auto getD = [phaseIdx, compIdx] (const auto& volVars)
+                    const auto getD = [&](const auto& volVars)
                     {
                         if constexpr (FluidSystem::isTracerFluidSystem())
                             return volVars.effectiveDiffusionCoefficient(0, 0, compIdx);
