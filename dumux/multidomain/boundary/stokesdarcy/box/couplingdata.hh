@@ -170,7 +170,17 @@ public:
           const auto& fluxVarCache = elementFluxVarsCache[darcyScvf];
           const auto& shapeValues = fluxVarCache.shapeValues();
 
-          for (const auto& scv : scvs(data.fvGeometry)){
+          // static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
+          // //TODO: cant find localBasis Type, there is ::Traits::Jacobian
+          // using JacobianType = Dune::FieldMatrix<Scalar, 1, darcyDim>;
+          // std::vector<JacobianType> shapeDerivates;
+          // std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+          //
+          // localBasis.evaluateFunction(scvf.geometry().center(), shapeValues);
+          // localBasis.evaluateJacobian(scvf.geometry().center() , shapeDerivates);//TODO: is .center local or global? i want local and is center correct?
+
+          for (const auto& scv : scvs(data.fvGeometry)){ //use axpy for grad?
+            // gradP.axpy(elemVolVars[scv].pressure(darcyPhaseIdx),shapeDerivates[scv.indexInElement()][0]);  //Every scv belongs to one node?
             gradP.axpy(elemVolVars[scv].pressure(darcyPhaseIdx), fluxVarCache.gradN(scv.indexInElement()));
             if (enableGravity) rho += elemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
           }
