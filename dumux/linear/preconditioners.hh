@@ -335,6 +335,90 @@ private:
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
 
 
+template<class X, class Y, int l = 1>
+class SeqJacobiMatrixFree : public Dune::Preconditioner<X,Y>
+{
+public:
+    //! \brief The domain type of the preconditioner.
+    using domain_type = X;
+    //! \brief The range type of the preconditioner.
+    using range_type = Y;
+    //! \brief The field type of the preconditioner.
+    using field_type = typename X::field_type;
+    //! \brief Scalar type underlying the field_type.
+    using scalar_field_type = Dune::Simd::Scalar<field_type>;
+
+    SeqJacobiMatrixFree(std::shared_ptr<Dune::LinearOperator<X,Y>> op, const Dune::ParameterTree& params)
+    : op_(op)
+    {}
+
+    /*!
+     * \brief Prepare the preconditioner.
+     */
+    virtual void pre(X& x, Y& b) {}
+
+    /*!
+     * \brief Apply the preconditioner
+     *
+     * \param update The update to be computed.
+     * \param currentDefect The current defect.
+     */
+    virtual void apply(X& update, const Y& currentDefect)
+    {
+
+        if (inverseDiagonalElements_.size() == 0)
+            init_(update, currentDefect);
+
+
+        for (std::size_t i = 0; i < update.size(); ++i)
+        {
+            auto tmp = currentDefect[i];
+            tmp *= inverseDiagonalElements_[i];
+            update[i] = tmp;
+        }
+    }
+
+    /*!
+     * \brief Clean up.
+     */
+    virtual void post(X& x) {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual Dune::SolverCategory::Category category() const
+    {
+        return Dune::SolverCategory::sequential;
+    }
+
+
+private:
+
+    void init_(X& update, const Y& currentDefect)
+    {
+        Dune::Timer timer;
+        auto tmp = X(update.size());
+        inverseDiagonalElements_ = tmp;
+        auto res = tmp;
+
+        for (std::size_t i = 0; i < inverseDiagonalElements_.size(); ++i)
+        {
+            tmp = 0;
+            res = 0;
+            tmp[i] = 1.0;
+            op_->apply(tmp, res);
+            inverseDiagonalElements_[i] = 1.0/res[i];
+        }
+
+        timer.stop();
+
+        std::cout << "initializing Jac precond took " << timer.elapsed() << " seconds" << std::endl;
+    }
+
+
+    std::shared_ptr<const Dune::LinearOperator<X,Y>> op_;
+    X inverseDiagonalElements_;
+};
+
+
 //! See https://www.cs.umd.edu/~elman/papers/tax.pdf
 template<class M, class X, class Y, int l = 1>
 class SeqSimple : public Dune::Preconditioner<X,Y>
@@ -582,15 +666,23 @@ private:
         else
             linearOperator->setSolver([&](U& a, U& b) { applySolverForA_(a, b); });
 
-        Dune::ParameterTree tree;
-        tree["verbose"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", "0");
-        tree["reduction"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverResidualReduction", "1e-12");
-        tree["maxit"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverMaxIter", "1000");
-        tree["restart"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverRestart", "100");
+        Dune::ParameterTree treeSchurComplementSolver;
+        treeSchurComplementSolver["verbose"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", "0");
+        treeSchurComplementSolver["reduction"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverResidualReduction", "1e-12");
+        treeSchurComplementSolver["maxit"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverMaxIter", "1000");
+        treeSchurComplementSolver["restart"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverRestart", "100");
 
-        schurComplementPreconditioner_ = std::make_shared<Dune::Richardson<U, U>>();
-        // schurComplementSolver_ = std::make_unique<SchurComplementSolver>(linearOperator, schurComplementPreconditioner_, tree);
-        schurComplementSolver_ = std::make_unique<SchurComplementSolver>(linearOperator, std::make_shared<Dune::Richardson<U, U>>(), tree);
+        static const bool usePreconditionerForSchurComplement = getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.UsePreconditionerForSchurComplement", false);
+        if (usePreconditionerForSchurComplement)
+        {
+            Dune::ParameterTree treePreconditioner;
+            treePreconditioner["verbose"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", "0");
+            schurComplementPreconditioner_ = std::make_shared<SeqJacobiMatrixFree<U, U>>(linearOperator, treePreconditioner);
+        }
+        else
+            schurComplementPreconditioner_ = std::make_shared<Dune::Richardson<U, U>>();
+
+        schurComplementSolver_ = std::make_unique<SchurComplementSolver>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
     }
 
     void applyInverseOfDiagonalOfA_(U& x) const
