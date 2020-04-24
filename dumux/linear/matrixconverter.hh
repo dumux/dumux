@@ -25,6 +25,7 @@
 #define DUMUX_MATRIX_CONVERTER
 
 #include <cmath>
+#include <utility>
 #include <dune/common/indices.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/istl/bvector.hh>
@@ -104,11 +105,12 @@ private:
         };
 
         // fill the pattern
+        using namespace Dune::Hybrid;
         std::size_t rowIndex = 0;
-        Dune::Hybrid::forEach(A, [&addIndices, &rowIndex, numRows](const auto& rowOfMultiTypeMatrix)
+        forEach(std::make_index_sequence<MultiTypeBlockMatrix::N()>(), [&A, &addIndices, &rowIndex, numRows](const auto i)
         {
             std::size_t colIndex = 0;
-            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&addIndices, &colIndex, &rowIndex, numRows](const auto& subMatrix)
+            forEach(A[i], [&addIndices, &colIndex, &rowIndex, numRows](const auto& subMatrix)
             {
                 addIndices(subMatrix, rowIndex, colIndex);
 
@@ -154,11 +156,12 @@ private:
 
         };
 
+        using namespace Dune::Hybrid;
         std::size_t rowIndex = 0;
-        Dune::Hybrid::forEach(A, [&copyValues, &rowIndex, numRows](const auto& rowOfMultiTypeMatrix)
+        forEach(std::make_index_sequence<MultiTypeBlockMatrix::N()>(), [&A, &copyValues, &rowIndex, numRows](const auto i)
         {
             std::size_t colIndex = 0;
-            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&copyValues, &colIndex, &rowIndex, numRows](const auto& subMatrix)
+            forEach(A[i], [&copyValues, &colIndex, &rowIndex, numRows](const auto& subMatrix)
             {
                 copyValues(subMatrix, rowIndex, colIndex);
 
