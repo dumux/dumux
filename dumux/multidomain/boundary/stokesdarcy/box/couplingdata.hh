@@ -58,7 +58,9 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
+    //Lars added for velocityPorousMedium
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
+    template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
 
     using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
     using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
@@ -131,7 +133,7 @@ public:
     }
 
     /*!
-     * \brief Returns the velocity vector of the porous medium according to darcys law
+     * \brief Returns the velocity vector at the interface of the porous medium according to darcys law
      *
      * For the BeaversJoseph coupling, the tangential porous medium velocity needs to
      * be evaluated.
@@ -142,47 +144,42 @@ public:
       // Right way to get perm type?
       using PermeabilityType = typename Problem<darcyIdx>::SpatialParams::PermeabilityType;
       PermeabilityType K(0.0);
-      VelocityVector gradP(0.0);
-      Scalar rho(0.0);
+
+      VelocityVector gradP(0.0); // Pressure gradient darcy at the interface, pressure gradient has the same size as the resulting velocity Vector
+      Scalar rho(0.0); //density at the interface
+      //Getting needed Information from the darcy domain
       const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
+      //Gravity changes darcy's law for calculating the velocity: ...-rho*g, + or -?
       static const bool enableGravity = getParamFromGroup<bool>(this->couplingManager().problem(darcyIdx).paramGroup(), "Problem.EnableGravity");
 
-      // Iteraton over the different coupling segments?
+      // Iteraton over the different coupling segments
       for (const auto& data : stokesContext)
       {
-        if (scvf.index() == data.stokesScvfIdx) //We are on the correct scvf
+        if (scvf.index() == data.stokesScvfIdx) //We are on (one of) the correct scvf(s)
         {
           const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
           const auto& elemVolVars = *(data.elementVolVars);
           const auto& darcyFvGeometry = data.fvGeometry;
           const auto& localBasis = darcyFvGeometry.feLocalBasis();
 
-          //TODO: is this correct wy to get perm?
           K = data.volVars.permeability();
 
-          // TODO: Include gravity, commented out
-          static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
-          //TODO: cant find localBasis Type, there is ::Traits::Jacobian
-          using JacobianType = Dune::FieldMatrix<Scalar, 1, darcyDim>;
-          std::vector<JacobianType> shapeDerivates;
-          std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+          const auto& elementFluxVarsCache = *(data.elementFluxVarsCache); //ElementFluxVariablesCache<darcyIdx>
+          const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
+          const auto& fluxVarCache = elementFluxVarsCache[darcyScvf];
+          const auto& shapeValues = fluxVarCache.shapeValues();
 
-          //localBasis.evaluateFunction(scvf.geometry().center(), shapeValues);
-          localBasis.evaluateJacobian(scvf.geometry().center() , shapeDerivates);//TODO: is .center local or global? i want local and is center correct?
-
-          Dune::FieldVector<Scalar, 1> pressureGrad(0.0);
-          for (const auto& scv : scvs(data.fvGeometry)){ //use axpy for grad?
-            gradP.axpy(elemVolVars[scv].pressure(darcyPhaseIdx),shapeDerivates[scv.indexInElement()][0]);  //Every scv belongs to one node?
+          for (const auto& scv : scvs(data.fvGeometry)){
+            gradP.axpy(elemVolVars[scv].pressure(darcyPhaseIdx), fluxVarCache.gradN(scv.indexInElement()));
             if (enableGravity) rho += elemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
           }
 
           if (enableGravity)
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(scvf.center()));
 
-          //TODO: what is with viscosity?
           // apply the permeability and return the velocity
-          K *= -1.0;
+          K *= -1.0/data.volVars.viscosity(data.darcyScvfIdx);
         }
       }
     return mv(K, gradP);
