@@ -581,7 +581,7 @@ private:
             if (!scvf.boundary() ||
                 currentScvfBoundaryTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
                 currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())) ||
-                currentScvfBoundaryTypes->isNTangential(Indices::velocity(lateralFace..directionIndex()))
+                currentScvfBoundaryTypes->isNTangential(Indices::velocity(lateralFace.directionIndex()))
                )
             {
                 const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);

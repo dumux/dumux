@@ -286,7 +286,7 @@ public:
           const auto& localBasis = darcyFvGeometry.feLocalBasis();
 
           K = data.volVars.permeability();
-          const auto M = this->couplingManager().problem(darcyIdx).spatialParams().matrixNTangentialAtPos(scvf.center());
+          auto M = this->couplingManager().problem(darcyIdx).spatialParams().matrixNTangentialAtPos(scvf.center());
 
 
 
@@ -315,11 +315,12 @@ public:
 
           // apply the permeability and return the velocity
           //K *= -1.0/data.volVars.viscosity(data.darcyScvfIdx);
-          const auto& epsInterface = this->couplingManager().problem(darcyIdx).spatialParams().factorNTangential(scvf.center());
+          const auto& epsInterface = this->couplingManager().problem(darcyIdx).spatialParams().epsInterfaceAtPos(scvf.center());
           M*=epsInterface*epsInterface;
+          //TODO: correctly calculate, dont just pick the first one or even do something worse
+          return mv(M, gradP);
         }
       }
-    return mv(M, gradP);
     }
 };
 

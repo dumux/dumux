@@ -291,9 +291,7 @@ public:
                                        const Scalar tangentialVelocityGradient) const //dv/dx=0
     {
         //factor = 1/(eps*N1bl)
-        const Scalar factor = asImp_().factorNTangential(faceOnPorousBoundary);
-        factor*= asImp_().epsInterface(faceOnPorousBoundary);
-        factor=1.0/factor;
+        const Scalar factor = 1.0/(asImp_().epsInterface(faceOnPorousBoundary) * asImp_().factorNTangential(faceOnPorousBoundary));
         const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
 
         // create a unit normal vector oriented in positive coordinate direction
