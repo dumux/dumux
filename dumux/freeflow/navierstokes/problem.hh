@@ -280,6 +280,30 @@ public:
               + velocitySelf) / (betaBJ*distanceNormalToBoundary + 1.0);
     }
 
+    //TODO: Implement!
+    //TODO: A assume an inverted sign for factorNTangential...
+    //! helper function to evaluate the slip velocity on the boundary when the new tangential condition is used
+    const Scalar nTangentialVelocity(const Element& element,
+                                       const SubControlVolume& scv,
+                                       const SubControlVolumeFace& ownScvf, //stehendes
+                                       const SubControlVolumeFace& faceOnPorousBoundary, //liegendes
+                                       const Scalar velocitySelf, //vel auf stehendem
+                                       const Scalar tangentialVelocityGradient) const //dv/dx=0
+    {
+        //factor = 1/(eps*N1bl)
+        const Scalar factor = asImp_().factorNTangential(faceOnPorousBoundary);
+        factor*= asImp_().epsInterface(faceOnPorousBoundary);
+        factor=1.0/factor;
+        const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
+
+        // create a unit normal vector oriented in positive coordinate direction
+        GlobalPosition orientation = ownScvf.unitOuterNormal();
+        orientation[ownScvf.directionIndex()] = 1.0;
+        return (tangentialVelocityGradient*distanceNormalToBoundary
+              + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * factor * distanceNormalToBoundary
+              + velocitySelf) / (factor*distanceNormalToBoundary + 1.0);
+    }
+
 private:
 
     // Auxiliary method handling deprecation warnings. TODO: Remove after 3.2!
