@@ -132,10 +132,70 @@ public:
         return momentumFlux;
     }
 
+
+    //TODO: Implement!
+    /*!
+     * \brief Returns the new interface condition momentum flux across the coupling boundary.
+     *
+     * For the new momentum coupling, the porous medium side and a difference to the usual momentum flux is calculated
+     *
+     */
+    template<class ElementFaceVariables>
+    Scalar nMomentumCouplingCondition(const Element<stokesIdx>& element,
+                                     const FVElementGeometry<stokesIdx>& fvGeometry,
+                                     const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
+                                     const ElementFaceVariables& stokesElemFaceVars,
+                                     const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        Scalar momentumFlux(0.0);
+        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+
+        // integrate darcy pressure over each coupling segment and average
+        for (const auto& data : stokesContext)
+        {
+            if (scvf.index() == data.stokesScvfIdx)
+            {
+                const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+                const auto& elemVolVars = *(data.elementVolVars);
+                const auto& darcyFvGeometry = data.fvGeometry;
+                const auto& localBasis = darcyFvGeometry.feLocalBasis();
+
+                // do second order integration as box provides linear functions
+                static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
+                const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
+                for (const auto& qp : rule)
+                {
+                    const auto& ipLocal = qp.position();
+                    const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
+                    const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
+
+                    std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+                    localBasis.evaluateFunction(ipElementLocal, shapeValues);
+
+                    Scalar pressure = 0.0;
+                    for (const auto& scv : scvs(data.fvGeometry))
+                        pressure += elemVolVars[scv].pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+
+                    momentumFlux += pressure*data.segmentGeometry.integrationElement(qp.position())*qp.weight();
+                }
+            }
+        }
+
+        momentumFlux /= scvf.area();
+
+        // normalize pressure
+        if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
+            momentumFlux -= this->couplingManager().problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
+
+        momentumFlux *= scvf.directionSign();
+
+        return momentumFlux;
+    }
+
     /*!
      * \brief Returns the velocity vector at the interface of the porous medium according to darcys law
      *
-     * For the BeaversJoseph coupling, the tangential porous medium velocity needs to
+     * For the tangential (bj(s) and nTangential) coupling, the tangential porous medium velocity needs to
      * be evaluated.
      *
      */
