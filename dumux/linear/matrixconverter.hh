@@ -88,7 +88,7 @@ private:
         occupationPattern.resize(numRows, numRows);
 
         // lambda function to fill the occupation pattern
-        auto addIndices = [&occupationPattern](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
+        auto addIndices = [&](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
         {
             using std::abs;
             static const Scalar eps = getParam<Scalar>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
@@ -110,7 +110,7 @@ private:
         forEach(std::make_index_sequence<MultiTypeBlockMatrix::N()>(), [&A, &addIndices, &rowIndex, numRows](const auto i)
         {
             std::size_t colIndex = 0;
-            forEach(A[i], [&addIndices, &colIndex, &rowIndex, numRows](const auto& subMatrix)
+            forEach(A[i], [&](const auto& subMatrix)
             {
                 addIndices(subMatrix, rowIndex, colIndex);
 
@@ -139,7 +139,7 @@ private:
         const auto numRows = M.N();
 
         // lambda function to copy the values
-        auto copyValues = [&M](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
+        auto copyValues = [&](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
         {
             using std::abs;
             static const Scalar eps = getParam<Scalar>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
@@ -161,7 +161,7 @@ private:
         forEach(std::make_index_sequence<MultiTypeBlockMatrix::N()>(), [&A, &copyValues, &rowIndex, numRows](const auto i)
         {
             std::size_t colIndex = 0;
-            forEach(A[i], [&copyValues, &colIndex, &rowIndex, numRows](const auto& subMatrix)
+            forEach(A[i], [&](const auto& subMatrix)
             {
                 copyValues(subMatrix, rowIndex, colIndex);
 
@@ -220,7 +220,7 @@ public:
         bTmp.resize(b.dim());
 
         std::size_t startIndex = 0;
-        Dune::Hybrid::forEach(b, [&bTmp, &startIndex](const auto& subVector)
+        Dune::Hybrid::forEach(b, [&](const auto& subVector)
         {
             const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
 
@@ -243,7 +243,7 @@ public:
     static void retrieveValues(MultiTypeBlockVector& x, const BlockVector& y)
     {
         std::size_t startIndex = 0;
-        Dune::Hybrid::forEach(x, [&y, &startIndex](auto& subVector)
+        Dune::Hybrid::forEach(x, [&](auto& subVector)
         {
             const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
 
