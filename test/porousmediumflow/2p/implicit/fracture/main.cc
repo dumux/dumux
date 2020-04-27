@@ -23,7 +23,8 @@
  */
 #include <config.h>
 
-#include <ctime>
+#include <limits>
+#include <numeric>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -123,25 +124,25 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
 
     // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const bool useFixedTimeSteps = hasParam("TimeLoop.FixedTimeStepFile");
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    std::shared_ptr<CheckPointTimeLoop<double>> timeLoop;
+    const bool hasTimeStepSizeFile = hasParam("TimeLoop.TimeStepSizeFile");
+    std::vector<double> timeStepSizes;
 
-    std::vector<double> fixedTimeSteps;
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    if (useFixedTimeSteps)
+    if (hasTimeStepSizeFile)
     {
-        // Use fixed time step sizes. Read time steps from a file to get repeatable test results.
-        const auto fixedTimeStepsFileName = getParam<std::string>("TimeLoop.FixedTimeStepFile");
-        fixedTimeSteps = readFileToContainer<std::vector<double>>(fixedTimeStepsFileName);
-        dt = fixedTimeSteps[0];
+        timeStepSizes = readFileToContainer<std::vector<double>>(getParam<std::string>("TimeLoop.TimeStepSizeFile"));
+        const auto dtInit = timeStepSizes[0];
+        const auto tEnd = std::accumulate(timeStepSizes.begin(), timeStepSizes.end(), 0.0);
+        timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0, dtInit, tEnd);
     }
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
+    else
+    {
+        const auto dtInit = getParam<double>("TimeLoop.DtInitial");
+        const auto tEnd = getParam<double>("TimeLoop.TEnd");
+        const auto maxDt = getParam<double>("TimeLoop.MaxTimeStepSize");
+        timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0, dtInit, tEnd);
+        timeLoop->setMaxTimeStepSize(maxDt);
+    }
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -161,6 +162,13 @@ int main(int argc, char** argv) try
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
 
+        // if the time step sizes are not read from file
+        // save the succeeded time step size in the time step size vector
+        // we write that to file below to that it can be used on the next run
+        // to reproduce exactly the same time step sizes
+        if (!hasTimeStepSizeFile)
+            timeStepSizes.push_back(timeLoop->timeStepSize());
+
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
@@ -176,8 +184,8 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
-        if (useFixedTimeSteps)
-            timeLoop->setTimeStepSize(fixedTimeSteps[timeLoop->timeStepIndex()]);
+        if (hasTimeStepSizeFile)
+            timeLoop->setTimeStepSize(timeStepSizes[timeLoop->timeStepIndex()]);
         else
             timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
@@ -192,6 +200,11 @@ int main(int argc, char** argv) try
     // print dumux end message
     if (mpiHelper.rank() == 0)
     {
+        // write out the exact time steps this program used to produce a well-reproducible test
+        if (!hasTimeStepSizeFile)
+            writeContainerToFile(timeStepSizes, "dt/" + problem->name() + "_dt-reference.dat",
+                                 std::numeric_limits<double>::digits10);
+
         Parameters::print();
         DumuxMessage::print(/*firstCall=*/false);
     }
