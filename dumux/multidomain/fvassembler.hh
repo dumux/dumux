@@ -188,7 +188,7 @@ public:
         resetResidual_();
 
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(*jacobian_)), [&](const auto domainId)
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
         {
             auto& jacRow = (*jacobian_)[domainId];
             auto& subRes = (*residual_)[domainId];
@@ -269,9 +269,9 @@ public:
     void setJacobianBuildMode(JacobianMatrix& jac) const
     {
         using namespace Dune::Hybrid;
-        forEach(jac, [](auto& jacRow)
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto i)
         {
-            forEach(jacRow, [](auto& jacBlock)
+            forEach(jac[i], [&](auto& jacBlock)
             {
                 using BlockType = std::decay_t<decltype(jacBlock)>;
                 if (jacBlock.buildMode() == BlockType::BuildMode::unknown)
@@ -288,7 +288,7 @@ public:
     void setJacobianPattern(JacobianMatrix& jac) const
     {
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jac)), [&](const auto domainI)
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainI)
         {
             forEach(integralRange(Dune::Hybrid::size(jac[domainI])), [&](const auto domainJ)
             {
