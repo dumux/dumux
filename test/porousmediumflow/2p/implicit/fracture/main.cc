@@ -38,6 +38,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/io/container.hh>
 
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
@@ -113,12 +114,6 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
@@ -126,6 +121,23 @@ int main(int argc, char** argv) try
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
+
+    // get some time loop parameters
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    const bool useFixedTimeSteps = hasParam("TimeLoop.FixedTimeStepFile");
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+
+    std::vector<double> fixedTimeSteps;
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    if (useFixedTimeSteps)
+    {
+        // Use fixed time step sizes. Read time steps from a file to get repeatable test results.
+        const auto fixedTimeStepsFileName = getParam<std::string>("TimeLoop.FixedTimeStepFile");
+        fixedTimeSteps = readFileToContainer<std::vector<double>>(fixedTimeStepsFileName);
+        dt = fixedTimeSteps[0];
+    }
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
@@ -165,7 +177,10 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        if (useFixedTimeSteps)
+            timeLoop->setTimeStepSize(fixedTimeSteps[timeLoop->timeStepIndex()]);
+        else
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
