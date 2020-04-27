@@ -28,41 +28,22 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
-
-#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/io/container.hh>
 
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
-
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-
-#include <dumux/discretization/method.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_foam.hh>
 
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{}
+#include "problem.hh"
 
 ////////////////////////
 // the main function
@@ -82,7 +63,7 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -106,7 +87,7 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
+    SolutionVector x;
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -211,12 +192,12 @@ int main(int argc, char** argv) try
 
     return 0;
 } // end main
-catch (Dumux::ParameterException &e)
+catch (const Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
-catch (Dune::DGFException & e)
+catch (const Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
                  "). Most likely, the DGF file name is wrong "
@@ -225,13 +206,8 @@ catch (Dune::DGFException & e)
                  << " ---> Abort!" << std::endl;
     return 2;
 }
-catch (Dune::Exception &e)
+catch (const Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }
