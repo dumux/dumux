@@ -6,6 +6,7 @@ dumux_add_test(NAME test_2p_cornerpoint
               SOURCES main.cc
               CMAKE_GUARD HAVE_OPM_GRID
               COMPILE_DEFINITIONS HAVE_ECL_INPUT=1
+              LINK_LIBRARIES -fopenmp
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_cornerpoint-reference.vtu
