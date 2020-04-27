@@ -1,0 +1,63 @@
+[Problem]
+Name = biomineralization #
+Temperature = 298.15 #                   [K]            25°C
+
+[Initial]
+DensityW = 1087 #                        [kg/m³]       Density of the mixture
+Pressure = 1e5 #                         [Pa]
+XwTC = 2.3864e-7 #                       [mol/mol]     equilibrium with atmospheric CO2 under atmospheric pressure
+XwNa = 0.0 #                             [mol/mol]
+XwCl = 0.0 #                             [mol/mol]
+XwCa = 0.0 #                             [mol/mol]
+XwUrea = 0.0 #                           [mol/mol]
+XwTNH = 3.341641e-3 #                    [mol/mol]
+XwO2 = 4.4686e-6 #                       [mol/mol]
+XwSubstrate = 2.97638e-4 #               [mol/mol]
+XwSuspendedBiomass = 0.0 #               [mol/mol]
+Biofilm = 0.0 #                          [-]
+Calcite = 0.0 #                          [-]
+XwNaCorr = 2.9466e-6 #                   [mol/mol]      NaCorr to get the pH to 6.2 calculated as molefraction
+XwClCorr = 0.0 #                         [mol/mol]
+
+[Injection]
+FlowRate = 1.716666666667e-7 #           [m³/s]        The injected flow rate, see Hommel et al. 2015 =10.3/60/1e6 #     = [ml/min] /[s/min] /[ml/m³]
+MassFracTC = 5.8e-7 #                    [kg/kg]       equilibrium with atmospheric CO2 under atmospheric pressure
+ConcentrationNa = 0.0 #                  [kg/m³]       NaCl injected
+ConcentrationCa = 13.530742 #            [kg/m³]       computed from 49 g/l CaCl2*2H2O (molar mass = 147.68g/mol --> 0.33molCa/l, equimolar with urea (20g/l and 60g/mol))
+ConcentrationUrea = 20 #                 [kg/m³]
+ConcentrationTNH = 3.183840574 #         [kg/m³]       computed from 10 g/l NH4Cl
+ConcentrationO2 = 0.008 #                [kg/m³]
+ConcentrationSubstrate = 3 #             [kg/m³]
+ConcentrationSuspendedBiomass = 0.0665 # [kg/m³]       5.6e7 cfu/ml (40e8cfu/ml~1g/l) cfu = colony forming unit = approximately equal to viable cells
+ConcentrationNaCorr= 0.00379 #           [kg/m³]       NaCorr to get the pH to 6.2
+NumInjections = 212 #                    [-]           The number of injections, used to check, whether the matching injection file specified
+
+[TimeLoop]
+DtInitial = 1 #                          [s]
+TEnd = 100000 #                          [s]           for the entire experiment setup described in Hommel et a. 2015 use TEnd = 3203460 #
+MaxTimeStepSize = 500 #                  [s]           limiting the time step size speeds up the simulation, avoiding failed Newton iterations
+
+[Grid]
+UpperRight = 0.7112  #                   [m]           upper right corner coordinates, the actual experiment was 0.61m long, extended the domain to reduce BC effects
+Cells = 56  #                            [-]           number of cells in x,y-direction
+
+[SpatialParams]
+ReferencePorosity = 0.4 #                [-]
+ReferencePermeability = 2e-10 #          [m^2]
+
+[BioCoefficients]
+Ca1 = 8.3753e-8  #                       [1/s]         fitted parameter, see Hommel et al. 2015
+Ca2 = 8.5114e-7 #                        [1/s]         fitted parameter, see Hommel et al. 2015
+Cd1 = 2.894e-8 #                         [1/s]         Ebigbo et al. 2010
+Dc0 = 3.183e-7 #                         [1/s]         Taylor and Jaffe 1990
+Kmue = 4.1667e-5  #                      [1/s]         Connolly et al. 2013
+F = 0.5 #                                [-]           Mateles 1971
+Ke = 2e-5 #                              [kg/m³]       Hao et al. 1983
+Ks = 7.99e-4 #                           [kg/m³]       Taylor and Jaffe 1990
+Yield = 0.5 #                            [-]           Seto and Alexander 1985
+BiofilmDensity = 6.9 #                   [kg/m³]       fittet parameter, see Hommel et al. 2015
+
+[UreolysisCoefficients]
+Kub = 3.81e-4 #                          [kg_urease/kg_bio]       fitted parameter, see Hommel et al. 2015
+Kurease = 706.6667 #                     [mol_urea/(kg_urease s)] Lauchnor et al. 2014
+Ku = 0.355 #                             [mol/kgH2O]              Lauchnor et al. 2014

@@ -1,0 +1,53 @@
+{
+    "README.md" : [
+        "doc/_intro.md"
+    ],
+
+    "doc/modelconcept.md" : [
+        "doc/modelconcept_intro.md"
+    ],
+
+    "doc/mainfile.md" : [
+        "doc/mainfile_intro.md",
+        "main.cc"
+    ],
+
+    "doc/setup.md" : [
+        "doc/setup_intro.md",
+        "problem.hh",
+        "spatialparams.hh",
+        "properties.hh"
+    ],
+
+    "doc/fluidmaterial.md" : [
+        "doc/fluidmaterial_intro.md",
+        "material/co2tableslaboratory.hh",
+        "material/components/suspendedbiomass.hh",
+        "material/fluidsystems/biominsimplechemistry.hh",
+        "material/fluidsystems/icpcomplexsalinitybrine.hh"
+    ],
+
+    "doc/solidmaterial.md" : [
+        "doc/solidmaterial_intro.md",
+        "material/components/biofilm.hh",
+        "material/solidsystems/biominsolids.hh"
+    ],
+
+    "navigation" : {
+        "mainpage" : "README.md",
+        "subpages" : [
+            "doc/modelconcept.md",
+            "doc/mainfile.md",
+            "doc/setup.md",
+            "doc/fluidmaterial.md",
+            "doc/solidmaterial.md"
+        ],
+        "subtitles" : [
+            "Model concept",
+            "Main file",
+            "Simulation setup",
+            "Specific fluid material files",
+            "Specific solid material files"
+        ]
+    }
+}
