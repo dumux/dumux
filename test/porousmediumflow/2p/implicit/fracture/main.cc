@@ -142,7 +142,6 @@ int main(int argc, char** argv) try
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
-    timeLoop->setPeriodicCheckPoint(getParam<Scalar>("TimeLoop.PeriodicCheckPoint"));
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
