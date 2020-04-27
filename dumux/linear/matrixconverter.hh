@@ -213,10 +213,8 @@ public:
      */
     static auto multiTypeToBlockVector(const MultiTypeBlockVector& b)
     {
-        const auto size = getSize_(b);
-
         BlockVector bTmp;
-        bTmp.resize(size);
+        bTmp.resize(b.dim());
 
         std::size_t startIndex = 0;
         Dune::Hybrid::forEach(b, [&bTmp, &startIndex](const auto& subVector)
@@ -252,26 +250,6 @@ public:
 
             startIndex += numEq*subVector.size();
         });
-    }
-
-private:
-
-    /*!
-     * \brief Returns the size of the expanded multitype block vector
-     *
-     * \param b The multitype blockvector
-     */
-    static std::size_t getSize_(const MultiTypeBlockVector& b)
-    {
-        std::size_t size = 0;
-        Dune::Hybrid::forEach(b, [&size](const auto& subVector)
-        {
-            // the size of the individual vector blocks equals the respective number of equations.
-            const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
-            size += numEq * subVector.size();
-        });
-
-        return size;
     }
 };
 
