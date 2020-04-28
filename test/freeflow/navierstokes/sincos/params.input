@@ -40,12 +40,22 @@ UpwindWeight = 0.5
 Type = restartedflexiblegmressolver
 Verbosity = 2
 GMResRestart = 50
+ResidualReduction = 1e-5
 
 [LinearSolver.Preconditioner]
 Type = simple
 Verbosity = 2
-Iterations = 5
-Relaxation = 0.5
+Iterations = 1
+Relaxation = 1.0
 SimpleSolverVerbosity = 0
-SimpleSolverResidualReduction = 1e-12
-InvertSchurComplementA = true
+SimpleSolverResidualReduction = 1e-1
+InvertSchurComplementA = false
+# SimpleSolverType = bicgstabsolver
+SimpleSolverType = restartedgmressolver
+# SimpleSolverType = cgsolver
+UsePreconditionerForSchurComplement = true
+SimpleSolverPreconditionerReduction = 1e-1
+# SimpleSolverPreconditionerMaxIterations = 50
+AmgSmootherIterations = 1
+UseDiagonalInSchurComplement = true
+#

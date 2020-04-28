@@ -499,6 +499,149 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
         std::function<void(U&, U&)> solver_;
     };
 
+    class CBOperator : public Dune::LinearOperator<U, U>
+    {
+    public:
+
+        CBOperator(const M& m) : m_(m) {}
+
+        /*! \brief apply operator to x:  \f$ y = A(x) \f$
+              The input vector is consistent and the output must also be
+           consistent on the interior+border partition.
+         */
+        void apply (const U& x, U& y) const final
+        {
+            using namespace Dune::Indices;
+            auto& B = m_[_0][_1];
+            auto& C = m_[_1][_0];
+
+            auto tmp = U(B.N());
+            B.mv(x,tmp);
+            C.mv(tmp, y);
+        }
+
+        //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+        void applyscaleadd (typename U::field_type alpha, const U& x, U& y) const final
+        {
+            auto tmp = U(y.size());
+            apply(x, tmp);
+            y.axpy(alpha, tmp);
+        }
+
+        //! Category of the linear operator (see SolverCategory::Category)
+        Dune::SolverCategory::Category category() const final
+        {
+           return Dune::SolverCategory::sequential;
+        };
+
+    private:
+
+        //! The system matrix
+        const M& m_;
+    };
+
+    class SchurApprox : public Dune::Preconditioner<U,U>
+    {
+        using Solver = Dune::BiCGSTABSolver<U>;
+    public:
+        //! \brief The matrix type the preconditioner is for.
+        using matrix_type = M;
+        //! \brief The domain type of the preconditioner.
+        using domain_type = U;
+        //! \brief The range type of the preconditioner.
+        using range_type = U;
+        //! \brief The field type of the preconditioner.
+        using field_type = typename X::field_type;
+        //! \brief Scalar type underlying the field_type.
+        using scalar_field_type = Dune::Simd::Scalar<field_type>;
+
+        SchurApprox(const M& m) : m_(m) {}
+
+        /*! \brief apply operator to x:  \f$ y = A(x) \f$
+              The input vector is consistent and the output must also be
+           consistent on the interior+border partition.
+         */
+        virtual void apply (U& x, const U& y)
+        {
+            // convenience variables
+            // const auto& deltaP = x;
+            // auto& rhs = y;
+
+            using namespace Dune::Indices;
+            auto& A = m_[_0][_0];
+            auto& B = m_[_0][_1];
+            auto& C = m_[_1][_0];
+
+            Dune::ParameterTree treeSchurComplementSolver;
+            treeSchurComplementSolver["verbose"] = "1";
+            treeSchurComplementSolver["reduction"] = "1e-5";//getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverResidualReduction", "1e-12");
+            treeSchurComplementSolver["maxit"] = "100";//getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverMaxIter", "1000");
+            // treeSchurComplementSolver["restart"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverRestart", "100");
+
+            auto op = std::make_shared<CBOperator>(m_);
+            auto prec = std::make_shared<Dune::Richardson<U, U>>();
+
+            Solver solver(op, prec, treeSchurComplementSolver);
+
+            Dune::InverseOperatorResult result;
+            // schurComplementSolver_->apply(deltaP, pRhs, result);
+
+            auto tmp = x;
+
+            auto rhs = y;
+
+            solver.apply(tmp, rhs, result);
+
+            auto tmp1= U(B.N());
+
+
+            B.mv(tmp,tmp1);
+
+            tmp = U(A.N());
+
+            A.mv(tmp1, tmp);
+
+            tmp1 = U(C.N());
+
+            C.mv(tmp, tmp1);
+
+            tmp = tmp1;
+
+
+            solver.apply(tmp, tmp1, result);
+            //
+            //
+            // B.mv(tmp, y);
+            // A.mv(tmp, y);
+            x = tmp;
+
+
+
+        }
+
+        /*!
+         * \brief Prepare the preconditioner.
+         */
+        virtual void pre(U& x, U& b) {}
+
+        /*!
+         * \brief Clean up.
+         */
+        virtual void post(U& x) {}
+
+
+        //! Category of the linear operator (see SolverCategory::Category)
+        Dune::SolverCategory::Category category() const final
+        {
+           return Dune::SolverCategory::sequential;
+        };
+
+    private:
+
+        //! The system matrix
+        const M& m_;
+    };
+
 public:
     //! \brief The matrix type the preconditioner is for.
     using matrix_type = M;
@@ -674,7 +817,8 @@ private:
         {
             Dune::ParameterTree treePreconditioner;
             treePreconditioner["verbose"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", "0");
-            schurComplementPreconditioner_ = std::make_shared<SeqJacobiMatrixFree<U, U>>(linearOperator, treePreconditioner);
+            schurComplementPreconditioner_ = std::make_shared<SchurApprox>(matrix_);
+            // schurComplementPreconditioner_ = std::make_shared<SeqJacobiMatrixFree<U, U>>(linearOperator, treePreconditioner);
         }
         else
             schurComplementPreconditioner_ = std::make_shared<Dune::Richardson<U, U>>();
