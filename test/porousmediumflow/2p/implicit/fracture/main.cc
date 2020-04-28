@@ -23,44 +23,27 @@
  */
 #include <config.h>
 
-#include <ctime>
+#include <limits>
+#include <numeric>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
-
-#include "problem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/io/container.hh>
 
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
-
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-
-#include <dumux/discretization/method.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_foam.hh>
 
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{}
+#include "problem.hh"
 
 ////////////////////////
 // the main function
@@ -80,7 +63,7 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -104,7 +87,7 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
+    SolutionVector x;
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -112,12 +95,6 @@ int main(int argc, char** argv) try
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
-
-    // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
@@ -127,10 +104,26 @@ int main(int argc, char** argv) try
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
-    // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-    timeLoop->setPeriodicCheckPoint(getParam<Scalar>("TimeLoop.PeriodicCheckPoint"));
+    // get some time loop parameters
+    std::shared_ptr<CheckPointTimeLoop<double>> timeLoop;
+    const bool hasTimeStepSizeFile = hasParam("TimeLoop.TimeStepSizeFile");
+    std::vector<double> timeStepSizes;
+
+    if (hasTimeStepSizeFile)
+    {
+        timeStepSizes = readFileToContainer<std::vector<double>>(getParam<std::string>("TimeLoop.TimeStepSizeFile"));
+        const auto dtInit = timeStepSizes[0];
+        const auto tEnd = std::accumulate(timeStepSizes.begin(), timeStepSizes.end(), 0.0);
+        timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0, dtInit, tEnd);
+    }
+    else
+    {
+        const auto dtInit = getParam<double>("TimeLoop.DtInitial");
+        const auto tEnd = getParam<double>("TimeLoop.TEnd");
+        const auto maxDt = getParam<double>("TimeLoop.MaxTimeStepSize");
+        timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0, dtInit, tEnd);
+        timeLoop->setMaxTimeStepSize(maxDt);
+    }
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -150,6 +143,13 @@ int main(int argc, char** argv) try
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
 
+        // if the time step sizes are not read from file
+        // save the succeeded time step size in the time step size vector
+        // we write that to file below to that it can be used on the next run
+        // to reproduce exactly the same time step sizes
+        if (!hasTimeStepSizeFile)
+            timeStepSizes.push_back(timeLoop->timeStepSize());
+
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
@@ -165,7 +165,10 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        if (hasTimeStepSizeFile)
+            timeLoop->setTimeStepSize(timeStepSizes[timeLoop->timeStepIndex()]);
+        else
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
@@ -178,18 +181,23 @@ int main(int argc, char** argv) try
     // print dumux end message
     if (mpiHelper.rank() == 0)
     {
+        // write out the exact time steps this program used to produce a well-reproducible test
+        if (!hasTimeStepSizeFile)
+            writeContainerToFile(timeStepSizes, "dt/" + problem->name() + "_dt-reference.dat",
+                                 std::numeric_limits<double>::digits10);
+
         Parameters::print();
         DumuxMessage::print(/*firstCall=*/false);
     }
 
     return 0;
 } // end main
-catch (Dumux::ParameterException &e)
+catch (const Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
     return 1;
 }
-catch (Dune::DGFException & e)
+catch (const Dune::DGFException & e)
 {
     std::cerr << "DGF exception thrown (" << e <<
                  "). Most likely, the DGF file name is wrong "
@@ -198,13 +206,8 @@ catch (Dune::DGFException & e)
                  << " ---> Abort!" << std::endl;
     return 2;
 }
-catch (Dune::Exception &e)
+catch (const Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }
