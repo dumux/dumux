@@ -178,7 +178,7 @@ public:
     }
 
     // The component names
-    static constexpr std::string componentName(int compIdx)
+    static std::string componentName(int compIdx)
     {
 
         switch (compIdx) {
@@ -196,7 +196,7 @@ public:
     }
 
     // The component molar masses
-    static constexpr Scalar molarMass(int compIdx)
+    static Scalar molarMass(int compIdx)
     {
         switch (compIdx) {
             case H2OIdx: return H2O::molarMass();
