@@ -30,6 +30,11 @@
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/multidomain/couplingmanager.hh> //Why is this the right coupling manager, not the one in this folder?
 
+// Lars
+#include <dumux/freeflow/navierstokes/staggered/velocitygradients.hh>
+#include <dumux/discretization/staggered/freeflow/boundarytypes.hh>
+#include <dune/common/std/optional.hh>
+
 namespace Dumux {
 /*!
  * \ingroup StokesDarcyCoupling
@@ -61,6 +66,9 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     //Lars added for velocityPorousMedium
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
     template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
+    //Lars added for nMomentum
+    template<std::size_t id> using BoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::BoundaryTypes>;
+    using StokesVelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry<stokesIdx>, BoundaryTypes<stokesIdx>, Indices<stokesIdx>>;
 
     using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
     using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
@@ -178,6 +186,36 @@ public:
 
                     momentumFlux += pressure*data.segmentGeometry.integrationElement(qp.position())*qp.weight();
                 }
+
+                //Lars:
+                // TODO: Missing localSubFaceIdx
+                const std::size_t localSubFaceIdx = 0;//!!!!!!!!!!!!!!!!
+                const auto eIdx = scvf.insideScvIdx();
+                const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
+                // Getting boundary types
+                Dune::Std::optional<BoundaryTypes<stokesIdx>> lateralFaceBoundaryTypes;
+                if (lateralScvf.boundary())
+                {
+                    lateralFaceBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, lateralScvf));
+                }
+                Dune::Std::optional<BoundaryTypes<stokesIdx>> currentScvfBoundaryTypes;
+                currentScvfBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, scvf));
+
+                // Getting velocity gradients
+                const Scalar velocityGrad_ji = StokesVelocityGradients::velocityGradJI(
+                  this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars,
+                  currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+                const Scalar velocityGrad_ij = StokesVelocityGradients::velocityGradIJ(
+                  this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars,
+                  currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+
+                // Calculating additional term for momentum flux
+                //TODO: inverted sign...
+                const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
+                //TODO: viscosity, normal/tangential!, sign, * 0.5/1/2?
+                //TODO: ij should be 0 for unsymm, is this fullfilled?
+                momentumFlux += Nsbl * 2 * (velocityGrad_ji + velocityGrad_ij);
             }
         }
 
