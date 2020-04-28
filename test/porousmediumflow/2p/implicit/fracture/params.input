@@ -2,7 +2,6 @@
 DtInitial = 250 # [s]
 TEnd = 300000 # [s]
 MaxTimeStepSize = 10000 # [s]
-PeriodicCheckPoint = 300000 # [s]
 
 [Grid]
 File = grids/fracture.msh
