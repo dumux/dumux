@@ -21,7 +21,7 @@ dumux_add_test(NAME test_2p_fracture_tpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa-00001.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa params.input -Problem.Name test_2p_fracture_tpfa")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa params.input -Problem.Name test_2p_fracture_tpfa -TimeLoop.TimeStepSizeFile dt/test_2p_fracture_tpfa_dt-reference.dat")
 
 dumux_add_test(NAME test_2p_fracture_mpfa
               LABELS porousmediumflow 2p
@@ -54,7 +54,7 @@ dumux_add_test(NAME test_2p_fracture_gravity_tpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_gravity_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_tpfa-00001.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa params.input -Problem.Name test_2p_fracture_gravity_tpfa -Problem.EnableGravity true")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa params.input -Problem.Name test_2p_fracture_gravity_tpfa -Problem.EnableGravity true -TimeLoop.TimeStepSizeFile dt/test_2p_fracture_gravity_tpfa_dt-reference.dat")
 
 dumux_add_test(NAME test_2p_fracture_gravity_mpfa
               TARGET test_2p_fracture_mpfa
