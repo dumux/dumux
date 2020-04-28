@@ -433,7 +433,6 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
     using LinearOperator = Dune::MatrixAdapter<A, U, U>;
     using Smoother = Dune::SeqSSOR<A, U, U>;
     using AMGSolverForA = Dune::Amg::AMG<LinearOperator, U, Smoother, Comm>;
-    using SchurComplementSolver = Dune::RestartedGMResSolver<U>;
 
     class SimpleOperator : public Dune::LinearOperator<U, U>
     {
@@ -482,8 +481,7 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
         {
             auto tmp = U(y.size());
             apply(x, tmp);
-            tmp *= alpha;
-            y += tmp;
+            y.axpy(alpha, tmp);
         }
 
         //! Category of the linear operator (see SolverCategory::Category)
@@ -558,7 +556,6 @@ public:
     {
         using namespace Dune::Indices;
 
-        auto& A = matrix_[_0][_0];
         auto& B = matrix_[_0][_1];
         auto& C = matrix_[_1][_0];
         auto& D = matrix_[_1][_1];
@@ -682,7 +679,16 @@ private:
         else
             schurComplementPreconditioner_ = std::make_shared<Dune::Richardson<U, U>>();
 
-        schurComplementSolver_ = std::make_unique<SchurComplementSolver>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
+        static const auto schurComplementSolverType = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverType", "restartedgmressolver");
+
+        if (schurComplementSolverType == "restartedgmressolver")
+            schurComplementSolver_ = std::make_unique<Dune::RestartedGMResSolver<U>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
+        else if (schurComplementSolverType == "bicgstabsolver")
+            schurComplementSolver_ = std::make_unique<Dune::BiCGSTABSolver<U>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
+        else if (schurComplementSolverType == "cgsolver")
+            schurComplementSolver_ = std::make_unique<Dune::CGSolver<U>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
+        else
+            DUNE_THROW(Dune::InvalidStateException, schurComplementSolverType << "not supported. Use restartedgmressolver, bicgstabsolver or cgsolver");
     }
 
     void applyInverseOfDiagonalOfA_(U& x) const
@@ -728,7 +734,7 @@ private:
     const int verbosity_;
 
     std::unique_ptr<AMGSolverForA> amgSolverForA_;
-    std::unique_ptr<SchurComplementSolver> schurComplementSolver_;
+    std::unique_ptr<Dune::IterativeSolver<U,U>> schurComplementSolver_;
     std::shared_ptr<Dune::Preconditioner<U,U>> schurComplementPreconditioner_;
 #if HAVE_UMFPACK
     std::unique_ptr<Dune::UMFPack<A>> umfPackSolverForA_;
