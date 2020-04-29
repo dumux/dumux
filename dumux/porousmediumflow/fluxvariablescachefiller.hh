@@ -525,7 +525,7 @@ private:
 
     //! Solves the local systems and stores the result in the handles
     template< class InteractionVolume, class DataHandle>
-    void prepareDataHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdate)
+    void prepareDataHandle_([[maybe_unused]] InteractionVolume& iv, [[maybe_unused]] DataHandle& handle, [[maybe_unused]] bool forceUpdate)
     {
         // (maybe) solve system subject to intrinsic permeability
         if constexpr (advectionEnabled)

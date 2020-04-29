@@ -176,7 +176,7 @@ private:
     }
 
     static std::pair<Scalar, Scalar>
-    diffusionCoefficientsAtInterface_(const int phaseIdx, const int compIdx,
+    diffusionCoefficientsAtInterface_([[maybe_unused]] const int phaseIdx, const int compIdx,
                                       const VolumeVariables& insideVV, const VolumeVariables& outsideVV)
     {
         if constexpr (!FluidSystem::isTracerFluidSystem())

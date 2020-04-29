@@ -90,7 +90,7 @@ public:
      * \brief Returns the advective flux computed by the respective law.
      */
     template<typename FunctionType>
-    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindTerm) const
+    Scalar advectiveFlux([[maybe_unused]] const int phaseIdx, [[maybe_unused]] const FunctionType& upwindTerm) const
     {
         if constexpr (enableAdvection)
         {
@@ -117,7 +117,7 @@ public:
     /*!
      * \brief Returns the diffusive fluxes computed by the respective law.
      */
-    Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(const int phaseIdx) const
+    Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux([[maybe_unused]] const int phaseIdx) const
     {
         if constexpr (enableMolecularDiffusion)
             return MolecularDiffusionType::flux(this->problem(),
@@ -153,7 +153,7 @@ public:
      * \brief Returns the conductive flux computed by the respective law.
      * \note This overload is used in models considering local thermal nonequilibrium
      */
-    Scalar heatConductionFlux(int phaseIdx) const
+    Scalar heatConductionFlux([[maybe_unused]] const int phaseIdx) const
     {
         if constexpr (enableEnergyBalance)
             return HeatConductionType::flux(this->problem(),
