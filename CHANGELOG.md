@@ -15,6 +15,8 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 
 - __Effective Laws and Diffusion Coefficients__: The effective laws interface has been changed within !1684. The interface for these laws has been unified, and all coefficents are to be stored in containers that fit to the model. These quantities should then be added in the volumeVariables, meaning all effective quantities would be accessible from the volumevariables.
 
+- __Examples__: The documentation of the examples has been improved further, focusing on readability and convenience. Further, three additional examples are included the folder `examples`. To get an overview, point your browser to https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples.
+
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
