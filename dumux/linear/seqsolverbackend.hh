@@ -1211,7 +1211,7 @@ public:
         auto smootherArgs = makeSmootherArgs_<SmootherArgs, Matrix, Vector>(std::make_index_sequence<Matrix::N()>{});
 
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(m)), [&](const auto i)
+        forEach(std::make_index_sequence<Matrix::N()>{}, [&](const auto i)
         {
             auto& args = std::get<decltype(i)::value>(smootherArgs);
             args->iterations = 1;
