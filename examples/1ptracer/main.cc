@@ -153,7 +153,7 @@ int main(int argc, char** argv) try
     // problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file using the Dune
     // `VTKWriter`. Moreover, we add the permeability distribution to the writer.
     // [[codeblock]]
-    using GridView = GetPropType<OnePTypeTag, Properties::GridView>;
+    using GridView = typename GridGeometry::GridView;
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
     onepWriter.addCellData(p, "p");
 
