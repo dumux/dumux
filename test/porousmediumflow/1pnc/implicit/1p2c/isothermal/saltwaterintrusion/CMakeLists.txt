@@ -1,4 +1,4 @@
-add_input_file_links()
+dune_symlink_to_source_files(FILES params.input test_1p2c_saltwaterintrusion_box_dt-reference.dat)
 
 # salt-water intrusion test using the box model
 dumux_add_test(NAME test_1p2c_saltwaterintrusion_box
@@ -10,4 +10,4 @@ dumux_add_test(NAME test_1p2c_saltwaterintrusion_box
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_saltwaterintrusion_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_saltwaterintrusion_box-00033.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_saltwaterintrusion_box params.input -Problem.Name test_1p2c_saltwaterintrusion_box")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_saltwaterintrusion_box params.input -Problem.Name test_1p2c_saltwaterintrusion_box -TimeLoop.TimeStepSizeFile test_1p2c_saltwaterintrusion_box_dt-reference.dat")
