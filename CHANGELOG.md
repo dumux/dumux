@@ -1,3 +1,17 @@
+Differences Between DuMuX 3.3 and DuMuX 3.2
+=============================================
+
+### Improvements and Enhancements
+
+- __Dune version__: Dumux now requires Dune >=2.7
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+
+### Deprecated properties/classes/functions/files, to be removed after 3.3:
+
+### Deleted classes/files, property names, constants/enums:
+
+
 Differences Between DuMuX 3.2 and DuMuX 3.1
 =============================================
 
@@ -88,7 +102,7 @@ If you use a self defined volumevariables class that inherits from the non-isoth
 - __EffectiveDiffusivity(various arguments)__: These values are now defined in the volvars and stored in a container fit to the model. To access these values, use the unified ```c++ effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) ```
 
 ### Deleted classes/files, property names, constants/enums
-
+Everything that has been deprecated before release 3.1 has been removed.
 
 Differences Between DuMuX 3.1 and DuMuX 3.0
 =============================================
