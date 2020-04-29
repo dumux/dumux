@@ -41,7 +41,7 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
@@ -168,8 +168,8 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+    using LinearSolver = ILU0BiCGSTABBackend;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
