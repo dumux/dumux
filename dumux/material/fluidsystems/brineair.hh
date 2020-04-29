@@ -124,7 +124,6 @@ private:
         {
             switch (brineCompIdx)
             {
-                assert(brineCompIdx == Brine::H2OIdx || brineCompIdx == Brine::NaClIdx);
                 case Brine::H2OIdx: return H2OIdx;
                 case Brine::NaClIdx: return NaClIdx;
                 default: return 0; // this will never be reached, only needed to suppress compiler warning
