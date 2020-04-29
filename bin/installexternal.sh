@@ -285,16 +285,12 @@ installOPM()
     fi
 
     if [ ! -e opm-common ]; then
-        git clone https://github.com/OPM/opm-common
-        cd opm-common
-        git reset --hard d3817e2fc2f79014d3cb0c01325a6e8a5dcc0cf3
+        git clone -b release/2020.04 https://github.com/OPM/opm-common
         cd $TOPDIR
     fi
 
     if [ ! -e opm-grid ]; then
-        git clone https://github.com/OPM/opm-grid
-        cd opm-grid
-        git reset --hard f3421419412dc326b2ffe566b0c405447f7bf1dc
+        git clone -b release/2020.04 https://github.com/OPM/opm-grid
         cd $TOPDIR
     fi
 
