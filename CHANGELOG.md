@@ -77,6 +77,7 @@ If you use a self defined volumevariables class that inherits from the non-isoth
 - Tracer model: tracer fluid systems do no longer provide a `getMainComponent` function since this simply doesn't make sense -- the main bulk component is not modeled.
 
 ### Deprecated properties, to be removed after 3.2:
+- __GridView__: The property `GridView` has been deprecated and can be accessed via `GridGeometry::GridView` instead.
 
 ### Deprecated classes/files, to be removed after 3.2:
 - __AMGBackend__: The class AMGBackend is deprecated and has been replaced by AMGBiCGSTABBackend which gets some different template arguments
