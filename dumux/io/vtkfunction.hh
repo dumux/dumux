@@ -39,7 +39,7 @@ namespace Dumux::Vtk {
 namespace Impl {
 
 template<class Field>
-double accessEntry(const Field& f, int mycomp, int i)
+double accessEntry(const Field& f, [[maybe_unused]] int mycomp, [[maybe_unused]] int i)
 {
     if constexpr (IsIndexable<std::decay_t<decltype(std::declval<Field>()[0])>>{})
     {
@@ -231,7 +231,7 @@ public:
     }
 private:
     //! access to the field
-    double accessEntry_(int mycomp, int eIdx, int cornerIdx) const
+    double accessEntry_([[maybe_unused]] int mycomp, [[maybe_unused]] int eIdx, [[maybe_unused]] int cornerIdx) const
     {
         if constexpr (IsIndexable<decltype(std::declval<F>()[0])>{})
         {
