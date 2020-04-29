@@ -1,7 +1,7 @@
 [TimeLoop]
-DtInitial = 1 # [s]
+DtInitial = 1e5 # [s]
 TEnd = 70000 # [s]
-MaxTimeStepSize = 1e6
+MaxTimeStepSize = 1e5
 
 [Grid]
 UpperRight = 1 1
@@ -14,10 +14,6 @@ EnableInertiaTerms = false
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
-
-[Newton]
-MaxSteps = 10
-MaxRelativeShift = 1e-8
 
 [Vtk]
 WriteFaceData = false
