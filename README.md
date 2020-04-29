@@ -82,9 +82,9 @@ You can also cite specific releases published on Zenodo:
 Automated Testing
 ==================
 
-* Dumux 3.2 / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-rel-3-2-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
-* Dumux master / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
-* Dumux master / Dune master: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-master-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
+* DuMu<sup>x</sup> 3.2 / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-rel-3-2-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
+* DuMu<sup>x</sup> master / Dune 2.7: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-rel-2-7-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
+* DuMu<sup>x</sup> master / Dune master: [![buildbot badge](https://git.iws.uni-stuttgart.de/buildbot/badges/dumux-master-dune-master-clang-full.svg)](https://git.iws.uni-stuttgart.de/buildbot/#/builders)
 
 DuMu<sup>x</sup> features many tests (some unit tests and test problems) that can
 be run manually. We have experimental support for automated testing with buildbot.

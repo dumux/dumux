@@ -1,9 +1,9 @@
-Differences Between DuMuX 3.3 and DuMuX 3.2
+Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 =============================================
 
 ### Improvements and Enhancements
 
-- __Dune version__: Dumux now requires Dune >=2.7
+- __Dune version__: DuMu<sup>x</sup> now requires Dune >=2.7
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
@@ -12,12 +12,12 @@ Differences Between DuMuX 3.3 and DuMuX 3.2
 ### Deleted classes/files, property names, constants/enums:
 
 
-Differences Between DuMuX 3.2 and DuMuX 3.1
+Differences Between DuMu<sup>x</sup> 3.2 and DuMu<sup>x</sup> 3.1
 =============================================
 
 ### Improvements and Enhancements
 
-- __C++17__: Dumux now requires a C++ compiler supporting the C++17 features of GCC 7 (e.g. GCC 7, Clang 5).
+- __C++17__: DuMu<sup>x</sup> now requires a C++ compiler supporting the C++17 features of GCC 7 (e.g. GCC 7, Clang 5).
 - __Radially symmetric problems__: We now have support for radially symmetric problems (disc, ball, toroid). The support comes in form of wrappers for sub control volumes and faces that overload the respective `volume()` and `area()` function turning a 1d or 2d problem into a 2d or 3d radially symmetric problem.
 
 - __Improvements of Beavers-Joseph(-Saffman) condition for the free flow model__: The naming for handling BJ(-S) boundary conditions has been adapted from `isBJS()` to `isBeaversJoseph()` / `setBJS()` to `setBeaversJoseph()`. In order to consider the velocity within the porous medium, the old `velocityPorousMedium(element, scvf)` method (returning a Scalar) has been renamed to `porousMediumVelocity(element, scvf)` (returning a velocity vector). The latter defaults to `VelocityVector(0.0)`.
@@ -104,12 +104,12 @@ If you use a self defined volumevariables class that inherits from the non-isoth
 ### Deleted classes/files, property names, constants/enums
 Everything that has been deprecated before release 3.1 has been removed.
 
-Differences Between DuMuX 3.1 and DuMuX 3.0
+Differences Between DuMu<sup>x</sup> 3.1 and DuMu<sup>x</sup> 3.0
 =============================================
 
 ### Improvements and Enhancements
 
-- __Examples__: Three extensively documented examples have been added which highlight interesting features and show how to apply DuMuX to interesting problems. They can be found in the new folder `examples`. To get an overview, point your browser to https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples.
+- __Examples__: Three extensively documented examples have been added which highlight interesting features and show how to apply DuMu<sup>x</sup> to interesting problems. They can be found in the new folder `examples`. To get an overview, point your browser to https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples.
 
 - __Porousmediumflow__: Added a new porous medium model for the energy balance of a porous solid (general heat equation).
 
@@ -196,25 +196,25 @@ used. Consider employing gcc for detecting occurrences of the old name.
 - Deprecated classes and files for the 3.0 release listed below stay deprecated
   for at least one more release cycle.
 
-Differences Between DuMuX 2.12 and DuMuX 3.0
+Differences Between DuMu<sup>x</sup> 2.12 and DuMu<sup>x</sup> 3.0
 =============================================
 
 ## Important Notes
 
-- DuMuX 3.0 is a major version update. It is not backward compatible in all aspects to 2.12.
-  The following minor version updates will be, as before for the DuMuX 2-series, always backward compatible
+- DuMu<sup>x</sup> 3.0 is a major version update. It is not backward compatible in all aspects to 2.12.
+  The following minor version updates will be, as before for the DuMu<sup>x</sup> 2-series, always backward compatible
       to at least the last minor version update.
 
 - The tutorial has been replaced by the new module `dumux-course` which is
   accessible at https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course.
-  We recommend new users and also users experienced with DuMuX 2.X to clone
+  We recommend new users and also users experienced with DuMu<sup>x</sup> 2.X to clone
   the course and have a look at the exercises in there.
 
-- DuMuX 3.0 is based on Dune 2.6 and is expected to run with the current Dune master.
+- DuMu<sup>x</sup> 3.0 is based on Dune 2.6 and is expected to run with the current Dune master.
   We will try to keep the compatibility with the Dune master
   as long as it is technically feasible and our resources allow it.
 
-- DuMuX 3.0 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+- DuMu<sup>x</sup> 3.0 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
   However, we suggest to use newer compiler versions, as we cannot test against all previous compiler versions.
 
 - For employing corner-point grids by means of opm-grid, the OPM release 2018.10 has to be used.
@@ -249,8 +249,8 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
 - __Assembly__: The assembler can now assemble implicit and explicit Euler time discretizations. An interface for implementing analytical Jacobians was added.
   The CCTpfa assembler has been significantly improved for complex models that spend a lot of time computing constitutive laws. Also the numerical
   differentiation scheme was improved by altering the order in which derivatives are computed.
-- __TypeTag templates:__ Implementers of code in DuMuX 3.0 are advised to avoid TypeTag as a template argument for class templates.
-  Many classes in the DuMuX core have been changed to have a small number of specific template arguments, including `GridGeometry`,
+- __TypeTag templates:__ Implementers of code in DuMu<sup>x</sup> 3.0 are advised to avoid TypeTag as a template argument for class templates.
+  Many classes in the DuMu<sup>x</sup> core have been changed to have a small number of specific template arguments, including `GridGeometry`,
   `TimeLoop`, `Newton`, `LinearSolver`, `SpatialParams`. This makes it possible to share objects of these types between models using
   different TypeTags. This was not possible before as `Class<TypeTag1>` and `Class<TypeTag2>` are different types, even if they contain
   exactly the same implementation code.
@@ -272,22 +272,22 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
 
 ### Models, Physics and Methods
 
-- __MPFA schemes:__ The new design of the DuMuX core facilitates the incorporation of new finite-volume schemes. In particular, the new core comes with
-  a framework for MPFA schemes, in which currently the only available scheme is the MPFA-O scheme. It can be used in conjunction with any DuMuX model and
+- __MPFA schemes:__ The new design of the DuMu<sup>x</sup> core facilitates the incorporation of new finite-volume schemes. In particular, the new core comes with
+  a framework for MPFA schemes, in which currently the only available scheme is the MPFA-O scheme. It can be used in conjunction with any DuMu<sup>x</sup> model and
   also works on surface grids. More schemes will be added in the future.
-- __Box-dfm:__ The `2pdfm` model from version 2.12 has been generalized such that it can be used on any DuMuX model and in both two and three dimensions.
+- __Box-dfm:__ The `2pdfm` model from version 2.12 has been generalized such that it can be used on any DuMu<sup>x</sup> model and in both two and three dimensions.
 - __Tracer transport__: A new model for tracer transport with a given flow field has been added. The model can be also used to implement sequentially
   coupled simulations, or iterative solvers where flow and transport are decoupled / weakly coupled.
 - __Mineralization__: An adapter model for mineralization has been added and can be used with all porousmediumflow models. A balance for the solid
   volume fraction of precipitating, adsorbed, or absorbed substances is added to the existing equations.
 - __Solution-dependent spatial params:__ A redesign of the spatial params interface allows now to define spatial parameters such as permeability
   and porosity that depend on the solution. This makes it easier to implement mineralization models altering the solid structure of the porous medium.
-- __Solid systems:__ DuMuX 3.0 introduces solid systems similar to fluid systems but for solid components. This allows a consistent
+- __Solid systems:__ DuMu<sup>x</sup> 3.0 introduces solid systems similar to fluid systems but for solid components. This allows a consistent
   implementation of mineralization models including reactions, dissolution, precipitation and other processes altering the solid
   phase of the porous medium.
-- __Multidomain:__ DuMuX 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
+- __Multidomain:__ DuMu<sup>x</sup> 3.0 introduces a new multidomain framework which does no longer depend on `dune-multidomain` and can be used for the coupling
   of an arbitrary number of subdomains. The sub-domains can be regions in which different sets of equations are solved and/or which have different
-  dimensionalities. The implementation is such that any of the existing DuMuX models can be used in the subdomains, while the data and functionality
+  dimensionalities. The implementation is such that any of the existing DuMu<sup>x</sup> models can be used in the subdomains, while the data and functionality
   required for the coupling of the sub-domains is implemented in a `CouplingManger` class. Three different coupling concepts are available, for which
   there are a number of available `CouplingManager` class implementations:
     - _Boundary:_ coupling across sub-domain boundaries
@@ -295,7 +295,7 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
     - _Facet:_ Coupling betweeen a bulk domain and a codimension-one sub-domain, which is conforming with the element facets of the bulk domain
 - __Free-flow models:__ The previous Navier-Stokes model using the box method has been replaced by one that employs a staggered grid discretization.
   The new method does not  require any stabilization techniques while those were necessary for the box method in order to avoid spurious oscillations.
-  The free-flow models in DuMuX 3.0 consider single phase flow with or without component/energy transport. So far, only regular Cartesian grids are supported
+  The free-flow models in DuMu<sup>x</sup> 3.0 consider single phase flow with or without component/energy transport. So far, only regular Cartesian grids are supported
   but local grid refinement will be added in a future release.
   Several RANS models for turbulent flow have been added: k-omega, k-epsilon, low-Re-k-epsilon, one-eq, zero-eq. The RANS models might be subject to further (interface)
   changes.
@@ -327,23 +327,23 @@ Differences Between DuMuX 2.12 and DuMuX 3.0
 - The `VtkMultiWriter` class is to be replaced by the class `VtkOutputModule`.
 - The file `start.hh` is replaced by new style main files.
 
-## Deleted classes/files/functions... which have been deprecated in DuMuX 2.12
+## Deleted classes/files/functions... which have been deprecated in DuMu<sup>x</sup> 2.12
 - Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.11 and DuMuX 2.12
+Differences Between DuMu<sup>x</sup> 2.11 and DuMu<sup>x</sup> 2.12
 =============================================
 
 * IMPORTANT NOTES:
-    - DuMuX 2.12 is expected to run based on Dune 2.4.1, 2.5, 2.6 and the Dune
+    - DuMu<sup>x</sup> 2.12 is expected to run based on Dune 2.4.1, 2.5, 2.6 and the Dune
       master. We will try to keep the compatibility with the Dune master
       as long as it is technically feasible and our resources allow it. If
-      you want to use Dumux multidomain models, you have to stick with the
+      you want to use DuMu<sup>x</sup> multidomain models, you have to stick with the
       Dune 2.4 core and specific versions of other modules, see
       [test/multidomain/README](test/multidomain/README) for details.
       Also the geomechanics models require Dune 2.4 and PDELab 2.0.
 
-    - DuMuX 2.12 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+    - DuMu<sup>x</sup> 2.12 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
     - For employing corner-point grids by means of opm-grid (former
       dune-cornerpoint), the OPM releases 2017.04 or 2017.10 have to be used.
@@ -377,22 +377,22 @@ Differences Between DuMuX 2.11 and DuMuX 2.12
       with the curve options.
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.11:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.11:
     - Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.10 and DuMuX 2.11
+Differences Between DuMu<sup>x</sup> 2.10 and DuMu<sup>x</sup> 2.11
 =============================================
 
 * IMPORTANT NOTES:
-    - DuMuX 2.11 is expected to run based on Dune 2.4.1, 2.5 and the Dune
+    - DuMu<sup>x</sup> 2.11 is expected to run based on Dune 2.4.1, 2.5 and the Dune
       master. We will try to keep the compatibility with the Dune master
       as long as it is technically feasible and our resources allow it. If
-      you want to use Dumux multidomain models, you have to stick with the
+      you want to use DuMu<sup>x</sup> multidomain models, you have to stick with the
       Dune 2.4 core and specific versions of other modules, see
       `test/multidomain/README` for details.
 
-    - DuMuX 2.11 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+    - DuMu<sup>x</sup> 2.11 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
     - For employing corner-point grids by means of opm-grid (former
       dune-cornerpoint), the OPM release 2016.04 has to be used.
@@ -428,22 +428,22 @@ Differences Between DuMuX 2.10 and DuMuX 2.11
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.11:
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.10:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.10:
     - Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.9 and DuMuX 2.10
+Differences Between DuMu<sup>x</sup> 2.9 and DuMu<sup>x</sup> 2.10
 ===================================================
 
 * IMPORTANT NOTES:
-    - DuMuX 2.10 is expected to run based on Dune 2.4.1, 2.5 and the Dune
+    - DuMu<sup>x</sup> 2.10 is expected to run based on Dune 2.4.1, 2.5 and the Dune
       master. We will try to keep the compatibility with the Dune master
       as long as it is technically feasible and our resources allow it. If
-      you want to use Dumux multidomain models, you have to stick with the
+      you want to use DuMu<sup>x</sup> multidomain models, you have to stick with the
       Dune 2.4 core and specific versions of other modules, see
       `test/multidomain/README` for details.
 
-    - DuMuX 2.10 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
+    - DuMu<sup>x</sup> 2.10 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
     - For employing corner-point grids by means of opm-grid (former
       dune-cornerpoint), the OPM release 2016.04 has to be used.
@@ -492,7 +492,7 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
     - The problem class interface needs to provide the method maxTimeStepSize().
       This is important if you implement problem classes not deriving from the base
-      problem classes in Dumux (`ImplicitProblem`, `OneModelProblem`,
+      problem classes in DuMu<sup>x</sup> (`ImplicitProblem`, `OneModelProblem`,
       `ImpetProblem`, and `MultidomainProblem`).
     - All name-related methods that previously returned / received `const char*`
       do now use the type-safe alternative `std::string`. An example is
@@ -526,17 +526,17 @@ Differences Between DuMuX 2.9 and DuMuX 2.10
       `moleFractionGrad` instead, with the obviously different physical meaning.
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.9:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.9:
     - Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.8 and DuMuX 2.9
+Differences Between DuMu<sup>x</sup> 2.8 and DuMu<sup>x</sup> 2.9
 ===================================================
 
 * IMPORTANT NOTES:
-    - DuMuX 2.9 is expected to run based on either Dune 2.4 or Dune 3.0. We will
+    - DuMu<sup>x</sup> 2.9 is expected to run based on either Dune 2.4 or Dune 3.0. We will
       try to keep the compatibility with Dune 3.0 as long as it is technically
-      feasible and our resources allow it. If you want to use Dumux multidomain
+      feasible and our resources allow it. If you want to use DuMu<sup>x</sup> multidomain
       models, you have to stick with the Dune 2.4 core and specific versions of
       other modules, see `test/multidomain/README` for details.
 
@@ -568,7 +568,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
       This has been a rather massive change affecting more than 1000 files. Close
       to 400 files have been moved and/or renamed.
       We made everything backwards-compatible, the worst thing that should happen
-      after switching to Dumux 2.9, will be some warnings when including headers
+      after switching to DuMu<sup>x</sup> 2.9, will be some warnings when including headers
       from old destinations/names. You can fix the include statements and get rid
       of the warnings by applying the bash script `bin/fix_includes.sh` to your
       source files, for example by executing
@@ -585,7 +585,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
       patch -p1 < patches/dumux-2.9-no-deprecated-headers.patch
       ```
       The benefits are hopefully:
-        + A clearer structure in terms of the problems that you want to apply Dumux
+        + A clearer structure in terms of the problems that you want to apply DuMu<sup>x</sup>
           for. Three main application areas on the top level: `porousmediumflow`,
           `freeflow` and `geomechanics`. The different numerical treatments "fully
           implicit" or "sequential" appear as discretization detail after the
@@ -615,7 +615,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
 
         + The subfolders `decoupled` and `implicit` of `test` have been removed.
 
-        + If you have cloned the Dumux Git repository and have local changes in the
+        + If you have cloned the DuMu<sup>x</sup> Git repository and have local changes in the
           folders `test/implicit` or `test/decoupled`, you can expect merge
           conflicts for your next `git pull`. You can either deal with these
           conflicts directly or create a patch, remove the local changes, pull, and
@@ -623,7 +623,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
           structure.
 
     - A two-phase multiple-interacting-continua (MINC) model has been added to
-      the Dumux model portfolio. See `test/porousmediumflow/2pminc/implicit` for
+      the DuMu<sup>x</sup> model portfolio. See `test/porousmediumflow/2pminc/implicit` for
       details.
 
     - The multidomain models have been restructured. Duplicated code has been
@@ -631,7 +631,7 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
       consistent manner.
 
     - It is now possible to specify point sources for implicit models. A point
-      source is a source term specified at any point location in e.g. kg/s. Dumux
+      source is a source term specified at any point location in e.g. kg/s. DuMu<sup>x</sup>
       will compute the correct control volume the source belongs to for you. Point
       sources can be e.g. solution and/or time-dependent. See tests
       (1p/implicit/pointsources, 2p/implicit/pointsources) for examples.
@@ -727,15 +727,15 @@ Differences Between DuMuX 2.8 and DuMuX 2.9
   is used.
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.8:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.8:
     - Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.7 and DuMuX 2.8
+Differences Between DuMu<sup>x</sup> 2.7 and DuMu<sup>x</sup> 2.8
 ===================================================
 
 * IMPORTANT NOTES:
-  - DuMuX 2.8 is expected to run based on either Dune 2.3 or Dune 2.4. However,
+  - DuMu<sup>x</sup> 2.8 is expected to run based on either Dune 2.3 or Dune 2.4. However,
     no attempt has been made to fix the warnings arising from the deprecation of
     EntityPointer in Dune 2.4. This will be made during the next release cycle.
     Moreover, using the multidomain models based on Dune 2.4 is currently only
@@ -835,16 +835,16 @@ Differences Between DuMuX 2.7 and DuMuX 2.8
   is used.
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.7:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.7:
   Everything listed as deprecated below has been removed.
 
-Differences Between DuMuX 2.6 and DuMuX 2.7
+Differences Between DuMu<sup>x</sup> 2.6 and DuMu<sup>x</sup> 2.7
 ===================================================
 
 * IMPORTANT NOTES:
-  - DuMuX 2.7 should work with DUNE 2.3 as well as 2.4. However, at the time of
+  - DuMu<sup>x</sup> 2.7 should work with DUNE 2.3 as well as 2.4. However, at the time of
     writing, DUNE-multidomain(grid) doesn't work with DUNE 2.4. Therefore, if a
-    DuMuX multidomain model should be used, DUNE 2.3 is required. See
+    DuMu<sup>x</sup> multidomain model should be used, DUNE 2.3 is required. See
     test/multidomain/README for details.
 
   - The 2.3 branch of dune-alugrid has no CMake support, use dune-alugrid master
@@ -892,9 +892,9 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
     printing only the first deviation from the reference solution, it now
     prints the maximum deviation in each field/variable.
 
-* DEPRECATED BUILD SYSTEM: DuMuX 2.7 will be the last release which can be built
+* DEPRECATED BUILD SYSTEM: DuMu<sup>x</sup> 2.7 will be the last release which can be built
     with the Autotools based build system. It is deprecated and will be removed
-    for DuMuX 2.8. We encourage the change towards CMake, especially with the
+    for DuMu<sup>x</sup> 2.8. We encourage the change towards CMake, especially with the
     upcoming DUNE 2.4.
     The warning can be suppressed with --disable-dumux-deprecated-autotools
 
@@ -990,11 +990,11 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
     "satisfyAbsAndRel_" -> "satisfyResidualAndShiftCriterion_"
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.6:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.6:
   Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.5 and DuMuX 2.6
+Differences Between DuMu<sup>x</sup> 2.5 and DuMu<sup>x</sup> 2.6
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
@@ -1077,11 +1077,11 @@ Differences Between DuMuX 2.5 and DuMuX 2.6
     They are replaced by sdProblemX, sdModelX, sdIDX, sdGridViewX.
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.5:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.5:
   Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.4 and DuMuX 2.5
+Differences Between DuMu<sup>x</sup> 2.4 and DuMu<sup>x</sup> 2.5
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
@@ -1104,11 +1104,11 @@ Differences Between DuMuX 2.4 and DuMuX 2.5
     Stokes2c* classes.
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.4:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.4:
   Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.3 and DuMuX 2.4
+Differences Between DuMu<sup>x</sup> 2.3 and DuMu<sup>x</sup> 2.4
 ===================================================
 
 * IMPORTANT NOTES:
@@ -1269,11 +1269,11 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     dp_dPi, dPi_dp, dTau_dt
 
 * DELETED classes/files, property names, constants/enums,
-  member functions/variables, which have been deprecated in DuMuX 2.3:
+  member functions/variables, which have been deprecated in DuMu<sup>x</sup> 2.3:
   Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.2 and DuMuX 2.3
+Differences Between DuMu<sup>x</sup> 2.2 and DuMu<sup>x</sup> 2.3
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
@@ -1390,11 +1390,11 @@ Differences Between DuMuX 2.2 and DuMuX 2.3
     respectively.
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.2:
+  member functions, which have been deprecated in DuMu<sup>x</sup> 2.2:
   Everything listed as deprecated below has been removed.
 
 
-Differences Between DuMuX 2.1 and DuMuX 2.2
+Differences Between DuMu<sup>x</sup> 2.1 and DuMu<sup>x</sup> 2.2
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
@@ -1420,9 +1420,9 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
   - The fully implicit models have been (partially) generalized to allow
     for a cell-centered discretization in addition to the default
     vertex-centered (box) one. Cell-centered fully implicit 2p and 2p2c
-    models are already available in the developers part of Dumux. Further
+    models are already available in the developers part of DuMu<sup>x</sup>. Further
     generalizations and the inclusion in the stable part are planned for
-    Dumux 2.3.
+    DuMu<sup>x</sup> 2.3.
 
   - Several model-specific features and classes have been unified, like
     the calculation of the Darcy velocity for the fully implicit flux
@@ -1542,7 +1542,7 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
   - Start functionality in dumux/common/start.hh: printUsageDGF and
     printUsageGrid are no longer needed.
 
-* DELETED member functions, which have been deprecated in DuMuX 2.1:
+* DELETED member functions, which have been deprecated in DuMu<sup>x</sup> 2.1:
   - dumux/material/spatialparameters/boxspatialparameters1p.hh:
     extrusionFactorScv and extrusionFactorScvf, now part of the volume variables
 
@@ -1579,7 +1579,7 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
   - DUMUX_DEPRECATED has been removed.
 
 
-Notable Differences Between DuMuX 2.0 and DuMuX 2.1
+Notable Differences Between DuMu<sup>x</sup> 2.0 and DuMu<sup>x</sup> 2.1
 ===================================================
 
 - The thermodynamics framework has been overhauled:
@@ -1634,17 +1634,17 @@ Notable Differences Between DuMuX 2.0 and DuMuX 2.1
 - The build system has received major improvements:
   - There is now much better test coverage of build-time dependencies
     on packages for the default autotools-based build system.
-  - Experimental support for building DuMuX using CMake has been much
+  - Experimental support for building DuMu<sup>x</sup> using CMake has been much
     improved. In the long run, CMake is projected to become the
     default build system.
 - All headers can now be included without any preconditions.
-- DuMuX now compiles without warnings if the -pedantic flag used for GCC.
+- DuMu<sup>x</sup> now compiles without warnings if the -pedantic flag used for GCC.
 - Specifying run-time parameters is now possible. The mechanism allows
   to use parameter files or to specify parameters directly on the
   command line and fallback parameter input files have been added for
   each test application.  As a consequence, applications can be run
   now without specifying any command line arguments.
-- The DuMuX property system has been fine-tuned:
+- The DuMu<sup>x</sup> property system has been fine-tuned:
   - Encapsulating property names with the PTAG() is no longer required
     for the GET_PROP* macros (but is still allowed).
   - Setting property defaults has been deprecated.

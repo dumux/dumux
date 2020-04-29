@@ -73,13 +73,13 @@ Copyright holders
 License
 -------
 
-DuMuX is licensed under the terms and conditions of the GNU General
+DuMu<sup>x</sup> is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later
 version. The GPL can be read [online][0], or below.
 
-Please note that DuMuX' license, unlike DUNE's, does NOT feature a
+Please note that DuMu<sup>x</sup>' license, unlike DUNE's, does NOT feature a
 template exception to the GNU General Public License. This means that
-you must publish any source code which uses any of the DuMuX header
+you must publish any source code which uses any of the DuMu<sup>x</sup> header
 files if you want to redistribute your program to third parties. If
 this is unacceptable to you, please [contact us][1] for a commercial license.
 
