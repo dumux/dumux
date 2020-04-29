@@ -93,6 +93,8 @@ public:
 #endif
         sequenceWriter_ = std::make_unique<Dune::VTKSequenceWriter<GridView>>(writer_, name);
     }
+    
+    virtual ~VtkOutputModuleBase() = default;
 
     //! the parameter group for getting parameter from the parameter tree
     const std::string& paramGroup() const
