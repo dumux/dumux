@@ -199,7 +199,7 @@ public:
     /*!
      * \brief Returns if an element is located in the near-wall region
      */
-    const bool inNearWallRegion(unsigned int elementIdx) const
+    bool inNearWallRegion(unsigned int elementIdx) const
     {
         unsigned int wallElementIdx = asImp_().wallElementIdx_[elementIdx];
         unsigned int matchingPointIdx = matchingPointIdx_[wallElementIdx];
@@ -210,7 +210,7 @@ public:
     /*!
      * \brief Returns if an element is the matching point
      */
-    const bool isMatchingPoint(unsigned int elementIdx) const
+    bool isMatchingPoint(unsigned int elementIdx) const
     { return matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]] == elementIdx; }
 
     /*!
