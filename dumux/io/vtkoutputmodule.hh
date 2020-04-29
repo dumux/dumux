@@ -86,6 +86,8 @@ public:
         writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridGeometry.gridView(), dm, coordPrecision);
         sequenceWriter_ = std::make_unique<Dune::VTKSequenceWriter<GridView>>(writer_, name);
     }
+    
+    virtual ~VtkOutputModuleBase() = default;
 
     //! the parameter group for getting parameter from the parameter tree
     const std::string& paramGroup() const
