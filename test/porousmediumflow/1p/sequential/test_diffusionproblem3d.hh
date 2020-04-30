@@ -34,6 +34,8 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/problem.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
 
+#include <dumux/linear/seqsolverbackend.hh>
+
 #include "test_diffusionspatialparams3d.hh"
 
 namespace Dumux
@@ -81,13 +83,8 @@ struct FluidSystem<TypeTag, TTag::DiffusionTest>
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
-#if HAVE_SUPERLU
 template<class TypeTag>
-struct LinearSolver<TypeTag, TTag::DiffusionTest> { using type = SuperLUBackend; };
-#else
-template<class TypeTag>
-struct LinearSolver<TypeTag, TTag::DiffusionTest> { using type = ILUnRestartedGMResBackend; };
-#endif
+struct LinearSolver<TypeTag, TTag::DiffusionTest> { using type = UMFPackBackend; };
 
 }
 
