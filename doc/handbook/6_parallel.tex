@@ -44,10 +44,10 @@ solver backend include the respective header
 Second, the linear solver must be switched to the AMG backend
 
 \begin{lstlisting}[style=DumuxCode]
-using LinearSolver = Dumux::AMGBackend<TypeTag>;
+using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
 \end{lstlisting}
 
-and the application must be recompiled. The parallel \texttt{Dumux::AMGBackend} instance has to be
+and the application must be recompiled. The parallel \texttt{AMGBiCGSTABBackend} instance has to be
 constructed with a \texttt{Dune::GridView} object and a mapper, in order to construct the
 parallel index set needed for communication.
 
