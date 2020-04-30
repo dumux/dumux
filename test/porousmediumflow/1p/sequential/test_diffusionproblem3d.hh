@@ -22,13 +22,7 @@
 #ifndef DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 #define DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 
-#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
-#endif
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/components/constant.hh>
 
@@ -71,16 +65,8 @@ struct MimeticTest { using InheritsFrom = std::tuple<DiffusionTest, MimeticPress
 } // end namespace TTag
 
 // Set the grid type
-#if HAVE_DUNE_ALUGRID
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DiffusionTest> { using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>; };
-#elif HAVE_UG
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DiffusionTest> { using type = Dune::UGGrid<3>; };
-#else
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DiffusionTest> { using type = Dune::YaspGrid<3>; };
-#endif
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DiffusionTest> { using type = TestDiffusion3DProblem<TypeTag>; };
