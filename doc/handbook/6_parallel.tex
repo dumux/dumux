@@ -19,7 +19,7 @@ computational domain  into subdomains. Some grid managers also support external
 tools like METIS, ParMETIS, PTScotch or ZOLTAN for partitioning.
 On the other hand, linear algebra types such as matrices and vectors
 do not know that they are in a parallel environment. Communication is then handled by the components of the
-parallel solvers. Currently, the only parallel solver backend is \texttt{Dumux::AMGBackend}, a parallel AMG-preconditioned
+parallel solvers. Currently, the only parallel solver backend is \texttt{Dumux::AMGBiCGSTABBackend}, a parallel AMG-preconditioned
 BiCGSTAB solver.
 
 In order for \Dumux simulation to run in parallel, an
@@ -34,7 +34,7 @@ to install one of the direct solver libraries supported by \texttt{dune-istl}. T
 in SuiteSparse, or SuperLU, see Section~\ref{sec:listofexternallibs}.
 
 \subsection{Prepare a Parallel Application}
-Not all parts of \Dumux can be used in parallel. In order to switch to the parallel \texttt{Dumux::AMGBackend}
+Not all parts of \Dumux can be used in parallel. In order to switch to the parallel \texttt{Dumux::AMGBiCGSTABBackend}
 solver backend include the respective header
 
 \begin{lstlisting}[style=DumuxCode]
@@ -47,7 +47,7 @@ Second, the linear solver must be switched to the AMG backend
 using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
 \end{lstlisting}
 
-and the application must be recompiled. The parallel \texttt{AMGBiCGSTABBackend} instance has to be
+and the application must be recompiled. The parallel \texttt{Dumux::AMGBiCGSTABBackend} instance has to be
 constructed with a \texttt{Dune::GridView} object and a mapper, in order to construct the
 parallel index set needed for communication.
 
