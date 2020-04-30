@@ -22,6 +22,7 @@
 // dumux environment
 #include <type_traits>
 #include <dumux/common/math.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <map>
 /**
@@ -547,7 +548,10 @@ void FVPressure<TypeTag>::solve()
 //    printvector(std::cout, f_, "right hand side", "row", 10, 1, 3);
 
     auto solver = getSolver<Solver>(problem_);
-    solver.solve(A_, pressure_, f_);
+    bool converged = solver.solve(A_, pressure_, f_);
+
+    if (!converged)
+        DUNE_THROW(Dumux::NumericalProblem, "Pressure solver did not converge!");
 
 //    printvector(std::cout, pressure_, "pressure", "row", 200, 1, 3);
 }
