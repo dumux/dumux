@@ -29,3 +29,6 @@ SolidHeatCapacity = 790
 
 [Vtk]
 OutputName = test_md_facet_1pnc1pnc
+
+[LinearSolver]
+ResidualReduction = 1e-10
