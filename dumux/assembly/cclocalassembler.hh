@@ -47,15 +47,14 @@ namespace Dumux {
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief A base class for all local cell-centered assemblers
- * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
  * \tparam Implementation The actual implementation
  * \tparam implicit Specifies whether the time discretization is implicit or not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, class Implementation, bool implicit>
-class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
+template<class Assembler, class Implementation, bool implicit>
+class CCLocalAssemblerBase : public FVLocalAssemblerBase<Assembler, Implementation, implicit>
 {
-    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
+    using ParentType = FVLocalAssemblerBase<Assembler, Implementation, implicit>;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using GridVariables = typename Assembler::GridVariables;
     using SolutionVector = typename Assembler::ResidualType;
@@ -113,11 +112,10 @@ public:
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
- * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
+template<class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
 class CCLocalAssembler;
 
 /*!
@@ -125,13 +123,13 @@ class CCLocalAssembler;
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using numeric differentiation and implicit time discretization
  */
-template<class TypeTag, class Assembler>
-class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
-: public CCLocalAssemblerBase<TypeTag, Assembler,
-                              CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>, true >
+template<class Assembler>
+class CCLocalAssembler<Assembler, DiffMethod::numeric, /*implicit=*/true>
+: public CCLocalAssemblerBase<Assembler,
+                              CCLocalAssembler<Assembler, DiffMethod::numeric, true>, true >
 {
-    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
+    using ThisType = CCLocalAssembler<Assembler, DiffMethod::numeric, true>;
+    using ParentType = CCLocalAssemblerBase<Assembler, ThisType, true>;
 
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
@@ -315,13 +313,13 @@ public:
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using numeric differentiation and explicit time discretization
  */
-template<class TypeTag, class Assembler>
-class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
-: public CCLocalAssemblerBase<TypeTag, Assembler,
-            CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>, false>
+template<class Assembler>
+class CCLocalAssembler<Assembler, DiffMethod::numeric, /*implicit=*/false>
+: public CCLocalAssemblerBase<Assembler,
+            CCLocalAssembler<Assembler, DiffMethod::numeric, false>, false>
 {
-    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
+    using ThisType = CCLocalAssembler<Assembler, DiffMethod::numeric, false>;
+    using ParentType = CCLocalAssemblerBase<Assembler, ThisType, false>;
 
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
@@ -431,13 +429,13 @@ public:
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using analytic (hand-coded) differentiation and implicit time discretization
  */
-template<class TypeTag, class Assembler>
-class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
-: public CCLocalAssemblerBase<TypeTag, Assembler,
-            CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>, true>
+template<class Assembler>
+class CCLocalAssembler<Assembler, DiffMethod::analytic, /*implicit=*/true>
+: public CCLocalAssemblerBase<Assembler,
+            CCLocalAssembler<Assembler, DiffMethod::analytic, true>, true>
 {
-    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
+    using ThisType = CCLocalAssembler<Assembler, DiffMethod::analytic, true>;
+    using ParentType = CCLocalAssemblerBase<Assembler, ThisType, true>;
 
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using GridVariables = typename Assembler::GridVariables;
@@ -526,13 +524,13 @@ public:
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using analytic (hand-coded) differentiation and explicit time discretization
  */
-template<class TypeTag, class Assembler>
-class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false>
-: public CCLocalAssemblerBase<TypeTag, Assembler,
-            CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>, false>
+template<class Assembler>
+class CCLocalAssembler<Assembler, DiffMethod::analytic, /*implicit=*/false>
+: public CCLocalAssemblerBase<Assembler,
+            CCLocalAssembler<Assembler, DiffMethod::analytic, false>, false>
 {
-    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
+    using ThisType = CCLocalAssembler<Assembler, DiffMethod::analytic, false>;
+    using ParentType = CCLocalAssemblerBase<Assembler, ThisType, false>;
 
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using GridVariables = typename Assembler::GridVariables;

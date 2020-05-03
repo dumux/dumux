@@ -59,8 +59,8 @@ class FVAssembler
     static constexpr bool isBox = discMethod == DiscretizationMethod::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
-    using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>,
-                                                     CCLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>>;
+    using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<ThisType, diffMethod, isImplicit>,
+                                                     CCLocalAssembler<ThisType, diffMethod, isImplicit>>;
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

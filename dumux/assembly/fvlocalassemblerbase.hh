@@ -37,12 +37,11 @@ namespace Dumux {
 /*!
  * \ingroup Assembly
  * \brief A base class for all local assemblers
- * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
  * \tparam Implementation The assembler implementation
  * \tparam useImplicitAssembly Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, class Implementation, bool useImplicitAssembly>
+template<class Assembler, class Implementation, bool useImplicitAssembly>
 class FVLocalAssemblerBase
 {
     using Problem = typename Assembler::Problem;
