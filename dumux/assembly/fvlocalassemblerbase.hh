@@ -29,7 +29,6 @@
 #include <dune/istl/matrixindexset.hh>
 
 #include <dumux/common/reservedblockvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/assembly/diffmethod.hh>
 
@@ -46,25 +45,25 @@ namespace Dumux {
 template<class TypeTag, class Assembler, class Implementation, bool useImplicitAssembly>
 class FVLocalAssemblerBase
 {
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using Problem = typename Assembler::Problem;
+    using Scalar = typename Assembler::Scalar;
+    using GridVariables = typename Assembler::GridVariables;
     using SolutionVector = typename Assembler::ResidualType;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+    using GridGeometry = typename Assembler::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using VolumeVariables = typename GridVariables::VolumeVariables;
+    using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
+    using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using ElementBoundaryTypes = typename Assembler::LocalResidual::ElementBoundaryTypes;
+    static constexpr auto numEq = VolumeVariables::PrimaryVariables::dimension;
 
 public:
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename Assembler::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     /*!
@@ -310,11 +309,11 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    template<class T = TypeTag, typename std::enable_if_t<!getPropValue<T, Properties::EnableGridVolumeVariablesCache>(), int> = 0>
+    template<class C = GridFluxVariablesCache, typename std::enable_if_t<!C::cachingEnabled, int> = 0>
     VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return elemVolVars[scv]; }
 
-    template<class T = TypeTag, typename std::enable_if_t<getPropValue<T, Properties::EnableGridVolumeVariablesCache>(), int> = 0>
+    template<class C = GridFluxVariablesCache, typename std::enable_if_t<C::cachingEnabled, int> = 0>
     VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return gridVolVars.volVars(scv); }
 
