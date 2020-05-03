@@ -25,12 +25,12 @@
 #ifndef DUMUX_CC_LOCAL_ASSEMBLER_HH
 #define DUMUX_CC_LOCAL_ASSEMBLER_HH
 
+#include <dune/common/fvector.hh>
 #include <dune/common/reservedvector.hh>
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dune/istl/matrixindexset.hh>
 
 #include <dumux/common/reservedblockvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/assembly/numericepsilon.hh>
@@ -56,12 +56,10 @@ template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using GridVariables = typename Assembler::GridVariables;
+    using SolutionVector = typename Assembler::ResidualType;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
 
     static_assert(!Assembler::Problem::enableInternalDirichletConstraints(), "Internal Dirichlet constraints are currently not implemented for cc-methods!");
 
@@ -134,20 +132,24 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
+    using Scalar = typename Assembler::Scalar;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using GridVariables = typename Assembler::GridVariables;
+    using SolutionVector = typename Assembler::ResidualType;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using GridGeometry = typename Assembler::GridGeometry;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
 
-    using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
+    static constexpr auto numEq = GridVariables::VolumeVariables::PrimaryVariables::dimension;
+    static constexpr auto dim = GridGeometry::GridView::dimension;
+
+    // TODO Deduce from Assembler::Problem
+    using NumEqVector = Dune::FieldVector<Scalar, numEq>;
+
+    using FluxStencil = Dumux::FluxStencil<typename GridGeometry::LocalView>;
     static constexpr int maxElementStencilSize = GridGeometry::maxElementStencilSize;
-    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    static constexpr bool enableGridFluxVarsCache = GridVariables::GridFluxVariablesCache::cachingEnabled;
 
 public:
 
@@ -320,13 +322,17 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    using Scalar = typename Assembler::Scalar;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using GridVariables = typename Assembler::GridVariables;
+    using GridGeometry = typename Assembler::GridGeometry;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+
+    static constexpr auto numEq = GridVariables::VolumeVariables::PrimaryVariables::dimension;
+
+    // TODO Deduce from Assembler::Problem
+    using NumEqVector = Dune::FieldVector<Scalar, numEq>;
 
 public:
     using ParentType::ParentType;
@@ -432,11 +438,14 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/tr
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using GridVariables = typename Assembler::GridVariables;
+
+    static constexpr auto numEq = GridVariables::VolumeVariables::PrimaryVariables::dimension;
+
+    // TODO Deduce from Assembler::Problem
+    using NumEqVector = Dune::FieldVector<typename Assembler::Scalar, numEq>;
 
 public:
     using ParentType::ParentType;
@@ -524,12 +533,14 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/fa
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using GridVariables = typename Assembler::GridVariables;
 
+    static constexpr auto numEq = GridVariables::VolumeVariables::PrimaryVariables::dimension;
+
+    // TODO Deduce from Assembler::Problem
+    using NumEqVector = Dune::FieldVector<typename Assembler::Scalar, numEq>;
 public:
     using ParentType::ParentType;
 
