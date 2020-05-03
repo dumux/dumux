@@ -28,7 +28,6 @@
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/bvector.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/assembly/numericepsilon.hh>
@@ -53,13 +52,10 @@ template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using GridVariables = typename Assembler::GridVariables;
+    using SolutionVector = typename Assembler::ResidualType;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
 public:
 
     using ParentType::ParentType;
@@ -226,12 +222,12 @@ public:
                     const auto dirichletValues = this->problem().dirichlet(this->element(), scvI);
 
                     // set the Dirichlet conditions in residual and jacobian
-                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    for (auto eqIdx = 0U; eqIdx < dirichletValues.size(); ++eqIdx)
                     {
                         if (bcTypes.isDirichlet(eqIdx))
                         {
                             const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                            assert(0 <= pvIdx && pvIdx < numEq);
+                            assert(0 <= pvIdx && pvIdx < dirichletValues.size());
                             applyDirichlet(scvI, dirichletValues, eqIdx, pvIdx);
                         }
                     }
@@ -265,18 +261,14 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
+    using Scalar = typename Assembler::Scalar;
+    using GridVariables = typename Assembler::GridVariables;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using ElementResidualVector = typename Assembler::LocalResidual::ElementResidualVector;
 
-    static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
-
+    static constexpr auto numEq = GridVariables::VolumeVariables::PrimaryVariables::dimension;
+    static constexpr auto dim = Assembler::GridGeometry::GridView::dimension;
 public:
 
     using ParentType::ParentType;
@@ -320,7 +312,7 @@ public:
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
             auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
-            const VolumeVariables origVolVars(curVolVars);
+            const auto origVolVars = curVolVars;
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -384,16 +376,14 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
+    using Scalar = typename Assembler::Scalar;
+    using GridVariables = typename Assembler::GridVariables;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using ElementResidualVector = typename Assembler::LocalResidual::ElementResidualVector;
 
+    static constexpr auto numEq = GridVariables::VolumeVariables::PrimaryVariables::dimension;
+    static constexpr auto dim = Assembler::GridGeometry::GridView::dimension;
 public:
 
     using ParentType::ParentType;
@@ -441,7 +431,7 @@ public:
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
             auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
-            const VolumeVariables origVolVars(curVolVars);
+            const auto origVolVars = curVolVars;
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -496,11 +486,10 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/t
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
+    using GridVariables = typename Assembler::GridVariables;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using ElementResidualVector = typename Assembler::LocalResidual::ElementResidualVector;
 public:
 
     using ParentType::ParentType;
@@ -615,11 +604,10 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/f
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
+    using GridVariables = typename Assembler::GridVariables;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using ElementResidualVector = typename Assembler::LocalResidual::ElementResidualVector;
 public:
 
     using ParentType::ParentType;
