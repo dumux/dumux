@@ -41,12 +41,7 @@
 #include <dumux/io/grid/gridmanager.hh>
 
 #include <dumux/linear/linearsolvertraits.hh>
-
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
-#include <dumux/linear/istlsolverfactorybackend.hh>
-#else
-#include <dumux/linear/amgbackend.hh>
-#endif
+#include <dumux/linear/istlsolvers.hh>
 
 #include <dumux/nonlinear/newtonsolver.hh>
 
@@ -129,11 +124,9 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
-#else
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
-#endif
+    constexpr auto blockSize = std::decay_t<decltype(x[0])>::dimension;
+    using BlockType = Dune::FieldVector<double, blockSize>;
+    using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, Assembler::JacobianMatrix, Dune::BlockVector<BlockType>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
