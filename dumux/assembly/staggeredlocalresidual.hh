@@ -44,7 +44,6 @@ class StaggeredLocalResidual
     using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -62,6 +61,7 @@ public:
     using CellCenterResidualValue = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FaceResidualValue = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using ElementResidualVector = CellCenterResidualValue;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
 
     //! the constructor
     StaggeredLocalResidual(const Problem* problem,

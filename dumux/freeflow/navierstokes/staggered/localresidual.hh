@@ -68,7 +68,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
@@ -80,6 +79,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
 public:
+    using ElementBoundaryTypes = typename ParentType::ElementBoundaryTypes;
     using EnergyLocalResidual = FreeFlowEnergyLocalResidual<GridGeometry, FluxVariables, ModelTraits::enableEnergyBalance(), (ModelTraits::numFluidComponents() > 1)>;
 
     // account for the offset of the cell center privars within the PrimaryVariables container

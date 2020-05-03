@@ -47,7 +47,6 @@ class BoxLocalResidual : public FVLocalResidual<TypeTag>
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -56,6 +55,7 @@ class BoxLocalResidual : public FVLocalResidual<TypeTag>
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ParentType::ParentType;
 
     //! evaluate flux residuals for one sub control volume face and add to residual

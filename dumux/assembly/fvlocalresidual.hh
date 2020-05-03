@@ -54,7 +54,6 @@ class FVLocalResidual
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -158,6 +157,7 @@ public:
         return residual;
     }
 
+    template<class ElementBoundaryTypes>
     ElementResidualVector evalFluxAndSource(const Element& element,
                                             const FVElementGeometry& fvGeometry,
                                             const ElementVolumeVariables& elemVolVars,
@@ -358,6 +358,7 @@ public:
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      * \param scvf The sub control volume face the flux term is integrated over
      */
+    template<class ElementBoundaryTypes>
     void evalFlux(ElementResidualVector& residual,
                   const Problem& problem,
                   const Element& element,
