@@ -35,7 +35,6 @@
 #include <dumux/multidomain/facet/box/darcyslaw.hh>
 #include <dumux/multidomain/facet/box/fickslaw.hh>
 #include <dumux/multidomain/facet/box/fourierslaw.hh>
-#include <dumux/multidomain/facet/box/elementboundarytypes.hh>
 #include <dumux/multidomain/facet/box/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/box/localresidual.hh>
 #include <dumux/multidomain/facet/box/upwindscheme.hh>
@@ -86,11 +85,6 @@ struct FluxVariables<TypeTag, TTag::BoxFacetCouplingModel>
     using type = PorousMediumFluxVariables<TypeTag,
                                            BoxFacetCouplingUpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>;
 };
-
-//! Per default, use the porous medium flow flux variables with the modified upwind scheme
-template<class TypeTag>
-struct ElementBoundaryTypes<TypeTag, TTag::BoxFacetCouplingModel>
-{ using type = BoxFacetCouplingElementBoundaryTypes<GetPropType<TypeTag, Properties::BoundaryTypes>>; };
 
 //! Set the default for the grid finite volume geometry
 template<class TypeTag>

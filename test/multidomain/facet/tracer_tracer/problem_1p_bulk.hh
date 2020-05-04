@@ -129,7 +129,7 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[0] < 1e-6 || globalPos[0] > this->gridGeometry().bBoxMax()[0] - 1e-6)
+        if ( (globalPos[0] < 1e-6 && globalPos[1] < 4.0) || globalPos[0] > this->gridGeometry().bBoxMax()[0] - 1e-6)
             values.setAllDirichlet();
         return values;
     }
