@@ -36,11 +36,16 @@
  * DUMUX_REGISTER_PRECONDITIONER("mypreconditioner", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::MyPreconditioner, 1>());
  * Expicitly specifying the namespaces is required.
  * Set parameter Preconditioner.Type to "mypreconditioner" to use it through the factory.
+ *
+ * In the macro implementation, the final static_assert forces implementers
+ * to put a semicolon after every DUMUX_REGISTER_PRECONDITIONER macro call (cf. example)
+ * and avoids a compiler warning for an empty line semicolon at the same time
  */
 #define DUMUX_REGISTER_PRECONDITIONER(name, tag, ...)                 \
 } namespace Dune {                                               \
 DUNE_REGISTRY_PUT(tag, name, __VA_ARGS__);  \
-} namespace Dumux {                                              \
+} namespace Dumux { \
+static_assert(true, "Require semicolon after macro call")
 
 namespace Dumux {
 namespace {
