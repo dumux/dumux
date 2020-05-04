@@ -11,6 +11,8 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 
 ### Deleted classes/files, property names, constants/enums:
 
+### Other noteworthy changes:
+- after release 3.2, DuMu<sup>x</sup> releases earlier than 2.12 will no longer be automatically tested or supported.
 
 Differences Between DuMu<sup>x</sup> 3.2 and DuMu<sup>x</sup> 3.1
 =============================================
