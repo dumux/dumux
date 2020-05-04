@@ -116,7 +116,7 @@ set_tests_properties(test_richards_lens_tpfa_parallel_yasp_restart PROPERTIES DE
 dumux_add_test(NAME test_richards_lens_box_parallel_ug
               LABELS porousmediumflow richards parallel
               SOURCES main.cc
-              CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
+              CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::UGGrid<2>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
@@ -127,7 +127,7 @@ dumux_add_test(NAME test_richards_lens_box_parallel_ug
 dumux_add_test(NAME test_richards_lens_tpfa_parallel_ug
               LABELS porousmediumflow richards parallel
               SOURCES main.cc
-              CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
+              CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::UGGrid<2>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
