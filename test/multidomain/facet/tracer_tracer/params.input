@@ -1,5 +1,5 @@
 [TimeLoop]
-TEnd = 5e4
+TEnd = 5e5
 Dt = 100
 
 [Problem]
