@@ -7,6 +7,7 @@ add_subdirectory(staggered)
 install(FILES
 darcyslaw.hh
 effectivestresslaw.hh
+fickiandiffusioncoefficients.hh
 fickslaw.hh
 fluxvariablesbase.hh
 fluxvariablescaching.hh
@@ -14,6 +15,7 @@ forchheimerslaw.hh
 fourierslaw.hh
 fourierslawnonequilibrium.hh
 hookeslaw.hh
+maxwellstefandiffusioncoefficients.hh
 maxwellstefanslaw.hh
 referencesystemformulation.hh
 shallowwaterflux.hh
