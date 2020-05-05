@@ -7,13 +7,14 @@ balanceequationopts.hh
 boundaryconditions.hh
 boundaryflag.hh
 boundarytypes.hh
-boundingboxtree.hh
 cubicspline.hh
 cubicsplinehermitebasis.hh
 defaultmappertraits.hh
 defaultusagemessage.hh
 deprecated.hh
 dimensionlessnumbers.hh
+doubleexpintegrationconstants.hh
+doubleexpintegrator.hh
 dumuxmessage.hh
 entitymap.hh
 exceptions.hh
