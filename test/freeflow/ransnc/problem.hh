@@ -483,41 +483,35 @@ private:
         return false;
 
     }
-
-    //! Specialization for the kepsilon
-    template<class Element, class SubControlVolume>
-    PrimaryVariables dirichletTurbulentTwoEq_(const Element& element,
-                                              const SubControlVolume& scv,
-                                              std::true_type) const
     {
-        const auto globalPos = scv.center();
-        PrimaryVariables values(initialAtPos(globalPos));
-        unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
-
-        // fixed value for the turbulent kinetic energy
-        values[Indices::turbulentKineticEnergyEqIdx] = this->turbulentKineticEnergyWallFunction(elementIdx);
-
-        // fixed value for the dissipation
-        values[Indices::dissipationEqIdx] = this->dissipationWallFunction(elementIdx);
-
-        return values;
     }
 
-    //! Specialization for the KOmega
+    //! Specialization for the kepsilon and komega
     template<class Element, class SubControlVolume>
     PrimaryVariables dirichletTurbulentTwoEq_(const Element& element,
-                                              const SubControlVolume& scv,
-                                              std::false_type) const
+                                              const SubControlVolume& scv) const
     {
         const auto globalPos = scv.center();
         PrimaryVariables values(initialAtPos(globalPos));
         unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
 
-        const auto wallDistance = ParentType::wallDistance_[elementIdx];
-        using std::pow;
-        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
-                                                / (ParentType::betaOmega() * pow(wallDistance, 2));
-        return values;
+        if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)
+        {
+            // For the kepsilon model we set a fixed value for the turbulent kinetic energy and the dissipation
+            values[Indices::turbulentKineticEnergyEqIdx] = this->turbulentKineticEnergyWallFunction(elementIdx);
+            values[Indices::dissipationEqIdx] = this->dissipationWallFunction(elementIdx);
+            return values;
+        }
+        else
+        {
+            static_assert(ModelTraits::turbulenceModel() == TurbulenceModel::komega, "Only valid for Komega");
+            // For the komega model we set a fixed value for the dissipation
+            const auto wallDistance = ParentType::wallDistance_[elementIdx];
+            using std::pow;
+            values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
+                                                    / (ParentType::betaOmega() * pow(wallDistance, 2));
+            return values;
+        }
     }
 
     const Scalar eps_;

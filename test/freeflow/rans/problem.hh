@@ -244,11 +244,7 @@ public:
                          const FVElementGeometry& fvGeometry,
                          const SubControlVolume& scv,
                          int pvIdx) const
-    {
-        using IsKOmegaKEpsilon = std::integral_constant<bool, (ModelTraits::turbulenceModel() == TurbulenceModel::komega
-                                                            || ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)>;
-        return isDirichletCell_(element, fvGeometry, scv, pvIdx, IsKOmegaKEpsilon{});
-    }
+    { return isDirichletCell_(element, fvGeometry, scv, pvIdx); }
 
      /*!
       * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.
@@ -404,84 +400,32 @@ private:
         }
     }
 
-    //! Forward to ParentType
     template<class Element, class FVElementGeometry, class SubControlVolume>
     bool isDirichletCell_(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const SubControlVolume& scv,
-                          int pvIdx,
-                          std::false_type) const
+                          const int& pvIdx) const
     {
-        return ParentType::isDirichletCell(element, fvGeometry, scv, pvIdx);
-    }
-
-    //! Specialization for the KOmega and KEpsilon Models
-    template<class Element, class FVElementGeometry, class SubControlVolume>
-    bool isDirichletCell_(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const SubControlVolume& scv,
-                          int pvIdx,
-                          std::true_type) const
-    {
-        using SetDirichletCellForBothTurbEq = std::integral_constant<bool, (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)>;
-        return isDirichletCellTurbulentTwoEq_(element, fvGeometry, scv, pvIdx, SetDirichletCellForBothTurbEq{});
-    }
-
-    //! Specialization for the KEpsilon Model
-    template<class Element>
-    bool isDirichletCellTurbulentTwoEq_(const Element& element,
-                                        const FVElementGeometry& fvGeometry,
-                                        const SubControlVolume& scv,
-                                        int pvIdx,
-                                        std::true_type) const
-    {
-        const auto eIdx = this->gridGeometry().elementMapper().index(element);
-
-        // set a fixed turbulent kinetic energy and dissipation near the wall
-        if (this->inNearWallRegion(eIdx))
-            return pvIdx == Indices::turbulentKineticEnergyEqIdx || pvIdx == Indices::dissipationEqIdx;
-
-        // set a fixed dissipation at  the matching point
-        if (this->isMatchingPoint(eIdx))
-            return pvIdx == Indices::dissipationEqIdx;// set a fixed dissipation (omega) for all cells at the wall
-
-        return false;
-    }
-
-    //! Specialization for the KOmega Model
-    template<class Element>
-    bool isDirichletCellTurbulentTwoEq_(const Element& element,
-                                        const FVElementGeometry& fvGeometry,
-                                        const SubControlVolume& scv,
-                                        int pvIdx,
-                                        std::false_type) const
-    {
-        // set a fixed dissipation (omega) for all cells at the wall
-        for (const auto& scvf : scvfs(fvGeometry))
-            if (isOnWallAtPos(scvf.center()) && pvIdx == Indices::dissipationIdx)
-                return true;
-
-        return false;
-
-    }
-
-    //! Specialization for the kepsilon
-    template<class Element, class SubControlVolume>
-    PrimaryVariables dirichletTurbulentTwoEq_(const Element& element,
-                                              const SubControlVolume& scv,
-                                              std::true_type) const
-    {
-        const auto globalPos = scv.center();
-        PrimaryVariables values(initialAtPos(globalPos));
-        unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
-
-        // fixed value for the turbulent kinetic energy
-        values[Indices::turbulentKineticEnergyEqIdx] = this->turbulentKineticEnergyWallFunction(elementIdx);
-
-        // fixed value for the dissipation
-        values[Indices::dissipationEqIdx] = this->dissipationWallFunction(elementIdx);
-
-        return values;
+        if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)
+        {
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
+            // For the kepsilon model we set fixed values within the matching point and at the wall
+            if (this->inNearWallRegion(eIdx))
+                return pvIdx == Indices::turbulentKineticEnergyEqIdx || pvIdx == Indices::dissipationEqIdx;
+            if (this->isMatchingPoint(eIdx))
+                return pvIdx == Indices::dissipationEqIdx;
+            return false;
+        }
+        else if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::komega)
+        {
+            // For the komega model we set a fixed dissipation (omega) for all cells at the wall
+            for (const auto& scvf : scvfs(fvGeometry))
+                if (isOnWallAtPos(scvf.center()) && pvIdx == Indices::dissipationIdx)
+                    return true;
+            return false;
+        }
+        else
+            return ParentType::isDirichletCell(element, fvGeometry, scv, pvIdx);
     }
 
     //! Specialization for the KOmega
