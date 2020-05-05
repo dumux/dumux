@@ -19,7 +19,8 @@ dumux_add_test(NAME test_md_facet_tracertracer_tpfa
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_tpfa_tracer_lowdim-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_tpfa_tracer_lowdim-00010.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_tpfa params.input \
-                                                              -Vtk.OutputName test_md_facet_tracertracer_tpfa")
+                                                              -Vtk.OutputName test_md_facet_tracertracer_tpfa \
+                                                              -TimeLoop.TEnd 5e4")
 
 dumux_add_test(NAME test_md_facet_tracertracer_mpfa
               LABELS multidomain multidomain_facet tracer
@@ -41,7 +42,8 @@ dumux_add_test(NAME test_md_facet_tracertracer_mpfa
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_mpfa_tracer_lowdim-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_mpfa_tracer_lowdim-00010.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_mpfa params.input \
-                                                              -Vtk.OutputName test_md_facet_tracertracer_mpfa")
+                                                              -Vtk.OutputName test_md_facet_tracertracer_mpfa \
+                                                              -TimeLoop.TEnd 5e4")
 
 dumux_add_test(NAME test_md_facet_tracertracer_box
               LABELS multidomain multidomain_facet tracer
@@ -62,4 +64,5 @@ dumux_add_test(NAME test_md_facet_tracertracer_box
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_box_tracer_lowdim-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_box_tracer_lowdim-00010.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_box params.input \
-                                                              -Vtk.OutputName test_md_facet_tracertracer_box")
+                                                              -Vtk.OutputName test_md_facet_tracertracer_box \
+                                                              -TimeLoop.TEnd 5e4")
