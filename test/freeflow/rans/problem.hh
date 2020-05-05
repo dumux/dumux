@@ -226,8 +226,7 @@ public:
 #endif
 
         // turbulence model-specific boundary types
-        static constexpr auto numEq = numTurbulenceEq(ModelTraits::turbulenceModel());
-        setBcTypes_(values, globalPos, Dune::index_constant<numEq>{});
+        setBcTypes_(values, globalPos);
 
         return values;
     }
@@ -377,31 +376,32 @@ private:
         }
     }
 
-    //! Boundary condition types for the zero-eq turbulence model (none)
-    void setBcTypes_(BoundaryTypes& values, const GlobalPosition& pos, Dune::index_constant<0>) const {}
-
     //! Boundary condition types for the one-eq turbulence model
-    void setBcTypes_(BoundaryTypes& values, const GlobalPosition& pos, Dune::index_constant<1>) const
+    void setBcTypes_(BoundaryTypes& values, const GlobalPosition& pos) const
     {
-        if(isOutlet_(pos))
-            values.setOutflow(Indices::viscosityTildeIdx);
-        else // walls and inflow
-            values.setDirichlet(Indices::viscosityTildeIdx);
-    }
-
-    //! Boundary condition types for the komega, kepsilon and lowrekepsilon turbulence models
-    void setBcTypes_(BoundaryTypes& values,const GlobalPosition& pos, Dune::index_constant<2>) const
-    {
-        if(isOutlet_(pos))
+        if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 0) // zero equation models
+            return;
+        else if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 1)  // one equation models
         {
-            values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
-            values.setOutflow(Indices::dissipationEqIdx);
+            if(isOutlet_(pos))
+                values.setOutflow(Indices::viscosityTildeIdx);
+            else // walls and inflow
+                values.setDirichlet(Indices::viscosityTildeIdx);
         }
-        else
+        else // two equation models
         {
-            // walls and inflow
-            values.setDirichlet(Indices::turbulentKineticEnergyIdx);
-            values.setDirichlet(Indices::dissipationIdx);
+            static_assert(numTurbulenceEq(ModelTraits::turbulenceModel()) == 2, "Only reached by 2eq models");
+            if(isOutlet_(pos))
+            {
+                values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
+                values.setOutflow(Indices::dissipationEqIdx);
+            }
+            else
+            {
+                // walls and inflow
+                values.setDirichlet(Indices::turbulentKineticEnergyIdx);
+                values.setDirichlet(Indices::dissipationIdx);
+            }
         }
     }
 
