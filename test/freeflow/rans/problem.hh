@@ -272,31 +272,17 @@ public:
      * \param scv the sub control volume
      * \note used for cell-centered discretization schemes
      */
-    template<bool enable = (ModelTraits::turbulenceModel() == TurbulenceModel::komega
-                         || ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon),
-                         std::enable_if_t<!enable, int> = 0>
     PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
     {
-        const auto globalPos = scv.center();
-        PrimaryVariables values(initialAtPos(globalPos));
-        return values;
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for fixed values at cell centers
-     *
-     * \param element The finite element
-     * \param scv the sub control volume
-     * \note used for cell-centered discretization schemes
-     */
-    template<bool enable = (ModelTraits::turbulenceModel() == TurbulenceModel::komega
-                         || ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon),
-                         std::enable_if_t<enable, int> = 0>
-    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
-    {
-        using SetDirichletCellForBothTurbEq = std::integral_constant<bool, (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)>;
-
-        return dirichletTurbulentTwoEq_(element, scv, SetDirichletCellForBothTurbEq{});
+        if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon
+                   || ModelTraits::turbulenceModel() == TurbulenceModel::komega)
+            return dirichletTurbulentTwoEq_(element, scv);
+        else
+        {
+            const auto globalPos = scv.center();
+            PrimaryVariables values(initialAtPos(globalPos));
+            return values;
+        }
     }
 
    /*!
@@ -428,21 +414,32 @@ private:
             return ParentType::isDirichletCell(element, fvGeometry, scv, pvIdx);
     }
 
-    //! Specialization for the KOmega
+    //! Specialization for the kepsilon and komega
     template<class Element, class SubControlVolume>
     PrimaryVariables dirichletTurbulentTwoEq_(const Element& element,
-                                              const SubControlVolume& scv,
-                                              std::false_type) const
+                                              const SubControlVolume& scv) const
     {
         const auto globalPos = scv.center();
         PrimaryVariables values(initialAtPos(globalPos));
         unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
 
-        const auto wallDistance = ParentType::wallDistance_[elementIdx];
-        using std::pow;
-        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
-                                                / (ParentType::betaOmega() * pow(wallDistance, 2));
-        return values;
+        if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)
+        {
+            // For the kepsilon model we set a fixed value for the turbulent kinetic energy and the dissipation
+            values[Indices::turbulentKineticEnergyEqIdx] = this->turbulentKineticEnergyWallFunction(elementIdx);
+            values[Indices::dissipationEqIdx] = this->dissipationWallFunction(elementIdx);
+            return values;
+        }
+        else
+        {
+            static_assert(ModelTraits::turbulenceModel() == TurbulenceModel::komega, "Only valid for Komega");
+            // For the komega model we set a fixed value for the dissipation
+            const auto wallDistance = ParentType::wallDistance_[elementIdx];
+            using std::pow;
+            values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
+                                                    / (ParentType::betaOmega() * wallDistance * wallDistance);
+            return values;
+        }
     }
 
     Scalar eps_;
