@@ -28,6 +28,8 @@ HTML_HEADER            = @srcdir@/header.html
 
 HTML_EXTRA_STYLESHEET  = @srcdir@/customdoxygendumux.css
 
+HTML_FILE_EXTENSION    = .xhtml
+
 EXCLUDE_PATTERNS       =
 
 ALIASES               += "warning=\xrefitem warning \"Warning List\" \"Warning List\""
@@ -44,6 +46,8 @@ MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 
 DOT_GRAPH_MAX_NODES    = 100
+
+DOT_IMAGE_FORMAT       = svg
 
 # uncomment for the website
 # SHORT_NAMES           = NO
