@@ -25,6 +25,10 @@
 #ifndef DUMUX_DISCRETIZATION_FE_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_FE_GRID_GEOMETRY_HH
 
+#include <vector>
+
+#include <dune/geometry/referenceelements.hh>
+
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
 
@@ -62,8 +66,10 @@ class FEGridGeometry
     using ThisType = FEGridGeometry<FEB, Traits>;
     using ParentType = BaseGridGeometry<typename FEB::GridView, Traits>;
 
-    using GridIndexType = typename IndexTraits<typename FEB::GridView>::GridIndex;
-    using LocalIndexType = typename IndexTraits<typename FEB::GridView>::LocalIndex;
+    using GV = typename FEB::GridView;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
+    using ReferenceElements = Dune::ReferenceElements<typename GV::ctype, GV::dimension>;
 
 public:
     //! export discretization method
@@ -87,6 +93,56 @@ public:
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
 
+    //! update the mappers etc
+    void update()
+    {
+        ParentType::update();
+
+        // determine which dofs lie on the boundary
+        dofOnBoundary_.assign(numDofs(), false);
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto localView = feBasis().localView();
+            localView.bind(element);
+
+            const auto& fe = localView.tree().finiteElement();
+            const auto refElement = referenceElement(element);
+
+            for (const auto& is : intersections(this->gridView(), element))
+            {
+                if (is.boundary())
+                {
+                    // loop over all dofs in this element and mark those
+                    // that live on this current boundary intersection
+                    for (unsigned int localDofIdx = 0; localDofIdx < localView.size(); localDofIdx++)
+                    {
+                        // get the index and codim of the entity this dof lives on
+                        const auto& localKey = fe.localCoefficients().localKey(localDofIdx);
+                        const auto subEntity = localKey.subEntity();
+                        const auto codim = localKey.codim();
+
+                        // dofs within a grid cell cannot lie on the boundary
+                        if (codim == 0)
+                            continue;
+
+                        // if the entity is a sub-entity of the current boundary intersection, the
+                        // dof at hand is on the boundary. To this end, loop over all sub-entities
+                        // of the intersection that have the same codim as the entity our dof lives on
+                        for (unsigned int i = 0; i < refElement.size(is.indexInInside(), 1, codim); i++)
+                        {
+                            // If j-th sub entity is the sub entity corresponding to our dof, continue and assign BC
+                            if (refElement.subEntity(is.indexInInside(), 1, i, codim) == subEntity)
+                            {
+                                dofOnBoundary_[localView.index(localDofIdx)] = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     //! The total number of degrees of freedom
     auto numDofs() const
     { return feBasis_->size(); }
@@ -94,6 +150,10 @@ public:
     //! The total number of degrees of freedom
     const FEBasis& feBasis() const
     { return *feBasis_; }
+
+    //! If a d.o.f. is on the boundary
+    bool dofOnBoundary(GridIndexType dofIdx) const
+    { return dofOnBoundary_[dofIdx]; }
 
     //! If a vertex / d.o.f. is on a periodic boundary
     bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
@@ -109,6 +169,7 @@ public:
 
 private:
     std::shared_ptr<FEBasis> feBasis_;
+    std::vector<bool> dofOnBoundary_;
 };
 
 } // end namespace Dumux
