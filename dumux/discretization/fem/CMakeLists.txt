@@ -1,4 +1,5 @@
 install(FILES
+elementboundarytypes.hh
 elementsolution.hh
 feelementgeometry.hh
 fegridgeometry.hh
