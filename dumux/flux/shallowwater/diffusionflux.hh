@@ -69,12 +69,13 @@ std::array<Scalar,3> diffusionFlux(const Scalar waterDepthLeft,
                                    const FVElementGeometry& fvGeometry,
                                    const typename FVElementGeometry::SubControlVolumeFace& scvf)
 {
-    using std::abs;
+    using std::sqrt;
+
     // Initialization
     Scalar gradU = 0.0;
     Scalar gradV = 0.0;
 
-    Scalar distance = std::sqrt(dx*dx + dy*dy);
+    Scalar distance = sqrt(dx*dx + dy*dy);
 
     // Compute the velocity gradients
     // Only if both cells have sufficient water
