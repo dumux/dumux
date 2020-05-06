@@ -29,9 +29,6 @@
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
-// #include <dumux/material/fluidmatrixinteractions/wallfrictionlaws/wallfrictionlaw.hh>
-// #include <dumux/material/fluidmatrixinteractions/wallfrictionlaws/wallnoslip.hh>
-
 
 namespace Dumux {
 
@@ -60,29 +57,7 @@ public:
         gravity_ = getParam<Scalar>("Problem.Gravity");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         wallFrictionLawType_ = getParam<std::string>("Problem.WallFrictionLaw");
-        //initWallFrictionLaw();
     }
-
-    /*!
-     * \brief Initialize the WallFrictionLaw
-     */
-    //void initWallFrictionLaw()
-    //{
-    //  if (wallFrictionLawType_ == "Noslip")
-    //  {
-    //      Scalar alphaWall = getParam<Scalar>("Problem.alphaWall");
-    //      wallFrictionLaw_ = std::make_unique<WallFrictionLawNoslip<VolumeVariables>>(gravity_, alphaWall);
-    //  }
-    //  else if (wallFrictionLawType_ == "Nikuradse")
-    //  {
-    //      Scalar wallKs = getParam<Scalar>("Problem.wallKs"); // equivalent sand roughness of the wall
-    //      wallFrictionLaw_ = std::make_unique<WallFrictionLawNikuradse<VolumeVariables>>(wallKs);
-    //  }
-    //  else
-    //  {
-    //      std::cout<<"The WallFrictionLaw in params.input is unknown. Valid entries are 'Noslip' and 'Nikuradse'!"<<std::endl;
-    //  }
-    //}
 
     /*! \brief Define the gravitation.
     *
@@ -102,19 +77,6 @@ public:
         return gravity_;
     }
 
-    /*! \brief Get the wallFrictionLaw.
-    *
-    * Get the wallFrictionLaw, which already includes the wall friction value.
-    *
-    * \return wallFrictionLaw
-    */
-
-    //const WallFrictionLaw<VolumeVariables>& wallFrictionLaw(const Element& element,
-    //                                                const SubControlVolumeFace& scvf) const
-    //{
-    //    return *wallFrictionLaw_;
-    //}
-
     /*! \brief Define the bed surface
     *
     * \param element The current element
@@ -126,14 +88,13 @@ public:
                       const SubControlVolume& scv) const
     {
         // todo depends on index e.g. eIdx = scv.elementIndex();
-        return 9.98 - element.geometry().center()[0] * bedSlope_;
+        return -9.98 - element.geometry().center()[0] * bedSlope_;
     }
 
 private:
     Scalar gravity_;
     Scalar bedSlope_;
     std::string wallFrictionLawType_;
-    //std::unique_ptr<FrictionLaw<VolumeVariables>> wallFrictionLaw_;
 };
 
 } // end namespace Dumux

@@ -46,7 +46,7 @@ public:
      * \ingroup Flux
      * \brief Prepares the riemann problem for the diffusive flux for
      *        the shallow water model. The actual model adds the
-     *        contributionof the shear stress tensor between two
+     *        contribution of the shear stress tensor between two
      *        control volumes and a mechanism to avoid degenerate
      *        expressions for small water depths.
      *
@@ -73,7 +73,8 @@ public:
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
         // Distance between the two cell centers
-        const auto distance = (outsideScv.center() - insideScv.center()).two_norm();
+        const auto dx = outsideScv.center()[0] - insideScv.center()[0];
+        const auto dy = outsideScv.center()[1] - insideScv.center()[1];
 
         auto diffusiveFlux = ShallowWater::diffusionFlux(insideVolVars.waterDepth(),
                                                          outsideVolVars.waterDepth(),
@@ -82,13 +83,15 @@ public:
                                                          insideVolVars.velocity(1),
                                                          outsideVolVars.velocity(1),
                                                          nxy,
-                                                         distance);
+                                                         dx,
+                                                         dy,
+                                                         fvGeometry,
+                                                         scvf);
 
         NumEqVector localFlux(0.0);
         localFlux[0] = diffusiveFlux[0] * scvf.area();
         localFlux[1] = diffusiveFlux[1] * scvf.area();
         localFlux[2] = diffusiveFlux[2] * scvf.area();
-
         return localFlux;
     }
 };

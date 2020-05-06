@@ -89,7 +89,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::PoiseuilleFlow>
  * having a slope equal to ib = dTheta / L, where dTheta is the water level difference between upstream and downstream: dTheta = 0.02 m (positive downwards).
  * With L = 400 m, the slope is ib = 0.00005 m/m, resulting in a constant water depth along the channel of H = 10.0 m.
 
- * At the west/left  (inflow)  boundary a discharge is prescribed of Q_in = -4087.5 m^3/s or q_in 4.0875 m^2/2 per meter.
+ * At the west/left  (inflow)  boundary a discharge is prescribed of Q_in = -408.75 m^3/s or q_in 4.0875 m^2/s per meter.
  * At the east/right (outflow) boundary a fixed water level is prescribed of theta = 0.0 m.
  * The south and north boundaries are set to roughwall type boundaries,
  * with a coefficient alphaWall = 1.0, where:
@@ -125,7 +125,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::PoiseuilleFlow>
  * Therefore u_{max} can be calculated to be:
  *
  * \f[
- * u_{max} = \frac{9.81*0.02*100^2}{8*0.1*400} = 0.125 m/s
+ * u_{max} = \frac{9.81*0.02*100^2}{8*0.1*400} = 6.13125 m/s
  * \f]
  *
  * The formula for u(y) is also used to calculate the analytic solution.
@@ -171,6 +171,8 @@ public:
         alphaWall_ = getParam<Scalar>("Problem.AlphaWall");
         ksWall_ = getParam<Scalar>("Problem.KsWall");
         wallFrictionLawType_ = getParam<std::string>("Problem.WallFrictionLaw");
+        // Make the wallFrictionLawType_ lower case
+        transform(wallFrictionLawType_.begin(), wallFrictionLawType_.end(), wallFrictionLawType_.begin(), ::tolower);
     }
 
     //! Get the analytical water depth
@@ -203,8 +205,8 @@ public:
             auto gravity = this->spatialParams().gravity(globalPos);
             Scalar y = globalPos[1];
             Scalar W = 100.0; // for now. Should be read from the grid input
-            Scalar h = 10.0; // hBoundary_- bedSurface;
-            Scalar u = (gravity*bedSlope_/(8.0*turbViscosity_)) * (4.0*pow(y,2.0) - pow(W,2.0));
+            Scalar h = hBoundary_; // hBoundary_- bedSurface;
+            Scalar u = -(gravity*bedSlope_/(8.0*turbViscosity_)) * (4.0*pow(y,2.0) - pow(W,2.0));
             exactWaterDepth_[eIdx] = h;
             exactVelocityX_[eIdx] = u;
             exactVelocityY_[eIdx] = 0.0;
@@ -225,34 +227,6 @@ public:
     {
         return name_;
     }
-
-    /*!
-     * \brief Compute the boundary flux term due to wall friction
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param scv The sub control volume
-     *
-     */
-     //NumEqVector wallFrictionSource(const Element& element,
-     //                               const FVElementGeometry& fvGeometry,
-     //                               const ElementVolumeVariables& elemVolVars,
-     //                               const SubControlVolume &scv) const
-     //{
-     //   NumEqVector wallFrictionSource(0.0);
-
-     //   const auto& volVars = elemVolVars[scv];
-     //   const auto wallDistance =
-     //   Dune::FieldVector<Scalar, 2> wallShearStress = this->spatialParams().wallfrictionLaw(element, scv).wallShearStress(volVars);
-
-     //   wallFrictionSource[0] = 0.0;
-     //   wallFrictionSource[1] = wallShearStress[0];
-     //   wallFrictionSource[2] = wallShearStress[1];
-
-     //   return wallFrictionSource;
-     //}
-
 
     /*!
      * \name Boundary conditions
@@ -301,7 +275,20 @@ public:
         // impose discharge at the left side
         if (scvf.center()[0] < 0.0 + eps_)
         {
-            boundaryStateVariables = ShallowWater::fixedDischargeBoundary(discharge_,
+            // Prescribe the exact q-distribution long the inflow boundaryStateVariables
+            // based on the parabolic u-profile:
+            // q(y) = (g*H*ib/(8*nu_T)) * (4*y^2^-W^2)
+            // Note the opposite sign to the velocity u, due to the fact that it is an inflow discharge
+            auto gravity = this->spatialParams().gravity(scvf.center());
+            Scalar y = scvf.center()[1];
+            Scalar W = 100.0; // for now. Should be read from the grid input
+            Scalar h = hBoundary_; // hBoundary_- bedSurface;
+            // Now compute a weighted average between the constant q (from input) and the parabolic q from the analytical solution
+            // based on the prescribed alphaWall
+            Scalar q_in0 = (gravity*h*bedSlope_/(8.0*turbViscosity_)) * (4.0*pow(y,2.0) - pow(W,2.0));
+            Scalar q_in1 = discharge_;
+            Scalar q_in  = (1.0-alphaWall_)*q_in1 + alphaWall_*q_in0;
+            boundaryStateVariables = ShallowWater::fixedDischargeBoundary(q_in,
                                                                           insideVolVars.waterDepth(),
                                                                           insideVolVars.velocity(0),
                                                                           insideVolVars.velocity(1),
@@ -327,6 +314,7 @@ public:
             // Get inside velocity components in cell face coordinates (t,n) using normal vector nxy
             // Note that the first component is the normal component
             // since we are rotating to the normal vector coordinate system
+            //std::cout << "Before the no slip boundary state computatation \n";
             Scalar insideVelocityNWall =  insideVolVars.velocity(0)*nxy[0] + insideVolVars.velocity(1)*nxy[1];
             Scalar insideVelocityTWall = -insideVolVars.velocity(0)*nxy[1] + insideVolVars.velocity(1)*nxy[0];
 
@@ -335,7 +323,7 @@ public:
             auto outsideVelocityTWall = insideVelocityTWall;
 
             // Now set the outside (ghost cell) velocities based on the chosen slip condition
-            if ((scvf.center()[1] < -50.0 + eps_ || scvf.center()[1] > 50.0 - eps_) && (wallFrictionLawType_ == "Noslip" || wallFrictionLawType_ == "Nikuradse"))
+            if ((scvf.center()[1] < -50.0 + eps_ || scvf.center()[1] > 50.0 - eps_) && (wallFrictionLawType_ == "noslip" || wallFrictionLawType_ == "nikuradse"))
             {
                 // Set the outside state using the no-slip wall roughness conditions based on alphaWall
                 // alphaWall = 0.0: full slip (wall tangential velocity equals inside tangential velocity)
@@ -381,36 +369,34 @@ public:
         // No-slip wall (with coefficient alphaWall):
         // Compute wall shear stress using turbulent viscosity and local velocity gradient
         // Assume velocity gradient (in cell adjacent to wall) equal to alphaWall*(0 - u_c)
-
-        //Dune::FieldVector<Scalar, 2> wallShearStress = this->spatialParams().wallfrictionLaw(element, scv).wallShearStress(volVars);
-
-        //bottomFrictionSource[0] = 0.0;
-        //bottomFrictionSource[1] =wallShearStress[0];
-        //bottomFrictionSource[2] =wallShearStress[1];
         std::array<Scalar, 3> roughWallFlux;
         roughWallFlux = {0.0};
         if (scvf.center()[1] < -50.0 + eps_ || scvf.center()[1] > 50.0 - eps_)
         {
-            // Distance from the cell center to the wall
-            auto distance = (scvf.center()-insideScv.center()).two_norm();
-            if (wallFrictionLawType_ == "Noslip")
+            // Distancess from the cell center to the wall
+            auto dx = scvf.center()[0]-insideScv.center()[0];
+            auto dy = scvf.center()[1]-insideScv.center()[1];
+            if (wallFrictionLawType_ == "noslip")
             {
-
                 roughWallFlux = ShallowWater::noslipWallBoundary(alphaWall_,
+                                                                 insideVolVars.waterDepth(),
                                                                  insideVolVars.velocity(0),
                                                                  insideVolVars.velocity(1),
                                                                  turbViscosity_,
-                                                                 insideVolVars.waterDepth(),
-                                                                 distance,
-                                                                 nxy);
+                                                                 dx,
+                                                                 dy,
+                                                                 nxy,
+                                                                 fvGeometry,
+                                                                 scvf);
             }
-            else if (wallFrictionLawType_ == "Nikuradse")
+            else if (wallFrictionLawType_ == "nikuradse")
             {
                 roughWallFlux = ShallowWater::nikuradseWallBoundary(ksWall_,
                                                                     insideVolVars.waterDepth(),
                                                                     insideVolVars.velocity(0),
                                                                     insideVolVars.velocity(1),
-                                                                    distance,
+                                                                    dx,
+                                                                    dy,
                                                                     nxy);
             }
         }
@@ -441,8 +427,12 @@ public:
     {
         PrimaryVariables values(0.0);
 
+        // the water depth is 10.0 m everywhere
+        // the bed level runs from -9.98 m at the inflow boundary
+        // to -10.0 m at the outflow boundary
+
         values[0] = hBoundary_;
-        values[1] = abs(discharge_)/hBoundary_;
+        values[1] = -(9.81*bedSlope_/(8.0*turbViscosity_)) * (4.0*std::pow(globalPos[1],2.0) - std::pow(100.0,2.0));
         values[2] = 0.0;
 
         return values;
