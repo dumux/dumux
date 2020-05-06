@@ -18,6 +18,7 @@ doubleexpintegrator.hh
 dumuxmessage.hh
 entitymap.hh
 exceptions.hh
+feproblem.hh
 fixedlengthspline_.hh
 fvproblem.hh
 indextraits.hh
