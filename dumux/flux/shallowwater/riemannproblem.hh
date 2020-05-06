@@ -129,7 +129,6 @@ std::array<Scalar,3> riemannProblem(const Scalar waterDepthLeft,
     localFlux[0] = riemannResult.flux[0] * mobility;
     localFlux[1] = riemannResult.flux[1] - hdxzl;
     localFlux[2] = riemannResult.flux[2] - hdyzl;
-
     return localFlux;
 }
 

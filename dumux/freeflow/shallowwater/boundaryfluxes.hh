@@ -39,7 +39,7 @@ namespace ShallowWater {
 /*!
  * \brief Compute the outer cell state for fixed water depth boundary.
  *
- * \param waterDepthBoundary Discharge per meter at the boundary face [m^2/s]
+ * \param waterDepthBoundary Water depth at the boundary face [m^2/s]
  * \param waterDepthInside Water depth in the inner cell [m]
  * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
  * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
@@ -135,19 +135,23 @@ std::array<Scalar, 3> fixedDischargeBoundary(const Scalar dischargeBoundary,
  * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
  * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
  * \param turbulentViscosity Turbulent viscosity [m^2/s]
- * \param distance Distance from inside cell center to the boundary face [m]
+ * \param dx X-distance from inside cell center to the boundary face [m]
+ * \param dy Y-distance from inside cell center to the boundary face [m]
  * \param nxy Normal vector of the boundary face
  *
  * \return cellStateOutside The outer cell state
  */
-template<class Scalar, class GlobalPosition>
+template<class Scalar, class GlobalPosition, class FVElementGeometry>
 std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
                                          const Scalar waterDepthInside,
                                          const Scalar velocityXInside,
                                          const Scalar velocityYInside,
                                          const Scalar turbulentViscosity,
-                                         const Scalar distance,
-                                         const GlobalPosition& nxy)
+                                         const Scalar dx,
+                                         const Scalar dy,
+                                         const GlobalPosition& nxy,
+                                         const FVElementGeometry& fvGeometry,
+                                         const typename FVElementGeometry::SubControlVolumeFace& scvf)
 {
     std::array<Scalar, 3> roughWallFlux;
     roughWallFlux = {0.0};
@@ -160,12 +164,12 @@ std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
         Scalar gradU   = 0.0;
         Scalar gradV   = 0.0;
 
-        // Change of distance to wall for boundary conditions from Jasak (1996), p. 93-94:
+        // Distance to wall for boundary conditions from Jasak (1996), p. 93-94:
         //Scalar dn[2] = {0.0};
         //Scalar fac = nxy[0]*dx+nxy[1]*dy;
         //dn[0] = fac*nxy[0];
         //dn[1] = fac*nxy[1];
-        //distance = std::sqrt(dn[0]*dn[0] + dn[1]*dn[1]);
+        Scalar distance = std::sqrt(dx*dx + dy*dy);
 
         // Compute the velocity gradients
         // Outside - inside cell: therefore the minus-sign
@@ -177,14 +181,13 @@ std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
             gradV         = -alphaWall * velocityYInside/distance;
         }
 
-        //At walls we assume the connection between the two cell centres to be
-        //orthogonal to the boundary face, i.e. c_delta = 1.0
-        Scalar c_delta = 1.0; // /(dx*nxy[0] + dy*nxy[1]);
+        // Factor that takes into account the direction of the normal vector
+        Scalar c_delta = (dx*nxy[0] + dy*nxy[1])/distance;
 
         // Compute the viscosity/diffusive fluxes at the rough wall
         roughWallFlux[0] = 0.0;
-        roughWallFlux[1] = turbulentViscosity * waterDepthInside * c_delta * gradU;
-        roughWallFlux[2] = turbulentViscosity * waterDepthInside * c_delta * gradV;
+        roughWallFlux[1] = -turbulentViscosity * waterDepthInside * c_delta * gradU;
+        roughWallFlux[2] = -turbulentViscosity * waterDepthInside * c_delta * gradV;
     }
     return roughWallFlux;
 }
@@ -196,7 +199,8 @@ std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
  * \param waterDepthInside Water depth in the inner cell [m]
  * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
  * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
- * \param distance Distance from inside cell center to the boundary face [m]
+ * \param dx X-distance from inside cell center to the boundary face [m]
+ * \param dy Y-distance from inside cell center to the boundary face [m]
  * \param nxy Normal vector of the boundary face
  *
  * \return cellStateOutside The outer cell state
@@ -206,7 +210,8 @@ std::array<Scalar, 3> nikuradseWallBoundary(const Scalar ksWall,
                                             const Scalar waterDepthInside,
                                             const Scalar velocityXInside,
                                             const Scalar velocityYInside,
-                                            const Scalar distance,
+                                            const Scalar dx,
+                                            const Scalar dy,
                                             const GlobalPosition& nxy)
 {
     std::array<Scalar, 3> roughWallFlux;
@@ -221,17 +226,21 @@ std::array<Scalar, 3> nikuradseWallBoundary(const Scalar ksWall,
     {
         Scalar y0w = ksWall/30.0;
         Scalar kappa2 = 0.41*0.41;
-        // velocity magnitude
-        auto velocityMagnitude  = sqrt(velocityXInside*velocityXInside + velocityYInside*velocityYInside);
-        // and the wall shear stress components
+        Scalar distance = std::sqrt(dx*dx + dy*dy);
+        Scalar velocityMagnitude  = sqrt(velocityXInside*velocityXInside + velocityYInside*velocityYInside);
+
         // should distance/y0w be limited to not become too small?
-        auto tauWx = kappa2*velocityMagnitude*velocityXInside/ max(0.01,(log(distance/y0w + 1.0))*(log(distance/y0w + 1.0)));
-        auto tauWy = kappa2*velocityMagnitude*velocityYInside/ max(0.01,(log(distance/y0w + 1.0))*(log(distance/y0w + 1.0)));
+        Scalar fac = kappa2*velocityMagnitude / max(1.0e-3,(log(distance/y0w+1.0))*(log(distance/y0w+1.0)));
+
+        // Factor that takes into account the direction of the unit vector
+        Scalar c_delta = (dx*nxy[0] + dy*nxy[1])/distance;
+        auto tauWx = c_delta*fac*velocityXInside;
+        auto tauWy = c_delta*fac*velocityYInside;
 
         // Compute the viscosity/diffusive fluxes at the rough wall
         roughWallFlux[0] = 0.0;
-        roughWallFlux[1] = -waterDepthInside*tauWx; //*velocityXInside/max(0.01,abs(velocityXInside));
-        roughWallFlux[2] = -waterDepthInside*tauWy; //*velocityYInside/max(0.01,abs(velocityYInside));
+        roughWallFlux[1] = waterDepthInside*tauWx;
+        roughWallFlux[2] = waterDepthInside*tauWy;
     }
     return roughWallFlux;
 }

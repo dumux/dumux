@@ -95,6 +95,7 @@ public:
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         NumEqVector flux(0.0);
+        NumEqVector advFlux(0.0);
         FluxVariables fluxVars;
         flux += fluxVars.advectiveFlux(problem, element, fvGeometry, elemVolVars, scvf);
         flux += fluxVars.diffusiveFlux(problem, element, fvGeometry, elemVolVars, scvf);

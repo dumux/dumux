@@ -116,6 +116,16 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
+    if (hasParam("TimeLoop.PrintoutTimes"))
+    {
+        const auto timeLoopPrintoutTimes = getParam<std::string>("TimeLoop.PrintoutTimes");
+        std::istringstream inputTimes(timeLoopPrintoutTimes);
+        std::vector<Scalar> printoutTimes {std::istream_iterator<double>(inputTimes), std::istream_iterator<double>()};
+        timeLoop->setCheckPoint(printoutTimes);
+    }
+
+    timeLoop->setCheckPoint(tEnd);
+
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
@@ -127,9 +137,6 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
-
-    //! set some check point at the end of the time loop
-    timeLoop->setCheckPoint(tEnd);
 
     // time loop
     timeLoop->start(); do
