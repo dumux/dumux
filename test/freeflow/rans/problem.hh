@@ -324,9 +324,7 @@ public:
 #endif
 
         // turbulence model-specific initial conditions
-        static constexpr auto numEq = numTurbulenceEq(ModelTraits::turbulenceModel());
-        setInitialAtPos_(values, globalPos, Dune::index_constant<numEq>{});
-
+        setInitialAtPos_(values, globalPos);
         return values;
     }
 
@@ -353,26 +351,27 @@ private:
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
-    //! Initial conditions for the zero-eq turbulence model (none)
-    void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos, Dune::index_constant<0>) const {}
-
-    //! Initial conditions for the one-eq turbulence model
-    void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos, Dune::index_constant<1>) const
-    {
-        values[Indices::viscosityTildeIdx] = viscosityTilde_;
-        if (isOnWallAtPos(globalPos))
-            values[Indices::viscosityTildeIdx] = 0.0;
-    }
-
     //! Initial conditions for the komega, kepsilon and lowrekepsilon turbulence models
-    void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos, Dune::index_constant<2>) const
+    void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos) const
     {
-        values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
-        values[Indices::dissipationIdx] = dissipation_;
-        if (isOnWallAtPos(globalPos))
+        if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 0) // zero equation models
+            return;
+        else if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 1)  // one equation models
         {
-            values[Indices::turbulentKineticEnergyIdx] = 0.0;
-            values[Indices::dissipationIdx] = 0.0;
+            values[Indices::viscosityTildeIdx] = viscosityTilde_;
+            if (isOnWallAtPos(globalPos))
+                values[Indices::viscosityTildeIdx] = 0.0;
+        }
+        else // two equation models
+        {
+            static_assert(numTurbulenceEq(ModelTraits::turbulenceModel()) == 2, "Only reached by 2eq models");
+            values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
+            values[Indices::dissipationIdx] = dissipation_;
+            if (isOnWallAtPos(globalPos))
+            {
+                values[Indices::turbulentKineticEnergyIdx] = 0.0;
+                values[Indices::dissipationIdx] = 0.0;
+            }
         }
     }
 
