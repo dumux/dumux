@@ -177,9 +177,7 @@ public:
     // \{
 
     bool isOnWallAtPos(const GlobalPosition& globalPos) const
-    {
-        return globalPos[1] < eps_;
-    }
+    { return globalPos[1] < eps_; }
 
    /*!
      * \brief Returns the temperature within the domain in [K].
@@ -273,7 +271,6 @@ public:
         {
             values[transportCompIdx] = (time() > 10.0) ? inletMoleFraction_ : 0.0;
         }
-
 #if NONISOTHERMAL
         if (time() > 10.0 && isOnWallAtPos(globalPos))
         {
@@ -317,7 +314,6 @@ public:
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = temperature();
 #endif
-
         // block velocity profile
         values[Indices::velocityXIdx] = 0.0;
         if (!isOnWallAtPos(globalPos))
@@ -332,25 +328,17 @@ public:
     // \}
 
     void setTimeLoop(TimeLoopPtr timeLoop)
-    {
-        timeLoop_ = timeLoop;
-    }
+    { timeLoop_ = timeLoop; }
 
     Scalar time() const
-    {
-        return timeLoop_->time();
-    }
+    { return timeLoop_->time(); }
 
 private:
     bool isInlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
+    { return globalPos[0] < eps_; }
 
     bool isOutlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
-    }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     //! Initial conditions for the komega, kepsilon and lowrekepsilon turbulence models
     void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos) const

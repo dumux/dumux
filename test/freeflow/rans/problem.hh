@@ -72,7 +72,6 @@ struct PipeLauferNILowReKEpsilon { using InheritsFrom = std::tuple<RANSModel, Lo
 struct PipeLauferNIKEpsilon { using InheritsFrom = std::tuple<RANSModel, KEpsilonNI>; };
 } // end namespace TTag
 
-
 // the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::RANSModel>
@@ -181,9 +180,7 @@ public:
     }
 
     Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
-    {
-        return sandGrainRoughness_;
-    }
+    { return sandGrainRoughness_; }
 
    /*!
      * \brief Returns the temperature [K] within the domain for the isothermal model.
@@ -224,7 +221,6 @@ public:
         else
             values.setDirichlet(Indices::temperatureIdx);
 #endif
-
         // turbulence model-specific boundary types
         setBcTypes_(values, globalPos);
 
@@ -300,11 +296,9 @@ public:
                                         : time() / initializationTime_ * inletVelocity_;
         if (isOnWallAtPos(globalPos))
             values[Indices::velocityXIdx] = 0.0;
-
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = isOnWallAtPos(globalPos) ? wallTemperature_ : inletTemperature_;
 #endif
-
         // turbulence model-specific initial conditions
         setInitialAtPos_(values, globalPos);
         return values;
@@ -313,25 +307,17 @@ public:
     // \}
 
     void setTimeLoop(TimeLoopPtr timeLoop)
-    {
-        timeLoop_ = timeLoop;
-    }
+    { timeLoop_ = timeLoop; }
 
     Scalar time() const
-    {
-        return timeLoop_->time();
-    }
+    { return timeLoop_->time(); }
 
 private:
     bool isInlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
-    }
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
 
     bool isOutlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
-    }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     //! Initial conditions for the komega, kepsilon and lowrekepsilon turbulence models
     void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos) const
