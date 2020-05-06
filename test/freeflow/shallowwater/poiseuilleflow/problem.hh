@@ -314,7 +314,6 @@ public:
             // Get inside velocity components in cell face coordinates (t,n) using normal vector nxy
             // Note that the first component is the normal component
             // since we are rotating to the normal vector coordinate system
-            //std::cout << "Before the no slip boundary state computatation \n";
             Scalar insideVelocityNWall =  insideVolVars.velocity(0)*nxy[0] + insideVolVars.velocity(1)*nxy[1];
             Scalar insideVelocityTWall = -insideVolVars.velocity(0)*nxy[1] + insideVolVars.velocity(1)*nxy[0];
 
