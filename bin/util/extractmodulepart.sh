@@ -331,26 +331,25 @@ echo "This file has been created automatically. Please adapt it to your needs." 
 echo "" >>$MODULE_NAME/$README_FILE
 echo "===============================" >>$MODULE_NAME/$README_FILE
 echo "" >>$MODULE_NAME/$README_FILE
-echo "The content of this DUNE module was extracted from the module $MODULE_DIR." >>$MODULE_NAME/$README_FILE
-echo "In particular, the following subfolders of $MODULE_DIR have been extracted:" >>$MODULE_NAME/$README_FILE
+echo "## Content" >>$MODULE_NAME/$README_FILE
+echo "" >>$MODULE_NAME/$README_FILE
+echo "The content of this DUNE module was extracted from the module \`$MODULE_DIR\`." >>$MODULE_NAME/$README_FILE
+echo "In particular, the following subfolders of \`$MODULE_DIR\` have been extracted:" >>$MODULE_NAME/$README_FILE
 echo "" >>$MODULE_NAME/$README_FILE
 for DIR_PATH in $ALL_DIRECTORIES; do
-  echo "  $DIR_PATH," >>$MODULE_NAME/$README_FILE
+  echo "*  \`$DIR_PATH\`," >>$MODULE_NAME/$README_FILE
 done
 echo "" >>$MODULE_NAME/$README_FILE
-echo "Additionally, all headers in $MODULE_DIR that are required to build the" >>$MODULE_NAME/$README_FILE
+echo "Additionally, all headers in \`$MODULE_DIR\` that are required to build the" >>$MODULE_NAME/$README_FILE
 echo "executables from the sources" >>$MODULE_NAME/$README_FILE
 echo "" >>$MODULE_NAME/$README_FILE
 for SOURCE in $ALL_SOURCES; do
-  echo "  $SOURCE," >>$MODULE_NAME/$README_FILE
+  echo "*  \`$SOURCE\`," >>$MODULE_NAME/$README_FILE
 done
 echo "" >>$MODULE_NAME/$README_FILE
-echo "have been extracted. You can build the module just like any other DUNE" >>$MODULE_NAME/$README_FILE
-echo "module. For building and running the executables, please go to the folders" >>$MODULE_NAME/$README_FILE
-echo "containing the sources listed above." >>$MODULE_NAME/$README_FILE
-echo "" >>$MODULE_NAME/$README_FILE
-echo "" >>$MODULE_NAME/$README_FILE
-echo "" >>$MODULE_NAME/$README_FILE
+echo "have been extracted. You can configure the module just like any other DUNE" >>$MODULE_NAME/$README_FILE
+echo "module by using \`dunecontrol\`. For building and running the executables," >>$MODULE_NAME/$README_FILE
+echo "please go to the build folders corresponding to the sources listed above." >>$MODULE_NAME/$README_FILE
 echo "" >>$MODULE_NAME/$README_FILE
 
 # get versions from modules we are depeding on
@@ -384,16 +383,26 @@ touch $MODULE_NAME/install$MODULE_NAME.sh
 . "$SCRIPT_DIR/getusedversions.sh"
 # execute function from script
 echo "Extracting Git status of dependencies and creating patches"
+echo "## Dependencies on other DUNE modules" >>$MODULE_NAME/$README_FILE
+echo "" >>$MODULE_NAME/$README_FILE
+echo "| module | branch | commit hash |" >> $MODULE_NAME/$README_FILE
+echo "|:-------|:-------|:------------|" >> $MODULE_NAME/$README_FILE
 for MOD in $DEPENDING_MODULE_NAMES
 do
   if [ $MOD != $MODULE_NAME ]; then
     MODULE_DIR=${MOD%*/}
-    getVersionGit $MODULE_DIR $(pwd)/$MODULE_NAME/install$MODULE_NAME.sh | tee -a $MODULE_NAME/$README_FILE
-    grep "Error:" $MODULE_NAME/$README_FILE > /dev/null
+    VERSION_OUTPUT=$(getVersionGit $MODULE_DIR $(pwd)/$MODULE_NAME/install$MODULE_NAME.sh)
+    echo "$VERSION_OUTPUT"
+    grep "Error:" <<< $VERSION_OUTPUT > /dev/null
     EXIT_CODE=$?
     if [[ $EXIT_CODE == 0 ]]; then
       exit
     fi
+    VERSION_OUTPUT=$(echo "$VERSION_OUTPUT" | tr -s " ")
+    DEPENDENCY_NAME=$(cut -d " " -f1 <<< $VERSION_OUTPUT)
+    BRANCH_NAME=$(cut -d " " -f2 <<< $VERSION_OUTPUT)
+    COMMIT_HASH=$(cut -d " " -f3 <<< $VERSION_OUTPUT)
+    echo "| $DEPENDENCY_NAME | $BRANCH_NAME | $COMMIT_HASH |" >> $MODULE_NAME/$README_FILE
   fi
 done
 
