@@ -49,6 +49,7 @@ class RANSVolumeVariables
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
+    static constexpr bool enableMolecularDiffusion = Traits::ModelTraits::enableMolecularDiffusion();
 
 public:
 
@@ -197,27 +198,28 @@ public:
     template<class Problem>
     void calculateEddyDiffusivity(const Problem& problem)
     {
-        eddyDiffusivity_ = kinematicEddyViscosity()
-                           / problem.turbulentSchmidtNumber();
+        if constexpr (!enableMolecularDiffusion)
+            eddyDiffusivity_ = 0.0;
+        else
+            eddyDiffusivity_ = kinematicEddyViscosity()
+                             / problem.turbulentSchmidtNumber();
     }
 
     /*!
      * \brief Calculates the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ based
      *        on the kinematic eddy viscosity and the turbulent Prandtl number
      */
-    template<class Problem, bool eB = enableEnergyBalance, typename std::enable_if_t<eB, int> = 0>
+    template<class Problem>
     void calculateEddyThermalConductivity(const Problem& problem)
     {
-        eddyThermalConductivity_ = kinematicEddyViscosity()
-                                   * NavierStokesParentType::density()
-                                   * NavierStokesParentType::heatCapacity()
-                                   / problem.turbulentPrandtlNumber();
+        if constexpr (!enableEnergyBalance)
+            eddyThermalConductivity_ = 0.0;
+        else
+            eddyThermalConductivity_ = kinematicEddyViscosity()
+                                     * NavierStokesParentType::density()
+                                     * NavierStokesParentType::heatCapacity()
+                                     / problem.turbulentPrandtlNumber();
     }
-
-    //! \brief Eddy thermal conductivity is zero for isothermal model
-    template<class Problem, bool eB = enableEnergyBalance, typename std::enable_if_t<!eB, int> = 0>
-    void calculateEddyThermalConductivity(const Problem& problem)
-    { eddyThermalConductivity_ = 0.0; }
 
     /*!
      * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
@@ -235,15 +237,17 @@ public:
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    { return NavierStokesParentType::diffusionCoefficient(0, compIIdx, compJIdx) + eddyDiffusivity(); }
+    {
+        static_assert(enableMolecularDiffusion, "Should not be called for isothermal models");
+        return NavierStokesParentType::diffusionCoefficient(0, compIIdx, compJIdx) + eddyDiffusivity(); }
 
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid-flow in the sub-control volume.
      */
-    template<bool eB = enableEnergyBalance, typename std::enable_if_t<eB, int> = 0>
     Scalar effectiveThermalConductivity() const
     {
+        static_assert(enableEnergyBalance, "Should not be called for isothermal models");
         return NavierStokesParentType::thermalConductivity() + eddyThermalConductivity();
     }
 
