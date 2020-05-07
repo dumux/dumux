@@ -127,7 +127,7 @@ public:
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
 
-                Scalar ksPlus = this->sandGrainRoughness_[elementIdx] * volVars.uStar() / volVars.kinematicViscosity();
+                Scalar ksPlus = asImp_().sandGrainRoughnessAtPos(element.geometry().center()) * volVars.uStar() / volVars.kinematicViscosity();
                 if (ksPlus > 0 && eddyViscosityModel_.compare("baldwinLomax") == 0)
                 {
                     DUNE_THROW(Dune::NotImplemented, "Roughness is not implemented for the Baldwin-Lomax model.");

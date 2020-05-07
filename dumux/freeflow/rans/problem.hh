@@ -114,7 +114,7 @@ public:
         flowNormalAxis_.resize(this->gridGeometry().elementMapper().size(), 0);
         wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), 1);
         kinematicViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
-        sandGrainRoughness_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+//         sandGrainRoughness_.resize(this->gridGeometry().elementMapper().size(), 0.0);
 
         // retrieve all wall intersections and corresponding elements
         std::vector<unsigned int> wallElements;
@@ -174,7 +174,7 @@ public:
                     wallDistance_[elementIdx] = abs(global[searchAxis]);
                     wallElementIdx_[elementIdx] = wallElements[i];
                     wallNormalAxis_[elementIdx] = searchAxis;
-                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
+//                     sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
                 }
             }
         }
@@ -484,15 +484,15 @@ public:
                    "The problem does not provide an isOnWall() method.");
     }
 
-    /*!
-     * \brief Returns the sand-grain roughness \f$\mathrm{[m]}\f$ at a given position
-     *
-     * \param globalPos The position in global coordinates.
-     */
-    Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
-    {
-        return 0.0;
-    }
+//     /*!
+//      * \brief Returns the sand-grain roughness \f$\mathrm{[m]}\f$ at a given position
+//      *
+//      * \param globalPos The position in global coordinates.
+//      */
+//     Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
+//     {
+//         return 0.0;
+//     }
 
     /*!
      * \brief Returns the Karman constant
@@ -543,7 +543,7 @@ public:
     std::vector<unsigned int> wallNormalAxis_;
     std::vector<unsigned int> flowNormalAxis_;
     std::vector<Scalar> kinematicViscosity_;
-    std::vector<Scalar> sandGrainRoughness_;
+//     std::vector<Scalar> sandGrainRoughness_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
