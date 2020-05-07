@@ -64,7 +64,6 @@
 #include <dumux/material/spatialparams/fv.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
