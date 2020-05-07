@@ -288,7 +288,7 @@ public:
      * \param scv the sub control volume
      * \note used for cell-centered discretization schemes
      */
-    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
+    PrimaryVariables dirichlet([[maybe_unused]] const Element& element, const SubControlVolume& scv) const
     {
         if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon
                    || ModelTraits::turbulenceModel() == TurbulenceModel::komega)
@@ -341,7 +341,8 @@ private:
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     //! Initial conditions for the komega, kepsilon and lowrekepsilon turbulence models
-    void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos) const
+    void setInitialAtPos_([[maybe_unused]] PrimaryVariables& values,
+                          [[maybe_unused]] const GlobalPosition &globalPos) const
     {
         if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 0) // zero equation models
             return;
@@ -365,7 +366,8 @@ private:
     }
 
     //! Boundary condition types for the one-eq turbulence model
-    void setBcTypes_(BoundaryTypes& values, const GlobalPosition& pos) const
+    void setBcTypes_([[maybe_unused]] BoundaryTypes& values,
+                     [[maybe_unused]] const GlobalPosition& pos) const
     {
         if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 0) // zero equation models
             return;
@@ -394,14 +396,14 @@ private:
     }
 
     template<class Element, class FVElementGeometry, class SubControlVolume>
-    bool isDirichletCell_(const Element& element,
+    bool isDirichletCell_([[maybe_unused]] const Element& element,
                           const FVElementGeometry& fvGeometry,
-                          const SubControlVolume& scv,
+                          [[maybe_unused]] const SubControlVolume& scv,
                           const int& pvIdx) const
     {
         if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)
         {
-            const auto eIdx = this->gridGeometry().elementMapper().index(element);
+            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
             // For the kepsilon model we set fixed values within the matching point and at the wall
             if (this->inNearWallRegion(eIdx))
                 return pvIdx == Indices::turbulentKineticEnergyEqIdx || pvIdx == Indices::dissipationEqIdx;
