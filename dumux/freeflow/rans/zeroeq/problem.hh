@@ -96,14 +96,29 @@ public:
     /*!
      * \brief Update the dynamic (solution dependent) relations to the walls
      *
-     * This calculates the roughness related properties
-     *
      * \param curSol The solution vector.
      */
     void updateDynamicWallProperties(const SolutionVector& curSol)
     {
         ParentType::updateDynamicWallProperties(curSol);
 
+        if (hasParam("Problem.SandGrainRoughness"))
+            updateAdditionalRoughnessLength(curSol);
+
+        // update routine for specfic models
+        if (eddyViscosityModel_.compare("baldwinLomax") == 0)
+            updateBaldwinLomaxProperties();
+    }
+
+    /*!
+     * \brief Updates the wall roughness length according to the sand grain roughness.
+     *
+     * This calculates the roughness related properties
+     *
+     * \param curSol The solution vector.
+     */
+    void updateAdditionalRoughnessLength(const SolutionVector& curSol)
+    {
         // calculate additional roughness
         bool printedRangeWarning = false;
         for (const auto& element : elements(this->gridGeometry().gridView()))
@@ -150,10 +165,6 @@ public:
                                                         * (sqrt(ksPlus) - ksPlus * exp(-ksPlus / 6.0));
             }
         }
-
-        // update routine for specfic models
-        if (eddyViscosityModel_.compare("baldwinLomax") == 0)
-            updateBaldwinLomaxProperties();
     }
 
     /*!
