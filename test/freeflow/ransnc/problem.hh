@@ -177,9 +177,7 @@ public:
     // \{
 
     bool isOnWallAtPos(const GlobalPosition& globalPos) const
-    {
-        return globalPos[1] < eps_;
-    }
+    { return globalPos[1] < eps_; }
 
    /*!
      * \brief Returns the temperature within the domain in [K].
@@ -206,8 +204,7 @@ public:
         BoundaryTypes values;
 
         // turbulence model-specific boundary types
-        static constexpr auto numEq = numTurbulenceEq(ModelTraits::turbulenceModel());
-        setBcTypes_(values, globalPos, Dune::index_constant<numEq>{});
+        setBcTypes_(values, globalPos);
 
         if(isInlet_(globalPos))
         {
@@ -254,11 +251,7 @@ public:
                          const FVElementGeometry& fvGeometry,
                          const SubControlVolume& scv,
                          int pvIdx) const
-    {
-        using IsKOmegaKEpsilon = std::integral_constant<bool, (ModelTraits::turbulenceModel() == TurbulenceModel::komega
-                                                            || ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)>;
-        return isDirichletCell_(element, fvGeometry, scv, pvIdx, IsKOmegaKEpsilon{});
-    }
+    { return isDirichletCell_(element, fvGeometry, scv, pvIdx); }
 
      /*!
       * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.
@@ -278,7 +271,6 @@ public:
         {
             values[transportCompIdx] = (time() > 10.0) ? inletMoleFraction_ : 0.0;
         }
-
 #if NONISOTHERMAL
         if (time() > 10.0 && isOnWallAtPos(globalPos))
         {
@@ -296,31 +288,17 @@ public:
      * \param scv the sub control volume
      * \note used for cell-centered discretization schemes
      */
-    template<bool enable = (ModelTraits::turbulenceModel() == TurbulenceModel::komega
-                         || ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon),
-                         std::enable_if_t<!enable, int> = 0>
-    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
+    PrimaryVariables dirichlet([[maybe_unused]] const Element& element, const SubControlVolume& scv) const
     {
-        const auto globalPos = scv.center();
-        PrimaryVariables values(initialAtPos(globalPos));
-        return values;
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for fixed values at cell centers
-     *
-     * \param element The finite element
-     * \param scv the sub control volume
-     * \note used for cell-centered discretization schemes
-     */
-    template<bool enable = (ModelTraits::turbulenceModel() == TurbulenceModel::komega
-                         || ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon),
-                         std::enable_if_t<enable, int> = 0>
-    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
-    {
-        using SetDirichletCellForBothTurbEq = std::integral_constant<bool, (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)>;
-
-        return dirichletTurbulentTwoEq_(element, scv, SetDirichletCellForBothTurbEq{});
+        if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon
+                   || ModelTraits::turbulenceModel() == TurbulenceModel::komega)
+            return dirichletTurbulentTwoEq_(element, scv);
+        else
+        {
+            const auto globalPos = scv.center();
+            PrimaryVariables values(initialAtPos(globalPos));
+            return values;
+        }
     }
 
    /*!
@@ -336,7 +314,6 @@ public:
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = temperature();
 #endif
-
         // block velocity profile
         values[Indices::velocityXIdx] = 0.0;
         if (!isOnWallAtPos(globalPos))
@@ -344,181 +321,134 @@ public:
         values[Indices::velocityYIdx] = 0.0;
 
         // turbulence model-specific initial conditions
-        static constexpr auto numEq = numTurbulenceEq(ModelTraits::turbulenceModel());
-        setInitialAtPos_(values, globalPos, Dune::index_constant<numEq>{});
-
+        setInitialAtPos_(values, globalPos);
         return values;
     }
 
     // \}
 
     void setTimeLoop(TimeLoopPtr timeLoop)
-    {
-        timeLoop_ = timeLoop;
-    }
+    { timeLoop_ = timeLoop; }
 
     Scalar time() const
-    {
-        return timeLoop_->time();
-    }
+    { return timeLoop_->time(); }
 
 private:
     bool isInlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
+    { return globalPos[0] < eps_; }
 
     bool isOutlet_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
-    }
-
-    //! Initial conditions for the zero-eq turbulence model (none)
-    void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos, Dune::index_constant<0>) const {}
-
-    //! Initial conditions for the one-eq turbulence model
-    void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos, Dune::index_constant<1>) const
-    {
-        values[Indices::viscosityTildeIdx] = viscosityTilde_;
-        if (isOnWallAtPos(globalPos))
-            values[Indices::viscosityTildeIdx] = 0.0;
-    }
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     //! Initial conditions for the komega, kepsilon and lowrekepsilon turbulence models
-    void setInitialAtPos_(PrimaryVariables& values, const GlobalPosition &globalPos, Dune::index_constant<2>) const
+    void setInitialAtPos_([[maybe_unused]] PrimaryVariables& values,
+                          [[maybe_unused]] const GlobalPosition &globalPos) const
     {
-        values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
-        values[Indices::dissipationIdx] = dissipation_;
-        if (isOnWallAtPos(globalPos))
+        if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 0) // zero equation models
+            return;
+        else if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 1)  // one equation models
         {
-            values[Indices::turbulentKineticEnergyIdx] = 0.0;
-            values[Indices::dissipationIdx] = 0.0;
+            values[Indices::viscosityTildeIdx] = viscosityTilde_;
+            if (isOnWallAtPos(globalPos))
+                values[Indices::viscosityTildeIdx] = 0.0;
+        }
+        else // two equation models
+        {
+            static_assert(numTurbulenceEq(ModelTraits::turbulenceModel()) == 2, "Only reached by 2eq models");
+            values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
+            values[Indices::dissipationIdx] = dissipation_;
+            if (isOnWallAtPos(globalPos))
+            {
+                values[Indices::turbulentKineticEnergyIdx] = 0.0;
+                values[Indices::dissipationIdx] = 0.0;
+            }
         }
     }
 
-    //! Boundary condition types for the zero-eq turbulence model (none)
-    void setBcTypes_(BoundaryTypes& values, const GlobalPosition& pos, Dune::index_constant<0>) const {}
-
     //! Boundary condition types for the one-eq turbulence model
-    void setBcTypes_(BoundaryTypes& values, const GlobalPosition& pos, Dune::index_constant<1>) const
+    void setBcTypes_([[maybe_unused]] BoundaryTypes& values,
+                     [[maybe_unused]] const GlobalPosition& pos) const
     {
-        if(isOutlet_(pos))
-            values.setOutflow(Indices::viscosityTildeIdx);
-        else // walls and inflow
-            values.setDirichlet(Indices::viscosityTildeIdx);
+        if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 0) // zero equation models
+            return;
+        else if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 1)  // one equation models
+        {
+            if(isOutlet_(pos))
+                values.setOutflow(Indices::viscosityTildeIdx);
+            else // walls and inflow
+                values.setDirichlet(Indices::viscosityTildeIdx);
+        }
+        else // two equation models
+        {
+            static_assert(numTurbulenceEq(ModelTraits::turbulenceModel()) == 2, "Only reached by 2eq models");
+            if(isOutlet_(pos))
+            {
+                values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
+                values.setOutflow(Indices::dissipationEqIdx);
+            }
+            else
+            {
+                // walls and inflow
+                values.setDirichlet(Indices::turbulentKineticEnergyIdx);
+                values.setDirichlet(Indices::dissipationIdx);
+            }
+        }
     }
 
-    //! Boundary condition types for the komega, kepsilon and lowrekepsilon turbulence models
-    void setBcTypes_(BoundaryTypes& values,const GlobalPosition& pos, Dune::index_constant<2>) const
+    template<class Element, class FVElementGeometry, class SubControlVolume>
+    bool isDirichletCell_([[maybe_unused]] const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          [[maybe_unused]] const SubControlVolume& scv,
+                          const int& pvIdx) const
     {
-        if(isOutlet_(pos))
+        if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)
         {
-            values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
-            values.setOutflow(Indices::dissipationEqIdx);
+            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+            // For the kepsilon model we set fixed values within the matching point and at the wall
+            if (this->inNearWallRegion(eIdx))
+                return pvIdx == Indices::turbulentKineticEnergyEqIdx || pvIdx == Indices::dissipationEqIdx;
+            if (this->isMatchingPoint(eIdx))
+                return pvIdx == Indices::dissipationEqIdx;
+            return false;
+        }
+        else if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::komega)
+        {
+            // For the komega model we set a fixed dissipation (omega) for all cells at the wall
+            for (const auto& scvf : scvfs(fvGeometry))
+                if (isOnWallAtPos(scvf.center()) && pvIdx == Indices::dissipationIdx)
+                    return true;
+            return false;
+        }
+        else
+            return ParentType::isDirichletCell(element, fvGeometry, scv, pvIdx);
+    }
+
+    //! Specialization for the kepsilon and komega
+    template<class Element, class SubControlVolume>
+    PrimaryVariables dirichletTurbulentTwoEq_(const Element& element,
+                                              const SubControlVolume& scv) const
+    {
+        const auto globalPos = scv.center();
+        PrimaryVariables values(initialAtPos(globalPos));
+        unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
+
+        if constexpr (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)
+        {
+            // For the kepsilon model we set a fixed value for the turbulent kinetic energy and the dissipation
+            values[Indices::turbulentKineticEnergyEqIdx] = this->turbulentKineticEnergyWallFunction(elementIdx);
+            values[Indices::dissipationEqIdx] = this->dissipationWallFunction(elementIdx);
+            return values;
         }
         else
         {
-            // walls and inflow
-            values.setDirichlet(Indices::turbulentKineticEnergyIdx);
-            values.setDirichlet(Indices::dissipationIdx);
+            static_assert(ModelTraits::turbulenceModel() == TurbulenceModel::komega, "Only valid for Komega");
+            // For the komega model we set a fixed value for the dissipation
+            const auto wallDistance = ParentType::wallDistance_[elementIdx];
+            using std::pow;
+            values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
+                                                    / (ParentType::betaOmega() * wallDistance * wallDistance);
+            return values;
         }
-    }
-
-    //! Forward to ParentType
-    template<class Element, class FVElementGeometry, class SubControlVolume>
-    bool isDirichletCell_(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const SubControlVolume& scv,
-                          int pvIdx,
-                          std::false_type) const
-    {
-        return ParentType::isDirichletCell(element, fvGeometry, scv, pvIdx);
-    }
-
-    //! Specialization for the KOmega and KEpsilon Models
-    template<class Element, class FVElementGeometry, class SubControlVolume>
-    bool isDirichletCell_(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const SubControlVolume& scv,
-                          int pvIdx,
-                          std::true_type) const
-    {
-        using SetDirichletCellForBothTurbEq = std::integral_constant<bool, (ModelTraits::turbulenceModel() == TurbulenceModel::kepsilon)>;
-        return isDirichletCellTurbulentTwoEq_(element, fvGeometry, scv, pvIdx, SetDirichletCellForBothTurbEq{});
-    }
-
-    //! Specialization for the KEpsilon Model
-    template<class Element>
-    bool isDirichletCellTurbulentTwoEq_(const Element& element,
-                                        const FVElementGeometry& fvGeometry,
-                                        const SubControlVolume& scv,
-                                        int pvIdx,
-                                        std::true_type) const
-    {
-        const auto eIdx = this->gridGeometry().elementMapper().index(element);
-
-        // set a fixed turbulent kinetic energy and dissipation near the wall
-        if (this->inNearWallRegion(eIdx))
-            return pvIdx == Indices::turbulentKineticEnergyEqIdx || pvIdx == Indices::dissipationEqIdx;
-
-        // set a fixed dissipation at  the matching point
-        if (this->isMatchingPoint(eIdx))
-            return pvIdx == Indices::dissipationEqIdx;// set a fixed dissipation (omega) for all cells at the wall
-
-        return false;
-    }
-
-    //! Specialization for the KOmega Model
-    template<class Element>
-    bool isDirichletCellTurbulentTwoEq_(const Element& element,
-                                        const FVElementGeometry& fvGeometry,
-                                        const SubControlVolume& scv,
-                                        int pvIdx,
-                                        std::false_type) const
-    {
-        // set a fixed dissipation (omega) for all cells at the wall
-        for (const auto& scvf : scvfs(fvGeometry))
-            if (isOnWallAtPos(scvf.center()) && pvIdx == Indices::dissipationIdx)
-                return true;
-
-        return false;
-
-    }
-
-    //! Specialization for the kepsilon
-    template<class Element, class SubControlVolume>
-    PrimaryVariables dirichletTurbulentTwoEq_(const Element& element,
-                                              const SubControlVolume& scv,
-                                              std::true_type) const
-    {
-        const auto globalPos = scv.center();
-        PrimaryVariables values(initialAtPos(globalPos));
-        unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
-
-        // fixed value for the turbulent kinetic energy
-        values[Indices::turbulentKineticEnergyEqIdx] = this->turbulentKineticEnergyWallFunction(elementIdx);
-
-        // fixed value for the dissipation
-        values[Indices::dissipationEqIdx] = this->dissipationWallFunction(elementIdx);
-
-        return values;
-    }
-
-    //! Specialization for the KOmega
-    template<class Element, class SubControlVolume>
-    PrimaryVariables dirichletTurbulentTwoEq_(const Element& element,
-                                              const SubControlVolume& scv,
-                                              std::false_type) const
-    {
-        const auto globalPos = scv.center();
-        PrimaryVariables values(initialAtPos(globalPos));
-        unsigned int  elementIdx = this->gridGeometry().elementMapper().index(element);
-
-        const auto wallDistance = ParentType::wallDistance_[elementIdx];
-        using std::pow;
-        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
-                                                / (ParentType::betaOmega() * pow(wallDistance, 2));
-        return values;
     }
 
     const Scalar eps_;
