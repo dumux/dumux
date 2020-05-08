@@ -130,15 +130,8 @@ public:
         const auto parallelUpwindingMomenta = getLateralUpwindingMomenta_(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
                                                                           transportingVelocity, localSubFaceIdx, currentScvfBoundaryTypes,
                                                                           lateralFaceBoundaryTypes, canHigherOrder);
-
-        if (canHigherOrder)
-        {
-            return doLateralMomentumUpwinding_(fvGeometry, scvf, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
-        }
-        else
-        {
-            return doLateralMomentumUpwinding_(fvGeometry, scvf, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
-        }
+        return doLateralMomentumUpwinding_(fvGeometry, scvf, parallelUpwindingMomenta, transportingVelocity,
+                                           localSubFaceIdx, gridFluxVarsCache, canHigherOrder);
     }
 
 private:
@@ -431,22 +424,9 @@ private:
     }
 
     /*!
-     * \brief Returns the upwinded momentum for basic upwind schemes
+     * \brief Returns the upwinded momentum for higher order or basic upwind schemes
      *
-     *        Fowards to Frontal Momentum Upwinding method
-     */
-    static Scalar doLateralMomentumUpwinding_(const FVElementGeometry& fvGeometry,
-                                              const SubControlVolumeFace& scvf,
-                                              const std::array<Scalar, 2>& momenta,
-                                              const Scalar transportingVelocity,
-                                              const int localSubFaceIdx,
-                                              const GridFluxVariablesCache& gridFluxVarsCache)
-    {
-        return doFrontalMomentumUpwinding_(scvf, momenta, transportingVelocity, gridFluxVarsCache);
-    }
-
-    /*!
-     * \brief Returns the upwinded momentum for higher order upwind schemes
+     * If higher order methods are not enabled, this is fowarded to the Frontal Momentum Upwinding method
      *
      * \param scvf The sub control volume face
      * \param momenta The momenta to be upwinded
@@ -454,20 +434,32 @@ private:
      * \param localSubFaceIdx  The local index of the subface
      * \param gridFluxVarsCache The grid flux variables cache
      */
-    static Scalar doLateralMomentumUpwinding_(const FVElementGeometry& fvGeometry,
+    template<class MomentaArray>
+    static Scalar doLateralMomentumUpwinding_([[maybe_unused]] const FVElementGeometry& fvGeometry,
                                               const SubControlVolumeFace& scvf,
-                                              const std::array<Scalar, 3>& momenta,
+                                              const MomentaArray& momenta,
                                               const Scalar transportingVelocity,
-                                              const int localSubFaceIdx,
-                                              const GridFluxVariablesCache& gridFluxVarsCache)
+                                              [[maybe_unused]] const int localSubFaceIdx,
+                                              const GridFluxVariablesCache& gridFluxVarsCache,
+                                              const bool canHigherOrder)
     {
-        const auto eIdx = scvf.insideScvIdx();
-        const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-
-        const bool selfIsUpstream = ( lateralFace.directionSign() == sign(transportingVelocity) );
         const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
-        std::array<Scalar,3> distances = getLateralDistances_(scvf, localSubFaceIdx, selfIsUpstream);
-        return upwindScheme.tvd(momenta, distances, selfIsUpstream, upwindScheme.tvdApproach());
+        if constexpr (useHigherOrder)
+        {
+            if (canHigherOrder)
+            {
+                const auto eIdx = scvf.insideScvIdx();
+                const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+                const bool selfIsUpstream = ( lateralFace.directionSign() == sign(transportingVelocity) );
+                const std::array<Scalar,3> distances = getLateralDistances_(scvf, localSubFaceIdx, selfIsUpstream);
+                return upwindScheme.tvd(momenta, distances, selfIsUpstream, upwindScheme.tvdApproach());
+            }
+            else
+                return upwindScheme.upwind(momenta[0], momenta[1]);
+        }
+        else
+            return upwindScheme.upwind(momenta[0], momenta[1]);
+
     }
 
     /*!
