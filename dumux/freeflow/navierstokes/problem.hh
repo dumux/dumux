@@ -298,7 +298,7 @@ public:
         GlobalPosition orientation = ownScvf.unitOuterNormal();
         orientation[ownScvf.directionIndex()] = 1.0;
         return (tangentialVelocityGradient*distanceNormalToBoundary
-              + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * factor * distanceNormalToBoundary
+              + asImp_().newPorousMediumInterfaceVelocity(element, faceOnPorousBoundary) * orientation * factor * distanceNormalToBoundary
               + velocitySelf) / (factor*distanceNormalToBoundary + 1.0);
     }
 
