@@ -97,14 +97,13 @@ public:
         {
             const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, elemVolVars[scvf.insideScvIdx()].density(),
                                                                       transportingVelocity, std::integral_constant<bool, useHigherOrder>{});
-            return doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache);
         }
         else
         {
             const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, elemVolVars[scvf.insideScvIdx()].density(),
                                                                       transportingVelocity, std::integral_constant<bool, false>{});
-            return doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache);
         }
+        return doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache, canHigherOrder);
     }
 
     /*!
@@ -239,21 +238,6 @@ private:
         return momenta;
     }
 
-    /*!
-     * \brief Returns the upwinded momentum for basic upwind schemes
-     *
-     * \param scvf The sub control volume face
-     * \param momenta The momenta to be upwinded
-     * \param transportingVelocity The average of the self and opposite velocities.
-     * \param gridFluxVarsCache The grid flux variables cache
-     */
-    static Scalar doFrontalMomentumUpwinding_(const SubControlVolumeFace& scvf,
-                                              const std::array<Scalar, 2>& momenta,
-                                              const Scalar transportingVelocity,
-                                              const GridFluxVariablesCache& gridFluxVarsCache)
-    {
-        const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
-        return upwindScheme.upwind(momenta[0], momenta[1]);
     }
 
     /*!
@@ -264,16 +248,27 @@ private:
      * \param transportingVelocity The average of the self and opposite velocities.
      * \param gridFluxVarsCache The grid flux variables cache
      */
-    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
-    static Scalar doFrontalMomentumUpwinding_(const SubControlVolumeFace& scvf,
-                                              const std::array<Scalar, 3>& momenta,
-                                              const Scalar transportingVelocity,
-                                              const GridFluxVariablesCache& gridFluxVarsCache)
+    template<class MomentaArray>
+    static Scalar doFrontalMomentumUpwinding_([[maybe_unused]] const SubControlVolumeFace& scvf,
+                                              const MomentaArray& momenta,
+                                              [[maybe_unused]] const Scalar transportingVelocity,
+                                              const GridFluxVariablesCache& gridFluxVarsCache,
+                                              const bool canHigherOrder)
     {
         const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
-        const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-        std::array<Scalar,3> distances = getFrontalDistances_(scvf, selfIsUpstream);
-        return upwindScheme.tvd(momenta, distances, selfIsUpstream, upwindScheme.tvdApproach());
+        if constexpr (useHigherOrder)
+        {
+            if (canHigherOrder)
+            {
+                const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
+                const std::array<Scalar,3> distances = getFrontalDistances_(scvf, selfIsUpstream);
+                return upwindScheme.tvd(momenta, distances, selfIsUpstream, upwindScheme.tvdApproach());
+            }
+            else
+                return upwindScheme.upwind(momenta[0], momenta[1]);
+        }
+        else
+            return upwindScheme.upwind(momenta[0], momenta[1]);
     }
 
     /*!
