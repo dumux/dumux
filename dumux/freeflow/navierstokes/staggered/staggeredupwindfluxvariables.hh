@@ -92,17 +92,8 @@ public:
                                                                const Scalar transportingVelocity)
     {
         const bool canHigherOrder = canFrontalSecondOrder_(scvf, transportingVelocity);
-
-        if (canHigherOrder)
-        {
-            const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, elemVolVars[scvf.insideScvIdx()].density(),
-                                                                      transportingVelocity, std::integral_constant<bool, useHigherOrder>{});
-        }
-        else
-        {
-            const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, elemVolVars[scvf.insideScvIdx()].density(),
-                                                                      transportingVelocity, std::integral_constant<bool, false>{});
-        }
+        const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, elemVolVars[scvf.insideScvIdx()].density(),
+                                                                  transportingVelocity, canHigherOrder);
         return doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache, canHigherOrder);
     }
 
@@ -182,62 +173,37 @@ private:
     }
 
     /*!
-     * \brief Returns an array of the two momenta needed for basic upwinding methods.
-     *
-     * \param scvf The sub control volume face
-     * \param elemFaceVars The element face variables
-     * \param density The given density \f$\mathrm{[kg/m^3]}\f$
-     * \param transportingVelocity The average of the self and opposite velocities.
-     * \param false_type False if higher order methods are not enabled.
-     */
-    static std::array<Scalar, 2> getFrontalUpwindingMomenta_(const SubControlVolumeFace& scvf,
-                                                             const ElementFaceVariables& elemFaceVars,
-                                                             const Scalar density,
-                                                             const Scalar transportingVelocity,
-                                                             std::false_type)
-    {
-        const Scalar momentumSelf = elemFaceVars[scvf].velocitySelf() * density;
-        const Scalar momentumOpposite = elemFaceVars[scvf].velocityOpposite() * density;
-        const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-
-        return selfIsUpstream ? std::array<Scalar, 2>{momentumOpposite, momentumSelf}
-                              : std::array<Scalar, 2>{momentumSelf, momentumOpposite};
-    }
-
-    /*!
      * \brief Returns an array of the three momenta needed for higher order upwinding methods.
      *
      * \param scvf The sub control volume face
      * \param elemFaceVars The element face variables
      * \param density The given density \f$\mathrm{[kg/m^3]}\f$
      * \param transportingVelocity The average of the self and opposite velocities.
-     * \param true_type True if higher order methods are enabled.
      */
-    static std::array<Scalar, 3> getFrontalUpwindingMomenta_(const SubControlVolumeFace& scvf,
-                                                             const ElementFaceVariables& elemFaceVars,
-                                                             const Scalar density,
-                                                             const Scalar transportingVelocity,
-                                                             std::true_type)
+    static auto getFrontalUpwindingMomenta_(const SubControlVolumeFace& scvf,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const Scalar density,
+                                            const Scalar transportingVelocity,
+                                            [[maybe_unused]] const bool canHigherOrder)
     {
         const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-        std::array<Scalar, 3> momenta;
+        const Scalar momentumSelf = elemFaceVars[scvf].velocitySelf() * density;
+        const Scalar momentumOpposite = elemFaceVars[scvf].velocityOpposite() * density;
 
-        if (selfIsUpstream)
+        if constexpr (useHigherOrder)
         {
-            momenta[0] = elemFaceVars[scvf].velocityOpposite() * density;
-            momenta[1] = elemFaceVars[scvf].velocitySelf() * density;
-            momenta[2] = elemFaceVars[scvf].velocityForward(0) * density;
+            if (canHigherOrder)
+                return selfIsUpstream ? std::array<Scalar, 3>{momentumOpposite, momentumSelf,
+                                                              elemFaceVars[scvf].velocityForward(0)*density}
+                                      : std::array<Scalar, 3>{momentumSelf, momentumOpposite,
+                                                              elemFaceVars[scvf].velocityBackward(0)*density};
+            else
+                return selfIsUpstream ? std::array<Scalar, 3>{momentumOpposite, momentumSelf}
+                                      : std::array<Scalar, 3>{momentumSelf, momentumOpposite};
         }
         else
-        {
-            momenta[0] = elemFaceVars[scvf].velocitySelf() * density;
-            momenta[1] = elemFaceVars[scvf].velocityOpposite() * density;
-            momenta[2] = elemFaceVars[scvf].velocityBackward(0) * density;
-        }
-
-        return momenta;
-    }
-
+            return selfIsUpstream ? std::array<Scalar, 2>{momentumOpposite, momentumSelf}
+                                  : std::array<Scalar, 2>{momentumSelf, momentumOpposite};
     }
 
     /*!
