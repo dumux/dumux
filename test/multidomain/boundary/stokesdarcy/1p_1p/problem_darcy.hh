@@ -146,7 +146,12 @@ public:
         values.setAllNeumann();
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values.setAllCouplingNeumann();
+        {
+            if (couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure)
+                values.setAllCouplingNeumann();
+            else // CouplingMode::reconstructFreeFlowNormalStress
+                values.setCouplingDirichlet(0);
+        }
 
         if (verticalFlow_)
         {
@@ -167,7 +172,10 @@ public:
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
-        return initial(element);
+        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+            return couplingManager().couplingData().freeFlowInterfaceStress(element, scvf);
+        else
+            return initial(element);
     }
 
     /*!
