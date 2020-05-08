@@ -91,7 +91,7 @@ public:
                                                                const GridFluxVariablesCache& gridFluxVarsCache,
                                                                const Scalar transportingVelocity)
     {
-        const bool canHigherOrder = canFrontalSecondOrder_(scvf, transportingVelocity, std::integral_constant<bool, useHigherOrder>{});
+        const bool canHigherOrder = canFrontalSecondOrder_(scvf, transportingVelocity);
 
         if (canHigherOrder)
         {
@@ -157,20 +157,6 @@ public:
 
 private:
 
-  /*!
-     * \brief Returns false as higher order methods are not enabled.
-     *
-     *        If higher order methods are not prescribed, this function will be called and false is returned..
-     *
-     * \param ownScvf the sub control volume face
-     * \param transportingVelocity The average of the self and opposite velocities.
-     * \param false_type False if higher order methods are not enabled.
-     */
-    static bool canFrontalSecondOrder_(const SubControlVolumeFace& ownScvf,
-                                       const Scalar transportingVelocity,
-                                       std::false_type)
-    { return false; }
-
     /*!
      * \brief Returns whether or not the face in question is far enough from the wall to handle higher order methods.
      *
@@ -178,19 +164,22 @@ private:
      *        If the face is upstream, and the scvf has a forward neighbor, higher order methods are possible.
      *        If the face is downstream, and the scvf has a backwards neighbor, higher order methods are possible.
      *        Otherwise, higher order methods are not possible.
-     *        If higher order methods are not prescribed, this function will not be called.
+     *        If higher order methods are not prescribed, this function will return false.
      *
      * \param ownScvf the sub control volume face
      * \param transportingVelocity The average of the self and opposite velocities.
-     * \param true_type True if higher order methods are enabled.
      */
-    static bool canFrontalSecondOrder_(const SubControlVolumeFace& ownScvf,
-                                       const Scalar transportingVelocity,
-                                       std::true_type)
+    static bool canFrontalSecondOrder_([[maybe_unused]] const SubControlVolumeFace& ownScvf,
+                                       [[maybe_unused]] const Scalar transportingVelocity)
     {
-        // Depending on selfIsUpstream I have to check if I have a forward or a backward neighbor to retrieve
-        const bool selfIsUpstream = ownScvf.directionSign() != sign(transportingVelocity);
-        return selfIsUpstream ? ownScvf.hasForwardNeighbor(0) : ownScvf.hasBackwardNeighbor(0);
+        if constexpr (useHigherOrder)
+        {
+            // Depending on selfIsUpstream I have to check if I have a forward or a backward neighbor to retrieve
+            const bool selfIsUpstream = ownScvf.directionSign() != sign(transportingVelocity);
+            return selfIsUpstream ? ownScvf.hasForwardNeighbor(0) : ownScvf.hasBackwardNeighbor(0);
+        }
+        else
+            return false;
     }
 
     /*!
