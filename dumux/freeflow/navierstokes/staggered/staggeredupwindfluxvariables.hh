@@ -127,19 +127,16 @@ public:
         // Check whether the own or the neighboring element is upstream.
         const bool selfIsUpstream = ( lateralFace.directionSign() == sign(transportingVelocity) );
         const bool canHigherOrder = canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx);
+        const auto parallelUpwindingMomenta = getLateralUpwindingMomenta_(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
+                                                                          transportingVelocity, localSubFaceIdx, currentScvfBoundaryTypes,
+                                                                          lateralFaceBoundaryTypes, canHigherOrder);
 
         if (canHigherOrder)
         {
-            const auto parallelUpwindingMomenta = getLateralUpwindingMomenta_(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
-                                                                              transportingVelocity, localSubFaceIdx, currentScvfBoundaryTypes,
-                                                                              lateralFaceBoundaryTypes, std::integral_constant<bool, useHigherOrder>{});
             return doLateralMomentumUpwinding_(fvGeometry, scvf, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
         }
         else
         {
-            const auto parallelUpwindingMomenta = getLateralUpwindingMomenta_(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
-                                                                              transportingVelocity, localSubFaceIdx, currentScvfBoundaryTypes,
-                                                                              lateralFaceBoundaryTypes, std::integral_constant<bool, false>{});
             return doLateralMomentumUpwinding_(fvGeometry, scvf, parallelUpwindingMomenta, transportingVelocity, localSubFaceIdx, gridFluxVarsCache);
         }
     }
@@ -300,132 +297,137 @@ private:
     }
 
     /*!
-
-
-    /*!
-     * \brief Returns an array of the three momenta needed for higher order upwinding methods.
-     *
-     *  Only called if higher order methods are enabled and the scvf can use higher order methods.
+     * \brief Returns an array of momenta needed for higher order or calls a function to return an array for basic upwinding methods.
      */
-    static std::array<Scalar, 3> getLateralUpwindingMomenta_(const Problem& problem,
-                                                             const FVElementGeometry& fvGeometry,
-                                                             const Element& element,
-                                                             const SubControlVolumeFace& ownScvf,
-                                                             const ElementVolumeVariables& elemVolVars,
-                                                             const FaceVariables& faceVars,
-                                                             const Scalar transportingVelocity,
-                                                             const int localSubFaceIdx,
-                                                             const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                             const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
-                                                             std::true_type)
+    static auto getLateralUpwindingMomenta_(const Problem& problem,
+                                            const FVElementGeometry& fvGeometry,
+                                            const Element& element,
+                                            const SubControlVolumeFace& ownScvf,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const FaceVariables& faceVars,
+                                            const Scalar transportingVelocity,
+                                            const int localSubFaceIdx,
+                                            const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                            const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                            [[maybe_unused]] const bool canHigherOrder)
     {
+        // Check whether the own or the neighboring element is upstream.
         const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[lateralFace.outsideScvIdx()];
-
-        // If the lateral face lies on a boundary, we assume that the parallel velocity on the boundary is actually known,
-        // thus we always use this value for the computation of the transported momentum.
-        if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
-        {
-            const Scalar boundaryMomentum = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf,
-                                                                             faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
-                                                                             localSubFaceIdx) * insideVolVars.density();
-
-             return std::array<Scalar, 3>{boundaryMomentum, boundaryMomentum, boundaryMomentum};
-        }
 
         // Check whether the own or the neighboring element is upstream.
         const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
 
-        std::array<Scalar, 3> momenta;
-
-        if (selfIsUpstream)
+        if constexpr (useHigherOrder)
         {
-            momenta[1] = faceVars.velocitySelf() * insideVolVars.density();
+            if (canHigherOrder)
+            {
+                // If the lateral face lies on a boundary, we assume that the parallel velocity on the boundary is actually known,
+                // thus we always use this value for the computation of the transported momentum.
+                if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
+                {
+                    const Scalar boundaryMomentum = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf,
+                                                                                    faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
+                                                                                    localSubFaceIdx) * insideVolVars.density();
 
-            if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
-                momenta[0] = faceVars.velocityParallel(localSubFaceIdx, 0) * insideVolVars.density();
+                    return std::array<Scalar, 3>{boundaryMomentum, boundaryMomentum, boundaryMomentum};
+                }
+
+                std::array<Scalar, 3> momenta;
+                if (selfIsUpstream)
+                {
+                    momenta[1] = faceVars.velocitySelf() * insideVolVars.density();
+
+                    if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
+                        momenta[0] = faceVars.velocityParallel(localSubFaceIdx, 0) * insideVolVars.density();
+                    else
+                        momenta[0] = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf,
+                                                                    faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
+                                                                    localSubFaceIdx) * insideVolVars.density();
+
+                    // The local index of the faces that is opposite to localSubFaceIdx
+                    const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
+
+                    // The "upstream-upstream" velocity is retrieved from the other parallel neighbor or from the boundary.
+                    if (ownScvf.hasParallelNeighbor(oppositeSubFaceIdx, 0))
+                        momenta[2] = faceVars.velocityParallel(oppositeSubFaceIdx, 0) * insideVolVars.density();
+                    else
+                        momenta[2] = getParallelVelocityFromOppositeBoundary_(problem, element, fvGeometry, ownScvf,
+                                                                            faceVars, currentScvfBoundaryTypes,
+                                                                            oppositeSubFaceIdx) * insideVolVars.density();
+                }
+                else
+                {
+                    momenta[0] = faceVars.velocitySelf() * outsideVolVars.density();
+                    momenta[1] = faceVars.velocityParallel(localSubFaceIdx, 0) * outsideVolVars.density();
+
+                    // If there is another parallel neighbor I can assign the "upstream-upstream" velocity, otherwise I retrieve it from the boundary.
+                    if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 1))
+                        momenta[2] = faceVars.velocityParallel(localSubFaceIdx, 1) * outsideVolVars.density();
+                    else
+                    {
+                        const Element& elementParallel = fvGeometry.gridGeometry().element(lateralFace.outsideScvIdx());
+                        const SubControlVolumeFace& firstParallelScvf = fvGeometry.scvf(lateralFace.outsideScvIdx(), ownScvf.localFaceIdx());
+
+                        momenta[2] = getParallelVelocityFromOppositeBoundary_(problem, elementParallel, fvGeometry, firstParallelScvf,
+                                                                            faceVars, problem.boundaryTypes(elementParallel, firstParallelScvf),
+                                                                            localSubFaceIdx) * outsideVolVars.density();
+                    }
+                }
+                return momenta;
+            }
             else
-                momenta[0] = getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf,
-                                                              faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
-                                                              localSubFaceIdx) * insideVolVars.density();
-
-            // The local index of the faces that is opposite to localSubFaceIdx
-            const int oppositeSubFaceIdx = localSubFaceIdx % 2 ? localSubFaceIdx - 1 : localSubFaceIdx + 1;
-
-            // The "upstream-upstream" velocity is retrieved from the other parallel neighbor or from the boundary.
-            if (ownScvf.hasParallelNeighbor(oppositeSubFaceIdx, 0))
-                momenta[2] = faceVars.velocityParallel(oppositeSubFaceIdx, 0) * insideVolVars.density();
-            else
-                momenta[2] = getParallelVelocityFromOppositeBoundary_(problem, element, fvGeometry, ownScvf,
-                                                                      faceVars, currentScvfBoundaryTypes,
-                                                                      oppositeSubFaceIdx) * insideVolVars.density();
+                return getFirstOrderLateralUpwindingMomenta_(problem, element, fvGeometry, ownScvf, faceVars,
+                                                             currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
+                                                             localSubFaceIdx, selfIsUpstream, insideVolVars, outsideVolVars);
         }
         else
-        {
-            momenta[0] = faceVars.velocitySelf() * outsideVolVars.density();
-            momenta[1] = faceVars.velocityParallel(localSubFaceIdx, 0) * outsideVolVars.density();
-
-            // If there is another parallel neighbor I can assign the "upstream-upstream" velocity, otherwise I retrieve it from the boundary.
-            if (ownScvf.hasParallelNeighbor(localSubFaceIdx, 1))
-                momenta[2] = faceVars.velocityParallel(localSubFaceIdx, 1) * outsideVolVars.density();
-            else
-            {
-                const Element& elementParallel = fvGeometry.gridGeometry().element(lateralFace.outsideScvIdx());
-                const SubControlVolumeFace& firstParallelScvf = fvGeometry.scvf(lateralFace.outsideScvIdx(), ownScvf.localFaceIdx());
-
-                momenta[2] = getParallelVelocityFromOppositeBoundary_(problem, elementParallel, fvGeometry, firstParallelScvf,
-                                                                      faceVars, problem.boundaryTypes(elementParallel, firstParallelScvf),
-                                                                      localSubFaceIdx) * outsideVolVars.density();
-            }
-        }
-
-        return momenta;
+            return getFirstOrderLateralUpwindingMomenta_(problem, element, fvGeometry, ownScvf, faceVars,
+                                                         currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
+                                                         localSubFaceIdx, selfIsUpstream, insideVolVars, outsideVolVars);
     }
 
     /*!
-     * \brief Returns an array of the two momenta needed for basic upwinding methods.
-     *
-     *  Called if higher order methods are not enabled of if the scvf can not use higher order methods.
+     * \brief Returns an array of momenta needed for basic upwinding methods.
      */
-    static std::array<Scalar, 2> getLateralUpwindingMomenta_(const Problem& problem,
-                                                             const FVElementGeometry& fvGeometry,
-                                                             const Element& element,
-                                                             const SubControlVolumeFace& ownScvf,
-                                                             const ElementVolumeVariables& elemVolVars,
-                                                             const FaceVariables& faceVars,
-                                                             const Scalar transportingVelocity,
-                                                             const int localSubFaceIdx,
-                                                             const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                             const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
-                                                             std::false_type)
+    static auto getFirstOrderLateralUpwindingMomenta_(const Problem& problem,
+                                                      const Element& element,
+                                                      const FVElementGeometry& fvGeometry,
+                                                      const SubControlVolumeFace& ownScvf,
+                                                      const FaceVariables& faceVars,
+                                                      const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                      const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                      const int localSubFaceIdx,
+                                                      const bool selfIsUpstream,
+                                                      const VolumeVariables& insideVolVars,
+                                                      const VolumeVariables& outsideVolVars)
     {
-         // Check whether the own or the neighboring element is upstream.
-        const SubControlVolumeFace& lateralFace = fvGeometry.scvf(ownScvf.insideScvIdx(), ownScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-
-        // Get the volume variables of the own and the neighboring element
-        const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[lateralFace.outsideScvIdx()];
-
         const Scalar momentumParallel = ownScvf.hasParallelNeighbor(localSubFaceIdx, 0)
                                       ? faceVars.velocityParallel(localSubFaceIdx, 0) * outsideVolVars.density()
                                       : (getParallelVelocityFromBoundary_(problem, element, fvGeometry, ownScvf,
                                                                           faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
-                                                                          localSubFaceIdx)
-                                      * insideVolVars.density());
-
+                                                                          localSubFaceIdx) * insideVolVars.density());
         // If the lateral face lies on a boundary, we assume that the parallel velocity on the boundary is actually known,
         // thus we always use this value for the computation of the transported momentum.
         if (!ownScvf.hasParallelNeighbor(localSubFaceIdx, 0))
-            return std::array<Scalar, 2>{momentumParallel, momentumParallel};
+        {
+            if constexpr (useHigherOrder)
+                return std::array<Scalar, 3>{momentumParallel, momentumParallel};
+            else
+                return std::array<Scalar, 2>{momentumParallel, momentumParallel};
+        }
 
-        const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
         const Scalar momentumSelf = faceVars.velocitySelf() * insideVolVars.density();
+        if constexpr (useHigherOrder)
+            return selfIsUpstream ? std::array<Scalar, 3>{momentumParallel, momentumSelf}
+                                  : std::array<Scalar, 3>{momentumSelf, momentumParallel};
+        else
+            return selfIsUpstream ? std::array<Scalar, 2>{momentumParallel, momentumSelf}
+                                  : std::array<Scalar, 2>{momentumSelf, momentumParallel};
 
-        return selfIsUpstream ? std::array<Scalar, 2>{momentumParallel, momentumSelf}
-                              : std::array<Scalar, 2>{momentumSelf, momentumParallel};
     }
 
     /*!
