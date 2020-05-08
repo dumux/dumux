@@ -117,17 +117,16 @@ public:
                                                                const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                                const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
     {
+        // Check whether the own or the neighboring element is upstream.
         const auto eIdx = scvf.insideScvIdx();
         const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
         const Scalar transportingVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
 
         // Check whether the own or the neighboring element is upstream.
         const bool selfIsUpstream = ( lateralFace.directionSign() == sign(transportingVelocity) );
-
-        const bool canHigherOrder = canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx, std::integral_constant<bool, useHigherOrder>{});
+        const bool canHigherOrder = canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx);
 
         if (canHigherOrder)
         {
@@ -272,38 +271,35 @@ private:
      * This helper function checks if the scvf of interest is not too near to the
      * boundary so that a dof upstream with respect to the upstream dof is available.
      *
+     * If higher order methods are not prescribed, false is returned.
+     *
      * \param ownScvf The SubControlVolumeFace we are considering
      * \param selfIsUpstream @c true if the velocity at ownScvf is upstream wrt the transporting velocity
      * \param localSubFaceIdx The local subface index
-     * \param true_type True when second order is enabled.
      */
     static bool canLateralSecondOrder_(const SubControlVolumeFace& ownScvf,
                                        const bool selfIsUpstream,
-                                       const int localSubFaceIdx,
-                                       std::true_type)
+                                       const int localSubFaceIdx)
     {
-        if (selfIsUpstream)
+        if constexpr (useHigherOrder)
         {
-            // The self velocity is upstream. The downstream velocity can be assigned or retrieved
-            // from the boundary, even if there is no parallel neighbor.
-            return true;
+            if (selfIsUpstream)
+            {
+                // The self velocity is upstream. The downstream velocity can be assigned or retrieved
+                // from the boundary, even if there is no parallel neighbor.
+                return true;
+            }
+            else
+            {
+                // The self velocity is downstream. If there is no parallel neighbor I cannot use a second order approximation.
+                return ownScvf.hasParallelNeighbor(localSubFaceIdx, 0);
+            }
         }
         else
-        {
-            // The self velocity is downstream. If there is no parallel neighbor I cannot use a second order approximation.
-            return ownScvf.hasParallelNeighbor(localSubFaceIdx, 0);
-        }
+            return false;
     }
 
     /*!
-     * \brief Check if a second order approximation for the lateral part of the advective term can be used
-     *        If higher order methods are not prescribed, this is called and false is returned.
-     */
-    static bool canLateralSecondOrder_(const SubControlVolumeFace& ownScvf,
-                                       const bool selfIsUpstream,
-                                       const int localSubFaceIdx,
-                                       std::false_type)
-    {   return false; }
 
 
     /*!
