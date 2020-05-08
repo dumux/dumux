@@ -232,10 +232,10 @@ private:
      * \param ownScvf The sub control volume face
      * \param selfIsUpstream bool describing upstream face.
      */
-    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     static std::array<Scalar, 3> getFrontalDistances_(const SubControlVolumeFace& ownScvf,
                                                       const bool selfIsUpstream)
     {
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
         // Depending on selfIsUpstream the downstream and the (up)upstream distances are saved.
         // distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
         std::array<Scalar, 3> distances;
@@ -469,11 +469,11 @@ private:
      * \param localSubFaceIdx  The local index of the subface
      * \param selfIsUpstream bool describing upstream face.
      */
-    template<bool enable = useHigherOrder, std::enable_if_t<enable, int> = 0>
     static std::array<Scalar, 3> getLateralDistances_(const SubControlVolumeFace& ownScvf,
                                                       const int localSubFaceIdx,
                                                       const bool selfIsUpstream)
     {
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
         // distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
         std::array<Scalar, 3> distances;
 
