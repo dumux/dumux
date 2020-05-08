@@ -156,7 +156,7 @@ public:
 
         }
 
-        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        if(couplingManager().isCoupledEntity(CouplingManager::freeFlowIdx, scvf))
         {
             values.setCouplingNeumann(Indices::conti0EqIdx);
             values.setCouplingNeumann(Indices::momentumYBalanceIdx);
@@ -192,7 +192,7 @@ public:
     {
         NumEqVector values(0.0);
 
-        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        if(couplingManager().isCoupledEntity(CouplingManager::freeFlowIdx, scvf))
         {
             values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
             values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
@@ -250,7 +250,7 @@ public:
      */
     Scalar alphaBJ(const SubControlVolumeFace& scvf) const
     {
-        return couplingManager().problem(CouplingManager::darcyIdx).spatialParams().beaversJosephCoeffAtPos(scvf.center());
+        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().beaversJosephCoeffAtPos(scvf.center());
     }
 
     // \}

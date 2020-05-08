@@ -94,9 +94,9 @@ int main(int argc, char** argv)
     auto couplingManager = std::make_shared<CouplingManager>(stokesFvGridGeometry, darcyFvGridGeometry);
 
     // the indices
-    constexpr auto stokesCellCenterIdx = CouplingManager::stokesCellCenterIdx;
-    constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
-    constexpr auto darcyIdx = CouplingManager::darcyIdx;
+    constexpr auto stokesCellCenterIdx = CouplingManager::freeFlowCellCenterIdx;
+    constexpr auto stokesFaceIdx = CouplingManager::freeFlowFaceIdx;
+    constexpr auto darcyIdx = CouplingManager::porousMediumIdx;
 
     // the problem (initial and boundary conditions)
     using StokesProblem = GetPropType<StokesTypeTag, Properties::Problem>;
