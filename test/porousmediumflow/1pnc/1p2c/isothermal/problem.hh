@@ -91,8 +91,10 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
         pressureIdx = Indices::pressureIdx,
 
         // component indices
-        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx),
-        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
+        H2OIdx = 0,
+        N2Idx = 1,
+        // H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx),
+        // N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
 
         // indices of the equations
         contiH2OEqIdx = Indices::conti0EqIdx + H2OIdx,

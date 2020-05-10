@@ -43,6 +43,7 @@
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/python/material/fluidsystems/1ppython.hh>
 
 #include "problem.hh"
 #include "../spatialparams.hh"
@@ -75,8 +76,22 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::OnePTwoCTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+#if !USEPYTHONFLUIDSYSTEM
     using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
     using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
+#else
+    // using TabulatedH2O = Components::TabulatedComponent<Dumux::Components::H2O<Scalar> >;
+    using H2O = Components::H2O<Scalar>;
+    using SimpleN2 = Dumux::Components::N2<Scalar>;
+
+    struct Name
+    {
+        static constexpr auto get()
+        { return "testfluidsystem1p2c"; }
+    };
+
+    using type = Dumux::Python::FluidSystems::OnePLiquid<Scalar, Name, H2O, SimpleN2>;
+#endif
 };
 
 // Set the spatial parameters
