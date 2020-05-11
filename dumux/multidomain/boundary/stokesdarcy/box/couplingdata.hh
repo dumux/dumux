@@ -240,11 +240,13 @@ public:
     VelocityVector porousMediumVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
       // Right way to get perm type?
-      using PermeabilityType = typename Problem<darcyIdx>::SpatialParams::PermeabilityType;
-      PermeabilityType K(0.0);
+      // using PermeabilityType = typename Problem<darcyIdx>::SpatialParams::PermeabilityType;
+      // PermeabilityType K(0.0);
 
+      VelocityVector velocity(0.0);
       VelocityVector gradP(0.0); // Pressure gradient darcy at the interface, pressure gradient has the same size as the resulting velocity Vector
       Scalar rho(0.0); //density at the interface
+
       //Getting needed Information from the darcy domain
       const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
@@ -261,7 +263,9 @@ public:
           const auto& darcyFvGeometry = data.fvGeometry;
           const auto& localBasis = darcyFvGeometry.feLocalBasis();
 
-          K = data.volVars.permeability();
+          gradP=0.0;
+          rho=0.0;
+          const auto& K = data.volVars.permeability();
 
           const auto& elementFluxVarsCache = *(data.elementFluxVarsCache); //ElementFluxVariablesCache<darcyIdx>
           const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
@@ -285,12 +289,11 @@ public:
 
           if (enableGravity)
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(scvf.center()));
-
-          // apply the permeability and return the velocity
-          K *= -1.0/data.volVars.viscosity(data.darcyScvfIdx);
+          //velocity=-K/mu*gradP, and length/volume weighted (averaging over all segments)
+          velocity.axpy(-data.segmentGeometry.volume()/data.volVars.viscosity(data.darcyScvfIdx), mv(K,gradP));
         }
       }
-    return mv(K, gradP);
+    return velocity/scvf.geometry().volume();
     }
 
     /*!
@@ -302,9 +305,9 @@ public:
     VelocityVector newPorousMediumInterfaceVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
       // Right way to get perm type?
-      using PermeabilityType = typename Problem<darcyIdx>::SpatialParams::PermeabilityType;
-      PermeabilityType K(0.0);
-
+      // using PermeabilityType = typename Problem<darcyIdx>::SpatialParams::PermeabilityType;
+      // PermeabilityType K(0.0);
+      VelocityVector velocity(0.0);
       VelocityVector gradP(0.0); // Pressure gradient darcy at the interface, pressure gradient has the same size as the resulting velocity Vector
       Scalar rho(0.0); //density at the interface
       //Getting needed Information from the darcy domain
@@ -323,9 +326,10 @@ public:
           const auto& darcyFvGeometry = data.fvGeometry;
           const auto& localBasis = darcyFvGeometry.feLocalBasis();
 
-          K = data.volVars.permeability();
+          // K = data.volVars.permeability();
           auto M = this->couplingManager().problem(darcyIdx).spatialParams().matrixNTangentialAtPos(scvf.center());
-
+          gradP=0.0;
+          rho=0.0;
 
 
           const auto& elementFluxVarsCache = *(data.elementFluxVarsCache); //ElementFluxVariablesCache<darcyIdx>
@@ -351,14 +355,13 @@ public:
           if (enableGravity)
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(scvf.center()));
 
-          // apply the permeability and return the velocity
-          //K *= -1.0/data.volVars.viscosity(data.darcyScvfIdx);
           const auto& epsInterface = this->couplingManager().problem(darcyIdx).spatialParams().epsInterfaceAtPos(scvf.center());
           M*=epsInterface*epsInterface;
-          //TODO: correctly calculate, dont just pick the first one or even do something worse
-          return mv(M, gradP);
+          velocity.axpy(-data.segmentGeometry.volume()/data.volVars.viscosity(data.darcyScvfIdx), mv(M,gradP));
         }
       }
+      //TODO: are the same metrics used for stokes and darcy? => l1+l2+l3+...(darcy)=l_ges(stokes)?
+      return velocity/scvf.geometry().volume();
     }
 };
 
