@@ -309,34 +309,33 @@ public:
 
 private:
 
-    //! do nothing if no turbulence model is used
-    template<class ...Args, bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<!turbulenceModel, int> = 0>
-    void incorporateWallFunction_(Args&&... args) const
-    {}
-
-    //! if a turbulence model is used, ask the problem is a wall function shall be employed and get the flux accordingly
-    template<bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<turbulenceModel, int> = 0>
-    void incorporateWallFunction_(CellCenterResidual& boundaryFlux,
-                                  const Problem& problem,
-                                  const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const ElementFaceVariables& elemFaceVars) const
+    //! if a turbulence model is used, ask the problem if a wall function shall be employed and get the flux accordingly
+    void incorporateWallFunction_([[maybe_unused]] CellCenterResidual& boundaryFlux,
+                                  [[maybe_unused]] const Problem& problem,
+                                  [[maybe_unused]] const Element& element,
+                                  [[maybe_unused]] const FVElementGeometry& fvGeometry,
+                                  [[maybe_unused]] const SubControlVolumeFace& scvf,
+                                  [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
+                                  [[maybe_unused]] const ElementFaceVariables& elemFaceVars) const
     {
-        static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
-        const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-
-        // account for wall functions, if used
-        for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+        if constexpr (ModelTraits::usesTurbulenceModel())
         {
-            // use a wall function
-            if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
+            static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
+            const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+
+            // account for wall functions, if used
+            for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
             {
-                boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
-                                                           * extrusionFactor * scvf.area();
+                // use a wall function
+                if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
+                {
+                    boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
+                                                            * extrusionFactor * scvf.area();
+                }
             }
         }
+        else
+            return;
     }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
