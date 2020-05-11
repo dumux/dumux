@@ -5,6 +5,7 @@ cclocalassembler.hh
 cclocalresidual.hh
 diffmethod.hh
 entitycolor.hh
+felocalresidual.hh
 fvassembler.hh
 fvlocalassemblerbase.hh
 fvlocalresidual.hh
