@@ -621,32 +621,32 @@ private:
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
     }
 
-    //! do nothing if no turbulence model is used
-    template<class ...Args, bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<!turbulenceModel, int> = 0>
-    bool incorporateWallFunction_(Args&&... args) const
-    { return false; }
-
-    //! if a turbulence model is used, ask the problem is a wall function shall be employed and get the flux accordingly
-    template<bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<turbulenceModel, int> = 0>
-    bool incorporateWallFunction_(FacePrimaryVariables& lateralFlux,
-                                  const Problem& problem,
-                                  const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const ElementFaceVariables& elemFaceVars,
-                                  const std::size_t localSubFaceIdx) const
+    //! if a turbulence model is used, ask the problem if a wall function shall be employed and get the flux accordingly
+    bool incorporateWallFunction_([[maybe_unused]] FacePrimaryVariables& lateralFlux,
+                                  [[maybe_unused]] const Problem& problem,
+                                  [[maybe_unused]] const Element& element,
+                                  [[maybe_unused]] const FVElementGeometry& fvGeometry,
+                                  [[maybe_unused]] const SubControlVolumeFace& scvf,
+                                  [[maybe_unused]] const ElementVolumeVariables& elemVolVars,
+                                  [[maybe_unused]] const ElementFaceVariables& elemFaceVars,
+                                  [[maybe_unused]] const std::size_t localSubFaceIdx) const
     {
-        const auto eIdx = scvf.insideScvIdx();
-        const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-
-        if (problem.useWallFunction(element, lateralScvf, Indices::velocity(scvf.directionIndex())))
+        if constexpr (ModelTraits::usesTurbulenceModel())
         {
-            const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-            const auto lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter);
-            lateralFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                                               * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5;
-            return true;
+            const auto eIdx = scvf.insideScvIdx();
+            const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
+            if (problem.useWallFunction(element, lateralScvf, Indices::velocity(scvf.directionIndex())))
+            {
+                std::cout << "reached\n";
+                const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
+                const auto lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter);
+                lateralFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
+                                                * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5;
+                return true;
+            }
+            else
+                return false;
         }
         else
             return false;
