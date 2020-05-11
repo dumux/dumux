@@ -53,15 +53,6 @@ class PorousMediumFluxVariables
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
 
     enum
     {
