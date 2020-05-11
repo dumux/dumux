@@ -331,47 +331,25 @@ public:
     }
 
     //! \brief Returns the flux for non-isothermal and compositional RANS models
-    template<bool eB = enableEnergyBalance, bool compositional = isCompositional,
-             typename std::enable_if_t<eB && compositional, int> = 0>
     CellCenterPrimaryVariables wallFunction(const Element& element,
                                             const FVElementGeometry& fvGeometry,
                                             const ElementVolumeVariables& elemVolVars,
                                             const ElementFaceVariables& elemFaceVars,
                                             const SubControlVolumeFace& scvf) const
     {
-        return wallFunctionComponent(element, fvGeometry, elemVolVars, elemFaceVars, scvf)
-               + wallFunctionEnergy(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+        if constexpr (isCompositional && enableEnergyBalance)
+            return wallFunctionComponent(element, fvGeometry, elemVolVars, elemFaceVars, scvf)
+                 + wallFunctionEnergy(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+        else if constexpr (isCompositional && !enableEnergyBalance)
+            return wallFunctionComponent(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+        else if constexpr (!isCompositional && enableEnergyBalance)
+            return wallFunctionEnergy(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+        else
+        {
+            static_assert((!isCompositional && !enableEnergyBalance), "Should only be reached by isothermal non-compositional models");
+            return CellCenterPrimaryVariables(0.0);
+        }
     }
-
-    //! \brief Returns the flux for isothermal and compositional RANS models
-    template<bool eB = enableEnergyBalance, bool compositional = isCompositional,
-             typename std::enable_if_t<!eB && compositional, int> = 0>
-    CellCenterPrimaryVariables wallFunction(const Element& element,
-                                            const FVElementGeometry& fvGeometry,
-                                            const ElementVolumeVariables& elemVolVars,
-                                            const ElementFaceVariables& elemFaceVars,
-                                            const SubControlVolumeFace& scvf) const
-    { return wallFunctionComponent(element, fvGeometry, elemVolVars, elemFaceVars, scvf); }
-
-    //! \brief Returns the flux for non-isothermal RANS models
-    template<bool eB = enableEnergyBalance, bool compositional = isCompositional,
-             typename std::enable_if_t<eB && !compositional, int> = 0>
-    CellCenterPrimaryVariables wallFunction(const Element& element,
-                                            const FVElementGeometry& fvGeometry,
-                                            const ElementVolumeVariables& elemVolVars,
-                                            const ElementFaceVariables& elemFaceVars,
-                                            const SubControlVolumeFace& scvf) const
-    { return wallFunctionEnergy(element, fvGeometry, elemVolVars, elemFaceVars, scvf); }
-
-    //! \brief Returns the flux for isothermal RANS models
-    template<bool eB = enableEnergyBalance, bool compositional = isCompositional,
-             typename std::enable_if_t<!eB && !compositional, int> = 0>
-    CellCenterPrimaryVariables wallFunction(const Element& element,
-                                            const FVElementGeometry& fvGeometry,
-                                            const ElementVolumeVariables& elemVolVars,
-                                            const ElementFaceVariables& elemFaceVars,
-                                            const SubControlVolumeFace& scvf) const
-    { return CellCenterPrimaryVariables(0.0); }
 
     //! \brief Returns the component wall-function flux
     CellCenterPrimaryVariables wallFunctionComponent(const Element& element,
