@@ -157,7 +157,12 @@ public:
         BoundaryTypes values;
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values.setAllCouplingNeumann();
+        {
+            if (couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure)
+                values.setAllCouplingNeumann();
+            else // reconstructFreeFlowNormalStress
+                values.setAllCouplingDirichlet();
+        }
         else
             values.setAllDirichlet();
 
@@ -174,8 +179,13 @@ public:
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
-        const auto p = analyticalSolution(scvf.center())[pressureIdx];
-        return PrimaryVariables(p);
+        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+            return couplingManager().couplingData().freeFlowInterfaceStress(element, scvf);
+        else
+        {
+            const auto p = analyticalSolution(scvf.center())[pressureIdx];
+            return PrimaryVariables(p);
+        }
     }
 
     /*!

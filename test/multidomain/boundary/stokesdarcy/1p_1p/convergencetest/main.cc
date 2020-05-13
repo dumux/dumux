@@ -319,14 +319,32 @@ int main(int argc, char** argv)
     // get a solution vector storing references to the two FreeFlow solution vectors
     auto freeFlowSol = partial(sol, freeFlowFaceIdx, freeFlowCellCenterIdx);
 
-    couplingManager->init(freeFlowProblem, darcyProblem, sol);
-
     // the grid variables
     using FreeFlowGridVariables = GetPropType<FreeFlowTypeTag, Properties::GridVariables>;
     auto freeFlowGridVariables = std::make_shared<FreeFlowGridVariables>(freeFlowProblem, freeFlowGridGeometry);
     freeFlowGridVariables->init(freeFlowSol);
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyGridGeometry);
+
+    const auto couplingMode = []
+    {
+        const auto mode = getParam<std::string>("Problem.CouplingMode", "ReconstructPorousMediumPressure");
+        if (mode == "ReconstructPorousMediumPressure")
+            return CouplingManager::CouplingMode::reconstructPorousMediumPressure;
+        else if (mode == "ReconstructFreeFlowNormalStress")
+            return CouplingManager::CouplingMode::reconstructFreeFlowNormalStress;
+        else
+            DUNE_THROW(Dune::InvalidStateException, mode << " is not a valid coupling mode. Use ReconstructPorousMediumPressure or ReconstructFreeFlowNormalStress");
+    }();
+
+    // initialize the coupling manager
+    couplingManager->init(freeFlowProblem, darcyProblem,
+                          std::make_tuple(freeFlowGridVariables->faceGridVariablesPtr(),
+                                          freeFlowGridVariables->cellCenterGridVariablesPtr(),
+                                          darcyGridVariables),
+                          sol, couplingMode);
+
+    freeFlowGridVariables->init(freeFlowSol);
     darcyGridVariables->init(sol[darcyIdx]);
 
     // intialize the vtk output module
