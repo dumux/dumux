@@ -87,6 +87,7 @@ class FreeFlowSubProblem : public NavierStokesProblem<TypeTag>
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -177,20 +178,36 @@ public:
 
         if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
-            values.setCouplingNeumann(Indices::conti0EqIdx);
-            values.setCouplingNeumann(Indices::momentumYBalanceIdx);
+            if (couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure)
+            {
+                values.setCouplingNeumann(Indices::conti0EqIdx);
+                values.setCouplingNeumann(Indices::momentumYBalanceIdx);
+            }
+            else // reconstructFreeFlowNormalStress
+                values.setCouplingDirichlet(Indices::velocityYIdx);
+
             values.setBeaversJoseph(Indices::momentumXBalanceIdx);
         }
 
         return values;
     }
 
-    /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    // using ParentType::dirichlet;
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
     {
-        return analyticalSolution(globalPos);
+        return analyticalSolution(scv.center());
+    }
+
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        {
+            PrimaryVariables values(0.0);
+            values[Indices::velocityYIdx] = couplingManager().couplingData().porousMediumInterfaceVelocity(element, scvf);
+            return values;
+        }
+        else
+            return analyticalSolution(scvf.center());
     }
 
     /*!
@@ -211,7 +228,7 @@ public:
     {
         NumEqVector values(0.0);
 
-        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
             values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
