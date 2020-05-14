@@ -34,6 +34,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include "../spatialparams.hh"
+#include "testcase.hh"
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -100,30 +101,19 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr auto velocityYIdx = 1;
     static constexpr auto pressureIdx = 2;
 
-    enum class TestCase
-    {
-        ShiueExampleOne, ShiueExampleTwo, Rybak
-    };
-
 public:
     //! export the Indices
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     DarcySubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
-                   std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(gridGeometry, "Darcy"), couplingManager_(couplingManager)
+                    std::shared_ptr<CouplingManager> couplingManager,
+                    std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    const TestCase testCase)
+    : ParentType(gridGeometry, spatialParams, "Darcy")
+    , couplingManager_(couplingManager)
+    , testCase_(testCase)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-
-        const auto testCaseInput = getParamFromGroup<std::string>(this->paramGroup(), "Problem.TestCase", "ShiueExampleTwo");
-        if (testCaseInput == "ShiueExampleOne")
-            testCase_ = TestCase::ShiueExampleOne;
-        else if (testCaseInput == "ShiueExampleTwo")
-            testCase_ = TestCase::ShiueExampleTwo;
-        else if (testCaseInput == "Rybak")
-            testCase_ = TestCase::Rybak;
-        else
-            DUNE_THROW(Dune::InvalidStateException, testCaseInput + " is not a valid test case");
     }
 
     /*!

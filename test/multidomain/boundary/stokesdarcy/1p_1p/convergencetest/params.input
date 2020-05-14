@@ -2,24 +2,23 @@
 UpperRight = 1 1
 Cells = 40 40
 
-[Stokes.Grid]
+[FreeFlow.Grid]
 LowerLeft = 0 1
 UpperRight = 1 2
 Cells = 40 40
 
-[Stokes.Problem]
-Name = stokes
+[FreeFlow.Problem]
+Name = freeFlow
 EnableInertiaTerms = false
 
 [Darcy.Problem]
 Name = darcy
 
 [Darcy.SpatialParams]
-Permeability = 1.0
 AlphaBeaversJoseph = 1.0
 
 [Vtk]
-OutputName = test_md_boundary_stokes1p_darcy1p_convergencetest
+OutputName = test_md_boundary_freeflow1p_darcy1p_convergencetest
 
 [Problem]
 EnableGravity = false
