@@ -33,7 +33,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "../spatialparams.hh"
+#include "spatialparams.hh"
 #include "testcase.hh"
 
 #include <dumux/material/components/constant.hh>
@@ -70,7 +70,7 @@ struct SpatialParams<TypeTag, TTag::DarcyOneP>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = OnePSpatialParams<GridGeometry, Scalar>;
+    using type = ConvergenceTestSpatialParams<GridGeometry, Scalar>;
 };
 } // end namespace Properties
 
@@ -223,6 +223,8 @@ public:
                 return rhsShiueEtAlExampleTwo_(globalPos);
             case TestCase::Rybak:
                 return rhsRybak_(globalPos);
+            case TestCase::Schneider:
+                return rhsSchneiderEtAl_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -258,6 +260,8 @@ public:
                 return analyticalSolutionShiueEtAlExampleTwo_(globalPos);
             case TestCase::Rybak:
                 return analyticalSolutionRybak_(globalPos);
+            case TestCase::Schneider:
+                return analyticalSolutionSchneiderEtAl_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -335,6 +339,50 @@ private:
     // see Shiue et al., 2018: "Convergence of the MAC Scheme for the Stokes/Darcy Coupling Problem"
     NumEqVector rhsShiueEtAlExampleTwo_(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0); }
+
+    // see Schneider et al., 2019: "Coupling staggered-grid and MPFA finite volume methods for
+    // free flow/porous-medium flow problems"
+    Dune::FieldVector<Scalar, 3> analyticalSolutionSchneiderEtAl_(const GlobalPosition& globalPos) const
+    {
+        Dune::FieldVector<Scalar, 3> sol(0.0);
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        static constexpr Scalar omega = M_PI;
+        static constexpr Scalar c = 0.0;
+        using std::exp; using std::sin; using std::cos;
+        const Scalar sinOmegaX = sin(omega*x);
+        const Scalar cosOmegaX = cos(omega*x);
+        static const Scalar expTwo = exp(2);
+        const Scalar expYPlusOne = exp(y+1);
+
+        sol[pressureIdx] = (expYPlusOne + 2 - expTwo)*sinOmegaX;
+        sol[velocityXIdx] = c/(2*omega)*expYPlusOne*sinOmegaX*sinOmegaX
+                            -omega*(expYPlusOne + 2 - expTwo)*cosOmegaX;
+        sol[velocityYIdx] = (0.5*c*(expYPlusOne + 2 - expTwo)*cosOmegaX
+                            -(c*cosOmegaX + 1)*exp(y-1))*sinOmegaX;
+
+        return sol;
+    }
+
+    // see Schneider et al., 2019: "Coupling staggered-grid and MPFA finite volume methods for
+    // free flow/porous-medium flow problems (with c = 0)"
+    NumEqVector rhsSchneiderEtAl_(const GlobalPosition& globalPos) const
+    {
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        using std::exp; using std::sin; using std::cos;
+        static constexpr Scalar omega = M_PI;
+        static constexpr Scalar c = 0.0;
+        const Scalar cosOmegaX = cos(omega*x);
+        static const Scalar expTwo = exp(2);
+        const Scalar expYPlusOne = exp(y+1);
+
+        const Scalar result = (-(c*cosOmegaX + 1)*exp(y - 1)
+                                             + 1.5*c*expYPlusOne*cosOmegaX
+                                             + omega*omega*(expYPlusOne - expTwo + 2))
+                                             *sin(omega*x);
+        return NumEqVector(result);
+    }
 
     static constexpr Scalar eps_ = 1e-7;
     std::shared_ptr<CouplingManager> couplingManager_;

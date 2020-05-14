@@ -292,16 +292,16 @@ int main(int argc, char** argv) try
     const auto testCase = []()
     {
         const auto testCaseInput = getParam<std::string>("Problem.TestCase", "ShiueExampleTwo");
-        TestCase tc;
         if (testCaseInput == "ShiueExampleOne")
-            tc = TestCase::ShiueExampleOne;
+            return TestCase::ShiueExampleOne;
         else if (testCaseInput == "ShiueExampleTwo")
-            tc = TestCase::ShiueExampleTwo;
+            return TestCase::ShiueExampleTwo;
         else if (testCaseInput == "Rybak")
-            tc = TestCase::Rybak;
+            return TestCase::Rybak;
+        else if (testCaseInput == "Schneider")
+            return TestCase::Schneider;
         else
             DUNE_THROW(Dune::InvalidStateException, testCaseInput + " is not a valid test case");
-        return tc;
     }();
 
     using FreeFlowProblem = GetPropType<FreeFlowTypeTag, Properties::Problem>;

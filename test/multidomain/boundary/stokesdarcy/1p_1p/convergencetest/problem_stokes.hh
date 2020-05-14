@@ -140,6 +140,8 @@ public:
                 return rhsShiueEtAlExampleTwo_(globalPos);
             case TestCase::Rybak:
                 return rhsRybak_(globalPos);
+            case TestCase::Schneider:
+                return rhsSchneiderEtAl_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -265,6 +267,8 @@ public:
                 return analyticalSolutionShiueEtAlExampleTwo_(globalPos);
             case TestCase::Rybak:
                 return analyticalSolutionRybak_(globalPos);
+            case TestCase::Schneider:
+                return analyticalSolutionSchneiderEtAl_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -342,6 +346,42 @@ private:
     // see Shiue et al., 2018: "Convergence of the MAC Scheme for the Stokes/Darcy Coupling Problem"
     NumEqVector rhsShiueEtAlExampleTwo_(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0); }
+
+    // see Schneider et al., 2019: "Coupling staggered-grid and MPFA finite volume methods for
+    // free flow/porous-medium flow problems"
+    PrimaryVariables analyticalSolutionSchneiderEtAl_(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables sol(0.0);
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        using std::sin;
+        static constexpr Scalar omega = M_PI;
+        const Scalar sinOmegaX = sin(omega*x);
+
+        sol[Indices::velocityXIdx] = y;
+        sol[Indices::velocityYIdx] = -y*sinOmegaX;
+        sol[Indices::pressureIdx] = -y*y*sinOmegaX*sinOmegaX;
+        return sol;
+    }
+
+    // see Schneider et al., 2019: "Coupling staggered-grid and MPFA finite volume methods for
+    // free flow/porous-medium flow problems"
+    NumEqVector rhsSchneiderEtAl_(const GlobalPosition& globalPos) const
+    {
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        using std::exp; using std::sin; using std::cos;
+        static constexpr Scalar omega = M_PI;
+        const Scalar sinOmegaX = sin(omega*x);
+        const Scalar cosOmegaX = cos(omega*x);
+
+        NumEqVector source(0.0);
+        source[Indices::conti0EqIdx] = -sinOmegaX;
+        source[Indices::momentumXBalanceIdx] = -2*omega*y*y*sinOmegaX*cosOmegaX
+                                               -2*y*sinOmegaX + omega*cosOmegaX;
+        source[Indices::momentumYBalanceIdx] = -omega*y*y*cosOmegaX - omega*omega*y*sinOmegaX;
+        return source;
+    }
 
     static constexpr Scalar eps_ = 1e-7;
     std::string problemName_;

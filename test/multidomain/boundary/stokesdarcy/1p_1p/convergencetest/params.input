@@ -32,3 +32,6 @@ LiquidKinematicViscosity = 1.0
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-4
+
+[FreeFlow.Flux]
+UpwindWeight = 0.5

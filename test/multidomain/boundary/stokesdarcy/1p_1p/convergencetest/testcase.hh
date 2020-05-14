@@ -29,7 +29,7 @@ namespace Dumux {
 
 enum class TestCase
 {
-    ShiueExampleOne, ShiueExampleTwo, Rybak
+    ShiueExampleOne, ShiueExampleTwo, Rybak, Schneider
 };
 
 } // end namespace Dumux
