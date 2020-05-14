@@ -25,6 +25,7 @@
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/typetraits.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/method.hh>
@@ -206,6 +207,17 @@ public:
     /*!
      * \brief Returns the beta value, or the alpha value divided by the square root of the intrinsic permeability.
      */
+    Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
+    {
+        const Scalar interfacePermeability = interfacePermeability_(element, scvf, tangentialVector);
+        using std::sqrt;
+        return asImp_().alphaBJ(scvf) / sqrt(interfacePermeability);
+    }
+
+    /*!
+     * \brief Returns the beta value, or the alpha value divided by the square root of the intrinsic permeability.
+     */
+    [[deprecated("Use betaBJ with tangential vector instead. Will be removed after 3.3")]]
     Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf) const
     {
         using std::sqrt;
@@ -228,14 +240,14 @@ public:
                                        const Scalar velocitySelf,
                                        const Scalar tangentialVelocityGradient) const
     {
-        // du/dy + dv/dx = alpha/sqrt(K) * (u_boundary-uPM)
-        // beta = alpha/sqrt(K)
-        const Scalar betaBJ = asImp_().betaBJ(element, faceOnPorousBoundary);
-        const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
-
         // create a unit normal vector oriented in positive coordinate direction
         GlobalPosition orientation = ownScvf.unitOuterNormal();
         orientation[ownScvf.directionIndex()] = 1.0;
+
+        // du/dy + dv/dx = alpha/sqrt(K) * (u_boundary-uPM)
+        // beta = alpha/sqrt(K)
+        const Scalar betaBJ = asImp_().betaBJ(element, faceOnPorousBoundary, orientation);
+        const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
 
         return (tangentialVelocityGradient*distanceNormalToBoundary
               + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * betaBJ * distanceNormalToBoundary
@@ -243,6 +255,18 @@ public:
     }
 
 private:
+    //! Returns a scalar-valued permeability value at the coupling interface
+    Scalar interfacePermeability_(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
+    {
+        const auto& K = asImp_().permeability(element, scvf);
+
+        // use t*K*t for permeability tensors
+        if constexpr (Dune::IsNumber<std::decay_t<decltype(K)>>::value)
+            return K;
+        else
+            return vtmv(tangentialVector, K, tangentialVector);
+    }
+
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
