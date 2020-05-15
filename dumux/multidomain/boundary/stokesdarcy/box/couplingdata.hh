@@ -228,10 +228,10 @@ public:
         const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
         //TODO: viscosity?
         //TODO: ij should be 0 for unsymm, is this fullfilled? yes, but just if nTangential/bj/pressure bc is used
-        momentumFlux += Nsbl * (velocityGrad_ji + velocityGrad_ij);
-
-        momentumFlux *= scvf.directionSign();
+        // Averaging the gradients to get evaluation at the center
+        momentumFlux += 1.0/numSubFaces*Nsbl * (velocityGrad_ji + velocityGrad_ij);
       }
+      momentumFlux *= scvf.directionSign();
 
       return momentumFlux;
     }
