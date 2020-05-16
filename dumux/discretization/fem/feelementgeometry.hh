@@ -34,16 +34,19 @@ namespace Dumux {
  * \tparam The grid geometry type
  * \tparam The FEBasis local view
  */
-template<class GridGeometry>
+template<class GG>
 class FEElementGeometry
 {
-    using GridView = typename GridGeometry::GridView;
+    using GridView = typename GG::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FEBasis = typename GridGeometry::FEBasis;
+    using FEBasis = typename GG::FEBasis;
     using FEBasisLocalView = typename FEBasis::LocalView;
 
 public:
+    //! export grid geometry type
+    using GridGeometry = GG;
+
     //! constructor taking grid geometry
     FEElementGeometry(const GridGeometry& gg)
     : gridGeometry_(gg)
