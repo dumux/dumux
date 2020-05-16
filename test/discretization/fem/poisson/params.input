@@ -1,0 +1,9 @@
+[Grid]
+UpperRight = 3 3
+Cells = 100 100
+
+[Problem]
+Name = poisson
+
+[SpatialParams]
+TensorValue = 1
