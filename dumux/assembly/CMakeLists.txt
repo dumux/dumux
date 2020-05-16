@@ -1,4 +1,5 @@
 install(FILES
+assembler.hh
 boxlocalassembler.hh
 boxlocalresidual.hh
 cclocalassembler.hh
