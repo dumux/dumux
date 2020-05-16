@@ -33,6 +33,7 @@ namespace Dumux {
  * \note A local object is only functional after calling its bind/bindElement method.
  * \tparam GridCache the grid caching type (such as GridGeometry)
  * \param gridCache the grid caching object we want to localView from
+ * \todo TODO: Rename template args if local view concept is extended to assemblers
  */
 template<class GridCache>
 inline typename GridCache::LocalView localView(const GridCache& gridCache)
