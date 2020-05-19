@@ -38,12 +38,14 @@ template<class GridGeometry>
 class FEElementGeometry
 {
     using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
 
     using FEBasis = typename GridGeometry::FEBasis;
     using FEBasisLocalView = typename FEBasis::LocalView;
 
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
+
     //! constructor taking grid geometry
     FEElementGeometry(const GridGeometry& gg)
     : gridGeometry_(gg)
