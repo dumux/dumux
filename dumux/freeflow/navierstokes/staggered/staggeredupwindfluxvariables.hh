@@ -208,7 +208,7 @@ private:
                                               const MomentaArray& momenta,
                                               [[maybe_unused]] const Scalar transportingVelocity,
                                               const GridFluxVariablesCache& gridFluxVarsCache,
-                                              const bool canHigherOrder)
+                                              [[maybe_unused]] const bool canHigherOrder)
     {
         const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
         if constexpr (useHigherOrder)
@@ -268,8 +268,8 @@ private:
      * \param localSubFaceIdx The local subface index
      */
     static bool canLateralSecondOrder_(const SubControlVolumeFace& ownScvf,
-                                       const bool selfIsUpstream,
-                                       const int localSubFaceIdx)
+                                       [[maybe_unused]] const bool selfIsUpstream,
+                                       [[maybe_unused]] const int localSubFaceIdx)
     {
         if constexpr (useHigherOrder)
         {
@@ -438,10 +438,10 @@ private:
     static Scalar doLateralMomentumUpwinding_([[maybe_unused]] const FVElementGeometry& fvGeometry,
                                               const SubControlVolumeFace& scvf,
                                               const MomentaArray& momenta,
-                                              const Scalar transportingVelocity,
+                                              [[maybe_unused]] const Scalar transportingVelocity,
                                               [[maybe_unused]] const int localSubFaceIdx,
                                               const GridFluxVariablesCache& gridFluxVarsCache,
-                                              const bool canHigherOrder)
+                                              [[maybe_unused]] const bool canHigherOrder)
     {
         const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
         if constexpr (useHigherOrder)
@@ -536,7 +536,7 @@ private:
             return VelocityGradients::beaversJosephVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
                                                                          currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
-        else if(lateralFaceHasDirichletVelocity)
+        else if (lateralFaceHasDirichletVelocity)
         {
             //     ________________
             //     ---------------o                 || frontal face of staggered half-control-volume
@@ -547,7 +547,10 @@ private:
             //     |      ||      #                 o  position at which the boundary conditions will be evaluated
             //     ---------------#
 
-            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+            const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
+            const auto ghostFace = lateralFace.makeBoundaryFace(scvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter);
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         }
         else
@@ -596,12 +599,6 @@ private:
         return getParallelVelocityFromBoundary_(problem, element, fvGeometry, scvf,
                                                 faceVars, currentScvfBoundaryTypes, lateralOppositeFaceBoundaryTypes,
                                                 localOppositeSubFaceIdx);
-    }
-
-    //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
-    static SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx)
-    {
-        return ownScvf.makeBoundaryFace(ownScvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter);
     }
 };
 
