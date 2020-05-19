@@ -205,7 +205,7 @@ public:
     }
 
     /*!
-     * \brief Returns the beta value, or the alpha value divided by the square root of the intrinsic permeability.
+     * \brief Returns the beta value which is the alpha value divided by the square root of the (scalar-valued) interface permeability.
      */
     Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
     {
@@ -215,7 +215,7 @@ public:
     }
 
     /*!
-     * \brief Returns the beta value, or the alpha value divided by the square root of the intrinsic permeability.
+     * \brief Returns the beta value which is the alpha value divided by the square root of the (scalar-valued) interface permeability.
      */
     [[deprecated("Use betaBJ with tangential vector instead. Will be removed after 3.3")]]
     Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf) const
@@ -232,7 +232,10 @@ public:
         return VelocityVector(0.0);
     }
 
-    //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used
+
+    /*!
+     * \brief Returns the slip velocity at a porous boundary based on the Beavers-Joseph(-Saffman) condition.
+     */
     const Scalar beaversJosephVelocity(const Element& element,
                                        const SubControlVolume& scv,
                                        const SubControlVolumeFace& ownScvf,
@@ -255,7 +258,7 @@ public:
     }
 
 private:
-    //! Returns a scalar-valued permeability value at the coupling interface
+    //! Returns a scalar permeability value at the coupling interface
     Scalar interfacePermeability_(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
     {
         const auto& K = asImp_().permeability(element, scvf);
