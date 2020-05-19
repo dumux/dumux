@@ -212,6 +212,18 @@ public:
         return asImp_().alphaBJ(scvf) / sqrt(asImp_().permeability(element, scvf));
     }
 
+    Scalar epsInterface(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the epsInterface value must be returned in the acutal problem");}
+
+    Scalar factorNMomentum(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNMomentum value must be returned in the acutal problem");}
+
+    Scalar factorNTangential(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNTangential value must be returned in the acutal problem");}
+
+    Dune::FieldMatrix<Scalar, dim, dim> matrixNTangential(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the matrixNTangential value must be returned in the acutal problem");}
+
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
      */
