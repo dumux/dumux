@@ -142,6 +142,10 @@ public:
                 const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralScvf, lateralBoundaryFacePos);
                 return problem.dirichlet(element, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())];
             }
+            else if (lateralFaceBoundaryTypes->isNTangential(Indices::velocity(scvf.directionIndex()))){
+                return nTangentialVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
+                                                        currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            }
             else if (lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex())))
             {
                 return beaversJosephVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
@@ -221,6 +225,10 @@ public:
                 const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                 const auto lateralBoundaryFace = makeStaggeredBoundaryFace(scvf, lateralBoundaryFacePos);
                 return problem.dirichlet(element, lateralBoundaryFace)[Indices::velocity(lateralScvf.directionIndex())];
+            }
+            else if (currentScvfBoundaryTypes->isNTangential(Indices::velocity(lateralScvf.directionIndex()))){
+                return nTangentialVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
+                                                        currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
             }
             else if (currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex())))
             {
@@ -302,6 +310,49 @@ public:
                                              tangentialVelocityGradient);
     }
 
+    template<class Problem, class FaceVariables>
+    static Scalar nTangentialVelocityAtCurrentScvf(const Problem& problem,
+                                                     const Element& element,
+                                                     const FVElementGeometry& fvGeometry,
+                                                     const SubControlVolumeFace& scvf,
+                                                     const FaceVariables& faceVars,
+                                                     const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                     const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                     const std::size_t localSubFaceIdx)
+    {
+        const auto eIdx = scvf.insideScvIdx();
+        const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+        const Scalar innerLateralVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
+
+        const auto tangentialVelocityGradient = [&]()
+        {
+            // If the current scvf is on a boundary and if a Dirichlet BC for the pressure or a BJ condition for
+            // the slip velocity is set there, assume a tangential velocity gradient of zero along the lateral face
+            // (towards the current scvf).
+            static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),
+                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+
+            if (unsymmetrizedGradientForBJ)
+                return 0.0;
+
+            if (lateralScvf.boundary())
+            {
+                if (lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx) ||
+                    lateralFaceBoundaryTypes->isNTangential(Indices::velocity(scvf.directionIndex())))
+                    return 0.0;
+            }
+
+            return velocityGradIJ(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+        }();
+
+        return problem.nTangentialVelocity(element,
+                                             fvGeometry.scv(scvf.insideScvIdx()),
+                                             lateralScvf,
+                                             scvf, /*on boundary*/
+                                             innerLateralVelocity,
+                                             tangentialVelocityGradient);
+    }
+
     /*!
      * \brief Returns the Beavers-Jospeh slip velocity for a lateral scvf which lies on the boundary.
      *
@@ -355,6 +406,49 @@ public:
         }();
 
         return problem.beaversJosephVelocity(element,
+                                             fvGeometry.scv(scvf.insideScvIdx()),
+                                             scvf,
+                                             lateralScvf, /*on boundary*/
+                                             innerParallelVelocity,
+                                             tangentialVelocityGradient);
+    }
+
+    template<class Problem, class FaceVariables>
+    static Scalar nTangentialVelocityAtLateralScvf(const Problem& problem,
+                                                     const Element& element,
+                                                     const FVElementGeometry& fvGeometry,
+                                                     const SubControlVolumeFace& scvf,
+                                                     const FaceVariables& faceVars,
+                                                     const Dune::Std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                     const Dune::Std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
+                                                     const std::size_t localSubFaceIdx)
+    {
+        const auto eIdx = scvf.insideScvIdx();
+        const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+        const Scalar innerParallelVelocity = faceVars.velocitySelf();
+
+        const auto tangentialVelocityGradient = [&]()
+        {
+            // If the current scvf is on a boundary and if a Dirichlet BC for the pressure or a BJ condition for
+            // the slip velocity is set there, assume a tangential velocity gradient of zero along the lateral face
+            // (towards the current scvf).
+            static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),
+                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+
+            if (unsymmetrizedGradientForBJ)
+                return 0.0;
+
+            if (scvf.boundary())
+            {
+                if (currentScvfBoundaryTypes->isDirichlet(Indices::pressureIdx) ||
+                    currentScvfBoundaryTypes->isNTangential(Indices::velocity(lateralScvf.directionIndex())))
+                    return 0.0;
+            }
+
+            return velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+        }();
+
+        return problem.nTangentialVelocity(element,
                                              fvGeometry.scv(scvf.insideScvIdx()),
                                              scvf,
                                              lateralScvf, /*on boundary*/

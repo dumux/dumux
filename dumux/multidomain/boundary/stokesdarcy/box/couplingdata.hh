@@ -28,7 +28,12 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
-#include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/multidomain/couplingmanager.hh> //TODO: Why is this the right coupling manager, not the one in this folder?
+
+//Needed for nMomentumCouplingCondition
+#include <dumux/freeflow/navierstokes/staggered/velocitygradients.hh>
+#include <dumux/discretization/staggered/freeflow/boundarytypes.hh>
+#include <dune/common/std/optional.hh>
 
 namespace Dumux {
 /*!
@@ -58,9 +63,13 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     static constexpr auto freeFlowIdx = CouplingManager::freeFlowIdx;
     static constexpr auto porousMediumIdx = CouplingManager::porousMediumIdx;
 
-    using AdvectionType = GetPropType<SubDomainTypeTag<porousMediumIdx>, Properties::AdvectionType>;
-    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
-    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
+    using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
+    template<std::size_t id> using BoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::BoundaryTypes>;
+    using StokesVelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry<stokesIdx>, BoundaryTypes<stokesIdx>, Indices<stokesIdx>>;
+
+    using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
+    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
+    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, GridGeometry<darcyIdx>::discMethod>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
@@ -126,6 +135,260 @@ public:
         momentumFlux *= scvf.directionSign();
 
         return momentumFlux;
+    }
+
+    //TODO: Review!
+    /*!
+    * \brief Returns the new interface condition momentum flux across the coupling boundary.
+    *
+    * For the new momentum coupling, the porous medium side and a difference to the usual momentum flux is calculated
+    *
+    */
+    template<class ElementFaceVariables>
+    Scalar nMomentumCouplingCondition(const Element<stokesIdx>& element,
+                                      const FVElementGeometry<stokesIdx>& fvGeometry,
+                                      const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
+                                      const ElementFaceVariables& stokesElemFaceVars,
+                                      const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+      Scalar momentumFlux(0.0);
+      const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+      //######## darcy contribution #################
+      // integrate darcy pressure over each coupling segment and average
+      for (const auto& data : stokesContext)
+      {
+        if (scvf.index() == data.stokesScvfIdx)
+        {
+          const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+          const auto& elemVolVars = *(data.elementVolVars);
+          const auto& darcyFvGeometry = data.fvGeometry;
+          const auto& localBasis = darcyFvGeometry.feLocalBasis();
+
+          // do second order integration as box provides linear functions
+          static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
+          const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
+          for (const auto& qp : rule)
+          {
+            const auto& ipLocal = qp.position();
+            const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
+            const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
+
+            std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+            localBasis.evaluateFunction(ipElementLocal, shapeValues);
+
+            Scalar pressure = 0.0;
+            for (const auto& scv : scvs(data.fvGeometry))
+            pressure += elemVolVars[scv].pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+
+            momentumFlux += pressure*data.segmentGeometry.integrationElement(qp.position())*qp.weight();
+          }
+        }
+      }
+      momentumFlux /= scvf.area();
+
+      // normalize pressure
+      if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
+      momentumFlux -= this->couplingManager().problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
+
+      //######## New (n) stokes contribution #################
+      const std::size_t numSubFaces = scvf.pairData().size(); //numer of adjacent sub faces?
+
+      // Account for all sub faces.
+      for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+      {
+        const auto eIdx = scvf.insideScvIdx();
+        const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
+        // If the current scvf is on a boundary, check if there is a Neumann BC for the stress in tangential direction.
+        // Create a boundaryTypes object (will be empty if not at a boundary).
+        Dune::Std::optional<BoundaryTypes> currentScvfBoundaryTypes;
+        if (scvf.boundary())
+            currentScvfBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, scvf));
+
+        // Getting boundary type for lateral face
+        Dune::Std::optional<BoundaryTypes<stokesIdx>> lateralFaceBoundaryTypes;
+        if (lateralScvf.boundary())
+        {
+          lateralFaceBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, lateralScvf));
+        }
+
+
+        // Getting velocity gradients
+        const Scalar velocityGrad_ji = StokesVelocityGradients::velocityGradJI(
+          this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
+          currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+        const Scalar velocityGrad_ij = StokesVelocityGradients::velocityGradIJ(
+            this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
+            currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+
+        // Calculating additional term for momentum flux
+        //TODO: inverted sign...
+        const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
+        //TODO: viscosity?
+        //TODO: ij should be 0 for unsymm, is this fullfilled? yes, but just if nTangential/bj/pressure bc is used
+        // Averaging the gradients to get evaluation at the center
+        momentumFlux += 1.0/numSubFaces*Nsbl * (velocityGrad_ji + velocityGrad_ij);
+      }
+      momentumFlux *= scvf.directionSign();
+
+      return momentumFlux;
+    }
+
+    // TODO: Review!
+    /*!
+    * \brief Returns the velocity vector at the interface of the porous medium according to darcys law
+    *
+    * For the tangential (bj(s) and nTangential) coupling, the tangential porous medium velocity needs to
+    * be evaluated. We use darcys law and perform an integral average over all coupling segments
+    *
+    */
+    VelocityVector porousMediumVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+      VelocityVector velocity(0.0); //  velocity darcy
+      VelocityVector gradP(0.0);    // pressure gradient darcy
+      Scalar rho(0.0);              // density darcy
+
+      //Getting needed information from the darcy domain
+      const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+
+      //TODO: //Gravity changes darcy's law for calculating the velocity: ...-rho*g, + or -?
+      static const bool enableGravity = getParamFromGroup<bool>(this->couplingManager().problem(darcyIdx).paramGroup(), "Problem.EnableGravity");
+
+      // Iteraton over the different coupling segments
+      for (const auto& data : stokesContext)
+      {
+        //We are on (one of) the correct scvf(s)
+        if (scvf.index() == data.stokesScvfIdx)
+        {
+          const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+          const auto& elemVolVars = *(data.elementVolVars);
+          const auto& darcyFvGeometry = data.fvGeometry;
+          const auto& localBasis = darcyFvGeometry.feLocalBasis();
+
+          // Darcy Permeability
+          const auto& K = data.volVars.permeability();
+
+          // INTEGRATION, second order as box provides linear functions
+          static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
+          const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
+          //Loop over all quadrature points in the rule
+          for (const auto& qp : rule)
+          {
+            const auto& ipLocal = qp.position();
+            const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
+            const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
+
+            //reset pressure gradient and rho at this qp
+            gradP=0.0;
+            rho=0.0;
+            //initialize the shape values
+            //TODO: move definitions outside the loop?
+            std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+            localBasis.evaluateFunction(ipElementLocal, shapeValues);
+            //and derivate values
+            using JacobianType = Dune::FieldMatrix<Scalar, 1, darcyDim>;
+            std::vector<JacobianType> shapeDerivates;
+            localBasis.evaluateJacobian(ipElementLocal, shapeDerivates);
+
+            //calc pressure gradient and rho at qp, every scv belongs to one node
+            for (const auto& scv : scvs(data.fvGeometry)){
+              gradP.axpy(elemVolVars[scv].pressure(darcyPhaseIdx),shapeDerivates[scv.indexInElement()][0]);
+              if (enableGravity){
+                rho += elemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+              }
+            }
+            //account gravity
+            if (enableGravity){
+              gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
+            }
+
+            //Add the integrated segment velocity to the sum
+            velocity.axpy(-data.segmentGeometry.integrationElement(qp.position())*qp.weight()/data.volVars.viscosity(data.darcyScvfIdx), mv(K,gradP));
+          }
+        }
+      }
+      //The integration is performed to get the average of the darcy velocity over one stokes face
+      velocity /= scvf.area();
+      return velocity;
+    }
+
+
+    // TODO: Review!
+    /*!
+    * \brief Returns the velocity vector with a different permeability tensor
+    *
+    * For the new interface condition by Elissa Eggenweiler, a pm-velocity with altered permeability tensor needs to be evaluated
+    *
+    */
+    VelocityVector newPorousMediumInterfaceVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+      VelocityVector velocity(0.0); //  velocity darcy
+      VelocityVector gradP(0.0);    // pressure gradient darcy
+      Scalar rho(0.0);              // density darcy
+
+      //Getting needed information from the darcy domain
+      const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+
+      //TODO: //Gravity changes darcy's law for calculating the velocity: ...-rho*g, + or -?
+      static const bool enableGravity = getParamFromGroup<bool>(this->couplingManager().problem(darcyIdx).paramGroup(), "Problem.EnableGravity");
+
+      // Iteraton over the different coupling segments
+      for (const auto& data : stokesContext)
+      {
+        //We are on (one of) the correct scvf(s)
+        if (scvf.index() == data.stokesScvfIdx)
+        {
+          const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
+          const auto& elemVolVars = *(data.elementVolVars);
+          const auto& darcyFvGeometry = data.fvGeometry;
+          const auto& localBasis = darcyFvGeometry.feLocalBasis();
+
+          // INTEGRATION, second order as box provides linear functions
+          static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
+          const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
+          //Loop over all quadrature points in the rule
+          for (const auto& qp : rule)
+          {
+            const auto& ipLocal = qp.position();
+            const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
+            const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
+
+            //reset pressure gradient and rho at this qp
+            gradP=0.0;
+            rho=0.0;
+            //Darcy parameters
+            const auto& epsInterface = this->couplingManager().problem(darcyIdx).spatialParams().epsInterfaceAtPos(ipGlobal);
+            const auto& M = this->couplingManager().problem(darcyIdx).spatialParams().matrixNTangentialAtPos(ipGlobal);
+
+            //initialize the shape values
+            //TODO: move definitions outside the loop?
+            std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+            localBasis.evaluateFunction(ipElementLocal, shapeValues);
+            //and derivate values
+            using JacobianType = Dune::FieldMatrix<Scalar, 1, darcyDim>;
+            std::vector<JacobianType> shapeDerivates;
+            localBasis.evaluateJacobian(ipElementLocal, shapeDerivates);
+
+            //calc pressure gradient and rho at qp, every scv belongs to one node
+            for (const auto& scv : scvs(data.fvGeometry)){
+              gradP.axpy(elemVolVars[scv].pressure(darcyPhaseIdx),shapeDerivates[scv.indexInElement()][0]);
+              if (enableGravity){
+                rho += elemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+              }
+            }
+            //account gravity
+            if (enableGravity){
+              gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
+            }
+
+            //Add the integrated segment velocity to the sum
+            velocity.axpy(-data.segmentGeometry.integrationElement(qp.position())*qp.weight()*epsInterface*epsInterface/data.volVars.viscosity(data.darcyScvfIdx), mv(M,gradP));
+          }
+        }
+      }
+      //The integration is performed to get the average of the darcy velocity over one stokes face
+      velocity /= scvf.area();
+      return velocity;
     }
 };
 
