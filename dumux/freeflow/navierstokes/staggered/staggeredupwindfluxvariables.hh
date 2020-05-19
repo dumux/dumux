@@ -208,7 +208,7 @@ private:
                                               const MomentaArray& momenta,
                                               [[maybe_unused]] const Scalar transportingVelocity,
                                               const GridFluxVariablesCache& gridFluxVarsCache,
-                                              const bool canHigherOrder)
+                                              [[maybe_unused]] const bool canHigherOrder)
     {
         const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
         if constexpr (useHigherOrder)
@@ -268,8 +268,8 @@ private:
      * \param localSubFaceIdx The local subface index
      */
     static bool canLateralSecondOrder_(const SubControlVolumeFace& ownScvf,
-                                       const bool selfIsUpstream,
-                                       const int localSubFaceIdx)
+                                       [[maybe_unused]] const bool selfIsUpstream,
+                                       [[maybe_unused]] const int localSubFaceIdx)
     {
         if constexpr (useHigherOrder)
         {
@@ -438,10 +438,10 @@ private:
     static Scalar doLateralMomentumUpwinding_([[maybe_unused]] const FVElementGeometry& fvGeometry,
                                               const SubControlVolumeFace& scvf,
                                               const MomentaArray& momenta,
-                                              const Scalar transportingVelocity,
+                                              [[maybe_unused]] const Scalar transportingVelocity,
                                               [[maybe_unused]] const int localSubFaceIdx,
                                               const GridFluxVariablesCache& gridFluxVarsCache,
-                                              const bool canHigherOrder)
+                                              [[maybe_unused]] const bool canHigherOrder)
     {
         const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
         if constexpr (useHigherOrder)
