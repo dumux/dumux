@@ -61,9 +61,10 @@ class CCTpfaFVElementGeometry<GG, true>
     using ThisType = CCTpfaFVElementGeometry<GG, true>;
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
     //! export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
@@ -181,12 +182,13 @@ class CCTpfaFVElementGeometry<GG, false>
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
     //! export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
