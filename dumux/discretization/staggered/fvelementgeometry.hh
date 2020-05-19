@@ -57,6 +57,8 @@ class StaggeredFVElementGeometry<GG, true> : public CCTpfaFVElementGeometry<GG, 
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
 
@@ -91,8 +93,9 @@ class StaggeredFVElementGeometry<GG, false>
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
     //! export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face

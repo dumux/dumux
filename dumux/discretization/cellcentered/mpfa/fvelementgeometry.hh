@@ -59,12 +59,13 @@ class CCMpfaFVElementGeometry<GG, true>
 {
     using ThisType = CCMpfaFVElementGeometry<GG, true>;
     using GridView = typename GG::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
     static constexpr int dim = GridView::dimension;
 
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
     //! export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
@@ -175,7 +176,6 @@ class CCMpfaFVElementGeometry<GG, false>
 {
     using ThisType = CCMpfaFVElementGeometry<GG, false>;
     using GridView = typename GG::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using MpfaHelper = typename GG::MpfaHelper;
 
@@ -185,6 +185,8 @@ class CCMpfaFVElementGeometry<GG, false>
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
+    //! export type of the element
+    using Element = typename GridView::template Codim<0>::Entity;
     //! export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face

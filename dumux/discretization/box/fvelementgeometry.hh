@@ -56,11 +56,12 @@ class BoxFVElementGeometry<GG, true>
     static constexpr int dimWorld = GridView::dimensionworld;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 public:
+    //! export the element type
+    using Element = typename GridView::template Codim<0>::Entity;
     //! export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
@@ -171,7 +172,6 @@ class BoxFVElementGeometry<GG, false>
     static constexpr int dimWorld = GridView::dimensionworld;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
-    using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
@@ -180,6 +180,8 @@ class BoxFVElementGeometry<GG, false>
                                              typename GG::SubControlVolume,
                                              typename GG::SubControlVolumeFace>;
 public:
+    //! export the element type
+    using Element = typename GridView::template Codim<0>::Entity;
     //! export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
