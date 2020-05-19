@@ -55,6 +55,7 @@ public:
         boundaryInfo_[eqIdx].visited = false;
         boundaryInfo_[eqIdx].isSymmetry = false;
         boundaryInfo_[eqIdx].isBeaversJoseph = false;
+        boundaryInfo_[eqIdx].isNTangential = false;
     }
 
     /*!
@@ -104,6 +105,16 @@ public:
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isBeaversJoseph = true;
     }
+    /*!
+     * \brief Set a boundary condition for a single equation to
+     *        new slip condition by Elissa Eggenweiler
+     */
+    void setNTangential(unsigned eqIdx)
+    {
+        resetEq(eqIdx);
+        boundaryInfo_[eqIdx].visited = true;
+        boundaryInfo_[eqIdx].isNTangential = true;
+    }
 
     /*!
      * \brief Returns true if an equation is used to specify a
@@ -113,6 +124,15 @@ public:
      */
     bool isBeaversJoseph(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isBeaversJoseph; }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        nTangential boundary condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isNTangential(unsigned eqIdx) const
+    { return boundaryInfo_[eqIdx].isNTangential; }
 
     /*!
      * \brief Returns true if some equation is used to specify a
@@ -126,12 +146,25 @@ public:
         return false;
     }
 
+    /*!
+     * \brief Returns true if some equation is used to specify a
+     *        nTangential boundary condition.
+     */
+    bool hasNTangential() const
+    {
+        for (int i = 0; i < numEq; ++i)
+            if (boundaryInfo_[i].isNTangential)
+                return true;
+        return false;
+    }
+
 protected:
     struct StaggeredFreeFlowBoundaryInfo
     {
         bool visited;
         bool isSymmetry;
         bool isBeaversJoseph;
+        bool isNTangential;
     };
 
     std::array<StaggeredFreeFlowBoundaryInfo, numEq> boundaryInfo_;
