@@ -229,7 +229,15 @@ public:
      */
     VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        return VelocityVector(0.0);
+        return asImp_().porousMediumVelocity(element, scvf);
+    }
+
+    /*!
+     * \brief Returns the darcy velocity vector with a different permeability tensor
+     */
+    VelocityVector newPorousMediumInterfaceVelocity(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        return asImp_().newPorousMediumInterfaceVelocity(element, scvf);
     }
 
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used
