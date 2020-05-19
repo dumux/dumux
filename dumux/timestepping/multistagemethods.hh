@@ -103,7 +103,7 @@ public:
     explicit Theta(const Scalar theta)
     : paramAlpha_{{-1.0, 1.0}}
     , paramBeta_{{1.0-theta, theta}}
-    , paramD_{{0.0, 1.0}};
+    , paramD_{{0.0, 1.0}}
     {}
 
     bool implicit () const final
@@ -162,6 +162,7 @@ public:
 template<class Scalar>
 class RungeKuttaExplicitFourthOrder final : public MultiStageMethod<Scalar>
 {
+public:
     RungeKuttaExplicitFourthOrder()
     : paramAlpha_{{{-1.0, 1.0, 0.0, 0.0, 0.0},
                    {-1.0, 0.0, 1.0, 0.0, 0.0},
@@ -171,7 +172,7 @@ class RungeKuttaExplicitFourthOrder final : public MultiStageMethod<Scalar>
                   {0.0, 0.5, 0.0, 0.0, 0.0},
                   {0.0, 0.0, 1.0, 0.0, 0.0},
                   {1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0, 0.0}}}
-    , paramD_{{0.0, 0.5, 0.5, 1.0, 1.0}};
+    , paramD_{{0.0, 0.5, 0.5, 1.0, 1.0}}
     {}
 
     bool implicit () const final

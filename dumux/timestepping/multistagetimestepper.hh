@@ -39,25 +39,26 @@ template<class Scalar>
 class MultiStageParams
 {
     struct Params {
-        Scalar alpha, betaDt, timeAtStage;
+        Scalar alpha, betaDt, timeAtStage, dtFraction;
         bool skipTemporal, skipSpatial;
     };
 public:
     //! Extract params for stage i from method m
-    StageParams(std::size_t i, const MultiStageMethod<Scalar>& m, const Scalar t, const Scalar dt)
+    MultiStageParams(const MultiStageMethod<Scalar>& m, std::size_t i, const Scalar t, const Scalar dt)
     : size_(i+1)
     {
         params_.resize(size_);
         for (std::size_t k = 0; k < size_; ++k)
         {
-            auto p = params_[k];
-            params_.alpha = m.temporalWeight(i, k);
-            params_.betaDt = m.spatialWeight(i, k)*dt;
-            params_.timeAtStage = t + m.timeStepWeight(k)*dt;
+            auto& p = params_[k];
+            p.alpha = m.temporalWeight(i, k);
+            p.betaDt = m.spatialWeight(i, k)*dt;
+            p.timeAtStage = t + m.timeStepWeight(k)*dt;
+            p.dtFraction = m.timeStepWeight(k);
 
             using std::abs;
-            params_.skipTemporal = (abs(params_.alpha) < 1e-6);
-            params_.skipSpatial = (abs(params_.beta) < 1e-6);
+            p.skipTemporal = (abs(p.alpha) < 1e-6);
+            p.skipSpatial = (abs(p.betaDt) < 1e-6);
         }
     }
 
@@ -75,6 +76,10 @@ public:
     //! the time at which we have to evaluate the operators
     Scalar timeAtStage (std::size_t k) const
     { return params_[k].timeAtStage; }
+
+    //! the fraction of a time step corresponding to the k-th stage
+    Scalar timeStepFraction (std::size_t k) const
+    { return params_[k].dtFraction; }
 
     //! If \f$ \alpha_{ik} = 0\f$
     Scalar skipTemporal (std::size_t k) const
@@ -120,29 +125,36 @@ public:
     void pushSolution(SolutionVector& sol)
     {
         sols_.push_back(&sol);
-        sols_.push_back(false);
+        owned_.push_back(false);
     }
 
     //! create an intermediate/temporary solution
     void createSolution(const SolutionVector& guess)
     {
         sols_.push_back(new SolutionVector(guess));
-        sols_.push_back(true);
+        owned_.push_back(true);
     }
 
     auto size() const
     { return sols_.size(); }
 
     SolutionVector& operator[] (std::size_t i)
-    { return *sol_[i]; }
+    { return *sols_[i]; }
+
+    const SolutionVector& operator[] (std::size_t i) const
+    { return *sols_[i]; }
 
     SolutionVector& back()
+    { return *sols_.back(); }
+
+    const SolutionVector& back() const
     { return *sols_.back(); }
 
 private:
     std::vector<SolutionVector*> sols_;
     std::vector<bool> owned_;
 };
+
 
 /*!
  * \brief Time stepping with a multi-stage method
@@ -153,11 +165,18 @@ private:
 template<class PDESolver>
 class MultiStageTimeStepper
 {
-    using Scalar = typename PDESolver::Scalar;
+    using Scalar = typename PDESolver::Assembler::Scalar;
     using SolutionVector = typename PDESolver::Assembler::ResidualType;
     using Solutions = MultiStageSolutions<SolutionVector>;
 
 public:
+
+    /*!
+     * \brief The constructor
+     * \param pdeSolver Solver class for solving a PDE in each stage
+     * \param msMethod The multi-stage method which is to be used for time integration
+     * \todo TODO: Add time step control if the pde solver doesn't converge
+     */
     MultiStageTimeStepper(std::shared_ptr<PDESolver> pdeSolver,
                           std::shared_ptr<const MultiStageMethod<Scalar>> msMethod)
     : pdeSolver_(pdeSolver)
@@ -166,31 +185,41 @@ public:
 
     /*!
      * \brief Advance one time step of the given time loop
+     * \param x The container in which to write the solution of the next time step.
+     *          This is also used as the initial guess.
+     * \param t The current time level
+     * \param dt The time step size to be used
      * TODO: Add time step control if the pde solver doesn't converge
      */
-    void step(SolutionVector& sol, SolutionVector& solOld, const Scalar tOld, const Scalar dt)
+    void step(SolutionVector& x, const Scalar t, const Scalar dt)
     {
-        const auto numStages = method_->numStages();
+        const auto numStages = msMethod_->numStages();
         Solutions solutions(numStages);
 
         // The solution of stage zero is oldOld (\f$ x^{n}\f$).
-        solutions.pushSolution(solOld);
+        solutions.createSolution(x);
+
+        // make sure the assembler gets rid of stuff from the last time integration
+        pdeSolver_->assembler().prepareTimeIntegration(numStages);
 
         // For each intermediate stage we solve for the stage solution.
         // In the last stage (stageIdx = numStages), we obtain the solution (\f$ x^{n+1}\f$)
+        // and write it into the provided container
         for (auto stageIdx = 1UL; stageIdx <= numStages; ++stageIdx)
         {
             if (stageIdx == numStages)
-                solutions.pushSolution(sol);
+            {
+                solutions.pushSolution(x);
+                solutions.back() = solutions[stageIdx-1];
+            }
             else
                 solutions.createSolution(solutions[stageIdx-1]);
 
             // extract parameters for this stage from the time stepping method
-            auto stageParams = StageParams(*msMethod_, stageIdx, tOld, dt);
+            auto stageParams = std::make_shared<MultiStageParams<Scalar>>(*msMethod_, stageIdx, t, dt);
 
-            // prepare the assembler
-            pdeSolver_->assembler().setMultiStageSolutions(solutions);
-            pdeSolver_->assembler().setStageParams(std::move(stageParams));
+            // prepare the assembler for this stage
+            pdeSolver_->assembler().prepareStage(solutions, stageParams);
 
             // assemble & solve
             pdeSolver_->solve(solutions.back());
