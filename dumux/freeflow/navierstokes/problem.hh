@@ -212,13 +212,33 @@ public:
         return asImp_().alphaBJ(scvf) / sqrt(asImp_().permeability(element, scvf));
     }
 
+    Scalar epsInterface(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the epsInterface value must be returned in the acutal problem");}
+
+    Scalar factorNMomentum(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNMomentum value must be returned in the acutal problem");}
+
+    Scalar factorNTangential(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNTangential value must be returned in the acutal problem");}
+
+    Dune::FieldMatrix<Scalar, dim, dim> matrixNTangential(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the matrixNTangential value must be returned in the acutal problem");}
+
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
      */
     VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        return VelocityVector(0.0);
+        return VelocityVector(0.0);//TODO: -> Dont force implementation?
     }
+
+    /*!
+     * \brief Returns the darcy velocity vector with a different permeability tensor
+     */
+    VelocityVector newPorousMediumInterfaceVelocity(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the newPorousMediumInterfaceVelocity must be returned in the acutal problem");
+      }
 
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used
     const Scalar beaversJosephVelocity(const Element& element,
@@ -240,6 +260,26 @@ public:
         return (tangentialVelocityGradient*distanceNormalToBoundary
               + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * betaBJ * distanceNormalToBoundary
               + velocitySelf) / (betaBJ*distanceNormalToBoundary + 1.0);
+    }
+
+    //TODO: I assume an inverted sign for factorNTangential...
+    //! helper function to evaluate the slip velocity on the boundary when the new tangential condition is used
+    const Scalar nTangentialVelocity(const Element& element,
+                                       const SubControlVolume& scv,
+                                       const SubControlVolumeFace& ownScvf, //stehendes
+                                       const SubControlVolumeFace& faceOnPorousBoundary, //liegendes
+                                       const Scalar velocitySelf, //vel auf stehendem
+                                       const Scalar tangentialVelocityGradient) const //dv/dx=0
+    {
+        const Scalar factor = 1.0/(asImp_().epsInterface(faceOnPorousBoundary) * asImp_().factorNTangential(faceOnPorousBoundary));
+        const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
+
+        // create a unit normal vector oriented in positive coordinate direction
+        GlobalPosition orientation = ownScvf.unitOuterNormal();
+        orientation[ownScvf.directionIndex()] = 1.0;
+        return (tangentialVelocityGradient*distanceNormalToBoundary
+              + asImp_().newPorousMediumInterfaceVelocity(element, faceOnPorousBoundary) * orientation * factor * distanceNormalToBoundary
+              + velocitySelf) / (factor*distanceNormalToBoundary + 1.0);
     }
 
 private:
