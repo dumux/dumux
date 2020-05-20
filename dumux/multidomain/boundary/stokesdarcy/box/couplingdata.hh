@@ -33,7 +33,7 @@
 //Needed for nMomentumCouplingCondition
 #include <dumux/freeflow/navierstokes/staggered/velocitygradients.hh>
 #include <dumux/discretization/staggered/freeflow/boundarytypes.hh>
-#include <dune/common/std/optional.hh>
+#include <optional>
 
 namespace Dumux {
 /*!
@@ -201,12 +201,12 @@ public:
 
         // If the current scvf is on a boundary, check if there is a Neumann BC for the stress in tangential direction.
         // Create a boundaryTypes object (will be empty if not at a boundary).
-        Dune::Std::optional<BoundaryTypes> currentScvfBoundaryTypes;
+        std::optional<BoundaryTypes<stokesIdx>> currentScvfBoundaryTypes;
         if (scvf.boundary())
             currentScvfBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, scvf));
 
         // Getting boundary type for lateral face
-        Dune::Std::optional<BoundaryTypes<stokesIdx>> lateralFaceBoundaryTypes;
+        std::optional<BoundaryTypes<stokesIdx>> lateralFaceBoundaryTypes;
         if (lateralScvf.boundary())
         {
           lateralFaceBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, lateralScvf));
