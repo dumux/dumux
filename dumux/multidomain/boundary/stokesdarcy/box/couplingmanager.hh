@@ -34,7 +34,8 @@
 #include <dumux/multidomain/staggeredcouplingmanager.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
 
-#include "couplingdata.hh"
+#include "../couplingmanager.hh"
+#include "../couplingdata.hh"
 #include "couplingmapper.hh"
 
 namespace Dumux {
@@ -45,18 +46,16 @@ namespace Dumux {
  */
 template<class MDTraits>
 class StokesDarcyCouplingManagerImplementation<MDTraits, DiscretizationMethod::box>
-: public virtual StaggeredCouplingManager<MDTraits>
+: public virtual StaggeredCouplingManager<MDTraits>, public FreeFlowPorousMediumCouplingManagerBase<MDTraits>
 {
     using Scalar = typename MDTraits::Scalar;
     using ParentType = StaggeredCouplingManager<MDTraits>;
 
 public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto stokesIdx = stokesCellCenterIdx;
-    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
+    static constexpr auto freeFlowFaceIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::freeFlowFaceIdx;
+    static constexpr auto freeFlowCellCenterIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::freeFlowCellCenterIdx;
+    static constexpr auto freeFlowIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::freeFlowIdx;
+    static constexpr auto porousMediumIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::porousMediumIdx;
 
 private:
 
@@ -92,32 +91,31 @@ private:
 
     using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;
 
-    using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
+    using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;
 
     using CouplingMapper = StokesDarcyCouplingMapperBox<MDTraits>;
 
     // Each context object contains the data related to one coupling segment
     struct StationaryStokesCouplingContext
     {
-        Element<darcyIdx> element;
-        FVElementGeometry<darcyIdx> fvGeometry;
+        Element<porousMediumIdx> element;
+        FVElementGeometry<porousMediumIdx> fvGeometry;
         std::size_t darcyScvfIdx;
         std::size_t stokesScvfIdx;
-        VolumeVariables<darcyIdx> volVars;
-        std::unique_ptr< ElementVolumeVariables<darcyIdx> > elementVolVars;
-        std::unique_ptr< ElementFluxVariablesCache<darcyIdx> > elementFluxVarsCache;
+        VolumeVariables<porousMediumIdx> volVars;
+        std::unique_ptr< ElementVolumeVariables<porousMediumIdx> > elementVolVars;
+        std::unique_ptr< ElementFluxVariablesCache<porousMediumIdx> > elementFluxVarsCache;
         typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
     };
 
-    // Each context object contains the data related to one coupling segment
     struct StationaryDarcyCouplingContext
     {
-        Element<stokesIdx> element;
-        FVElementGeometry<stokesIdx> fvGeometry;
+        Element<freeFlowIdx> element;
+        FVElementGeometry<freeFlowIdx> fvGeometry;
         std::size_t stokesScvfIdx;
         std::size_t darcyScvfIdx;
         VelocityVector velocity;
-        VolumeVariables<stokesIdx> volVars;
+        VolumeVariables<freeFlowIdx> volVars;
         typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
     };
 public:
@@ -127,8 +125,8 @@ public:
     using CouplingData = StokesDarcyCouplingData<MDTraits, StokesDarcyCouplingManager<MDTraits>>;
 
     //! Constructor
-    StokesDarcyCouplingManagerImplementation(std::shared_ptr<const GridGeometry<stokesIdx>> stokesFvGridGeometry,
-                                             std::shared_ptr<const GridGeometry<darcyIdx>> darcyFvGridGeometry)
+    StokesDarcyCouplingManagerImplementation(std::shared_ptr<const GridGeometry<freeFlowIdx>> stokesFvGridGeometry,
+                                             std::shared_ptr<const GridGeometry<porousMediumIdx>> darcyFvGridGeometry)
     { }
 
     /*!
@@ -137,8 +135,8 @@ public:
     // \{
 
     //! Initialize the coupling manager
-    void init(std::shared_ptr<const Problem<stokesIdx>> stokesProblem,
-              std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
+    void init(std::shared_ptr<const Problem<freeFlowIdx>> stokesProblem,
+              std::shared_ptr<const Problem<porousMediumIdx>> darcyProblem,
               const SolutionVector& curSol)
     {
         if (Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->spatialParams().gravity({})))
@@ -192,12 +190,12 @@ public:
     /*!
      * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Darcy information)
      */
-    template<std::size_t i, class Assembler, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
-    void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element, const Assembler& assembler) const
+    template<std::size_t i, class Assembler, std::enable_if_t<(i == freeFlowCellCenterIdx || i == freeFlowFaceIdx), int> = 0>
+    void bindCouplingContext(Dune::index_constant<i> domainI, const Element<freeFlowCellCenterIdx>& element, const Assembler& assembler) const
     {
         stokesCouplingContext_.clear();
 
-        const auto stokesElementIdx = this->problem(stokesIdx).gridGeometry().elementMapper().index(element);
+        const auto stokesElementIdx = this->problem(freeFlowIdx).gridGeometry().elementMapper().index(element);
         boundStokesElemIdx_ = stokesElementIdx;
 
         // do nothing if the element is not coupled to the other domain
@@ -206,30 +204,30 @@ public:
 
         // prepare the coupling context
         const auto& couplingSegments = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
-        auto darcyFvGeometry = localView(this->problem(darcyIdx).gridGeometry());
+        auto darcyFvGeometry = localView(this->problem(porousMediumIdx).gridGeometry());
 
         for(const auto& couplingSegment : couplingSegments)
         {
-            const auto& darcyElement = this->problem(darcyIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
+            const auto& darcyElement = this->problem(porousMediumIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
             darcyFvGeometry.bind(darcyElement);
             const auto& scvf = darcyFvGeometry.scvf(couplingSegment.scvfIdx);
             const auto& scv = darcyFvGeometry.scv(scvf.insideScvIdx());
 
-            auto darcyElemVolVars = localView(assembler.gridVariables(darcyIdx).curGridVolVars());
-            auto darcyElemFluxVarsCache = localView(assembler.gridVariables(darcyIdx).gridFluxVarsCache());
+            auto darcyElemVolVars = localView(assembler.gridVariables(porousMediumIdx).curGridVolVars());
+            auto darcyElemFluxVarsCache = localView(assembler.gridVariables(porousMediumIdx).gridFluxVarsCache());
 
-            darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[darcyIdx]);
-            darcyElemVolVars.bindElement(darcyElement, darcyFvGeometry, this->curSol()[darcyIdx]);
+            darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
+            darcyElemVolVars.bindElement(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
             darcyElemFluxVarsCache.bind(darcyElement, darcyFvGeometry, darcyElemVolVars);
 
-            const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
-            VolumeVariables<darcyIdx> darcyVolVars;
-            darcyVolVars.update(darcyElemSol, this->problem(darcyIdx), darcyElement, scv);
+            const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
+            VolumeVariables<porousMediumIdx> darcyVolVars;
+            darcyVolVars.update(darcyElemSol, this->problem(porousMediumIdx), darcyElement, scv);
 
             // add the context
             stokesCouplingContext_.push_back({darcyElement, darcyFvGeometry, couplingSegment.scvfIdx, couplingSegment.flipScvfIdx, darcyVolVars,
-                                              std::make_unique< ElementVolumeVariables<darcyIdx> >( std::move(darcyElemVolVars)),
-                                              std::make_unique< ElementFluxVariablesCache<darcyIdx> >( std::move(darcyElemFluxVarsCache)),
+                                              std::make_unique< ElementVolumeVariables<porousMediumIdx> >( std::move(darcyElemVolVars)),
+                                              std::make_unique< ElementFluxVariablesCache<porousMediumIdx> >( std::move(darcyElemFluxVarsCache)),
                                               couplingSegment.geometry});
         }
     }
@@ -238,11 +236,11 @@ public:
      * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Stokes information)
      */
     template<class Assembler>
-    void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element, const Assembler& assembler) const
+    void bindCouplingContext(Dune::index_constant<porousMediumIdx> domainI, const Element<porousMediumIdx>& element, const Assembler& assembler) const
     {
         darcyCouplingContext_.clear();
 
-        const auto darcyElementIdx = this->problem(darcyIdx).gridGeometry().elementMapper().index(element);
+        const auto darcyElementIdx = this->problem(porousMediumIdx).gridGeometry().elementMapper().index(element);
         boundDarcyElemIdx_ = darcyElementIdx;
 
         // do nothing if the element is not coupled to the other domain
@@ -251,11 +249,11 @@ public:
 
         // prepare the coupling context
         const auto& couplingSegments = couplingMapper_.darcyElementToStokesElementMap().at(darcyElementIdx);
-        auto stokesFvGeometry = localView(this->problem(stokesIdx).gridGeometry());
+        auto stokesFvGeometry = localView(this->problem(freeFlowIdx).gridGeometry());
 
         for(const auto& couplingSegment : couplingSegments)
         {
-            const auto& stokesElement = this->problem(stokesIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
+            const auto& stokesElement = this->problem(freeFlowIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
             stokesFvGeometry.bindElement(stokesElement);
 
             VelocityVector faceVelocity(0.0);
@@ -263,16 +261,16 @@ public:
             for(const auto& scvf : scvfs(stokesFvGeometry))
             {
                 if(scvf.index() == couplingSegment.scvfIdx)
-                    faceVelocity[scvf.directionIndex()] = this->curSol()[stokesFaceIdx][scvf.dofIndex()];
+                    faceVelocity[scvf.directionIndex()] = this->curSol()[freeFlowFaceIdx][scvf.dofIndex()];
             }
 
-            using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
-            const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][couplingSegment.eIdx];
+            using PriVarsType = typename VolumeVariables<freeFlowCellCenterIdx>::PrimaryVariables;
+            const auto& cellCenterPriVars = this->curSol()[freeFlowCellCenterIdx][couplingSegment.eIdx];
             const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
 
-            VolumeVariables<stokesIdx> stokesVolVars;
+            VolumeVariables<freeFlowIdx> stokesVolVars;
             for(const auto& scv : scvs(stokesFvGeometry))
-                stokesVolVars.update(elemSol, this->problem(stokesIdx), stokesElement, scv);
+                stokesVolVars.update(elemSol, this->problem(freeFlowIdx), stokesElement, scv);
 
             // add the context
             darcyCouplingContext_.push_back({stokesElement, stokesFvGeometry,
@@ -285,11 +283,11 @@ public:
      * \brief Update the coupling context for the Darcy residual w.r.t. Darcy DOFs
      */
     template<class LocalAssemblerI>
-    void updateCouplingContext(Dune::index_constant<darcyIdx> domainI,
+    void updateCouplingContext(Dune::index_constant<porousMediumIdx> domainI,
                                const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<darcyIdx> domainJ,
+                               Dune::index_constant<porousMediumIdx> domainJ,
                                std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<darcyIdx>& priVarsJ,
+                               const PrimaryVariables<porousMediumIdx>& priVarsJ,
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
@@ -299,27 +297,27 @@ public:
      * \brief Update the coupling context for the Darcy residual w.r.t. the Stokes cell-center DOFs (DarcyToCC)
      */
     template<class LocalAssemblerI>
-    void updateCouplingContext(Dune::index_constant<darcyIdx> domainI,
+    void updateCouplingContext(Dune::index_constant<porousMediumIdx> domainI,
                                const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<stokesCellCenterIdx> domainJ,
+                               Dune::index_constant<freeFlowCellCenterIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<stokesCellCenterIdx>& priVars,
+                               const PrimaryVariables<freeFlowCellCenterIdx>& priVars,
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
 
         for (auto& data : darcyCouplingContext_)
         {
-            const auto stokesElemIdx = this->problem(stokesIdx).gridGeometry().elementMapper().index(data.element);
+            const auto stokesElemIdx = this->problem(freeFlowIdx).gridGeometry().elementMapper().index(data.element);
 
             if(stokesElemIdx != dofIdxGlobalJ)
                 continue;
 
-            using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
+            using PriVarsType = typename VolumeVariables<freeFlowCellCenterIdx>::PrimaryVariables;
             const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(priVars);
 
             for(const auto& scv : scvs(data.fvGeometry))
-                data.volVars.update(elemSol, this->problem(stokesIdx), data.element, scv);
+                data.volVars.update(elemSol, this->problem(freeFlowIdx), data.element, scv);
         }
     }
 
@@ -327,9 +325,9 @@ public:
      * \brief Update the coupling context for the Darcy residual w.r.t. the Stokes face DOFs (DarcyToFace)
      */
     template<class LocalAssemblerI>
-    void updateCouplingContext(Dune::index_constant<darcyIdx> domainI,
+    void updateCouplingContext(Dune::index_constant<porousMediumIdx> domainI,
                                const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<stokesFaceIdx> domainJ,
+                               Dune::index_constant<freeFlowFaceIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
                                const PrimaryVariables<1>& priVars,
                                int pvIdxJ)
@@ -349,12 +347,12 @@ public:
     /*!
      * \brief Update the coupling context for the Stokes cc residual w.r.t. the Darcy DOFs (FaceToDarcy)
      */
-    template<std::size_t i, class LocalAssemblerI, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
+    template<std::size_t i, class LocalAssemblerI, std::enable_if_t<(i == freeFlowCellCenterIdx || i == freeFlowFaceIdx), int> = 0>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<darcyIdx> domainJ,
+                               Dune::index_constant<porousMediumIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<darcyIdx>& priVars,
+                               const PrimaryVariables<porousMediumIdx>& priVars,
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
@@ -362,19 +360,19 @@ public:
         for (auto& data : stokesCouplingContext_)
         {
             //Derivatives are assumed to be always calculated with respect to unknowns associated with its own element
-            const auto darcyElemSol = elementSolution(data.element, this->curSol()[darcyIdx], this->problem(darcyIdx).gridGeometry());
+            const auto darcyElemSol = elementSolution(data.element, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
 
             const auto& scvf = data.fvGeometry.scvf(data.darcyScvfIdx);
             const auto& scv = data.fvGeometry.scv(scvf.insideScvIdx());
             if(scv.dofIndex() == dofIdxGlobalJ)
-                data.volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
+                data.volVars.update(darcyElemSol, this->problem(porousMediumIdx), data.element, scv);
 
             for (auto&& scv : scvs(data.fvGeometry))
             {
                 if(scv.dofIndex() == dofIdxGlobalJ)
                 {
                     auto& volVars = (*data.elementVolVars)[scv];
-                    volVars.update(darcyElemSol, this->problem(darcyIdx), data.element, scv);
+                    volVars.update(darcyElemSol, this->problem(porousMediumIdx), data.element, scv);
                 }
             }
         }
@@ -393,7 +391,7 @@ public:
     /*!
      * \brief Access the coupling context needed for the Stokes domain
      */
-    const auto& stokesCouplingContext(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    const auto& stokesCouplingContext(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
         if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
             DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
@@ -410,9 +408,9 @@ public:
     /*!
      * \brief Access the coupling context needed for the Darcy domain
      */
-    const auto& darcyCouplingContext(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
+    const auto& darcyCouplingContext(const Element<porousMediumIdx>& element, const SubControlVolumeFace<porousMediumIdx>& scvf) const
     {
-        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != this->problem(darcyIdx).gridGeometry().elementMapper().index(element))
+        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != this->problem(porousMediumIdx).gridGeometry().elementMapper().index(element))
             DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
 
         for(const auto& context : darcyCouplingContext_)
@@ -427,9 +425,9 @@ public:
     /*!
      * \brief Access the coupling context needed for the Darcy domain
      */
-    const auto& darcyCouplingContextVector(const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
+    const auto& darcyCouplingContextVector(const Element<porousMediumIdx>& element, const SubControlVolumeFace<porousMediumIdx>& scvf) const
     {
-        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != this->problem(darcyIdx).gridGeometry().elementMapper().index(element))
+        if (darcyCouplingContext_.empty() || boundDarcyElemIdx_ != this->problem(porousMediumIdx).gridGeometry().elementMapper().index(element))
             DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
 
         return darcyCouplingContext_;
@@ -438,7 +436,7 @@ public:
     /*!
      * \brief Access the coupling context needed for the Stokes domain
      */
-    const auto& stokesCouplingContextVector(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    const auto& stokesCouplingContextVector(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
         if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != scvf.insideScvIdx())
             DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
@@ -453,9 +451,9 @@ public:
     /*!
      * \brief The Stokes cell center coupling stencil w.r.t. Darcy DOFs
      */
-    const CouplingStencil& couplingStencil(Dune::index_constant<stokesCellCenterIdx> domainI,
-                                           const Element<stokesIdx>& element,
-                                           Dune::index_constant<darcyIdx> domainJ) const
+    const CouplingStencil& couplingStencil(Dune::index_constant<freeFlowCellCenterIdx> domainI,
+                                           const Element<freeFlowIdx>& element,
+                                           Dune::index_constant<porousMediumIdx> domainJ) const
     {
         const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         if(stokesCellCenterCouplingStencils_.count(eIdx))
@@ -478,9 +476,9 @@ public:
      * \brief The coupling stencil of domain I, i.e. which domain J dofs
      *        the given domain I element's residual depends on.
      */
-    const CouplingStencil& couplingStencil(Dune::index_constant<darcyIdx> domainI,
-                                           const Element<darcyIdx>& element,
-                                           Dune::index_constant<stokesCellCenterIdx> domainJ) const
+    const CouplingStencil& couplingStencil(Dune::index_constant<porousMediumIdx> domainI,
+                                           const Element<porousMediumIdx>& element,
+                                           Dune::index_constant<freeFlowCellCenterIdx> domainJ) const
     {
         const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         if(darcyToStokesCellCenterCouplingStencils_.count(eIdx))
@@ -493,9 +491,9 @@ public:
      * \brief The coupling stencil of domain I, i.e. which domain J dofs
      *        the given domain I element's residual depends on.
      */
-    const CouplingStencil& couplingStencil(Dune::index_constant<darcyIdx> domainI,
-                                           const Element<darcyIdx>& element,
-                                           Dune::index_constant<stokesFaceIdx> domainJ) const
+    const CouplingStencil& couplingStencil(Dune::index_constant<porousMediumIdx> domainI,
+                                           const Element<porousMediumIdx>& element,
+                                           Dune::index_constant<freeFlowFaceIdx> domainJ) const
     {
         const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         if (darcyToStokesFaceCouplingStencils_.count(eIdx))
@@ -510,16 +508,16 @@ public:
      */
     template<std::size_t i, std::size_t j>
     const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
-                                           const SubControlVolumeFace<stokesIdx>& scvf,
+                                           const SubControlVolumeFace<freeFlowIdx>& scvf,
                                            Dune::index_constant<j> domainJ) const
     { return emptyStencil_; }
 
     /*!
      * \brief The coupling stencil of a Stokes face w.r.t. Darcy DOFs
      */
-    const CouplingStencil& couplingStencil(Dune::index_constant<stokesFaceIdx> domainI,
-                                           const SubControlVolumeFace<stokesIdx>& scvf,
-                                           Dune::index_constant<darcyIdx> domainJ) const
+    const CouplingStencil& couplingStencil(Dune::index_constant<freeFlowFaceIdx> domainI,
+                                           const SubControlVolumeFace<freeFlowIdx>& scvf,
+                                           Dune::index_constant<porousMediumIdx> domainJ) const
     {
         const auto faceDofIdx = scvf.dofIndex();
         if(stokesFaceCouplingStencils_.count(faceDofIdx))
@@ -547,7 +545,7 @@ public:
     /*!
      * \brief Returns whether a given free flow scvf is coupled to the other domain
      */
-    bool isCoupledEntity(Dune::index_constant<stokesIdx>, const SubControlVolumeFace<stokesFaceIdx>& scvf) const
+    bool isCoupledEntity(Dune::index_constant<freeFlowIdx>, const SubControlVolumeFace<freeFlowFaceIdx>& scvf) const
     {
         return stokesFaceCouplingStencils_.count(scvf.dofIndex());
     }
@@ -555,9 +553,9 @@ public:
     /*!
      * \brief Returns whether a given free flow scvf is coupled to the other domain
      */
-    bool isCoupledEntity(Dune::index_constant<darcyIdx>, const Element<darcyIdx>& element, const SubControlVolumeFace<darcyIdx>& scvf) const
+    bool isCoupledEntity(Dune::index_constant<porousMediumIdx>, const Element<porousMediumIdx>& element, const SubControlVolumeFace<porousMediumIdx>& scvf) const
     {
-        return couplingMapper_.isCoupledDarcyScvf(this->problem(darcyIdx).gridGeometry().elementMapper().index(element),
+        return couplingMapper_.isCoupledDarcyScvf(this->problem(porousMediumIdx).gridGeometry().elementMapper().index(element),
                                                   scvf.index());
     }
 
