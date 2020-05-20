@@ -38,6 +38,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
@@ -63,9 +64,37 @@ int main(int argc, char** argv) try
     // parse command line arguments and input file
     Parameters::init(argc, argv);
 
-    // try to create a grid (from the given grid file or the input file)
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    // create a grid
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    Dumux::GridManager<Grid> gridManager;
+
+#if HAVE_DUNE_SUBGRID
+    const bool isStaircaseGeometry = getParam<bool>("Problem.IsStaircaseGeometry", false);
+
+    // cut out elements within the stair-case region
+    auto selector = [&](const auto& element)
+    {
+        if (!isStaircaseGeometry)
+            return true;
+
+        const auto globalPos = element.geometry().center();
+        const auto x = globalPos[0];
+        const auto y = globalPos[1];
+
+        auto eps = 1e-12;
+        static const auto lowerLeft = getParam<std::decay_t<decltype(globalPos)>>("Grid.LowerLeft");
+
+        if (x < eps || y > (lowerLeft[1] + 1.0 - eps))
+            return true;
+
+        const bool isBelowCurve = y < (x/2.0 - std::floor(x/2.0) + lowerLeft[1] + eps);
+        return !isBelowCurve;
+    };
+
+    gridManager.init(selector, "Internal");
+#else
     gridManager.init();
+#endif
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid

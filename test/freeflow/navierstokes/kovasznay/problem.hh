@@ -31,6 +31,10 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#if HAVE_DUNE_SUBGRID
+#include <dune/subgrid/subgrid.hh>
+#endif
+
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
@@ -62,7 +66,16 @@ struct FluidSystem<TypeTag, TTag::KovasznayTest>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::KovasznayTest> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::KovasznayTest>
+{
+    using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >;
+
+#if HAVE_DUNE_SUBGRID
+    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
+#else
+    using type = HostGrid;
+#endif
+};
 
 // Set the problem property
 template<class TypeTag>
