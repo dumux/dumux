@@ -28,7 +28,7 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
-#include <dumux/multidomain/couplingmanager.hh> //TODO: Why is this the right coupling manager, not the one in this folder?
+#include <dumux/multidomain/couplingmanager.hh> //TODO by Lars: Why is this the right coupling manager, not the one in this folder?
 
 //Needed for nMomentumCouplingCondition
 #include <dumux/freeflow/navierstokes/staggered/velocitygradients.hh>
@@ -139,7 +139,8 @@ public:
         return momentumFlux;
     }
 
-    //TODO: Review!
+    //TODO by Lars: Review!
+    //TODO by Lars: Use momentumCouplingCondition(...)/introduce new method to remove dulplicated code?
     /*!
     * \brief Returns the new interface condition momentum flux across the coupling boundary.
     *
@@ -224,10 +225,10 @@ public:
             currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
         // Calculating additional term for momentum flux
-        //TODO: inverted sign...
+        //TODO by Lars: inverted sign...
         const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
-        //TODO: viscosity?
-        //TODO: ij should be 0 for unsymm, is this fullfilled? yes, but just if nTangential/bj/pressure bc is used
+        //TODO by Lars: viscosity?
+        //TODO by Lars: ij should be 0 for unsymm, is this fullfilled? yes, but just if nTangential/bj/pressure bc is used
         // Averaging the gradients to get evaluation at the center
         momentumFlux += 1.0/numSubFaces*Nsbl * (velocityGrad_ji + velocityGrad_ij);
       }
@@ -236,7 +237,7 @@ public:
       return momentumFlux;
     }
 
-    // TODO: Review!
+    // TODO by Lars: Review!
     /*!
     * \brief Returns the velocity vector at the interface of the porous medium according to darcys law
     *
@@ -252,8 +253,6 @@ public:
 
       //Getting needed information from the darcy domain
       const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
-
-      //TODO: //Gravity changes darcy's law for calculating the velocity: ...-rho*g, + or -?
       static const bool enableGravity = getParamFromGroup<bool>(this->couplingManager().problem(darcyIdx).paramGroup(), "Problem.EnableGravity");
 
       // Iteraton over the different coupling segments
@@ -300,6 +299,7 @@ public:
               }
             }
             //account gravity
+            //TODO by Lars: Gravity changes darcy's law for calculating the velocity: Why is -rho*g correct?
             if (enableGravity){
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
             }
@@ -315,7 +315,7 @@ public:
     }
 
 
-    // TODO: Review!
+    // TODO by Lars: Review!
     /*!
     * \brief Returns the velocity vector with a different permeability tensor
     *
@@ -331,7 +331,6 @@ public:
       //Getting needed information from the darcy domain
       const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
-      //TODO: //Gravity changes darcy's law for calculating the velocity: ...-rho*g, + or -?
       static const bool enableGravity = getParamFromGroup<bool>(this->couplingManager().problem(darcyIdx).paramGroup(), "Problem.EnableGravity");
 
       // Iteraton over the different coupling segments
@@ -363,7 +362,7 @@ public:
             const auto& M = this->couplingManager().problem(darcyIdx).spatialParams().matrixNTangentialAtPos(ipGlobal);
 
             //initialize the shape values
-            //TODO: move definitions outside the loop?
+            //TODO by Lars: move definitions outside the loop?
             std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
             localBasis.evaluateFunction(ipElementLocal, shapeValues);
             //and derivate values
@@ -379,6 +378,7 @@ public:
               }
             }
             //account gravity
+            //TODO by Lars: Gravity changes darcy's law for calculating the velocity: Why is -rho*g correct?
             if (enableGravity){
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
             }
