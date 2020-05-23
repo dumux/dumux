@@ -244,14 +244,6 @@ public:
         return VelocityVector(0.0);//TODO: -> Dont force implementation?
     }
 
-    /*!
-     * \brief Returns the darcy velocity vector with a different permeability tensor
-     */
-    VelocityVector newPorousMediumInterfaceVelocity(const Element& element, const SubControlVolumeFace& scvf) const
-    {
-        DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the newPorousMediumInterfaceVelocity must be returned in the acutal problem");
-      }
-
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used
     const Scalar beaversJosephVelocity(const Element& element,
                                        const SubControlVolume& scv,
@@ -290,7 +282,7 @@ public:
         GlobalPosition orientation = ownScvf.unitOuterNormal();
         orientation[ownScvf.directionIndex()] = 1.0;
         return (tangentialVelocityGradient*distanceNormalToBoundary
-              + asImp_().newPorousMediumInterfaceVelocity(element, faceOnPorousBoundary) * orientation * factor * distanceNormalToBoundary
+              + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * factor * distanceNormalToBoundary
               + velocitySelf) / (factor*distanceNormalToBoundary + 1.0);
     }
 
