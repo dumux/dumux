@@ -2,7 +2,7 @@
 project("dumux" C CXX)
 
 # general stuff
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.13)
 
 if(NOT (dune-common_DIR
         OR dune-common_ROOT
