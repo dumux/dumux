@@ -32,6 +32,7 @@
 #include <dune/grid/common/partitionset.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 namespace Dumux {
 
@@ -419,59 +420,16 @@ private:
 template<class GridView, class DofMapper, int dofCodim>
 class ParallelVectorHelper
 {
-    /*!
-     * \brief GatherScatter implementation that makes a right hand side in the box model consistent.
-     */
-    template<class V>
-    class ConsistencyBoxGatherScatter
-    : public Dune::CommDataHandleIF<ConsistencyBoxGatherScatter<V>,typename V::block_type>
-    {
-    public:
-        using DataType = typename V::block_type;
-
-        ConsistencyBoxGatherScatter(V& container, const DofMapper& mapper)
-        : container_(container), mapper_(mapper)
-        {}
-
-        bool contains(int dim, int codim) const
-        { return dofCodim == codim; }
-
-        //! returns true if size per entity of given dim and codim is a constant
-        bool fixedSize(int dim, int codim) const
-        { return true; }
-
-        template<class EntityType>
-        std::size_t size(EntityType& e) const
-        { return 1; }
-
-        template<class MessageBuffer, class EntityType>
-        void gather(MessageBuffer& buff, const EntityType& e) const
-        {
-            buff.write(container_[mapper_.index(e)]);
-        }
-
-        template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
-        {
-            typename V::block_type block;
-            buff.read(block);
-            container_[mapper_.index(e)] += block;
-        }
-    private:
-        V& container_;
-        const DofMapper& mapper_;
-    };
-
 public:
     ParallelVectorHelper(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {}
 
     // \brief Make a vector of the box model consistent.
-    template<class B, class A>
-    void makeNonOverlappingConsistent(Dune::BlockVector<B,A>& v) const
+    template<class Block, class Alloc>
+    void makeNonOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
     {
-        ConsistencyBoxGatherScatter<Dune::BlockVector<B,A> > gs(v, mapper_);
+        VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
         if (gridView_.comm().size() > 1)
             gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface,
                                   Dune::ForwardCommunication);
