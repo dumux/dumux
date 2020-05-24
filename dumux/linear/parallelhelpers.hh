@@ -81,42 +81,6 @@ class ParallelISTLHelper
     };
 
     /*!
-     * \brief GatherScatter implementation that makes a right hand side in the box model consistent.
-     */
-    template<class V>
-    class ConsistencyBoxGatherScatter
-        : public BaseGatherScatter,
-          public Dune::CommDataHandleIF<ConsistencyBoxGatherScatter<V>,typename V::block_type>
-    {
-    public:
-        using DataType = typename V::block_type;
-        using BaseGatherScatter::contains;
-        using BaseGatherScatter::fixedSize;
-        using BaseGatherScatter::size;
-
-        ConsistencyBoxGatherScatter(V& container, const DofMapper& mapper)
-        : BaseGatherScatter(mapper), container_(container)
-        {}
-
-        template<class MessageBuffer, class EntityType>
-        void gather(MessageBuffer& buff, const EntityType& e) const
-        {
-            buff.write(container_[this->index(e)]);
-        }
-
-        template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
-        {
-            typename V::block_type block;
-            buff.read(block);
-            container_[this->index(e)] += block;
-        }
-    private:
-        V& container_;
-    };
-
-
-    /*!
      * \brief Writes ghostMarker_ to each data item (of the container) that is gathered or scattered
      * and is neither interior nor border.
      *
@@ -345,16 +309,6 @@ public:
     bool isGhost(std::size_t i) const
     { return isGhost_[i] == ghostMarker_; }
 
-    // \brief Make a vector of the box model consistent.
-    template<class B, class A>
-    void makeNonOverlappingConsistent(Dune::BlockVector<B,A>& v)
-    {
-        ConsistencyBoxGatherScatter<Dune::BlockVector<B,A> > gs(v, mapper_);
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface,
-                                  Dune::ForwardCommunication);
-    }
-
     /*!
      * \brief Creates a parallel index set
      *
@@ -472,6 +426,72 @@ private:
     bool initialized_; //!< whether isGhost and owner arrays are initialized
 
 }; // class ParallelISTLHelper
+
+template<class GridView, class DofMapper, int dofCodim>
+class ParallelVectorHelper
+{
+    /*!
+     * \brief GatherScatter implementation that makes a right hand side in the box model consistent.
+     */
+    template<class V>
+    class ConsistencyBoxGatherScatter
+    : public Dune::CommDataHandleIF<ConsistencyBoxGatherScatter<V>,typename V::block_type>
+    {
+    public:
+        using DataType = typename V::block_type;
+
+        ConsistencyBoxGatherScatter(V& container, const DofMapper& mapper)
+        : container_(container), mapper_(mapper)
+        {}
+
+        bool contains(int dim, int codim) const
+        { return dofCodim == codim; }
+
+        //! returns true if size per entity of given dim and codim is a constant
+        bool fixedSize(int dim, int codim) const
+        { return true; }
+
+        template<class EntityType>
+        std::size_t size(EntityType& e) const
+        { return 1; }
+
+        template<class MessageBuffer, class EntityType>
+        void gather(MessageBuffer& buff, const EntityType& e) const
+        {
+            buff.write(container_[mapper_.index(e)]);
+        }
+
+        template<class MessageBuffer, class EntityType>
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
+        {
+            typename V::block_type block;
+            buff.read(block);
+            container_[mapper_.index(e)] += block;
+        }
+    private:
+        V& container_;
+        const DofMapper& mapper_;
+    };
+
+public:
+    ParallelVectorHelper(const GridView& gridView, const DofMapper& mapper)
+    : gridView_(gridView), mapper_(mapper)
+    {}
+
+    // \brief Make a vector of the box model consistent.
+    template<class B, class A>
+    void makeNonOverlappingConsistent(Dune::BlockVector<B,A>& v) const
+    {
+        ConsistencyBoxGatherScatter<Dune::BlockVector<B,A> > gs(v, mapper_);
+        if (gridView_.comm().size() > 1)
+            gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface,
+                                  Dune::ForwardCommunication);
+    }
+
+private:
+    const GridView gridView_; //!< the grid view
+    const DofMapper& mapper_; //!< the dof mapper
+};
 
 /*!
  * \ingroup Linear
@@ -773,7 +793,7 @@ private:
     std::map<IdType, int> idToIndex_;
     std::map<int, IdType> indexToID_;
 
-}; // class EntityExchanger
+};
 
 /*!
  * \brief Prepare linear algebra variables for parallel solvers
@@ -797,7 +817,8 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
         matrixHelper.extendMatrix(A, [&pHelper](auto idx){ return pHelper.isGhost(idx); });
         matrixHelper.sumEntries(A);
 
-        pHelper.makeNonOverlappingConsistent(b);
+        ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(pHelper.gridView(), pHelper.dofMapper());
+        vectorHelper.makeNonOverlappingConsistent(b);
 
         // create commicator, operator, scalar product
         const auto category = Dune::SolverCategory::nonoverlapping;
