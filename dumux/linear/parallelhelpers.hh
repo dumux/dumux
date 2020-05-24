@@ -276,15 +276,17 @@ class ParallelISTLHelper
 public:
 
     ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper)
-        : gridView_(gridView), mapper_(mapper), initialized_(false)
-    {}
+    : gridView_(gridView), mapper_(mapper)
+    {
+        initGhostsAndOwners();
+    }
 
     // \brief Initializes the markers for ghosts and owners with the correct size and values.
     //
     void initGhostsAndOwners()
     {
         const auto rank = gridView_.comm().rank();
-        isOwned_.resize(mapper_.size(), rank);
+        isOwned_.assign(mapper_.size(), rank);
         // find out about ghosts
         GhostGatherScatter ggs(isOwned_, mapper_);
 
@@ -302,8 +304,6 @@ public:
         // convert vector into mask vector
         for (auto& v : isOwned_)
             v = (v == rank) ? 1 : 0;
-
-        initialized_ = true;
     }
 
     bool isGhost(std::size_t i) const
@@ -316,16 +316,8 @@ public:
      * communicators.
      */
     template<class Comm>
-    void createParallelIndexSet(Comm& comm)
+    void createParallelIndexSet(Comm& comm) const
     {
-        if (!initialized_)
-        {
-            // This is the first time this function is called.
-            // Therefore we need to initialize the marker vectors for ghosts and
-            // owned dofs
-            initGhostsAndOwners();
-        }
-
         if (gridView_.comm().size() <= 1)
         {
             comm.remoteIndices().template rebuild<false>();
@@ -423,7 +415,6 @@ private:
     const DofMapper& mapper_; //!< the dof mapper
     std::vector<std::size_t> isOwned_; //!< vector to identify unique decomposition
     std::vector<std::size_t> isGhost_; //!< vector to identify ghost dofs
-    bool initialized_; //!< whether isGhost and owner arrays are initialized
 
 }; // class ParallelISTLHelper
 

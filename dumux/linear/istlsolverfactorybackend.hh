@@ -131,7 +131,7 @@ public:
         if (isParallel_)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
 
-        reset();
+        firstCall_ = true;
     }
 
     /*!
@@ -146,11 +146,15 @@ public:
                              const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
 #if HAVE_MPI
-    , parallelHelper_(std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
     , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
 #endif
     {
-        reset();
+        firstCall_ = true;
+        initializeParameters_();
+#if HAVE_MPI
+        if (isParallel_)
+            parallelHelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+#endif
     }
 
     /*!
@@ -172,17 +176,6 @@ public:
         return result_.converged;
     }
 
-    //! reset the linear solver factory
-    void reset()
-    {
-        firstCall_ = true;
-        params_ = LinearSolverParameters<LinearSolverTraits>::createParameterTree(paramGroup_);
-        checkMandatoryParameters_();
-        name_ = params_.get<std::string>("preconditioner.type") + "-preconditioned " + params_.get<std::string>("type");
-        if (params_.get<int>("verbose", 0) > 0)
-            std::cout << "Initialized linear solver of type: " << name_ << std::endl;
-    }
-
     const Dune::InverseOperatorResult& result() const
     {
         return result_;
@@ -194,6 +187,15 @@ public:
     }
 
 private:
+
+    void initializeParameters_()
+    {
+        params_ = LinearSolverParameters<LinearSolverTraits>::createParameterTree(paramGroup_);
+        checkMandatoryParameters_();
+        name_ = params_.get<std::string>("preconditioner.type") + "-preconditioned " + params_.get<std::string>("type");
+        if (params_.get<int>("verbose", 0) > 0)
+            std::cout << "Initialized linear solver of type: " << name_ << std::endl;
+    }
 
     void checkMandatoryParameters_()
     {
@@ -244,10 +246,7 @@ private:
         using ScalarProduct = typename ParallelTraits::ScalarProduct;
 
         if (firstCall_)
-        {
             initSolverFactories<Matrix, LinearOperator>();
-            parallelHelper_->initGhostsAndOwners();
-        }
 
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> linearOperator;
