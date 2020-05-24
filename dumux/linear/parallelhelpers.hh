@@ -789,11 +789,7 @@ private:
  */
 template<class LinearSolverTraits, class ParallelTraits,
          class Matrix, class Vector, class ParallelHelper>
-void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
-                                  std::shared_ptr<typename ParallelTraits::Comm>& comm,
-                                  std::shared_ptr<typename ParallelTraits::LinearOperator>& fop,
-                                  std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
-                                  ParallelHelper& pHelper)
+void prepareLinearAlgebraParallel(Matrix& A, Vector& b, ParallelHelper& pHelper)
 {
     if constexpr (ParallelTraits::isNonOverlapping)
     {
@@ -808,23 +804,28 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
 
         ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(pHelper.gridView(), pHelper.dofMapper());
         vectorHelper.makeNonOverlappingConsistent(b);
+    }
+}
 
-        // create commicator, operator, scalar product
-        const auto category = Dune::SolverCategory::nonoverlapping;
-        comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
-        pHelper.createParallelIndexSet(*comm);
-        fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
-        sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
-    }
-    else
-    {
-        // create commicator, operator, scalar product
-        const auto category = Dune::SolverCategory::overlapping;
-        comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
-        pHelper.createParallelIndexSet(*comm);
-        fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
-        sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
-    }
+/*!
+ * \brief Prepare linear algebra variables for parallel solvers
+ */
+template<class LinearSolverTraits, class ParallelTraits,
+         class Matrix, class Vector, class ParallelHelper>
+void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
+                                  std::shared_ptr<typename ParallelTraits::Comm>& comm,
+                                  std::shared_ptr<typename ParallelTraits::LinearOperator>& fop,
+                                  std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
+                                  ParallelHelper& pHelper)
+{
+    prepareLinearAlgebraParallel<LinearSolverTraits, ParallelTraits>(A, b, pHelper);
+    const auto category = ParallelTraits::isNonOverlapping ?
+        Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
+
+    comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
+    pHelper.createParallelIndexSet(*comm);
+    fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
+    sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
 }
 
 } // end namespace Dumux
