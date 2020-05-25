@@ -55,6 +55,7 @@
 
 #include "newtonconvergencewriter.hh"
 #include "newtonvariablesbackend.hh"
+#include "primaryvariableswitchadapter.hh"
 
 namespace Dumux {
 namespace Detail {
@@ -68,13 +69,6 @@ struct supportsPartialReassembly
                                               std::declval<const PartialReassembler<Assembler>*>()))
     {}
 };
-
-//! helper aliases to extract a primary variable switch from the VolumeVariables (if defined, yields int otherwise)
-template<class Assembler>
-using DetectPVSwitch = typename Assembler::GridVariables::VolumeVariables::PrimaryVariableSwitch;
-
-template<class Assembler>
-using GetPVSwitch = Dune::Std::detected_or<int, DetectPVSwitch, Assembler>;
 
 // helper struct and function detecting if the linear solver features a norm() function
 template <class LinearSolver, class Residual>
@@ -188,10 +182,13 @@ private:
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
     using TimeLoop = TimeLoopBase<Scalar>;
 
-    using PrimaryVariableSwitch = typename Detail::GetPVSwitch<Assembler>::type;
-    using HasPriVarsSwitch = typename Detail::GetPVSwitch<Assembler>::value_t; // std::true_type or std::false_type
-    static constexpr bool hasPriVarsSwitch() { return HasPriVarsSwitch::value; };
+    // enable models with primary variable switch
+    // TODO: Always use ParentType::Variables once we require assemblers to export variables
     static constexpr bool assemblerExportsVariables = Impl::exportsVariables<Assembler>;
+    using Vars = std::conditional_t<assemblerExportsVariables,
+                                    typename ParentType::Variables,
+                                    typename Assembler::GridVariables>;
+    using PrimaryVariableSwitchAdapter = Dumux::PrimaryVariableSwitchAdapter<Vars>;
 
 public:
     using typename ParentType::Variables;
@@ -208,6 +205,7 @@ public:
     , endIterMsgStream_(std::ostringstream::out)
     , comm_(comm)
     , paramGroup_(paramGroup)
+    , priVarSwitchAdapter_(std::make_unique<PrimaryVariableSwitchAdapter>(paramGroup))
     {
         initParams_(paramGroup);
 
@@ -221,12 +219,6 @@ public:
         // initialize the partial reassembler
         if (enablePartialReassembly_)
             partialReassembler_ = std::make_unique<Reassembler>(this->assembler());
-
-        if (hasPriVarsSwitch())
-        {
-            const int priVarSwitchVerbosity = getParamFromGroup<int>(paramGroup, "PrimaryVariableSwitch.Verbosity", 1);
-            priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(priVarSwitchVerbosity);
-        }
     }
 
     //! the communicator for parallel runs
@@ -370,13 +362,20 @@ public:
     virtual void newtonBegin(Variables& initVars)
     {
         numSteps_ = 0;
-        initPriVarSwitch_(initVars, HasPriVarsSwitch{});
+
+        if constexpr (assemblerExportsVariables)
+            priVarSwitchAdapter_->initialize(Backend::getDofVector(initVars), initVars);
+        else // this assumes assembly with solution (i.e. Variables=SolutionVector)
+            priVarSwitchAdapter_->initialize(initVars, this->assembler().gridVariables());
+
         const auto& initSol = Backend::getDofVector(initVars);
 
         // write the initial residual if a convergence writer was set
         if (convergenceWriter_)
         {
             this->assembler().assembleResidual(initVars);
+
+            // dummy vector, there is no delta before solving the linear system
             auto delta = Backend::makeZeroDofVector(Backend::size(initSol));
             convergenceWriter_->write(initSol, delta, this->assembler().residual());
         }
@@ -591,7 +590,10 @@ public:
     virtual void newtonEndStep(Variables &vars,
                                const SolutionVector &uLastIter)
     {
-        invokePriVarSwitch_(vars, HasPriVarsSwitch{});
+        if constexpr (assemblerExportsVariables)
+            priVarSwitchAdapter_->invoke(Backend::getDofVector(vars), vars);
+        else // this assumes assembly with solution (i.e. Variables=SolutionVector)
+            priVarSwitchAdapter_->invoke(vars, this->assembler().gridVariables());
 
         ++numSteps_;
 
@@ -633,7 +635,7 @@ public:
     {
         // in case the model has a priVar switch and some some primary variables
         // actually switched their state in the last iteration, enforce another iteration
-        if (priVarsSwitchedInLastIteration_)
+        if (priVarSwitchAdapter_->switched())
             return false;
 
         if (enableShiftCriterion_ && !enableResidualCriterion_)
@@ -841,87 +843,6 @@ protected:
 
     bool enableResidualCriterion() const
     { return enableResidualCriterion_; }
-
-    /*!
-     * \brief Initialize the privar switch, noop if there is no priVarSwitch
-     */
-    void initPriVarSwitch_(Variables&, std::false_type) {}
-
-    /*!
-     * \brief Initialize the privar switch
-     */
-    void initPriVarSwitch_(Variables& vars, std::true_type)
-    {
-        priVarSwitch_->reset(Backend::size(Backend::getDofVector(vars)));
-        priVarsSwitchedInLastIteration_ = false;
-
-        const auto& problem = this->assembler().problem();
-        const auto& gridGeometry = this->assembler().gridGeometry();
-
-        // if the assembler does not export the variables type
-        // we assume old-style assemblers which operate on solution
-        // vectors and return the grid variables
-        if constexpr (!assemblerExportsVariables)
-            priVarSwitch_->updateDirichletConstraints(problem, gridGeometry,
-                                                      this->assembler().gridVariables(),
-                                                      vars);
-        else
-            priVarSwitch_->updateDirichletConstraints(problem, gridGeometry, vars, Backend::getDofVector(vars));
-    }
-
-    /*!
-     * \brief Switch primary variables if necessary, noop if there is no priVarSwitch
-     */
-    void invokePriVarSwitch_(Variables&, std::false_type) {}
-
-    /*!
-     * \brief Switch primary variables if necessary
-     */
-    void invokePriVarSwitch_(Variables& vars, std::true_type)
-    {
-        // update the variable switch (returns true if the pri vars at at least one dof were switched)
-        // for disabled grid variable caching
-        const auto& gridGeometry = this->assembler().gridGeometry();
-        const auto& problem = this->assembler().problem();
-
-        // we assume an old-style assembler if it doesn't export the Variable type
-        if constexpr (!assemblerExportsVariables)
-        {
-            auto& gridVariables = this->assembler().gridVariables();
-
-            // invoke the primary variable switch
-            priVarsSwitchedInLastIteration_ = priVarSwitch_->update(vars, gridVariables, problem, gridGeometry);
-
-            if (priVarsSwitchedInLastIteration_)
-            {
-                for (const auto& element : elements(gridGeometry.gridView()))
-                {
-                    // if the volume variables are cached globally, we need to update those where the primary variables have been switched
-                    priVarSwitch_->updateSwitchedVolVars(problem, element, gridGeometry, gridVariables, Backend::getDofVector(vars));
-
-                    // if the flux variables are cached globally, we need to update those where the primary variables have been switched
-                    priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, gridGeometry, gridVariables, Backend::getDofVector(vars));
-                }
-            }
-        }
-        else
-        {
-            // invoke the primary variable switch
-            priVarsSwitchedInLastIteration_ = priVarSwitch_->update(Backend::getDofVector(vars), vars, problem, gridGeometry);
-
-            if (priVarsSwitchedInLastIteration_)
-            {
-                for (const auto& element : elements(gridGeometry.gridView()))
-                {
-                    // if the volume variables are cached globally, we need to update those where the primary variables have been switched
-                    priVarSwitch_->updateSwitchedVolVars(problem, element, gridGeometry, vars, Backend::getDofVector(vars));
-
-                    // if the flux variables are cached globally, we need to update those where the primary variables have been switched
-                    priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, gridGeometry, vars, Backend::getDofVector(vars));
-                }
-            }
-        }
-    }
 
     //! optimal number of iterations we want to achieve
     int targetSteps_;
@@ -1383,9 +1304,7 @@ private:
     std::size_t numLinearSolverBreakdowns_ = 0; //! total number of linear solves that failed
 
     //! the class handling the primary variable switch
-    std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
-    //! if we switched primary variables in the last iteration
-    bool priVarsSwitchedInLastIteration_ = false;
+    std::unique_ptr<PrimaryVariableSwitchAdapter> priVarSwitchAdapter_;
 
     //! convergence writer
     std::shared_ptr<ConvergenceWriter> convergenceWriter_ = nullptr;
