@@ -50,6 +50,7 @@
 #include <dumux/assembly/partialreassembler.hh>
 
 #include "newtonconvergencewriter.hh"
+#include "primaryvariableswitchadapter.hh"
 
 namespace Dumux {
 namespace Detail {
@@ -63,13 +64,6 @@ struct supportsPartialReassembly
                                               std::declval<const PartialReassembler<Assembler>*>()))
     {}
 };
-
-//! helper aliases to extract a primary variable switch from the VolumeVariables (if defined, yields int otherwise)
-template<class Assembler>
-using DetectPVSwitch = typename Assembler::GridVariables::VolumeVariables::PrimaryVariableSwitch;
-
-template<class Assembler>
-using GetPVSwitch = Dune::Std::detected_or<int, DetectPVSwitch, Assembler>;
 
 } // end namespace Detail
 
@@ -95,10 +89,9 @@ class NewtonSolver : public PDESolver<Assembler, LinearSolver>
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
     using TimeLoop = TimeLoopBase<Scalar>;
 
-    using PrimaryVariableSwitch = typename Detail::GetPVSwitch<Assembler>::type;
-    using HasPriVarsSwitch = typename Detail::GetPVSwitch<Assembler>::value_t; // std::true_type or std::false_type
-    static constexpr bool hasPriVarsSwitch() { return HasPriVarsSwitch::value; };
-
+    // enable models with primary variable switch
+    // TODO: Use more general Assembler::Variables once it is available
+    using PrimaryVariableSwitchAdapter = Dumux::PrimaryVariableSwitchAdapter<typename Assembler::GridVariables>;
 public:
 
     using Communication = Comm;
@@ -114,6 +107,7 @@ public:
     , endIterMsgStream_(std::ostringstream::out)
     , comm_(comm)
     , paramGroup_(paramGroup)
+    , priVarSwitchAdapter_(std::make_unique<PrimaryVariableSwitchAdapter>(paramGroup))
     {
         initParams_(paramGroup);
 
@@ -127,12 +121,6 @@ public:
         // initialize the partial reassembler
         if (enablePartialReassembly_)
             partialReassembler_ = std::make_unique<Reassembler>(this->assembler());
-
-        if (hasPriVarsSwitch())
-        {
-            const int priVarSwitchVerbosity = getParamFromGroup<int>(paramGroup, "PrimaryVariableSwitch.Verbosity", 1);
-            priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(priVarSwitchVerbosity);
-        }
     }
 
     //! the communicator for parallel runs
@@ -263,7 +251,7 @@ public:
     virtual void newtonBegin(SolutionVector& u)
     {
         numSteps_ = 0;
-        initPriVarSwitch_(u, HasPriVarsSwitch{});
+        priVarSwitchAdapter_->initialize(u, this->assembler().gridVariables());
 
         // write the initial residual if a convergence writer was set
         if (convergenceWriter_)
@@ -486,7 +474,7 @@ public:
     virtual void newtonEndStep(SolutionVector &uCurrentIter,
                                const SolutionVector &uLastIter)
     {
-        invokePriVarSwitch_(uCurrentIter, HasPriVarsSwitch{});
+        priVarSwitchAdapter_->invoke(uCurrentIter, this->assembler().gridVariables());
 
         ++numSteps_;
 
@@ -535,7 +523,7 @@ public:
     {
         // in case the model has a priVar switch and some some primary variables
         // actually switched their state in the last iteration, enforce another iteration
-        if (priVarsSwitchedInLastIteration_)
+        if (priVarSwitchAdapter_->switched())
             return false;
 
         if (enableShiftCriterion_ && !enableResidualCriterion_)
@@ -713,58 +701,6 @@ protected:
 
     bool enableResidualCriterion() const
     { return enableResidualCriterion_; }
-
-    /*!
-     * \brief Initialize the privar switch, noop if there is no priVarSwitch
-     */
-    void initPriVarSwitch_(SolutionVector&, std::false_type) {}
-
-    /*!
-     * \brief Initialize the privar switch
-     */
-    void initPriVarSwitch_(SolutionVector& sol, std::true_type)
-    {
-        priVarSwitch_->reset(sol.size());
-        priVarsSwitchedInLastIteration_ = false;
-
-        const auto& problem = this->assembler().problem();
-        const auto& gridGeometry = this->assembler().gridGeometry();
-        auto& gridVariables = this->assembler().gridVariables();
-        priVarSwitch_->updateBoundary(problem, gridGeometry, gridVariables, sol);
-    }
-
-    /*!
-     * \brief Switch primary variables if necessary, noop if there is no priVarSwitch
-     */
-    void invokePriVarSwitch_(SolutionVector&, std::false_type) {}
-
-    /*!
-     * \brief Switch primary variables if necessary
-     */
-    void invokePriVarSwitch_(SolutionVector& uCurrentIter, std::true_type)
-    {
-        // update the variable switch (returns true if the pri vars at at least one dof were switched)
-        // for disabled grid variable caching
-        const auto& gridGeometry = this->assembler().gridGeometry();
-        const auto& problem = this->assembler().problem();
-        auto& gridVariables = this->assembler().gridVariables();
-
-        // invoke the primary variable switch
-        priVarsSwitchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, gridVariables,
-                                                                problem, gridGeometry);
-
-        if (priVarsSwitchedInLastIteration_)
-        {
-            for (const auto& element : elements(gridGeometry.gridView()))
-            {
-                // if the volume variables are cached globally, we need to update those where the primary variables have been switched
-                priVarSwitch_->updateSwitchedVolVars(problem, element, gridGeometry, gridVariables, uCurrentIter);
-
-                // if the flux variables are cached globally, we need to update those where the primary variables have been switched
-                priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, gridGeometry, gridVariables, uCurrentIter);
-            }
-        }
-    }
 
     //! optimal number of iterations we want to achieve
     int targetSteps_;
@@ -1280,9 +1216,7 @@ private:
     std::size_t numLinearSolverBreakdowns_ = 0; //! total number of linear solves that failed
 
     //! the class handling the primary variable switch
-    std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
-    //! if we switched primary variables in the last iteration
-    bool priVarsSwitchedInLastIteration_ = false;
+    std::unique_ptr<PrimaryVariableSwitchAdapter> priVarSwitchAdapter_;
 
     //! convergence writer
     std::shared_ptr<ConvergenceWriter> convergenceWriter_ = nullptr;
