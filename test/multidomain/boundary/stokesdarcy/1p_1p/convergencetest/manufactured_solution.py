@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 This script determines the source terms needed for analytical solutions for coupled Stokes/Darcy problems.
