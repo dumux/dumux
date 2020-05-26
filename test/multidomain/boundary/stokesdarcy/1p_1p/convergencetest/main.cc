@@ -19,9 +19,7 @@
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief A test problem for the coupled Stokes/Darcy problem (1p).
- *        The analytical solution is given in Shiue et al., 2018:
- *        "Convergence of the MAC Scheme for the Stokes/Darcy Coupling Problem"
+ * \brief A test problem for the coupled FreeFlow/Darcy problem (1p).
  */
 
 #include <config.h>
@@ -51,6 +49,7 @@
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
 
+#include "testcase.hh"
 #include "problem_darcy.hh"
 #include "problem_stokes.hh"
 
@@ -58,7 +57,7 @@ namespace Dumux {
 namespace Properties {
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::StokesOneP>
+struct CouplingManager<TypeTag, TTag::FreeFlowOneP>
 {
     using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyOneP>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
@@ -67,7 +66,7 @@ struct CouplingManager<TypeTag, TTag::StokesOneP>
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DarcyOneP>
 {
-    using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOneP, Properties::TTag::StokesOneP, TypeTag>;
+    using Traits = StaggeredMultiDomainTraits<Properties::TTag::FreeFlowOneP, Properties::TTag::FreeFlowOneP, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
@@ -80,7 +79,7 @@ struct CouplingManager<TypeTag, TTag::DarcyOneP>
 * \param problem the problem for which to evaluate the analytical solution
 */
 template<class Scalar, class Problem>
-auto createStokesAnalyticalSolution(const Problem& problem)
+auto createFreeFlowAnalyticalSolution(const Problem& problem)
 {
     const auto& gridGeometry = problem.gridGeometry();
     using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
@@ -171,11 +170,11 @@ auto createDarcyAnalyticalSolution(const Problem& problem)
 }
 
 template<class Problem, class SolutionVector>
-void printStokesL2Error(const Problem& problem, const SolutionVector& x)
+void printFreeFlowL2Error(const Problem& problem, const SolutionVector& x)
 {
     using namespace Dumux;
     using Scalar = double;
-    using TypeTag = Properties::TTag::StokesOneP;
+    using TypeTag = Properties::TTag::FreeFlowOneP;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -253,7 +252,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using StokesTypeTag = Properties::TTag::StokesOneP;
+    using FreeFlowTypeTag = Properties::TTag::FreeFlowOneP;
     using DarcyTypeTag = Properties::TTag::DarcyOneP;
 
     // try to create a grid (from the given grid file or the input file)
@@ -262,67 +261,83 @@ int main(int argc, char** argv) try
     DarcyGridManager darcyGridManager;
     darcyGridManager.init("Darcy"); // pass parameter group
 
-    using StokesGridManager = Dumux::GridManager<GetPropType<StokesTypeTag, Properties::Grid>>;
-    StokesGridManager stokesGridManager;
-    stokesGridManager.init("Stokes"); // pass parameter group
+    using FreeFlowGridManager = Dumux::GridManager<GetPropType<FreeFlowTypeTag, Properties::Grid>>;
+    FreeFlowGridManager freeFlowGridManager;
+    freeFlowGridManager.init("FreeFlow"); // pass parameter group
 
     // we compute on the leaf grid view
     const auto& darcyGridView = darcyGridManager.grid().leafGridView();
-    const auto& stokesGridView = stokesGridManager.grid().leafGridView();
+    const auto& freeFlowGridView = freeFlowGridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    using StokesGridGeometry = GetPropType<StokesTypeTag, Properties::GridGeometry>;
-    auto stokesGridGeometry = std::make_shared<StokesGridGeometry>(stokesGridView);
-    stokesGridGeometry->update();
+    using FreeFlowGridGeometry = GetPropType<FreeFlowTypeTag, Properties::GridGeometry>;
+    auto freeFlowGridGeometry = std::make_shared<FreeFlowGridGeometry>(freeFlowGridView);
+    freeFlowGridGeometry->update();
     using DarcyGridGeometry = GetPropType<DarcyTypeTag, Properties::GridGeometry>;
     auto darcyGridGeometry = std::make_shared<DarcyGridGeometry>(darcyGridView);
     darcyGridGeometry->update();
 
-    using Traits = StaggeredMultiDomainTraits<StokesTypeTag, StokesTypeTag, DarcyTypeTag>;
+    using Traits = StaggeredMultiDomainTraits<FreeFlowTypeTag, FreeFlowTypeTag, DarcyTypeTag>;
 
     // the coupling manager
     using CouplingManager = StokesDarcyCouplingManager<Traits>;
-    auto couplingManager = std::make_shared<CouplingManager>(stokesGridGeometry, darcyGridGeometry);
+    auto couplingManager = std::make_shared<CouplingManager>(freeFlowGridGeometry, darcyGridGeometry);
 
     // the indices
-    constexpr auto stokesCellCenterIdx = CouplingManager::stokesCellCenterIdx;
-    constexpr auto stokesFaceIdx = CouplingManager::stokesFaceIdx;
+    constexpr auto freeFlowCellCenterIdx = CouplingManager::stokesCellCenterIdx;
+    constexpr auto freeFlowFaceIdx = CouplingManager::stokesFaceIdx;
     constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
     // the problem (initial and boundary conditions)
-    using StokesProblem = GetPropType<StokesTypeTag, Properties::Problem>;
-    auto stokesProblem = std::make_shared<StokesProblem>(stokesGridGeometry, couplingManager);
+    const auto testCase = []()
+    {
+        const auto testCaseInput = getParam<std::string>("Problem.TestCase", "ShiueExampleTwo");
+        if (testCaseInput == "ShiueExampleOne")
+            return TestCase::ShiueExampleOne;
+        else if (testCaseInput == "ShiueExampleTwo")
+            return TestCase::ShiueExampleTwo;
+        else if (testCaseInput == "Rybak")
+            return TestCase::Rybak;
+        else if (testCaseInput == "Schneider")
+            return TestCase::Schneider;
+        else
+            DUNE_THROW(Dune::InvalidStateException, testCaseInput + " is not a valid test case");
+    }();
+
+    using FreeFlowProblem = GetPropType<FreeFlowTypeTag, Properties::Problem>;
+    auto freeFlowProblem = std::make_shared<FreeFlowProblem>(freeFlowGridGeometry, couplingManager, testCase);
     using DarcyProblem = GetPropType<DarcyTypeTag, Properties::Problem>;
-    auto darcyProblem = std::make_shared<DarcyProblem>(darcyGridGeometry, couplingManager);
+    auto spatialParams = std::make_shared<typename DarcyProblem::SpatialParams>(darcyGridGeometry, testCase);
+    auto darcyProblem = std::make_shared<DarcyProblem>(darcyGridGeometry, couplingManager, spatialParams, testCase);
 
     // the solution vector
     Traits::SolutionVector sol;
-    sol[stokesCellCenterIdx].resize(stokesGridGeometry->numCellCenterDofs());
-    sol[stokesFaceIdx].resize(stokesGridGeometry->numFaceDofs());
+    sol[freeFlowCellCenterIdx].resize(freeFlowGridGeometry->numCellCenterDofs());
+    sol[freeFlowFaceIdx].resize(freeFlowGridGeometry->numFaceDofs());
     sol[darcyIdx].resize(darcyGridGeometry->numDofs());
 
-    // get a solution vector storing references to the two Stokes solution vectors
-    auto stokesSol = partial(sol, stokesFaceIdx, stokesCellCenterIdx);
+    // get a solution vector storing references to the two FreeFlow solution vectors
+    auto freeFlowSol = partial(sol, freeFlowFaceIdx, freeFlowCellCenterIdx);
 
-    couplingManager->init(stokesProblem, darcyProblem, sol);
+    couplingManager->init(freeFlowProblem, darcyProblem, sol);
 
     // the grid variables
-    using StokesGridVariables = GetPropType<StokesTypeTag, Properties::GridVariables>;
-    auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesGridGeometry);
-    stokesGridVariables->init(stokesSol);
+    using FreeFlowGridVariables = GetPropType<FreeFlowTypeTag, Properties::GridVariables>;
+    auto freeFlowGridVariables = std::make_shared<FreeFlowGridVariables>(freeFlowProblem, freeFlowGridGeometry);
+    freeFlowGridVariables->init(freeFlowSol);
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyGridGeometry);
     darcyGridVariables->init(sol[darcyIdx]);
 
     // intialize the vtk output module
     using Scalar = typename Traits::Scalar;
-    StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
-    GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
-    const auto stokesAnalyticalSolution = createStokesAnalyticalSolution<Scalar>(*stokesProblem);
-    stokesVtkWriter.addField(std::get<0>(stokesAnalyticalSolution), "pressureExact");
-    stokesVtkWriter.addField(std::get<1>(stokesAnalyticalSolution), "velocityExact");
-    stokesVtkWriter.addFaceField(std::get<2>(stokesAnalyticalSolution), "faceVelocityExact");
-    stokesVtkWriter.write(0.0);
+    StaggeredVtkOutputModule<FreeFlowGridVariables, decltype(freeFlowSol)> freeFlowVtkWriter(*freeFlowGridVariables, freeFlowSol, freeFlowProblem->name());
+    GetPropType<FreeFlowTypeTag, Properties::IOFields>::initOutputModule(freeFlowVtkWriter);
+    const auto freeFlowAnalyticalSolution = createFreeFlowAnalyticalSolution<Scalar>(*freeFlowProblem);
+    freeFlowVtkWriter.addField(std::get<0>(freeFlowAnalyticalSolution), "pressureExact");
+    freeFlowVtkWriter.addField(std::get<1>(freeFlowAnalyticalSolution), "velocityExact");
+    freeFlowVtkWriter.addFaceField(std::get<2>(freeFlowAnalyticalSolution), "faceVelocityExact");
+    freeFlowVtkWriter.write(0.0);
 
     VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx],  darcyProblem->name());
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
@@ -335,12 +350,12 @@ int main(int argc, char** argv) try
 
     // the assembler for a stationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
-                                                 std::make_tuple(stokesGridGeometry->faceFVGridGeometryPtr(),
-                                                                 stokesGridGeometry->cellCenterFVGridGeometryPtr(),
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(freeFlowProblem, freeFlowProblem, darcyProblem),
+                                                 std::make_tuple(freeFlowGridGeometry->faceFVGridGeometryPtr(),
+                                                                 freeFlowGridGeometry->cellCenterFVGridGeometryPtr(),
                                                                  darcyGridGeometry),
-                                                 std::make_tuple(stokesGridVariables->faceGridVariablesPtr(),
-                                                                 stokesGridVariables->cellCenterGridVariablesPtr(),
+                                                 std::make_tuple(freeFlowGridVariables->faceGridVariablesPtr(),
+                                                                 freeFlowGridVariables->cellCenterGridVariablesPtr(),
                                                                  darcyGridVariables),
                                                  couplingManager);
 
@@ -356,10 +371,10 @@ int main(int argc, char** argv) try
     nonLinearSolver.solve(sol);
 
     // write vtk output
-    stokesVtkWriter.write(1.0);
+    freeFlowVtkWriter.write(1.0);
     darcyVtkWriter.write(1.0);
 
-    printStokesL2Error(*stokesProblem, stokesSol);
+    printFreeFlowL2Error(*freeFlowProblem, freeFlowSol);
     printDarcyL2Error(*darcyProblem, sol[darcyIdx]);
 
     ////////////////////////////////////////////////////////////

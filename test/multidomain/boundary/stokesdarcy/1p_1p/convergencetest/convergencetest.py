@@ -12,8 +12,8 @@ testname = str(sys.argv[1])
 testargs = [str(i) for i in sys.argv][2:]
 
 # remove the old log files
-subprocess.call(['rm', testname + '_stokes.log'])
-print("Removed old log file ({})!".format(testname + '_stokes.log'))
+subprocess.call(['rm', testname + '_freeFlow.log'])
+print("Removed old log file ({})!".format(testname + '_freeFlow.log'))
 subprocess.call(['rm', testname + '_darcy.log'])
 print("Removed old log file ({})!".format(testname + '_darcy.log'))
 
@@ -22,9 +22,9 @@ for i in [0, 1, 2]:
     subprocess.call(['./' + testname] + testargs + ['-Grid.Refinement', str(i),
                                       '-Vtk.OutputName', testname])
 
-def checkRatesStokes():
+def checkRatesFreeFlow():
     # check the rates and append them to the log file
-    logfile = open(testname + '_stokes.log', "r+")
+    logfile = open(testname + '_freeFlow.log', "r+")
 
     errorP = []
     errorVx = []
@@ -64,7 +64,7 @@ def checkRatesStokes():
     logfile.close()
     print("\nComputed the following convergence rates for {}:\n".format(testname))
 
-    subprocess.call(['cat', testname + '_stokes.log'])
+    subprocess.call(['cat', testname + '_freeFlow.log'])
 
     return {"p" : resultsP, "v_x" : resultsVx, "v_y" : resultsVy}
 
@@ -104,23 +104,23 @@ def checkRatesDarcy():
 
     return {"p" : resultsP}
 
-def checkRatesStokesAndDarcy():
-    resultsStokes = checkRatesStokes()
+def checkRatesFreeFlowAndDarcy():
+    resultsFreeFlow = checkRatesFreeFlow()
     resultsDarcy = checkRatesDarcy()
 
     def mean(numbers):
         return float(sum(numbers)) / len(numbers)
 
     # check the rates, we expect rates around 2
-    if mean(resultsStokes["p"]) < 2.05 and mean(resultsStokes["p"]) < 1.84:
+    if mean(resultsFreeFlow["p"]) < 2.05 and mean(resultsFreeFlow["p"]) < 1.84:
         sys.stderr.write("*"*70 + "\n" + "The convergence rates for pressure were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 
-    if mean(resultsStokes["v_x"]) < 2.05 and mean(resultsStokes["v_x"]) < 1.95:
+    if mean(resultsFreeFlow["v_x"]) < 2.05 and mean(resultsFreeFlow["v_x"]) < 1.95:
         sys.stderr.write("*"*70 + "\n" + "The convergence rates for x-velocity were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 
-    if mean(resultsStokes["v_y"]) < 2.05 and mean(resultsStokes["v_y"]) < 1.95:
+    if mean(resultsFreeFlow["v_y"]) < 2.05 and mean(resultsFreeFlow["v_y"]) < 1.95:
         sys.stderr.write("*"*70 + "\n" + "The convergence rates for y-velocity were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 
@@ -129,4 +129,4 @@ def checkRatesStokesAndDarcy():
         sys.exit(1)
 
 
-checkRatesStokesAndDarcy()
+checkRatesFreeFlowAndDarcy()

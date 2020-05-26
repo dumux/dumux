@@ -19,11 +19,11 @@
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief The Stokes sub-problem of coupled Stokes-Darcy convergence test
+ * \brief The free-flow sub-problem of coupled FreeFlow/Darcy convergence test
  */
 
-#ifndef DUMUX_STOKES_SUBPROBLEM_HH
-#define DUMUX_STOKES_SUBPROBLEM_HH
+#ifndef DUMUX_FREEFLOW_SUBPROBLEM_HH
+#define DUMUX_FREEFLOW_SUBPROBLEM_HH
 
 #include <dune/common/fvector.hh>
 #include <dune/grid/yaspgrid.hh>
@@ -34,20 +34,21 @@
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
+#include "testcase.hh"
 
 namespace Dumux {
 template <class TypeTag>
-class StokesSubProblem;
+class FreeFlowSubProblem;
 
 namespace Properties {
 // Create new type tags
 namespace TTag {
-struct StokesOneP { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
+struct FreeFlowOneP { using InheritsFrom = std::tuple<NavierStokes, StaggeredFreeFlowModel>; };
 } // end namespace TTag
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::StokesOneP>
+struct FluidSystem<TypeTag, TTag::FreeFlowOneP>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
@@ -55,18 +56,18 @@ struct FluidSystem<TypeTag, TTag::StokesOneP>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::StokesOneP> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
+struct Grid<TypeTag, TTag::FreeFlowOneP> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::StokesOneP> { using type = Dumux::StokesSubProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::FreeFlowOneP> { using type = Dumux::FreeFlowSubProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOneP> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
 } // end namespace Properties
 
 /*!
@@ -74,7 +75,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOneP> { static conste
  * \brief The Stokes sub-problem of coupled Stokes-Darcy convergence test
  */
 template <class TypeTag>
-class StokesSubProblem : public NavierStokesProblem<TypeTag>
+class FreeFlowSubProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -91,29 +92,16 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
-    enum class TestCase
-    {
-        ShiueExampleOne, ShiueExampleTwo, Rybak
-    };
-
 public:
     //! export the Indices
     using Indices = typename ModelTraits::Indices;
 
-    StokesSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(gridGeometry, "Stokes"), couplingManager_(couplingManager)
+    FreeFlowSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager, const TestCase testCase)
+    : ParentType(gridGeometry, "FreeFlow")
+    , couplingManager_(couplingManager)
+    , testCase_(testCase)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-
-        const auto testCaseInput = getParamFromGroup<std::string>(this->paramGroup(), "Problem.TestCase", "ShiueExampleTwo");
-        if (testCaseInput == "ShiueExampleOne")
-            testCase_ = TestCase::ShiueExampleOne;
-        else if (testCaseInput == "ShiueExampleTwo")
-            testCase_ = TestCase::ShiueExampleTwo;
-        else if (testCaseInput == "Rybak")
-            testCase_ = TestCase::Rybak;
-        else
-            DUNE_THROW(Dune::InvalidStateException, testCaseInput + " is not a valid test case");
     }
 
     /*!
@@ -152,6 +140,8 @@ public:
                 return rhsShiueEtAlExampleTwo_(globalPos);
             case TestCase::Rybak:
                 return rhsRybak_(globalPos);
+            case TestCase::Schneider:
+                return rhsSchneiderEtAl_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -248,7 +238,7 @@ public:
      * \brief Returns the intrinsic permeability of required as input parameter
               for the Beavers-Joseph-Saffman boundary condition
      */
-    Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
+    auto permeability(const Element& element, const SubControlVolumeFace& scvf) const
     {
         return couplingManager().couplingData().darcyPermeability(element, scvf);
     }
@@ -277,6 +267,8 @@ public:
                 return analyticalSolutionShiueEtAlExampleTwo_(globalPos);
             case TestCase::Rybak:
                 return analyticalSolutionRybak_(globalPos);
+            case TestCase::Schneider:
+                return analyticalSolutionSchneiderEtAl_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -355,6 +347,42 @@ private:
     NumEqVector rhsShiueEtAlExampleTwo_(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0); }
 
+    // see Schneider et al., 2019: "Coupling staggered-grid and MPFA finite volume methods for
+    // free flow/porous-medium flow problems"
+    PrimaryVariables analyticalSolutionSchneiderEtAl_(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables sol(0.0);
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        using std::sin;
+        static constexpr Scalar omega = M_PI;
+        const Scalar sinOmegaX = sin(omega*x);
+
+        sol[Indices::velocityXIdx] = y;
+        sol[Indices::velocityYIdx] = -y*sinOmegaX;
+        sol[Indices::pressureIdx] = -y*y*sinOmegaX*sinOmegaX;
+        return sol;
+    }
+
+    // see Schneider et al., 2019: "Coupling staggered-grid and MPFA finite volume methods for
+    // free flow/porous-medium flow problems"
+    NumEqVector rhsSchneiderEtAl_(const GlobalPosition& globalPos) const
+    {
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        using std::exp; using std::sin; using std::cos;
+        static constexpr Scalar omega = M_PI;
+        const Scalar sinOmegaX = sin(omega*x);
+        const Scalar cosOmegaX = cos(omega*x);
+
+        NumEqVector source(0.0);
+        source[Indices::conti0EqIdx] = -sinOmegaX;
+        source[Indices::momentumXBalanceIdx] = -2*omega*y*y*sinOmegaX*cosOmegaX
+                                               -2*y*sinOmegaX + omega*cosOmegaX;
+        source[Indices::momentumYBalanceIdx] = -omega*y*y*cosOmegaX - omega*omega*y*sinOmegaX;
+        return source;
+    }
+
     static constexpr Scalar eps_ = 1e-7;
     std::string problemName_;
     std::shared_ptr<CouplingManager> couplingManager_;
@@ -362,4 +390,4 @@ private:
 };
 } // end namespace Dumux
 
-#endif // DUMUX_STOKES_SUBPROBLEM_HH
+#endif // DUMUX_FREEFLOW_SUBPROBLEM_HH
