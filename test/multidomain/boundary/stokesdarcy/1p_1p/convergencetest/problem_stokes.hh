@@ -96,12 +96,15 @@ public:
     //! export the Indices
     using Indices = typename ModelTraits::Indices;
 
-    FreeFlowSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager, const TestCase testCase)
+    FreeFlowSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                       std::shared_ptr<CouplingManager> couplingManager,
+                       const TestCase testCase,
+                       const std::string& name)
     : ParentType(gridGeometry, "FreeFlow")
     , couplingManager_(couplingManager)
     , testCase_(testCase)
     {
-        problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        problemName_ = name + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
     /*!

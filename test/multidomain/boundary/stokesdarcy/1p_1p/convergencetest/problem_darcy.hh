@@ -108,12 +108,13 @@ public:
     DarcySubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                     std::shared_ptr<CouplingManager> couplingManager,
                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                    const TestCase testCase)
+                    const TestCase testCase,
+                    const std::string& name)
     : ParentType(gridGeometry, spatialParams, "Darcy")
     , couplingManager_(couplingManager)
     , testCase_(testCase)
     {
-        problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        problemName_ = name + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
     /*!
