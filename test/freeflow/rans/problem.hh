@@ -47,6 +47,8 @@
 #include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
 #include <dumux/freeflow/rans/twoeq/kepsilon/model.hh>
 
+#include <dumux/freeflow/rans/fluxhelper.hh>
+
 namespace Dumux {
 
 template <class TypeTag>
@@ -128,6 +130,8 @@ class PipeLauferProblem : public RANSProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+
+    using FluxHelper = Rans::BoundaryFluxHelper<ModelTraits, NumEqVector>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
 
@@ -217,7 +221,7 @@ public:
 
 #if NONISOTHERMAL
         if(isOutlet_(globalPos))
-            values.setOutflow(Indices::energyEqIdx);
+            values.setNeumann(Indices::energyEqIdx);
         else
             values.setDirichlet(Indices::temperatureIdx);
 #endif
@@ -279,6 +283,38 @@ public:
             PrimaryVariables values(initialAtPos(globalPos));
             return values;
         }
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFaceVariables& elemFaceVars,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        if(isOutlet_(scvf.center()))
+        {
+            values = FluxHelper::outflowFlux(*this,
+                                             element,
+                                             fvGeometry,
+                                             elemVolVars[scvf.insideScvIdx()],
+                                             initialAtPos(scvf.center()),
+                                             scvf,
+                                             elemFaceVars[scvf].velocitySelf());
+        }
+
+        return values;
     }
 
    /*!
@@ -353,7 +389,7 @@ private:
         else if constexpr (numTurbulenceEq(ModelTraits::turbulenceModel()) == 1)  // one equation models
         {
             if(isOutlet_(pos))
-                values.setOutflow(Indices::viscosityTildeIdx);
+                values.setNeumann(Indices::viscosityTildeIdx);
             else // walls and inflow
                 values.setDirichlet(Indices::viscosityTildeIdx);
         }
@@ -362,8 +398,8 @@ private:
             static_assert(numTurbulenceEq(ModelTraits::turbulenceModel()) == 2, "Only reached by 2eq models");
             if(isOutlet_(pos))
             {
-                values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
-                values.setOutflow(Indices::dissipationEqIdx);
+                values.setNeumann(Indices::turbulentKineticEnergyEqIdx);
+                values.setNeumann(Indices::dissipationEqIdx);
             }
             else
             {
