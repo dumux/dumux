@@ -289,26 +289,26 @@ int main(int argc, char** argv) try
     constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
     // the problem (initial and boundary conditions)
-    const auto testCase = []()
+    const auto testCaseName = getParam<std::string>("Problem.TestCase");
+    const auto testCase = [&testCaseName]()
     {
-        const auto testCaseInput = getParam<std::string>("Problem.TestCase", "ShiueExampleTwo");
-        if (testCaseInput == "ShiueExampleOne")
+        if (testCaseName == "ShiueExampleOne")
             return TestCase::ShiueExampleOne;
-        else if (testCaseInput == "ShiueExampleTwo")
+        else if (testCaseName == "ShiueExampleTwo")
             return TestCase::ShiueExampleTwo;
-        else if (testCaseInput == "Rybak")
+        else if (testCaseName == "Rybak")
             return TestCase::Rybak;
-        else if (testCaseInput == "Schneider")
+        else if (testCaseName == "Schneider")
             return TestCase::Schneider;
         else
-            DUNE_THROW(Dune::InvalidStateException, testCaseInput + " is not a valid test case");
+            DUNE_THROW(Dune::InvalidStateException, testCaseName + " is not a valid test case");
     }();
 
     using FreeFlowProblem = GetPropType<FreeFlowTypeTag, Properties::Problem>;
-    auto freeFlowProblem = std::make_shared<FreeFlowProblem>(freeFlowGridGeometry, couplingManager, testCase);
+    auto freeFlowProblem = std::make_shared<FreeFlowProblem>(freeFlowGridGeometry, couplingManager, testCase, testCaseName);
     using DarcyProblem = GetPropType<DarcyTypeTag, Properties::Problem>;
     auto spatialParams = std::make_shared<typename DarcyProblem::SpatialParams>(darcyGridGeometry, testCase);
-    auto darcyProblem = std::make_shared<DarcyProblem>(darcyGridGeometry, couplingManager, spatialParams, testCase);
+    auto darcyProblem = std::make_shared<DarcyProblem>(darcyGridGeometry, couplingManager, spatialParams, testCase, testCaseName);
 
     // the solution vector
     Traits::SolutionVector sol;

@@ -10,6 +10,7 @@ dune_add_test(NAME test_md_boundary_darcy1p_stokes1p_convtest
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ./convergencetest.py
               CMD_ARGS  test_md_boundary_darcy1p_freeflow1p_convtest params.input
+                        -Problem.TestCase ShiueExampleTwo
                         -Darcy.SpatialParams.Permeability 1.0)
 
 dune_add_test(NAME test_md_boundary_darcy1p_navierstokes1p_convtest

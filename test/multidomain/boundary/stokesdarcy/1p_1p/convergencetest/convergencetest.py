@@ -8,8 +8,9 @@ if len(sys.argv) < 2:
     sys.stderr.write('Please provide a single argument <testname> to the script\n')
     sys.exit(1)
 
-testname = str(sys.argv[1])
+executableName = str(sys.argv[1])
 testargs = [str(i) for i in sys.argv][2:]
+testname = testargs[testargs.index('-Problem.TestCase')+1]
 
 # remove the old log files
 subprocess.call(['rm', testname + '_freeFlow.log'])
@@ -19,8 +20,7 @@ print("Removed old log file ({})!".format(testname + '_darcy.log'))
 
 # do the runs with different refinement
 for i in [0, 1, 2]:
-    subprocess.call(['./' + testname] + testargs + ['-Grid.Refinement', str(i),
-                                      '-Vtk.OutputName', testname])
+    subprocess.call(['./' + executableName] + testargs + ['-Grid.Refinement', str(i)])
 
 def checkRatesFreeFlow():
     # check the rates and append them to the log file
