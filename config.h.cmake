@@ -43,9 +43,6 @@
 /* Define the path to dumux */
 #define DUMUX_SOURCE_DIR "${CMAKE_SOURCE_DIR}"
 
-/* Define to 1 if Valgrind was found */
-#cmakedefine HAVE_VALGRIND 1
-
 /* Define to 1 if gnuplot was found */
 #cmakedefine HAVE_GNUPLOT 1
 
