@@ -10,7 +10,7 @@ dumux_add_test(NAME test_ff_stokes2c_diffusion_mass
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_diffusion-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_diffusion_mass-00015.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_diffusion_mass-00010.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_mass params_diffusion.input
                              -Problem.Name test_ff_stokes2c_diffusion_mass"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-22})
@@ -24,7 +24,7 @@ dumux_add_test(NAME test_ff_stokes2c_diffusion_mole
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_diffusion-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_diffusion_mole-00015.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_diffusion_mole-00010.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c params_diffusion.input
                              -Problem.Name test_ff_stokes2c_diffusion_mole"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-22})
@@ -73,7 +73,7 @@ dumux_add_test(NAME test_ff_stokes2cni_diffusion
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2cni_diffusion-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni_diffusion-00014.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni_diffusion-00010.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni params_diffusionni.input
                              -Problem.Name test_ff_stokes2cni_diffusion"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-13})

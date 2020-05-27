@@ -1,6 +1,7 @@
 [TimeLoop]
-DtInitial = 1e6 # [s]
+DtInitial = 1e8 # [s]
 TEnd = 1e9 # [s]
+MaxTimeStepSize = 1e8 # [s]
 
 [Grid]
 UpperRight = 5 1
