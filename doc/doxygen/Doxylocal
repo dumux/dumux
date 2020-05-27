@@ -29,6 +29,8 @@ HTML_EXTRA_STYLESHEET  = @srcdir@/customdoxygendumux.css
 
 HTML_FILE_EXTENSION    = .xhtml
 
+USE_MATHJAX            = YES
+
 EXCLUDE_PATTERNS       =
 
 ALIASES               += "warning=\xrefitem warning \"Warning List\" \"Warning List\""

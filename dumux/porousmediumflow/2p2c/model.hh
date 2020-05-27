@@ -28,7 +28,7 @@
  * approach is used as the equation for the conservation of momentum:
  * \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
  * \f]
  *
  * By inserting this into the equations for the conservation of the
@@ -38,7 +38,7 @@
  {\partial t}
  - \sum_\alpha  \text{div} \left\{ \varrho_\alpha \frac{M^\kappa}{M_\alpha} x_\alpha^\kappa
  \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- (\textbf{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
+ (\textbf{grad}\, p_\alpha - \varrho_{\alpha}  \mathbf{g}) \right\}
  \nonumber \\ \nonumber \\
  &-& \sum_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa \varrho_{\alpha}
  \textbf{grad} X^\kappa_{\alpha} \right\}

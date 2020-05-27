@@ -36,7 +36,7 @@
  \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
  -
  \text{div} \left\{
- \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
  \right\} - q_\alpha = 0 \;.
  \f]
  *

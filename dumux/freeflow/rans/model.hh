@@ -25,7 +25,7 @@
  * This model implements a single-phase, isothermal Reynolds-Averaged
  * Navier-Stokes model, solving the <B> momentum balance equation </B>
  * \f[
- \frac{\partial (\varrho \textbf{v})}{\partial t} + \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\textup{T}}) = \nabla \cdot (\mu_\textrm{eff} (\nabla \textbf{v} + \nabla \textbf{v}^{\textup{T}}))
+ \frac{\partial (\varrho \textbf{v})}{\partial t} + \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\text{T}}) = \nabla \cdot (\mu_\textrm{eff} (\nabla \textbf{v} + \nabla \textbf{v}^{\text{T}}))
    - \nabla p + \varrho \textbf{g} - \textbf{f}
  * \f]
  * The effective viscosity is composed of the fluid and the eddy viscosity:
