@@ -29,7 +29,6 @@
 
 #include <dumux/material/idealgas.hh>
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/valgrind.hh>
 
 #include "iapws/common.hh"
 #include "iapws/region1.hh"
@@ -575,21 +574,16 @@ public:
      */
     static Scalar gasPressure(Scalar temperature, Scalar density)
     {
-        Valgrind::CheckDefined(temperature);
-        Valgrind::CheckDefined(density);
-
         // We use the newton method for this. For the initial value we
         // assume steam to be an ideal gas
         Scalar pressure = IdealGas<Scalar>::pressure(temperature, density/molarMass());
         Scalar eps = pressure*1e-7;
 
         Scalar deltaP = pressure*2;
-        Valgrind::CheckDefined(pressure);
-        Valgrind::CheckDefined(deltaP);
-
         using std::abs;
-        for (int i = 0; i < 5 && abs(pressure*1e-9) < abs(deltaP); ++i) {
-            Scalar f = gasDensity(temperature, pressure) - density;
+        for (int i = 0; i < 5 && abs(pressure*1e-9) < abs(deltaP); ++i)
+        {
+            const Scalar f = gasDensity(temperature, pressure) - density;
 
             Scalar df_dp;
             df_dp = gasDensity(temperature, pressure + eps);
@@ -599,8 +593,6 @@ public:
             deltaP = - f/df_dp;
 
             pressure += deltaP;
-            Valgrind::CheckDefined(pressure);
-            Valgrind::CheckDefined(deltaP);
         }
 
         return pressure;

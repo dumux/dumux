@@ -38,7 +38,6 @@
 #include <dumux/material/binarycoefficients/h2o_air.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
 #include <dumux/io/name.hh>
@@ -587,22 +586,17 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        Scalar T = fluidState.temperature(phaseIdx);
-        Scalar p = fluidState.pressure(phaseIdx);
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
 
         if (phaseIdx == liquidPhaseIdx)
             return Brine::enthalpy(BrineAdapter<FluidState>(fluidState), Brine::liquidPhaseIdx);
         else
         {
             // This assumes NaCl not to be present in the gas phase
-            Scalar XAir = fluidState.massFraction(gasPhaseIdx, AirIdx);
-            Scalar XH2O = fluidState.massFraction(gasPhaseIdx, H2OIdx);
-
-            Scalar result = 0;
-            result += XH2O * H2O::gasEnthalpy(T, p);
-            result += XAir * Air::gasEnthalpy(T, p);
-            Valgrind::CheckDefined(result);
-            return result;
+            const Scalar XAir = fluidState.massFraction(gasPhaseIdx, AirIdx);
+            const Scalar XH2O = fluidState.massFraction(gasPhaseIdx, H2OIdx);
+            return XH2O*H2O::gasEnthalpy(T, p) + XAir*Air::gasEnthalpy(T, p);
         }
     }
 

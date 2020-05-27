@@ -87,9 +87,6 @@ public:
      */
     void updatePure(Scalar temperature, Scalar pressure)
     {
-        Valgrind::CheckDefined(temperature);
-        Valgrind::CheckDefined(pressure);
-
         // Calculate the Peng-Robinson parameters of the pure
         // components
         //
@@ -110,8 +107,6 @@ public:
             else
                 f_omega = 0.37464 + omega*(1.54226 - omega*0.26992);
 
-            Valgrind::CheckDefined(f_omega);
-
             using std::sqrt;
             Scalar tmp = 1 + f_omega*(1 - sqrt(Tr));
             tmp = tmp*tmp;
@@ -124,8 +119,6 @@ public:
 
             this->pureParams_[i].setA(a);
             this->pureParams_[i].setB(b);
-            Valgrind::CheckDefined(this->pureParams_[i].a());
-            Valgrind::CheckDefined(this->pureParams_[i].b());
         }
 
         updateACache_();
@@ -156,11 +149,9 @@ public:
         Scalar b = 0;
         for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
             Scalar xi = fs.moleFraction(phaseIdx, compIIdx) / sumx;
-            Valgrind::CheckDefined(xi);
             using::std::isfinite;
             for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
                 Scalar xj = fs.moleFraction(phaseIdx, compJIdx) / sumx;
-                Valgrind::CheckDefined(xj);
 
                 // mixing rule from Reid, page 82
                 a +=  xi * xj * aCache_[compIIdx][compJIdx];
@@ -175,9 +166,6 @@ public:
 
         this->setA(a);
         this->setB(b);
-        Valgrind::CheckDefined(this->a());
-        Valgrind::CheckDefined(this->b());
-
     }
 
     /*!
@@ -214,20 +202,8 @@ public:
         return pureParams_[compIdx];
     }
 
-    /*!
-     * \brief If run under valgrind, this method produces an warning
-     *        if the parameters where not determined correctly.
-     */
-    void checkDefined() const
-    {
-#ifndef NDEBUG
-        for (int i = 0; i < numComponents; ++i)
-            pureParams_[i].checkDefined();
-
-        Valgrind::CheckDefined(this->a());
-        Valgrind::CheckDefined(this->b());
-#endif
-    };
+    [[deprecated("Will be removed after Dumux 3.3")]]
+    void checkDefined() const {}
 
 protected:
     PureParams pureParams_[numComponents];

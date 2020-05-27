@@ -317,7 +317,6 @@ public:
 
         // add contribution from possible point sources
         source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
-        Valgrind::CheckDefined(source);
 
         return source;
     }

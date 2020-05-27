@@ -169,7 +169,6 @@ public:
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-        Valgrind::CheckDefined(sg_);
 
         fluidState_.setSaturation(wPhaseIdx, sw_);
         fluidState_.setSaturation(gPhaseIdx, sg_);
@@ -547,7 +546,6 @@ public:
                                  fluidState_.saturation(nPhaseIdx),
                                  fluidState_.saturation(gPhaseIdx));
             mobility_[phaseIdx] = kr / mu;
-            Valgrind::CheckDefined(mobility_[phaseIdx]);
         }
 
         // material dependent parameters for NAPL adsorption

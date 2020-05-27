@@ -29,7 +29,6 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
@@ -146,7 +145,6 @@ public:
                 // as parameter!
                 kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
             relativePermeability_[phaseIdx] = kr;
-            Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
         }
 
         // porosity & permeability
@@ -280,8 +278,6 @@ public:
             fluidTemperature = FluidSystem::vaporTemperature(fluidState, fluidState_.wettingPhase());
         else
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-
-        Valgrind::CheckDefined(fluidTemperature);
 
         // the model assumes that all fluid phases have the same temperature
         for (int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)

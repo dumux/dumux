@@ -28,7 +28,6 @@
 #include <cassert>
 #include <iomanip>
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
@@ -757,8 +756,6 @@ public:
     {
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(p);
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {

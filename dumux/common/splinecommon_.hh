@@ -32,7 +32,6 @@
 #include <dune/common/float_cmp.hh>
 
 #include "math.hh"
-#include "valgrind.hh"
 
 namespace Dumux {
 
@@ -292,8 +291,7 @@ public:
 
 protected:
     // this is an internal class, so everything is protected!
-    SplineCommon_()
-    { Valgrind::SetUndefined(asImp_()); }
+    SplineCommon_() = default;
 
     /*!
      * \brief Set the sampling point vectors.

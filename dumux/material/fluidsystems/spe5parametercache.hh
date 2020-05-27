@@ -64,10 +64,8 @@ public:
      */
     Spe5ParameterCache()
     {
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             VmUpToDate_[phaseIdx] = false;
-            Valgrind::SetUndefined(Vm_[phaseIdx]);
-        }
     }
 
     /*!
@@ -273,7 +271,6 @@ protected:
     template <class FluidState>
     void updateMix_(const FluidState &fs, int phaseIdx)
     {
-        Valgrind::CheckDefined(fs.averageMolarMass(phaseIdx));
         switch (phaseIdx)
         {
             case oPhaseIdx:

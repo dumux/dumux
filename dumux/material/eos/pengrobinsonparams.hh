@@ -29,8 +29,6 @@
 #ifndef DUMUX_PENG_ROBINSON_PARAMS_HH
 #define DUMUX_PENG_ROBINSON_PARAMS_HH
 
-#include <dumux/common/valgrind.hh>
-
 namespace Dumux {
 
 /*!
@@ -60,17 +58,9 @@ public:
     Scalar b() const
     { return b_; }
 
-    /*!
-     * \brief If run under valgrind, this method produces an warning
-     *        if the parameters where not determined correctly.
-     */
+    [[deprecated("Will be removed after Dumux 3.3")]]
     void checkDefined() const
-    {
-#ifndef NDEBUG
-        Valgrind::CheckDefined(a_);
-        Valgrind::CheckDefined(b_);
-#endif
-    };
+    {}
 
     /*!
      * \brief Set the attractive parameter 'a' of the Peng-Robinson

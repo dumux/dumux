@@ -29,7 +29,6 @@
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/valgrind.hh>
 
 namespace Dumux {
 
@@ -131,8 +130,6 @@ public:
         for (int nIdx = 0; nIdx < nMax; ++nIdx) {
             // calculate Jacobian matrix and right hand side
             linearize_(J, b, fluidState, paramCache, phaseIdx, targetFug);
-            Valgrind::CheckDefined(J);
-            Valgrind::CheckDefined(b);
 
             // Solve J*x = b
             x = 0;
@@ -140,14 +137,9 @@ public:
             catch (Dune::FMatrixError &e)
             { throw NumericalProblem(e.what()); }
 
-            //std::cout << "original delta: " << x << "\n";
-
-            Valgrind::CheckDefined(x);
-
             // update the fluid composition. b is also used to store
             // the defect for the next iteration.
             Scalar relError = update_(fluidState, paramCache, x, b, phaseIdx, targetFug);
-            //std::cout << "relError: " << relError << "\n";
 
             if (relError < 1e-9) {
                 Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);

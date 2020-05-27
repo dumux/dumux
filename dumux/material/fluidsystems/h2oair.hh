@@ -36,7 +36,6 @@
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/components/h2o.hh>
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
 #include <dumux/io/name.hh>
@@ -648,28 +647,16 @@ public:
     static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
     {
-        Scalar T = fluidState.temperature(phaseIdx);
-        Scalar p = fluidState.pressure(phaseIdx);
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(p);
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
 
         if (phaseIdx == liquidPhaseIdx)
-        {
             return H2O::liquidEnthalpy(T, p);
-        }
 
         else if (phaseIdx == gasPhaseIdx)
-        {
-            Scalar result = 0.0;
-            result +=
-                H2O::gasEnthalpy(T, p) *
-                fluidState.massFraction(gasPhaseIdx, H2OIdx);
+            return H2O::gasEnthalpy(T, p)*fluidState.massFraction(gasPhaseIdx, H2OIdx)
+                   + Air::gasEnthalpy(T, p)*fluidState.massFraction(gasPhaseIdx, AirIdx);
 
-            result +=
-                Air::gasEnthalpy(T, p) *
-                fluidState.massFraction(gasPhaseIdx, AirIdx);
-            return result;
-        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
