@@ -175,14 +175,9 @@ public:
 
         // solve for all mole fractions
         try { M.solve(x, b); }
-        catch (Dune::FMatrixError & e) {
+        catch (const Dune::FMatrixError& e) {
             DUNE_THROW(NumericalProblem,
-                    "Matrix for composition of phases could not be solved. \n"
-                    "Throwing NumericalProblem for trying with smaller timestep.");
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
+                "MiscibleMultiPhaseComposition: Failed to solve the linear equation system for the phase composition.");
         }
 
         // set all mole fractions and the the additional quantities in
