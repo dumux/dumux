@@ -89,7 +89,6 @@ private:
     template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using SubControlVolume  = typename FVElementGeometry<id>::SubControlVolume;
 
-
     template<std::size_t id> using GridFaceVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridFaceVariables>;
     template<std::size_t id> using ElementFaceVariables = typename GridFaceVariables<id>::LocalView;
     template<std::size_t id> using FaceVariables = typename ElementFaceVariables<id>::FaceVariables;
@@ -97,14 +96,12 @@ private:
     template<std::size_t id> using GridVariables = typename MDTraits::template SubDomain<id>::GridVariables;
     using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
 
-
     using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;
-
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
-
     using CouplingMapper = StokesDarcyCouplingMapper;
+    using TimeLoop = TimeLoopBase<Scalar>;
 
-    struct StationaryStokesCouplingContext
+    struct FreeFlowCouplingContext
     {
         Element<darcyIdx> element;
         FVElementGeometry<darcyIdx> fvGeometry;
@@ -116,7 +113,7 @@ private:
         { return fvGeometry.scvf(darcyScvfIdx); }
     };
 
-    struct StationaryDarcyCouplingContext
+    struct DarcyCouplingContext
     {
         Element<stokesIdx> element;
         FVElementGeometry<stokesIdx> fvGeometry;
@@ -128,8 +125,10 @@ private:
         std::optional<VolumeVariables<stokesIdx>> volVars;
 
         // quantities only reuqired for CouplingMode::reconstructFreeFlowNormalStress
-        std::optional<ElementVolumeVariables<stokesIdx>> elemVolVars;
-        std::optional<ElementFaceVariables<stokesIdx>> elemFaceVars;
+        std::optional<ElementVolumeVariables<stokesIdx>> curElemVolVars;
+        std::optional<ElementFaceVariables<stokesIdx>> curElemFaceVars;
+        std::optional<ElementVolumeVariables<stokesIdx>> prevElemVolVars;
+        std::optional<ElementFaceVariables<stokesIdx>> prevElemFaceVars;
         std::optional<ElementFluxVariablesCache<stokesIdx>> elemFluxVarsCache;
 
         const auto& getStokesScvf() const
@@ -158,7 +157,6 @@ public:
     // \{
 
     //! Initialize the coupling manager
-    [[deprecated("Use init() with gridVaribales!. Will be removed after 3.3")]]
     void init(std::shared_ptr<const Problem<stokesIdx>> stokesProblem,
               std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
               const SolutionVector& curSol)
@@ -171,7 +169,7 @@ public:
 
         this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
         this->curSol() = curSol;
-        couplingData_ = std::make_shared<CouplingData>(*this);
+        couplingData_ = std::make_shared<CouplingData>(*this, timeLoop_);
         computeStencils();
     }
 
@@ -191,8 +189,22 @@ public:
 
         this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
         this->curSol() = curSol;
-        couplingData_ = std::make_shared<CouplingData>(*this);
+        couplingData_ = std::make_shared<CouplingData>(*this, timeLoop_);
         computeStencils();
+    }
+
+    //! Initialize the coupling manager
+    void init(std::shared_ptr<const Problem<stokesIdx>> stokesProblem,
+              std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
+              GridVariablesTuple&& gridVariables,
+              const SolutionVector& curSol,
+              const SolutionVector& prevSol,
+              std::shared_ptr<TimeLoop> timeLoop,
+              const CouplingMode couplingMode = CouplingMode::reconstructPorousMediumPressure)
+    {
+        timeLoop_ = timeLoop;
+        prevSol_ = prevSol;
+        init(stokesProblem, darcyProblem, gridVariables, curSol, couplingMode);
     }
 
     //! Update after the grid has changed
@@ -300,14 +312,18 @@ public:
 
         std::optional<VelocityVector> faceVelocity;
         std::optional<VolumeVariables<stokesIdx>> stokesVolVars;
-        std::optional<ElementVolumeVariables<stokesIdx>> stokesElemVolVars;
-        std::optional<ElementFaceVariables<stokesIdx>> stokesElemFaceVars;
+        std::optional<ElementVolumeVariables<stokesIdx>> curStokesElemVolVars;
+        std::optional<ElementFaceVariables<stokesIdx>> curStokesElemFaceVars;
+        std::optional<ElementVolumeVariables<stokesIdx>> prevStokesElemVolVars;
+        std::optional<ElementFaceVariables<stokesIdx>> prevStokesElemFaceVars;
         std::optional<ElementFluxVariablesCache<stokesIdx>> stokesElemFluxVarsCache;
 
         if (couplingMode() == CouplingMode::reconstructFreeFlowNormalStress)
         {
-            stokesElemVolVars.emplace(localView(gridVars_(stokesIdx).curGridVolVars()));
-            stokesElemFaceVars.emplace(localView(gridVars_(stokesIdx).curGridFaceVars()));
+            curStokesElemVolVars.emplace(localView(gridVars_(stokesIdx).curGridVolVars()));
+            curStokesElemFaceVars.emplace(localView(gridVars_(stokesIdx).curGridFaceVars()));
+            prevStokesElemVolVars.emplace(localView(gridVars_(stokesIdx).prevGridVolVars()));
+            prevStokesElemFaceVars.emplace(localView(gridVars_(stokesIdx).prevGridFaceVars()));
             stokesElemFluxVarsCache.emplace(localView(gridVars_(stokesIdx).gridFluxVarsCache()));
         }
 
@@ -337,15 +353,16 @@ public:
             }
             else // CouplingMode::reconstructFreeFlowNormalStress
             {
-                stokesElemVolVars->bind(stokesElement, stokesFvGeometry, this->curSol()[stokesCellCenterIdx]);
-                stokesElemFaceVars->bind(stokesElement, stokesFvGeometry, this->curSol()[stokesFaceIdx]);
-                stokesElemFluxVarsCache->bind(stokesElement, stokesFvGeometry, *stokesElemVolVars);
+                curStokesElemVolVars->bind(stokesElement, stokesFvGeometry, this->curSol()[stokesCellCenterIdx]);
+                curStokesElemFaceVars->bind(stokesElement, stokesFvGeometry, this->curSol()[stokesFaceIdx]);
+                stokesElemFluxVarsCache->bind(stokesElement, stokesFvGeometry, *curStokesElemVolVars);
             }
 
             // add the context
             darcyCouplingContext_.push_back({stokesElement, stokesFvGeometry, indices.scvfIdx, indices.flipScvfIdx,
                                              faceVelocity, stokesVolVars,
-                                             stokesElemVolVars, stokesElemFaceVars, stokesElemFluxVarsCache});
+                                             curStokesElemVolVars, curStokesElemFaceVars, prevStokesElemVolVars, prevStokesElemFaceVars,
+                                             stokesElemFluxVarsCache});
         }
     }
 
@@ -394,7 +411,7 @@ public:
             else // CouplingMode::reconstructFreeFlowNormalStress
             {
                 for (const auto& scv : scvs(data.fvGeometry))
-                    getVolVarAccess_(domainJ, gridVars_(stokesIdx).curGridVolVars(), data.elemVolVars.value(), scv).update(elemSol, this->problem(stokesIdx), data.element, scv);
+                    getVolVarAccess_(domainJ, gridVars_(stokesIdx).curGridVolVars(), data.curElemVolVars.value(), scv).update(elemSol, this->problem(stokesIdx), data.element, scv);
             }
         }
     }
@@ -421,7 +438,7 @@ public:
             {
                 using FaceSolution = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::StaggeredFaceSolution>;
                 FaceSolution faceSol(data.getStokesScvf(), this->curSol()[domainJ], stokesProblem.gridGeometry());
-                auto& faceVars = getFaceVarAccess_(domainJ, gridVars_(stokesIdx).curGridFaceVars(), data.elemFaceVars.value(), data.getStokesScvf());
+                auto& faceVars = getFaceVarAccess_(domainJ, gridVars_(stokesIdx).curGridFaceVars(), data.curElemFaceVars.value(), data.getStokesScvf());
                 faceVars.update(faceSol, stokesProblem, data.element, data.fvGeometry, data.getStokesScvf());
             }
         }
@@ -732,11 +749,15 @@ private:
 
     CouplingMode couplingMode_;
 
+    // only for transient problems
+    std::shared_ptr<const TimeLoop> timeLoop_ = nullptr;
+    const SolutionVector* prevSol_ = nullptr;
+
     ////////////////////////////////////////////////////////////////////////////
     //! The coupling context
     ////////////////////////////////////////////////////////////////////////////
-    mutable std::vector<StationaryStokesCouplingContext> stokesCouplingContext_;
-    mutable std::vector<StationaryDarcyCouplingContext> darcyCouplingContext_;
+    mutable std::vector<FreeFlowCouplingContext> stokesCouplingContext_;
+    mutable std::vector<DarcyCouplingContext> darcyCouplingContext_;
 
     mutable std::size_t boundStokesElemIdx_;
     mutable std::size_t boundDarcyElemIdx_;
