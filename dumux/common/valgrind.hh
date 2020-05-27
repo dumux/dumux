@@ -23,6 +23,7 @@
  */
 #ifndef DUMUX_VALGRIND_HH
 #define DUMUX_VALGRIND_HH
+#warning "This header is deprecated and will be removed after release 3.3"
 
 #if ! HAVE_VALGRIND
 namespace Valgrind
