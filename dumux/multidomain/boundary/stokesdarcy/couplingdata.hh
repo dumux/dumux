@@ -29,6 +29,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -257,8 +258,13 @@ class StokesDarcyCouplingDataImplementationBase
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
+    using TimeLoop = TimeLoopBase<typename MDTraits::Scalar>;
+
 public:
-    StokesDarcyCouplingDataImplementationBase(const CouplingManager& couplingmanager): couplingManager_(couplingmanager) {}
+    StokesDarcyCouplingDataImplementationBase(const CouplingManager& couplingmanager, std::shared_ptr<const TimeLoop> timeLoop)
+    : couplingManager_(couplingmanager)
+    , timeLoop_(timeLoop)
+    {}
 
     /*!
      * \brief Returns the corresponding phase index needed for coupling.
@@ -343,18 +349,51 @@ public:
 
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& freeFlowScvf = darcyContext.getStokesScvf();
-        const auto& freeFlowElemVolVars = darcyContext.elemVolVars.value();
+        const auto& curFreeFlowElemVolVars = darcyContext.curElemVolVars.value();
+        const auto& prevFreeFlowElemVolVars = darcyContext.prevElemVolVars.value();
+        const auto& freeFlowProblem = this->couplingManager().problem(stokesIdx);
+        const auto& freeFlowElement = darcyContext.element;
+        const auto& freeFlowFVGeometry = darcyContext.fvGeometry;
+        const auto& curFreeFlowElemenFaceVars = darcyContext.curElemFaceVars.value();
+        const auto& prevFreeFlowElemenFaceVars = darcyContext.prevElemFaceVars.value();
 
+        using LocalResidual = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::LocalResidual>;
+        LocalResidual localResidual(&freeFlowProblem, timeLoop_.get());
+
+        typename LocalResidual::FaceResidualValue result(0.0);
+
+        if (timeLoop_)
+            localResidual.evalStorageForFace(result,
+                                             freeFlowProblem,
+                                             freeFlowElement,
+                                             freeFlowFVGeometry,
+                                             prevFreeFlowElemVolVars,
+                                             curFreeFlowElemVolVars,
+                                             prevFreeFlowElemenFaceVars,
+                                             curFreeFlowElemenFaceVars,
+                                             freeFlowScvf);
+
+        localResidual.evalSourceForFace(result,
+                                        freeFlowProblem,
+                                        freeFlowElement,
+                                        freeFlowFVGeometry,
+                                        curFreeFlowElemVolVars,
+                                        curFreeFlowElemenFaceVars,
+                                        freeFlowScvf);
+
+        // consider momentum flux
         using FluxVariables = GetPropType<SubDomainTypeTag<stokesIdx>, Properties::FluxVariables>;
         FluxVariables fluxVars;
-        return fluxVars.computeMomentumFlux(this->couplingManager().problem(stokesIdx),
-                                            darcyContext.element,
-                                            freeFlowScvf,
-                                            darcyContext.fvGeometry,
-                                            freeFlowElemVolVars,
-                                            darcyContext.elemFaceVars.value(),
-                                            darcyContext.elemFluxVarsCache->gridFluxVarsCache())
-                                            / (freeFlowElemVolVars[freeFlowScvf.insideScvIdx()].extrusionFactor() * freeFlowScvf.area());
+        result += fluxVars.computeMomentumFlux(freeFlowProblem,
+                                               freeFlowElement,
+                                               freeFlowScvf,
+                                               freeFlowFVGeometry,
+                                               curFreeFlowElemVolVars,
+                                               curFreeFlowElemenFaceVars,
+                                               darcyContext.elemFluxVarsCache->gridFluxVarsCache());
+
+        result /= curFreeFlowElemVolVars[freeFlowScvf.insideScvIdx()].extrusionFactor() * freeFlowScvf.area();
+        return result;
     }
 
     /*!
@@ -559,7 +598,7 @@ protected:
 
 private:
     const CouplingManager& couplingManager_;
-
+    std::shared_ptr<const TimeLoop> timeLoop_;
 };
 
 /*!
@@ -615,7 +654,7 @@ public:
         const auto& stokesScvf =  darcyContext.getStokesScvf();
         const Scalar stokesDensity = this->couplingManager().couplingMode() == CouplingManager::CouplingMode::reconstructPorousMediumPressure ?
                                      darcyContext.volVars.value().density()
-                                   : darcyContext.elemVolVars.value()[stokesScvf.insideScvIdx()].density();
+                                   : darcyContext.curElemVolVars.value()[stokesScvf.insideScvIdx()].density();
 
         const bool insideIsUpstream = velocity > 0.0;
 
