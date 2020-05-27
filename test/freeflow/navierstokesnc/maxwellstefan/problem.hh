@@ -36,6 +36,8 @@
 #include <dumux/flux/maxwellstefanslaw.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
+#include <dumux/freeflow/navierstokes/fluxhelper.hh>
+
 #include <dumux/io/gnuplotinterface.hh>
 
 namespace Dumux {
@@ -210,7 +212,10 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -219,6 +224,8 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+
+    using FluxHelper = NavierStokes::BoundaryFluxHelper<ModelTraits, NumEqVector>;
 
     enum {
         compTwoIdx =  Indices::conti0EqIdx + FluidSystem::N2Idx,
@@ -362,8 +369,8 @@ public:
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(Indices::velocityXIdx);
         values.setDirichlet(Indices::velocityYIdx);
-        values.setOutflow(compTwoIdx);
-        values.setOutflow(compThreeIdx);
+        values.setNeumann(compTwoIdx);
+        values.setNeumann(compThreeIdx);
         return values;
     }
 
@@ -375,6 +382,38 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         return initialAtPos(globalPos);
+    }
+
+        /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFaceVariables& elemFaceVars,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        const auto outflowFluxes = FluxHelper::outflowFlux(*this,
+                                                           element,
+                                                           fvGeometry,
+                                                           elemVolVars[scvf.insideScvIdx()],
+                                                           initialAtPos(scvf.center()),
+                                                           scvf,
+                                                           elemFaceVars[scvf].velocitySelf());
+
+        values[compTwoIdx] = outflowFluxes[compTwoIdx];
+        values[compThreeIdx] = outflowFluxes[compThreeIdx];
+
+        return values;
     }
 
    /*!

@@ -40,6 +40,7 @@
 
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
+#include <dumux/freeflow/navierstokes/fluxhelper.hh>
 namespace Dumux {
 
 template <class TypeTag>
@@ -112,15 +113,20 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+
+    using FluxHelper = NavierStokes::BoundaryFluxHelper<ModelTraits, NumEqVector>;
 
     static constexpr auto compIdx = 1;
     static constexpr auto transportCompIdx = Indices::conti0EqIdx + compIdx;
@@ -176,9 +182,9 @@ public:
         else if(isOutlet_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
-            values.setOutflow(transportEqIdx);
+            values.setNeumann(transportEqIdx);
 #if NONISOTHERMAL
-            values.setOutflow(Indices::energyEqIdx);
+            values.setNeumann(Indices::energyEqIdx);
 #endif
         }
         else
@@ -223,6 +229,44 @@ public:
             values[Indices::temperatureIdx] = 293.15;
 #endif
             }
+        }
+
+        return values;
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementVolumeVariables, class ElementFaceVariables>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFaceVariables& elemFaceVars,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+
+        if(isOutlet_(scvf.center()))
+        {
+            const auto outflowFluxes = FluxHelper::outflowFlux(*this,
+                                                               element,
+                                                               fvGeometry,
+                                                               elemVolVars[scvf.insideScvIdx()],
+                                                               initialAtPos(scvf.center()),
+                                                               scvf,
+                                                               elemFaceVars[scvf].velocitySelf());
+
+            values[transportEqIdx] = outflowFluxes[transportEqIdx];
+
+#if NONISOTHERMAL
+            values[Indices::energyEqIdx] = outflowFluxes[Indices::energyEqIdx];
+#endif
         }
 
         return values;

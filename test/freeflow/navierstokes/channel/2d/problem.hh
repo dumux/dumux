@@ -35,6 +35,8 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 
+#include <dumux/freeflow/navierstokes/fluxhelper.hh>
+
 namespace Dumux {
 template <class TypeTag>
 class ChannelTestProblem;
@@ -98,7 +100,8 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -107,6 +110,8 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+
+    using FluxHelper = NavierStokes::BoundaryFluxHelper<ModelTraits, NumEqVector>;
 
     // the types of outlet boundary conditions
     enum class OutletCondition
@@ -188,7 +193,7 @@ public:
                 values.setNeumann(Indices::momentumXBalanceIdx);
             }
 #if NONISOTHERMAL
-            values.setOutflow(Indices::energyEqIdx);
+            values.setNeumann(Indices::energyEqIdx);
 #endif
         }
         else
@@ -252,6 +257,17 @@ public:
 
         if (outletCondition_ != OutletCondition::doNothing)
             values[1] = -dudy(scvf.center()[1], inletVelocity_) * elemVolVars[scvf.insideScvIdx()].viscosity();
+
+#if NONISOTHERMAL
+        if(isOutlet_(scvf.center()))
+            values[Indices::energyEqIdx] = FluxHelper::outflowFlux(*this,
+                                                                   element,
+                                                                   fvGeometry,
+                                                                   elemVolVars[scvf.insideScvIdx()],
+                                                                   initialAtPos(scvf.center()),
+                                                                   scvf,
+                                                                   elemFaceVars[scvf].velocitySelf())[Indices::energyEqIdx];
+#endif
 
         return values;
     }
