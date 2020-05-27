@@ -28,8 +28,8 @@
  * The solid phases. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
- * v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- * \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ * v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
+ * \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
  * \f]
  *
  * By inserting this into the equations for the conservation of the
@@ -38,8 +38,8 @@
  * && \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa \phi S_\alpha )}
  * {\partial t}
  * - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
- * \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- * (\text{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
+ * \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
+ * (\text{grad}\, p_\alpha - \varrho_{\alpha}  \mathbf{g}) \right\}
  * \nonumber \\ \nonumber \\
  *   &-& \sum_\alpha \text{div} \left\{{\bf D_{\alpha, pm}^\kappa} \varrho_{\alpha} \text{grad}\, X^\kappa_{\alpha} \right\}
  * - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,

@@ -27,8 +27,8 @@
  && \frac{\partial (\sum_w \varrho_w X_w^\kappa \phi S_w )}
  {\partial t}
  - \sum_w  \text{div} \left\{ \varrho_w X_w^\kappa
- \frac{k_{rw}}{\mu_w} \mbox{\bf K}
- (\text{grad}\, p_w - \varrho_{w}  \mbox{\bf g}) \right\}
+ \frac{k_{rw}}{\mu_w} \mathbf{K}
+ (\text{grad}\, p_w - \varrho_{w}  \mathbf{g}) \right\}
  \nonumber \\ \nonumber \\
     &-& \sum_w \text{div} \left\{{\bf D_{w, pm}^\kappa} \varrho_{w} \text{grad}\, X^\kappa_{w} \right\}
  - \sum_w q_w^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,

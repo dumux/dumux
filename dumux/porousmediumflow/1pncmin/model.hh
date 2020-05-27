@@ -26,8 +26,8 @@
 * of the solid phases. The standard multi-phase Darcy
 * approach is used as the equation for the conservation of momentum:
 * \f[
-v = - \frac{k_{r}}{\mu} \mbox{\bf K}
-\left(\text{grad}\, p - \varrho_{f} \mbox{\bf g} \right)
+v = - \frac{k_{r}}{\mu} \mathbf{K}
+\left(\text{grad}\, p - \varrho_{f} \mathbf{g} \right)
 * \f]
 *
 * By inserting this into the equations for the conservation of the
@@ -35,8 +35,8 @@ v = - \frac{k_{r}}{\mu} \mbox{\bf K}
 * \f[
  \frac{\partial ( \varrho_f X^\kappa \phi  )}
 {\partial t} -  \text{div} \left\{ \varrho_f X^\kappa
-\frac{k_{r}}{\mu} \mbox{\bf K}
-(\text{grad}\, p - \varrho_{f}  \mbox{\bf g}) \right\}
+\frac{k_{r}}{\mu} \mathbf{K}
+(\text{grad}\, p - \varrho_{f}  \mathbf{g}) \right\}
 - \text{div} \left\{{\bf D_{pm}^\kappa} \varrho_{f} \text{grad}\, X^\kappa \right\}
 -  q_\kappa = 0 \qquad \kappa \in \{w, a,\cdots \}
 * \f]

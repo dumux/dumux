@@ -39,7 +39,7 @@
  \left\{
  \varrho_\alpha h_\alpha
  \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- \left( \textbf{grad}\,p_\alpha - \varrho_\alpha \mbox{\bf g} \right)
+ \left( \textbf{grad}\,p_\alpha - \varrho_\alpha \mathbf{g} \right)
  \right\} \\
     & - \text{div} \left(\lambda_{pm} \textbf{grad} \, T \right)
     - q^h = 0.
