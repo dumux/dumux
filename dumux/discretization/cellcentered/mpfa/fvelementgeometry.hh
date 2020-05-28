@@ -28,7 +28,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
-#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/indextraits.hh>
@@ -182,7 +181,6 @@ class CCMpfaFVElementGeometry<GG, false>
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     using CoordScalar = typename GridView::ctype;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
     //! export type of the element
@@ -377,7 +375,7 @@ private:
             const auto& e = useNeighbor ? is.outside() : element;
             const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
             const auto eg = e.geometry();
-            const auto refElement = ReferenceElements::general(eg.type());
+            const auto refElement = referenceElement(eg);
 
             // Set up a container with all relevant positions for scvf corner computation
             const auto numCorners = is.geometry().corners();
@@ -459,7 +457,7 @@ private:
             const auto& e = useNeighbor ? is.outside() : element;
             const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
             const auto eg = e.geometry();
-            const auto refElement = ReferenceElements::general(eg.type());
+            const auto refElement = referenceElement(eg);
 
             // Set up a container with all relevant positions for scvf corner computation
             const auto numCorners = is.geometry().corners();
