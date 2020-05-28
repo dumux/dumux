@@ -62,8 +62,6 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfa
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
@@ -344,7 +342,7 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-    const auto referenceElement = ReferenceElements::general(elementI.type());
+    const auto refElement = referenceElement(elementI);
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();
@@ -372,7 +370,7 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
 
     for (int vIdx = 0; vIdx < numVertices; vIdx++)
     {
-        int localVertIdx = referenceElement.subEntity(fIdx, dim - 1, vIdx, dim);
+        int localVertIdx = refElement.subEntity(fIdx, dim - 1, vIdx, dim);
 
         int vIdxGlobal = 0;
                 if (levelI >= levelJ)

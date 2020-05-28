@@ -79,8 +79,6 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2p: public FvMpfaL3dPress
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     using InteractionVolume = GetPropType<TypeTag, Properties::MPFAInteractionVolume>;
     using Intersection = typename GridView::Intersection;
 
@@ -307,7 +305,7 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-    const auto referenceElement = ReferenceElements::general(elementI.type());
+    const auto refElement = referenceElement(elementI);
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();
@@ -316,7 +314,7 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     for (int vIdx = 0; vIdx < numVertices; vIdx++)
     {
-        int localVertIdx = referenceElement.subEntity(indexInInside, 1, vIdx, dim);
+        int localVertIdx = refElement.subEntity(indexInInside, 1, vIdx, dim);
 
         int vIdxGlobal = problem_.variables().index(elementI.template subEntity<dim>(localVertIdx));
 

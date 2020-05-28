@@ -29,7 +29,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/type.hh>
-#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/math.hh>
 
@@ -519,7 +518,6 @@ class CCMpfaHelper : public MpfaDimensionHelper<GridGeometry,
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using CoordScalar = typename GridView::ctype;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
     /*!
@@ -569,7 +567,7 @@ public:
             {
                 if (!is.neighbor() && !is.boundary())
                 {
-                    const auto refElement = ReferenceElements::general(element.type());
+                    const auto refElement = referenceElement(element);
 
                     for (int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
                     {

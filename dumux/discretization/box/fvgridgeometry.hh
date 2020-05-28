@@ -28,7 +28,6 @@
 
 #include <unordered_map>
 
-#include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/discretization/method.hh>
@@ -90,8 +89,6 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
     using CoordScalar = typename GV::ctype;
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
-
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
     using GeometryHelper = BoxGeometryHelper<GV, dim,
                                              typename Traits::SubControlVolume,
@@ -171,7 +168,7 @@ public:
 
             // get the element geometry
             auto elementGeometry = element.geometry();
-            const auto referenceElement = ReferenceElements::general(elementGeometry.type());
+            const auto refElement = referenceElement(elementGeometry);
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
@@ -194,8 +191,8 @@ public:
             for (; scvfLocalIdx < element.subEntities(dim-1); ++scvfLocalIdx)
             {
                 // find the global and local scv indices this scvf is belonging to
-                std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                             static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+                std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                                                             static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
                 scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
                                                                   element,
@@ -220,7 +217,7 @@ public:
                     for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                     {
                         // find the scvs this scvf is belonging to
-                        const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
+                        const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
                         std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
                         scvfs_[eIdx].emplace_back(geometryHelper,
@@ -238,10 +235,10 @@ public:
                     // add all vertices on the intersection to the set of
                     // boundary vertices
                     const auto fIdx = intersection.indexInInside();
-                    const auto numFaceVerts = referenceElement.size(fIdx, 1, dim);
+                    const auto numFaceVerts = refElement.size(fIdx, 1, dim);
                     for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
                     {
-                        const auto vIdx = referenceElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdx = refElement.subEntity(fIdx, 1, localVIdx, dim);
                         const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
@@ -254,11 +251,11 @@ public:
 
                     // find the mapped periodic vertex of all vertices on periodic boundaries
                     const auto fIdx = intersection.indexInInside();
-                    const auto numFaceVerts = referenceElement.size(fIdx, 1, dim);
+                    const auto numFaceVerts = refElement.size(fIdx, 1, dim);
                     const auto eps = 1e-7*(elementGeometry.corner(1) - elementGeometry.corner(0)).two_norm();
                     for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
                     {
-                        const auto vIdx = referenceElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdx = refElement.subEntity(fIdx, 1, localVIdx, dim);
                         const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
                         const auto vPos = elementGeometry.corner(vIdx);
 
@@ -270,10 +267,10 @@ public:
                             if (isOutside.boundary() && isOutside.neighbor())
                             {
                                 const auto fIdxOutside = isOutside.indexInInside();
-                                const auto numFaceVertsOutside = referenceElement.size(fIdxOutside, 1, dim);
+                                const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
                                 for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
                                 {
-                                    const auto vIdxOutside = referenceElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
+                                    const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
                                     const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
                                     if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
@@ -363,8 +360,6 @@ class BoxFVGridGeometry<Scalar, GV, false, Traits>
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
 
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-
 public:
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
@@ -427,7 +422,7 @@ public:
             numScvf_ += element.subEntities(dim-1);
 
             const auto elementGeometry = element.geometry();
-            const auto referenceElement = ReferenceElements::general(elementGeometry.type());
+            const auto refElement = referenceElement(elementGeometry);
 
             // store the sub control volume face indices on the domain boundary
             for (const auto& intersection : intersections(this->gridView(), element))
@@ -441,10 +436,10 @@ public:
                     // add all vertices on the intersection to the set of
                     // boundary vertices
                     const auto fIdx = intersection.indexInInside();
-                    const auto numFaceVerts = referenceElement.size(fIdx, 1, dim);
+                    const auto numFaceVerts = refElement.size(fIdx, 1, dim);
                     for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
                     {
-                        const auto vIdx = referenceElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdx = refElement.subEntity(fIdx, 1, localVIdx, dim);
                         const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
@@ -457,11 +452,11 @@ public:
 
                     // find the mapped periodic vertex of all vertices on periodic boundaries
                     const auto fIdx = intersection.indexInInside();
-                    const auto numFaceVerts = referenceElement.size(fIdx, 1, dim);
+                    const auto numFaceVerts = refElement.size(fIdx, 1, dim);
                     const auto eps = 1e-7*(elementGeometry.corner(1) - elementGeometry.corner(0)).two_norm();
                     for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
                     {
-                        const auto vIdx = referenceElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdx = refElement.subEntity(fIdx, 1, localVIdx, dim);
                         const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
                         const auto vPos = elementGeometry.corner(vIdx);
 
@@ -473,10 +468,10 @@ public:
                             if (isOutside.boundary() && isOutside.neighbor())
                             {
                                 const auto fIdxOutside = isOutside.indexInInside();
-                                const auto numFaceVertsOutside = referenceElement.size(fIdxOutside, 1, dim);
+                                const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
                                 for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
                                 {
-                                    const auto vIdxOutside = referenceElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
+                                    const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
                                     const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
                                     if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)

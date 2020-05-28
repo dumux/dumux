@@ -30,7 +30,6 @@
 #include <memory>
 
 #include <dune/grid/common/mcmgmapper.hh>
-#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/indextraits.hh>
 
@@ -60,7 +59,6 @@ class CodimOneGridAdapter
     // Extract some types of the bulk grid
     using BulkGridView = typename Embeddings::template GridView<bulkGridId>;
     using BulkMapper = Dune::MultipleCodimMultipleGeomTypeMapper<BulkGridView>;
-    using BulkReferenceElements = typename Dune::ReferenceElements<typename BulkGridView::ctype, BulkGridView::dimension>;
     using BulkGridElement = typename BulkGridView::template Codim<0>::Entity;
     using BulkGridIntersection = typename BulkGridView::Intersection;
     using BulkGridVertex = typename BulkGridView::template Codim<BulkGridView::dimension>::Entity;
@@ -171,7 +169,7 @@ public:
     bool isOnFacetGrid(const BulkGridElement& element, const BulkGridIntersection& intersection) const
     {
         // Intersection lies on facet grid, if the corners of the intersection make up a facet element
-        const auto refElement = BulkReferenceElements::general(element.type());
+        const auto refElement = referenceElement(element);
         const auto numCorners = intersection.geometry().corners();
         const auto facetIdx = intersection.indexInInside();
 

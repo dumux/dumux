@@ -27,7 +27,6 @@
 
 #include <memory>
 #include <dune/common/float_cmp.hh>
-#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/io/velocityoutput.hh>
@@ -64,7 +63,6 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     static constexpr int dofCodim = isBox ? dim : 0;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using ReferenceElements = Dune::ReferenceElements<typename GridView::ctype, dim>;
 
     using Problem = typename GridVolumeVariables::Problem;
     using BoundaryTypes = typename Problem::Traits::BoundaryTypes;

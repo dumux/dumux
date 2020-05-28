@@ -30,7 +30,6 @@
 #include <algorithm>
 
 #include <dune/grid/common/mcmgmapper.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/indextraits.hh>
@@ -104,7 +103,6 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
     using GeometryHelper = BoxGeometryHelper<GV, dim, typename Traits::SubControlVolume, typename Traits::SubControlVolumeFace>;
 
 public:
@@ -195,7 +193,7 @@ public:
 
             // get the element geometry
             auto elementGeometry = element.geometry();
-            const auto referenceElement = ReferenceElements::general(elementGeometry.type());
+            const auto refElement = referenceElement(elementGeometry);
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
@@ -216,8 +214,8 @@ public:
             for (; scvfLocalIdx < element.subEntities(dim-1); ++scvfLocalIdx)
             {
                 // find the global and local scv indices this scvf is belonging to
-                std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                             static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+                std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                                                             static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
                 // create the sub-control volume face
                 scvfs_[eIdx].emplace_back(geometryHelper,
@@ -245,7 +243,7 @@ public:
 
                 std::vector<LocalIndexType> vIndicesLocal(numFaceCorners);
                 for (int i = 0; i < numFaceCorners; ++i)
-                    vIndicesLocal[i] = static_cast<LocalIndexType>(referenceElement.subEntity(idxInInside, 1, i, dim));
+                    vIndicesLocal[i] = static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, i, dim));
 
                 std::vector<LocalIndexType> gridVertexIndices(numFaceCorners);
                 for (int i = 0; i < numFaceCorners; ++i)
@@ -364,8 +362,6 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, false, Traits>
     using Intersection = typename GV::Intersection;
     using CoordScalar = typename GV::ctype;
 
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-
 public:
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
@@ -449,7 +445,7 @@ public:
             numScvf_ += element.subEntities(dim-1);
 
             const auto elementGeometry = element.geometry();
-            const auto referenceElement = ReferenceElements::general(elementGeometry.type());
+            const auto refElement = referenceElement(elementGeometry);
 
             // store the sub control volume face indices on the domain/interior boundary
             // skip handled facets (necessary for e.g. Dune::FoamGrid)
@@ -469,7 +465,7 @@ public:
 
                 std::vector<LocalIndexType> vIndicesLocal(numFaceCorners);
                 for (int i = 0; i < numFaceCorners; ++i)
-                    vIndicesLocal[i] = static_cast<LocalIndexType>(referenceElement.subEntity(idxInInside, 1, i, dim));
+                    vIndicesLocal[i] = static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, i, dim));
 
                 std::vector<GridIndexType> gridVertexIndices(numFaceCorners);
                 for (int i = 0; i < numFaceCorners; ++i)

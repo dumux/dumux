@@ -33,7 +33,6 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
-#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/geometry/makegeometry.hh>

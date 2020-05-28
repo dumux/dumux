@@ -25,6 +25,7 @@
 #define DUMUX_FVMPFAO2DVELOCITY2P_HH
 
 #include <dune/grid/common/gridenums.hh>
+
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/ointeractionvolume.hh>
@@ -62,8 +63,6 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
@@ -206,7 +205,7 @@ public:
                 refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
                 refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
 
-                const DimVector& localPos = ReferenceElements::general(element.type()).position(0, 0);
+                const DimVector& localPos = referenceElement(element).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
                 const JacobianTransposed jacobianT = element.geometry().jacobianTransposed(localPos);
@@ -587,9 +586,9 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                    const auto referenceElement = ReferenceElements::general(element.type());
+                    const auto refElement = referenceElement(element);
 
-                    const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
+                    const LocalPosition& localPos = refElement.position(boundaryFaceIdx, 1);
 
                     const GlobalPosition& globalPosFace = element.geometry().global(localPos);
 
@@ -696,9 +695,9 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                    const auto referenceElement = ReferenceElements::general(element.type());
+                    const auto refElement = referenceElement(element);
 
-                    const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
+                    const LocalPosition& localPos = refElement.position(boundaryFaceIdx, 1);
 
                     const GlobalPosition& globalPosFace = element.geometry().global(localPos);
 

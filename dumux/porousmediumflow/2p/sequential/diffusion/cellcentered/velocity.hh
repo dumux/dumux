@@ -87,8 +87,6 @@ class FVVelocity2P
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     enum
     {
         pw = Indices::pressureW,
@@ -203,8 +201,7 @@ public:
                 const typename Element::Geometry& geometry = element.geometry();
 
                 // get corresponding reference element
-                using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-                const auto refElement = ReferenceElements::general(geometry.type());
+                const auto refElement = referenceElement(geometry);
 
                 const int numberOfFaces=refElement.size(1);
                 std::vector<Scalar> fluxW(numberOfFaces,0);

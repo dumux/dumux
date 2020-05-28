@@ -26,7 +26,6 @@
 #define DUMUX_DISCRETIZATION_BOX_GEOMETRY_HELPER_HH
 
 #include <array>
-#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/math.hh>
 
@@ -128,7 +127,6 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
 
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
     //! the maximum number of helper points used to construct the geometries
     //! Using a statically sized point array is much faster than dynamic allocation
@@ -140,7 +138,7 @@ public:
     : elementGeometry_(geometry)
     , corners_(geometry.corners())
     {
-        const auto referenceElement = ReferenceElements::general(geometry.type());
+        const auto refElement = referenceElement(geometry);
 
         // the element center
         p_[0] = geometry.center();
@@ -150,8 +148,8 @@ public:
             p_[i+1] = geometry.corner(i);
 
         // face midpoints
-        for (int i = 0; i < referenceElement.size(1); ++i)
-            p_[i+corners_+1] = geometry.global(referenceElement.position(i, 1));
+        for (int i = 0; i < refElement.size(1); ++i)
+            p_[i+corners_+1] = geometry.global(refElement.position(i, 1));
     }
 
     //! Create a vector with the scv corners
@@ -250,9 +248,9 @@ public:
                                              const typename Intersection::Geometry& isGeom,
                                              unsigned int indexInIntersection) const
     {
-        const auto referenceElement = ReferenceElements::general(elementGeometry_.type());
+        const auto refElement = referenceElement(elementGeometry_);
 
-        const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, indexInIntersection, dim);
+        const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, indexInIntersection, dim);
         if (indexInIntersection == 0)
             return ScvfCornerStorage({p_[vIdxLocal+1], isGeom.center()});
         else if (indexInIntersection == 1)
@@ -348,8 +346,6 @@ class BoxGeometryHelper<GridView, 3, ScvType, ScvfType>
 
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
-    using FaceReferenceElements = typename Dune::ReferenceElements<Scalar, dim-1>;
 
     //! the maximum number of helper points used to construct the geometries
     //! Using a statically sized point array is much faster than dynamic allocation
@@ -359,7 +355,7 @@ public:
     : elementGeometry_(geometry)
     , corners_(geometry.corners())
     {
-        const auto referenceElement = ReferenceElements::general(geometry.type());
+        const auto refElement = referenceElement(geometry);
 
         // the element center
         p_[0] = geometry.center();
@@ -369,12 +365,12 @@ public:
             p_[i+1] = geometry.corner(i);
 
         // edge midpoints
-        for (int i = 0; i < referenceElement.size(dim-1); ++i)
-            p_[i+corners_+1] = geometry.global(referenceElement.position(i, dim-1));
+        for (int i = 0; i < refElement.size(dim-1); ++i)
+            p_[i+corners_+1] = geometry.global(refElement.position(i, dim-1));
 
         // face midpoints
-        for (int i = 0; i < referenceElement.size(1); ++i)
-            p_[i+corners_+1+referenceElement.size(dim-1)] = geometry.global(referenceElement.position(i, 1));
+        for (int i = 0; i < refElement.size(1); ++i)
+            p_[i+corners_+1+refElement.size(dim-1)] = geometry.global(refElement.position(i, 1));
     }
 
     //! Create a vector with the scv corners
@@ -552,8 +548,8 @@ public:
                                              const typename Intersection::Geometry& geometry,
                                              unsigned int indexInIntersection) const
     {
-        const auto referenceElement = ReferenceElements::general(elementGeometry_.type());
-        const auto faceRefElem = FaceReferenceElements::general(geometry.type());
+        const auto refElement = referenceElement(elementGeometry_);
+        const auto faceRefElem = referenceElement(geometry);
 
         GlobalPosition pi[9];
         auto corners = geometry.corners();
@@ -565,14 +561,14 @@ public:
         const auto idxInInside = is.indexInInside();
         for (int i = 0; i < corners; ++i)
         {
-            const auto vIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim);
+            const auto vIdxLocal = refElement.subEntity(idxInInside, 1, i, dim);
             pi[i+1] = elementGeometry_.corner(vIdxLocal);
         }
 
         // edge midpoints
         for (int i = 0; i < faceRefElem.size(1); ++i)
         {
-            const auto edgeIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim-1);
+            const auto edgeIdxLocal = refElement.subEntity(idxInInside, 1, i, dim-1);
             pi[i+corners+1] = p_[edgeIdxLocal+corners_+1];
         }
 

@@ -55,8 +55,6 @@ class FvMpfaL3dInteractionVolumeContainer
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
@@ -376,8 +374,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
     int eIdxGlobal = problem_.variables().index(element);
 
     const ElementGeometry& geometry = element.geometry();
-
-    const auto referenceElement = ReferenceElements::general(geometry.type());
+    const auto refElement = referenceElement(geometry);
 
     int levelI = element.level();
 
@@ -417,7 +414,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
 
             for (int i = 0; i < isGeometry.corners(); i++)
             {
-                int localVertIdx = referenceElement.subEntity(indexInInside, 1, i, dim);
+                int localVertIdx = refElement.subEntity(indexInInside, 1, i, dim);
 
                 int vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, localVertIdx, dim);
 
@@ -1353,20 +1350,20 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
         const ElementGeometry& geometry1 = element1.geometry();
         const ElementGeometry& geometry8 = element8.geometry();
 
-        const auto referenceElement = ReferenceElements::general(geometry1.type());
+        const auto refElement = referenceElement(geometry1);
 
-        DimVector edgeCoord(geometry1.global(referenceElement.position(9, dim - 1)));
+        DimVector edgeCoord(geometry1.global(refElement.position(9, dim - 1)));
         interactionVolume.setEdgePosition(edgeCoord, 2);
-        edgeCoord = geometry1.global(referenceElement.position(3, dim - 1));
+        edgeCoord = geometry1.global(refElement.position(3, dim - 1));
         interactionVolume.setEdgePosition(edgeCoord, 0);
-        edgeCoord = geometry1.global(referenceElement.position(11, dim - 1));
+        edgeCoord = geometry1.global(refElement.position(11, dim - 1));
         interactionVolume.setEdgePosition(edgeCoord, 5);
 
-        edgeCoord = geometry8.global(referenceElement.position(4, dim - 1));
+        edgeCoord = geometry8.global(refElement.position(4, dim - 1));
         interactionVolume.setEdgePosition(edgeCoord, 4);
-        edgeCoord = geometry8.global(referenceElement.position(6, dim - 1));
+        edgeCoord = geometry8.global(refElement.position(6, dim - 1));
         interactionVolume.setEdgePosition(edgeCoord, 3);
-        edgeCoord = geometry8.global(referenceElement.position(0, dim - 1));
+        edgeCoord = geometry8.global(refElement.position(0, dim - 1));
         interactionVolume.setEdgePosition(edgeCoord, 1);
     }
 

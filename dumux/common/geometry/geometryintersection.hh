@@ -27,7 +27,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/math.hh>
@@ -406,7 +405,6 @@ public:
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
-    using ReferenceElements = typename Dune::ReferenceElements<ctype, dim1>;
 
 public:
     /*!
@@ -552,8 +550,6 @@ public:
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
-    using ReferenceElementsGeo1 = typename Dune::ReferenceElements<ctype, dim1>;
-    using ReferenceElementsGeo2 = typename Dune::ReferenceElements<ctype, dim2>;
 
 public:
     /*!
@@ -594,22 +590,22 @@ public:
 
             if (points.size() - numPoints1 != geo2.corners())
             {
-                const auto referenceElement1 = ReferenceElementsGeo1::general(geo1.type());
-                const auto referenceElement2 = ReferenceElementsGeo2::general(geo2.type());
+                const auto refElement1 = referenceElement(geo1);
+                const auto refElement2 = referenceElement(geo2);
 
                 // add intersections of edges
                 using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
                 using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
-                for (int i = 0; i < referenceElement1.size(dim1-1); ++i)
+                for (int i = 0; i < refElement1.size(dim1-1); ++i)
                 {
-                    const auto localEdgeGeom1 = referenceElement1.template geometry<dim1-1>(i);
+                    const auto localEdgeGeom1 = refElement1.template geometry<dim1-1>(i);
                     const auto edge1 = SegGeometry( Dune::GeometryTypes::line,
                                                     std::vector<Point>( {geo1.global(localEdgeGeom1.corner(0)),
                                                                          geo1.global(localEdgeGeom1.corner(1))} ));
 
-                    for (int j = 0; j < referenceElement2.size(dim2-1); ++j)
+                    for (int j = 0; j < refElement2.size(dim2-1); ++j)
                     {
-                        const auto localEdgeGeom2 = referenceElement2.template geometry<dim2-1>(j);
+                        const auto localEdgeGeom2 = refElement2.template geometry<dim2-1>(j);
                         const auto edge2 = SegGeometry( Dune::GeometryTypes::line,
                                                         std::vector<Point>( {geo2.global(localEdgeGeom2.corner(0)),
                                                                              geo2.global(localEdgeGeom2.corner(1))} ));
@@ -698,7 +694,6 @@ public:
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
-    using ReferenceElements = typename Dune::ReferenceElements<ctype, dim1>;
 
 public:
     /*!
@@ -847,8 +842,6 @@ public:
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
-    using ReferenceElementsGeo1 = typename Dune::ReferenceElements<ctype, dim1>;
-    using ReferenceElementsGeo2 = typename Dune::ReferenceElements<ctype, dim2>;
 
 public:
     /*!
@@ -887,16 +880,16 @@ public:
         using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld>;
         using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
 
-        const auto referenceElement1 = ReferenceElementsGeo1::general(geo1.type());
-        const auto referenceElement2 = ReferenceElementsGeo2::general(geo2.type());
+        const auto refElement1 = referenceElement(geo1);
+        const auto refElement2 = referenceElement(geo2);
 
         // intersection policy for point-like intersections (used later)
         using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
 
         // add intersection points of all polyhedron edges (codim dim-1) with the polygon
-        for (int i = 0; i < referenceElement1.size(dim1-1); ++i)
+        for (int i = 0; i < refElement1.size(dim1-1); ++i)
         {
-            const auto localEdgeGeom = referenceElement1.template geometry<dim1-1>(i);
+            const auto localEdgeGeom = refElement1.template geometry<dim1-1>(i);
             const auto p = geo1.global(localEdgeGeom.corner(0));
             const auto q = geo1.global(localEdgeGeom.corner(1));
             const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
@@ -908,11 +901,11 @@ public:
         }
 
         // add intersection points of all polygon faces (codim 1) with the polyhedron faces
-        for (int i = 0; i < referenceElement1.size(1); ++i)
+        for (int i = 0; i < refElement1.size(1); ++i)
         {
             const auto faceGeo = [&]()
             {
-                const auto localFaceGeo = referenceElement1.template geometry<1>(i);
+                const auto localFaceGeo = refElement1.template geometry<1>(i);
                 if (localFaceGeo.corners() == 4)
                 {
                     const auto a = geo1.global(localFaceGeo.corner(0));
@@ -932,9 +925,9 @@ public:
                 }
             }();
 
-            for (int j = 0; j < referenceElement2.size(1); ++j)
+            for (int j = 0; j < refElement2.size(1); ++j)
             {
-                const auto localEdgeGeom = referenceElement2.template geometry<1>(j);
+                const auto localEdgeGeom = refElement2.template geometry<1>(j);
                 const auto p = geo2.global(localEdgeGeom.corner(0));
                 const auto q = geo2.global(localEdgeGeom.corner(1));
 
@@ -1039,7 +1032,6 @@ public:
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
-    using ReferenceElements = typename Dune::ReferenceElements<ctype, dim1>;
 
 public:
     /*!
@@ -1313,7 +1305,6 @@ public:
 
 private:
     static constexpr ctype eps_ = 1.5e-7; // base epsilon for floating point comparisons
-    using ReferenceElements = typename Dune::ReferenceElements<ctype, dim1>;
 
 public:
     /*!

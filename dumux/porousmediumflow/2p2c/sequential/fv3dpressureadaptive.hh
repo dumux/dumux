@@ -126,7 +126,6 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
     // using declarations to abbreviate several dune classes...
     using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
-    using ReferenceElementContainer = Dune::ReferenceElements<Scalar, dim>;
 
     using Grid = typename GridView::Grid;
     using Intersection = typename GridView::Intersection;
@@ -1436,21 +1435,21 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     int localFace24 = face24->indexInInside();
     int localFace26 = face26->indexInInside();
 
-    const auto referenceElement = ReferenceElementContainer::general(neighbor.type());
+    const auto refElement = referenceElement(neighbor);
 
     //find 'x'5 = edgeCoord1226
     int edge1226;
     // search through edges of face 12
-    for(int nectarine=0; nectarine < referenceElement.size(localFace12, 1, dim-1); nectarine++)
+    for(int nectarine=0; nectarine < refElement.size(localFace12, 1, dim-1); nectarine++)
     {
         // get local Idx of edge on face 12
-        int localEdgeOn12 = referenceElement.subEntity(localFace12, 1, nectarine, dim-1);
+        int localEdgeOn12 = refElement.subEntity(localFace12, 1, nectarine, dim-1);
         // search through edges of face 26
-        for(int plum = 0; plum < referenceElement.size(localFace26, 1,dim-1); plum++)
+        for(int plum = 0; plum < refElement.size(localFace26, 1,dim-1); plum++)
         {
-//            int localEdge26 = referenceElement.subEntity(localFace26, 1, plum, dim-1);
-            if(referenceElement.subEntity(localFace12, 1, nectarine, dim-1)
-                    == referenceElement.subEntity(localFace26, 1, plum, dim-1))
+//            int localEdge26 = refElement.subEntity(localFace26, 1, plum, dim-1);
+            if(refElement.subEntity(localFace12, 1, nectarine, dim-1)
+                    == refElement.subEntity(localFace26, 1, plum, dim-1))
             {
                 edge1226 = localEdgeOn12;
                 break;
@@ -1458,19 +1457,19 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         }
     }
     GlobalPosition edgeCoord1226 =  // 'x'5
-            neighbor.geometry().global(referenceElement.position(edge1226, dim-1));
+            neighbor.geometry().global(refElement.position(edge1226, dim-1));
 
     //find 'x'4 = edgeCoord1224
     int edge1224;
     // search through edges of face 12
-    for(int nectarine=0; nectarine < referenceElement.size(localFace12, 1, dim-1); nectarine++)
+    for(int nectarine=0; nectarine < refElement.size(localFace12, 1, dim-1); nectarine++)
     {
         // get local Idx of edge on face 12
-        int localEdgeOn12 = referenceElement.subEntity(localFace12, 1, nectarine, dim-1);
+        int localEdgeOn12 = refElement.subEntity(localFace12, 1, nectarine, dim-1);
         // search through edges of face 24
-        for(int plum = 0; plum < referenceElement.size(localFace24, 1, dim-1); plum++)
+        for(int plum = 0; plum < refElement.size(localFace24, 1, dim-1); plum++)
         {
-            int localEdge24 = referenceElement.subEntity(localFace24, 1, plum, dim-1);
+            int localEdge24 = refElement.subEntity(localFace24, 1, plum, dim-1);
             if(localEdgeOn12 == localEdge24)
             {
                 edge1224 = localEdgeOn12;
@@ -1479,19 +1478,19 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         }
     }
     GlobalPosition edgeCoord1224 =  // 'x'4
-            neighbor.geometry().global(referenceElement.position(edge1224, dim-1));
+            neighbor.geometry().global(refElement.position(edge1224, dim-1));
 
     //find 'x'6 = edgeCoord2426
     int edge2426;
     // search through edges of face 24
-    for(int nectarine=0; nectarine < referenceElement.size(localFace24, 1, dim-1); nectarine++)
+    for(int nectarine=0; nectarine < refElement.size(localFace24, 1, dim-1); nectarine++)
     {
         // get local Idx of edge on face 24
-        int localEdgeOn24 = referenceElement.subEntity(localFace24, 1, nectarine, dim-1);
+        int localEdgeOn24 = refElement.subEntity(localFace24, 1, nectarine, dim-1);
         // search through edges of face 26
-        for(int plum = 0; plum < referenceElement.size(localFace26, 1, dim-1); plum++)
+        for(int plum = 0; plum < refElement.size(localFace26, 1, dim-1); plum++)
         {
-            int localEdge26 = referenceElement.subEntity(localFace26, 1, plum, dim-1);
+            int localEdge26 = refElement.subEntity(localFace26, 1, plum, dim-1);
             if(localEdgeOn24 == localEdge26)
             {
                 edge2426 = localEdgeOn24;
@@ -1500,7 +1499,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         }
     }
     GlobalPosition edgeCoord2426 =   // 'x'6
-            neighbor.geometry().global(referenceElement.position(edge2426, dim-1));
+            neighbor.geometry().global(refElement.position(edge2426, dim-1));
 
     /** 2) Calculate omega, chi for matrices  **/
     // center of face in global coordinates, i.e., the midpoint of face 'isIt24'
@@ -1746,7 +1745,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 
                 // get postion as seen from element
                 GlobalPosition vertexOnElement
-                    = referenceElement.position(verticeSmall, dim);
+                    = refElement.position(verticeSmall, dim);
 
                 for (int indexOnFace = 0; indexOnFace < 4; indexOnFace++)
                 {

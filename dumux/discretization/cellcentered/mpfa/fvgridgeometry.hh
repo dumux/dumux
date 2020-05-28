@@ -26,8 +26,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 
-#include <dune/geometry/referenceelements.hh>
-
 #include <dumux/common/parameters.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
@@ -81,7 +79,6 @@ class CCMpfaFVGridGeometry<GV, Traits, true>
     using Intersection = typename GV::Intersection;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using CoordScalar = typename GV::ctype;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
@@ -249,7 +246,7 @@ public:
                 const auto& e = useNeighbor ? is.outside() : element;
                 const auto indexInElement = useNeighbor ? is.indexInOutside() : indexInInside;
                 const auto eg = e.geometry();
-                const auto refElement = ReferenceElements::general(eg.type());
+                const auto refElement = referenceElement(eg);
 
                 // Set up a container with all relevant positions for scvf corner computation
                 const auto numCorners = is.geometry().corners();
@@ -449,7 +446,6 @@ class CCMpfaFVGridGeometry<GV, Traits, false>
     using Intersection = typename GV::Intersection;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using CoordScalar = typename GV::ctype;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
@@ -624,7 +620,7 @@ public:
                 const auto& e = useNeighbor ? is.outside() : element;
                 const auto indexInElement = useNeighbor ? is.indexInOutside() : indexInInside;
                 const auto eg = e.geometry();
-                const auto refElement = ReferenceElements::general(eg.type());
+                const auto refElement = referenceElement(eg);
 
                 // evaluate if vertices on this intersection use primary/secondary IVs
                 const bool isBranchingPoint = dim < dimWorld ? outsideIndices[indexInInside].size() > 1 : false;

@@ -25,7 +25,6 @@
 #define DUMUX_TEST_IO_GRIDMANAGER_TESTS_HH
 
 #include <dune/common/version.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
@@ -106,7 +105,6 @@ class GridManagerTests
     using Scalar = double;
     static const int dim = Grid::dimension;
     using GridManager = typename Dumux::GridManager<Grid>;
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
 public:
 
@@ -261,7 +259,7 @@ private:
                 if (!intersection.boundary())
                     continue;
 
-                const auto refElement = ReferenceElements::general(element.geometry().type());
+                const auto refElement = referenceElement(element.geometry());
                 const auto numVertices = refElement.size(intersection.indexInInside(), 1, dim);
                 // loop over vertices of the intersection facet
                 for(std::size_t vIdx = 0; vIdx < numVertices; vIdx++)
