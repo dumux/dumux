@@ -34,6 +34,8 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
+#include <dumux/freeflow/navierstokes/fluxhelper.hh>
+
 namespace Dumux {
 template <class TypeTag>
 class StokesSubProblem;
@@ -89,7 +91,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -102,6 +105,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
+
+    using FluxHelper = NavierStokes::BoundaryFluxHelper<ModelTraits, NumEqVector>;
 
 public:
     StokesSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
@@ -193,7 +198,7 @@ public:
             else if (onRightBoundary_(globalPos))
             {
                 values.setDirichlet(Indices::pressureIdx);
-                values.setOutflow(Indices::conti0EqIdx + 1);
+                values.setNeumann(Indices::conti0EqIdx + 1);
             }
             else
             {
@@ -283,6 +288,16 @@ public:
             const auto tmp = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
             values[Indices::conti0EqIdx] = tmp[0];
             values[Indices::conti0EqIdx + 1] = tmp[1];
+        }
+        else if(onRightBoundary_(scvf.center()))
+        {
+            values[Indices::conti0EqIdx + 1] = FluxHelper::outflowFlux(*this,
+                                                                       element,
+                                                                       fvGeometry,
+                                                                       elemVolVars[scvf.insideScvIdx()],
+                                                                       initialAtPos(scvf.center()),
+                                                                       scvf,
+                                                                       elemFaceVars[scvf].velocitySelf())[Indices::conti0EqIdx + 1];
         }
         return values;
     }

@@ -35,6 +35,8 @@
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 
+#include <dumux/freeflow/navierstokes/fluxhelper.hh>
+
 namespace Dumux {
 template <class TypeTag>
 class StokesSubProblem;
@@ -96,7 +98,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -114,6 +117,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
+
+    using FluxHelper = NavierStokes::BoundaryFluxHelper<ModelTraits, NumEqVector>;
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
@@ -195,10 +200,10 @@ public:
         if (onRightBoundary_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
-            values.setOutflow(Indices::conti0EqIdx + 1);
+            values.setNeumann(Indices::conti0EqIdx + 1);
 
 #if NONISOTHERMAL
-            values.setOutflow(Indices::energyEqIdx);
+            values.setNeumann(Indices::energyEqIdx);
 #endif
         }
 
@@ -258,8 +263,17 @@ public:
             values[Indices::energyEqIdx] = -xVelocity * fluidState.density(0) * fluidState.enthalpy(0);
 #endif
         }
-
-        if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        else if(onRightBoundary_(scvf.center()))
+        {
+            values = FluxHelper::outflowFlux(*this,
+                                             element,
+                                             fvGeometry,
+                                             elemVolVars[scvf.insideScvIdx()],
+                                             initialAtPos(scvf.center()),
+                                             scvf,
+                                             elemFaceVars[scvf].velocitySelf());
+        }
+        else if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 

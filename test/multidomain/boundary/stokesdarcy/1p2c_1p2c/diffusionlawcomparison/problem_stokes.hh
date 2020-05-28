@@ -40,6 +40,8 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
+#include <dumux/freeflow/navierstokes/fluxhelper.hh>
+
 // for StokesDarcyCouplingOptions
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 
@@ -106,7 +108,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -121,6 +124,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
+    using FluxHelper = NavierStokes::BoundaryFluxHelper<ModelTraits, NumEqVector>;
 public:
     StokesSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, "Stokes"), eps_(1e-6), injectionState_(false), couplingManager_(couplingManager)
@@ -180,7 +184,7 @@ public:
         else if(onRightBoundary_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
-            values.setOutflow(Indices::conti0EqIdx + 1);
+            values.setNeumann(Indices::conti0EqIdx + 1);
         }
         else
         {
@@ -241,6 +245,16 @@ public:
             const auto tmp = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf, DiffusionCoefficientAveragingType::harmonic);
             values[Indices::conti0EqIdx] = tmp[0];
             values[Indices::conti0EqIdx + 1] = tmp[1];
+        }
+        else if(onRightBoundary_(scvf.center()))
+        {
+            values[Indices::conti0EqIdx + 1] = FluxHelper::outflowFlux(*this,
+                                                                       element,
+                                                                       fvGeometry,
+                                                                       elemVolVars[scvf.insideScvIdx()],
+                                                                       initialAtPos(scvf.center()),
+                                                                       scvf,
+                                                                       elemFaceVars[scvf].velocitySelf())[Indices::conti0EqIdx + 1];
         }
         return values;
     }

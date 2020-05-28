@@ -37,6 +37,7 @@
 // for StokesDarcyCouplingOptions
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 
+#include <dumux/freeflow/navierstokes/fluxhelper.hh>
 namespace Dumux {
 template <class TypeTag>
 class StokesSubProblem;
@@ -91,7 +92,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -103,6 +105,8 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using FluxHelper = NavierStokes::BoundaryFluxHelper<ModelTraits, NumEqVector>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
@@ -160,8 +164,8 @@ public:
         else if(onRightBoundary_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
-            values.setOutflow(Indices::conti0EqIdx + 1);
-            values.setOutflow(Indices::conti0EqIdx + 2);
+            values.setNeumann(Indices::conti0EqIdx + 1);
+            values.setNeumann(Indices::conti0EqIdx + 2);
 
         }
         else
@@ -221,6 +225,16 @@ public:
             values[Indices::conti0EqIdx] = tmp[0];
             values[Indices::conti0EqIdx + 1] = tmp[1];
             values[Indices::conti0EqIdx + 2] = tmp[2];
+        }
+        else if(onRightBoundary_(scvf.center()))
+        {
+            values = FluxHelper::outflowFlux(*this,
+                                             element,
+                                             fvGeometry,
+                                             elemVolVars[scvf.insideScvIdx()],
+                                             initialAtPos(scvf.center()),
+                                             scvf,
+                                             elemFaceVars[scvf].velocitySelf());
         }
         return values;
     }
