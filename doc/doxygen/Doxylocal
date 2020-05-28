@@ -13,7 +13,6 @@ PREDEFINED            += "NEW_PROP_TAG(name)=Property tag name" \
 INPUT                 += @srcdir@/mainpage.txt \
                          @srcdir@/modules.txt \
                          @top_srcdir@/dumux \
-                         @top_srcdir@/test \
                          @srcdir@/extradoc/parameterlist.txt
 
 EXAMPLE_PATH          += @srcdir@/extradoc
