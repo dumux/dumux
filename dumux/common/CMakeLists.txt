@@ -32,7 +32,6 @@ partial.hh
 pdesolver.hh
 pointsource.hh
 properties.hh
-quad.hh
 reorderingdofmapper.hh
 reservedblockvector.hh
 spline.hh

@@ -29,10 +29,10 @@
 #include <dune/grid/uggrid.hh>
 #endif
 #include <dune/grid/yaspgrid.hh>
-
-#include <dumux/common/quad.hh>
+#if HAVE_QUADMATH
+#include <dune/common/quadmath.hh>
+#endif
 #include <dumux/common/boundarytypes.hh>
-
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
@@ -101,12 +101,12 @@ template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::OnePIncompressible> { static constexpr bool value = false; };
 
 // define a TypeTag for a quad precision test
-#if HAVE_QUAD
+#if HAVE_QUADMATH
 namespace TTag {
 struct OnePIncompressibleTpfaQuad { using InheritsFrom = std::tuple<OnePIncompressibleTpfa>; };
 } // end namespace TTag
 template<class TypeTag>
-struct Scalar<TypeTag, TTag::OnePIncompressibleTpfaQuad> { using type = Quad; };
+struct Scalar<TypeTag, TTag::OnePIncompressibleTpfaQuad> { using type = Dune::Float128; };
 #endif
 } // end namespace Properties
 
@@ -140,7 +140,7 @@ public:
         if(checkIsConstantVelocity)
         {
             velocity_[dimWorld-1] = -permeability * dp_dy_;
-            velocity_[dimWorld-1] /= FluidSystem::viscosity(temperature(), 1.0e5);
+            velocity_[dimWorld-1] /= FluidSystem::viscosity(temperature(), Scalar(1.0e5));
         }
     }
 
