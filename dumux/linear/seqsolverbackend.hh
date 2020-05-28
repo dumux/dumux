@@ -1284,9 +1284,9 @@ public:
     bool solve(Matrix& m, Vector& x, Vector& b)
     {
 #if HAVE_MPI
-        solveSequentialOrParallel_(A, x, b);
+        solveSequentialOrParallel_(m, x, b);
 #else
-        solveSequential_(A, x, b);
+        solveSequential_(m, x, b);
 #endif
         firstCall_ = false;
         return result_.converged;
