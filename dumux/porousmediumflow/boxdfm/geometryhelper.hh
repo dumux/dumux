@@ -45,7 +45,6 @@ class BoxDfmGeometryHelper<GridView, 2, ScvType, ScvfType> : public BoxGeometryH
 
     static constexpr auto dim = GridView::dimension;
     using Scalar = typename GridView::ctype;
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
 public:
 
@@ -67,9 +66,9 @@ public:
                    const Intersection& is,
                    unsigned int edgeIndexInIntersection = 0) const
     {
-        const auto referenceElement = ReferenceElements::general(this->elementGeometry_.type());
-        const auto vIdxLocal0 = referenceElement.subEntity(is.indexInInside(), 1, 0, dim);
-        const auto vIdxLocal1 = referenceElement.subEntity(is.indexInInside(), 1, 1, dim);
+        const auto refElement = referenceElement(this->elementGeometry_);
+        const auto vIdxLocal0 = refElement.subEntity(is.indexInInside(), 1, 0, dim);
+        const auto vIdxLocal1 = refElement.subEntity(is.indexInInside(), 1, 1, dim);
         auto n = this->elementGeometry_.corner(vIdxLocal1) - this->elementGeometry_.corner(vIdxLocal0);
         n /= n.two_norm();
         return n;
@@ -88,8 +87,6 @@ class BoxDfmGeometryHelper<GridView, 3, ScvType, ScvfType> : public BoxGeometryH
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
     using Scalar = typename GridView::ctype;
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
-    using FaceReferenceElements = typename Dune::ReferenceElements<Scalar, dim-1>;
 
 public:
 
@@ -101,8 +98,8 @@ public:
                                              const typename Intersection::Geometry& isGeom,
                                              unsigned int edgeIndexInIntersection) const
     {
-        const auto referenceElement = ReferenceElements::general(this->elementGeometry_.type());
-        const auto faceRefElem = FaceReferenceElements::general(isGeom.type());
+        const auto refElement = referenceElement(this->elementGeometry_);
+        const auto faceRefElem = referenceElement(isGeom);
 
         // create point vector for this geometry
         typename ScvfType::Traits::GlobalPosition pi[9];
@@ -114,7 +111,7 @@ public:
         const auto idxInInside = is.indexInInside();
         for (int i = 0; i < faceRefElem.size(1); ++i)
         {
-            const auto edgeIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim-1);
+            const auto edgeIdxLocal = refElement.subEntity(idxInInside, 1, i, dim-1);
             pi[i+1] = this->p_[edgeIdxLocal+this->corners_+1];
         }
 
@@ -164,15 +161,15 @@ public:
                    const Intersection& is,
                    unsigned int edgeIndexInIntersection) const
     {
-        const auto referenceElement = ReferenceElements::general(this->elementGeometry_.type());
+        const auto refElement = referenceElement(this->elementGeometry_);
 
         // first get the intersection corners (maximum "4" is for quadrilateral face)
         typename ScvfType::Traits::GlobalPosition c[4];
 
-        const auto corners = referenceElement.size(is.indexInInside(), 1, dim);
+        const auto corners = refElement.size(is.indexInInside(), 1, dim);
         for (int i = 0; i < corners; ++i)
         {
-            const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, i, dim);
+            const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, i, dim);
             c[i] = this->elementGeometry_.corner(vIdxLocal);
         }
 

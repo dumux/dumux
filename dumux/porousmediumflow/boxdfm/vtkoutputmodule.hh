@@ -28,7 +28,6 @@
 #include <set>
 
 #include <dune/grid/common/gridfactory.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -74,7 +73,6 @@ class BoxDfmVtkOutputModule : public VtkOutputModule<GridVariables, SolutionVect
     using GridIndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using ReferenceElements = typename Dune::ReferenceElements<typename GridView::ctype, dim>;
 
     using Field = Vtk::template Field<GridView>;
     using FractureField = Vtk::template Field<FractureGridView>;
@@ -519,7 +517,7 @@ private:
         for (const auto& element : elements(gridView))
         {
             const auto eIdxGlobal = gridGeometry.elementMapper().index(element);
-            const auto referenceElement = ReferenceElements::general(element.type());
+            const auto refElement = referenceElement(element);
 
             for (const auto& is : intersections(gridView, element))
             {
@@ -531,7 +529,7 @@ private:
                 std::vector<GridIndexType> isVertexIndices(numCorners);
                 for (unsigned int i = 0; i < numCorners; ++i)
                     isVertexIndices[i] = gridGeometry.vertexMapper().subIndex(element,
-                                                                                referenceElement.subEntity(indexInInside, 1, i, dim),
+                                                                                refElement.subEntity(indexInInside, 1, i, dim),
                                                                                 dim);
 
                 // determine if this is a fracture facet & if it has to be inserted

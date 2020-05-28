@@ -31,7 +31,6 @@
 
 #include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/discretization/scvandscvfiterators.hh>
@@ -62,7 +61,6 @@ class BoxDfmFVElementGeometry<GG, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 public:
     //! Export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
@@ -173,9 +171,6 @@ class BoxDfmFVElementGeometry<GG, false>
 
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using FaceReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim-1>;
-
     using GeometryHelper = BoxDfmGeometryHelper<GridView, dim,
                                                 typename GG::SubControlVolume,
                                                 typename GG::SubControlVolumeFace>;
@@ -276,7 +271,7 @@ private:
         // get the element geometry
         auto elementGeometry = element.geometry();
         elemGeometryType_ = elementGeometry.type();
-        const auto referenceElement = ReferenceElements::general(elemGeometryType_);
+        const auto refElement = referenceElement(element);
 
         // get the sub control volume geometries of this element
         GeometryHelper geometryHelper(elementGeometry);
@@ -304,8 +299,8 @@ private:
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
         {
             // find the local scv indices this scvf is connected to
-            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                         static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                                                         static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
             scvfs_[scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
                                                         element,
@@ -336,7 +331,7 @@ private:
             std::vector<GridIndexType> isVertexIndices(numCorners);
             for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
                 isVertexIndices[vIdxLocal] = gridGeometry().vertexMapper().subIndex(element,
-                                                                                      referenceElement.subEntity(idxInInside, 1, vIdxLocal, dim),
+                                                                                      refElement.subEntity(idxInInside, 1, vIdxLocal, dim),
                                                                                       dim);
 
             if (intersection.boundary())
@@ -344,7 +339,7 @@ private:
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < numCorners; ++isScvfLocalIdx)
                 {
                     // find the scv this scvf is connected to
-                    const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(referenceElement.subEntity(idxInInside, 1, isScvfLocalIdx, dim));
+                    const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, isScvfLocalIdx, dim));
                     std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
                     scvfs_.emplace_back(geometryHelper,
@@ -370,7 +365,7 @@ private:
                                        intersection,
                                        isGeometry,
                                        vIdxLocal,
-                                       static_cast<LocalIndexType>(referenceElement.subEntity(idxInInside, 1, vIdxLocal, dim)),
+                                       static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, vIdxLocal, dim)),
                                        scvLocalIdx++,
                                        idxInInside,
                                        eIdx,
@@ -379,12 +374,12 @@ private:
                 // add fracture scvf for each edge of the intersection in 3d
                 if (dim == 3)
                 {
-                    const auto& faceReferenceElement = FaceReferenceElements::general(isGeometry.type());
-                    for (unsigned int edgeIdx = 0; edgeIdx < faceReferenceElement.size(1); ++edgeIdx)
+                    const auto& faceRefElement = referenceElement(isGeometry);
+                    for (unsigned int edgeIdx = 0; edgeIdx < faceRefElement.size(1); ++edgeIdx)
                     {
                         // inside/outside scv indices in face local node numbering
-                        std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(faceReferenceElement.subEntity(edgeIdx, 1, 0, dim-1)),
-                                                                     static_cast<LocalIndexType>(faceReferenceElement.subEntity(edgeIdx, 1, 1, dim-1))});
+                        std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 0, dim-1)),
+                                                                     static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 1, dim-1))});
 
                         // add offset to get the right scv indices
                         std::for_each( localScvIndices.begin(),
