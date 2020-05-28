@@ -102,9 +102,7 @@ public:
         {
             // element geometry
             const Geometry& geometry = element.geometry();
-            Dune::GeometryType geomType = geometry.type();
-            using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-            const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
+            const Dune::FieldVector<Scalar,dim>& local = referenceElement(geometry).position(0, 0);
             Dune::FieldVector<Scalar,dim> globalPos = geometry.global(local);
 
             Scalar volume = geometry.volume();

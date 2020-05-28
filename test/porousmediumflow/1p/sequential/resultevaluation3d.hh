@@ -92,7 +92,6 @@ public:
         enum{dim = Grid::dimension};
 
         using JacobianInverseTransposed = typename Geometry::JacobianInverseTransposed;
-        using ReferenceElements = Dune::ReferenceElements<ct, dim>;
         const GV& gridview(grid.levelGridView(grid.maxLevel()));
         const IS& indexset(gridview.indexSet());
         Mapper elementMapper(gridview, Dune::mcmgElementLayout());
@@ -159,12 +158,8 @@ public:
             // element geometry
             const Geometry& geometry = element.geometry();
 
-            // cell geometry type
-            Dune::GeometryType gt = geometry.type();
-
             // cell center in reference element
-            const Dune::FieldVector<ct,dim>&
-                local = ReferenceElements::general(gt).position(0,0);
+            const Dune::FieldVector<ct,dim>& local = referenceElement(geometry).position(0,0);
 
             // get global coordinate of cell center
             Dune::FieldVector<ct,dim> globalPos = geometry.global(local);
@@ -425,11 +420,9 @@ public:
         using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
         using SolVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
         using JacobianInverseTransposed = typename Geometry::JacobianInverseTransposed;
-        using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
         ElementMapper elementMapper(gridView, Dune::mcmgElementLayout());
         SolVector exactSol(gridView.size(0));
-
 
         uMinExact = 1e100;
         uMaxExact = -1e100;
@@ -469,10 +462,7 @@ public:
         {
             // element geometry
             const Geometry& geometry = element.geometry();
-
-            Dune::GeometryType geomType = geometry.type();
-
-            const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
+            const Dune::FieldVector<Scalar,dim>& local = referenceElement(geometry).position(0, 0);
             Dune::FieldVector<Scalar,dim> globalPos = geometry.global(local);
 
             Scalar volume = geometry.volume();
@@ -709,8 +699,6 @@ public:
         using Element = typename Grid::template Codim<0>::Entity;
         using Geometry = typename Element::Geometry;
         using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-        using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-        using ReferenceFaces = Dune::ReferenceElements<Scalar, dim-1>;
 
         ElementMapper elementMapper(gridView, Dune::mcmgElementLayout());
 
@@ -728,14 +716,10 @@ public:
         {
             // element geometry
             const Geometry& geometry = element.geometry();
-
-            Dune::GeometryType geomType = geometry.type();
-
-            const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
+            const Dune::FieldVector<Scalar,dim>& local = referenceElement(geometry).position(0, 0);
             Dune::FieldVector<Scalar,dim> globalPos = geometry.global(local);
 
-            Scalar volume = geometry.integrationElement(local)
-                    *ReferenceElements::general(geomType).volume();
+            Scalar volume = geometry.integrationElement(local) * referenceElement(geometry).volume();
 
             int eIdx = elementMapper.index(element);
 
@@ -763,14 +747,11 @@ public:
             Dune::FieldVector<Scalar,dim> exactGradient;
             for (const auto& intersection : intersections(gridView, element))
             {
-                // get geometry type of face
-                Dune::GeometryType gtf = intersection.geometryInInside().type();
-
                 // local number of facet
                 i++;
 
                 // center in face's reference element
-                const Dune::FieldVector<Scalar,dim-1>& faceLocalNm1 = ReferenceFaces::general(gtf).position(0,0);
+                const Dune::FieldVector<Scalar,dim-1>& faceLocalNm1 = referenceElement(intersection.geometryInInside()).position(0,0);
 
                 // center of face in global coordinates
                 Dune::FieldVector<Scalar,dim> faceGlobal = intersection.geometry().global(faceLocalNm1);
