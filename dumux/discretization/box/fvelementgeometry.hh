@@ -27,7 +27,6 @@
 #define DUMUX_DISCRETIZATION_BOX_FV_ELEMENT_GEOMETRY_HH
 
 #include <dune/geometry/type.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/indextraits.hh>
@@ -58,7 +57,6 @@ class BoxFVElementGeometry<GG, true>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -174,7 +172,6 @@ class BoxFVElementGeometry<GG, false>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
     using GeometryHelper = BoxGeometryHelper<GridView, dim,
                                              typename GG::SubControlVolume,
@@ -283,7 +280,7 @@ private:
         // get the element geometry
         auto elementGeometry = element.geometry();
         elemGeometryType_ = elementGeometry.type();
-        const auto referenceElement = ReferenceElements::general(elemGeometryType_);
+        const auto refElement = referenceElement(elementGeometry);
 
         // get the sub control volume geometries of this element
         GeometryHelper geometryHelper(elementGeometry);
@@ -310,8 +307,8 @@ private:
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
         {
             // find the local scv indices this scvf is connected to
-            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                         static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                                                         static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
             scvfs_[scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
                                                         element,
@@ -332,7 +329,7 @@ private:
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                 {
                     // find the scv this scvf is connected to
-                    const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
+                    const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
                     std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
                     scvfs_.emplace_back(geometryHelper,
