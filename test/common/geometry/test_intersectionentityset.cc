@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <numeric>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
@@ -135,8 +136,7 @@ int main (int argc, char *argv[]) try
             intersectionEntitySet.build(geoSet0, geoSet1);
 
             // greatest common divisor to compute number of intersections
-            const auto gcd = [](int a, int b, const auto& impl) -> int { return b == 0 ? a : impl(b, a % b, impl); };
-            const auto numIntersections = b + a - gcd(a, b, gcd);
+            const auto numIntersections = b + a - std::gcd(a, b);
 
             if (intersectionEntitySet.size() != numIntersections)
                 DUNE_THROW(Dune::Exception, "Wrong number of line segment intersections."
