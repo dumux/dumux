@@ -59,6 +59,8 @@ This file contains the __solid component class__ which defines the name, molar m
 // including the base and the generic solid component
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/solid.hh>
+
+#include <dumux/common/parameters.hh>
 ```
 
 ### The biofilm component
