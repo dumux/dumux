@@ -62,7 +62,8 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[outsideScv];
 
-        if (std::signbit(flux)) // if sign of flux is negative
+        using std::signbit;
+        if (signbit(flux)) // if sign of flux is negative
             return flux*(upwindWeight*upwindTerm(outsideVolVars)
                          + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
         else
@@ -87,6 +88,7 @@ public:
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
+        using std::signbit;
         static const Scalar upwindWeight = getParam<Scalar>("Flux.UpwindWeight");
 
         // the volume variables of the inside sub-control volume
@@ -103,7 +105,7 @@ public:
             Scalar sumUpwindFluxes = 0.0;
 
             // if the inside flux is positive (outflow) do fully upwind and return flux
-            if (!std::signbit(flux))
+            if (!signbit(flux))
                 return upwindTerm(insideVolVars)*flux;
             else
                 sumUpwindFluxes += flux;
@@ -125,7 +127,7 @@ public:
                                                              phaseIdx,
                                                              fluxVars.elemFluxVarsCache());
 
-                if (!std::signbit(outsideFlux))
+                if (!signbit(outsideFlux))
                     branchingPointUpwindTerm += upwindTerm(elemVolVars[outsideScvIdx])*outsideFlux;
                 else
                     sumUpwindFluxes += outsideFlux;
@@ -140,7 +142,7 @@ public:
             // upwind scheme (always do fully upwind at branching points)
             // a weighting here would lead to an error since the derivation is based on a fully upwind scheme
             // TODO How to implement a weight of e.g. 0.5
-            if (std::signbit(flux))
+            if (signbit(flux))
                 return flux*branchingPointUpwindTerm;
             else
                 return flux*upwindTerm(insideVolVars);
@@ -150,7 +152,7 @@ public:
         {
             // upwind scheme
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-            if (std::signbit(flux))
+            if (signbit(flux))
                 return flux*(upwindWeight*upwindTerm(outsideVolVars)
                              + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
             else
@@ -173,7 +175,8 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        if (std::signbit(flux)) // if sign of flux is negative
+        using std::signbit;
+        if (signbit(flux)) // if sign of flux is negative
             return flux*(upwindWeight*upwindTerm(outsideVolVars)
                          + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
         else
