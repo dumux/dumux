@@ -33,7 +33,6 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 
-#include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/math.hh>
@@ -61,7 +60,6 @@ class VertexEnrichmentHelper
     static_assert(dimWorld == int(CodimOneGridView::dimensionworld), "world dimension mismatch");
 
     using Intersection = typename GridView::Intersection;
-    using ReferenceElements = typename Dune::ReferenceElements<typename GridView::ctype, dim>;
     using MCMGMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -103,7 +101,7 @@ public:
             const auto eIdx = elementMapper.index(e);
 
             std::vector<unsigned int> handledFacets;
-            const auto refElement = ReferenceElements::general(e.type());
+            const auto refElement = referenceElement(e);
             for (const auto& is : intersections(gridView, e))
             {
                 // do not start path search on boundary intersections
@@ -273,7 +271,7 @@ private:
                 if (std::find(path.begin(), path.end(), outsideElemIdx) == path.end())
                 {
                     const auto idxInOutside = is.indexInOutside();
-                    const auto outsideRefElement = ReferenceElements::general(outsideElement.type());
+                    const auto outsideRefElement = referenceElement(outsideElement);
                     path.push_back(outsideElemIdx);
 
                     // on 2d grids, there is only going to be one more

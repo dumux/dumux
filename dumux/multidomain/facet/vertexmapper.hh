@@ -29,9 +29,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
-
 #include <dune/grid/common/mcmgmapper.hh>
-#include <dune/geometry/referenceelements.hh>
 
 #include "enrichmenthelper.hh"
 
@@ -80,10 +78,9 @@ public:
 
         // first find all bulk grid vertices on the boundary
         std::vector<bool> isOnBoundary(gridView.size(dim), false);
-        using ReferenceElements = typename Dune::ReferenceElements<typename GridView::ctype, dim>;
         for (const auto& e : elements(gridView))
         {
-            const auto refElem = ReferenceElements::general(e.type());
+            const auto refElem = referenceElement(e);
             for (const auto& is : intersections(gridView, e))
                 if (is.boundary())
                     for (int i = 0; i < is.geometry().corners(); ++i)
@@ -97,7 +94,6 @@ public:
             vertexMarkers[codimOneGridAdapter.bulkGridVertexIndex(vertex)] = true;
 
         // unmark where necessary
-        using CodimOneReferenceElements = typename Dune::ReferenceElements<typename CodimOneGridView::ctype, dim-1>;
         for (const auto& codimOneElement : elements(codimOneGridView))
         {
             // if a codimension one element has less than two embedments  we do not need to enrich
@@ -108,7 +104,7 @@ public:
             // otherwise, we check for immersed boundaries where we also must not enrich
             else
             {
-                const auto refElem = CodimOneReferenceElements::general(codimOneElement.type());
+                const auto refElem = referenceElement(codimOneElement);
                 for (const auto& intersection : intersections(codimOneGridView, codimOneElement))
                 {
                     // skip if intersection is not on boundary

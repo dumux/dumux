@@ -23,7 +23,6 @@
 #define DUMUX_BOX_FACETCOUPLING_MAPPER_HH
 
 #include <dune/common/indices.hh>
-#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
@@ -102,7 +101,6 @@ public:
         {
             using LowDimIndexType = typename IndexTraits<LowDimGridView>::GridIndex;
             using BulkIndexType = typename IndexTraits<BulkGridView>::GridIndex;
-            using BulkReferenceElements = Dune::ReferenceElements<typename BulkGridView::ctype, bulkDim>;
 
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
             auto& lowDimData = this->couplingMap_(facetGridId, bulkGridId)[lowDimElemIdx];
@@ -120,7 +118,7 @@ public:
             for (auto bulkElemIdx : adjoinedEntityIndices)
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
-                const auto bulkRefElem = BulkReferenceElements::general(bulkElement.type());
+                const auto bulkRefElem = referenceElement(bulkElement);
 
                 // find the bulk element facet that lies on this low dim element (assumes conformity!)
                 bool found = false;
