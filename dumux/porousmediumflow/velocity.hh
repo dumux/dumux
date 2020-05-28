@@ -26,15 +26,15 @@
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITY_HH
 
 #include <vector>
-#include <dumux/flux/traits.hh>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
-#include <dune/geometry/referenceelements.hh>
+#include <dune/geometry/type.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/flux/traits.hh>
 
 namespace Dumux {
 
@@ -67,7 +67,6 @@ class PorousMediumFlowVelocity
     static constexpr bool stationaryVelocityField = FluxTraits::hasStationaryVelocityField();
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using ReferenceElements = Dune::ReferenceElements<typename GridView::ctype, dim>;
 
     using Problem = typename GridVolumeVariables::Problem;
     using BoundaryTypes = typename Problem::Traits::BoundaryTypes;
@@ -145,8 +144,8 @@ public:
         }
 
         // get the transposed Jacobian of the element mapping
-        const auto referenceElement = ReferenceElements::general(geomType);
-        const auto& localPos = referenceElement.position(0, 0);
+        const auto refElement = referenceElement(geometry);
+        const auto& localPos = refElement.position(0, 0);
         const auto jacobianT2 = geometry.jacobianTransposed(localPos);
 
         if(isBox)
