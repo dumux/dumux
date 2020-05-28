@@ -170,7 +170,6 @@ public:
             sumSat += priVars[Indices::s0Idx + phaseIdx];
             fluidState.setSaturation(phaseIdx, priVars[Indices::s0Idx + phaseIdx]);
         }
-        Valgrind::CheckDefined(sumSat);
         fluidState.setSaturation(numFluidPhases() - 1, 1.0 - sumSat);
 
         /////////////
@@ -607,7 +606,6 @@ public:
             sumSat += priVars[Indices::s0Idx + phaseIdx];
             fluidState.setSaturation(phaseIdx, priVars[Indices::s0Idx + phaseIdx]);
         }
-        Valgrind::CheckDefined(sumSat);
         fluidState.setSaturation(numFluidPhases() - 1, 1.0 - sumSat);
 
         /////////////
@@ -699,6 +697,7 @@ public:
 
 //          // For using the ... other way of calculating equilibrium
 //          THIS IS ONLY FOR silencing Valgrind but is not used in this model
+// TODO: Can this be removed???
         for(int phaseIdx=0; phaseIdx<numFluidPhases(); ++phaseIdx)
             for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
                 const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,

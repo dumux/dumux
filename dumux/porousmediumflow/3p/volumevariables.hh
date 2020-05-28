@@ -25,7 +25,6 @@
 #ifndef DUMUX_3P_VOLUME_VARIABLES_HH
 #define DUMUX_3P_VOLUME_VARIABLES_HH
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
@@ -103,7 +102,6 @@ public:
                                  fluidState_.saturation(nPhaseIdx),
                                  fluidState_.saturation(gPhaseIdx))
                                  / fluidState_.viscosity(phaseIdx);
-            Valgrind::CheckDefined(mobility_[phaseIdx]);
         }
 
         // porosity
@@ -111,7 +109,6 @@ public:
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
         EnergyVolVars::updateEffectiveThermalConductivity();
-        Valgrind::CheckDefined(permeability_);
     }
 
     /*!
@@ -143,8 +140,6 @@ public:
         const Scalar sw = priVars[swIdx];
         const Scalar sn = priVars[snIdx];
         const Scalar sg = 1.0 - sw - sn;
-
-        Valgrind::CheckDefined(sg);
 
         fluidState.setSaturation(wPhaseIdx, sw);
         fluidState.setSaturation(gPhaseIdx, sg);

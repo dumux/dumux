@@ -27,7 +27,6 @@
 #include <cassert>
 #include <iomanip>
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
 #include <dumux/material/idealgas.hh>
@@ -618,41 +617,26 @@ public:
                                              int compJIdx)
 
     {
-        static Scalar undefined(1e10);
-        Valgrind::SetUndefined(undefined);
-
         if (compIIdx > compJIdx)
         {
             using std::swap;
             swap(compIIdx, compJIdx);
         }
 
-#ifndef NDEBUG
-        if (compIIdx == compJIdx ||
-            phaseIdx > numPhases - 1 ||
-            compJIdx > numComponents - 1)
-        {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Binary diffusion coefficient of components "
-                       << compIIdx << " and " << compJIdx
-                       << " in phase " << phaseIdx << " is undefined!\n");
-        }
-#endif
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
 
-        Scalar T = fluidState.temperature(phaseIdx);
-        Scalar p = fluidState.pressure(phaseIdx);
+        if (phaseIdx == liquidPhaseIdx && compIIdx == H2OIdx && compJIdx == N2Idx)
+            return BinaryCoeff::H2O_N2::liquidDiffCoeff(T, p);
 
-        // liquid phase
-        if (phaseIdx == liquidPhaseIdx) {
-            if (compIIdx == H2OIdx && compJIdx == N2Idx)
-                return BinaryCoeff::H2O_N2::liquidDiffCoeff(T, p);
-            return undefined;
-        }
-
-        // gas phase
-        if (compIIdx == H2OIdx && compJIdx == N2Idx)
+        else if (phaseIdx == gasPhaseIdx && compIIdx == H2OIdx && compJIdx == N2Idx)
             return BinaryCoeff::H2O_N2::gasDiffCoeff(T, p);
-        return undefined;
+
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                   "Binary diffusion coefficient of components "
+                    << compIIdx << " and " << compJIdx
+                    << " in phase " << phaseIdx << " is unavailable!\n");
     }
 
     using Base::enthalpy;
@@ -672,10 +656,8 @@ public:
     static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
     {
-        Scalar T = fluidState.temperature(phaseIdx);
-        Scalar p = fluidState.pressure(phaseIdx);
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(p);
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {

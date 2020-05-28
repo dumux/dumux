@@ -28,8 +28,6 @@
 
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/common/valgrind.hh>
-
 namespace Dumux {
 
 /*!
@@ -44,15 +42,11 @@ class BrooksCoreyParams
 public:
     using Scalar = ScalarT;
 
-    BrooksCoreyParams()
-    {
-        Valgrind::SetUndefined(*this);
-    }
+    BrooksCoreyParams() = default;
 
     BrooksCoreyParams(Scalar pe, Scalar lambda)
-        : pe_(pe), lambda_(lambda)
-    {
-    }
+    : pe_(pe), lambda_(lambda)
+    {}
 
     /*!
      * \brief Equality comparison with another set of params

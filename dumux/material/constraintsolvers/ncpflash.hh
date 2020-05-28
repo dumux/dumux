@@ -29,7 +29,6 @@
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/valgrind.hh>
 
 namespace Dumux {
 
@@ -165,10 +164,6 @@ public:
         // right hand side
         Vector b;
 
-        Valgrind::SetUndefined(J);
-        Valgrind::SetUndefined(deltaX);
-        Valgrind::SetUndefined(b);
-
         // make the fluid state consistent with the fluid system.
         completeFluidState_<MaterialLaw>(fluidState,
                                          paramCache,
@@ -186,8 +181,6 @@ public:
         for (int nIdx = 0; nIdx < nMax; ++nIdx) {
             // calculate Jacobian matrix and right hand side
             linearize_<MaterialLaw>(J, b, fluidState, paramCache, matParams, globalMolarities);
-            Valgrind::CheckDefined(J);
-            Valgrind::CheckDefined(b);
 
             // Solve J*x = b
             deltaX = 0;
@@ -220,7 +213,6 @@ public:
 
                 throw NumericalProblem(e.what());
             }
-            Valgrind::CheckDefined(deltaX);
 
             /*
             printFluidState_(fluidState);
@@ -332,9 +324,7 @@ protected:
         // reset jacobian
         J = 0;
 
-        Valgrind::SetUndefined(b);
         calculateDefect_(b, fluidState, fluidState, globalMolarities);
-        Valgrind::CheckDefined(b);
 
         // assemble jacobian matrix
         for (int pvIdx = 0; pvIdx < numEq; ++ pvIdx) {

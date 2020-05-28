@@ -57,7 +57,6 @@
 // [[/codeblock]]
 
 #include <dumux/material/fluidsystems/nullparametercache.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
 #include <assert.h>
@@ -365,35 +364,29 @@ public:
         assert(0 <= compIIdx && compIIdx < numComponents);
         assert(0 <= compJIdx && compJIdx < numComponents);
 
-       Scalar temperature = fluidState.temperature(phaseIdx);
-       Scalar pressure = fluidState.pressure(phaseIdx);
+       const Scalar temperature = fluidState.temperature(phaseIdx);
+       const Scalar pressure = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == wPhaseIdx)
+        {
             assert(compIIdx == H2OIdx);
-            Scalar result = 0.0;
-            if(compJIdx == TCIdx)
-                 result = Brine_CO2::liquidDiffCoeff(temperature, pressure);
+            if (compJIdx == TCIdx)
+                return Brine_CO2::liquidDiffCoeff(temperature, pressure);
             else if(compJIdx == O2Idx)
-                result = Dumux::BinaryCoeff::H2O_O2::liquidDiffCoeff(temperature, pressure);
+                return Dumux::BinaryCoeff::H2O_O2::liquidDiffCoeff(temperature, pressure);
             else //all other components
-                result = 1.587e-9;  //[m²/s]    //J. Phys. D: Appl. Phys. 40 (2007) 2769-2776 //old Value from Anozie 1e-9
-
-            Valgrind::CheckDefined(result);
-            return result;
+                return 1.587e-9;  //[m²/s]    //J. Phys. D: Appl. Phys. 40 (2007) 2769-2776 //old Value from Anozie 1e-9
         }
-        else {
+        else
+        {
             assert(phaseIdx == nPhaseIdx);
             assert(compIIdx == TCIdx);
-            Scalar result = 0.0;
-            if(compJIdx == H2OIdx)
-             result = Brine_CO2::gasDiffCoeff(temperature, pressure);
-            else if(compJIdx == O2Idx)
-                result = Dumux::BinaryCoeff::H2O_O2::gasDiffCoeff(temperature, pressure);
+            if (compJIdx == H2OIdx)
+                return Brine_CO2::gasDiffCoeff(temperature, pressure);
+            else if (compJIdx == O2Idx)
+                return Dumux::BinaryCoeff::H2O_O2::gasDiffCoeff(temperature, pressure);
             else //all other components
-                result = 0.0;
-
-            Valgrind::CheckDefined(result);
-            return result;
+                return 0.0;
         }
     };
     // [[/codeblock]]
@@ -500,24 +493,15 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        Scalar temperature = fluidState.temperature(phaseIdx);
-        Scalar pressure = fluidState.pressure(phaseIdx);
+        const Scalar temperature = fluidState.temperature(phaseIdx);
+        const Scalar pressure = fluidState.pressure(phaseIdx);
 
         if (phaseIdx == wPhaseIdx)
-        {
             return Brine::enthalpy(BrineAdapter<FluidState>(fluidState), Brine::liquidPhaseIdx);
-        }
-        else {
-            Scalar XCO2 = fluidState.massFraction(nPhaseIdx, TCIdx);
-            Scalar XBrine = fluidState.massFraction(nPhaseIdx, H2OIdx);
-
-            Scalar result = 0;
-            result += XBrine * Brine::gasEnthalpy(temperature, pressure);
-            result += XCO2 * CO2::gasEnthalpy(temperature, pressure);
-            Valgrind::CheckDefined(result);
-            return result;
-        }
-    };
+        else
+            return fluidState.massFraction(nPhaseIdx, H2OIdx)*Brine::gasEnthalpy(temperature, pressure)
+                   + fluidState.massFraction(nPhaseIdx, TCIdx)*CO2::gasEnthalpy(temperature, pressure);
+    }
 
     // The phase thermal conductivities are assumed to not change significantly from those of the pure brine for the liquid and pure CO2 for the gas phase
     template <class FluidState>

@@ -37,7 +37,6 @@
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
 #include "primaryvariableswitch.hh"
@@ -168,7 +167,6 @@ public:
                 sg_ = 1. - sw_;
             }
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-            Valgrind::CheckDefined(sg_);
 
             fluidState_.setSaturation(wPhaseIdx, sw_);
             fluidState_.setSaturation(gPhaseIdx, sg_);
@@ -206,7 +204,6 @@ public:
                  pg_ = pn_ + pcAlpha * pcgn + (1.-pcAlpha)*(pcgw - pcNW1);
             }
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-            Valgrind::CheckDefined(pw_);
 
             fluidState_.setPressure(wPhaseIdx, pw_);
             fluidState_.setPressure(gPhaseIdx, pg_);
@@ -272,7 +269,6 @@ public:
                  temp_ = FluidSystem::inverseVaporPressureCurve(fluidState_, gPhaseIdx, nCompIdx);
             }
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-            Valgrind::CheckDefined(temp_);
 
             for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
             {
@@ -524,7 +520,6 @@ public:
                 sg_ = 0.;
             }
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-            Valgrind::CheckDefined(sg_);
 
             fluidState_.setSaturation(wPhaseIdx, sw_);
             fluidState_.setSaturation(gPhaseIdx, sg_);
@@ -562,7 +557,6 @@ public:
                  pg_ = pn_ + pcAlpha * pcgn + (1.-pcAlpha)*(pcgw - pcNW1);
             }
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-            Valgrind::CheckDefined(pw_);
 
             fluidState_.setPressure(wPhaseIdx, pw_);
             fluidState_.setPressure(gPhaseIdx, pg_);
@@ -640,12 +634,10 @@ public:
                  }
             }
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-            Valgrind::CheckDefined(temp_);
 
-            for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
-            {
-                    fluidState_.setTemperature(phaseIdx, temp_);
-            }
+            for (int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                fluidState_.setTemperature(phaseIdx, temp_);
+
             solidState_.setTemperature(temp_);
 
             // now comes the tricky part: calculate phase composition
@@ -746,7 +738,6 @@ public:
                                  fluidState_.saturation(nPhaseIdx),
                                  fluidState_.saturation(gPhaseIdx));
             mobility_[phaseIdx] = kr / mu;
-            Valgrind::CheckDefined(mobility_[phaseIdx]);
         }
 
         // material dependent parameters for NAPL adsorption
@@ -764,8 +755,7 @@ public:
         effectiveDiffCoeff_.update(getEffectiveDiffusionCoefficient);
 
         // permeability
-        permeability_ =  problem.spatialParams().permeability(element, scv, elemSol);
-        Valgrind::CheckDefined(permeability_);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         fluidState_.setTemperature(temp_);
         // the enthalpies (internal energies are directly calculated in the fluidstate

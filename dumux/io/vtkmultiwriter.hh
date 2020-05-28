@@ -38,9 +38,6 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
-#include <dumux/common/valgrind.hh>
-
-
 #if HAVE_MPI
 #include <mpi.h>
 #endif
@@ -508,15 +505,12 @@ private:
         }
     }
 
-    // make sure the field is well defined if running under valgrind
-    // and make sure that all values can be displayed by paraview
+    // make sure that all values can be displayed by paraview
     template <class DataBuffer>
     void sanitizeBuffer_(DataBuffer &b, int nComps)
     {
         for (unsigned int i = 0; i < b.size(); ++i) {
             for (int j = 0; j < nComps; ++j) {
-                Valgrind::CheckDefined(b[i][j]);
-
                 // set values which are too small to 0 to avoid
                 // problems with paraview
                 if (std::abs(b[i][j])

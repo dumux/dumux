@@ -41,7 +41,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>

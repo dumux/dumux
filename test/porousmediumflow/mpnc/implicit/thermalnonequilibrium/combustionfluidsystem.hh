@@ -33,7 +33,6 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
 namespace Dumux {

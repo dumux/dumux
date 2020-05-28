@@ -154,7 +154,7 @@ public:
         aWettingNonWettingSurfaceParamsFreeFlow_.setA1(0.);
         aWettingNonWettingSurfaceParamsFreeFlow_.setA2(0.);
         aWettingNonWettingSurfaceParamsFreeFlow_.setA3(0.);
-        aWettingNonWettingSurfaceParamsFreeFlow_.setPcMax(42.); // not needed because it is anyways zero; silencing valgrind
+        aWettingNonWettingSurfaceParamsFreeFlow_.setPcMax(42.); // not needed because it is anyways zero;
 
         // dummys for free flow: no interface where there is only one phase
         aNonWettingSolidSurfaceParamsFreeFlow_.setA1(0.);

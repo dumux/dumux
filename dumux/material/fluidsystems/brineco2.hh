@@ -672,12 +672,9 @@ public:
         }
         else if (phaseIdx == gasPhaseIdx)
         {
-            Scalar result = 0;
             // we assume NaCl to not enter the gas phase, only consider H2O and CO2
-            result += H2O::gasEnthalpy(T, p)*fluidState.massFraction(gasPhaseIdx, BrineOrH2OIdx);
-            result += CO2::gasEnthalpy(T, p) *fluidState.massFraction(gasPhaseIdx, CO2Idx);
-            Valgrind::CheckDefined(result);
-            return result;
+            return H2O::gasEnthalpy(T, p)*fluidState.massFraction(gasPhaseIdx, BrineOrH2OIdx)
+                   + CO2::gasEnthalpy(T, p) *fluidState.massFraction(gasPhaseIdx, CO2Idx);
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
@@ -782,9 +779,6 @@ private:
     {
         const auto T = fluidState.temperature(liquidPhaseIdx);
         const auto p = fluidState.pressure(liquidPhaseIdx);
-
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(p);
 
         if (T < 273.15)
             DUNE_THROW(NumericalProblem, "Liquid density for Brine and CO2 is only "
