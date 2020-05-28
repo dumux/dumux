@@ -23,6 +23,7 @@
 #define DUMUX_MPFAO2DPRESSUREVELOCITIES2P_HH
 
 #include <dune/common/float_cmp.hh>
+
 #include "2dpressure.hh"
 #include "2dvelocity.hh"
 
@@ -66,8 +67,6 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
 
     using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
     using Intersection = typename GridView::Intersection;
-
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
     using InteractionVolume = FVMPFAOInteractionVolume<TypeTag>;
 
@@ -304,7 +303,7 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-    const auto referenceElement = ReferenceElements::general(elementI.type());
+    const auto refElement = referenceElement(elementI);
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();
@@ -313,7 +312,7 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     for (int vIdx = 0; vIdx < numVertices; vIdx++)
     {
-        int localVertIdx = referenceElement.subEntity(indexInInside, dim - 1, vIdx, dim);
+        int localVertIdx = refElement.subEntity(indexInInside, dim - 1, vIdx, dim);
 
         int vIdxGlobal = problem_.variables().index(elementI.template subEntity<dim>(localVertIdx));
 

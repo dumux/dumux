@@ -57,8 +57,6 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
@@ -188,94 +186,94 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
 
             const ElementGeometry& geometry = element.geometry();
 
-            const auto referenceElement = ReferenceElements::general(geometry.type());
+            const auto refElement = referenceElement(geometry);
 
             switch (idx)
             {
             case 0:
                 {
-                    DimVector edgeCoord(geometry.global(referenceElement.position(9, dim - 1)));
+                    DimVector edgeCoord(geometry.global(refElement.position(9, dim - 1)));
                     interactionVolume.setEdgePosition(edgeCoord, 2);
-                    edgeCoord = geometry.global(referenceElement.position(3, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(3, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 0);
-                    edgeCoord = geometry.global(referenceElement.position(11, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(11, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 5);
 
                     break;
                 }
             case 1:
                 {
-                    DimVector edgeCoord(geometry.global(referenceElement.position(2, dim - 1)));
+                    DimVector edgeCoord(geometry.global(refElement.position(2, dim - 1)));
                     interactionVolume.setEdgePosition(edgeCoord, 0);
-                    edgeCoord = geometry.global(referenceElement.position(8, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(8, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 2);
-                    edgeCoord = geometry.global(referenceElement.position(11, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(11, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 3);
 
                     break;
                 }
             case 2:
                 {
-                    DimVector edgeCoord(geometry.global(referenceElement.position(1, dim - 1)));
+                    DimVector edgeCoord(geometry.global(refElement.position(1, dim - 1)));
                     interactionVolume.setEdgePosition(edgeCoord, 0);
-                    edgeCoord = geometry.global(referenceElement.position(9, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(9, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 4);
-                    edgeCoord = geometry.global(referenceElement.position(10, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(10, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 5);
 
                     break;
                 }
             case 3:
                 {
-                    DimVector edgeCoord(geometry.global(referenceElement.position(0, dim - 1)));
+                    DimVector edgeCoord(geometry.global(refElement.position(0, dim - 1)));
                     interactionVolume.setEdgePosition(edgeCoord, 0);
-                    edgeCoord = geometry.global(referenceElement.position(8, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(8, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 4);
-                    edgeCoord = geometry.global(referenceElement.position(10, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(10, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 3);
 
                     break;
                 }
             case 4:
                 {
-                    DimVector edgeCoord(geometry.global(referenceElement.position(3, dim - 1)));
+                    DimVector edgeCoord(geometry.global(refElement.position(3, dim - 1)));
                     interactionVolume.setEdgePosition(edgeCoord, 1);
-                    edgeCoord = geometry.global(referenceElement.position(5, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(5, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 2);
-                    edgeCoord = geometry.global(referenceElement.position(7, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(7, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 5);
 
                     break;
                 }
             case 5:
                 {
-                    DimVector edgeCoord(geometry.global(referenceElement.position(2, dim - 1)));
+                    DimVector edgeCoord(geometry.global(refElement.position(2, dim - 1)));
                     interactionVolume.setEdgePosition(edgeCoord, 1);
-                    edgeCoord = geometry.global(referenceElement.position(4, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(4, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 2);
-                    edgeCoord = geometry.global(referenceElement.position(7, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(7, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 3);
 
                     break;
                 }
             case 6:
                 {
-                    DimVector edgeCoord(geometry.global(referenceElement.position(1, dim - 1)));
+                    DimVector edgeCoord(geometry.global(refElement.position(1, dim - 1)));
                     interactionVolume.setEdgePosition(edgeCoord, 1);
-                    edgeCoord = geometry.global(referenceElement.position(5, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(5, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 4);
-                    edgeCoord = geometry.global(referenceElement.position(6, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(6, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 5);
 
                     break;
                 }
             case 7:
                 {
-                    DimVector edgeCoord(geometry.global(referenceElement.position(0, dim - 1)));
+                    DimVector edgeCoord(geometry.global(refElement.position(0, dim - 1)));
                     interactionVolume.setEdgePosition(edgeCoord, 1);
-                    edgeCoord = geometry.global(referenceElement.position(4, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(4, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 4);
-                    edgeCoord = geometry.global(referenceElement.position(6, dim - 1));
+                    edgeCoord = geometry.global(refElement.position(6, dim - 1));
                     interactionVolume.setEdgePosition(edgeCoord, 3);
 
                     break;
@@ -349,94 +347,94 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
         const ElementGeometry& geometry = element.geometry();
 
-        const auto referenceElement = ReferenceElements::general(geometry.type());
+        const auto refElement = referenceElement(geometry);
 
         switch (idx)
         {
         case 0:
             {
-                DimVector edgeCoord(geometry.global(referenceElement.position(9, dim - 1)));
+                DimVector edgeCoord(geometry.global(refElement.position(9, dim - 1)));
                 interactionVolume.setEdgePosition(edgeCoord, 2);
-                edgeCoord = geometry.global(referenceElement.position(3, dim - 1));
+                edgeCoord = geometry.global(refElement.position(3, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 0);
-                edgeCoord = geometry.global(referenceElement.position(11, dim - 1));
+                edgeCoord = geometry.global(refElement.position(11, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 5);
 
                 break;
             }
         case 1:
             {
-                DimVector edgeCoord(geometry.global(referenceElement.position(2, dim - 1)));
+                DimVector edgeCoord(geometry.global(refElement.position(2, dim - 1)));
                 interactionVolume.setEdgePosition(edgeCoord, 0);
-                edgeCoord = geometry.global(referenceElement.position(8, dim - 1));
+                edgeCoord = geometry.global(refElement.position(8, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 2);
-                edgeCoord = geometry.global(referenceElement.position(11, dim - 1));
+                edgeCoord = geometry.global(refElement.position(11, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 3);
 
                 break;
             }
         case 2:
             {
-                DimVector edgeCoord(geometry.global(referenceElement.position(1, dim - 1)));
+                DimVector edgeCoord(geometry.global(refElement.position(1, dim - 1)));
                 interactionVolume.setEdgePosition(edgeCoord, 0);
-                edgeCoord = geometry.global(referenceElement.position(9, dim - 1));
+                edgeCoord = geometry.global(refElement.position(9, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 4);
-                edgeCoord = geometry.global(referenceElement.position(10, dim - 1));
+                edgeCoord = geometry.global(refElement.position(10, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 5);
 
                 break;
             }
         case 3:
             {
-                DimVector edgeCoord(geometry.global(referenceElement.position(0, dim - 1)));
+                DimVector edgeCoord(geometry.global(refElement.position(0, dim - 1)));
                 interactionVolume.setEdgePosition(edgeCoord, 0);
-                edgeCoord = geometry.global(referenceElement.position(8, dim - 1));
+                edgeCoord = geometry.global(refElement.position(8, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 4);
-                edgeCoord = geometry.global(referenceElement.position(10, dim - 1));
+                edgeCoord = geometry.global(refElement.position(10, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 3);
 
                 break;
             }
         case 4:
             {
-                DimVector edgeCoord(geometry.global(referenceElement.position(3, dim - 1)));
+                DimVector edgeCoord(geometry.global(refElement.position(3, dim - 1)));
                 interactionVolume.setEdgePosition(edgeCoord, 1);
-                edgeCoord = geometry.global(referenceElement.position(5, dim - 1));
+                edgeCoord = geometry.global(refElement.position(5, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 2);
-                edgeCoord = geometry.global(referenceElement.position(7, dim - 1));
+                edgeCoord = geometry.global(refElement.position(7, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 5);
 
                 break;
             }
         case 5:
             {
-                DimVector edgeCoord(geometry.global(referenceElement.position(2, dim - 1)));
+                DimVector edgeCoord(geometry.global(refElement.position(2, dim - 1)));
                 interactionVolume.setEdgePosition(edgeCoord, 1);
-                edgeCoord = geometry.global(referenceElement.position(4, dim - 1));
+                edgeCoord = geometry.global(refElement.position(4, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 2);
-                edgeCoord = geometry.global(referenceElement.position(7, dim - 1));
+                edgeCoord = geometry.global(refElement.position(7, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 3);
 
                 break;
             }
         case 6:
             {
-                DimVector edgeCoord(geometry.global(referenceElement.position(1, dim - 1)));
+                DimVector edgeCoord(geometry.global(refElement.position(1, dim - 1)));
                 interactionVolume.setEdgePosition(edgeCoord, 1);
-                edgeCoord = geometry.global(referenceElement.position(5, dim - 1));
+                edgeCoord = geometry.global(refElement.position(5, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 4);
-                edgeCoord = geometry.global(referenceElement.position(6, dim - 1));
+                edgeCoord = geometry.global(refElement.position(6, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 5);
 
                 break;
             }
         case 7:
             {
-                DimVector edgeCoord(geometry.global(referenceElement.position(0, dim - 1)));
+                DimVector edgeCoord(geometry.global(refElement.position(0, dim - 1)));
                 interactionVolume.setEdgePosition(edgeCoord, 1);
-                edgeCoord = geometry.global(referenceElement.position(4, dim - 1));
+                edgeCoord = geometry.global(refElement.position(4, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 4);
-                edgeCoord = geometry.global(referenceElement.position(6, dim - 1));
+                edgeCoord = geometry.global(refElement.position(6, dim - 1));
                 interactionVolume.setEdgePosition(edgeCoord, 3);
 
                 break;
@@ -1118,7 +1116,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
                 const ElementGeometry& geometry = element5.geometry();
 
-                const auto referenceElement = ReferenceElements::general(geometry.type());
+                const auto refElement = referenceElement(geometry);
 
                 int oldSubVolumElemIdx = IndexTranslator::getOldElemIdxFromNewFaceIdxto0(zeroFaceIdx, 4);
                 int oldEdgeIdx = IndexTranslator::getOldEdgeIdxFromNewFaceIdxto0(zeroFaceIdx, 1);
@@ -1131,13 +1129,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         switch (oldEdgeIdx)
                         {
                         case 2:
-                            edgeCoord = geometry.global(referenceElement.position(9, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(9, dim - 1));
                             break;
                         case 0:
-                            edgeCoord = geometry.global(referenceElement.position(3, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(3, dim - 1));
                             break;
                         case 5:
-                            edgeCoord = geometry.global(referenceElement.position(11, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(11, dim - 1));
                             break;
                         }
 
@@ -1148,13 +1146,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         switch (oldEdgeIdx)
                         {
                         case 0:
-                            edgeCoord = geometry.global(referenceElement.position(2, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(2, dim - 1));
                             break;
                         case 2:
-                            edgeCoord = geometry.global(referenceElement.position(8, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(8, dim - 1));
                             break;
                         case 3:
-                            edgeCoord = geometry.global(referenceElement.position(11, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(11, dim - 1));
                             break;
                         }
 
@@ -1165,13 +1163,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         switch (oldEdgeIdx)
                         {
                         case 0:
-                            edgeCoord = geometry.global(referenceElement.position(1, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(1, dim - 1));
                             break;
                         case 4:
-                            edgeCoord = geometry.global(referenceElement.position(9, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(9, dim - 1));
                             break;
                         case 5:
-                            edgeCoord = geometry.global(referenceElement.position(10, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(10, dim - 1));
                             break;
                         }
 
@@ -1182,13 +1180,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         switch (oldEdgeIdx)
                         {
                         case 0:
-                            edgeCoord = geometry.global(referenceElement.position(0, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(0, dim - 1));
                             break;
                         case 4:
-                            edgeCoord = geometry.global(referenceElement.position(8, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(8, dim - 1));
                             break;
                         case 3:
-                            edgeCoord = geometry.global(referenceElement.position(10, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(10, dim - 1));
                             break;
                         }
 
@@ -1199,13 +1197,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         switch (oldEdgeIdx)
                         {
                         case 1:
-                            edgeCoord = geometry.global(referenceElement.position(3, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(3, dim - 1));
                             break;
                         case 2:
-                            edgeCoord = geometry.global(referenceElement.position(5, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(5, dim - 1));
                             break;
                         case 5:
-                            edgeCoord = geometry.global(referenceElement.position(7, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(7, dim - 1));
                             break;
                         }
 
@@ -1216,13 +1214,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         switch (oldEdgeIdx)
                         {
                         case 1:
-                            edgeCoord = geometry.global(referenceElement.position(2, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(2, dim - 1));
                             break;
                         case 2:
-                            edgeCoord = geometry.global(referenceElement.position(4, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(4, dim - 1));
                             break;
                         case 3:
-                            edgeCoord = geometry.global(referenceElement.position(7, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(7, dim - 1));
                             break;
                         }
 
@@ -1233,13 +1231,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         switch (oldEdgeIdx)
                         {
                         case 1:
-                            edgeCoord = geometry.global(referenceElement.position(1, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(1, dim - 1));
                             break;
                         case 4:
-                            edgeCoord = geometry.global(referenceElement.position(5, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(5, dim - 1));
                             break;
                         case 5:
-                            edgeCoord = geometry.global(referenceElement.position(6, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(6, dim - 1));
                             break;
                         }
 
@@ -1250,13 +1248,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         switch (oldEdgeIdx)
                         {
                         case 1:
-                            edgeCoord = geometry.global(referenceElement.position(0, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(0, dim - 1));
                             break;
                         case 4:
-                            edgeCoord = geometry.global(referenceElement.position(4, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(4, dim - 1));
                             break;
                         case 3:
-                            edgeCoord = geometry.global(referenceElement.position(6, dim - 1));
+                            edgeCoord = geometry.global(refElement.position(6, dim - 1));
                             break;
                         }
 

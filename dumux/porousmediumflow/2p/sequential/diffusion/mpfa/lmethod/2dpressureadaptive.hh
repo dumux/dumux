@@ -84,8 +84,6 @@ class FvMpfaL2dPressure2pAdaptive: public FVPressure<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
@@ -776,7 +774,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
         // get index
         int eIdxGlobal1 = problem_.variables().index(element);
 
-        const auto referenceElement = ReferenceElements::general(element.type());
+        const auto refElement = referenceElement(element);
 
         const auto isEndIt12 = problem_.gridView().iend(element);
         for (auto isIt12 = problem_.gridView().ibegin(element); isIt12 != isEndIt12; ++isIt12)
@@ -807,13 +805,13 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 // get the global coordinate and global vertex index of corner1234
                 for (int i = 0; i < intersection12.geometry().corners(); ++i)
                 {
-                    int localVertIdx12corner = referenceElement.subEntity(indexInInside12, dim - 1, i, dim);
+                    int localVertIdx12corner = refElement.subEntity(indexInInside12, dim - 1, i, dim);
 
                     int globalVertIdx12corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx12corner));
 
                     for (int j = 0; j < intersection14.geometry().corners(); ++j)
                     {
-                        int localVertIdx14corner = referenceElement.subEntity(indexInInside14, dim - 1, j, dim);
+                        int localVertIdx14corner = refElement.subEntity(indexInInside14, dim - 1, j, dim);
 
                         int globalVertIdx14corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx14corner));
 
@@ -1245,7 +1243,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                         {
                             for (int i = 0; i < intersection2.geometry().corners(); ++i)
                             {
-                                int localVertIdx2corner = referenceElement.subEntity(intersection2.indexInInside(), dim - 1, i,
+                                int localVertIdx2corner = refElement.subEntity(intersection2.indexInInside(), dim - 1, i,
                                         dim);
 
                                 int globalVertIdx2corner = problem_.variables().index(element2.template subEntity<dim>(localVertIdx2corner));
@@ -1334,13 +1332,13 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 {
                     bool finished = false;
 
-                    int localVertIdx12corner = referenceElement.subEntity(indexInInside12, dim - 1, i, dim);
+                    int localVertIdx12corner = refElement.subEntity(indexInInside12, dim - 1, i, dim);
 
                     int globalVertIdx12corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx12corner));
 
                     for (int j = 0; j < intersection14.geometry().corners(); ++j)
                     {
-                        int localVertIdx14corner = referenceElement.subEntity(indexInInside14, dim - 1, j, dim);
+                        int localVertIdx14corner = refElement.subEntity(indexInInside14, dim - 1, j, dim);
 
                         int globalVertIdx14corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx14corner));
 
@@ -1478,7 +1476,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                         {
                             for (int i = 0; i < intersection4.geometry().corners(); ++i)
                             {
-                                int localVertIdx4corner = referenceElement.subEntity(intersection4.indexInInside(), dim - 1, i,
+                                int localVertIdx4corner = refElement.subEntity(intersection4.indexInInside(), dim - 1, i,
                                         dim);
 
                                 int globalVertIdx4corner = problem_.variables().index(element4.template subEntity<dim>(localVertIdx4corner));
@@ -2350,9 +2348,9 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                            const auto referenceElement = ReferenceElements::general(element.type());
+                            const auto refElement = referenceElement(element);
 
-                            const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
+                            const LocalPosition& localPos = refElement.position(boundaryFaceIdx, 1);
 
                             const GlobalPosition& globalPosFace = element.geometry().global(localPos);
 

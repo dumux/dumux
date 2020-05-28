@@ -81,8 +81,6 @@ class FvMpfaL2dPressure2p: public FVPressure<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
@@ -733,7 +731,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
             // get the intersection node /bar^{x_3} between 'intersection12'
             // and 'intersection14', denoted as 'corner1234'
-            const auto referenceElement = ReferenceElements::general(element.type());
+            const auto refElement = referenceElement(element);
 
             GlobalPosition corner1234(0);
 
@@ -744,13 +742,13 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
             {
                 bool finished = false;
 
-                int localVertIdx12corner = referenceElement.subEntity(indexInInside12, 1, i, dim);
+                int localVertIdx12corner = refElement.subEntity(indexInInside12, 1, i, dim);
 
                 int globalVertIdx12corner = problem_.variables().vertexMapper().subIndex(element, localVertIdx12corner, dim);
 
                 for (int j = 0; j < intersection14.geometry().corners(); ++j)
                 {
-                    int localVertIdx14corner = referenceElement.subEntity(indexInInside14, 1, j, dim);
+                    int localVertIdx14corner = refElement.subEntity(indexInInside14, 1, j, dim);
 
                     int globalVertIdx14corner = problem_.variables().vertexMapper().subIndex(element, localVertIdx14corner, dim);
 
@@ -961,7 +959,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                         {
                             for (int i = 0; i < intersection2.geometry().corners(); ++i)
                             {
-                                int localVertIdx2corner = referenceElement.subEntity(intersection2.indexInInside(), dim - 1, i,
+                                int localVertIdx2corner = refElement.subEntity(intersection2.indexInInside(), dim - 1, i,
                                         dim);
 
                                 int globalVertIdx2corner = problem_.variables().index(
@@ -1092,7 +1090,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                         {
                             for (int i = 0; i < intersection4.geometry().corners(); ++i)
                             {
-                                int localVertIdx4corner = referenceElement.subEntity(intersection4.indexInInside(), dim - 1, i,
+                                int localVertIdx4corner = refElement.subEntity(intersection4.indexInInside(), dim - 1, i,
                                         dim);
 
                                 int globalVertIdx4corner = problem_.variables().index(
@@ -1631,9 +1629,9 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                            const auto referenceElement = ReferenceElements::general(element.type());
+                            const auto refElement = referenceElement(element);
 
-                            const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
+                            const LocalPosition& localPos = refElement.position(boundaryFaceIdx, 1);
 
                             const GlobalPosition& globalPosFace = element.geometry().global(localPos);
 

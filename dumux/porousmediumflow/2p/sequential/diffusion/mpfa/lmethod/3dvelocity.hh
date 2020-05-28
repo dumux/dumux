@@ -62,8 +62,6 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
@@ -222,7 +220,7 @@ public:
                 refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
                 refVelocity[2] = 0.5 * (fluxW[5] - fluxW[4]);
 
-                const DimVector& localPos = ReferenceElements::general(element.type()).position(0, 0);
+                const DimVector& localPos = referenceElement(element).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
                 const JacobianTransposed jacobianT = element.geometry().jacobianTransposed(localPos);
