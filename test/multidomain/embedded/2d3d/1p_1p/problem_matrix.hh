@@ -26,7 +26,6 @@
 #define DUMUX_MATRIX_ROBLEM_HH
 
 #include <dune/geometry/quadraturerules.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 

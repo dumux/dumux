@@ -59,8 +59,6 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-
     enum
     {
         pw = Indices::pressureW,

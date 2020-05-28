@@ -30,7 +30,6 @@
 
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/alugrid/grid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 

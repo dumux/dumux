@@ -40,7 +40,6 @@ class GmshBoundaryFlagTest
     using Scalar = double;
     static const int dim = Grid::dimension;
     using GridManager = typename Dumux::GridManager<Grid>;
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
 public:
 

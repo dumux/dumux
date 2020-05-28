@@ -28,7 +28,6 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/geometry/quadraturerules.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/math.hh>
