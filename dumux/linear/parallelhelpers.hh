@@ -278,32 +278,7 @@ public:
     ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
-        initGhostsAndOwners();
-    }
-
-    // \brief Initializes the markers for ghosts and owners with the correct size and values.
-    //
-    void initGhostsAndOwners()
-    {
-        const auto rank = gridView_.comm().rank();
-        isOwned_.assign(mapper_.size(), rank);
-        // find out about ghosts
-        GhostGatherScatter ggs(isOwned_, mapper_);
-
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(ggs, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
-
-        isGhost_ = isOwned_;
-
-        // partition interior/border
-        InteriorBorderGatherScatter dh(isOwned_, mapper_);
-
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(dh, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
-
-        // convert vector into mask vector
-        for (auto& v : isOwned_)
-            v = (v == rank) ? 1 : 0;
+        initGhostsAndOwners_();
     }
 
     bool isGhost(std::size_t i) const
@@ -379,6 +354,29 @@ public:
     { return gridView_; }
 
 private:
+    void initGhostsAndOwners_()
+    {
+        const auto rank = gridView_.comm().rank();
+        isOwned_.assign(mapper_.size(), rank);
+        // find out about ghosts
+        GhostGatherScatter ggs(isOwned_, mapper_);
+
+        if (gridView_.comm().size() > 1)
+            gridView_.communicate(ggs, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+
+        isGhost_ = isOwned_;
+
+        // partition interior/border
+        InteriorBorderGatherScatter dh(isOwned_, mapper_);
+
+        if (gridView_.comm().size() > 1)
+            gridView_.communicate(dh, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+
+        // convert vector into mask vector
+        for (auto& v : isOwned_)
+            v = (v == rank) ? 1 : 0;
+    }
+
     template<class Comm, class GlobalIndices>
     void resizeIndexSet_(Comm& comm, const GlobalIndices& globalIndices) const
     {
