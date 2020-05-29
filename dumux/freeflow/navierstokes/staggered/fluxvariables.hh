@@ -547,7 +547,8 @@ private:
                                                                     const FaceVariables& faceVars,
                                                                     const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                                     const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
-                                                                    const int localSubFaceIdx)
+                                                                    const int localSubFaceIdx,
+                                                                    bool useZeroNormalGradient = false)
     {
         const auto eIdx = scvf.insideScvIdx();
         const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
@@ -568,8 +569,12 @@ private:
                              ? insideVolVars.effectiveViscosity()
                              : (insideVolVars.effectiveViscosity() + outsideVolVars.effectiveViscosity()) * 0.5;
 
+
+        if(currentScvfBoundaryTypes->isDirichlet(Indices::pressureIdx))
+            useZeroNormalGradient = true;
+
         // Consider the shear stress caused by the gradient of the velocities normal to our face of interest.
-        if (!enableUnsymmetrizedVelocityGradient)
+        if (!enableUnsymmetrizedVelocityGradient && !useZeroNormalGradient)
         {
             if (!scvf.boundary() ||
                 currentScvfBoundaryTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
@@ -584,11 +589,8 @@ private:
         // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
         // If we have a Dirichlet condition for the pressure at the lateral face we assume to have a zero velocityGrad_ij velocity gradient
         // so we can skip the computation.
-        if (!lateralFace.boundary() || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
-        {
-            const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
-            lateralDiffusiveFlux -= muAvg * velocityGrad_ij * lateralFace.directionSign();
-        }
+        const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+        lateralDiffusiveFlux -= muAvg * velocityGrad_ij * lateralFace.directionSign();
 
         // Account for the area of the staggered lateral face (0.5 of the coinciding scfv).
         return lateralDiffusiveFlux * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
