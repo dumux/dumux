@@ -1325,7 +1325,8 @@ private:
             matrixHelper.extendMatrix(diagBlock, [&parHelper](auto idx){ return parHelper.isGhost(idx); });
             matrixHelper.sumEntries(diagBlock);
 
-            parHelper.makeNonOverlappingConsistent(rhsBlock);
+            ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(parHelper.gridView(), parHelper.dofMapper());
+            vectorHelper.makeNonOverlappingConsistent(rhsBlock);
 
             category = Dune::SolverCategory::nonoverlapping;
         }
@@ -1380,15 +1381,6 @@ private:
     template<class Matrix, class Vector>
     void solveParallel_(Matrix& m, Vector& x, Vector& b)
     {
-        if (firstCall_)
-        {
-            using namespace Dune::Hybrid;
-            forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
-            {
-                std::get<i>(parHelpers_)->initGhostsAndOwners();
-            });
-        }
-
         auto linearOperators = makeLinearOperators_<LinearOperator, Vector>(std::make_index_sequence<numBlocks>{});
         auto scalarProducts = makeScalarProducts_<ScalarProduct, Vector>(std::make_index_sequence<numBlocks>{});
         auto preconditioners = makePreconditioners_<Preconditioner, Vector>(std::make_index_sequence<numBlocks>{});
