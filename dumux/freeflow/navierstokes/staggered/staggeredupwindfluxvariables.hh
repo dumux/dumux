@@ -521,16 +521,13 @@ private:
                                                    const int localSubFaceIdx)
     {
         // Find out what boundary type is set on the lateral face
-        const bool useZeroGradient = lateralFaceBoundaryTypes && (lateralFaceBoundaryTypes->isSymmetry()
-                                                                  || lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
         const bool lateralFaceHasBJS = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex()));
         const bool lateralFaceHasDirichletVelocity = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex()));
-        const Scalar velocitySelf = faceVars.velocitySelf();
 
         // If there is a Dirichlet condition for the pressure we assume zero gradient for the velocity,
         // so the velocity at the boundary equal to that on the scvf.
-        if (useZeroGradient)
-            return velocitySelf;
+        if (!lateralFaceHasBJS && !lateralFaceHasDirichletVelocity)
+            return faceVars.velocitySelf();
 
         if (lateralFaceHasBJS)
             return VelocityGradients::beaversJosephVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
