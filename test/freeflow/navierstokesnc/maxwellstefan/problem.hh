@@ -220,10 +220,9 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
-    enum {
-        compTwoIdx =  Indices::conti0EqIdx + FluidSystem::N2Idx,
-        compThreeIdx = Indices::conti0EqIdx + FluidSystem::CO2Idx,
-    };
+    static constexpr auto compOneIdx =  Indices::conti0EqIdx;
+    static constexpr auto compTwoIdx =  Indices::conti0EqIdx + FluidSystem::N2Idx;
+    static constexpr auto compThreeIdx = Indices::conti0EqIdx + FluidSystem::CO2Idx;
 
 public:
     MaxwellStefanNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -251,7 +250,6 @@ public:
                                  const GridVariables& gridVariables,
                                  const Scalar time)
     {
-
         if (plotOutput_)
         {
             Scalar x_co2_left = 0.0;
@@ -287,7 +285,6 @@ public:
                         x_h2_right += elemVolVars[scv].moleFraction(FluidSystem::H2Idx);
                         j +=1;
                     }
-
                 }
             }
             x_co2_left /= i;
@@ -333,7 +330,6 @@ public:
             gnuplot3_.addDataSetToPlot(x_, y6_, "H2_right.dat", "w l t 'H_2 right'");
             gnuplot3_.plot("mole_fraction_H2");
         }
-
     }
 
    /*!
@@ -359,11 +355,12 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        // set Dirichlet values for the velocity everywhere
+        // Set no-flow/no-slip everywhere. Neumann defaults to zero.
         values.setDirichlet(Indices::velocityXIdx);
         values.setDirichlet(Indices::velocityYIdx);
-        values.setOutflow(compTwoIdx);
-        values.setOutflow(compThreeIdx);
+        values.setNeumann(compOneIdx);
+        values.setNeumann(compTwoIdx);
+        values.setNeumann(compThreeIdx);
         return values;
     }
 
