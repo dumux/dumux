@@ -32,8 +32,6 @@
 
 #include <dumux/assembly/cclocalresidual.hh>
 
-#include <dumux/flux/fluxvariablescaching.hh>
-
 #include <dumux/discretization/fvproperties.hh>
 
 #include <dumux/discretization/cellcentered/elementsolution.hh>
@@ -159,14 +157,6 @@ struct ElementBoundaryTypes<TypeTag, TTag::CCMpfaModel> { using type = CCElement
 //! Set the BaseLocalResidual to CCLocalResidual
 template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::CCMpfaModel> { using type = CCLocalResidual<TypeTag>; };
-
-//! Set the default for the FluxVariablesCache
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::CCMpfaModel> { using type = FluxVariablesCaching::EmptyCache<GetPropType<TypeTag, Properties::Scalar>>; };
-
-//! Set the default for the FluxVariablesCacheFiller
-template<class TypeTag>
-struct FluxVariablesCacheFiller<TypeTag, TTag::CCMpfaModel> { using type = FluxVariablesCaching::EmptyCacheFiller; };
 } // namespace Properties
 } // namespace Dumux
 
