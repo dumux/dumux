@@ -171,7 +171,7 @@ public:
     {
         // make sure the tree don't get out of scope
         domainTree_ = domainTree;
-        targetTree_ = targetTree_;
+        targetTree_ = targetTree;
         build(*domainTree_, *targetTree_);
     }
 
