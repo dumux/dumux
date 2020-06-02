@@ -39,6 +39,7 @@ dumux_add_test(NAME test_co2_tpfa_sequential
 dumux_add_test(NAME test_co2_box_parallel
                TARGET test_co2_box
                LABELS porousmediumflow co2 parallel
+               TIMEOUT 1200
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100,"porosity":1}
@@ -50,6 +51,7 @@ dumux_add_test(NAME test_co2_box_parallel
 dumux_add_test(NAME test_co2_tpfa_parallel
                TARGET test_co2_tpfa
                LABELS porousmediumflow co2 parallel
+               TIMEOUT 1200
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
@@ -92,6 +94,7 @@ dumux_add_test(NAME test_co2ni_tpfa_sequential
 dumux_add_test(NAME test_co2ni_box_parallel
                TARGET test_co2ni_box
                LABELS porousmediumflow co2 co2ni parallel
+               TIMEOUT 1200
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100,"porosity":1}
@@ -103,6 +106,7 @@ dumux_add_test(NAME test_co2ni_box_parallel
 dumux_add_test(NAME test_co2ni_tpfa_parallel
                TARGET test_co2ni_tpfa
                LABELS porousmediumflow co2 co2ni parallel
+               TIMEOUT 1200
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
