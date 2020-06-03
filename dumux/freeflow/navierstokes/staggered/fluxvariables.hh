@@ -515,8 +515,9 @@ private:
             }
         }();
 
+        const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
         StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, faceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
-        return upwindHelper.computeUpwindedLateralMomentum(localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
+        return upwindHelper.computeUpwindLateralMomentum(selfIsUpstream, lateralFace, localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
                * transportingVelocity * lateralFace.directionSign() * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
     }
 
