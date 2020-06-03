@@ -12,38 +12,11 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/geometry/intersectspointgeometry.hh>
 
-#ifndef DOXYGEN
-template<class Geometry>
-bool testIntersection(const Geometry& geo,
-                      const typename Geometry::GlobalCoordinate& p,
-                      bool foundExpected, bool verbose)
-{
-    bool found = Dumux::intersectsPointGeometry(p, geo);
-    if (!found && foundExpected)
-    {
-        std::cerr << "  Failed detecting intersection of " << geo.type();
-        for (int i = 0; i < geo.corners(); ++i)
-            std::cerr << " (" << geo.corner(i) << ")";
-        std::cerr << " with point: " << p << std::endl;
-    }
-    else if (found && !foundExpected)
-    {
-        std::cerr << "  Found false positive: intersection of " << geo.type();
-        for (int i = 0; i < geo.corners(); ++i)
-            std::cerr << " (" << geo.corner(i) << ")";
-        std::cerr << " with point: " << p << std::endl;
-    }
-    if (verbose)
-    {
-        if (found && foundExpected)
-            std::cout << "  Found intersection with " << p << std::endl;
-        else if (!found && !foundExpected)
-            std::cout << "  No intersection with " << p << std::endl;
-    }
-    return (found == foundExpected);
-}
+#include "transformation.hh"
+#include "test_intersection.hh"
+
+namespace Dumux {
 
 template<class Transformation>
 void runIntersectionTest(std::vector<bool>& returns, const Transformation& transform, bool verbose)
@@ -57,7 +30,7 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
 
     auto cornersTet = Points({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}});
     std::transform(cornersTet.begin(), cornersTet.end(), cornersTet.begin(),
-                   [&transform](const auto& p) { return transform(p); });
+                   [&](const auto& p) { return transform(p); });
     const auto tetrahedron = Geo(Dune::GeometryTypes::tetrahedron, cornersTet);
 
     for (const auto& corner : cornersTet)
@@ -74,7 +47,7 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     auto cornersHex = Points({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0},
                               {0.0, 0.0, 1.0}, {1.0, 0.0, 1.0}, {0.0, 1.0, 1.0}, {1.0, 1.0, 1.0}});
     std::transform(cornersHex.begin(), cornersHex.end(), cornersHex.begin(),
-                   [&transform](const auto& p) { return transform(p); });
+                   [&](const auto& p) { return transform(p); });
     auto hexahedron = Geo(Dune::GeometryTypes::hexahedron, cornersHex);
 
     for (const auto& corner : cornersHex)
@@ -91,7 +64,7 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     auto cornersPyramid = Points({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0},
                                   {1.0, 1.0, 0.0}, {0.5, 0.5, 1.0}});
     std::transform(cornersPyramid.begin(), cornersPyramid.end(), cornersPyramid.begin(),
-                   [&transform](const auto& p) { return transform(p); });
+                   [&](const auto& p) { return transform(p); });
     auto pyramid = Geo(Dune::GeometryTypes::pyramid, cornersPyramid);
 
     for (const auto& corner : cornersPyramid)
@@ -111,7 +84,7 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     auto cornersPrism = Points({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0},
                                 {0.0, 0.0, 1.0}, {1.0, 0.0, 1.0}, {0.0, 1.0, 1.0}});
     std::transform(cornersPrism.begin(), cornersPrism.end(), cornersPrism.begin(),
-                   [&transform](const auto& p) { return transform(p); });
+                   [&](const auto& p) { return transform(p); });
     auto prism = Geo(Dune::GeometryTypes::prism, cornersPrism);
 
     for (const auto& corner : cornersPrism)
@@ -124,34 +97,12 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     returns.push_back(testIntersection(prism, transform({0.25, 0.25, 1.0001}), false, verbose));
 }
 
-template<class ctype>
-auto createTransformation(const ctype scale,
-                          const Dune::FieldVector<ctype, 3>& translate,
-                          const Dune::FieldVector<ctype, 3>& rotationAxis,
-                          const ctype rotationAngle)
-{
-    std::cout << "Intersection test with transformation:"
-              << " ctype: " << Dune::className<ctype>()
-              << ", scaling: " << scale
-              << ", translation: " << translate
-              << ", rotationAxis: " << rotationAxis
-              << ", rotationAngle: " << rotationAngle << std::endl;
-    const ctype sinAngle = std::sin(rotationAngle);
-    const ctype cosAngle = std::cos(rotationAngle);
-    return [=](Dune::FieldVector<ctype, 3> p){
-        p *= scale;
-        p.axpy(scale, translate);
-        auto tp = p;
-        tp *= cosAngle;
-        tp.axpy(sinAngle, Dumux::crossProduct(rotationAxis, p));
-        return tp.axpy((1.0-cosAngle)*(rotationAxis*p), rotationAxis);
-    };
-}
-
-#endif
+} // end namespace Dumux
 
 int main (int argc, char *argv[]) try
 {
+    using namespace Dumux;
+
     // collect returns to determine exit code
     std::vector<bool> returns;
     constexpr bool verbose = false;
@@ -162,7 +113,7 @@ int main (int argc, char *argv[]) try
             for (const double angle : {0.0, 0.2*M_PI, 0.5*M_PI, 0.567576567*M_PI, M_PI})
                 for (const auto& rotAxis : {Vec(std::sqrt(3.0)/3.0), Vec({std::sqrt(2.0)/2.0, std::sqrt(2.0)/2.0, 0.0})})
                     runIntersectionTest(returns,
-                        createTransformation<double>(scaling, Vec(translation), rotAxis, angle), verbose);
+                        make3DTransformation<double>(scaling, Vec(translation), rotAxis, angle, true), verbose);
 
     // determine the exit code
     if (std::any_of(returns.begin(), returns.end(), std::logical_not<bool>{}))
