@@ -30,6 +30,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
+#include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/assembly/boxlocalresidual.hh>
 
@@ -96,6 +97,24 @@ template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::BoxModel> { using type = BoxLocalResidual<TypeTag>; };
 
 } // namespace Properties
+
+namespace Impl {
+
+template<class Problem>
+struct ProblemTraits<Problem, DiscretizationMethod::box>
+{
+private:
+    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using Element = typename GG::GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GG::SubControlVolume;
+public:
+    using GridGeometry = GG;
+    // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
+    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
+};
+
+} // end namespace Impl
+
 } // namespace Dumux
 
 #endif

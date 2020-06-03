@@ -29,6 +29,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/defaultmappertraits.hh>
+#include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/assembly/cclocalresidual.hh>
 
@@ -158,6 +159,24 @@ struct ElementBoundaryTypes<TypeTag, TTag::CCMpfaModel> { using type = CCElement
 template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::CCMpfaModel> { using type = CCLocalResidual<TypeTag>; };
 } // namespace Properties
+
+namespace Impl {
+
+template<class Problem>
+struct ProblemTraits<Problem, DiscretizationMethod::ccmpfa>
+{
+private:
+    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using Element = typename GG::GridView::template Codim<0>::Entity;
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
+public:
+    using GridGeometry = GG;
+    // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scvf)
+    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
+};
+
+} // end namespace Impl
+
 } // namespace Dumux
 
 #endif
