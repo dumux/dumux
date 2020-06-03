@@ -214,9 +214,10 @@ public:
         {
             // Get the average velocity at the center of the element (i.e. the location of the staggered face).
             const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
+            const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
             StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, faceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
-            frontalFlux += upwindHelper.computeUpwindedFrontalMomentum(transportingVelocity)
+            frontalFlux += upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream)
                            * transportingVelocity * -1.0 * scvf.directionSign();
         }
 

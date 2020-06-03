@@ -76,6 +76,8 @@ class StaggeredUpwindHelper
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
+    static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
+
 public:
     StaggeredUpwindHelper(const Element& element,
                           const FVElementGeometry& fvGeometry,
@@ -99,12 +101,25 @@ public:
      *        Then the corresponding set of momenta are collected and the prescribed
      *        upwinding method is used to calculate the momentum.
      */
-    FacePrimaryVariables computeUpwindedFrontalMomentum(const Scalar transportingVelocity)
+    FacePrimaryVariables computeUpwindFrontalMomentum(const bool selfIsUpstream) const
     {
-        const bool canHigherOrder = canFrontalSecondOrder_(scvf_, transportingVelocity);
-        const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf_, faceVars_, elemVolVars_[scvf_.insideScvIdx()].density(),
-                                                                  transportingVelocity, canHigherOrder);
-        return doFrontalMomentumUpwinding_(scvf_, upwindingMomenta, transportingVelocity, upwindScheme_, canHigherOrder);
+        const auto density = elemVolVars_[scvf_.insideScvIdx()].density();
+
+        // for higher order schemes do higher order upwind reconstruction
+        if constexpr (useHigherOrder)
+        {
+            // only second order is implemented so far
+            if (canDoFrontalSecondOrder_(selfIsUpstream))
+            {
+                const auto distances = getFrontalDistances_(selfIsUpstream);
+                const auto upwindMomenta = getFrontalSecondOrderUpwindMomenta_(density, selfIsUpstream);
+                return upwindScheme_.tvd(upwindMomenta, distances, selfIsUpstream, upwindScheme_.tvdApproach());
+            }
+        }
+
+        // otherwise apply first order upwind scheme
+        const auto upwindMomenta = getFrontalFirstOrderUpwindMomenta_(density, selfIsUpstream);
+        return upwindScheme_.upwind(upwindMomenta[0], upwindMomenta[1]);
     }
 
     /*!
@@ -118,7 +133,7 @@ public:
      */
     FacePrimaryVariables computeUpwindedLateralMomentum(const int localSubFaceIdx,
                                                         const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                        const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
+                                                        const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes) const
     {
         // Check whether the own or the neighboring element is upstream.
         const auto eIdx = scvf_.insideScvIdx();
@@ -138,7 +153,6 @@ public:
     }
 
 private:
-
     /*!
      * \brief Returns whether or not the face in question is far enough from the wall to handle higher order methods.
      *
@@ -146,115 +160,64 @@ private:
      *        If the face is upstream, and the scvf has a forward neighbor, higher order methods are possible.
      *        If the face is downstream, and the scvf has a backwards neighbor, higher order methods are possible.
      *        Otherwise, higher order methods are not possible.
-     *        If higher order methods are not prescribed, this function will return false.
-     *
-     * \param ownScvf the sub control volume face
-     * \param transportingVelocity The average of the self and opposite velocities.
      */
-    static bool canFrontalSecondOrder_([[maybe_unused]] const SubControlVolumeFace& ownScvf,
-                                       [[maybe_unused]] const Scalar transportingVelocity)
+    bool canDoFrontalSecondOrder_(bool selfIsUpstream) const
     {
-        if constexpr (useHigherOrder)
-        {
-            // Depending on selfIsUpstream I have to check if I have a forward or a backward neighbor to retrieve
-            const bool selfIsUpstream = ownScvf.directionSign() != sign(transportingVelocity);
-            return selfIsUpstream ? ownScvf.hasForwardNeighbor(0) : ownScvf.hasBackwardNeighbor(0);
-        }
-        else
-            return false;
+        // Depending on selfIsUpstream I have to check if I have a forward or a backward neighbor to retrieve
+        return selfIsUpstream ? scvf_.hasForwardNeighbor(0) : scvf_.hasBackwardNeighbor(0);
     }
 
     /*!
-     * \brief Returns an array of the three momenta needed for higher order upwinding methods.
-     *
-     * \param scvf The sub control volume face
-     * \param faceVars The face variables of the scvf
-     * \param density The given density \f$\mathrm{[kg/m^3]}\f$
-     * \param transportingVelocity The average of the self and opposite velocities.
+     * \brief Returns an array of the three momenta needed for second order upwinding methods.
      */
-    static auto getFrontalUpwindingMomenta_(const SubControlVolumeFace& scvf,
-                                            const FaceVariables& faceVars,
-                                            const Scalar density,
-                                            const Scalar transportingVelocity,
-                                            [[maybe_unused]] const bool canHigherOrder)
+    std::array<Scalar, 3> getFrontalSecondOrderUpwindMomenta_(const Scalar density, bool selfIsUpstream) const
     {
-        const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-        const Scalar momentumSelf = faceVars.velocitySelf() * density;
-        const Scalar momentumOpposite = faceVars.velocityOpposite() * density;
-
-        if constexpr (useHigherOrder)
-        {
-            if (canHigherOrder)
-                return selfIsUpstream ? std::array<Scalar, 3>{momentumOpposite, momentumSelf,
-                                                              faceVars.velocityForward(0)*density}
-                                      : std::array<Scalar, 3>{momentumSelf, momentumOpposite,
-                                                              faceVars.velocityBackward(0)*density};
-            else
-                return selfIsUpstream ? std::array<Scalar, 3>{momentumOpposite, momentumSelf}
-                                      : std::array<Scalar, 3>{momentumSelf, momentumOpposite};
-        }
+        static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
+        const Scalar momentumSelf = faceVars_.velocitySelf() * density;
+        const Scalar momentumOpposite = faceVars_.velocityOpposite() * density;
+        if (selfIsUpstream)
+            return {momentumOpposite, momentumSelf, faceVars_.velocityForward(0)*density};
         else
-            return selfIsUpstream ? std::array<Scalar, 2>{momentumOpposite, momentumSelf}
-                                  : std::array<Scalar, 2>{momentumSelf, momentumOpposite};
+            return {momentumSelf, momentumOpposite, faceVars_.velocityBackward(0)*density};
     }
 
     /*!
-     * \brief Returns the upwinded momentum for higher order upwind schemes
-     *
-     * \param scvf The sub control volume face
-     * \param momenta The momenta to be upwinded
-     * \param transportingVelocity The average of the self and opposite velocities.
-     * \param gridFluxVarsCache The grid flux variables cache
+     * \brief Returns an array of the two momenta needed for first order upwinding method
      */
-    template<class MomentaArray>
-    static Scalar doFrontalMomentumUpwinding_([[maybe_unused]] const SubControlVolumeFace& scvf,
-                                              const MomentaArray& momenta,
-                                              [[maybe_unused]] const Scalar transportingVelocity,
-                                              const UpwindScheme& upwindScheme,
-                                              [[maybe_unused]] const bool canHigherOrder)
+    std::array<Scalar, 2> getFrontalFirstOrderUpwindMomenta_(const Scalar density, bool selfIsUpstream) const
     {
-        if constexpr (useHigherOrder)
-        {
-            if (canHigherOrder)
-            {
-                const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-                const std::array<Scalar,3> distances = getFrontalDistances_(scvf, selfIsUpstream);
-                return upwindScheme.tvd(momenta, distances, selfIsUpstream, upwindScheme.tvdApproach());
-            }
-            else
-                return upwindScheme.upwind(momenta[0], momenta[1]);
-        }
+        const Scalar momentumSelf = faceVars_.velocitySelf() * density;
+        const Scalar momentumOpposite = faceVars_.velocityOpposite() * density;
+        if (selfIsUpstream)
+            return {momentumOpposite, momentumSelf};
         else
-            return upwindScheme.upwind(momenta[0], momenta[1]);
+            return {momentumSelf, momentumOpposite};
     }
 
     /*!
      * \brief Returns an array of distances needed for non-uniform higher order upwind schemes
-     *
-     * \param ownScvf The sub control volume face
-     * \param selfIsUpstream bool describing upstream face.
+     * Depending on selfIsUpstream the downstream and the (up)upstream distances are saved.
+     * distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
      */
-    static std::array<Scalar, 3> getFrontalDistances_(const SubControlVolumeFace& ownScvf,
-                                                      const bool selfIsUpstream)
+    std::array<Scalar, 3> getFrontalDistances_(const bool selfIsUpstream) const
     {
         static_assert(useHigherOrder, "Should only be reached if higher order methods are enabled");
-        // Depending on selfIsUpstream the downstream and the (up)upstream distances are saved.
-        // distances {upstream to downstream distance, up-upstream to upstream distance, downstream staggered cell size}
-        std::array<Scalar, 3> distances;
-
         if (selfIsUpstream)
         {
-            distances[0] = ownScvf.selfToOppositeDistance();
-            distances[1] = ownScvf.axisData().inAxisForwardDistances[0];
-            distances[2] = 0.5 * (ownScvf.axisData().selfToOppositeDistance + ownScvf.axisData().inAxisBackwardDistances[0]);
+            std::array<Scalar, 3> distances;
+            distances[0] = scvf_.selfToOppositeDistance();
+            distances[1] = scvf_.axisData().inAxisForwardDistances[0];
+            distances[2] = 0.5 * (scvf_.axisData().selfToOppositeDistance + scvf_.axisData().inAxisBackwardDistances[0]);
+            return distances;
         }
         else
         {
-            distances[0] = ownScvf.selfToOppositeDistance();
-            distances[1] = ownScvf.axisData().inAxisBackwardDistances[0];
-            distances[2] = 0.5 * (ownScvf.axisData().selfToOppositeDistance + ownScvf.axisData().inAxisForwardDistances[0]);
+            std::array<Scalar, 3> distances;
+            distances[0] = scvf_.selfToOppositeDistance();
+            distances[1] = scvf_.axisData().inAxisBackwardDistances[0];
+            distances[2] = 0.5 * (scvf_.axisData().selfToOppositeDistance + scvf_.axisData().inAxisForwardDistances[0]);
+            return distances;
         }
-        return distances;
     }
 
     /*!
@@ -612,4 +575,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_NAVIERSTOKES_STAGGERED_UPWINDVARIABLES_HH
+#endif
