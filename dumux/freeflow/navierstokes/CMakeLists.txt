@@ -1,6 +1,7 @@
 add_subdirectory(staggered)
 
 install(FILES
+boundarytypes.hh
 fluxvariables.hh
 indices.hh
 iofields.hh

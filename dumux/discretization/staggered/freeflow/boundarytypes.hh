@@ -24,118 +24,14 @@
 #ifndef STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
 #define STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
 
-#include <dumux/common/boundarytypes.hh>
-#include <dumux/common/typetraits/typetraits.hh>
+#warning "This header is deprecated. Use dumux/freeflow/navierstokes/boundarytypes.hh"
+
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 namespace Dumux {
 
-/*!
- * \ingroup StaggeredDiscretization
- * \brief Class to specify the type of a boundary condition for the staggered Navier-Stokes model.
- */
 template <int numEq>
-class StaggeredFreeFlowBoundaryTypes : public Dumux::BoundaryTypes<numEq>
-{
-    using ParentType = Dumux::BoundaryTypes<numEq>;
-
-public:
-    StaggeredFreeFlowBoundaryTypes()
-    {
-        for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
-            resetEq(eqIdx);
-    }
-
-    /*!
-     * \brief Reset the boundary types for one equation.
-     */
-    void resetEq(int eqIdx)
-    {
-        ParentType::resetEq(eqIdx);
-
-        boundaryInfo_[eqIdx].visited = false;
-        boundaryInfo_[eqIdx].isSymmetry = false;
-        boundaryInfo_[eqIdx].isBeaversJoseph = false;
-    }
-
-    /*!
-     * \brief Sets a symmetry boundary condition for all equations
-     */
-    void setAllSymmetry()
-    {
-        for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
-        {
-            resetEq(eqIdx);
-            boundaryInfo_[eqIdx].visited = true;
-            boundaryInfo_[eqIdx].isSymmetry = true;
-        }
-    }
-
-    /*!
-     * \brief Returns true if the there is a symmetry boundary condition
-     */
-    bool isSymmetry() const
-    { return boundaryInfo_[0].isSymmetry; }
-
-    /*!
-     * \brief  Prevent setting all boundary conditions to Dirichlet.
-     */
-    template<class T = void>
-    void setAllDirichlet()
-    {
-        static_assert(AlwaysFalse<T>::value, "Setting all boundary types to Dirichlet not permitted!");
-    }
-
-    /*!
-     * \brief  Prevent setting all boundary conditions to Neumann.
-     */
-    template<class T = void>
-    void setAllNeumann()
-    {
-        static_assert(AlwaysFalse<T>::value, "Setting all boundary types to Neumann not permitted!");
-    }
-
-    /*!
-     * \brief Set a boundary condition for a single equation to
-     *        Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
-     */
-    void setBeaversJoseph(unsigned eqIdx)
-    {
-        resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = true;
-        boundaryInfo_[eqIdx].isBeaversJoseph = true;
-    }
-
-    /*!
-     * \brief Returns true if an equation is used to specify a
-     *        Beavers-Joseph(-Saffman) boundary condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    bool isBeaversJoseph(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isBeaversJoseph; }
-
-    /*!
-     * \brief Returns true if some equation is used to specify a
-     *        Beavers-Joseph(-Saffman) boundary condition.
-     */
-    bool hasBeaversJoseph() const
-    {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isBeaversJoseph)
-                return true;
-        return false;
-    }
-
-protected:
-    struct StaggeredFreeFlowBoundaryInfo
-    {
-        bool visited;
-        bool isSymmetry;
-        bool isBeaversJoseph;
-    };
-
-    std::array<StaggeredFreeFlowBoundaryInfo, numEq> boundaryInfo_;
-};
+using StaggeredFreeFlowBoundaryTypes [[deprecated("Use NavierStokesBoundaryTypes instead. Will be removed after 3.3")]] = NavierStokesBoundaryTypes<numEq>;
 
 } // end namespace Dumux
 

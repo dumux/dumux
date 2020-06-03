@@ -35,9 +35,9 @@
 #include <dumux/discretization/staggered.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/freeflow/properties.hh>
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 #include "facevariables.hh"
-#include "boundarytypes.hh"
 #include "velocityoutput.hh"
 #include "fvgridgeometrytraits.hh"
 #include "gridvolumevariables.hh"
@@ -119,7 +119,7 @@ public:
 template<class TypeTag>
 struct BoundaryTypes<TypeTag, TTag::StaggeredFreeFlowModel>
 {
-    using type = StaggeredFreeFlowBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using type = NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 };
 
 //! The velocity output
