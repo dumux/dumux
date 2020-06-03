@@ -30,6 +30,8 @@
 // [[codeblock]]
 // including the base component
 #include <dumux/material/components/base.hh>
+
+#include <dumux/common/parameters.hh>
 // [[/codeblock]]
 
 // ### The suspended biomass component
