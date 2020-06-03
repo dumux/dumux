@@ -32,7 +32,6 @@
 #include <algorithm>
 #include <array>
 #include <bitset>
-#include <stack>
 
 namespace Dumux {
 namespace Detail {
@@ -220,7 +219,7 @@ private:
 
     /*!
      * \brief Fills the axis data with the outer dofs and distances.
-     *        This function builds and extended stencil (see AxisData)
+     *        This function builds and extended stencil (see AxisData for upwindSchemeOrder > 1)
      *        and is therefore only called when higher order upwinding methods are prescribed.
      */
     void fillOuterAxisData_()
@@ -228,111 +227,80 @@ private:
         // reset the axis data struct
         axisData_ = {};
 
+        // Set the forward dofs
+        const auto thisFaceLocalIdx = intersection_.indexInInside();
+        const auto& faceCenterPos = getFacet_(thisFaceLocalIdx, element_).geometry().center();
+        if (intersection_.neighbor())
+            addForwardNeighborAxisData_(intersection_.outside(), 0, thisFaceLocalIdx, faceCenterPos);
+
+        // Set the backward dofs
+        const auto oppositeFaceLocalIdx = localOppositeIdx_(thisFaceLocalIdx);
+        const auto& oppositeFaceCenterPos = getFacet_(oppositeFaceLocalIdx, element_).geometry().center();
+        for (const auto& intersection : intersections(gridView_, element_))
+        {
+            if (intersection.indexInInside() == oppositeFaceLocalIdx && intersection.neighbor())
+            {
+                addBackwardNeighborAxisData_(intersection.outside(), 0, oppositeFaceLocalIdx, oppositeFaceCenterPos);
+                break;
+            }
+        }
+    }
+
+    /*!
+     * \brief Recursively add axis data in forward direction
+     */
+    void addForwardNeighborAxisData_(const Element& neighbor,
+                                     const std::size_t distance,
+                                     const unsigned int localIntersectionIndex,
+                                     const GlobalPosition& faceCenterPos)
+    {
+        // fill the forward axis data for this element in the stencil
+        axisData_.hasForwardNeighbor.set(distance, true);
+        axisData_.inAxisForwardDofs[distance] = gridView_.indexSet().subIndex(neighbor, localIntersectionIndex, codimIntersection);
+        const auto& forwardFacePos = getFacet_(localIntersectionIndex, neighbor).geometry().center();
+        axisData_.inAxisForwardDistances[distance] = (forwardFacePos - faceCenterPos).two_norm();
+
+        // recursion end if we added all axis data for the given stencil size (numParallelFaces)
         const auto numForwardBackwardAxisDofs = axisData_.inAxisForwardDofs.size();
+        if (distance >= numForwardBackwardAxisDofs-1)
+            return;
 
-        // Set the Forward Dofs
-        std::stack<Element> inAxisForwardElementStack;
-        const auto inIdx = intersection_.indexInInside();
-        auto selfFace = getFacet_(inIdx, element_);
-        if(intersection_.neighbor())
+        for (const auto& intersection : intersections(gridView_, neighbor))
         {
-            inAxisForwardElementStack.push(intersection_.outside());
-            bool keepStackingForward = (inAxisForwardElementStack.size() < numForwardBackwardAxisDofs);
-            while(keepStackingForward)
+            if (intersection.indexInInside() == localIntersectionIndex && intersection.neighbor())
             {
-                auto e = inAxisForwardElementStack.top();
-                for(const auto& intersection : intersections(gridView_,e))
-                {
-                    if( (intersection.indexInInside() == inIdx ) )
-                    {
-                        if( intersection.neighbor())
-                        {
-                            inAxisForwardElementStack.push(intersection.outside());
-                            keepStackingForward = (inAxisForwardElementStack.size() < numForwardBackwardAxisDofs);
-                        }
-                        else
-                        {
-                            keepStackingForward = false;
-                        }
-                    }
-                }
+                addForwardNeighborAxisData_(intersection.outside(), distance+1, localIntersectionIndex, forwardFacePos);
+                break;
             }
         }
+    }
 
-        std::vector<GlobalPosition> forwardFaceCoordinates(inAxisForwardElementStack.size(), selfFace.geometry().center());
-        while(!inAxisForwardElementStack.empty())
-        {
-            int forwardIdx = inAxisForwardElementStack.size()-1;
-            axisData_.hasForwardNeighbor.set(forwardIdx, true);
-            axisData_.inAxisForwardDofs[forwardIdx] = gridView_.indexSet().subIndex(inAxisForwardElementStack.top(), inIdx, codimIntersection);
-            selfFace = getFacet_(inIdx, inAxisForwardElementStack.top());
-            forwardFaceCoordinates[forwardIdx] = selfFace.geometry().center();
-            inAxisForwardElementStack.pop();
-        }
+    /*!
+     * \brief Recursively add axis data in backward direction
+     */
+    void addBackwardNeighborAxisData_(const Element& neighbor,
+                                      const std::size_t distance,
+                                      const unsigned int localIntersectionIndex,
+                                      const GlobalPosition& faceCenterPos)
+    {
+        // fill the forward axis data for this element in the stencil
+        axisData_.hasBackwardNeighbor.set(distance, true);
+        axisData_.inAxisBackwardDofs[distance] = gridView_.indexSet().subIndex(neighbor, localIntersectionIndex, codimIntersection);
+        const auto& backwardFacePos = getFacet_(localIntersectionIndex, neighbor).geometry().center();
+        axisData_.inAxisBackwardDistances[distance] = (backwardFacePos - faceCenterPos).two_norm();
 
-        const auto self = getFacet_(inIdx, element_);
-        for (int i = 0; i< forwardFaceCoordinates.size(); i++)
-        {
-            if (i == 0)
-                axisData_.inAxisForwardDistances[i] = (forwardFaceCoordinates[i] - self.geometry().center()).two_norm();
-            else
-                axisData_.inAxisForwardDistances[i] = (forwardFaceCoordinates[i]- forwardFaceCoordinates[i-1]).two_norm();
-        }
+        // recursion end if we added all axis data for the given stencil size (numParallelFaces)
+        const auto numForwardBackwardAxisDofs = axisData_.inAxisForwardDofs.size();
+        if (distance >= numForwardBackwardAxisDofs-1)
+            return;
 
-        // Set the Backward Dofs
-        std::stack<Element> inAxisBackwardElementStack;
-        const auto oppIdx = localOppositeIdx_(inIdx);
-        auto oppFace = getFacet_(oppIdx, element_);
-        for(const auto& intersection : intersections(gridView_, element_))
+        for (const auto& intersection : intersections(gridView_, neighbor))
         {
-            if(intersection.indexInInside() == oppIdx)
+            if (intersection.indexInInside() == localIntersectionIndex && intersection.neighbor())
             {
-                if(intersection.neighbor())
-                {
-                    inAxisBackwardElementStack.push(intersection.outside());
-                    bool keepStackingBackward = (inAxisBackwardElementStack.size() < numForwardBackwardAxisDofs);
-                    while(keepStackingBackward)
-                    {
-                        auto e = inAxisBackwardElementStack.top();
-                        for(const auto& intersectionOut : intersections(gridView_,e))
-                        {
-
-                            if( (intersectionOut.indexInInside() == oppIdx ) )
-                            {
-                                if( intersectionOut.neighbor())
-                                {
-                                    inAxisBackwardElementStack.push(intersectionOut.outside());
-                                    keepStackingBackward = (inAxisBackwardElementStack.size() < numForwardBackwardAxisDofs);
-                                }
-                                else
-                                {
-                                    keepStackingBackward = false;
-                                }
-                            }
-                        }
-                    }
-                }
+                addBackwardNeighborAxisData_(intersection.outside(), distance+1, localIntersectionIndex, backwardFacePos);
+                break;
             }
-        }
-
-        std::vector<GlobalPosition> backwardFaceCoordinates(inAxisBackwardElementStack.size(), oppFace.geometry().center());
-        while(!inAxisBackwardElementStack.empty())
-        {
-            int backwardIdx = inAxisBackwardElementStack.size()-1;
-            axisData_.hasBackwardNeighbor.set(backwardIdx, true);
-            axisData_.inAxisBackwardDofs[backwardIdx] = gridView_.indexSet().subIndex(inAxisBackwardElementStack.top(), oppIdx, codimIntersection);
-            oppFace = getFacet_(oppIdx, inAxisBackwardElementStack.top());
-            backwardFaceCoordinates[backwardIdx] = oppFace.geometry().center();
-            inAxisBackwardElementStack.pop();
-        }
-
-        const auto opposite = getFacet_(oppIdx, element_);
-        for (int i = 0; i< backwardFaceCoordinates.size(); i++)
-        {
-            if (i == 0)
-                axisData_.inAxisBackwardDistances[i] = (backwardFaceCoordinates[i] - opposite.geometry().center()).two_norm();
-            else
-                axisData_.inAxisBackwardDistances[i] = (backwardFaceCoordinates[i] - backwardFaceCoordinates[i-1]).two_norm();
         }
     }
 
