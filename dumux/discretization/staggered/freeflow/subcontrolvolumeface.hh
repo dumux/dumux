@@ -43,13 +43,16 @@ namespace Dumux {
 #ifndef DOXYGEN
 namespace Detail {
 // helper struct detecting if the container class storing the scvf's corners has a resize function
-struct hasResize
+struct HasResize
 {
-    template<class Container>
-    auto operator()(Container&& c)
-    -> decltype(c.resize(1))
-    {}
+    template<class Container> auto operator()(Container&& c)
+    -> decltype(c.resize(1)) {}
 };
+
+template<class C>
+constexpr bool hasResize()
+{ return decltype(isValid(HasResize{})(std::declval<C>()))::value; }
+
 } // end namespace Detail
 #endif
 
@@ -66,9 +69,9 @@ struct FreeFlowStaggeredDefaultScvfGeometryTraits
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename GridView::ctype;
-    using PairData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::PairData;
-    using AxisData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::AxisData;
-
+    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>;
+    using PairData = typename GeometryHelper::PairData;
+    using AxisData = typename GeometryHelper::AxisData;
 
     using Grid = typename GridView::Grid;
     static constexpr int dim = Grid::dimension;
@@ -130,12 +133,12 @@ public:
     FreeFlowStaggeredSubControlVolumeFace() = default;
 
     //! Constructor with intersection
-    template <class Intersection, class GeometryHelper>
+    template <class Intersection>
     FreeFlowStaggeredSubControlVolumeFace(const Intersection& is,
                                           const typename Intersection::Geometry& isGeometry,
                                           GridIndexType scvfIndex,
                                           const std::vector<GridIndexType>& scvIndices,
-                                          const GeometryHelper& geometryHelper)
+                                          const typename T::GeometryHelper& geometryHelper)
     : ParentType(),
       geomType_(isGeometry.type()),
       area_(isGeometry.volume()),
@@ -151,7 +154,7 @@ public:
       outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
       isGhostFace_(false)
     {
-        if constexpr (isValid(Detail::hasResize())(corners_)))
+        if constexpr (Detail::hasResize<CornerStorage>())
             corners_.resize(isGeometry.corners());
 
         for (int i = 0; i < isGeometry.corners(); ++i)
@@ -268,7 +271,7 @@ public:
         return axisData_;
     }
 
-    //! Returns @c true if the face is a ghost face
+    //! Returns true if the face is a ghost face
     bool isGhostFace() const
     {
         return isGhostFace_;
