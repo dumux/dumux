@@ -85,6 +85,9 @@ public:
 
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
+    //! export upwind scheme
+    using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
+
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
 
@@ -129,7 +132,7 @@ public:
     }
 
     //! Return the StaggeredUpwindMethods
-    const StaggeredUpwindMethods<Scalar, upwindSchemeOrder>& staggeredUpwindMethods() const
+    const UpwindScheme& staggeredUpwindMethods() const
     {
         return staggeredUpwindMethods_;
     }
@@ -146,7 +149,7 @@ public:
 
 private:
     const Problem* problemPtr_;
-    StaggeredUpwindMethods<Scalar, upwindSchemeOrder> staggeredUpwindMethods_;
+    UpwindScheme staggeredUpwindMethods_;
 
     std::vector<FluxVariablesCache> fluxVarsCache_;
     std::vector<std::size_t> globalScvfIndices_;
@@ -181,6 +184,9 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
+    //! export upwind scheme
+    using UpwindScheme = StaggeredUpwindMethods<Scalar, upwindSchemeOrder>;
+
     StaggeredGridFluxVariablesCache(const Problem& problem)
     : problemPtr_(&problem)
     , staggeredUpwindMethods_(problem.paramGroup())
@@ -197,15 +203,14 @@ public:
     { return *problemPtr_; }
 
     //! Return the UpwindingMethods
-    const StaggeredUpwindMethods<Scalar, upwindSchemeOrder>& staggeredUpwindMethods() const
+    const UpwindScheme& staggeredUpwindMethods() const
     {
         return staggeredUpwindMethods_;
     }
 
 private:
     const Problem* problemPtr_;
-    StaggeredUpwindMethods<Scalar, upwindSchemeOrder> staggeredUpwindMethods_;
-
+    UpwindScheme staggeredUpwindMethods_;
 };
 
 } // end namespace Dumux

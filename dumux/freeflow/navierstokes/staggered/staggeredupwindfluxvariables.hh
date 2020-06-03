@@ -43,7 +43,7 @@ namespace Dumux {
  * \brief The upwinding variables class for the Navier-Stokes model using the staggered grid discretization.
  */
 template<class TypeTag, int upwindSchemeOrder>
-class StaggeredUpwindFluxVariables
+class StaggeredUpwindHelper
 {
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -52,10 +52,10 @@ class StaggeredUpwindFluxVariables
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
 
     using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
+    using UpwindScheme = typename GridFluxVariablesCache::UpwindScheme;
     using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
 
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
-    using ElementFaceVariables = typename GridFaceVariables::LocalView;
     using FaceVariables = typename GridFaceVariables::FaceVariables;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -77,6 +77,20 @@ class StaggeredUpwindFluxVariables
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
 public:
+    StaggeredUpwindHelper(const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const SubControlVolumeFace& scvf,
+                          const FaceVariables& faceVars,
+                          const ElementVolumeVariables& elemVolVars,
+                          const UpwindScheme& upwindScheme)
+    : element_(element)
+    , fvGeometry_(fvGeometry)
+    , scvf_(scvf)
+    , faceVars_(faceVars)
+    , elemVolVars_(elemVolVars)
+    , upwindScheme_(upwindScheme)
+    {}
+
     /*!
      * \brief Returns the momentum in the frontal directon.
      *
@@ -85,16 +99,12 @@ public:
      *        Then the corresponding set of momenta are collected and the prescribed
      *        upwinding method is used to calculate the momentum.
      */
-    static FacePrimaryVariables computeUpwindedFrontalMomentum(const SubControlVolumeFace& scvf,
-                                                               const ElementFaceVariables& elemFaceVars,
-                                                               const ElementVolumeVariables& elemVolVars,
-                                                               const GridFluxVariablesCache& gridFluxVarsCache,
-                                                               const Scalar transportingVelocity)
+    FacePrimaryVariables computeUpwindedFrontalMomentum(const Scalar transportingVelocity)
     {
-        const bool canHigherOrder = canFrontalSecondOrder_(scvf, transportingVelocity);
-        const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf, elemFaceVars, elemVolVars[scvf.insideScvIdx()].density(),
+        const bool canHigherOrder = canFrontalSecondOrder_(scvf_, transportingVelocity);
+        const auto upwindingMomenta = getFrontalUpwindingMomenta_(scvf_, faceVars_, elemVolVars_[scvf_.insideScvIdx()].density(),
                                                                   transportingVelocity, canHigherOrder);
-        return doFrontalMomentumUpwinding_(scvf, upwindingMomenta, transportingVelocity, gridFluxVarsCache, canHigherOrder);
+        return doFrontalMomentumUpwinding_(scvf_, upwindingMomenta, transportingVelocity, upwindScheme_, canHigherOrder);
     }
 
     /*!
@@ -106,32 +116,25 @@ public:
      *        Then the corresponding set of momenta are collected and the prescribed
      *        upwinding method is used to calculate the momentum.
      */
-    static FacePrimaryVariables computeUpwindedLateralMomentum(const Problem& problem,
-                                                               const FVElementGeometry& fvGeometry,
-                                                               const Element& element,
-                                                               const SubControlVolumeFace& scvf,
-                                                               const ElementVolumeVariables& elemVolVars,
-                                                               const FaceVariables& faceVars,
-                                                               const GridFluxVariablesCache& gridFluxVarsCache,
-                                                               const int localSubFaceIdx,
-                                                               const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-                                                               const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
+    FacePrimaryVariables computeUpwindedLateralMomentum(const int localSubFaceIdx,
+                                                        const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
+                                                        const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
     {
         // Check whether the own or the neighboring element is upstream.
-        const auto eIdx = scvf.insideScvIdx();
-        const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+        const auto eIdx = scvf_.insideScvIdx();
+        const auto& lateralFace = fvGeometry_.scvf(eIdx, scvf_.pairData(localSubFaceIdx).localLateralFaceIdx);
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
-        const Scalar transportingVelocity = faceVars.velocityLateralInside(localSubFaceIdx);
+        const Scalar transportingVelocity = faceVars_.velocityLateralInside(localSubFaceIdx);
 
         // Check whether the own or the neighboring element is upstream.
         const bool selfIsUpstream = ( lateralFace.directionSign() == sign(transportingVelocity) );
-        const bool canHigherOrder = canLateralSecondOrder_(scvf, selfIsUpstream, localSubFaceIdx);
-        const auto parallelUpwindingMomenta = getLateralUpwindingMomenta_(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
+        const bool canHigherOrder = canLateralSecondOrder_(scvf_, selfIsUpstream, localSubFaceIdx);
+        const auto parallelUpwindingMomenta = getLateralUpwindingMomenta_(elemVolVars_.gridVolVars().problem(), fvGeometry_, element_, scvf_, elemVolVars_, faceVars_,
                                                                           transportingVelocity, localSubFaceIdx, currentScvfBoundaryTypes,
                                                                           lateralFaceBoundaryTypes, canHigherOrder);
-        return doLateralMomentumUpwinding_(fvGeometry, scvf, parallelUpwindingMomenta, transportingVelocity,
-                                           localSubFaceIdx, gridFluxVarsCache, canHigherOrder);
+        return doLateralMomentumUpwinding_(fvGeometry_, scvf_, parallelUpwindingMomenta, transportingVelocity,
+                                           localSubFaceIdx, upwindScheme_, canHigherOrder);
     }
 
 private:
@@ -165,27 +168,27 @@ private:
      * \brief Returns an array of the three momenta needed for higher order upwinding methods.
      *
      * \param scvf The sub control volume face
-     * \param elemFaceVars The element face variables
+     * \param faceVars The face variables of the scvf
      * \param density The given density \f$\mathrm{[kg/m^3]}\f$
      * \param transportingVelocity The average of the self and opposite velocities.
      */
     static auto getFrontalUpwindingMomenta_(const SubControlVolumeFace& scvf,
-                                            const ElementFaceVariables& elemFaceVars,
+                                            const FaceVariables& faceVars,
                                             const Scalar density,
                                             const Scalar transportingVelocity,
                                             [[maybe_unused]] const bool canHigherOrder)
     {
         const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-        const Scalar momentumSelf = elemFaceVars[scvf].velocitySelf() * density;
-        const Scalar momentumOpposite = elemFaceVars[scvf].velocityOpposite() * density;
+        const Scalar momentumSelf = faceVars.velocitySelf() * density;
+        const Scalar momentumOpposite = faceVars.velocityOpposite() * density;
 
         if constexpr (useHigherOrder)
         {
             if (canHigherOrder)
                 return selfIsUpstream ? std::array<Scalar, 3>{momentumOpposite, momentumSelf,
-                                                              elemFaceVars[scvf].velocityForward(0)*density}
+                                                              faceVars.velocityForward(0)*density}
                                       : std::array<Scalar, 3>{momentumSelf, momentumOpposite,
-                                                              elemFaceVars[scvf].velocityBackward(0)*density};
+                                                              faceVars.velocityBackward(0)*density};
             else
                 return selfIsUpstream ? std::array<Scalar, 3>{momentumOpposite, momentumSelf}
                                       : std::array<Scalar, 3>{momentumSelf, momentumOpposite};
@@ -207,10 +210,9 @@ private:
     static Scalar doFrontalMomentumUpwinding_([[maybe_unused]] const SubControlVolumeFace& scvf,
                                               const MomentaArray& momenta,
                                               [[maybe_unused]] const Scalar transportingVelocity,
-                                              const GridFluxVariablesCache& gridFluxVarsCache,
+                                              const UpwindScheme& upwindScheme,
                                               [[maybe_unused]] const bool canHigherOrder)
     {
-        const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
         if constexpr (useHigherOrder)
         {
             if (canHigherOrder)
@@ -440,10 +442,9 @@ private:
                                               const MomentaArray& momenta,
                                               [[maybe_unused]] const Scalar transportingVelocity,
                                               [[maybe_unused]] const int localSubFaceIdx,
-                                              const GridFluxVariablesCache& gridFluxVarsCache,
+                                              const UpwindScheme& upwindScheme,
                                               [[maybe_unused]] const bool canHigherOrder)
     {
-        const auto& upwindScheme = gridFluxVarsCache.staggeredUpwindMethods();
         if constexpr (useHigherOrder)
         {
             if (canHigherOrder)
@@ -600,6 +601,13 @@ private:
                                                 faceVars, currentScvfBoundaryTypes, lateralOppositeFaceBoundaryTypes,
                                                 localOppositeSubFaceIdx);
     }
+
+    const Element& element_;
+    const FVElementGeometry& fvGeometry_;
+    const SubControlVolumeFace& scvf_;
+    const FaceVariables& faceVars_;
+    const ElementVolumeVariables& elemVolVars_;
+    const UpwindScheme& upwindScheme_;
 };
 
 } // end namespace Dumux
