@@ -56,6 +56,7 @@ class StaggeredUpwindHelper
     using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
 
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
+    using ElementFaceVariables = typename GridFaceVariables::LocalView;
     using FaceVariables = typename GridFaceVariables::FaceVariables;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -82,13 +83,14 @@ public:
     StaggeredUpwindHelper(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const SubControlVolumeFace& scvf,
-                          const FaceVariables& faceVars,
+                          const ElementFaceVariables& elemFaceVars,
                           const ElementVolumeVariables& elemVolVars,
                           const UpwindScheme& upwindScheme)
     : element_(element)
     , fvGeometry_(fvGeometry)
     , scvf_(scvf)
-    , faceVars_(faceVars)
+    , elemFaceVars_(elemFaceVars)
+    , faceVars_(elemFaceVars[scvf])
     , elemVolVars_(elemVolVars)
     , upwindScheme_(upwindScheme)
     {}
@@ -258,7 +260,7 @@ private:
         // thus we always use this value for the computation of the transported momentum.
         if (!scvf_.hasParallelNeighbor(localSubFaceIdx, 0))
         {
-            const Scalar boundaryVelocity = getParallelVelocityFromBoundary_(element_, scvf_, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            const Scalar boundaryVelocity = getParallelVelocityFromBoundary_(element_, scvf_, faceVars_, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
             const Scalar boundaryMomentum = boundaryVelocity*insideDensity;
             return {boundaryMomentum, boundaryMomentum, boundaryMomentum};
         }
@@ -276,7 +278,7 @@ private:
             if (scvf_.hasParallelNeighbor(oppositeSubFaceIdx, 0))
                 momenta[2] = faceVars_.velocityParallel(oppositeSubFaceIdx, 0)*insideDensity;
             else
-                momenta[2] = getParallelVelocityFromOppositeBoundary_(element_, scvf_, currentScvfBoundaryTypes, oppositeSubFaceIdx)*insideDensity;
+                momenta[2] = getParallelVelocityFromOppositeBoundary_(element_, scvf_, faceVars_, currentScvfBoundaryTypes, oppositeSubFaceIdx)*insideDensity;
             return momenta;
         }
         else
@@ -295,7 +297,7 @@ private:
                 const auto& firstParallelScvf = fvGeometry_.scvf(lateralFace.outsideScvIdx(), scvf_.localFaceIdx());
                 const auto& problem = elemVolVars_.gridVolVars().problem();
                 const auto& boundaryTypes = problem.boundaryTypes(elementParallel, firstParallelScvf);
-                momenta[2] = getParallelVelocityFromOppositeBoundary_(elementParallel, firstParallelScvf, boundaryTypes, localSubFaceIdx)*outsideDensity;
+                momenta[2] = getParallelVelocityFromOppositeBoundary_(elementParallel, firstParallelScvf, elemFaceVars_[firstParallelScvf], boundaryTypes, localSubFaceIdx)*outsideDensity;
             }
             return momenta;
         }
@@ -315,7 +317,7 @@ private:
         // thus we always use this value for the computation of the transported momentum.
         if (!scvf_.hasParallelNeighbor(localSubFaceIdx, 0))
         {
-            const Scalar boundaryVelocity = getParallelVelocityFromBoundary_(element_, scvf_, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            const Scalar boundaryVelocity = getParallelVelocityFromBoundary_(element_, scvf_, faceVars_, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
             const Scalar boundaryMomentum = boundaryVelocity*insideDensity;
             return {boundaryMomentum, boundaryMomentum};
         }
@@ -365,6 +367,7 @@ private:
      */
     Scalar getParallelVelocityFromBoundary_(const Element& element,
                                             const SubControlVolumeFace& scvf,
+                                            const FaceVariables& faceVars,
                                             const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                             const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                             const int localSubFaceIdx) const
@@ -373,11 +376,11 @@ private:
         // so the velocity at the boundary equal to that on the scvf.
         const bool useZeroGradient = lateralFaceBoundaryTypes && (lateralFaceBoundaryTypes->isSymmetry() || lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
         if (useZeroGradient)
-            return faceVars_.velocitySelf();
+            return faceVars.velocitySelf();
 
         const bool lateralFaceHasBJS = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex()));
         if (lateralFaceHasBJS)
-            return VelocityGradients::beaversJosephVelocityAtLateralScvf(elemVolVars_.gridVolVars().problem(), element, fvGeometry_, scvf, faceVars_,
+            return VelocityGradients::beaversJosephVelocityAtLateralScvf(elemVolVars_.gridVolVars().problem(), element, fvGeometry_, scvf, faceVars,
                                                                          currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
         const bool lateralFaceHasDirichletVelocity = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex()));
@@ -408,6 +411,7 @@ private:
      */
     Scalar getParallelVelocityFromOppositeBoundary_(const Element& element,
                                                     const SubControlVolumeFace& scvf,
+                                                    const FaceVariables& faceVars,
                                                     const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                     const int localOppositeSubFaceIdx) const
     {
@@ -430,12 +434,13 @@ private:
         // Get the boundary types of the lateral opposite boundary face
         const auto& problem = elemVolVars_.gridVolVars().problem();
         const auto lateralOppositeFaceBoundaryTypes = problem.boundaryTypes(element, lateralOppositeScvf.makeBoundaryFace(center));
-        return getParallelVelocityFromBoundary_(element, scvf, currentScvfBoundaryTypes, lateralOppositeFaceBoundaryTypes, localOppositeSubFaceIdx);
+        return getParallelVelocityFromBoundary_(element, scvf, faceVars, currentScvfBoundaryTypes, lateralOppositeFaceBoundaryTypes, localOppositeSubFaceIdx);
     }
 
     const Element& element_;
     const FVElementGeometry& fvGeometry_;
     const SubControlVolumeFace& scvf_;
+    const ElementFaceVariables& elemFaceVars_;
     const FaceVariables& faceVars_;
     const ElementVolumeVariables& elemVolVars_;
     const UpwindScheme& upwindScheme_;

@@ -216,7 +216,7 @@ public:
             const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
             const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
-            StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, faceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
+            StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
             frontalFlux += upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream)
                            * transportingVelocity * -1.0 * scvf.directionSign();
         }
@@ -390,7 +390,7 @@ public:
             // If none of the above boundary conditions apply for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
                 lateralFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                          scvf, elemVolVars, faceVars,
+                                                                          scvf, elemVolVars, elemFaceVars,
                                                                           gridFluxVarsCache,
                                                                           currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
                                                                           localSubFaceIdx);
@@ -478,7 +478,7 @@ private:
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
                                                                     const ElementVolumeVariables& elemVolVars,
-                                                                    const FaceVariables& faceVars,
+                                                                    const ElementFaceVariables& elemFaceVars,
                                                                     const GridFluxVariablesCache& gridFluxVarsCache,
                                                                     const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                                     const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
@@ -491,6 +491,7 @@ private:
         // of interest is located.
         const Scalar transportingVelocity = [&]()
         {
+            const auto& faceVars = elemFaceVars[scvf];
             if (!scvf.boundary())
                 return faceVars.velocityLateralInside(localSubFaceIdx);
             else
@@ -516,7 +517,7 @@ private:
         }();
 
         const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
-        StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, faceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
+        StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
         return upwindHelper.computeUpwindLateralMomentum(selfIsUpstream, lateralFace, localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
                * transportingVelocity * lateralFace.directionSign() * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
     }
