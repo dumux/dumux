@@ -130,7 +130,7 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
     // evaluate the acutal pattern
     for (const auto& element : elements(gridGeometry.gridView()))
     {
-        if(gridGeometry.isCellCenter())
+        if constexpr (GridGeometry::isCellCenter())
         {
             // the global index of the element at hand
             static constexpr auto cellCenterIdx = GridGeometry::cellCenterIdx();
@@ -142,8 +142,9 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
         else
         {
             static constexpr auto faceIdx = GridGeometry::faceIdx();
-            auto fvGeometry = localView(gridGeometry);
+            auto fvGeometry = localView(gridGeometry.actualGridGeometry());
             fvGeometry.bindElement(element);
+            // TODO get dofs from staggered fvGeometry
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
