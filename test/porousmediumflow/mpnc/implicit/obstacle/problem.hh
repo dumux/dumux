@@ -31,6 +31,8 @@
 #include <dune/common/parametertreeparser.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
 
@@ -130,7 +132,7 @@ class ObstacleProblem
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;

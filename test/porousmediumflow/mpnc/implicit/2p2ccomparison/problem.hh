@@ -29,6 +29,8 @@
 #include <dune/common/parametertreeparser.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
 
@@ -110,7 +112,7 @@ class MPNCComparisonProblem
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;

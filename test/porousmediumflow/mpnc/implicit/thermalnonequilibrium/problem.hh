@@ -32,6 +32,8 @@
 
 #include <dune/grid/onedgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
@@ -173,7 +175,7 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
