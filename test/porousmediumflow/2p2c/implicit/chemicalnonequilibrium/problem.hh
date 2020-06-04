@@ -31,6 +31,8 @@
 
 #include <dune/common/parametertreeparser.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
 
@@ -127,7 +129,7 @@ class TwoPTwoCChemicalNonequilibriumProblem : public PorousMediumFlowProblem<Typ
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
