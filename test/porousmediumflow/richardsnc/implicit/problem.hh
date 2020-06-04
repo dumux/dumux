@@ -29,6 +29,8 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -115,7 +117,7 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
