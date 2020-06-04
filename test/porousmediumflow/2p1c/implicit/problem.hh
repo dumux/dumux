@@ -27,6 +27,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/2p1c/model.hh>
@@ -96,9 +97,11 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<ModelTraits::numEq()>;
+
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
@@ -106,12 +109,12 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
     // copy some indices for convenience
     enum {
@@ -125,7 +128,6 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
         liquidPhaseOnly = Indices::liquidPhaseOnly
     };
 
-    static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
@@ -208,7 +210,7 @@ public:
 
         if (ipGlobal[0] < eps_)
         {
-            if(ipGlobal[1] > 2.0 - eps_ && ipGlobal[1] < 3.0 + eps_)
+            if (ipGlobal[1] > 2.0 - eps_ && ipGlobal[1] < 3.0 + eps_)
             {
                 const Scalar massRate = 1e-1;
                 values[conti0EqIdx] = -massRate;
