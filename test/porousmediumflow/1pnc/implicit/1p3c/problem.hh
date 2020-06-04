@@ -31,6 +31,8 @@
 #endif
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/evalsolution.hh>
@@ -244,7 +246,7 @@ class MaxwellStefanOnePThreeCTestProblem : public PorousMediumFlowProblem<TypeTa
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;

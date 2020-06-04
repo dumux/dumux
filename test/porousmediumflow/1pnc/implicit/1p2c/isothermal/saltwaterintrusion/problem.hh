@@ -28,6 +28,8 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -95,7 +97,7 @@ class SaltWaterIntrusionTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
