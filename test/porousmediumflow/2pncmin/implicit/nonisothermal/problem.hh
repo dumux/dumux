@@ -26,7 +26,9 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/common/properties.hh>
+
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -183,7 +185,7 @@ class SalinizationProblem : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
