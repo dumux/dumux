@@ -35,6 +35,8 @@
 #include <dune/grid/uggrid.hh>
 #endif
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
@@ -116,7 +118,7 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
