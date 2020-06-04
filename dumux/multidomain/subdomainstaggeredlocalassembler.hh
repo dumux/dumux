@@ -413,6 +413,7 @@ class SubDomainStaggeredLocalAssemblerImplicitBase : public SubDomainStaggeredLo
 {
     using ParentType = SubDomainStaggeredLocalAssemblerBase<id, TypeTag, Assembler, Implementation>;
     static constexpr auto domainId = Dune::index_constant<id>();
+    using GridGeometry = typename Assembler::template GridGeometry<id>;
 public:
     using ParentType::ParentType;
 
@@ -427,9 +428,27 @@ public:
         auto&& curElemFaceVars = this->curElemFaceVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
+        fvGeometry.bind(element);
+
+        if constexpr (id == GridGeometry::faceIdx())
+        {
+            static_assert(GridGeometry::isFace());
+            staggeredFVGeometries_.reserve(fvGeometry.numScvf());
+
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                staggeredFVGeometries_.emplace_back(fvGeometry.gridGeometry().faceFVGridGeometry());
+                staggeredFVGeometries_.back().bind(element, scvf, 0 /*localDofIdx TODO: extract from scvf?*/);
+            }
+        }
+        else
+        {
+            static_assert(std::is_same_v<decltype(staggeredFVGeometries_), int>);
+        }
+
         // bind the caches
         couplingManager.bindCouplingContext(domainId, element, this->assembler());
-        fvGeometry.bind(element);
+
         curElemVolVars.bind(element, fvGeometry, curSol);
         curElemFaceVars.bind(element, fvGeometry, curSol);
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
@@ -439,6 +458,17 @@ public:
             this->prevElemFaceVars().bindElement(element, fvGeometry, this->assembler().prevSol());
         }
     }
+
+    template <bool enable = GridGeometry::isFace(), std::enable_if_t<enable, int> = 0>
+    const typename GridGeometry::LocalView& faceFVGeometry(int idx) const
+    {
+        return staggeredFVGeometries_[idx];
+    }
+
+private:
+
+    // this is only needed for staggered (face-related) grid geometries
+    std::conditional_t<GridGeometry::isFace(), std::vector<typename GridGeometry::LocalView>, int> staggeredFVGeometries_;
 };
 
 /*!
@@ -637,7 +667,10 @@ public:
 
         // treat the local residua of the face dofs:
         for (auto&& scvf : scvfs(fvGeometry))
+        {
+            const auto& faceFVGeometry = this->faceFVGeometry(scvf.localFaceIdx());
             origResiduals[scvf.localFaceIdx()] = this->evalLocalResidualForFace(scvf);
+        }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all face residuals in the element w.r.t. to other face dofs.         //
