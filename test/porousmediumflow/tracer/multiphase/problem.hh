@@ -26,6 +26,7 @@
 #ifndef DUMUX_TRACER_MULTIPHASE_TEST_PROBLEM_HH
 #define DUMUX_TRACER_MULTIPHASE_TEST_PROBLEM_HH
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
@@ -46,7 +47,7 @@ class TracerTest : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
