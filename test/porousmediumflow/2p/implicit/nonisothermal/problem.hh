@@ -37,6 +37,8 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -155,7 +157,7 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 
 public:
     InjectionProblem2PNI(std::shared_ptr<const GridGeometry> gridGeometry)
