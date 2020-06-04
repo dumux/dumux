@@ -30,6 +30,8 @@
 #endif
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -110,7 +112,7 @@ class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
