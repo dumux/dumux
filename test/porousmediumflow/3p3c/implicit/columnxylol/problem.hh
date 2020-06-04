@@ -33,6 +33,8 @@
 #include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/material/components/constant.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/3p3c/model.hh>
@@ -157,7 +159,7 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
