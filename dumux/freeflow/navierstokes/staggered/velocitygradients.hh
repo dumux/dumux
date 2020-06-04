@@ -340,26 +340,6 @@ public:
                                              tangentialVelocityGradient);
     }
 
-private:
-
-    /*!
-     * \brief Get the location of the lateral staggered face's center.
-     *        Only needed for boundary conditions if the current scvf or the lateral one is on a bounary.
-     *
-     * \verbatim
-     *      --------#######o                 || frontal face of staggered half-control-volume
-     *      |      ||      | current scvf    #  lateral staggered face of interest (may lie on a boundary)
-     *      |      ||      |                 x  dof position
-     *      |      ||      x~~~~> vel.Self   -- element boundaries, current scvf may lie on a boundary
-     *      |      ||      |                 o  position at which the boundary conditions will be evaluated
-     *      |      ||      |                    (lateralStaggeredFaceCenter)
-     *      ----------------
-     * \endverbatim
-     */
-    static const GlobalPosition& lateralStaggeredFaceCenter_(const SubControlVolumeFace& scvf, const int localSubFaceIdx)
-    {
-        return scvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter;
-    };
 };
 
 } // end namespace Dumux
