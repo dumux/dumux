@@ -24,6 +24,7 @@
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_FACETPROBLEM_HH
 #define DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_FACETPROBLEM_HH
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
@@ -50,7 +51,7 @@ class OnePNCLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
