@@ -28,24 +28,31 @@
 #define DUMUX_PIPE_LAUFER_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
-#include <dune/common/hybridutilities.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/turbulenceproperties.hh>
-#include <dumux/freeflow/rans/problem.hh>
-#include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/components/air.hh>
 
-#include <dumux/freeflow/rans/zeroeq/model.hh>
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <dumux/freeflow/turbulenceproperties.hh>
 #include <dumux/freeflow/turbulencemodel.hh>
+
+#include <dumux/freeflow/rans/problem.hh>
+
 #include <dumux/freeflow/rans/oneeq/problem.hh>
 #include <dumux/freeflow/rans/oneeq/model.hh>
+
+#include <dumux/freeflow/rans/twoeq/kepsilon/model.hh>
+#include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
+
+#include <dumux/freeflow/rans/twoeq/komega/model.hh>
+#include <dumux/freeflow/rans/twoeq/komega/problem.hh>
+
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh>
-#include <dumux/freeflow/rans/twoeq/komega/problem.hh>
-#include <dumux/freeflow/rans/twoeq/komega/model.hh>
-#include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
-#include <dumux/freeflow/rans/twoeq/kepsilon/model.hh>
+
+#include <dumux/freeflow/rans/zeroeq/model.hh>
+
+#include <dumux/material/components/air.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 
 namespace Dumux {
 
@@ -111,7 +118,7 @@ class PipeLauferProblem : public RANSProblem<TypeTag>
 {
     using ParentType = RANSProblem<TypeTag>;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
