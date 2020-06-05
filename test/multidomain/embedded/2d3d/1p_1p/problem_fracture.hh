@@ -27,6 +27,7 @@
 
 #include <dune/foamgrid/foamgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -106,7 +107,7 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;

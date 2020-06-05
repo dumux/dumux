@@ -28,6 +28,7 @@
 
 #include <dune/foamgrid/foamgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -107,7 +108,7 @@ class RootProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using SourceValues = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;

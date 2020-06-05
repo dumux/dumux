@@ -29,6 +29,7 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
@@ -115,7 +116,7 @@ class MatrixProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
