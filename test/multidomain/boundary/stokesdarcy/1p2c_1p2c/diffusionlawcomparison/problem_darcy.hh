@@ -29,19 +29,19 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/flux/maxwellstefanslaw.hh>
+
+#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include "./../spatialparams.hh"
-
-#include <dumux/material/fluidsystems/1padapter.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
-#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
-
-// for StokesDarcyCouplingOptions
-#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 
 #ifndef DIFFUSIONTYPE
 #define DIFFUSIONTYPE FicksLaw<TypeTag>
@@ -110,7 +110,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

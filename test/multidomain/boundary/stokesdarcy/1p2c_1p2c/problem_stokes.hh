@@ -27,12 +27,14 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/discretization/staggered/freeflow/properties.hh>
+
+#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
+
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
-
-#include <dumux/freeflow/navierstokes/problem.hh>
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 
 namespace Dumux {
 template <class TypeTag>
@@ -90,7 +92,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
