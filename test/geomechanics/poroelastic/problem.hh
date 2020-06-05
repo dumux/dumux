@@ -28,6 +28,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/geomechanics/poroelastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
@@ -80,7 +81,7 @@ class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
