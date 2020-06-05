@@ -180,6 +180,7 @@ conditions for the single-phase flow simulation.
 
 ```cpp
 #include <cmath> // for `std::log`
+#include <dumux/common/boundarytypes.hh> // for `BoundaryTypes`
 #include <dumux/common/properties.hh> // for `GetPropType`
 #include <dumux/common/parameters.hh> // for `getParam`
 #include <dumux/porousmediumflow/problem.hh>  // for `PorousMediumFlowProblem`
@@ -199,7 +200,7 @@ class RotSymExampleProblem : public PorousMediumFlowProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

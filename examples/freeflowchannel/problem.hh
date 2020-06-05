@@ -29,9 +29,11 @@
 //
 // ### Include files
 //
-// The only include we need here is the `NavierStokesProblem` class, the base
+// Include the `NavierStokesProblem` class, the base
 // class from which we will derive.
 #include <dumux/freeflow/navierstokes/problem.hh>
+// Include the `NavierStokesBoundaryTypes` class which specifies the boundary types set in this problem.
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
@@ -44,13 +46,12 @@ class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
 {
     // A few convenience aliases used throughout this class.
     using ParentType = NavierStokesProblem<TypeTag>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<PrimaryVariables::size()>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;

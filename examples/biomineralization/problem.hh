@@ -30,6 +30,7 @@
 // [[codeblock]]
 // This header contains the PorousMediumFlowProblem class
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/common/boundarytypes.hh> // for `BoundaryTypes`
 #include <dumux/common/properties.hh> // GetPropType
 #include <dumux/material/components/ammonia.hh>
 #include <dumux/discretization/evalgradients.hh>
@@ -93,7 +94,7 @@ class MICPColumnProblemSimpleChemistry : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;

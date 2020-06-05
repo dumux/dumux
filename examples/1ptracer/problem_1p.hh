@@ -29,9 +29,11 @@
 //
 // ### Include files
 //
-// The only include we need here is the `PorousMediumFlowProblem` class, the base
+// Include the `PorousMediumFlowProblem` class, the base
 // class from which we will derive.
 #include <dumux/porousmediumflow/problem.hh>
+// Include the `BoundaryTypes` class which specifies the boundary types set in this problem.
+#include <dumux/common/boundarytypes.hh>
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
@@ -53,7 +55,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 

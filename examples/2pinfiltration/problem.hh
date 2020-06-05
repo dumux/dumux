@@ -24,9 +24,11 @@
 // [[content]]
 //
 // ### Includes
-// We start with includes for `PorousMediumFlowProblem`, `readFileToContainer` and `GetPropType` (used below).
+// We start with includes for `PorousMediumFlowProblem`, `readFileToContainer`,
+// `BoundaryTypes` and `GetPropType` (used below).
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/io/container.hh>
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/common/properties.hh>
 
 // ### Problem class
@@ -48,7 +50,7 @@ class PointSourceProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using PointSource =  GetPropType<TypeTag, Properties::PointSource>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
