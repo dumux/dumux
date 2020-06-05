@@ -29,14 +29,16 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/discretization/staggered/freeflow/properties.hh>
+
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
+
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include "../../l2error.hh"
-
 
 namespace Dumux {
 template <class TypeTag>
@@ -89,7 +91,7 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;

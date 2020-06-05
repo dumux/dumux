@@ -28,15 +28,17 @@
 #ifndef DUMUX_3D_CHANNEL_PROBLEM_HH
 #define DUMUX_3D_CHANNEL_PROBLEM_HH
 
+#include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/constant.hh>
-
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
+
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include <dune/common/float_cmp.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
+
+#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #ifndef DIM_3D
 #define DIM_3D 0
@@ -102,7 +104,7 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -112,7 +114,7 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
