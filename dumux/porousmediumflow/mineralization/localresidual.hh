@@ -76,15 +76,15 @@ public:
     {
         auto storage = ParentType::computeStorage(problem, scv, volVars);
 
-        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
-        { return useMoles ? volVars.solidComponentMolarDensity(phaseIdx) : volVars.solidComponentDensity(phaseIdx); };
+        const auto massOrMoleSolidDensity = [](const auto& volVars, const int sCompIdx)
+        { return useMoles ? volVars.solidComponentMolarDensity(sCompIdx) : volVars.solidComponentDensity(sCompIdx); };
 
-        // compute storage term of all components within all fluid phases
-        for (int phaseIdx = 0; phaseIdx < numSolidComps-numInertSolidComps; ++phaseIdx)
+        // compute storage term of all solid components
+        for (int sCompIdx = 0; sCompIdx < numSolidComps-numInertSolidComps; ++sCompIdx)
         {
-            auto eqIdx = Indices::conti0EqIdx + numComponents + phaseIdx;
-            storage[eqIdx] += volVars.solidVolumeFraction(phaseIdx)
-                             * massOrMoleDensity(volVars, phaseIdx);
+            auto eqIdx = Indices::conti0EqIdx + numComponents + sCompIdx;
+            storage[eqIdx] += volVars.solidVolumeFraction(sCompIdx)
+                             * massOrMoleSolidDensity(volVars, sCompIdx);
         }
 
         return storage;
