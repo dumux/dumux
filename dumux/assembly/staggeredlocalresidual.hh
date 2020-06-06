@@ -195,8 +195,10 @@ public:
     // \{
 
     //! Convenience function to evaluate the flux and source terms for the face residual
+    template<class FaceFVElementGeometry>
     FaceResidualValue evalFluxAndSourceForFace(const Element& element,
                                                const FVElementGeometry& fvGeometry,
+                                               const FaceFVElementGeometry& faceFVGeometry,
                                                const ElementVolumeVariables& elemVolVars,
                                                const ElementFaceVariables& elemFaceVars,
                                                const ElementBoundaryTypes& bcTypes,
@@ -205,16 +207,18 @@ public:
     {
         FaceResidualValue residual(0.0);
         asImp().evalSourceForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, scvf);
-        asImp().evalFluxForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, scvf);
+        asImp().evalFluxForFace(residual, this->problem(), element, fvGeometry, faceFVGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, scvf);
 
         return residual;
     }
 
     //! Evaluate the flux terms for a face residual
+    template<class FaceFVElementGeometry>
     void evalFluxForFace(FaceResidualValue& residual,
                          const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
+                         const FaceFVElementGeometry& faceFVGeometry,
                          const ElementVolumeVariables& elemVolVars,
                          const ElementFaceVariables& elemFaceVars,
                          const ElementBoundaryTypes& elemBcTypes,
@@ -222,9 +226,9 @@ public:
                          const SubControlVolumeFace& scvf) const
     {
         if (!scvf.boundary())
-            residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+            residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, faceFVGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
         else
-            residual += asImp_().computeBoundaryFluxForFace(problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
+            residual += asImp_().computeBoundaryFluxForFace(problem, element, fvGeometry, faceFVGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
     }
 
     //! Evaluate the source terms for a face residual

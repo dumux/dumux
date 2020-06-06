@@ -165,15 +165,36 @@ public:
     /*!
      * \brief Returns the momentum flux over all staggered faces.
      */
+    template<class FaceFVElementGeometry>
     FacePrimaryVariables computeMomentumFlux(const Problem& problem,
                                              const Element& element,
                                              const SubControlVolumeFace& scvf,
                                              const FVElementGeometry& fvGeometry,
+                                             const FaceFVElementGeometry& faceFVGeometry,
                                              const ElementVolumeVariables& elemVolVars,
                                              const ElementFaceVariables& elemFaceVars,
                                              const GridFluxVariablesCache& gridFluxVarsCache)
     {
-        return computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache) +
+        FacePrimaryVariables result(0.0);
+
+        int idx = 0;
+        for (const auto& staggeredScvf : scvfs(faceFVGeometry))
+        {
+            if (staggeredScvf.associatedDofIdx() == scvf.dofIndex() && staggeredScvf.isFrontal() && !staggeredScvf.boundary())
+            {
+                idx++;
+                assert(scvf.area() == staggeredScvf.area());
+                assert(scvf.directionIndex() == staggeredScvf.directionIndex());
+                assert(scvf.directionSign() == staggeredScvf.directionSign());
+                result = computeFrontalMomentumFlux(problem, element, fvGeometry, scvf, staggeredScvf, faceFVGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache);
+            }
+        }
+
+        assert(idx == 1);
+
+        // TODO remove asserts
+
+        return result +
                computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache);
     }
 
@@ -194,10 +215,13 @@ public:
      *                   scvf
      * \endverbatim
      */
+    template<class FaceFVElementGeometry>
     FacePrimaryVariables computeFrontalMomentumFlux(const Problem& problem,
                                                     const Element& element,
-                                                    const SubControlVolumeFace& scvf,
                                                     const FVElementGeometry& fvGeometry,
+                                                    const SubControlVolumeFace& scvf,
+                                                    const typename FaceFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
+                                                    const FaceFVElementGeometry& faceFVGeometry,
                                                     const ElementVolumeVariables& elemVolVars,
                                                     const ElementFaceVariables& elemFaceVars,
                                                     const GridFluxVariablesCache& gridFluxVarsCache)
@@ -205,6 +229,7 @@ public:
         FacePrimaryVariables frontalFlux(0.0);
 
         // The velocities of the dof at interest and the one of the opposite scvf.
+        // TODO allow elemFaceVars[staggeredScv]
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
         const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
         const auto& faceVars =  elemFaceVars[scvf];
@@ -218,15 +243,16 @@ public:
 
             StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
             frontalFlux += upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream)
-                           * transportingVelocity * -1.0 * scvf.directionSign();
+                           * transportingVelocity * -1.0 * staggeredScvf.directionSign();
         }
 
         // The volume variables within the current element. We only require those (and none of neighboring elements)
         // because the fluxes are calculated over the staggered face at the center of the element.
+        // TODO get volvars from coupling manager
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         // Diffusive flux.
-        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(scvf, faceVars) * scvf.directionSign();
+        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(faceFVGeometry, staggeredScvf, faceVars) * staggeredScvf.directionSign();
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -238,16 +264,17 @@ public:
         // The scvf is used to normalize by the same value from the left and right side.
         // Can potentially help to improve the condition number of the system matrix.
         const Scalar pressure = normalizePressure ?
-                                insideVolVars.pressure() - problem.initial(scvf)[Indices::pressureIdx]
+                                insideVolVars.pressure() - problem.initial(scvf)[Indices::pressureIdx] // TODO problem signatures
                               : insideVolVars.pressure();
 
         // Account for the orientation of the staggered face's normal outer normal vector
         // (pointing in opposite direction of the scvf's one).
-        frontalFlux += pressure * -1.0 * scvf.directionSign();
+
+        frontalFlux += pressure * -1.0 * staggeredScvf.directionSign();
 
         // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf
         // our velocity dof of interest lives on.
-        return frontalFlux * scvf.area() * insideVolVars.extrusionFactor();
+        return frontalFlux * staggeredScvf.area() * insideVolVars.extrusionFactor();
    }
 
     /*!

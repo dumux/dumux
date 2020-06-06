@@ -60,15 +60,16 @@ public:
      *                                               O position at which gradient is evaluated
      * \endverbatim
      */
-    template<class FaceVariables>
-    static Scalar velocityGradII(const SubControlVolumeFace& scvf,
+    template<class StaggeredFVElementGeometry, class FaceVariables>
+    static Scalar velocityGradII(const StaggeredFVElementGeometry fvGeometry,
+                                 const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
                                  const FaceVariables& faceVars)
     {
         // The velocities of the dof at interest and the one of the opposite scvf.
         const Scalar velocitySelf = faceVars.velocitySelf();
         const Scalar velocityOpposite = faceVars.velocityOpposite();
 
-        return ((velocityOpposite - velocitySelf) / scvf.selfToOppositeDistance()) * scvf.directionSign();
+        return ((velocityOpposite - velocitySelf) / fvGeometry.normalDistanceForGradient(staggeredScvf)) * staggeredScvf.directionSign();
     }
 
     /*!
