@@ -193,6 +193,7 @@ public:
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
     static constexpr int upwindSchemeOrder = Traits::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
+    static constexpr bool cachingEnabled = true;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
@@ -450,6 +451,7 @@ public:
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
     static constexpr int upwindSchemeOrder = Traits::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
+    static constexpr bool cachingEnabled = false;
 
     using GeometryHelper = typename Traits::GeometryHelper;
 
