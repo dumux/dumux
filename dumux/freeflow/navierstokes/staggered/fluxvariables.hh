@@ -36,7 +36,7 @@
 #include <dumux/discretization/method.hh>
 
 
-#include "staggeredupwindfluxvariables.hh"
+#include "staggeredupwindhelper.hh"
 #include "velocitygradients.hh"
 
 namespace Dumux {

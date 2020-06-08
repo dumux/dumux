@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::StaggeredUpwindFluxVariables
+ * \copydoc Dumux::StaggeredUpwindHelper
  */
 #ifndef DUMUX_NAVIERSTOKES_STAGGERED_UPWINDVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_STAGGERED_UPWINDVARIABLES_HH
