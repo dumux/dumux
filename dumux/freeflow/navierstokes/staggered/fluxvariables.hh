@@ -36,7 +36,7 @@
 #include <dumux/discretization/method.hh>
 
 
-#include "staggeredupwindfluxvariables.hh"
+#include "staggeredupwindhelper.hh"
 #include "velocitygradients.hh"
 
 namespace Dumux {
@@ -207,14 +207,17 @@ public:
         // The velocities of the dof at interest and the one of the opposite scvf.
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
         const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
+        const auto& faceVars =  elemFaceVars[scvf];
 
         // Advective flux.
         if (problem.enableInertiaTerms())
         {
             // Get the average velocity at the center of the element (i.e. the location of the staggered face).
             const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
+            const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
-            frontalFlux += StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedFrontalMomentum(scvf, elemFaceVars, elemVolVars, gridFluxVarsCache, transportingVelocity)
+            StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
+            frontalFlux += upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream)
                            * transportingVelocity * -1.0 * scvf.directionSign();
         }
 
@@ -223,7 +226,7 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         // Diffusive flux.
-        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(scvf, elemFaceVars[scvf]) * scvf.directionSign();
+        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(scvf, faceVars) * scvf.directionSign();
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -387,7 +390,7 @@ public:
             // If none of the above boundary conditions apply for the given sub face, proceed to calculate the tangential momentum flux.
             if (problem.enableInertiaTerms())
                 lateralFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                          scvf, elemVolVars, faceVars,
+                                                                          scvf, elemVolVars, elemFaceVars,
                                                                           gridFluxVarsCache,
                                                                           currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
                                                                           localSubFaceIdx);
@@ -475,7 +478,7 @@ private:
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
                                                                     const ElementVolumeVariables& elemVolVars,
-                                                                    const FaceVariables& faceVars,
+                                                                    const ElementFaceVariables& elemFaceVars,
                                                                     const GridFluxVariablesCache& gridFluxVarsCache,
                                                                     const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                                     const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
@@ -488,6 +491,7 @@ private:
         // of interest is located.
         const Scalar transportingVelocity = [&]()
         {
+            const auto& faceVars = elemFaceVars[scvf];
             if (!scvf.boundary())
                 return faceVars.velocityLateralInside(localSubFaceIdx);
             else
@@ -512,8 +516,9 @@ private:
             }
         }();
 
-        return StaggeredUpwindFluxVariables<TypeTag, upwindSchemeOrder>::computeUpwindedLateralMomentum(problem, fvGeometry, element, scvf, elemVolVars, faceVars,
-                                                                     gridFluxVarsCache, localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
+        const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
+        StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
+        return upwindHelper.computeUpwindLateralMomentum(selfIsUpstream, lateralFace, localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
                * transportingVelocity * lateralFace.directionSign() * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
     }
 
