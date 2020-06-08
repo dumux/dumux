@@ -246,8 +246,17 @@ public:
         frontalFlux += pressure * -1.0 * scvf.directionSign();
 
         // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf
+        Scalar area = 0;
+        for (const auto otherScvf : scvfs(fvGeometry))
+        {
+            if (scvf.dofIndexOpposingFace() == otherScvf.dofIndex())
+                area = 0.5*(otherScvf.area()+scvf.area());
+
+        }
+
+
         // our velocity dof of interest lives on.
-        return frontalFlux * scvf.area() * insideVolVars.extrusionFactor();
+        return frontalFlux * area * insideVolVars.extrusionFactor();
    }
 
     /*!
