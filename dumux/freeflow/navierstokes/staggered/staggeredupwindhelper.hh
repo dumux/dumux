@@ -78,6 +78,14 @@ class StaggeredUpwindHelper
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
 
     static_assert(upwindSchemeOrder <= 2, "Not implemented: Order higher than 2!");
+    static_assert(upwindSchemeOrder <= 1 || GridFluxVariablesCache::cachingEnabled,
+        "Higher order upwind method requires caching enabled for the GridFluxVariablesCache!");
+    static_assert(upwindSchemeOrder <= 1 || GridGeometry::cachingEnabled,
+        "Higher order upwind method requires caching enabled for the GridGeometry!");
+    static_assert(upwindSchemeOrder <= 1 || GridFaceVariables::cachingEnabled,
+        "Higher order upwind method requires caching enabled for the GridFaceVariables!");
+    static_assert(upwindSchemeOrder <= 1 || GridVolumeVariables::cachingEnabled,
+        "Higher order upwind method requires caching enabled for the GridGeometry!");
 
 public:
     StaggeredUpwindHelper(const Element& element,
