@@ -56,6 +56,7 @@ struct PairData
     SmallLocalIndexType localLateralFaceIdx;
     Scalar lateralDistance;
     GlobalPosition lateralStaggeredFaceCenter;
+    GlobalPosition unitOuterNormal;
 };
 
 /*!
@@ -327,7 +328,8 @@ private:
                 setLateralPairFirstInfo_(innerElementIntersectionIdx, element_, numPairInnerLateralIdx);
 
                 const auto distance = innerElementIntersection.geometry().center() - selfElementCenter;
-                pairData_[numPairInnerLateralIdx].lateralStaggeredFaceCenter = selfFacetCenter+distance;
+                pairData_[numPairInnerLateralIdx].lateralStaggeredFaceCenter = selfFacetCenter + distance;
+                pairData_[numPairInnerLateralIdx].unitOuterNormal = innerElementIntersection.centerUnitOuterNormal();
 
                 numPairInnerLateralIdx++;
             }
