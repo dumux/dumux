@@ -43,14 +43,16 @@ namespace Dumux {
 #ifndef DOXYGEN
 namespace Detail {
 // helper struct detecting if the container class storing the scvf's corners has a resize function
-// for g++ > 5.3, this can be replaced by a lambda
-struct hasResize
+struct HasResize
 {
-    template<class Container>
-    auto operator()(Container&& c)
-    -> decltype(c.resize(1))
-    {}
+    template<class Container> auto operator()(Container&& c)
+    -> decltype(c.resize(1)) {}
 };
+
+template<class C>
+constexpr bool hasResize()
+{ return decltype(isValid(HasResize{})(std::declval<C>()))::value; }
+
 } // end namespace Detail
 #endif
 
@@ -67,9 +69,9 @@ struct FreeFlowStaggeredDefaultScvfGeometryTraits
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename GridView::ctype;
-    using PairData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::PairData;
-    using AxisData = typename FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>::AxisData;
-
+    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView, upwindSchemeOrder>;
+    using PairData = typename GeometryHelper::PairData;
+    using AxisData = typename GeometryHelper::AxisData;
 
     using Grid = typename GridView::Grid;
     static constexpr int dim = Grid::dimension;
@@ -131,12 +133,12 @@ public:
     FreeFlowStaggeredSubControlVolumeFace() = default;
 
     //! Constructor with intersection
-    template <class Intersection, class GeometryHelper>
+    template <class Intersection>
     FreeFlowStaggeredSubControlVolumeFace(const Intersection& is,
                                           const typename Intersection::Geometry& isGeometry,
                                           GridIndexType scvfIndex,
                                           const std::vector<GridIndexType>& scvIndices,
-                                          const GeometryHelper& geometryHelper)
+                                          const typename T::GeometryHelper& geometryHelper)
     : ParentType(),
       geomType_(isGeometry.type()),
       area_(isGeometry.volume()),
@@ -145,19 +147,19 @@ public:
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       boundary_(is.boundary()),
-
       axisData_(geometryHelper.axisData()),
       pairData_(std::move(geometryHelper.pairData())),
       localFaceIdx_(geometryHelper.localFaceIndex()),
       dirIdx_(geometryHelper.directionIndex()),
       outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
       isGhostFace_(false)
-      {
-          using HasResize = decltype(isValid(Detail::hasResize())(corners_));
-          maybeResizeCornerStorage_(HasResize{}, isGeometry.corners());
-          for (int i = 0; i < isGeometry.corners(); ++i)
-              corners_[i] = isGeometry.corner(i);
-      }
+    {
+        if constexpr (Detail::hasResize<CornerStorage>())
+            corners_.resize(isGeometry.corners());
+
+        for (int i = 0; i < isGeometry.corners(); ++i)
+            corners_[i] = isGeometry.corner(i);
+    }
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
@@ -269,7 +271,7 @@ public:
         return axisData_;
     }
 
-    //! Returns @c true if the face is a ghost face
+    //! Returns true if the face is a ghost face
     bool isGhostFace() const
     {
         return isGhostFace_;
@@ -397,12 +399,6 @@ public:
     }
 
 private:
-    void maybeResizeCornerStorage_(std::true_type /*hasResize*/, std::size_t size)
-    { corners_.resize(size); }
-
-    void maybeResizeCornerStorage_(std::false_type /*hasResize*/, std::size_t size)
-    {}
-
     Dune::GeometryType geomType_;
     CornerStorage corners_;
     Scalar area_;
