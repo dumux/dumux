@@ -180,7 +180,7 @@ public:
         int idx = 0;
         for (const auto& staggeredScvf : scvfs(faceFVGeometry))
         {
-            if (staggeredScvf.associatedDofIdx() == scvf.dofIndex() && staggeredScvf.isFrontal() && !staggeredScvf.boundary())
+            if (staggeredScvf.associatedDofIndex() == scvf.dofIndex() && staggeredScvf.isFrontal() && !staggeredScvf.boundary())
             {
                 idx++;
                 assert(scvf.area() == staggeredScvf.area());
@@ -195,7 +195,7 @@ public:
         // TODO remove asserts
 
         return result +
-               computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache);
+               computeLateralMomentumFlux(problem, element, scvf, fvGeometry, faceFVGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache);
     }
 
     /*!
@@ -294,17 +294,18 @@ public:
      *                 scvf
      * \endverbatim
      */
+    template<class FaceFVElementGeometry>
     FacePrimaryVariables computeLateralMomentumFlux(const Problem& problem,
                                                     const Element& element,
                                                     const SubControlVolumeFace& scvf,
                                                     const FVElementGeometry& fvGeometry,
+                                                    const FaceFVElementGeometry& faceFVGeometry,
                                                     const ElementVolumeVariables& elemVolVars,
                                                     const ElementFaceVariables& elemFaceVars,
                                                     const GridFluxVariablesCache& gridFluxVarsCache)
     {
         FacePrimaryVariables lateralFlux(0.0);
         const auto& faceVars = elemFaceVars[scvf];
-        const std::size_t numSubFaces = scvf.pairData().size();
 
         // If the current scvf is on a boundary, check if there is a Neumann BC for the stress in tangential direction.
         // Create a boundaryTypes object (will be empty if not at a boundary).
@@ -313,8 +314,12 @@ public:
             currentScvfBoundaryTypes.emplace(problem.boundaryTypes(element, scvf));
 
         // Account for all sub faces.
-        for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+        int localSubFaceIdx = 0;
+        for (const auto& staggeredScvf : scvfs(faceFVGeometry))
         {
+            if (!staggeredScvf.isLateral() || staggeredScvf.associatedDofIndex() != scvf.dofIndex())
+                continue;
+
             const auto eIdx = scvf.insideScvIdx();
             // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
             const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
@@ -354,6 +359,7 @@ public:
                         scvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(lateralScvf.directionIndex())]
                         * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5
                         * lateralScvf.directionSign();
+                        ++localSubFaceIdx;
                         continue;
                 }
 
@@ -369,6 +375,7 @@ public:
                         lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(scvf.directionIndex())]
                         * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5
                         * lateralScvf.directionSign();
+                        ++localSubFaceIdx;
                         continue;
                 }
             }
@@ -380,7 +387,10 @@ public:
                 // Check if we have a symmetry boundary condition. If yes, the tangential part of the momentum flux can be neglected
                 // and we may skip any further calculations for the given sub face.
                 if (lateralFaceBoundaryTypes->isSymmetry())
+                {
+                    ++localSubFaceIdx;
                     continue;
+                }
 
                 // Handle Neumann boundary conditions. No further calculations are then required for the given sub face.
                 if (lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
@@ -391,12 +401,16 @@ public:
                     const auto lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter);
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
                                                   * elemVolVars[lateralScvf.insideScvIdx()].extrusionFactor() * lateralScvf.area() * 0.5;
+                    ++localSubFaceIdx;
                     continue;
                 }
 
                 // Handle wall-function fluxes (only required for RANS models)
                 if (incorporateWallFunction_(lateralFlux, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, localSubFaceIdx))
+                {
+                    ++localSubFaceIdx;
                     continue;
+                }
             }
 
             // Check the consistency of the boundary conditions, exactly one of the following must be set
@@ -415,17 +429,22 @@ public:
             }
 
             // If none of the above boundary conditions apply for the given sub face, proceed to calculate the tangential momentum flux.
-            if (problem.enableInertiaTerms())
-                lateralFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                          scvf, elemVolVars, elemFaceVars,
-                                                                          gridFluxVarsCache,
-                                                                          currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
-                                                                          localSubFaceIdx);
+            // TODO advective fluxes
+            // if (problem.enableInertiaTerms())
+            //     lateralFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
+            //                                                               scvf, faceFVGeometry, staggeredScvf,
+            //                                                               elemVolVars, faceVars,
+            //                                                               gridFluxVarsCache,
+            //                                                               currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
+            //                                                               localSubFaceIdx);
 
             lateralFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, fvGeometry, element,
-                                                                      scvf, elemVolVars, faceVars,
+                                                                      scvf, faceFVGeometry, staggeredScvf,
+                                                                      elemVolVars, faceVars,
                                                                       currentScvfBoundaryTypes, lateralFaceBoundaryTypes,
                                                                       localSubFaceIdx);
+
+            ++localSubFaceIdx;
         }
         return lateralFlux;
     }
@@ -500,10 +519,13 @@ private:
      *                 scvf
      * \endverbatim
      */
+    template<class StaggeredFVElementGeometry>
     FacePrimaryVariables computeAdvectivePartOfLateralMomentumFlux_(const Problem& problem,
                                                                     const FVElementGeometry& fvGeometry,
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
+                                                                    const StaggeredFVElementGeometry staggeredFVGeometry,
+                                                                    const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const ElementFaceVariables& elemFaceVars,
                                                                     const GridFluxVariablesCache& gridFluxVarsCache,
@@ -535,7 +557,7 @@ private:
                 }
                 else if (bcTypes.isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
                 {
-                    return VelocityGradients::beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
+                    return VelocityGradients::beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars,
                                                                                  currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
                 }
                 else
@@ -571,10 +593,13 @@ private:
      *                                              -- elements
      * \endverbatim
      */
+    template<class StaggeredFVElementGeometry>
     FacePrimaryVariables computeDiffusivePartOfLateralMomentumFlux_(const Problem& problem,
                                                                     const FVElementGeometry& fvGeometry,
                                                                     const Element& element,
                                                                     const SubControlVolumeFace& scvf,
+                                                                    const StaggeredFVElementGeometry staggeredFVGeometry,
+                                                                    const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
                                                                     const ElementVolumeVariables& elemVolVars,
                                                                     const FaceVariables& faceVars,
                                                                     const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
@@ -607,7 +632,7 @@ private:
                 currentScvfBoundaryTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
                 currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
             {
-                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
                 // Account for the orientation of the staggered normal face's outer normal vector.
                 lateralDiffusiveFlux -= muAvg * velocityGrad_ji * lateralFace.directionSign();
             }
@@ -618,7 +643,7 @@ private:
         // so we can skip the computation.
         if (!lateralFace.boundary() || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
         {
-            const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
             lateralDiffusiveFlux -= muAvg * velocityGrad_ij * lateralFace.directionSign();
         }
 

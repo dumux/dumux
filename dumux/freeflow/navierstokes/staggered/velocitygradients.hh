@@ -95,18 +95,20 @@ public:
      *                                                       O position at which gradient is evaluated
      * \endverbatim
      */
-    template<class Problem, class FaceVariables>
+    template<class Problem, class StaggeredFVElementGeometry, class FaceVariables>
     static Scalar velocityGradIJ(const Problem& problem,
                                  const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const SubControlVolumeFace& scvf,
+                                 const StaggeredFVElementGeometry staggeredFVGeometry,
+                                 const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
                                  const FaceVariables& faceVars,
                                  const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                  const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                  const std::size_t localSubFaceIdx)
     {
         const auto eIdx = scvf.insideScvIdx();
-        const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+        const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx); // TODO remove
 
         // For the velocityGrad_ij derivative, get the velocities at the current (own) scvf
         // and at the parallel one at the neighboring scvf.
@@ -114,9 +116,9 @@ public:
 
         const auto outerParallelVelocity = [&]()
         {
-            if (!lateralScvf.boundary())
+            if (!staggeredScvf.boundary())
                 return faceVars.velocityParallel(localSubFaceIdx, 0);
-            else if (lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())))
+            else if (lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex()))) // TODO query staggered scv for direction
             {
                 // Sample the value of the Dirichlet BC at the center of the staggered lateral face.
                 const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
@@ -124,8 +126,8 @@ public:
             }
             else if (lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex())))
             {
-                return beaversJosephVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
-                                                          currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+                return beaversJosephVelocityAtLateralScvf(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars,
+                                                          currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx); // TODO revise BJS signature
             }
             else
                 DUNE_THROW(Dune::InvalidStateException, "Invalid lateral boundary type at " << lateralScvf.center());
@@ -135,7 +137,7 @@ public:
         // of the staggered face's outer normal vector. This also correctly accounts for the reduced
         // distance used in the gradient if the lateral scvf lies on a boundary.
         return (outerParallelVelocity - innerParallelVelocity)
-               / scvf.parallelDofsDistance(localSubFaceIdx, 0) * lateralScvf.directionSign();
+               / staggeredFVGeometry.normalDistanceForGradient(staggeredScvf) * staggeredScvf.directionSign();
     }
 
     /*!
@@ -169,11 +171,13 @@ public:
      *                                              O position at which gradient is evaluated
      * \endverbatim
      */
-    template<class Problem, class FaceVariables>
+    template<class Problem, class StaggeredFVElementGeometry, class FaceVariables>
     static Scalar velocityGradJI(const Problem& problem,
                                  const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const SubControlVolumeFace& scvf,
+                                 const StaggeredFVElementGeometry staggeredFVGeometry,
+                                 const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
                                  const FaceVariables& faceVars,
                                  const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                  const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
@@ -203,7 +207,7 @@ public:
             }
             else if (currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex())))
             {
-                return beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
+                return beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars,
                                                           currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
             }
             else
@@ -215,7 +219,7 @@ public:
                                     ? (outerLateralVelocity - innerLateralVelocity)
                                     : (innerLateralVelocity - outerLateralVelocity);
 
-        return lateralDeltaV / scvf.pairData(localSubFaceIdx).lateralDistance;
+        return lateralDeltaV / staggeredFVGeometry.tangentialDistanceForGradient(staggeredScvf); // TODO put sign in distance
     }
 
     /*!
@@ -238,11 +242,13 @@ public:
      * \endverbatim
      *
      */
-    template<class Problem, class FaceVariables>
+    template<class Problem, class StaggeredFVElementGeometry, class FaceVariables>
     static Scalar beaversJosephVelocityAtCurrentScvf(const Problem& problem,
                                                      const Element& element,
                                                      const FVElementGeometry& fvGeometry,
                                                      const SubControlVolumeFace& scvf,
+                                                     const StaggeredFVElementGeometry staggeredFVGeometry,
+                                                     const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
                                                      const FaceVariables& faceVars,
                                                      const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                      const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
@@ -270,7 +276,7 @@ public:
                     return 0.0;
             }
 
-            return velocityGradIJ(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            return velocityGradIJ(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
         }();
 
         return problem.beaversJosephVelocity(element,
@@ -298,11 +304,13 @@ public:
      *                                                       -- elements
      * \endverbatim
      */
-    template<class Problem, class FaceVariables>
+    template<class Problem, class StaggeredFVElementGeometry, class FaceVariables>
     static Scalar beaversJosephVelocityAtLateralScvf(const Problem& problem,
                                                      const Element& element,
                                                      const FVElementGeometry& fvGeometry,
                                                      const SubControlVolumeFace& scvf,
+                                                     const StaggeredFVElementGeometry staggeredFVGeometry,
+                                                     const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
                                                      const FaceVariables& faceVars,
                                                      const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                                      const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
@@ -330,7 +338,7 @@ public:
                     return 0.0;
             }
 
-            return velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            return velocityGradJI(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
         }();
 
         return problem.beaversJosephVelocity(element,
