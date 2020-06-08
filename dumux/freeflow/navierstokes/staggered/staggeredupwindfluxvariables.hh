@@ -246,6 +246,9 @@ private:
 
     /*!
      * \brief Returns an array of momenta needed for higher order or calls a function to return an array for basic upwinding methods.
+     * TODO: In order to get a second order momentum upwind scheme for compressible flow the densities have to be evaluated
+     * at the same integration points / positions as the velocities. The currently implementation just takes the closest upwind density
+     * to compute the momentum as a crude approximation.
      */
     std::array<Scalar, 3> getLateralSecondOrderUpwindMomenta_(const Scalar insideDensity,
                                                               const Scalar outsideDensity,
