@@ -83,10 +83,13 @@ private:
     template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
     template<std::size_t id> using ElementBoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::ElementBoundaryTypes>;
     template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
-    template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
+    template<std::size_t id> using GridVariables = typename MDTraits::template SubDomain<id>::GridVariables;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using PrimaryVariables = typename MDTraits::template SubDomain<id>::PrimaryVariables;
     template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
+
+    using ProblemTuple = typename MDTraits::template TupleOfSharedPtrConst<Problem>;
+    using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
 
     using CellCenterSolutionVector = GetPropType<StokesTypeTag, Properties::CellCenterSolutionVector>;
 
@@ -119,9 +122,13 @@ public:
     using CouplingData = StokesDarcyCouplingData<MDTraits, StokesDarcyCouplingManager<MDTraits>>;
 
     //! Constructor
+    [[deprecated("Use default constructor taking no arguments. Will be removed after 3.3")]]
     StokesDarcyCouplingManager(std::shared_ptr<const GridGeometry<stokesIdx>> stokesFvGridGeometry,
                                std::shared_ptr<const GridGeometry<darcyIdx>> darcyFvGridGeometry)
     { }
+
+    //! Constructor
+    StokesDarcyCouplingManager() = default;
 
     /*!
      * \brief Methods to be accessed by main
@@ -133,14 +140,37 @@ public:
               std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
               const SolutionVector& curSol)
     {
-        if (Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->spatialParams().gravity({})))
+        DUNE_THROW(Dune::InvalidStateException, "This function is not supported anymore."
+                   << "Use init(stokesProblem, darcyProblem, gridVariables, curSol) for stationary problems or "
+                   << "init(stokesProblem, darcyProblem, gridVariables, curSol, prevSol) for transient problems.");
+    }
+
+    //! Initialize the coupling manager
+    void init(ProblemTuple&& problem,
+              GridVariablesTuple&& gridVariables,
+              const SolutionVector& curSol)
+    {
+        this->setSubProblems(problem);
+
+        if (Dune::FloatCmp::ne(this->problem(stokesIdx).gravity(), this->problem(darcyIdx).spatialParams().gravity({})))
             DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
 
-        this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
+            gridVariables_ = gridVariables;
         this->curSol() = curSol;
         couplingData_ = std::make_shared<CouplingData>(*this);
         computeStencils();
     }
+
+    //! Initialize the coupling manager
+    void init(ProblemTuple&& problem,
+              GridVariablesTuple&& gridVariables,
+              const SolutionVector& curSol,
+              const SolutionVector& prevSol)
+    {
+        prevSol_ = &prevSol;
+        init(std::forward<decltype(problem)>(problem), std::forward<decltype(gridVariables)>(gridVariables), curSol);
+    }
+
 
     //! Update after the grid has changed
     void update()
@@ -552,6 +582,14 @@ private:
 
     mutable std::size_t boundStokesElemIdx_;
     mutable std::size_t boundDarcyElemIdx_;
+
+    /*!
+     * \brief A tuple of std::shared_ptrs to the grid variables of the sub problems
+     */
+     GridVariablesTuple gridVariables_;
+
+     const SolutionVector* prevSol_ = nullptr;
+
 
     CouplingMapper couplingMapper_;
 };

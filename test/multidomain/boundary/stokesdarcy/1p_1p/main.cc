@@ -138,8 +138,6 @@ int main(int argc, char** argv) try
     // get a solution vector storing references to the two Stokes solution vectors
     auto stokesSol = partial(sol, stokesFaceIdx, stokesCellCenterIdx);
 
-    couplingManager->init(stokesProblem, darcyProblem, sol);
-
     // the grid variables
     using StokesGridVariables = GetPropType<StokesTypeTag, Properties::GridVariables>;
     auto stokesGridVariables = std::make_shared<StokesGridVariables>(stokesProblem, stokesFvGridGeometry);
@@ -147,6 +145,12 @@ int main(int argc, char** argv) try
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
     darcyGridVariables->init(sol[darcyIdx]);
+
+    couplingManager->init(std::make_tuple(stokesProblem, stokesProblem, darcyProblem),
+                          std::make_tuple(stokesGridVariables->faceGridVariablesPtr(),
+                                          stokesGridVariables->cellCenterGridVariablesPtr(),
+                                          darcyGridVariables),
+                          sol);
 
     // intialize the vtk output module
     StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
