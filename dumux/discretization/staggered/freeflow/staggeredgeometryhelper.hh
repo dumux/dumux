@@ -52,6 +52,7 @@ struct PairData
     std::array<GridIndexType, upwindSchemeOrder> parallelDofs;
     std::array<Scalar, upwindSchemeOrder> parallelCellWidths;
     bool hasOuterLateral = false;
+    bool lateralFaceOnBoundary;
     std::pair<GridIndexType, GridIndexType> lateralPair;
     SmallLocalIndexType localLateralFaceIdx;
     Scalar lateralDistance;
@@ -330,6 +331,7 @@ private:
                 const auto distance = innerElementIntersection.geometry().center() - selfElementCenter;
                 pairData_[numPairInnerLateralIdx].lateralStaggeredFaceCenter = selfFacetCenter + distance;
                 pairData_[numPairInnerLateralIdx].unitOuterNormal = innerElementIntersection.centerUnitOuterNormal();
+                pairData_[numPairInnerLateralIdx].lateralFaceOnBoundary = !innerElementIntersection.neighbor();
 
                 numPairInnerLateralIdx++;
             }
