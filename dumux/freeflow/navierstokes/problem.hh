@@ -257,6 +257,26 @@ public:
               + velocitySelf) / (betaBJ*distanceNormalToBoundary + 1.0);
     }
 
+    /*!
+     * \brief Returns the slip velocity at a porous boundary based on the Beavers-Joseph(-Saffman) condition.
+     */
+    template<bool enable = GridGeometry::discMethod == DiscretizationMethod::staggered, std::enable_if_t<enable, int> = 0>
+    const Scalar beaversJosephVelocity(const Element& element,
+                                       const typename GridGeometry::FaceFVGridGeometryType::StaggeredSubControlVolumeFace& faceOnPorousBoundary,
+                                       const GlobalPosition& orientation,
+                                       const Scalar velocityAboveBoundary,
+                                       const Scalar distanceNormalToBoundary,
+                                       const Scalar tangentialVelocityGradient) const
+    {
+        // du/dy + dv/dx = alpha/sqrt(K) * (u_boundary-uPM)
+        // beta = alpha/sqrt(K)
+        const Scalar betaBJ = asImp_().betaBJ(element, faceOnPorousBoundary, orientation);
+
+        return (tangentialVelocityGradient*distanceNormalToBoundary
+              + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * betaBJ * distanceNormalToBoundary
+              + velocityAboveBoundary) / (betaBJ*distanceNormalToBoundary + 1.0);
+    }
+
 private:
     //! Returns a scalar permeability value at the coupling interface
     Scalar interfacePermeability_(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
