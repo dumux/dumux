@@ -63,6 +63,9 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
+    using FaceFVElementGeometry = typename GridGeometry::FaceFVGridGeometryType::LocalView;
+    using StaggeredSubControlVolumeFace = typename FaceFVElementGeometry::StaggeredSubControlVolumeFace;
+
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -125,6 +128,21 @@ public:
         return asImp_().sourceAtPos(e.center());
     }
 
+    using ParentType::dirichlet;
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume face.
+     *
+     * \param element The finite element
+     * \param scvf the sub control volume face
+     *
+     */
+    PrimaryVariables dirichlet(const Element& element, const StaggeredSubControlVolumeFace& scvf) const
+    {
+        // forward it to the method which only takes the global coordinate
+        return asImp_().dirichletAtPos(scvf.ipGlobal());
+    }
+
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
@@ -145,6 +163,29 @@ public:
                         const ElementVolumeVariables& elemVolVars,
                         const ElementFaceVariables& elemFaceVars,
                         const SubControlVolumeFace& scvf) const
+    {
+        // forward it to the interface with only the global position
+        return asImp_().neumannAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry of the element's staggered control volumes
+     * \param elemFaceVars All face variables for the element
+     * \param scvf The sub control volume face
+     *
+     * Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     */
+    NumEqVector neumann(const Element& element,
+                        const FaceFVElementGeometry& fvGeometry,
+                        const ElementFaceVariables& elemFaceVars,
+                        const StaggeredSubControlVolumeFace& scvf) const
     {
         // forward it to the interface with only the global position
         return asImp_().neumannAtPos(scvf.ipGlobal());
