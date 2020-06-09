@@ -557,8 +557,8 @@ private:
                 }
                 else if (bcTypes.isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
                 {
-                    return VelocityGradients::beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars,
-                                                                                 currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+                    return VelocityGradients::beaversJosephVelocityAtCurrentScvf(problem, element, staggeredFVGeometry, staggeredScvf, faceVars,
+                                                                                 currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
                 }
                 else
                     return faceVars.velocityLateralInside(localSubFaceIdx);
@@ -606,6 +606,8 @@ private:
                                                                     const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes,
                                                                     const int localSubFaceIdx)
     {
+        assert(staggeredScvf.isLateral());
+
         const auto eIdx = scvf.insideScvIdx();
         const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
@@ -617,6 +619,7 @@ private:
         // Get the volume variables of the own and the neighboring element. The neighboring
         // element is adjacent to the staggered face normal to the current scvf
         // where the dof of interest is located.
+        // TODO use coupling context to get interpolated mu
         const auto& insideVolVars = elemVolVars[lateralFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[lateralFace.outsideScvIdx()];
 
@@ -632,7 +635,7 @@ private:
                 currentScvfBoundaryTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
                 currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
             {
-                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
                 // Account for the orientation of the staggered normal face's outer normal vector.
                 lateralDiffusiveFlux -= muAvg * velocityGrad_ji * lateralFace.directionSign();
             }
@@ -643,7 +646,7 @@ private:
         // so we can skip the computation.
         if (!lateralFace.boundary() || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
         {
-            const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, fvGeometry, scvf, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+            const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
             lateralDiffusiveFlux -= muAvg * velocityGrad_ij * lateralFace.directionSign();
         }
 
