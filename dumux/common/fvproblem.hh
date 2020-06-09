@@ -187,8 +187,6 @@ public:
      * \param element The finite element
      * \param scvf the sub control volume face
      * \note used for cell-centered discretization schemes
-     *
-     * The method returns the boundary types information.
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
@@ -208,8 +206,6 @@ public:
      * \param element The finite element
      * \param scv the sub control volume
      * \note used for cell-centered discretization schemes
-     *
-     * The method returns the boundary types information.
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
