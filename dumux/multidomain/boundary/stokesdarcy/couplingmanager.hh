@@ -87,6 +87,7 @@ private:
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using PrimaryVariables = typename MDTraits::template SubDomain<id>::PrimaryVariables;
     template<std::size_t id> using SubControlVolumeFace  = typename FVElementGeometry<id>::SubControlVolumeFace;
+    using StaggeredSubControlVolumeFace = typename GridGeometry<0>::FaceFVGridGeometryType::LocalView::StaggeredSubControlVolumeFace;
 
     using ProblemTuple = typename MDTraits::template TupleOfSharedPtrConst<Problem>;
     using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
@@ -400,6 +401,26 @@ public:
     const auto& couplingData() const
     {
         return *couplingData_;
+    }
+
+    /*!
+     * \brief Access the coupling context needed for the Stokes domain
+     */
+    const auto& stokesCouplingContext(const Element<stokesIdx>& element, const StaggeredSubControlVolumeFace& scvf) const
+    {
+        if (stokesCouplingContext_.empty() || boundStokesElemIdx_ != this->problem(stokesIdx).gridGeometry().elementMapper().index(element))
+            bindCouplingContext(stokesIdx, element);
+
+        assert(stokesCouplingContext_.size() == 1);
+        return stokesCouplingContext_[0]; // TODO
+
+        // for(const auto& context : stokesCouplingContext_)
+        // {
+        //     if(scvf.index() == context.stokesScvfIdx)
+        //         return context;
+        // }
+
+        // DUNE_THROW(Dune::InvalidStateException, "No coupling context found at scvf " << scvf.center());
     }
 
     /*!
