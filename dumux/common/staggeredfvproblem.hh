@@ -49,6 +49,7 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
@@ -127,6 +128,24 @@ public:
         // forward to solution independent, fully-implicit specific interface
         return asImp_().sourceAtPos(e.center());
     }
+
+    using ParentType::boundaryTypes;
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param element The finite element
+     * \param the sub control volume face
+     */
+    BoundaryTypes boundaryTypes(const Element& element,
+                                const StaggeredSubControlVolumeFace &scvf) const
+    {
+        // forward it to the method which only takes the global coordinate
+        return asImp_().boundaryTypesAtPos(scvf.center());
+    }
+
+
+
 
     using ParentType::dirichlet;
     /*!
