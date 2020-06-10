@@ -1,0 +1,21 @@
+[Grid]
+Positions0 = 0 0.1 # [m]
+Positions1 = 0 1.0 # [m]
+Cells0 = 10 # [-]
+Cells1 = 100 # [-]
+Grading0 = 1
+Grading1 = 1
+
+[Problem]
+Name = pipe
+MeanInletVelocity = 0.1 # [m/s]
+
+[Vtk]
+OutputName = test_ff_stokes_channel
+
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false
+
+[Vtk]
+AddVelocity = 1
