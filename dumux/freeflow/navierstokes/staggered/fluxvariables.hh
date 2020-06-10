@@ -180,7 +180,7 @@ public:
         int idx = 0;
         for (const auto& staggeredScvf : scvfs(faceFVGeometry))
         {
-            if (staggeredScvf.associatedDofIndex() == scvf.dofIndex() && staggeredScvf.isFrontal() && !staggeredScvf.boundary())
+            if (staggeredScvf.insideScvIdx() == scvf.dofIndex() && staggeredScvf.isFrontal() && !staggeredScvf.boundary())
             {
                 idx++;
                 assert(scvf.area() == staggeredScvf.area());
@@ -317,24 +317,22 @@ public:
         int localSubFaceIdx = 0;
         for (const auto& staggeredScvf : scvfs(faceFVGeometry))
         {
-            if (!staggeredScvf.isLateral() || staggeredScvf.associatedDofIndex() != scvf.dofIndex())
+            if (!staggeredScvf.isLateral() || staggeredScvf.insideScvIdx() != scvf.dofIndex())
                 continue;
 
-            const auto eIdx = scvf.insideScvIdx();
-            // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
-            const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+            const auto& staggeredScv = faceFVGeometry.scv(staggeredScvf.insideScvIdx());
 
             // Create a boundaryTypes object (will be empty if not at a boundary).
             std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
 
             // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
             // we are on a boundary where we have to check for boundary conditions.
-            if (lateralScvf.boundary())
+            if (staggeredScvf.boundary())
             {
                 // Retrieve the boundary types that correspond to the center of the lateral scvf. As a convention, we always query
                 // the type of BCs at the center of the element's "actual" lateral scvf (not the face of the staggered control volume).
                 // The value of the BC will be evaluated at the center of the staggered face.
-                //     --------T######V                 || frontal face of staggered half-control-volume
+                //     --------###T##V                 || frontal face of staggered half-control-volume
                 //     |      ||      | current scvf    #  lateral staggered face of interest (may lie on a boundary)
                 //     |      ||      |                 x  dof position
                 //     |      ||      x~~~~> vel.Self   -- element boundaries
@@ -342,7 +340,7 @@ public:
                 //     |      ||      |                    (center of lateral scvf)
                 //     ----------------                 V  position at which the value of the boundary conditions will be evaluated
                 //                                         (center of the staggered lateral face)
-                lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, lateralScvf));
+                lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, staggeredScvf));
             }
 
             // If the current scvf is on a bounary and if there is a Neumann or Beavers-Joseph-(Saffmann) BC for the stress in tangential direction,
@@ -351,7 +349,7 @@ public:
             if (currentScvfBoundaryTypes)
             {
                 // Handle Neumann BCs.
-                if (currentScvfBoundaryTypes->isNeumann(Indices::velocity(lateralScvf.directionIndex())))
+                if (currentScvfBoundaryTypes->isNeumann(Indices::velocity(staggeredScvf.directionIndex())))
                 {
                     // TODO pass elemFluxVarsCache
                     lateralFlux += problem.neumann(element, faceFVGeometry, elemFaceVars, staggeredScvf)[Indices::velocity(staggeredScvf.directionIndex())] * staggeredScvf.area() * staggeredScvf.directionSign();
@@ -362,7 +360,7 @@ public:
 
             // Check if the lateral face (perpendicular to our current scvf) lies on a boundary. If yes, boundary conditions might need to be treated
             // and further calculations can be skipped.
-            if (lateralScvf.boundary())
+            if (staggeredScvf.boundary())
             {
                 // Check if we have a symmetry boundary condition. If yes, the tangential part of the momentum flux can be neglected
                 // and we may skip any further calculations for the given sub face.
@@ -373,7 +371,7 @@ public:
                 }
 
                 // Handle Neumann boundary conditions. No further calculations are then required for the given sub face.
-                if (lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
+                if (lateralFaceBoundaryTypes->isNeumann(Indices::velocity(staggeredScv.directionIndex())))
                 {
                     lateralFlux +=  problem.neumann(element, faceFVGeometry, elemFaceVars, staggeredScvf)[Indices::velocity(staggeredScv.directionIndex())] * staggeredScvf.area() * staggeredScvf.directionSign();
                     ++localSubFaceIdx;
@@ -393,8 +391,8 @@ public:
             {
                 std::bitset<3> admittableBcTypes;
                 admittableBcTypes.set(0, lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
-                admittableBcTypes.set(1, lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())));
-                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex())));
+                admittableBcTypes.set(1, lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(staggeredScv.directionIndex())));
+                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScv.directionIndex())));
                 if (admittableBcTypes.count() != 1)
                 {
                     DUNE_THROW(Dune::InvalidStateException, "Invalid boundary conditions for lateral scvf "
@@ -617,13 +615,8 @@ private:
         }
 
         // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
-        // If we have a Dirichlet condition for the pressure at the lateral face we assume to have a zero velocityGrad_ij velocity gradient
-        // so we can skip the computation.
-        if (!lateralFace.boundary() || !lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx))
-        {
-            const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
-            lateralDiffusiveFlux -= muAvg * velocityGrad_ij * lateralFace.directionSign();
-        }
+        const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
+        lateralDiffusiveFlux -= muAvg * velocityGrad_ij * staggeredScvf.directionSign();
 
         // Account for the area of the staggered lateral face (0.5 of the coinciding scfv).
         return lateralDiffusiveFlux * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
