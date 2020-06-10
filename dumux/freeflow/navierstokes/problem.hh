@@ -207,7 +207,8 @@ public:
     /*!
      * \brief Returns the beta value which is the alpha value divided by the square root of the (scalar-valued) interface permeability.
      */
-    Scalar betaBJ(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
+    template<class Scvf>
+    Scalar betaBJ(const Element& element, const Scvf& scvf, const GlobalPosition& tangentialVector) const
     {
         const Scalar interfacePermeability = interfacePermeability_(element, scvf, tangentialVector);
         using std::sqrt;
@@ -227,7 +228,8 @@ public:
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
      */
-    VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
+    template<class Scvf>
+    VelocityVector porousMediumVelocity(const Element& element, const Scvf& scvf) const
     {
         return VelocityVector(0.0);
     }
@@ -279,7 +281,8 @@ public:
 
 private:
     //! Returns a scalar permeability value at the coupling interface
-    Scalar interfacePermeability_(const Element& element, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
+    template<class Scvf>
+    Scalar interfacePermeability_(const Element& element, const Scvf& scvf, const GlobalPosition& tangentialVector) const
     {
         const auto& K = asImp_().permeability(element, scvf);
 

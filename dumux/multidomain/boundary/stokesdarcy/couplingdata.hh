@@ -283,7 +283,8 @@ public:
     /*!
      * \brief Returns the intrinsic permeability of the coupled Darcy element.
      */
-    auto darcyPermeability(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    template<class Scvf>
+    auto darcyPermeability(const Element<stokesIdx>& element, const Scvf& scvf) const
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
         return stokesContext.volVars.permeability();

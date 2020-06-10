@@ -269,7 +269,8 @@ public:
      * \brief Returns the intrinsic permeability of required as input parameter
               for the Beavers-Joseph-Saffman boundary condition
      */
-    Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
+    template<class Scvf>
+    Scalar permeability(const Element& element, const Scvf& scvf) const
     {
         return couplingManager().couplingData().darcyPermeability(element, scvf);
     }
@@ -278,7 +279,8 @@ public:
      * \brief Returns the alpha value required as input parameter for the
               Beavers-Joseph-Saffman boundary condition.
      */
-    Scalar alphaBJ(const SubControlVolumeFace& scvf) const
+    template<class Scvf>
+    Scalar alphaBJ(const Scvf& scvf) const
     {
         return couplingManager().problem(CouplingManager::darcyIdx).spatialParams().beaversJosephCoeffAtPos(scvf.center());
     }
