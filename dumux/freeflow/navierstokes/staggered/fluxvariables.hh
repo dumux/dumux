@@ -328,8 +328,8 @@ public:
                     // Get the location of the lateral staggered face's center.
                     FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
-                        scvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(lateralFace.directionIndex())]
+                    const auto lateralBoundaryFace = makeStaggeredBoundaryFace(scvf, lateralStaggeredFaceCenter);
+                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(lateralFace.directionIndex())]
                         * extrusionFactor_(elemVolVars, lateralFace) * lateralScvf.area()
                         * lateralFace.directionSign();
                         continue;
@@ -344,8 +344,8 @@ public:
                 {
                     FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
-                        lateralFace.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(scvf.directionIndex())]
+                    const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralFace, lateralStaggeredFaceCenter);
+                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
                         * extrusionFactor_(elemVolVars, lateralFace) * lateralScvf.area()
                         * lateralFace.directionSign();
                         continue;
@@ -368,7 +368,7 @@ public:
                     // the staggered faces's center.
                     FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    const auto lateralBoundaryFace = lateralFace.makeBoundaryFace(lateralStaggeredFaceCenter);
+                    const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralFace, lateralStaggeredFaceCenter);
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
                                                   * elemVolVars[lateralFace.insideScvIdx()].extrusionFactor() * lateralScvf.area();
                     continue;
@@ -511,7 +511,8 @@ private:
                     // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                     // the staggered faces's center.
                     const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    return problem.dirichlet(element, scvf.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(lateralFace.directionIndex())];
+                    const auto lateralBoundaryFace = makeStaggeredBoundaryFace(scvf, lateralBoundaryFacePos);
+                    return problem.dirichlet(element, lateralBoundaryFace)[Indices::velocity(lateralFace.directionIndex())];
                 }
                 else if (bcTypes.isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
                 {
@@ -680,7 +681,7 @@ private:
         if (problem.useWallFunction(element, lateralFace, Indices::velocity(scvf.directionIndex())))
         {
             FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
-            const auto lateralBoundaryFace = lateralFace.makeBoundaryFace(lateralStaggeredFaceCenter_(scvf, localSubFaceIdx));
+            const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralFace, lateralStaggeredFaceCenter_(scvf, localSubFaceIdx));
             lateralFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
                                                * extrusionFactor_(elemVolVars, lateralFace) * lateralScvf.area();
             return true;
