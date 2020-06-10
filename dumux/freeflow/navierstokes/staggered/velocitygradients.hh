@@ -108,7 +108,7 @@ public:
         // and at the parallel one at the neighboring scvf.
         const Scalar innerParallelVelocity = faceVars.velocitySelf();
 
-        const auto& staggeredScv = staggeredFVGeometry.scv(staggeredLateralScvf.associatedDofIndex());
+        const auto& staggeredScv = staggeredFVGeometry.scv(staggeredLateralScvf.insideScvIdx());
         const auto directionIndex = staggeredScv.directionIndex();
         const auto localLateralFaceIdx = staggeredFVGeometry.localLateralFaceIndex(staggeredLateralScvf); // goes from 0 to dim-1
 
@@ -124,7 +124,7 @@ public:
                                                           currentScvfBoundaryTypes, lateralFaceBoundaryTypes); // TODO revise BJS signature
             }
             else
-                DUNE_THROW(Dune::InvalidStateException, "Invalid lateral boundary type at " << staggeredLateralScvf.center());
+                return innerParallelVelocity; // assume a gradient of zero if the boundary conditions don't allow to calculate a gradient
         }();
 
         // The velocity gradient already accounts for the orientation
@@ -174,12 +174,8 @@ public:
                                  const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
                                  const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
     {
-        const auto& staggeredScv = staggeredFVGeometry.scv(staggeredLateralScvf.associatedDofIndex());
+        const auto& staggeredScv = staggeredFVGeometry.scv(staggeredLateralScvf.insideScvIdx());
         const auto localLateralFaceIdx = staggeredFVGeometry.localLateralFaceIndex(staggeredLateralScvf); // goes from 0 to dim-1
-
-        // Assume a zero velocity gradient for pressure boundary conditions.
-        if (currentScvfBoundaryTypes && currentScvfBoundaryTypes->isDirichlet(Indices::pressureIdx))
-            return 0.0;
 
         // For the velocityGrad_ji gradient, get the velocities perpendicular to the velocity at the current scvf.
         // The inner one is located at staggered face within the own element,
@@ -198,7 +194,7 @@ public:
                                                           currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
             }
             else
-                DUNE_THROW(Dune::InvalidStateException, "Invalid lateral boundary types at " << staggeredLateralScvf.center());
+                return innerLateralVelocity; // assume a gradient of zero if the boundary conditions don't allow to calculate a gradient
         }();
 
         // Calculate the velocity gradient in positive coordinate direction.
@@ -239,7 +235,7 @@ public:
                                                      const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
     {
         assert(staggeredScvf.isLateral());
-        const auto& staggeredScv = staggeredFVGeometry.scv(staggeredScvf.associatedDofIndex());
+        const auto& staggeredScv = staggeredFVGeometry.scv(staggeredScvf.insideScvIdx());
 
         const auto tangentialVelocityGradient = [&]()
         {
@@ -251,15 +247,10 @@ public:
 
             if (unsymmetrizedGradientForBJ)
                 return 0.0;
-
-            if (staggeredScvf.boundary())
-            {
-                if (lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx) ||
-                    lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScv.directionIndex())))
-                    return 0.0;
-            }
-
-            return velocityGradIJ(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
+            else if (staggeredScvf.boundary() && lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScv.directionIndex())))
+                return 0.0;
+            else
+                return velocityGradIJ(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
         }();
 
         for (const auto& scvfOnBoundary : scvfs(staggeredFVGeometry))
@@ -311,7 +302,7 @@ public:
                                                      const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
     {
         assert(staggeredScvf.isLateral());
-        const auto& staggeredScv = staggeredFVGeometry.scv(staggeredScvf.associatedDofIndex());
+        const auto& staggeredScv = staggeredFVGeometry.scv(staggeredScvf.insideScvIdx());
 
         const auto tangentialVelocityGradient = [&]()
         {
@@ -323,15 +314,10 @@ public:
 
             if (unsymmetrizedGradientForBJ)
                 return 0.0;
-
-            if (staggeredScv.boundary())
-            {
-                if (currentScvfBoundaryTypes->isDirichlet(Indices::pressureIdx) ||
-                    currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScvf.directionIndex())))
-                    return 0.0;
-            }
-
-            return velocityGradJI(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
+            else if (staggeredScv.boundary() && currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScvf.directionIndex())))
+                return 0.0;
+            else
+                return velocityGradJI(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
         }();
 
         GlobalPosition orientation(0.0);
