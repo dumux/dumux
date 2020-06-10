@@ -189,7 +189,8 @@ public:
      *
      * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
      */
-    Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
+    template<class Scvf>
+    Scalar permeability(const Element& element, const Scvf& scvf) const
     {
         DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the permeability must be returned in the acutal problem");
     }
@@ -199,7 +200,8 @@ public:
      *
      * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
      */
-    Scalar alphaBJ(const SubControlVolumeFace& scvf) const
+    template<class Scvf>
+    Scalar alphaBJ(const Scvf& scvf) const
     {
         DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the alpha value must be returned in the acutal problem");
     }
