@@ -353,30 +353,10 @@ public:
                 // Handle Neumann BCs.
                 if (currentScvfBoundaryTypes->isNeumann(Indices::velocity(lateralScvf.directionIndex())))
                 {
-                    // Get the location of the lateral staggered face's center.
-                    const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
-                        scvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(lateralScvf.directionIndex())]
-                        * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5
-                        * lateralScvf.directionSign();
-                        ++localSubFaceIdx;
-                        continue;
-                }
-
-                // Treat the edge case when our current scvf has a BJ condition while the lateral face has a Neumann BC.
-                // It is not clear how to evaluate the BJ condition here.
-                // For symmetry reasons, our own scvf should then have the same Neumann flux as the lateral face.
-                // TODO: We should clarify if this is the correct approach.
-                if (currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex())) && lateralFaceBoundaryTypes &&
-                    lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
-                {
-                    const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
-                        lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(scvf.directionIndex())]
-                        * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5
-                        * lateralScvf.directionSign();
-                        ++localSubFaceIdx;
-                        continue;
+                    // TODO pass elemFluxVarsCache
+                    lateralFlux += problem.neumann(element, faceFVGeometry, elemFaceVars, staggeredScvf)[Indices::velocity(staggeredScvf.directionIndex())] * staggeredScvf.area() * staggeredScvf.directionSign();
+                    ++localSubFaceIdx;
+                    continue;
                 }
             }
 
@@ -395,12 +375,7 @@ public:
                 // Handle Neumann boundary conditions. No further calculations are then required for the given sub face.
                 if (lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
-                    // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
-                    // the staggered faces's center.
-                    const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    const auto lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter);
-                    lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                                                  * elemVolVars[lateralScvf.insideScvIdx()].extrusionFactor() * lateralScvf.area() * 0.5;
+                    lateralFlux +=  problem.neumann(element, faceFVGeometry, elemFaceVars, staggeredScvf)[Indices::velocity(staggeredScv.directionIndex())] * staggeredScvf.area() * staggeredScvf.directionSign();
                     ++localSubFaceIdx;
                     continue;
                 }
@@ -632,12 +607,12 @@ private:
         if (!enableUnsymmetrizedVelocityGradient)
         {
             if (!scvf.boundary() ||
-                currentScvfBoundaryTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
-                currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
+                currentScvfBoundaryTypes->isDirichlet(Indices::velocity(staggeredScvf.directionIndex())) ||
+                currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScvf.directionIndex())))
             {
                 const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
                 // Account for the orientation of the staggered normal face's outer normal vector.
-                lateralDiffusiveFlux -= muAvg * velocityGrad_ji * lateralFace.directionSign();
+                lateralDiffusiveFlux -= muAvg * velocityGrad_ji * staggeredScvf.directionSign();
             }
         }
 
