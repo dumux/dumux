@@ -34,6 +34,7 @@
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/staggered/velocitygradients.hh>
 
 namespace Dumux {
 template <class TypeTag>
@@ -103,10 +104,14 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
+    using FaceFVElementGeometry = typename GridGeometry::FaceFVGridGeometryType::LocalView;
+    using StaggeredSubControlVolumeFace = typename FaceFVElementGeometry::StaggeredSubControlVolumeFace;
+
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+    using VelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry, BoundaryTypes, Indices>;
 
     // the types of outlet boundary conditions
     enum class OutletCondition
@@ -252,6 +257,48 @@ public:
 
         if (outletCondition_ != OutletCondition::doNothing)
             values[1] = -dudy(scvf.center()[1], inletVelocity_) * elemVolVars[scvf.insideScvIdx()].viscosity();
+
+        return values;
+    }
+
+    template<class ElementFaceVariables>
+    NumEqVector neumann(const Element& element,
+                        const FaceFVElementGeometry& fvGeometry,
+                        const ElementFaceVariables& elemFaceVars,
+                        const StaggeredSubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0);
+        assert(scvf.isLateral());
+        std::optional<BoundaryTypes> currentScvfBoundaryTypes;
+        std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
+
+        const auto& staggeredScv = fvGeometry.scv(scvf.insideScvIdx());
+
+        // TODO get viscosity (and density) from coupling manager
+        if (staggeredScv.boundary())
+        {
+            currentScvfBoundaryTypes.emplace(boundaryTypesAtPos(staggeredScv.dofPosition()));
+            if (scvf.boundary())
+                lateralFaceBoundaryTypes.emplace(boundaryTypesAtPos(staggeredScv.dofPosition()));
+
+            lateralFaceBoundaryTypes->setDirichlet(0); lateralFaceBoundaryTypes->setDirichlet(1); // TODO hack
+
+            const auto& faceVars = elemFaceVars[staggeredScv.correspondingCellCenterScvfIndex()];
+            const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(*this, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
+            const auto lateralDiffusiveFlux = -1.0 * velocityGrad_ij;
+
+            values[1] = lateralDiffusiveFlux;
+        }
+        else
+        {
+            assert(scvf.boundary());
+            lateralFaceBoundaryTypes.emplace(boundaryTypesAtPos(staggeredScv.dofPosition()));
+            const auto& faceVars = elemFaceVars[staggeredScv.correspondingCellCenterScvfIndex()];
+            const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(*this, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
+            const auto lateralDiffusiveFlux = -1.0 * velocityGrad_ji ;
+
+            values[1] = lateralDiffusiveFlux;
+        }
 
         return values;
     }
