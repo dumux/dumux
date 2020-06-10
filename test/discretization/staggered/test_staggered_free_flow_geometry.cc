@@ -36,6 +36,7 @@
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
+#include <dumux/discretization/staggered/freeflow/fvgridgeometrytraits.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
@@ -51,29 +52,6 @@ public:
   void operator()(const T& t){}
 };
 } // end namespace Detail
-
-//! the fv grid geometry traits for this test
-template<class GridView, int upwOrder>
-struct TestFVGGTraits : public DefaultMapperTraits<GridView>
-{
-    using SubControlVolume = CCSubControlVolume<GridView>;
-    using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView, upwOrder>;
-    using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
-    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView, upwOrder>;
-    static constexpr int upwindSchemeOrder = upwOrder;
-
-    struct DofTypeIndices
-    {
-        using CellCenterIdx = Dune::index_constant<0>;
-        using FaceIdx = Dune::index_constant<1>;
-    };
-
-    template<class GridGeometry>
-    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<GridGeometry>;
-
-    template<class GridGeometry, bool cachingEnabled>
-    using LocalView = StaggeredFVElementGeometry<GridGeometry, cachingEnabled>;
-};
 
 } // end namespace Dumux
 #endif
@@ -96,7 +74,7 @@ int main (int argc, char *argv[]) try
     static constexpr int upwindSchemeOrder = 2;
 
     using GridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
-                                                   TestFVGGTraits<typename Grid::LeafGridView, upwindSchemeOrder> >;
+                                                 StaggeredFreeFlowDefaultFVGridGeometryTraits<typename Grid::LeafGridView, upwindSchemeOrder> >;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

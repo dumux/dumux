@@ -78,6 +78,8 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using FaceFrontalSubControlVolumeFace = typename GridGeometry::Traits::FaceFrontalSubControlVolumeFace;
+    using FaceLateralSubControlVolumeFace = typename GridGeometry::Traits::FaceLateralSubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
@@ -246,8 +248,10 @@ public:
         frontalFlux += pressure * -1.0 * scvf.directionSign();
 
         // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf
-        // our velocity dof of interest lives on.
-        return frontalFlux * scvf.area() * insideVolVars.extrusionFactor();
+        // our velocity dof of interest lives on but with adjusted centroid
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+        FaceFrontalSubControlVolumeFace frontalFace(scv.center(), scvf.area());
+        return frontalFlux * frontalFace.area() * insideVolVars.extrusionFactor();
    }
 
     /*!
@@ -290,14 +294,14 @@ public:
         {
             const auto eIdx = scvf.insideScvIdx();
             // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
-            const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+            const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
             // Create a boundaryTypes object (will be empty if not at a boundary).
             std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
 
             // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
             // we are on a boundary where we have to check for boundary conditions.
-            if (lateralScvf.boundary())
+            if (lateralFace.boundary())
             {
                 // Retrieve the boundary types that correspond to the center of the lateral scvf. As a convention, we always query
                 // the type of BCs at the center of the element's "actual" lateral scvf (not the face of the staggered control volume).
@@ -310,7 +314,7 @@ public:
                 //     |      ||      |                    (center of lateral scvf)
                 //     ----------------                 V  position at which the value of the boundary conditions will be evaluated
                 //                                         (center of the staggered lateral face)
-                lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, lateralScvf));
+                lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, lateralFace));
             }
 
             // If the current scvf is on a bounary and if there is a Neumann or Beavers-Joseph-(Saffmann) BC for the stress in tangential direction,
@@ -319,14 +323,15 @@ public:
             if (currentScvfBoundaryTypes)
             {
                 // Handle Neumann BCs.
-                if (currentScvfBoundaryTypes->isNeumann(Indices::velocity(lateralScvf.directionIndex())))
+                if (currentScvfBoundaryTypes->isNeumann(Indices::velocity(lateralFace.directionIndex())))
                 {
                     // Get the location of the lateral staggered face's center.
+                    FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
-                        scvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(lateralScvf.directionIndex())]
-                        * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5
-                        * lateralScvf.directionSign();
+                        scvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(lateralFace.directionIndex())]
+                        * extrusionFactor_(elemVolVars, lateralFace) * lateralScvf.area()
+                        * lateralFace.directionSign();
                         continue;
                 }
 
@@ -334,21 +339,22 @@ public:
                 // It is not clear how to evaluate the BJ condition here.
                 // For symmetry reasons, our own scvf should then have the same Neumann flux as the lateral face.
                 // TODO: We should clarify if this is the correct approach.
-                if (currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex())) && lateralFaceBoundaryTypes &&
+                if (currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())) && lateralFaceBoundaryTypes &&
                     lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
+                    FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars,
-                        lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(scvf.directionIndex())]
-                        * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5
-                        * lateralScvf.directionSign();
+                        lateralFace.makeBoundaryFace(lateralStaggeredFaceCenter))[Indices::velocity(scvf.directionIndex())]
+                        * extrusionFactor_(elemVolVars, lateralFace) * lateralScvf.area()
+                        * lateralFace.directionSign();
                         continue;
                 }
             }
 
             // Check if the lateral face (perpendicular to our current scvf) lies on a boundary. If yes, boundary conditions might need to be treated
             // and further calculations can be skipped.
-            if (lateralScvf.boundary())
+            if (lateralFace.boundary())
             {
                 // Check if we have a symmetry boundary condition. If yes, the tangential part of the momentum flux can be neglected
                 // and we may skip any further calculations for the given sub face.
@@ -360,10 +366,11 @@ public:
                 {
                     // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                     // the staggered faces's center.
+                    FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                    const auto lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter);
+                    const auto lateralBoundaryFace = lateralFace.makeBoundaryFace(lateralStaggeredFaceCenter);
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                                                  * elemVolVars[lateralScvf.insideScvIdx()].extrusionFactor() * lateralScvf.area() * 0.5;
+                                                  * elemVolVars[lateralFace.insideScvIdx()].extrusionFactor() * lateralScvf.area();
                     continue;
                 }
 
@@ -518,8 +525,9 @@ private:
 
         const bool selfIsUpstream = lateralFace.directionSign() == sign(transportingVelocity);
         StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
+        FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
         return upwindHelper.computeUpwindLateralMomentum(selfIsUpstream, lateralFace, localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
-               * transportingVelocity * lateralFace.directionSign() * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
+               * transportingVelocity * lateralFace.directionSign() * lateralScvf.area() * extrusionFactor_(elemVolVars, lateralFace);
     }
 
     /*!
@@ -596,7 +604,8 @@ private:
         }
 
         // Account for the area of the staggered lateral face (0.5 of the coinciding scfv).
-        return lateralDiffusiveFlux * lateralFace.area() * 0.5 * extrusionFactor_(elemVolVars, lateralFace);
+        FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
+        return lateralDiffusiveFlux * lateralScvf.area() * extrusionFactor_(elemVolVars, lateralFace);
     }
 
     /*!
@@ -616,6 +625,29 @@ private:
     const GlobalPosition& lateralStaggeredFaceCenter_(const SubControlVolumeFace& scvf, const int localSubFaceIdx) const
     {
         return scvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter;
+    };
+
+    /*!
+     * \brief Get the location of the lateral staggered sub control volume face center.
+     *        Only needed for boundary conditions if the current scvf or the lateral one is on a bounary.
+     *
+     * \verbatim
+     *      --------###o####                 || frontal face of staggered half-control-volume
+     *      |      ||      | current scvf    #  lateral staggered face of interest (may lie on a boundary)
+     *      |      ||      |                 x  dof position
+     *      |      ||      x~~~~> vel.Self   -- element boundaries, current scvf may lie on a boundary
+     *      |      ||      |                 o  center of the lateral staggered scvf
+     *      |      ||      |
+     *      ----------------
+     * \endverbatim
+     */
+    GlobalPosition lateralStaggeredSCVFCenter_(const SubControlVolumeFace& lateralFace,
+                                               const SubControlVolumeFace& currentFace,
+                                               const int localSubFaceIdx) const
+    {
+        auto pos = currentFace.pairData(localSubFaceIdx).lateralStaggeredFaceCenter - lateralFace.center();
+        pos *= 0.5;
+        return pos;
     };
 
     //! helper function to get the averaged extrusion factor for a face
@@ -643,14 +675,14 @@ private:
                                   const std::size_t localSubFaceIdx) const
     {
         const auto eIdx = scvf.insideScvIdx();
-        const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+        const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
-        if (problem.useWallFunction(element, lateralScvf, Indices::velocity(scvf.directionIndex())))
+        if (problem.useWallFunction(element, lateralFace, Indices::velocity(scvf.directionIndex())))
         {
-            const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-            const auto lateralBoundaryFace = lateralScvf.makeBoundaryFace(lateralStaggeredFaceCenter);
+            FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
+            const auto lateralBoundaryFace = lateralFace.makeBoundaryFace(lateralStaggeredFaceCenter_(scvf, localSubFaceIdx));
             lateralFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                                               * extrusionFactor_(elemVolVars, lateralScvf) * lateralScvf.area() * 0.5;
+                                               * extrusionFactor_(elemVolVars, lateralFace) * lateralScvf.area();
             return true;
         }
         else

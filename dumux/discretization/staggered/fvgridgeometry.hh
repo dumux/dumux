@@ -174,37 +174,40 @@ class StaggeredFVGridGeometry;
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.
  */
-template<class GV, class Traits>
-class StaggeredFVGridGeometry<GV, true, Traits>
-: public BaseGridGeometry<GV, Traits>
+template<class GV, class T>
+class StaggeredFVGridGeometry<GV, true, T>
+: public BaseGridGeometry<GV, T>
 {
-    using ThisType = StaggeredFVGridGeometry<GV, true, Traits>;
-    using ParentType = BaseGridGeometry<GV, Traits>;
+    using ThisType = StaggeredFVGridGeometry<GV, true, T>;
+    using ParentType = BaseGridGeometry<GV, T>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
 
-    using IntersectionMapper = typename Traits::IntersectionMapper;
-    using GeometryHelper = typename Traits::GeometryHelper;
-    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
+    using IntersectionMapper = typename T::IntersectionMapper;
+    using GeometryHelper = typename T::GeometryHelper;
+    using ConnectivityMap = typename T::template ConnectivityMap<ThisType>;
 
 public:
+    //! export the traits
+    using Traits = typename T::PublicTraits;
+
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
-    static constexpr int upwindSchemeOrder = Traits::upwindSchemeOrder;
+    static constexpr int upwindSchemeOrder = T::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     static constexpr bool cachingEnabled = true;
 
     //! export the type of the fv element geometry (the local view type)
-    using LocalView = typename Traits::template LocalView<ThisType, true>;
+    using LocalView = typename T::template LocalView<ThisType, true>;
     //! export the type of sub control volume
-    using SubControlVolume = typename Traits::SubControlVolume;
+    using SubControlVolume = typename T::SubControlVolume;
     //! export the type of sub control volume
-    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    using SubControlVolumeFace = typename T::SubControlVolumeFace;
     //! export the grid view type
     using GridView = GV;
     //! export the dof type indices
-    using DofTypeIndices = typename Traits::DofTypeIndices;
+    using DofTypeIndices = typename T::DofTypeIndices;
 
     //! return a integral constant for cell center dofs
     static constexpr auto cellCenterIdx()
@@ -433,38 +436,41 @@ private:
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.
  */
-template<class GV, class Traits>
-class StaggeredFVGridGeometry<GV, false, Traits>
-: public BaseGridGeometry<GV, Traits>
+template<class GV, class T>
+class StaggeredFVGridGeometry<GV, false, T>
+: public BaseGridGeometry<GV, T>
 {
-    using ThisType = StaggeredFVGridGeometry<GV, false, Traits>;
-    using ParentType = BaseGridGeometry<GV, Traits>;
+    using ThisType = StaggeredFVGridGeometry<GV, false, T>;
+    using ParentType = BaseGridGeometry<GV, T>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
 
-    using IntersectionMapper = typename Traits::IntersectionMapper;
-    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
+    using IntersectionMapper = typename T::IntersectionMapper;
+    using ConnectivityMap = typename T::template ConnectivityMap<ThisType>;
 
 public:
+    //! export the traits
+    using Traits = typename T::PublicTraits;
+
     //! export discretization method
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
-    static constexpr int upwindSchemeOrder = Traits::upwindSchemeOrder;
+    static constexpr int upwindSchemeOrder = T::upwindSchemeOrder;
     static constexpr bool useHigherOrder = upwindSchemeOrder > 1;
     static constexpr bool cachingEnabled = false;
 
-    using GeometryHelper = typename Traits::GeometryHelper;
+    using GeometryHelper = typename T::GeometryHelper;
 
     //! export the type of the fv element geometry (the local view type)
-    using LocalView = typename Traits::template LocalView<ThisType, false>;
+    using LocalView = typename T::template LocalView<ThisType, false>;
     //! export the type of sub control volume
-    using SubControlVolume = typename Traits::SubControlVolume;
+    using SubControlVolume = typename T::SubControlVolume;
     //! export the type of sub control volume
-    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    using SubControlVolumeFace = typename T::SubControlVolumeFace;
     //! export the grid view type
     using GridView = GV;
     //! export the dof type indices
-    using DofTypeIndices = typename Traits::DofTypeIndices;
+    using DofTypeIndices = typename T::DofTypeIndices;
 
     //! return a integral constant for cell center dofs
     static constexpr auto cellCenterIdx()
