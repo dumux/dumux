@@ -406,7 +406,7 @@ template<int dimworld, class ctypea, class ctypeb, typename std::enable_if_t<dim
 inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
     using ctype = typename Dune::PromotionTraits<ctypea, ctypeb>::PromotedType;
-    static constexpr ctype eps_ = 1.0e-1;
+    static constexpr ctype eps_ = 1.0e-7;
     const ctype eps0 = eps_*std::max(b[1]-b[0], a[1]-a[0]);
     return b[0] - eps0 <= a[1] && a[0] <= b[1] + eps0;
 }
