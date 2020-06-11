@@ -25,6 +25,7 @@
 #include <cmath>
 #include <type_traits>
 #include <vector>
+#include <algorithm>
 
 #include <dune/common/fvector.hh>
 
@@ -361,6 +362,32 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
         intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections);
         intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections);
     }
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the index of the intersecting element of a Cartesian grid with a point
+ * The grid is given by the lower left corner (min), the upper right corner (max)
+ * and the number of cells in each direction (cells).
+ * \note If there are several options the lowest matching cell index will be returned
+ * \note Returns the index i + I*j + I*J*k for the intersecting element i,j,k of a grid with I,J,K cells
+ */
+template<class ctype, int dimworld>
+inline std::size_t intersectingEntityCartesianGrid(const Dune::FieldVector<ctype, dimworld>& point,
+                                                   const Dune::FieldVector<ctype, dimworld>& min,
+                                                   const Dune::FieldVector<ctype, dimworld>& max,
+                                                   const std::array<int, std::size_t(dimworld)>& cells)
+{
+    std::size_t index = 0;
+    for (int i = 0; i < dimworld; ++i)
+    {
+        using std::clamp; using std::floor;
+        ctype dimOffset = clamp<ctype>(floor((point[i]-min[i])*cells[i]/(max[i]-min[i])), 0.0, cells[i]-1);
+        for (int j = 0; j < i; ++j)
+            dimOffset *= cells[j];
+        index += static_cast<std::size_t>(dimOffset);
+    }
+    return index;
 }
 
 } // end namespace Dumux
