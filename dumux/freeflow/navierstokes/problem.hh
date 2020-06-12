@@ -29,6 +29,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/multidomain/staggered/freeflow/navierstokes/couplingmanager.hh>
+#include <dumux/multidomain/staggeredtraits.hh>
 
 namespace Dumux {
 
@@ -38,7 +40,8 @@ template<class TypeTag, DiscretizationMethod discMethod> struct NavierStokesPare
 template<class TypeTag>
 struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>
 {
-    using type = StaggeredFVProblem<TypeTag>;
+    using CouplingManager = StaggeredCouplingManager<StaggeredMultiDomainTraits<TypeTag, TypeTag>>;
+    using type = StaggeredFVProblem<TypeTag, CouplingManager>;
 };
 
 //! The actual NavierStokesParentProblem
@@ -94,8 +97,11 @@ public:
      * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    NavierStokesProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
-    : ParentType(gridGeometry, paramGroup)
+    template<class CouplingManager>
+    NavierStokesProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                        CouplingManager cm,
+                        const std::string& paramGroup = "")
+    : ParentType(gridGeometry, cm, paramGroup)
     , gravity_(0.0)
     {
         if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))

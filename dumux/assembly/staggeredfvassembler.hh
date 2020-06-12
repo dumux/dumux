@@ -36,7 +36,7 @@
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/staggeredtraits.hh>
-#include <dumux/multidomain/staggeredcouplingmanager.hh>
+#include <dumux/multidomain/staggered/freeflow/navierstokes/couplingmanager.hh>
 
 #include "diffmethod.hh"
 
@@ -73,11 +73,12 @@ public:
     //! The constructor for stationary problems
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
                          std::shared_ptr<const GridGeometry> gridGeometry,
-                         std::shared_ptr<GridVariables> gridVariables)
+                         std::shared_ptr<GridVariables> gridVariables,
+                         std::shared_ptr<CouplingManager> cm)
     : ParentType(std::make_tuple(problem, problem),
                  std::make_tuple(gridGeometry->faceFVGridGeometryPtr(), gridGeometry->cellCenterFVGridGeometryPtr()),
                  std::make_tuple(gridVariables->faceGridVariablesPtr(), gridVariables->cellCenterGridVariablesPtr()),
-                 std::make_shared<CouplingManager>())
+                 cm)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
         this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
