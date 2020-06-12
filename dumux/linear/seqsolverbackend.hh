@@ -1012,7 +1012,6 @@ class BlockDiagILU0BiCGSTABSolver : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // Solve saddle-point problem using a Schur complement based preconditioner
     template<class Matrix, class Vector>
     bool solve(const Matrix& M, Vector& x, const Vector& b)
     {
@@ -1032,7 +1031,7 @@ public:
     }
 
     std::string name() const
-    { return "block-diagonal ILU0 preconditioned BiCGSTAB solver"; }
+    { return "block-diagonal ILU0-preconditioned BiCGSTAB solver"; }
 
 private:
     Dune::InverseOperatorResult result_;
@@ -1051,7 +1050,6 @@ class BlockDiagILU0RestartedGMResSolver : public LinearSolver
 public:
     using LinearSolver::LinearSolver;
 
-    // Solve saddle-point problem using a Schur complement based preconditioner
     template<int precondBlockLevel = 2, class Matrix, class Vector>
     bool solve(const Matrix& M, Vector& x, const Vector& b)
     {
@@ -1072,7 +1070,7 @@ public:
     }
 
     std::string name() const
-    { return "block-diagonal ILU0 preconditioned restarted GMRes solver"; }
+    { return "block-diagonal ILU0-preconditioned restarted GMRes solver"; }
 
 private:
     Dune::InverseOperatorResult result_;
@@ -1277,7 +1275,7 @@ public:
     }
 
     std::string name() const
-    { return "block-diagonal AMG preconditioned BiCGSTAB solver"; }
+    { return "block-diagonal AMG-preconditioned BiCGSTAB solver"; }
 
 private:
     template<template<class M, std::size_t i> class Criterion, class Matrix, class Params, std::size_t... Is>
