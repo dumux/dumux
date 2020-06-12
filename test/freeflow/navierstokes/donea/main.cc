@@ -80,9 +80,16 @@ int main(int argc, char** argv) try
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
 
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag>;
+
+    // the coupling manager
+    using CouplingManager = StaggeredCouplingManager<Traits>;
+    auto couplingManager = std::make_shared<CouplingManager>();
+
+
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry, couplingManager);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -95,6 +102,10 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
+    couplingManager->init(std::make_tuple(problem, problem),
+                          std::make_tuple(gridVariables->faceGridVariablesPtr(), gridVariables->cellCenterGridVariablesPtr()),
+                          x);
+
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
@@ -106,7 +117,7 @@ int main(int argc, char** argv) try
 
     // use the staggered FV assembler
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, couplingManager);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;

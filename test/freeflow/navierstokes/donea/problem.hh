@@ -105,8 +105,9 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    DoneaTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    template<class CouplingManager>
+    DoneaTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, CouplingManager cm)
+    : ParentType(gridGeometry, cm)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         createAnalyticalSolution_();
