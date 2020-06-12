@@ -97,6 +97,22 @@ struct FreeFlowStaggeredDefaultScvfGeometryTraits
 
 /*!
  * \ingroup StaggeredDiscretization
+ * \brief Helper function to turn a given cell scvface into a fake boundary face
+ * \note This function is considered internal to staggered freeflow and may change or be deleted at any time without deprecation warning
+ */
+template<class SubControlVolumeFace>
+SubControlVolumeFace makeStaggeredBoundaryFace(const SubControlVolumeFace& scvf,
+                                               const typename SubControlVolumeFace::GlobalPosition& newCenter)
+{
+    auto bf = scvf;
+    bf.setCenter(newCenter);
+    bf.setBoundary(true);
+    bf.setIsGhostFace(true);
+    return bf;
+}
+
+/*!
+ * \ingroup StaggeredDiscretization
  * \brief Class for a sub control volume face in the staggered method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
  */
@@ -382,21 +398,17 @@ public:
         }
     }
 
-    /*!
-    * \brief Returns a copy of the own scvf whith a user-specified center position.
-    *        This is needed for retrieving boundary conditions when the actual center does not coincide with the position
-    *        on which the boundary condition is defined.
-    *
-    * \param pos The desired position of the boundary scvf's center
-    */
-    FreeFlowStaggeredSubControlVolumeFace makeBoundaryFace(const GlobalPosition& pos) const
-    {
-        FreeFlowStaggeredSubControlVolumeFace boundaryFace = *this;
-        boundaryFace.center_ = pos;
-        boundaryFace.boundary_ = true;
-        boundaryFace.isGhostFace_ = true;
-        return boundaryFace;
-    }
+    //! set the center to a different position
+    void setCenter(const GlobalPosition& center)
+    { center_ = center; }
+
+    //! set the boudnary flag
+    void setBoundary(bool boundaryFlag)
+    { boundary_ = boundaryFlag; }
+
+    //! set the ghost face flag
+    void setIsGhostFace(bool isGhostFaceFlag)
+    { isGhostFace_ = isGhostFaceFlag; }
 
 private:
     Dune::GeometryType geomType_;
@@ -420,4 +432,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
+#endif

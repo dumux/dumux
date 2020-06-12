@@ -407,7 +407,7 @@ private:
             //     ---------------#
 
             const auto& lateralFace = fvGeometry_.scvf(scvf.insideScvIdx(), scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-            const auto ghostFace = lateralFace.makeBoundaryFace(scvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter);
+            const auto ghostFace = makeStaggeredBoundaryFace(lateralFace, scvf.pairData(localSubFaceIdx).lateralStaggeredFaceCenter);
             const auto& problem = elemVolVars_.gridVolVars().problem();
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         }
@@ -444,7 +444,8 @@ private:
 
         // Get the boundary types of the lateral opposite boundary face
         const auto& problem = elemVolVars_.gridVolVars().problem();
-        const auto lateralOppositeFaceBoundaryTypes = problem.boundaryTypes(element, lateralOppositeScvf.makeBoundaryFace(center));
+        const auto lateralOppositeBoundaryFace = makeStaggeredBoundaryFace(lateralOppositeScvf, center);
+        const auto lateralOppositeFaceBoundaryTypes = problem.boundaryTypes(element, lateralOppositeBoundaryFace);
         return getParallelVelocityFromBoundary_(element, scvf, faceVars, currentScvfBoundaryTypes, lateralOppositeFaceBoundaryTypes, localOppositeSubFaceIdx);
     }
 

@@ -35,6 +35,57 @@
 
 namespace Dumux {
 
+template<class GridView>
+class FreeflowStaggeredSCV
+{
+    using ctype = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<ctype, GridView::dimensionworld>;
+public:
+    struct Traits
+    {
+        using Scalar = ctype;
+        using Geometry = typename GridView::template Codim<0>::Geometry;
+    };
+
+    FreeflowStaggeredSCV(const GlobalPosition& center, const ctype volume)
+    : center_(center), volume_(volume) {}
+
+    const GlobalPosition& center() const
+    { return center_; }
+
+    ctype volume() const
+    { return volume_; }
+private:
+    GlobalPosition center_;
+    ctype volume_;
+};
+
+template<class GridView>
+class FreeflowStaggeredSCVF
+{
+    using ctype = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<ctype, GridView::dimensionworld>;
+public:
+    struct Traits
+    {
+        using Scalar = ctype;
+        using Geometry = typename GridView::template Codim<1>::Geometry;
+    };
+
+    FreeflowStaggeredSCVF(const GlobalPosition& center, const ctype area)
+    : center_(center), area_(area) {}
+
+    const GlobalPosition& center() const
+    { return center_; }
+
+    ctype area() const
+    { return area_; }
+private:
+    GlobalPosition center_;
+    ctype area_;
+};
+
+
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Default traits for the finite volume grid geometry.
@@ -60,6 +111,15 @@ struct StaggeredFreeFlowDefaultFVGridGeometryTraits
 
     template<class GridGeometry, bool cachingEnabled>
     using LocalView = StaggeredFVElementGeometry<GridGeometry, cachingEnabled>;
+
+    struct PublicTraits
+    {
+        using CellSubControlVolume = SubControlVolume;
+        using CellSubControlVolumeFace = SubControlVolumeFace;
+        using FaceSubControlVolume = FreeflowStaggeredSCV<GridView>;
+        using FaceLateralSubControlVolumeFace = FreeflowStaggeredSCVF<GridView>;
+        using FaceFrontalSubControlVolumeFace = FreeflowStaggeredSCVF<GridView>;
+    };
 };
 
 } //end namespace Dumux

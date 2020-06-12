@@ -78,6 +78,15 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
 
     template<class GridGeometry, bool enableCache>
     using LocalView = StaggeredFVElementGeometry<GridGeometry, enableCache>;
+
+    struct PublicTraits
+    {
+        using CellSubControlVolume = SubControlVolume;
+        using CellSubControlVolumeFace = SubControlVolumeFace;
+        using FaceSubControlVolume = SubControlVolume;
+        using FaceLateralSubControlVolumeFace = SubControlVolumeFace;
+        using FaceFrontalSubControlVolumeFace = SubControlVolumeFace;
+    };
 };
 
 } // end namespace Dumux

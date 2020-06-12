@@ -47,9 +47,11 @@ class StaggeredLocalResidual
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using FaceSubControlVolume = typename GridGeometry::Traits::FaceSubControlVolume;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
 
     using CellCenterResidual = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
@@ -241,8 +243,13 @@ public:
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         const auto extrusionFactor = elemVolVars[scv].extrusionFactor();
 
+        // contruct staggered scv (half of the element)
+        auto scvCenter = scvf.center() - scv.center();
+        scvCenter *= 0.5;
+        FaceSubControlVolume faceScv(scvCenter, 0.5*scv.volume());
+
         // multiply by 0.5 because we only consider half of a staggered control volume here
-        source *= 0.5*scv.volume()*extrusionFactor;
+        source *= faceScv.volume()*extrusionFactor;
         residual -= source;
     }
 
@@ -272,18 +279,19 @@ public:
                             const ElementFaceVariables& curElemFaceVars,
                             const SubControlVolumeFace& scvf) const
     {
-        FaceResidualValue storage(0.0);
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        auto prevFaceStorage = asImp_().computeStorageForFace(problem, scvf, prevElemVolVars[scv], prevElemFaceVars);
-        auto curFaceStorage = asImp_().computeStorageForFace(problem, scvf, curElemVolVars[scv], curElemFaceVars);
 
-        storage = std::move(curFaceStorage);
-        storage -= std::move(prevFaceStorage);
+        auto storage = asImp_().computeStorageForFace(problem, scvf, curElemVolVars[scv], curElemFaceVars);
+        storage -= asImp_().computeStorageForFace(problem, scvf, prevElemVolVars[scv], prevElemFaceVars);
 
         const auto extrusionFactor = curElemVolVars[scv].extrusionFactor();
 
-        // multiply by 0.5 because we only consider half of a staggered control volume here
-        storage *= 0.5*scv.volume()*extrusionFactor;
+        // contruct staggered scv (half of the element)
+        auto scvCenter = scvf.center() - scv.center();
+        scvCenter *= 0.5;
+        FaceSubControlVolume faceScv(scvCenter, 0.5*scv.volume());
+
+        storage *= faceScv.volume()*extrusionFactor;
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;

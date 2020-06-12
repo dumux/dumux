@@ -119,7 +119,8 @@ public:
             {
                 // Sample the value of the Dirichlet BC at the center of the staggered lateral face.
                 const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                return problem.dirichlet(element, lateralScvf.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(scvf.directionIndex())];
+                const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralScvf, lateralBoundaryFacePos);
+                return problem.dirichlet(element, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())];
             }
             else if (lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex())))
             {
@@ -198,7 +199,8 @@ public:
             {
                 // Sample the value of the Dirichlet BC at the center of the lateral face intersecting with the boundary.
                 const auto& lateralBoundaryFacePos = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
-                return problem.dirichlet(element, scvf.makeBoundaryFace(lateralBoundaryFacePos))[Indices::velocity(lateralScvf.directionIndex())];
+                const auto lateralBoundaryFace = makeStaggeredBoundaryFace(scvf, lateralBoundaryFacePos);
+                return problem.dirichlet(element, lateralBoundaryFace)[Indices::velocity(lateralScvf.directionIndex())];
             }
             else if (currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex())))
             {
