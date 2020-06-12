@@ -88,6 +88,18 @@ public:
     const StaggeredHalfSubControlVolume& scv(const std::size_t scvIdx) const
     { return scvs_[findLocalIndex_(scvIdx, globalToLocalScvIdx_)]; }
 
+    //! iterator range for sub control volumes. Iterates over
+    //! all scvs of the bound element (not including neighbor scvs)
+    //! This is a free function found by means of ADL
+    //! To iterate over all sub control volumes of this FVElementGeometry use
+    //! for (auto&& scv : scvs(fvGeometry))
+    friend inline auto
+    scvs(const FaceStaggeredFVElementGeometry& g)
+    {
+        using IteratorType = typename std::array<SubControlVolume, 1>::const_iterator;
+        return Dune::IteratorRange<IteratorType>(g.scvs_.begin(), g.scvs_.end());
+    }
+
     //! Binding of an element preparing the geometries of the whole stencil
     //! called by the local jacobian to prepare element assembly
     void bind(const Element& element)
