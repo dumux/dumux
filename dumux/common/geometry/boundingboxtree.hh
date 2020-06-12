@@ -347,6 +347,22 @@ inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>&
 }
 
 /*!
+ * \ingroup Geometry
+ * \brief Determine if a point intersects an axis-aligned bounding box
+ * The bounding box is given by the lower left corner (min) and the upper right corner (max)
+ */
+template<class ctype, int dimworld>
+inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>& point,
+                                       const Dune::FieldVector<ctype, dimworld>& min,
+                                       const Dune::FieldVector<ctype, dimworld>& max)
+{
+    std::array<ctype, 2*dimworld> bBox;
+    std::copy(min.begin(), min.end(), bBox.begin());
+    std::copy(max.begin(), max.end(), bBox.begin()+dimworld);
+    return intersectsPointBoundingBox(point, bBox.data());
+}
+
+/*!
  * \brief Check whether a bounding box is intersecting another bounding box (dimworld == 3)
  * \param a Pointer to first bounding box coordinates
  * \param b Pointer to second bounding box coordinates
@@ -390,7 +406,7 @@ template<int dimworld, class ctypea, class ctypeb, typename std::enable_if_t<dim
 inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
     using ctype = typename Dune::PromotionTraits<ctypea, ctypeb>::PromotedType;
-    static constexpr ctype eps_ = 1.0e-1;
+    static constexpr ctype eps_ = 1.0e-7;
     const ctype eps0 = eps_*std::max(b[1]-b[0], a[1]-a[0]);
     return b[0] - eps0 <= a[1] && a[0] <= b[1] + eps0;
 }
