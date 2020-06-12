@@ -8,6 +8,7 @@ dumux_add_test(SOURCES test_2d2d_intersection.cc LABELS unit)
 dumux_add_test(SOURCES test_2d3d_intersection.cc LABELS unit)
 dumux_add_test(SOURCES test_graham_convex_hull.cc LABELS unit)
 dumux_add_test(SOURCES test_intersectingentity_cartesiangrid.cc LABELS unit)
+dumux_add_test(SOURCES test_circlepoints.cc LABELS unit)
 
 dune_symlink_to_source_files(FILES ball.msh)
 dumux_add_test(SOURCES test_intersectionentityset.cc
