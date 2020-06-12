@@ -668,9 +668,7 @@ public:
 
         // treat the local residua of the face dofs:
         for (auto&& scvf : scvfs(fvGeometry))
-        {
             origResiduals[scvf.localFaceIdx()] = this->evalLocalResidualForFace(scvf);
-        }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all face residuals in the element w.r.t. to other face dofs.         //
@@ -866,87 +864,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
-     */
-    template<class JacobianBlock, class ElementResidualVector, class GridVariables>
-    void assembleJacobianFaceCoupling(Dune::index_constant<cellCenterId> domainJ, JacobianBlock& A,
-                                      const ElementResidualVector& origResiduals, GridVariables& gridVariables)
-    {
-        /////////////////////////////////////////////////////////////////////////////////////////////////////
-        //  Calculate derivatives of all face residuals in the element w.r.t. all coupled cell center dofs //
-        /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        // get some aliases for convenience
-        const auto& problem = this->problem();
-        const auto& fvGeometry = this->fvGeometry();
-        const auto& gridGeometry = this->problem().gridGeometry();
-        const auto& connectivityMap = gridGeometry.connectivityMap();
-        const auto& curSol = this->curSol()[domainJ];
-
-        // build derivatives with for cell center dofs w.r.t. cell center dofs
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            // set the actual dof index
-            const auto faceGlobalI = scvf.dofIndex();
-
-            // build derivatives with for face dofs w.r.t. cell center dofs
-            for (const auto& globalJ : connectivityMap(faceId, cellCenterId, scvf.index()))
-            {
-                // get the volVars of the element with respect to which we are going to build the derivative
-                auto&& scvJ = fvGeometry.scv(globalJ);
-                const auto elementJ = fvGeometry.gridGeometry().element(globalJ);
-                auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), this->curElemVolVars(), scvJ);
-                const auto origVolVars(curVolVars);
-                const auto origCellCenterPriVars = curSol[globalJ];
-
-                for (int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
-                {
-                    using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
-                    PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(origCellCenterPriVars);
-
-                    constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
-
-                    auto evalResidual = [&](Scalar priVar)
-                    {
-                        // update the volume variables
-                        priVars[pvIdx + offset] = priVar;
-                        auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
-                        curVolVars.update(elemSol, problem, elementJ, scvJ);
-
-                        // update the coupling context
-                        auto deflectedCellCenterPriVars = origCellCenterPriVars;
-                        deflectedCellCenterPriVars[pvIdx] = priVar;
-                        this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, deflectedCellCenterPriVars, pvIdx);
-
-                        // compute face residual
-                        return this->evalLocalResidualForFace(scvf);
-                    };
-
-                    // derive the residuals numerically
-                    FaceResidualValue partialDeriv(0.0);
-                    const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
-                    static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
-                    static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
-                    NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, origResiduals[scvf.localFaceIdx()],
-                                                              epsCoupl(priVars[pvIdx + offset], pvIdx), numDiffMethod);
-
-                    // update the global jacobian matrix with the current partial derivatives
-                    updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
-
-                    // restore the original volVars
-                    curVolVars = origVolVars;
-
-                    // restore the undeflected state of the coupling context
-                    this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, origCellCenterPriVars, pvIdx);
-                }
-            }
-        }
-    }
-
     template<std::size_t otherId, class JacobianBlock, class ElementResidualVector, class GridVariables>
     void assembleJacobianFaceCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
                                       const ElementResidualVector& res, GridVariables& gridVariables)
@@ -965,8 +882,16 @@ public:
             // set the actual dof index
             const auto faceGlobalI = scvf.dofIndex();
 
-            // get stencil informations
-            const auto& stencil = this->couplingManager().couplingStencil(domainI, scvf, domainJ);
+            // TODO fix this
+            const auto& stencil = [&]()
+            {
+                for (const auto& scv : scvs(this->faceFVGeometry()))
+                {
+                    if (scv.dofIndex() == scvf.dofIndex())
+                        return this->couplingManager().couplingStencil(domainI, scv, domainJ);
+                }
+                DUNE_THROW(Dune::InvalidStateException, "no dof found");
+            }();
 
             if (stencil.empty())
                 continue;
