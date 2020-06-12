@@ -58,7 +58,8 @@ class FaceStaggeredFVElementGeometry
 
 public:
     //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
+    using SubControlVolume = typename GG::StaggeredHalfSubControlVolume;
+    using SubControlVolumeFace = typename GG::StaggeredSubControlVolumeFace;
     using StaggeredSubControlVolumeFace = typename GG::StaggeredSubControlVolumeFace;
     using StaggeredHalfSubControlVolume = typename GG::StaggeredHalfSubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;

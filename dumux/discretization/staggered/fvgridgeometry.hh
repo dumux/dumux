@@ -149,9 +149,9 @@ public:
     using ParentType::ParentType;
 
     //! export the type of sub control volume
-    using SubControlVolume = typename Traits::SubControlVolume;
+    using SubControlVolume = typename Traits::StaggeredHalfSubControlVolume;
     //! export the type of sub control volume face
-    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    using SubControlVolumeFace = typename Traits::StaggeredSubControlVolumeFace;
     //! export the type of the staggered sub control volume face
     using StaggeredSubControlVolumeFace = typename Traits::StaggeredSubControlVolumeFace;
     //! export the type of the staggered half sub control volume
