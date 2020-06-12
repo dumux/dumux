@@ -42,7 +42,7 @@ namespace Dumux {
  *       are assumed to be extruded by \f$1 m\f$ and 1D grids are assumed
  *       to have a cross section of \f$1m \times 1m\f$.
  */
-template<class TypeTag>
+template<class TypeTag, class CouplingManager>
 class StaggeredFVProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
@@ -82,9 +82,12 @@ public:
      * \param gridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    StaggeredFVProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    StaggeredFVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                       std::shared_ptr<CouplingManager> couplingManager,
+                       const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    { }
+    , couplingManager_(couplingManager)
+    {}
 
     /*!
      * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
@@ -280,6 +283,9 @@ public:
             sol[faceIdx][scvf.dofIndex()][pvIdx] = initSol[pvIdx];
     }
 
+    //! Get the coupling manager
+    const CouplingManager& couplingManager() const
+    { return *couplingManager_; }
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -288,6 +294,8 @@ protected:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
+
+    mutable std::shared_ptr<CouplingManager> couplingManager_;
 };
 
 } // end namespace Dumux
