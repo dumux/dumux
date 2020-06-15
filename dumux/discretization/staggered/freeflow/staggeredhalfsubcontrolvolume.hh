@@ -52,6 +52,7 @@ public:
 
     FreeFlowStaggeredHalfSubControlVolume(const GlobalPosition& center,
                                           const GlobalPosition& dofPosition,
+                                          const Scalar volume,
                                           const std::size_t dofIdx,
                                           const std::size_t correspondingCellCenterScvfIdx, // TODO remove or rename
                                           const std::size_t dirIdx,
@@ -59,6 +60,7 @@ public:
                                           const bool boundary)
     : center_(center)
     , dofPosition_(dofPosition)
+    , volume_(volume)
     , dofIdx_(dofIdx)
     , correspondingCellCenterScvfIdx_(correspondingCellCenterScvfIdx)
     , directionIdx_(dirIdx)
@@ -72,6 +74,9 @@ public:
     //! The position of the degree of freedom
     const GlobalPosition& dofPosition() const
     { return dofPosition_; }
+
+    Scalar volume() const
+    { return volume_; }
 
     std::size_t dofIndex() const
     { return dofIdx_; }
@@ -91,6 +96,7 @@ public:
 private:
     GlobalPosition center_;
     GlobalPosition dofPosition_;
+    Scalar volume_;
     std::size_t dofIdx_;
     std::size_t correspondingCellCenterScvfIdx_;
     std::size_t directionIdx_;
