@@ -42,6 +42,11 @@ class GridGeometryView
 {
 public:
 
+    //! export the element mapper type
+    using ElementMapper = typename ActualGridGeometry::ElementMapper;
+    //! export the vertex mapper type
+    using VertexMapper = typename ActualGridGeometry::VertexMapper;
+
     explicit GridGeometryView(const ActualGridGeometry* actualGridGeometry)
     : gridGeometry_(actualGridGeometry) {}
 
