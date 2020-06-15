@@ -138,6 +138,7 @@ public:
             const auto scvCenter = 0.5*(intersectionGeometry.center() + elementCenter);
             scvs_[localScvIdx] = StaggeredHalfSubControlVolume(scvCenter,
                                                                intersectionGeometry.center(),
+                                                               element.geometry().volume()*0.5,
                                                                insideScvIdx,
                                                                scvFaceIndices[localScvIdx],
                                                                directionIdx,
