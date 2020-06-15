@@ -121,12 +121,12 @@ private:
         const bool writeFaceVars = getParamFromGroup<bool>(out.paramGroup(), "Vtk.WriteFaceData", false);
         if(writeFaceVars)
         {
-            auto faceVelocityVector = [](const auto& scvf, const auto& faceVars)
+            auto faceVelocityVector = [](const auto& scv, const auto& faceVars)
                                       {
-                                          using VelocityVector = std::decay_t<decltype(scvf.unitOuterNormal())>;
+                                          using VelocityVector = typename OutputModule::GlobalPosition;
 
                                           VelocityVector velocity(0.0);
-                                          velocity[scvf.directionIndex()] = faceVars.velocitySelf();
+                                          velocity[scv.directionIndex()] = faceVars.velocitySelf();
                                           return velocity;
                                       };
 

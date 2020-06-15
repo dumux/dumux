@@ -57,7 +57,7 @@ class StaggeredVtkOutputModule
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GlobalPos = typename Element::Geometry::GlobalCoordinate;
 
     struct FaceVarScalarDataInfo { std::function<Scalar(const FaceVariables&)> get; std::string name; };
     struct FaceVarVectorDataInfo { std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)> get; std::string name; };
@@ -77,6 +77,8 @@ class StaggeredVtkOutputModule
     };
 
 public:
+    //! export  GlobalPosition type
+    using GlobalPosition = GlobalPos;
 
     template<class Sol>
     StaggeredVtkOutputModule(const GridVariables& gridVariables,
