@@ -49,18 +49,18 @@ class StaggeredVtkOutputModule
 : public VtkOutputModule<GridVariables, SolutionVector>
 {
     using ParentType = VtkOutputModule<GridVariables, SolutionVector>;
-    using GridGeometry = typename GridVariables::GridGeometry;
+    using GridGeometry = typename GridVariables::GridGeometry::FaceFVGridGeometryType;
     using GridView = typename GridGeometry::GridView;
     using Scalar = typename GridVariables::Scalar;
     using FaceVariables = typename GridVariables::GridFaceVariables::FaceVariables;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPos = typename Element::Geometry::GlobalCoordinate;
 
     struct FaceVarScalarDataInfo { std::function<Scalar(const FaceVariables&)> get; std::string name; };
-    struct FaceVarVectorDataInfo { std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)> get; std::string name; };
+    struct FaceVarVectorDataInfo { std::function<GlobalPos(const SubControlVolume& scv, const FaceVariables&)> get; std::string name; };
 
     struct FaceFieldScalarDataInfo
     {
@@ -71,8 +71,8 @@ class StaggeredVtkOutputModule
 
     struct FaceFieldVectorDataInfo
     {
-        FaceFieldVectorDataInfo(const std::vector<GlobalPosition>& f, const std::string& n) : data(f), name(n) {}
-        const std::vector<GlobalPosition>& data;
+        FaceFieldVectorDataInfo(const std::vector<GlobalPos>& f, const std::string& n) : data(f), name(n) {}
+        const std::vector<GlobalPos>& data;
         const std::string name;
     };
 
@@ -139,9 +139,9 @@ public:
     }
 
     //! Add a vector-valued faceVarible
-    //! \param f A function taking a SubControlVolumeFace and FaceVariables object and returning the desired vector
+    //! \param f A function taking a SubControlVolume and FaceVariables object and returning the desired vector
     //! \param name The name of the vtk field
-    void addFaceVariable(std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)>&& f, const std::string& name)
+    void addFaceVariable(std::function<GlobalPosition(const SubControlVolume& scv, const FaceVariables&)>&& f, const std::string& name)
     {
         faceVarVectorDataInfo_.push_back(FaceVarVectorDataInfo{f, name});
     }
@@ -196,7 +196,7 @@ private:
 
         for (const auto& element : elements(this->gridGeometry().gridView(), Dune::Partitions::interior))
         {
-            auto fvGeometry = localView(this->gridGeometry());
+            auto fvGeometry = localView(this->gridGeometry().faceFVGridGeometry());
             auto elemFaceVars = localView(this->gridVariables().curGridFaceVars());
 
             if (!faceVarScalarDataInfo_.empty() || !faceVarVectorDataInfo_.empty())
@@ -204,15 +204,15 @@ private:
                 fvGeometry.bind(element);
                 elemFaceVars.bindElement(element, fvGeometry, this->sol());
 
-                for (auto&& scvf : scvfs(fvGeometry))
+                for (auto&& scv : scvs(fvGeometry))
                 {
-                    const auto dofIdxGlobal = scvf.dofIndex();
+                    const auto dofIdxGlobal = scv.dofIndex();
                     if(dofVisited[dofIdxGlobal])
                         continue;
 
                     dofVisited[dofIdxGlobal] = true;
 
-                    const auto& faceVars = elemFaceVars[scvf];
+                    const auto& faceVars = elemFaceVars[scv];
 
                     // get the scalar-valued data
                     for (std::size_t i = 0; i < faceVarScalarDataInfo_.size(); ++i)
@@ -220,7 +220,7 @@ private:
 
                     // get the vector-valued data
                     for (std::size_t i = 0; i < faceVarVectorDataInfo_.size(); ++i)
-                            faceVarVectorData[i][dofIdxGlobal] = faceVarVectorDataInfo_[i].get(scvf, faceVars);
+                            faceVarVectorData[i][dofIdxGlobal] = faceVarVectorDataInfo_[i].get(scv, faceVars);
                 }
             }
         }

@@ -89,16 +89,16 @@ public:
                            int phaseIdx) const override
     {
         auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
+        const auto& gg = gridVariables_.gridGeometry().faceFVGridGeometry();
+        auto faceFVGeometry = localView(gg);
+        faceFVGeometry.bind(element);
         elemFaceVars.bindElement(element, fvGeometry, sol_);
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            auto dofIdxGlobal = scv.dofIndex();
+        const auto eIdx = gridVariables_.gridGeometry().elementMapper().index(element);
 
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                auto dirIdx = scvf.directionIndex();
-                velocity[dofIdxGlobal][dirIdx] += 0.5*elemFaceVars[scvf].velocitySelf();
-            }
+        for (auto&& scv : scvs(faceFVGeometry))
+        {
+            const auto dirIdx = scv.directionIndex();
+            velocity[eIdx][dirIdx] += 0.5*elemFaceVars[scv].velocitySelf();
         }
     }
 
