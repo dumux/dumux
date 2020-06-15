@@ -66,6 +66,7 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
 
     using FaceFVElementGeometry = typename GridGeometry::FaceFVGridGeometryType::LocalView;
     using StaggeredSubControlVolumeFace = typename FaceFVElementGeometry::StaggeredSubControlVolumeFace;
+    using StaggeredSubControlVolume = typename FaceFVElementGeometry::SubControlVolume;
 
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -223,6 +224,16 @@ public:
     PrimaryVariables initial(const Entity& entity) const
     {
         return asImp_().initialAtPos(entity.center());
+    }
+
+    /*!
+     * \brief Evaluate the initial value for a face-centered sub control volume
+     *
+     * \param scv The sub control volume)
+     */
+    PrimaryVariables initial(const StaggeredSubControlVolume& scv) const
+    {
+        return asImp_().initialAtPos(scv.dofPosition());
     }
 
     /*!
