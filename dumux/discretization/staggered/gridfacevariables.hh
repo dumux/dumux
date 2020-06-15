@@ -26,7 +26,7 @@
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/staggered/elementfacevariables.hh>
+#include <dumux/discretization/facecentered/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
 
 namespace Dumux {
@@ -42,7 +42,7 @@ template<class P, class FV>
 struct StaggeredDefaultGridFaceVariablesTraits
 {
     template<class GridFaceVariables, bool enableCache>
-    using LocalView = StaggeredElementFaceVariables<GridFaceVariables, enableCache>;
+    using LocalView = FaceCenteredElementVolumeVariables<GridFaceVariables, enableCache>;
 
     using FaceVariables = FV;
     using Problem = P;
