@@ -80,6 +80,9 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
     using Element = typename GridView::template Codim<0>::Entity;
 
     using FaceFVElementGeometry = typename GridGeometry::FaceFVGridGeometryType::LocalView;
+    using StaggeredScv = typename FaceFVElementGeometry::SubControlVolume;
+    using StaggeredScvf = typename FaceFVElementGeometry::SubControlVolumeFace;
+
 
     using CouplingManager = typename Assembler::CouplingManager;
 
@@ -264,12 +267,31 @@ public:
     {
         auto residual = evalLocalFluxAndSourceResidualForFace(scvf, elemVolVars, elemFaceVars);
 
-        if (!this->assembler().isStationaryProblem())
-            residual += evalLocalStorageResidualForFace(scvf);
+        // TODO remove loop
+        for (const auto& scv : scvs(this->faceFVGeometry()))
+        {
+            if (scv.correspondingCellCenterScvfIndex() == scvf.index())
+            {
+                if (!this->assembler().isStationaryProblem())
+                    residual += evalLocalStorageResidualForFace(scv);
+            }
+        }
 
-        this->localResidual().evalDirichletBoundariesForFace(residual, this->problem(), this->element(),
-                                                             this->fvGeometry(), scvf, elemVolVars, elemFaceVars,
-                                                             this->elemBcTypes(), this->elemFluxVarsCache());
+
+        for (const auto& staggeredScvf : scvfs(this->faceFVGeometry()))
+        {
+            const auto& scv = this->faceFVGeometry().scv(staggeredScvf.insideScvIdx());
+            if (scv.correspondingCellCenterScvfIndex() == scvf.index() && staggeredScvf.boundary() && staggeredScvf.isFrontal())
+            {
+                this->localResidual().evalDirichletBoundariesForFace(residual,
+                                                                     this->problem(),
+                                                                     this->element(),
+                                                                     this->faceFVGeometry(),
+                                                                     staggeredScvf,
+                                                                     elemFaceVars);
+            }
+        }
+
 
         return residual;
     }
@@ -306,9 +328,9 @@ public:
      *        element volume and face variables.
      * \param scvf The sub control volume face
      */
-    FaceResidualValue evalLocalStorageResidualForFace(const SubControlVolumeFace& scvf) const
+    FaceResidualValue evalLocalStorageResidualForFace(const StaggeredScv& scv) const
     {
-        return this->localResidual().evalStorageForFace(this->element(), this->fvGeometry(), this->prevElemVolVars(), this->curElemVolVars(), this->prevElemFaceVars(), this->curElemFaceVars(), scvf);
+        return this->localResidual().evalStorageForFace(this->element(), this->faceFVGeometry(), scv, this->prevElemFaceVars(), this->curElemFaceVars());
     }
 
     const Problem& problem() const
@@ -958,6 +980,7 @@ public:
             assert(eqIdx < matrix[globalI][globalJ].size());
             assert(pvIdx < matrix[globalI][globalJ][eqIdx].size());
             matrix[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+            // Dune::printmatrix(std::cout, matrix, "", "");
         }
     }
 

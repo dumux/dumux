@@ -64,6 +64,9 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
+    using FaceFVElementGeometry = typename GridGeometry::FaceFVGridGeometryType::LocalView;
+    using StaggeredScv = typename FaceFVElementGeometry::SubControlVolume;
+    using StaggeredScvf = typename FaceFVElementGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -143,13 +146,16 @@ public:
 
     //! Evaluate the storage term for the face control volume.
     FacePrimaryVariables computeStorageForFace(const Problem& problem,
-                                               const SubControlVolumeFace& scvf,
-                                               const VolumeVariables& volVars,
+                                               const Element& element,
+                                               const FaceFVElementGeometry& fvGeometry,
+                                               const StaggeredScv& scv,
                                                const ElementFaceVariables& elemFaceVars) const
     {
         FacePrimaryVariables storage(0.0);
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-        storage[0] = volVars.density() * velocity;
+        const Scalar velocity = elemFaceVars[scv].velocitySelf();
+        const auto eIdx = problem.gridGeometry().elementMapper().index(element);
+        const auto density = problem.couplingManager().faceCouplingContext(element, scv).elemVolVars[eIdx].density(); // TODO put in facevars!!!
+        storage[0] = density * velocity;
         return storage;
     }
 
@@ -235,22 +241,20 @@ public:
     void evalDirichletBoundariesForFace(FaceResidual& residual,
                                         const Problem& problem,
                                         const Element& element,
-                                        const FVElementGeometry& fvGeometry,
-                                        const SubControlVolumeFace& scvf,
-                                        const ElementVolumeVariables& elemVolVars,
-                                        const ElementFaceVariables& elemFaceVars,
-                                        const ElementBoundaryTypes& elemBcTypes,
-                                        const ElementFluxVariablesCache& elemFluxVarsCache) const
+                                        const FaceFVElementGeometry& fvGeometry,
+                                        const StaggeredScvf& scvf,
+                                        const ElementFaceVariables& elemFaceVars) const
     {
         if (scvf.boundary())
         {
             // handle the actual boundary conditions:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
+            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
             if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
             {
                 // set a fixed value for the velocity for Dirichlet boundary conditions
-                const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+                const Scalar velocity = elemFaceVars[scv].velocitySelf();
                 const Scalar dirichletValue = problem.dirichlet(element, scvf)[Indices::velocity(scvf.directionIndex())];
                 residual = velocity - dirichletValue;
             }
@@ -258,7 +262,7 @@ public:
             {
                 // for symmetry boundary conditions, there is no flow accross the boundary and
                 // we therefore treat it like a Dirichlet boundary conditions with zero velocity
-                const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+                const Scalar velocity = elemFaceVars[scv].velocitySelf();
                 const Scalar fixedValue = 0.0;
                 residual = velocity - fixedValue;
             }
@@ -300,12 +304,18 @@ public:
             }
             else if(bcTypes.isDirichlet(Indices::pressureIdx))
             {
-                // we are at an "fixed pressure" boundary for which the resdiual of the momentum balance needs to be assembled
-                // as if it where inside the domain and not on the boundary (source term has already been acounted for)
-                result = fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, faceFVGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
+                for (const auto& staggeredScvf : scvfs(faceFVGeometry))
+                {
+                    if (staggeredScvf.boundary() && staggeredScvf.isFrontal())
+                    {
+                        // we are at an "fixed pressure" boundary for which the resdiual of the momentum balance needs to be assembled
+                        // as if it where inside the domain and not on the boundary (source term has already been acounted for)
+                        result = fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, faceFVGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
 
-                // incorporate the inflow or outflow contribution
-                result += fluxVars.inflowOutflowBoundaryFlux(problem, element, scvf, elemVolVars, elemFaceVars);
+                        // incorporate the inflow or outflow contribution
+                        result += fluxVars.inflowOutflowBoundaryFlux(problem, element, faceFVGeometry, staggeredScvf, elemFaceVars);
+                    }
+                }
             }
         }
         return result;

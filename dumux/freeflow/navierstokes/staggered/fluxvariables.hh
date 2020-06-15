@@ -69,8 +69,13 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
     using FaceVariables = typename GridFaceVariables::FaceVariables;
 
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FaceFVElementGeometry = typename GridGeometry::FaceFVGridGeometryType::LocalView;
+    using StaggeredScv = typename FaceFVElementGeometry::SubControlVolume;
+    using StaggeredScvf = typename FaceFVElementGeometry::SubControlVolumeFace;
+
+
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -112,7 +117,7 @@ public:
                                              const SubControlVolumeFace &scvf,
                                              UpwindTerm upwindTerm)
     {
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+        const Scalar velocity = elemFaceVars[scvf.index()].velocitySelf(); // TODO
         const bool insideIsUpstream = scvf.directionSign() == sign(velocity);
         static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
 
@@ -165,7 +170,6 @@ public:
     /*!
      * \brief Returns the momentum flux over all staggered faces.
      */
-    template<class FaceFVElementGeometry>
     FacePrimaryVariables computeMomentumFlux(const Problem& problem,
                                              const Element& element,
                                              const SubControlVolumeFace& scvf,
@@ -186,7 +190,8 @@ public:
                 assert(scvf.area() == staggeredScvf.area());
                 assert(scvf.directionIndex() == staggeredScvf.directionIndex());
                 assert(scvf.directionSign() == staggeredScvf.directionSign());
-                result = computeFrontalMomentumFlux(problem, element, fvGeometry, scvf, staggeredScvf, faceFVGeometry, elemFaceVars, gridFluxVarsCache);
+
+                result = computeFrontalMomentumFlux(problem, element, faceFVGeometry, staggeredScvf, elemFaceVars, gridFluxVarsCache);
             }
         }
 
@@ -194,8 +199,13 @@ public:
 
         // TODO remove asserts
 
-        return result +
-               computeLateralMomentumFlux(problem, element, scvf, fvGeometry, faceFVGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache);
+        for (const auto& staggeredScv : scvs(faceFVGeometry))
+        {
+            if (staggeredScv.dofIndex() == scvf.dofIndex())
+                result += computeLateralMomentumFlux(problem, element, scvf, fvGeometry, faceFVGeometry, staggeredScv, elemVolVars, elemFaceVars, gridFluxVarsCache);
+        }
+
+        return result;
     }
 
     /*!
@@ -215,45 +225,41 @@ public:
      *                   scvf
      * \endverbatim
      */
-    template<class FaceFVElementGeometry>
     FacePrimaryVariables computeFrontalMomentumFlux(const Problem& problem,
                                                     const Element& element,
-                                                    const FVElementGeometry& fvGeometry,
-                                                    const SubControlVolumeFace& scvf,
-                                                    const typename FaceFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
                                                     const FaceFVElementGeometry& faceFVGeometry,
+                                                    const StaggeredScvf& scvf,
                                                     const ElementFaceVariables& elemFaceVars,
                                                     const GridFluxVariablesCache& gridFluxVarsCache)
     {
         FacePrimaryVariables frontalFlux(0.0);
 
         // The velocities of the dof at interest and the one of the opposite scvf.
-        // TODO allow elemFaceVars[staggeredScv]
-        const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
-        const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
-        const auto& faceVars =  elemFaceVars[scvf];
-
-        const auto& staggeredScv = faceFVGeometry.scv(staggeredScvf.insideScvIdx());
-        const auto& context = problem.couplingManager().faceCouplingContext(element, staggeredScv);
+        const auto& scv = faceFVGeometry.scv(scvf.insideScvIdx());
+        const auto& faceVars = elemFaceVars[scv];
+        const auto& context = problem.couplingManager().faceCouplingContext(element, scv);
 
         // Advective flux.
         if (problem.enableInertiaTerms())
         {
-            // Get the average velocity at the center of the element (i.e. the location of the staggered face).
-            const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
-            const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
-
-            StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, context.elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
-            frontalFlux += upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream)
-                           * transportingVelocity * -1.0 * staggeredScvf.directionSign();
+            // const Scalar velocitySelf = faceVars.velocitySelf();
+            // const Scalar velocityOpposite = faceVars.velocityOpposite();
+            // // Get the average velocity at the center of the element (i.e. the location of the staggered face).
+            // const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
+            // const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
+            //
+            // StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, context.elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
+            // frontalFlux += upwindHelper.computeUpwindFrontalMomentum(selfIsUpstream)
+            //                * transportingVelocity * -1.0 * staggeredScvf.directionSign();
         }
 
         // The volume variables within the current element. We only require those (and none of neighboring elements)
         // because the fluxes are calculated over the staggered face at the center of the element.
-        const auto& cellCenterVolVars = context.elemVolVars[scvf.insideScvIdx()];
+        const auto eIdx = faceFVGeometry.gridGeometry().elementMapper().index(element);
+        const auto& cellCenterVolVars = context.elemVolVars[eIdx];
 
         // Diffusive flux.
-        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(faceFVGeometry, staggeredScvf, faceVars) * staggeredScvf.directionSign();
+        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(faceFVGeometry, scvf, faceVars) * scvf.directionSign();
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -265,16 +271,16 @@ public:
         // The scvf is used to normalize by the same value from the left and right side.
         // Can potentially help to improve the condition number of the system matrix.
         const Scalar pressure = normalizePressure ?
-                                cellCenterVolVars.pressure() - problem.initial(scvf)[Indices::pressureIdx] // TODO problem signatures
+                                cellCenterVolVars.pressure() - problem.initial(scv)[Indices::pressureIdx] // TODO problem signatures
                               : cellCenterVolVars.pressure();
 
         // Account for the orientation of the staggered face's normal outer normal vector
         // (pointing in opposite direction of the scvf's one).
-        frontalFlux += pressure * -1.0 * staggeredScvf.directionSign();
+        frontalFlux += pressure * -1.0 * scvf.directionSign();
 
         // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf
         // our velocity dof of interest lives on.
-        return frontalFlux * staggeredScvf.area() * cellCenterVolVars.extrusionFactor();
+        return frontalFlux * scvf.area() * cellCenterVolVars.extrusionFactor();
    }
 
     /*!
@@ -294,33 +300,38 @@ public:
      *                 scvf
      * \endverbatim
      */
-    template<class FaceFVElementGeometry>
     FacePrimaryVariables computeLateralMomentumFlux(const Problem& problem,
                                                     const Element& element,
                                                     const SubControlVolumeFace& scvf,
                                                     const FVElementGeometry& fvGeometry,
                                                     const FaceFVElementGeometry& faceFVGeometry,
+                                                    const StaggeredScv& staggeredScv,
                                                     const ElementVolumeVariables& elemVolVars,
                                                     const ElementFaceVariables& elemFaceVars,
                                                     const GridFluxVariablesCache& gridFluxVarsCache)
     {
         FacePrimaryVariables lateralFlux(0.0);
-        const auto& faceVars = elemFaceVars[scvf];
+        const auto& faceVars = elemFaceVars[staggeredScv];
 
         // If the current scvf is on a boundary, check if there is a Neumann BC for the stress in tangential direction.
         // Create a boundaryTypes object (will be empty if not at a boundary).
         std::optional<BoundaryTypes> currentScvfBoundaryTypes;
-        if (scvf.boundary())
-            currentScvfBoundaryTypes.emplace(problem.boundaryTypes(element, scvf));
+        if (staggeredScv.boundary())
+        {
+            // TODO
+            for (const auto& staggeredScvf : scvfs(faceFVGeometry))
+            {
+                if (staggeredScvf.boundary() && staggeredScvf.isFrontal())
+                    currentScvfBoundaryTypes.emplace(problem.boundaryTypes(element, staggeredScvf));
+            }
+        }
 
         // Account for all sub faces.
         int localSubFaceIdx = 0;
         for (const auto& staggeredScvf : scvfs(faceFVGeometry))
         {
-            if (!staggeredScvf.isLateral() || staggeredScvf.insideScvIdx() != scvf.dofIndex())
+            if (!staggeredScvf.isLateral() || staggeredScvf.insideScvIdx() != staggeredScv.dofIndex())
                 continue;
-
-            const auto& staggeredScv = faceFVGeometry.scv(staggeredScvf.insideScvIdx());
 
             // Create a boundaryTypes object (will be empty if not at a boundary).
             std::optional<BoundaryTypes> lateralFaceBoundaryTypes;
@@ -440,22 +451,27 @@ public:
      */
     FacePrimaryVariables inflowOutflowBoundaryFlux(const Problem& problem,
                                                    const Element& element,
-                                                   const SubControlVolumeFace& scvf,
-                                                   const ElementVolumeVariables& elemVolVars,
+                                                   const FaceFVElementGeometry& faceFVGeometry,
+                                                   const StaggeredScvf& scvf,
                                                    const ElementFaceVariables& elemFaceVars) const
     {
         FacePrimaryVariables inOrOutflow(0.0);
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& scv = faceFVGeometry.scv(scvf.insideScvIdx());
+        const auto& context = problem.couplingManager().faceCouplingContext(element, scv);
+
+        const auto eIdx = problem.gridGeometry().elementMapper().index(element);
+        const auto& insideVolVars = context.elemVolVars[eIdx];
 
         // Advective momentum flux.
         if (problem.enableInertiaTerms())
         {
-            const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-            const auto& upVolVars = (scvf.directionSign() == sign(velocitySelf)) ?
-                                    insideVolVars : outsideVolVars;
-
-            inOrOutflow += velocitySelf * velocitySelf * upVolVars.density();
+            // TODO
+            // const Scalar velocitySelf = elemFaceVars[scv].velocitySelf();
+            // const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+            // const auto& upVolVars = (scvf.directionSign() == sign(velocitySelf)) ?
+            //                         insideVolVars : outsideVolVars;
+            //
+            // inOrOutflow += velocitySelf * velocitySelf * upVolVars.density();
         }
 
         // Apply a pressure at the boundary.

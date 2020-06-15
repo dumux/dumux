@@ -52,6 +52,11 @@ class StaggeredLocalResidual
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
 
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FaceFVElementGeometry = typename GridGeometry::FaceFVGridGeometryType::LocalView;
+    using StaggeredScv = typename FaceFVElementGeometry::SubControlVolume;
+    using StaggeredScvf = typename FaceFVElementGeometry::SubControlVolumeFace;
+
     using CellCenterResidual = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FaceResidual = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
     using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
@@ -252,16 +257,14 @@ public:
 
     //! Evaluate the storage terms for a face residual
     FaceResidualValue evalStorageForFace(const Element& element,
-                                         const FVElementGeometry& fvGeometry,
-                                         const ElementVolumeVariables& prevElemVolVars,
-                                         const ElementVolumeVariables& curElemVolVars,
+                                         const FaceFVElementGeometry& fvGeometry,
+                                         const StaggeredScv& scv,
                                          const ElementFaceVariables& prevElemFaceVars,
-                                         const ElementFaceVariables& curElemFaceVars,
-                                         const SubControlVolumeFace& scvf) const
+                                         const ElementFaceVariables& curElemFaceVars) const
     {
         assert(timeLoop_ && "no time loop set for storage term evaluation");
         FaceResidualValue storage(0.0);
-        asImp().evalStorageForFace(storage, problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, scvf);
+        asImp().evalStorageForFace(storage, problem(), element, fvGeometry, scv, prevElemFaceVars, curElemFaceVars);
         return storage;
     }
 
@@ -269,25 +272,22 @@ public:
     void evalStorageForFace(FaceResidualValue& residual,
                             const Problem& problem,
                             const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& prevElemVolVars,
-                            const ElementVolumeVariables& curElemVolVars,
+                            const FaceFVElementGeometry& fvGeometry,
+                            const StaggeredScv& scv,
                             const ElementFaceVariables& prevElemFaceVars,
-                            const ElementFaceVariables& curElemFaceVars,
-                            const SubControlVolumeFace& scvf) const
+                            const ElementFaceVariables& curElemFaceVars) const
     {
         FaceResidualValue storage(0.0);
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        auto prevFaceStorage = asImp_().computeStorageForFace(problem, scvf, prevElemVolVars[scv], prevElemFaceVars);
-        auto curFaceStorage = asImp_().computeStorageForFace(problem, scvf, curElemVolVars[scv], curElemFaceVars);
+        auto prevFaceStorage = asImp_().computeStorageForFace(problem, element, fvGeometry, scv, prevElemFaceVars);
+        auto curFaceStorage = asImp_().computeStorageForFace(problem, element, fvGeometry, scv, curElemFaceVars);
 
         storage = std::move(curFaceStorage);
         storage -= std::move(prevFaceStorage);
 
-        const auto extrusionFactor = curElemVolVars[scv].extrusionFactor();
+        const auto extrusionFactor = 1; //curElemVolVars[scv].extrusionFactor(); TODO put in facevars!!!
 
         // multiply by 0.5 because we only consider half of a staggered control volume here
-        storage *= 0.5*scv.volume()*extrusionFactor;
+        storage *= scv.volume()*extrusionFactor;
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;
