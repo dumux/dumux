@@ -30,6 +30,9 @@
 #include <cmath>
 #include <algorithm>
 #include <numeric>
+#include <iterator>
+#include <utility>
+#include <tuple>
 
 #include <dune/common/fvector.hh>
 
@@ -227,6 +230,49 @@ inline bool pointInEllipse(const GlobalPosition& p,
 
     return (da*da/(a*a) + db*db/(b*b) < 1.0);
 }
+
+//! construct evenly distributed integration points on an ellipse
+template<class GlobalPosition>
+inline std::pair<std::vector<GlobalPosition>, typename GlobalPosition::value_type>
+ellipseIntegrationPoints(const GlobalPosition& center,
+                         const GlobalPosition& firstUnitAxis,
+                         const GlobalPosition& secondUnitAxis,
+                         typename GlobalPosition::value_type a,
+                         typename GlobalPosition::value_type b,
+                         const GlobalPosition& normal,
+                         typename GlobalPosition::value_type characteristicLength)
+{
+    // choose step size in a-direction
+    const auto aStep = characteristicLength;
+
+    using std::floor;
+    const std::size_t aSamples = std::max<std::size_t>(floor(2*a/aStep), 1);
+    const std::size_t bSamples = std::max<std::size_t>(floor(2*b/aStep), 1);
+    const auto bStep = 2*b / bSamples;
+
+    // reserve upper limit estimate for memory needed
+    std::vector<GlobalPosition> points;
+    points.reserve(aSamples*bSamples);
+
+    // walk over lattice grid and reject points outside the ellipse
+    auto startAB = center;
+    startAB.axpy(-a + 0.5*aStep, firstUnitAxis);
+    startAB.axpy(-b + 0.5*bStep, secondUnitAxis);
+    for (std::size_t as = 0; as < aSamples; ++as)
+    {
+        auto posA = startAB;
+        posA.axpy(as*aStep, firstUnitAxis);
+        for (std::size_t bs = 0; bs < bSamples; ++bs)
+        {
+            auto pos = posA;
+            pos.axpy(bs*bStep, secondUnitAxis);
+            if (pointInEllipse(pos, center, firstUnitAxis, secondUnitAxis, normal, a, b))
+                points.emplace_back(std::move(pos));
+        }
+    }
+    // return points and integration element
+    return {points, aStep*bStep};
+}
 } // end namespace Impl
 
 /*!
@@ -248,80 +294,67 @@ class EllipticCylinderIntegration
 public:
     /*!
      * \brief Constructor
-     * \param aStep characteristic relative integration length (real number between 0 and 1)
+     * \param relCharLength characteristic relative integration length (real number between 0 and 1)
      * \note half the characteristic length means 2*2*2=8 times more integration points
      */
-    explicit EllipticCylinderIntegration(const Scalar aStep)
-    : aCharLength_(aStep)
+    explicit EllipticCylinderIntegration(const Scalar relCharLength)
+    : relCharLength_(relCharLength)
     {}
 
     /*!
      * \brief Set the geometry of elliptic cylinder
      * \param bottomCenter bottom center position
      * \param topCenter top center position
-     * \param firstAxis first ellipse axis
-     * \param secondAxis second ellipse axis
+     * \param firstAxis first ellipse axis (length corresponding to axis length)
+     * \param secondAxis second ellipse axis (length corresponding to axis length)
      * \param verbosity the verbosity level (default: 0 -> no terminal output)
      */
     void setGeometry(const GlobalPosition& bottomCenter,
                      const GlobalPosition& topCenter,
-                     GlobalPosition firstAxis,
-                     GlobalPosition secondAxis,
+                     const GlobalPosition& firstAxis,
+                     const GlobalPosition& secondAxis,
                      int verbosity = 0)
     {
+        const auto a = firstAxis.two_norm();
+        const auto b = secondAxis.two_norm();
+        const auto characteristicLength = relCharLength_*a;
+
+        auto firstUnitAxis = firstAxis; firstUnitAxis /= a;
+        auto secondUnitAxis = secondAxis; secondUnitAxis /= b;
+        const auto normal = crossProduct(firstUnitAxis, secondUnitAxis);
+
         auto zAxis = (topCenter-bottomCenter);
         const auto length = zAxis.two_norm();
         zAxis /= length;
-        const auto a = firstAxis.two_norm();
-        const auto b = secondAxis.two_norm();
-        firstAxis /= a;
-        secondAxis /= b;
-        const auto normal = crossProduct(firstAxis, secondAxis);
         const auto height = (zAxis*normal)*length;
-
-        const auto aStep = aCharLength_*a;
         using std::floor;
-        const std::size_t aSamples = std::max<std::size_t>(floor(2*a/aStep), 1);
-        const std::size_t bSamples = std::max<std::size_t>(floor(2*b/aStep), 1);
-        const std::size_t zSamples = std::max<std::size_t>(floor(height/aStep), 1);
-        const auto bStep = 2*b / Scalar(bSamples);
+        const std::size_t zSamples = std::max<std::size_t>(floor(height/characteristicLength), 1);
         const auto zStep = length / Scalar(zSamples);
         const auto zStepFactor = length/height;
 
-        integrationElement_ = aStep*bStep*zStep/zStepFactor;
-        points_.clear();
-        points_.reserve(aSamples*bSamples*zSamples);
-
         // walk over lattice grid and reject points outside the ellipse
-        auto startZ = bottomCenter; startZ.axpy(0.5*zStep, zAxis);
-        auto startAB = startZ;
-        startAB.axpy(-a + 0.5*aStep, firstAxis);
-        startAB.axpy(-b + 0.5*bStep, secondAxis);
-        for (std::size_t as = 0; as < aSamples; ++as)
-        {
-            auto posA = startAB;
-            posA.axpy(as*aStep, firstAxis);
-            for (std::size_t bs = 0; bs < bSamples; ++bs)
-            {
-                auto pos = posA;
-                pos.axpy(bs*bStep, secondAxis);
-                if (Impl::pointInEllipse(pos, startZ, firstAxis, secondAxis, normal, a, b))
-                    points_.emplace_back(std::move(pos));
-            }
-        }
+        auto startZ = bottomCenter;
+        startZ.axpy(0.5*zStep, zAxis);
+        auto [ellipseIPs, ellipseIntegrationElement]
+            = Impl::ellipseIntegrationPoints(startZ, firstUnitAxis, secondUnitAxis, a, b, normal, characteristicLength);
 
-        const auto abPoints = points_.size();
+        // compute total number of points
+        const auto abPoints = ellipseIPs.size();
         numPoints_ = abPoints*zSamples;
-        points_.resize(numPoints_);
 
+        // first move in the first layer of ellipse integration points
+        points_.clear();
+        points_.reserve(numPoints_);
+        std::move(ellipseIPs.begin(), ellipseIPs.end(), std::back_inserter(points_));
+
+        // then extrude along the z axis
+        auto zStepVector = zAxis; zStepVector *= zStep;
         for (std::size_t zs = 1; zs < zSamples; ++zs)
-        {
-            auto zOffset = zAxis; zOffset *= zs*zStep;
-            std::transform(points_.begin(), points_.begin() + abPoints, points_.begin() + zs*abPoints,
-                           [&zOffset](const auto& p){ return p + zOffset; });
-        }
+            std::transform(points_.end() - abPoints, points_.end(), std::back_inserter(points_),
+                           [&](const auto& p){ return p + zStepVector; });
 
-        // error correction to obtain exact integral of constant functions
+        // computation and error correction for integral element to obtain exact integral of constant functions
+        integrationElement_ = ellipseIntegrationElement*zStep/zStepFactor;
         const auto meanLocalError = (height*a*b*M_PI - integrationElement_*numPoints_)/Scalar(numPoints_);
         integrationElement_ += meanLocalError;
 
@@ -330,7 +363,6 @@ public:
             std::cout << "EllipticCylinderIntegration -- number of integration points: " << numPoints_ <<"\n";
             if (verbosity > 1)
                 std::cout << "  -- a: " << a << ", b: " << b << ", h: " << height << "\n"
-                          << "  -- aSamples: " << aSamples << ", bSamples: " << bSamples << ", zSamples: " << zSamples << "\n"
                           << "  -- volume: " << integrationElement_*numPoints_ << " (expected " << height*a*b*M_PI << ")\n"
                           << "  -- corrected a volume error of: " << meanLocalError/integrationElement_*100 << "%\n";
         }
@@ -349,7 +381,7 @@ public:
     { return numPoints_; }
 
 private:
-    const Scalar aCharLength_;
+    const Scalar relCharLength_;
     std::size_t numPoints_;
     Scalar integrationElement_;
     std::vector<GlobalPosition> points_;
@@ -373,63 +405,42 @@ class EllipseIntegration
 public:
     /*!
      * \brief Constructor
-     * \param aStep characteristic relative integration length (real number between 0 and 1)
+     * \param relCharLength characteristic relative integration length (real number between 0 and 1)
      * \note half the characteristic length means 2*2=4 times more integration points
      */
-    explicit EllipseIntegration(const Scalar aStep)
-    : aCharLength_(aStep)
+    explicit EllipseIntegration(const Scalar relCharLength)
+    : relCharLength_(relCharLength)
     {}
 
     /*!
      * \brief set geometry of an ellipse
      * \param center the center position
-     * \param firstAxis first ellipse axis
-     * \param secondAxis second ellipse axis
+     * \param firstAxis first ellipse axis (length corresponding to axis length)
+     * \param secondAxis second ellipse axis (length corresponding to axis length)
      * \param verbosity the verbosity level (default: 0 -> no terminal output)
      */
     void setGeometry(const GlobalPosition& center,
-                     GlobalPosition firstAxis,
-                     GlobalPosition secondAxis,
+                     const GlobalPosition& firstAxis,
+                     const GlobalPosition& secondAxis,
                      int verbosity = 0)
     {
         const auto a = firstAxis.two_norm();
         const auto b = secondAxis.two_norm();
-        firstAxis /= a;
-        secondAxis /= b;
-        const auto normal = crossProduct(firstAxis, secondAxis);
+        const auto characteristicLength = relCharLength_*a;
 
-        const auto aStep = aCharLength_*a;
-        using std::floor;
-        const std::size_t aSamples = std::max<std::size_t>(floor(2*a/aStep), 1);
-        const std::size_t bSamples = std::max<std::size_t>(floor(2*b/aStep), 1);
-        const auto bStep = 2*b / Scalar(bSamples);
+        auto firstUnitAxis = firstAxis; firstUnitAxis /= a;
+        auto secondUnitAxis = secondAxis; secondUnitAxis /= b;
+        const auto normal = crossProduct(firstUnitAxis, secondUnitAxis);
 
-        integrationElement_ = aStep*bStep;
-        points_.reserve(aSamples*bSamples);
-
-        // walk over lattice grid an reject point outside the ellipse
-        auto startZ = center;
-        auto startAB = startZ;
-        startAB.axpy(-a + 0.5*aStep, firstAxis);
-        startAB.axpy(-b + 0.5*bStep, secondAxis);
-        for (std::size_t as = 0; as < aSamples; ++as)
-        {
-            auto posA = startAB;
-            posA.axpy(as*aStep, firstAxis);
-            for (std::size_t bs = 0; bs < bSamples; ++bs)
-            {
-                auto pos = posA;
-                pos.axpy(bs*bStep, secondAxis);
-                if (Impl::pointInEllipse(pos, startZ, firstAxis, secondAxis, normal, a, b))
-                    points_.emplace_back(std::move(pos));
-            }
-        }
+        // generate integration points
+        std::tie(points_, integrationElement_)
+            = Impl::ellipseIntegrationPoints(center, firstUnitAxis, secondUnitAxis, a, b, normal, characteristicLength);
 
         // store number of sample points
         const auto abPoints = points_.size();
         numPoints_ = abPoints;
 
-        // error correction to obtain exact integral of constant functions
+        // computation and error correction for integral element to obtain exact integral of constant functions
         const auto meanLocalError = (a*b*M_PI - integrationElement_*numPoints_)/Scalar(numPoints_);
         integrationElement_ += meanLocalError;
 
@@ -438,7 +449,6 @@ public:
             std::cout << "EllipseIntegration -- number of integration points: " << numPoints_ << "\n";
             if (verbosity > 1)
                 std::cout << "  -- a: " << a << ", b: " << b << "\n"
-                          << "  -- aSamples: " << aSamples << ", bSamples: " << bSamples << "\n"
                           << "  -- area: " << integrationElement_*numPoints_ << " (expected " << a*b*M_PI << ")\n"
                           << "  -- corrected an area error of: " << meanLocalError/integrationElement_*100 << "%\n";
         }
@@ -457,7 +467,7 @@ public:
     { return numPoints_; }
 
 private:
-    const Scalar aCharLength_;
+    const Scalar relCharLength_;
     std::size_t numPoints_;
     Scalar integrationElement_;
     std::vector<GlobalPosition> points_;
