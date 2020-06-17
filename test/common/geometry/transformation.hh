@@ -49,7 +49,6 @@ auto make1DTransformation(const ctype scale,
     return [=](Dune::FieldVector<ctype, 1> p){
         p *= scale;
         p.axpy(scale, translate);
-        auto tp = p;
         return p;
     };
 }
@@ -76,12 +75,11 @@ auto make2DTransformation(const ctype scale,
     const ctype sinAngle = sin(rotationAngle);
     const ctype cosAngle = cos(rotationAngle);
     return [=](Dune::FieldVector<ctype, 2> p){
-        p *= scale;
-        p.axpy(scale, translate);
         auto tp = p;
         tp[0] = p[0]*cosAngle-p[1]*sinAngle;
         tp[1] = p[0]*sinAngle+p[1]*cosAngle;
-        return tp;
+        tp *= scale;
+        return tp.axpy(scale, translate);
     };
 }
 
@@ -98,7 +96,7 @@ auto make3DTransformation(const ctype scale,
                           bool verbose = true)
 {
     if (verbose)
-        std::cout << "Created transformation with"
+        std::cout << "Created 3D transformation with"
                   << " ctype: " << Dune::className<ctype>()
                   << ", scaling: " << scale
                   << ", translation: " << translate
@@ -109,12 +107,12 @@ auto make3DTransformation(const ctype scale,
     const ctype sinAngle = sin(rotationAngle);
     const ctype cosAngle = cos(rotationAngle);
     return [=](Dune::FieldVector<ctype, 3> p){
-        p *= scale;
-        p.axpy(scale, translate);
         auto tp = p;
         tp *= cosAngle;
         tp.axpy(sinAngle, Dumux::crossProduct({rotationAxis}, p));
-        return tp.axpy((1.0-cosAngle)*(rotationAxis*p), rotationAxis);
+        tp.axpy((1.0-cosAngle)*(rotationAxis*p), rotationAxis);
+        tp *= scale;
+        return tp.axpy(scale, translate);
     };
 }
 
