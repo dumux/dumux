@@ -96,7 +96,7 @@ auto make3DTransformation(const ctype scale,
                           bool verbose = true)
 {
     if (verbose)
-        std::cout << "Created transformation with"
+        std::cout << "Created 3D transformation with"
                   << " ctype: " << Dune::className<ctype>()
                   << ", scaling: " << scale
                   << ", translation: " << translate
