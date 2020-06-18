@@ -26,9 +26,9 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/material/fluidsystems/1padapter.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
+
 #include <dumux/freeflow/turbulenceproperties.hh>
 
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
@@ -46,6 +46,8 @@
 #include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
 #include <dumux/freeflow/compositional/kepsilonncmodel.hh>
 
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 namespace Dumux {
 
@@ -119,7 +121,7 @@ class FlatPlateNCTestProblem : public RANSProblem<TypeTag>
 {
     using ParentType = RANSProblem<TypeTag>;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

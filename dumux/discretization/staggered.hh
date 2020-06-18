@@ -28,6 +28,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERD_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
@@ -46,6 +47,7 @@
 
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -137,10 +139,11 @@ struct FacePrimaryVariables<TypeTag, TTag::StaggeredModel>
                                    getPropValue<TypeTag, Properties::NumEqFace>()>;
 };
 
+DUNE_NO_DEPRECATED_BEGIN
 //! Boundary types at a single degree of freedom
 template<class TypeTag>
 struct BoundaryTypes<TypeTag, TTag::StaggeredModel> { using type = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
-
+DUNE_NO_DEPRECATED_END
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 
@@ -199,6 +202,24 @@ public:
 };
 
 } // namespace Properties
+
+namespace Impl {
+
+template<class Problem>
+struct ProblemTraits<Problem, DiscretizationMethod::staggered>
+{
+private:
+    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using Element = typename GG::GridView::template Codim<0>::Entity;
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
+public:
+    using GridGeometry = GG;
+    // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scvf)
+    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
+};
+
+} // end namespace Impl
+
 } // namespace Dumux
 
 #endif

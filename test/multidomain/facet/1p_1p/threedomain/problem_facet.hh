@@ -28,6 +28,8 @@
 
 #include <dune/foamgrid/foamgrid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
@@ -104,7 +106,7 @@ class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:

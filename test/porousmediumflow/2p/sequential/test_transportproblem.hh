@@ -103,7 +103,7 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 

@@ -27,6 +27,8 @@
 
 #include <dune/alugrid/grid.hh>
 
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/multidomain/facet/box/properties.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
 #include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
@@ -114,7 +116,7 @@ class TracerBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;

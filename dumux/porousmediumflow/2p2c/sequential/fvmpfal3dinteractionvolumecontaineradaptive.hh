@@ -56,7 +56,7 @@ class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteract
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
     using PrimaryVariables = typename GetProp<TypeTag, Properties::SolutionTypes>::PrimaryVariables;
 
     using GridTypeIndices = GetPropType<TypeTag, Properties::GridTypeIndices>;

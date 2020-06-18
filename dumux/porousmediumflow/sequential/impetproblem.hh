@@ -84,7 +84,7 @@ private:
     using GridAdaptModel = GetPropType<TypeTag, Properties::GridAdaptModel>;
 
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 
     //private!! copy constructor
     IMPETProblem(const IMPETProblem&)

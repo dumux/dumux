@@ -26,15 +26,16 @@
 
 #include <array>
 #include <optional>
+#include <type_traits>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
-
 
 #include "staggeredupwindhelper.hh"
 #include "velocitygradients.hh"
@@ -82,7 +83,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using FaceLateralSubControlVolumeFace = typename GridGeometry::Traits::FaceLateralSubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
     using VelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry, BoundaryTypes, Indices>;
 
     static constexpr bool normalizePressure = getPropValue<TypeTag, Properties::NormalizePressure>();
@@ -504,7 +505,7 @@ private:
             else
             {
                 // Create a boundaryTypes object. Get the boundary conditions. We sample the type of BC at the center of the current scvf.
-                const BoundaryTypes bcTypes = problem.boundaryTypes(element, scvf);
+                const auto bcTypes = problem.boundaryTypes(element, scvf);
 
                 if (bcTypes.isDirichlet(Indices::velocity(lateralFace.directionIndex())))
                 {

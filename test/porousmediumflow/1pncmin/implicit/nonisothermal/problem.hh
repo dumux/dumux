@@ -29,6 +29,8 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/porousmediumflow/1pncmin/model.hh>
+#include <dumux/common/boundarytypes.hh>
+
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -129,7 +131,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

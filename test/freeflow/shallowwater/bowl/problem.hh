@@ -24,6 +24,7 @@
 #ifndef DUMUX_BOWL_TEST_PROBLEM_HH
 #define DUMUX_BOWL_TEST_PROBLEM_HH
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 
@@ -74,7 +75,7 @@ class BowlProblem : public ShallowWaterProblem<TypeTag>
     using NeumannFluxes = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 
 
 public:

@@ -130,7 +130,7 @@ using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
 using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 using PrimaryVariables = typename GetProp<TypeTag, Properties::SolutionTypes>::PrimaryVariables;
 
 enum

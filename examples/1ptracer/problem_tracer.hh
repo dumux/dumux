@@ -28,9 +28,11 @@
 // [[content]]
 //
 // ### Include files
-// The only include we need here is the `PorousMediumFlowProblem` class, the base
-// class for Problems from which we will derive.
+// Include the `PorousMediumFlowProblem` class, the base
+// class from which we will derive.
 #include <dumux/porousmediumflow/problem.hh>
+// Include the `BoundaryTypes` class which specifies the boundary types set in this problem.
+#include <dumux/common/boundarytypes.hh>
 
 // ### The problem class
 //
@@ -49,8 +51,8 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;

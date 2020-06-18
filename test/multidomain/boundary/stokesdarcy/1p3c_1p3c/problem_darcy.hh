@@ -28,15 +28,15 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
-#include <dumux/flux/maxwellstefanslaw.hh>
 
-#include <dumux/porousmediumflow/1pnc/model.hh>
-#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/common/boundarytypes.hh>
+
+#include <dumux/flux/maxwellstefanslaw.hh>
 
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
-// for StokesDarcyCouplingOptions
-#include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
+#include <dumux/porousmediumflow/1pnc/model.hh>
+#include <dumux/porousmediumflow/problem.hh>
 
 #include "../1p2c_1p2c/spatialparams.hh"
 #include "h2n2co2fluidsystem.hh"
@@ -101,7 +101,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

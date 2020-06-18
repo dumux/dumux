@@ -37,6 +37,7 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/compositional/kepsilonncmodel.hh>
 #include <dumux/freeflow/compositional/lowrekepsilonncmodel.hh>
@@ -125,7 +126,7 @@ private:
     class MockProblem : public BaseProblem
     {
         using ParentType = BaseProblem;
-        using BoundaryTypes = GetPropType<TTag, Properties::BoundaryTypes>;
+        using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
         using Scalar = GetPropType<TTag, Properties::Scalar>;
         using Traits = GetPropType<TTag, Properties::ModelTraits>;
     public:

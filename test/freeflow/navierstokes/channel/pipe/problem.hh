@@ -23,6 +23,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 namespace Dumux {
 
@@ -38,11 +39,11 @@ class FreeFlowPipeProblem : public NavierStokesProblem<TypeTag>
     using GridView = typename GridGeometry::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using BoundaryTypes = NavierStokesBoundaryTypes<PrimaryVariables::size()>;
 
 public:
     FreeFlowPipeProblem(std::shared_ptr<const GridGeometry> gridGeometry)

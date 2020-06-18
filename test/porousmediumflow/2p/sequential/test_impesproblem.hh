@@ -169,7 +169,7 @@ using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
 using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 

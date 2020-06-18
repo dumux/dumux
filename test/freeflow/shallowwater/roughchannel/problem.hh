@@ -28,6 +28,7 @@
 #include <dumux/discretization/cctpfa.hh>
 #include "spatialparams.hh"
 #include <dumux/common/parameters.hh>
+#include <dumux/common/boundarytypes.hh>
 
 #include <dumux/freeflow/shallowwater/model.hh>
 #include <dumux/freeflow/shallowwater/problem.hh>
@@ -113,7 +114,7 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 {
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

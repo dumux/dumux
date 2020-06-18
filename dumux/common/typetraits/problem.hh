@@ -18,20 +18,33 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup StaggeredDiscretization
- * \copydoc Dumux::StaggeredFreeFlowBoundaryTypes
+ * \ingroup Typetraits
+ * \brief Type traits for problem classes
  */
-#ifndef STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
-#define STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
+#ifndef DUMUX_TYPETRAITS_PROBLEM_HH
+#define DUMUX_TYPETRAITS_PROBLEM_HH
 
-#warning "This header is deprecated. Use dumux/freeflow/navierstokes/boundarytypes.hh"
-
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+#include <type_traits>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
-template <int numEq>
-using StaggeredFreeFlowBoundaryTypes [[deprecated("Use NavierStokesBoundaryTypes instead. Will be removed after 3.3")]] = NavierStokesBoundaryTypes<numEq>;
+// forward declare
+namespace Impl {
+template<class Problem, DiscretizationMethod dm>
+struct ProblemTraits;
+} // end namespace Impl
+
+/*!
+ * \ingroup Common
+ * \brief Type traits for problem classes.
+ */
+template<class Problem>
+struct ProblemTraits
+{
+    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using BoundaryTypes = typename Impl::template ProblemTraits<Problem, GridGeometry::discMethod>::BoundaryTypes;
+};
 
 } // end namespace Dumux
 

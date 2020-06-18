@@ -31,6 +31,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/staggeredupwindmethods.hh>
@@ -71,7 +72,7 @@ class StaggeredUpwindHelper
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
     using VelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry, BoundaryTypes, Indices>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

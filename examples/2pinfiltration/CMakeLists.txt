@@ -3,7 +3,7 @@ dune_symlink_to_source_files(FILES "initialsolutioncc.txt")
 
 # using tpfa and point source
 dumux_add_test(NAME example_2p_pointsource_adaptive
-               LABELS porousmediumflow 2p
+               LABELS porousmediumflow 2p example
                SOURCES main.cc
                CMAKE_GUARD dune-alugrid_FOUND
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

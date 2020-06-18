@@ -89,7 +89,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 
     enum
     {

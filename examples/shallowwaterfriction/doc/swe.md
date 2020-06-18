@@ -162,6 +162,12 @@ the model boundaries.
 #include <dumux/freeflow/shallowwater/boundaryfluxes.hh>
 ```
 
+Include the `BoundaryTypes` class which specifies the boundary types set in this problem.
+
+```cpp
+#include <dumux/common/boundarytypes.hh>
+```
+
 ### The problem class
 We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 In addition the analytical solution of the problem is calculated.
@@ -176,7 +182,7 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     // A few convenience aliases used throughout this class.
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

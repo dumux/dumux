@@ -56,7 +56,7 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2p: public FvMpfaL2dPress
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using CellData = GetPropType<TypeTag, Properties::CellData>;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 

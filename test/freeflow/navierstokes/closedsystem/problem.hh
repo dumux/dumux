@@ -27,12 +27,16 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/constant.hh>
-
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
+
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
+
+#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+
+#include "../l2error.hh"
 
 namespace Dumux {
 template <class TypeTag>
@@ -83,7 +87,7 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;

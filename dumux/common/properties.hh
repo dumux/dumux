@@ -67,8 +67,9 @@ template<class TypeTag, class MyTypeTag>
 struct JacobianMatrix { using type = UndefinedProperty; };         //!< Type of the global jacobian matrix
 template<class TypeTag, class MyTypeTag>
 struct SolutionVector { using type = UndefinedProperty; };         //!< Vector containing all primary variable vector of the grid
+
 template<class TypeTag, class MyTypeTag>
-struct BoundaryTypes { using type = UndefinedProperty; };          //!< Stores the boundary types of a single degree of freedom
+struct [[deprecated("BoundaryTypes will be removed after 3.3. Deduce boundary types from Problem.")]] BoundaryTypes { using type = UndefinedProperty; };          //!< Stores the boundary types of a single degree of freedom
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.

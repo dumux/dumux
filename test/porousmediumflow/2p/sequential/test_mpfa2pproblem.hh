@@ -154,7 +154,7 @@ using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::Wetting
 
 using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
 using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
 using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 

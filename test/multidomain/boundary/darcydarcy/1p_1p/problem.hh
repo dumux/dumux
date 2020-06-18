@@ -26,6 +26,7 @@
 #define DUMUX_ONEP_SUB_TEST_PROBLEM_HH
 
 #include <dune/common/indices.hh>
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include "spatialparams.hh"
 
@@ -54,7 +55,7 @@ class OnePTestProblem
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     static constexpr auto domainIdx = Dune::index_constant<tag>{};

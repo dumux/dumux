@@ -92,7 +92,7 @@ class MimeticTwoPLocalStiffnessAdaptive: public LocalStiffness<TypeTag, 1>
     using Grid = typename GridView::Grid;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using BoundaryTypes = GetPropType<TypeTag, Properties::BoundaryTypes>;
+    using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
     using SolutionTypes = GetProp<TypeTag, Properties::SolutionTypes>;
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using CellData = GetPropType<TypeTag, Properties::CellData>;
