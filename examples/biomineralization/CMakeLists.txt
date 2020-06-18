@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES injection_checkpoints.dat injection_type.dat 
 
 # compile MICP simplified chemistry column setup
 dumux_add_test(NAME example_biomineralization
-               LABELS porousmediumflow
+               LABELS porousmediumflow example
                SOURCES main.cc
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy
