@@ -39,7 +39,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
@@ -63,9 +64,33 @@ int main(int argc, char** argv) try
     // parse command line arguments and input file
     Parameters::init(argc, argv);
 
-    // try to create a grid (from the given grid file or the input file)
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    // create a grid
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    Dumux::GridManager<Grid> gridManager;
+
+#if HAVE_DUNE_SUBGRID
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    const bool isStaircaseGeometry = getParam<bool>("Problem.IsStaircaseGeometry", false);
+
+    auto selector = [&](const auto& element)
+    {
+        if (!isStaircaseGeometry)
+            return true;
+
+        const Scalar deltaX = 0.003;
+        const Scalar deltaZ = 0.000075;
+        const Scalar deltaY = 0.0003;
+
+        const Scalar eps = 1e-8;
+        const auto globalPos = element.geometry().center();
+
+        return globalPos[2] > (deltaZ/deltaX * globalPos[0] + deltaZ/deltaY * globalPos[1] - deltaZ + eps);
+    };
+
+    gridManager.init(selector, "Internal");
+#else
     gridManager.init();
+#endif
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
@@ -118,14 +143,14 @@ int main(int argc, char** argv) try
                     GetPropType<TypeTag, Properties::ModelTraits>,
                     GetPropType<TypeTag, Properties::LocalResidual>> flux(*gridVariables, x);
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
     const Scalar xMin = gridGeometry->bBoxMin()[0];
     const Scalar xMax = gridGeometry->bBoxMax()[0];
     const Scalar yMin = gridGeometry->bBoxMin()[1];
     const Scalar yMax = gridGeometry->bBoxMax()[1];
-#if DIM_3D
+
+#if GRID_DIM == 3
     const Scalar zMin = gridGeometry->bBoxMin()[2];
     const Scalar zMax = gridGeometry->bBoxMax()[2];
 #endif
@@ -136,7 +161,7 @@ int main(int argc, char** argv) try
     // In this case, we add half a cell-width to the x-position in order to make sure that
     // the cell faces lie on the plane. This assumes a regular cartesian grid.
     // The second plane is placed at the outlet of the channel.
-#if DIM_3D
+#if GRID_DIM == 3
     const auto p0inlet = GlobalPosition{xMin, yMin, zMin};
     const auto p1inlet = GlobalPosition{xMin, yMax, zMin};
     const auto p2inlet = GlobalPosition{xMin, yMin, zMax};
@@ -157,7 +182,7 @@ int main(int argc, char** argv) try
 
     const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
 
-#if DIM_3D
+#if GRID_DIM == 3
     const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin, zMin};
     const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax, zMin};
     const auto p2middle = GlobalPosition{planePosMiddleX + offsetX, yMin, zMax};
@@ -170,7 +195,7 @@ flux.addSurface("middle", p0middle, p1middle);
 #endif
 
     // The second plane is placed at the outlet of the channel.
-#if DIM_3D
+#if GRID_DIM == 3
     const auto p0outlet = GlobalPosition{xMax, yMin, zMin};
     const auto p1outlet = GlobalPosition{xMax, yMax, zMin};
     const auto p2outlet = GlobalPosition{xMax, yMin, zMax};
