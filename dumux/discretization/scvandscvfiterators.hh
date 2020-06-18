@@ -131,13 +131,8 @@ public:
         auto begin = vector.begin();
         const auto end = vector.end();
 
-        while (true)
-        {
-            if (begin == end || fvGeometry.scvf(*begin).insideScvIdx() == scvIdx)
-                break;
-            else
-                begin++;
-        }
+        while (begin != end && fvGeometry.scvf(*begin).insideScvIdx() != scvIdx)
+            ++begin;
 
         return SkippingScvfIterator(begin, end, fvGeometry, scvIdx);
     }
@@ -160,12 +155,9 @@ public:
 
     void increment()
     {
-        while (true)
-        {
-            it_++;
-            if (it_ == itEnd_ || dereference().insideScvIdx() == scvIdx_)
-                break;
-        }
+        ++it_;
+        while (it_ != itEnd_ && dereference().insideScvIdx() != scvIdx_)
+            ++it_;
     }
 
 private:
