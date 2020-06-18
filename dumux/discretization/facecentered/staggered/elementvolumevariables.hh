@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup StaggeredDiscretization
- * \copydoc Dumux::FaceCenteredElementVolumeVariables
+ * \copydoc Dumux::FaceCenteredStaggeredElementVolumeVariables
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_ELEMENTVOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_ELEMENTVOLUMEVARIABLES_HH
@@ -34,8 +34,8 @@ namespace Dumux {
  * \ingroup StaggeredDiscretization
  * \brief Base class for the face variables vector
  */
-template<class GridFaceVariables, bool cachingEnabled>
-class FaceCenteredElementVolumeVariables
+template<class GridVolumeVariables, bool cachingEnabled>
+class FaceCenteredStaggeredElementVolumeVariables
 {};
 
 /*!
@@ -43,26 +43,39 @@ class FaceCenteredElementVolumeVariables
  * \brief Class for the face variables vector. Specialization for the case of storing the face variables globally.
  */
 template<class GFV>
-class FaceCenteredElementVolumeVariables<GFV, /*cachingEnabled*/true>
+class FaceCenteredStaggeredElementVolumeVariables<GFV, /*cachingEnabled*/true>
 {
 public:
     //! export type of the grid volume variables
-    using GridFaceVariables = GFV;
+    using GridVolumeVariables = GFV;
 
     //! export type of the volume variables
-    using FaceVariables = typename GridFaceVariables::FaceVariables;
+    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
 
-    FaceCenteredElementVolumeVariables(const GridFaceVariables& gridVolumeVariables) : gridVolumeVariablesPtr_(&gridVolumeVariables) {}
+    FaceCenteredStaggeredElementVolumeVariables(const GridVolumeVariables& gridVolumeVariables)
+    : gridVolumeVariablesPtr_(&gridVolumeVariables)
+    , numScv_(gridVolumeVariables.problem().gridGeometry().numScv())
+    {}
 
     //! operator for the access with an scvf
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    const FaceVariables& operator [](const SubControlVolume& scv) const
-    { return gridVolumeVariables().faceVars(scv.correspondingCellCenterScvfIndex()); } // TODO
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
+    {
+        if (scv.index() < numScv_)
+            return gridVolVars().volVars(scv.index());
+        else
+            return boundaryVolumeVariables_[getLocalIdx_(scv.index())];
+    }
 
     //! operator for the access with an index
     //! needed for cc methods for the access to the boundary volume variables
-    const FaceVariables& operator [](const std::size_t scvIdx) const
-    { return gridVolumeVariables().faceVars(scvIdx); } // TODO
+    const VolumeVariables& operator [](const std::size_t scvIdx) const
+    {
+        if (scvIdx < numScv_)
+            return gridVolVars().volVars(scvIdx);
+        else
+            return boundaryVolumeVariables_[getLocalIdx_(scvIdx)];
+    }
 
 
     //! For compatibility reasons with the case of not storing the face vars.
@@ -71,7 +84,40 @@ public:
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
-    {}
+    {
+        if (!fvGeometry.hasBoundaryScvf())
+            return;
+
+        clear_();
+        boundaryVolVarIndices_.reserve(fvGeometry.gridGeometry().numBoundaryScv());
+        boundaryVolumeVariables_.reserve(fvGeometry.gridGeometry().numBoundaryScv());
+
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!scvf.boundary() || scvf.isFrontal())
+                continue;
+
+            // check if boundary is a pure dirichlet boundary
+            const auto& problem = gridVolVars().problem();
+            // const auto bcTypes = problem.boundaryTypes(element, scvf);
+            // if (bcTypes.hasOnlyDirichlet()) TODO
+            // {
+                const auto& scvI = fvGeometry.scv(scvf.insideScvIdx());
+                typename VolumeVariables::PrimaryVariables pv(problem.dirichlet(element, scvf)[scvI.directionIndex()]);
+                const auto dirichletPriVars = elementSolution<FVElementGeometry>(pv);
+
+                VolumeVariables volVars;
+                volVars.update(dirichletPriVars,
+                               problem,
+                               element,
+                               scvI);
+
+                boundaryVolumeVariables_.emplace_back(std::move(volVars));
+                boundaryVolVarIndices_.push_back(scvf.outsideScvIdx());
+            // }
+        }
+        assert(boundaryVolumeVariables_.size() == boundaryVolVarIndices_.size());
+    }
 
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
@@ -83,12 +129,39 @@ public:
 
 
     //! The global volume variables object we are a restriction of
-    const GridFaceVariables& gridVolumeVariables() const
+    const GridVolumeVariables& gridVolVars() const
     { return *gridVolumeVariablesPtr_; }
 
 
 private:
-    const GridFaceVariables* gridVolumeVariablesPtr_;
+    //! Clear all local storage
+    void clear_()
+    {
+        boundaryVolVarIndices_.clear();
+        boundaryVolumeVariables_.clear();
+    }
+
+    //! map a global scv index to the local storage index
+    int getLocalIdx_(const std::size_t volVarIdx) const
+    {
+        auto it = std::find(boundaryVolVarIndices_.begin(), boundaryVolVarIndices_.end(), volVarIdx);
+
+        if (it == boundaryVolVarIndices_.end())
+        {
+            std::cout << "volVarIdx " << volVarIdx << std::endl;
+            for (const auto i : boundaryVolVarIndices_)
+                std::cout << i << std::endl;
+        }
+
+
+        assert(it != boundaryVolVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
+        return std::distance(boundaryVolVarIndices_.begin(), it);
+    }
+
+    const GridVolumeVariables* gridVolumeVariablesPtr_;
+    const std::size_t numScv_;
+    std::vector<std::size_t> boundaryVolVarIndices_;
+    std::vector<VolumeVariables> boundaryVolumeVariables_;
 };
 
 /*!
@@ -96,33 +169,33 @@ private:
  * \brief Class for the face variables vector. Specialization for the case of not storing the face variables globally.
  */
 template<class GFV>
-class FaceCenteredElementVolumeVariables<GFV, /*cachingEnabled*/false>
+class FaceCenteredStaggeredElementVolumeVariables<GFV, /*cachingEnabled*/false>
 {
 public:
     //! export type of the grid volume variables
-    using GridFaceVariables = GFV;
+    using GridVolumeVariables = GFV;
 
     //! export type of the volume variables
-    using FaceVariables = typename GridFaceVariables::FaceVariables;
+    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
 
-    FaceCenteredElementVolumeVariables(const GridFaceVariables& globalFacesVars) : gridVolumeVariablesPtr_(&globalFacesVars) {}
+    FaceCenteredStaggeredElementVolumeVariables(const GridVolumeVariables& globalFacesVars) : gridVolumeVariablesPtr_(&globalFacesVars) {}
 
     //! const operator for the access with an scvf
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    const FaceVariables& operator [](const SubControlVolume& scv) const
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return faceVariables_[scv.indexInElement()]; }
 
     //! const operator for the access with an index
-    const FaceVariables& operator [](const std::size_t scvIdx) const
+    const VolumeVariables& operator [](const std::size_t scvIdx) const
     { return faceVariables_[getLocalIdx_(scvIdx)]; }
 
     //! operator for the access with an scvf
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    FaceVariables& operator [](const SubControlVolume& scv)
+    VolumeVariables& operator [](const SubControlVolume& scv)
     { return faceVariables_[scv.indexInElement()]; }
 
     // operator for the access with an index
-    FaceVariables& operator [](const std::size_t scvIdx)
+    VolumeVariables& operator [](const std::size_t scvIdx)
     { return faceVariables_[getLocalIdx_(scvIdx)]; }
 
     //! For compatibility reasons with the case of not storing the vol vars.
@@ -132,16 +205,9 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        faceVariables_.resize(fvGeometry.numScvf());
-        faceVarIndices_.resize(fvGeometry.numScvf());
+        // TODO
+        assert(false);
 
-        constexpr auto faceIdx = FVElementGeometry::GridGeometry::faceIdx();
-
-        for(auto&& scvf : scvfs(fvGeometry))
-        {
-            faceVariables_[scvf.localFaceIdx()].update(sol[faceIdx], gridVolumeVariables().problem(), element, fvGeometry, scvf);
-            faceVarIndices_[scvf.localFaceIdx()] = scvf.index();
-        }
     }
 
     //! Binding of an element, prepares only the face variables of the element
@@ -151,20 +217,11 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
-        faceVariables_.resize(fvGeometry.numScvf());
-        faceVarIndices_.resize(fvGeometry.numScvf());
-
-        constexpr auto faceIdx = FVElementGeometry::GridGeometry::faceIdx();
-
-        for(auto&& scvf : scvfs(fvGeometry))
-        {
-            faceVariables_[scvf.localFaceIdx()].updateOwnFaceOnly(sol[faceIdx][scvf.dofIndex()]);
-            faceVarIndices_[scvf.localFaceIdx()] = scvf.index();
-        }
+        // TODO
+        assert(false);
     }
-
     //! The global volume variables object we are a restriction of
-    const GridFaceVariables& gridVolumeVariables() const
+    const GridVolumeVariables& gridVolumeVariables() const
     { return *gridVolumeVariablesPtr_; }
 
 private:
@@ -176,9 +233,9 @@ private:
         return std::distance(faceVarIndices_.begin(), it);
     }
 
-    const GridFaceVariables* gridVolumeVariablesPtr_;
+    const GridVolumeVariables* gridVolumeVariablesPtr_;
     std::vector<std::size_t> faceVarIndices_;
-    std::vector<FaceVariables> faceVariables_;
+    std::vector<VolumeVariables> faceVariables_;
 };
 
 } // end namespace
