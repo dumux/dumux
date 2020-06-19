@@ -7,6 +7,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/istl/bvector.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 /*
@@ -27,40 +28,10 @@
 
 namespace Dumux {
 
-class MockScalarVariables
-{
-public:
-    static constexpr int dimension = 1;
-    MockScalarVariables() : var_(0.0) {}
-    explicit MockScalarVariables(double v) : var_(v) {}
-    MockScalarVariables& operator-=(const MockScalarVariables& other) { var_ -= other.var_; return *this; }
-    double& operator[] (int i) { return var_; }
-    const double& operator[] (int i) const { return var_; }
-private:
-    double var_;
-};
-
-class MockScalarResidual
-{
-public:
-    MockScalarResidual() : res_(0.0) {}
-    explicit MockScalarResidual(double r) : res_(r) {}
-    MockScalarResidual& operator=(double r) { res_[0] = r; return *this; }
-    MockScalarResidual& operator*=(double a) { res_[0] *= a; return *this; }
-    MockScalarResidual& operator+=(const MockScalarResidual& other) { res_[0] += other.res_[0]; return *this; }
-    MockScalarResidual& operator-=(const MockScalarResidual& other) { res_[0] -= other.res_[0]; return *this; }
-    constexpr std::size_t size() const { return 1; }
-    MockScalarVariables& operator[] (int i) { return res_; }
-    const MockScalarVariables& operator[] (int i) const { return res_; }
-    double two_norm2() const { return res_[0]*res_[0]; }
-private:
-    MockScalarVariables res_;
-};
-
 class MockScalarAssembler
 {
 public:
-    using ResidualType = MockScalarResidual;
+    using ResidualType = Dune::BlockVector<double>;
     using Scalar = double;
     using JacobianMatrix = double;
 
@@ -74,13 +45,14 @@ public:
 
     void assembleResidual(const ResidualType& sol)
     {
-        res_[0][0] = sol[0][0]*sol[0][0] - 5.0;
+        res_.resize(1);
+        res_[0] = sol[0]*sol[0] - 5.0;
     }
 
     void assembleJacobianAndResidual (const ResidualType& sol)
     {
         assembleResidual(sol);
-        jac_ = 2.0*sol[0][0];
+        jac_ = 2.0*sol[0];
     }
 
     JacobianMatrix& jacobian() { return jac_; }
@@ -90,7 +62,7 @@ public:
     double residualNorm(const ResidualType& sol)
     {
         assembleResidual(sol);
-        return res_[0][0];
+        return res_[0];
     }
 
     void updateGridVariables(const ResidualType& sol) {}
@@ -108,7 +80,7 @@ public:
     template<class Vector>
     bool solve (const double& A, Vector& x, const Vector& b) const
     {
-        x[0][0] = b[0][0]/A;
+        x[0] = b[0]/A;
         return true;
     }
 };
@@ -137,16 +109,17 @@ int main(int argc, char* argv[]) try
     auto solver = std::make_shared<Solver>(assembler, linearSolver);
 
     double initialGuess = 0.1;
-    MockScalarResidual x(initialGuess);
+    Dune::BlockVector<double> x(1);
+    x = initialGuess;
 
     std::cout << "Solving: x^2 - 5 = 0" << std::endl;
     solver->solve(x);
-    std::cout << "Solution: " << std::setprecision(15) << x[0][0]
+    std::cout << "Solution: " << std::setprecision(15) << x[0]
               << ", exact: " << std::sqrt(5.0)
-              << ", error: " << std::abs(x[0][0]-std::sqrt(5.0))/std::sqrt(5.0)*100 << "%" << std::endl;
+              << ", error: " << std::abs(x[0]-std::sqrt(5.0))/std::sqrt(5.0)*100 << "%" << std::endl;
 
-    if (Dune::FloatCmp::ne(x[0][0], std::sqrt(5.0), 1e-13))
-        DUNE_THROW(Dune::Exception, "Didn't find correct root: " << std::setprecision(15) << x[0][0] << ", exact: " << std::sqrt(5.0));
+    if (Dune::FloatCmp::ne(x[0], std::sqrt(5.0), 1e-13))
+        DUNE_THROW(Dune::Exception, "Didn't find correct root: " << std::setprecision(15) << x[0] << ", exact: " << std::sqrt(5.0));
 
     return 0;
 
