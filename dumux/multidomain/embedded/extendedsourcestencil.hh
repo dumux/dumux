@@ -34,8 +34,7 @@
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux {
-namespace EmbeddedCoupling {
+namespace Dumux::EmbeddedCoupling {
 
 /*!
  * \ingroup EmbeddedCoupling
@@ -53,8 +52,10 @@ class ExtendedSourceStencil
     template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
-    static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
+    template<std::size_t id>
+    static constexpr auto subDomainIdx = typename MDTraits::template SubDomain<id>::Index();
+    static constexpr auto bulkIdx = subDomainIdx<0>;
+    static constexpr auto lowDimIdx = subDomainIdx<1>;
 
     template<std::size_t id>
     static constexpr bool isBox()
@@ -73,8 +74,7 @@ public:
         for (const auto& element : elements(couplingManager.gridView(domainI)))
         {
             const auto& dofs = extendedSourceStencil_(couplingManager, domainI, element);
-
-            if (isBox<domainI>())
+            if constexpr (isBox<domainI>())
             {
                 for (int i = 0; i < element.subEntities(GridView<domainI>::dimension); ++i)
                     for (const auto globalJ : dofs)
@@ -104,7 +104,7 @@ public:
                                          JacobianMatrixDiagBlock& A,
                                          GridVariables& gridVariables) const
     {
-        constexpr auto numEq = std::decay_t<decltype(curSol[domainI][0])>::dimension;
+        constexpr auto numEq = std::decay_t<decltype(curSol[domainI][0])>::size();
         const auto& elementI = localAssemblerI.element();
 
         // only do something if we have an extended stencil
@@ -141,7 +141,7 @@ public:
                                                           partialDerivs, origResidual, numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
-                for (auto&& scvJ : scvs(localAssemblerI.fvGeometry()))
+                for (const auto& scvJ : scvs(localAssemblerI.fvGeometry()))
                 {
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                     {
@@ -159,30 +159,32 @@ public:
         }
     }
 
+    //! clear the internal data
+    void clear() { sourceStencils_.clear(); }
+
     //! return a reference to the stencil
-    typename CouplingManager::CouplingStencils& stencil()
+    typename CouplingManager::template CouplingStencils<bulkIdx>& stencil()
     { return sourceStencils_; }
 
 private:
-    //! the extended source stencil for the bulk domain due to the source average
-    const std::vector<std::size_t>& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<0> bulkDomain, const Element<0>& bulkElement) const
+    //! the extended source stencil due to the source average (always empty for lowdim, but may be filled for bulk)
+    template<std::size_t id>
+    const auto& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<id> bulkDomain, const Element<id>& bulkElement) const
     {
-        const auto bulkElementIdx = couplingManager.problem(bulkIdx).gridGeometry().elementMapper().index(bulkElement);
-        if (sourceStencils_.count(bulkElementIdx))
-            return sourceStencils_.at(bulkElementIdx);
-        else
-            return couplingManager.emptyStencil();
+        if constexpr (subDomainIdx<id> == bulkIdx)
+        {
+            const auto bulkElementIdx = couplingManager.problem(bulkIdx).gridGeometry().elementMapper().index(bulkElement);
+            if (sourceStencils_.count(bulkElementIdx))
+                return sourceStencils_.at(bulkElementIdx);
+        }
+
+        return couplingManager.emptyStencil(subDomainIdx<id>);
     }
 
-    //! the extended source stencil for the low dim domain is empty
-    const std::vector<std::size_t>& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<1> bulkDomain, const Element<1>& lowDimElement) const
-    { return couplingManager.emptyStencil(); }
-
     //! the additional stencil for the kernel evaluations / circle averages
-    typename CouplingManager::CouplingStencils sourceStencils_;
+    typename CouplingManager::template CouplingStencils<bulkIdx> sourceStencils_;
 };
 
-} // end namespace EmbeddedCoupling
-} // end namespace Dumux
+} // end namespace Dumux::EmbeddedCoupling
 
 #endif

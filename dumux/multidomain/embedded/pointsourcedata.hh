@@ -22,13 +22,13 @@
  * \brief Data associated with a point source
  */
 
-#ifndef DUMUX_POINTSOURCEDATA_HH
-#define DUMUX_POINTSOURCEDATA_HH
+#ifndef DUMUX_MULTIDOMAIN_EMBEDDED_POINTSOURCEDATA_HH
+#define DUMUX_MULTIDOMAIN_EMBEDDED_POINTSOURCEDATA_HH
 
 #include <vector>
-#include <unordered_map>
 #include <dune/common/fvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -44,59 +44,60 @@ class PointSourceData
     using Scalar = typename MDTraits::Scalar;
     using ShapeValues = typename std::vector<Dune::FieldVector<Scalar, 1> >;
 
-    // obtain the type tags of the sub problems
-    using BulkTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
-    using LowDimTypeTag = typename MDTraits::template SubDomain<1>::TypeTag;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
+    template<std::size_t id> using GridIndex = typename IndexTraits<GridView<id>>::GridIndex;
+    template<std::size_t id> using SolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
+    template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
 
-    using BulkPrimaryVariables = GetPropType<BulkTypeTag, Properties::PrimaryVariables>;
-    using LowDimPrimaryVariables = GetPropType<LowDimTypeTag, Properties::PrimaryVariables>;
+    static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
 
-    using BulkSolutionVector = GetPropType<BulkTypeTag, Properties::SolutionVector>;
-    using LowDimSolutionVector = GetPropType<LowDimTypeTag, Properties::SolutionVector>;
-
-    enum {
-        bulkIsBox = GetPropType<BulkTypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box,
-        lowDimIsBox = GetPropType<LowDimTypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box
-    };
+    template<std::size_t id>
+    static constexpr bool isBox()
+    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
 public:
     void addBulkInterpolation(const ShapeValues& shapeValues,
-                              const std::vector<std::size_t>& cornerIndices,
-                              std::size_t eIdx)
+                              const std::vector<GridIndex<bulkIdx>>& cornerIndices,
+                              GridIndex<bulkIdx> eIdx)
     {
+        static_assert(isBox<bulkIdx>(), "This interface is only available for the box method.");
         bulkElementIdx_ = eIdx;
         bulkCornerIndices_ = cornerIndices;
         bulkShapeValues_ = shapeValues;
     }
 
     void addLowDimInterpolation(const ShapeValues& shapeValues,
-                                const std::vector<std::size_t>& cornerIndices,
-                                std::size_t eIdx)
+                                const std::vector<GridIndex<lowDimIdx>>& cornerIndices,
+                                GridIndex<lowDimIdx> eIdx)
     {
+        static_assert(isBox<lowDimIdx>(), "This interface is only available for the box method.");
         lowDimElementIdx_ = eIdx;
         lowDimCornerIndices_ = cornerIndices;
         lowDimShapeValues_ = shapeValues;
     }
 
-    void addBulkInterpolation(std::size_t eIdx)
+    void addBulkInterpolation(GridIndex<bulkIdx> eIdx)
     {
-        assert(!bulkIsBox);
+        static_assert(!isBox<bulkIdx>(), "This interface is not available for the box method.");
         bulkElementIdx_ = eIdx;
     }
 
-    void addLowDimInterpolation(std::size_t eIdx)
+    void addLowDimInterpolation(GridIndex<lowDimIdx> eIdx)
     {
-        assert(!lowDimIsBox);
+        static_assert(!isBox<lowDimIdx>(), "This interface is not available for the box method.");
         lowDimElementIdx_ = eIdx;
     }
 
-    BulkPrimaryVariables interpolateBulk(const BulkSolutionVector& sol)
+    PrimaryVariables<bulkIdx> interpolateBulk(const SolutionVector<bulkIdx>& sol) const
     {
-        BulkPrimaryVariables bulkPriVars(0.0);
-        if (bulkIsBox)
+        PrimaryVariables<bulkIdx> bulkPriVars(0.0);
+        if (isBox<bulkIdx>())
         {
-            for (std::size_t i = 0; i < bulkCornerIndices_.size(); ++i)
-                for (std::size_t priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
+            for (int i = 0; i < bulkCornerIndices_.size(); ++i)
+                for (int priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
                     bulkPriVars[priVarIdx] += sol[bulkCornerIndices_[i]][priVarIdx]*bulkShapeValues_[i];
         }
         else
@@ -106,13 +107,13 @@ public:
         return bulkPriVars;
     }
 
-    LowDimPrimaryVariables interpolateLowDim(const LowDimSolutionVector& sol)
+    PrimaryVariables<lowDimIdx> interpolateLowDim(const SolutionVector<lowDimIdx>& sol) const
     {
-        LowDimPrimaryVariables lowDimPriVars(0.0);
-        if (lowDimIsBox)
+        PrimaryVariables<lowDimIdx> lowDimPriVars(0.0);
+        if (isBox<lowDimIdx>())
         {
-            for (std::size_t i = 0; i < lowDimCornerIndices_.size(); ++i)
-                for (std::size_t priVarIdx = 0; priVarIdx < lowDimPriVars.size(); ++priVarIdx)
+            for (int i = 0; i < lowDimCornerIndices_.size(); ++i)
+                for (int priVarIdx = 0; priVarIdx < lowDimPriVars.size(); ++priVarIdx)
                     lowDimPriVars[priVarIdx] += sol[lowDimCornerIndices_[i]][priVarIdx]*lowDimShapeValues_[i];
         }
         else
@@ -122,17 +123,18 @@ public:
         return lowDimPriVars;
     }
 
-    std::size_t lowDimElementIdx() const
+    GridIndex<lowDimIdx> lowDimElementIdx() const
     { return lowDimElementIdx_; }
 
-    std::size_t bulkElementIdx() const
+    GridIndex<bulkIdx> bulkElementIdx() const
     { return bulkElementIdx_; }
 
 private:
     ShapeValues bulkShapeValues_, lowDimShapeValues_;
-    std::vector<std::size_t> bulkCornerIndices_, lowDimCornerIndices_;
-    std::size_t lowDimElementIdx_;
-    std::size_t bulkElementIdx_;
+    std::vector<GridIndex<bulkIdx>> bulkCornerIndices_;
+    std::vector<GridIndex<lowDimIdx>> lowDimCornerIndices_;
+    GridIndex<bulkIdx> bulkElementIdx_;
+    GridIndex<lowDimIdx> lowDimElementIdx_;
 };
 
 /*!
@@ -151,48 +153,51 @@ class PointSourceDataCircleAverage : public PointSourceData<MDTraits>
     using Scalar = typename MDTraits::Scalar;
     using ShapeValues = typename std::vector<Dune::FieldVector<Scalar, 1> >;
 
-    // obtain the type tags of the sub problems
-    using BulkTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
-    using LowDimTypeTag = typename MDTraits::template SubDomain<1>::TypeTag;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
+    template<std::size_t id> using GridIndex = typename IndexTraits<GridView<id>>::GridIndex;
+    template<std::size_t id> using SolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
+    template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
 
-    using BulkPrimaryVariables = GetPropType<BulkTypeTag, Properties::PrimaryVariables>;
-    using LowDimPrimaryVariables = GetPropType<LowDimTypeTag, Properties::PrimaryVariables>;
+    static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
 
-    using BulkSolutionVector = GetPropType<BulkTypeTag, Properties::SolutionVector>;
-    using LowDimSolutionVector = GetPropType<LowDimTypeTag, Properties::SolutionVector>;
-
-    enum {
-        bulkIsBox = GetPropType<BulkTypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box,
-        lowDimIsBox = GetPropType<LowDimTypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::box
-    };
+    template<std::size_t id>
+    static constexpr bool isBox()
+    { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
 public:
     PointSourceDataCircleAverage() : enableBulkCircleInterpolation_(false) {}
 
-    BulkPrimaryVariables interpolateBulk(const BulkSolutionVector& sol)
+    PrimaryVariables<bulkIdx> interpolateBulk(const SolutionVector<bulkIdx>& sol) const
     {
         // bulk interpolation on the circle is only enabled for source in the
         // lower dimensional domain if we use a circle distributed bulk sources
         // (see coupling manager circle sources)
-        BulkPrimaryVariables bulkPriVars(sol[0]);
+        PrimaryVariables<bulkIdx> bulkPriVars(sol[0]);
         bulkPriVars = 0.0;
         if (enableBulkCircleInterpolation_)
         {
             // compute the average of the bulk privars over the circle around the integration point
             // this computes $\bar{p} = \frac{1}{2\pi R} int_0^2*\pi p R \text{d}\theta.
-            if (bulkIsBox)
+            if (isBox<bulkIdx>())
             {
                 assert(circleCornerIndices_.size() == circleShapeValues_.size());
 
                 Scalar weightSum = 0.0;
                 for (std::size_t j = 0; j < circleStencil_.size(); ++j)
                 {
-                    BulkPrimaryVariables priVars(0.0);
-                    const auto& cornerIndices = circleCornerIndices_[circleStencil_[j]];
-                    const auto& shapeValues = circleShapeValues_[circleStencil_[j]];
-                    for (std::size_t i = 0; i < cornerIndices.size(); ++i)
-                        for (std::size_t priVarIdx = 0; priVarIdx < priVars.size(); ++priVarIdx)
-                            priVars[priVarIdx] += sol[cornerIndices[i]][priVarIdx]*shapeValues[i];
+                    PrimaryVariables<bulkIdx> priVars(0.0);
+                    const auto& cornerIndices = *(circleCornerIndices_[j]);
+                    const auto& shapeValues = circleShapeValues_[j];
+                    for (int i = 0; i < cornerIndices.size(); ++i)
+                    {
+                        const auto& localSol = sol[cornerIndices[i]];
+                        const auto& shapeValue = shapeValues[i];
+                        for (int priVarIdx = 0; priVarIdx < PrimaryVariables<bulkIdx>::size(); ++priVarIdx)
+                            priVars[priVarIdx] += localSol[priVarIdx]*shapeValue;
+                    }
                     // multiply with weight and add
                     priVars *= circleIpWeight_[j];
                     weightSum += circleIpWeight_[j];
@@ -203,9 +208,9 @@ public:
             else
             {
                 Scalar weightSum = 0.0;
-                for (std::size_t j = 0; j < circleStencil_.size(); ++j)
+                for (int j = 0; j < circleStencil_.size(); ++j)
                 {
-                    for (std::size_t priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
+                    for (int priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
                         bulkPriVars[priVarIdx] += sol[circleStencil_[j]][priVarIdx]*circleIpWeight_[j];
 
                     weightSum += circleIpWeight_[j];
@@ -220,10 +225,10 @@ public:
         }
     }
 
-    void addCircleInterpolation(const std::unordered_map<std::size_t, std::vector<std::size_t> >& circleCornerIndices,
-                                const std::unordered_map<std::size_t, ShapeValues>& circleShapeValues,
+    void addCircleInterpolation(const std::vector<const std::vector<GridIndex<bulkIdx>>*>& circleCornerIndices,
+                                const std::vector<ShapeValues>& circleShapeValues,
                                 const std::vector<Scalar>& circleIpWeight,
-                                const std::vector<std::size_t>& circleStencil)
+                                const std::vector<GridIndex<bulkIdx>>& circleStencil)
     {
         circleCornerIndices_ = circleCornerIndices;
         circleShapeValues_ = circleShapeValues;
@@ -234,23 +239,21 @@ public:
     }
 
     void addCircleInterpolation(const std::vector<Scalar>& circleIpWeight,
-                                const std::vector<std::size_t>& circleStencil)
+                                const std::vector<GridIndex<bulkIdx>>& circleStencil)
     {
         circleIpWeight_ = circleIpWeight;
         circleStencil_ = circleStencil;
         enableBulkCircleInterpolation_ = true;
     }
 
-    const std::vector<std::size_t>& circleStencil()
-    {
-        return circleStencil_;
-    }
+    const std::vector<GridIndex<bulkIdx>>& circleStencil() const
+    { return circleStencil_; }
 
 private:
-    std::unordered_map<std::size_t, std::vector<std::size_t> > circleCornerIndices_;
-    std::unordered_map<std::size_t, ShapeValues> circleShapeValues_;
+    std::vector<const std::vector<GridIndex<bulkIdx>>*> circleCornerIndices_;
+    std::vector<ShapeValues> circleShapeValues_;
     std::vector<Scalar> circleIpWeight_;
-    std::vector<std::size_t> circleStencil_;
+    std::vector<GridIndex<bulkIdx>> circleStencil_;
     bool enableBulkCircleInterpolation_;
 };
 
