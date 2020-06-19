@@ -7,9 +7,15 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
+- For the "sequential" models, the property `BoundaryTypes` has been simply renamed to `SequentialBoundaryTypes`
+
 ### Deprecated properties/classes/functions/files, to be removed after 3.3:
 
+- The property `BoundaryTypes` has been deprecated. The boundary condition type can now be deduced from the problem type using `ProblemTraits`.
+
 ### Deleted classes/files, property names, constants/enums:
+
+- Everything that has been deprecated before release 3.2 has been removed.
 
 ### Other noteworthy changes:
 - after release 3.2, DuMu<sup>x</sup> releases earlier than 2.12 will no longer be automatically tested or supported.
