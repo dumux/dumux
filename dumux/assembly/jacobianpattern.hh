@@ -204,6 +204,41 @@ template<bool isImplicit, class GridGeometry,
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 { return getFEJacobianPattern(gridGeometry.feBasis()); }
 
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate Jacobian pattern for the face-centered staggered method
+ */
+template<bool isImplicit, class GridGeometry,
+         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::fcstaggered) ), int> = 0>
+Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
+{
+    // resize the jacobian and the residual
+    const auto numDofs = gridGeometry.numDofs();
+    Dune::MatrixIndexSet pattern(numDofs, numDofs);
+
+    const auto& connectivityMap = gridGeometry.connectivityMap();
+    auto fvGeometry = localView(gridGeometry);
+
+    // set the pattern
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        fvGeometry.bind(element);
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto globalI = scv.dofIndex();
+            pattern.add(globalI, globalI);
+            for (const auto& scvIdxJ : connectivityMap[scv.index()])
+            {
+                const auto globalJ = fvGeometry.scv(scvIdxJ).dofIndex();
+                pattern.add(globalI, globalJ);
+            }
+        }
+    }
+
+    return pattern;
+}
+
+
 } // namespace Dumux
 
 #endif
