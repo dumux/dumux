@@ -28,6 +28,7 @@
 
 #include <functional>
 
+#include <dune/common/reservedvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/geometry/boundingboxtree.hh>
@@ -278,23 +279,24 @@ public:
     //! calculate a DOF index to point source map from given vector of point sources
     template<class GridGeometry, class PointSource, class PointSourceMap>
     static void computePointSourceMap(const GridGeometry& gridGeometry,
-                                      std::vector<PointSource>& sources,
-                                      PointSourceMap& pointSourceMap)
+                                      const std::vector<PointSource>& sources,
+                                      PointSourceMap& pointSourceMap,
+                                      const std::string& paramGroup = "")
     {
-        constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
-
         const auto& boundingBoxTree = gridGeometry.boundingBoxTree();
 
-        for (auto&& source : sources)
+        for (const auto& s : sources)
         {
+            // make local copy of point source for the map
+            auto source = s;
             // compute in which elements the point source falls
             const auto entities = intersectingEntities(source.position(), boundingBoxTree);
             // split the source values equally among all concerned entities
             source.setEmbeddings(entities.size()*source.embeddings());
             // loop over all concernes elements
-            for (unsigned int eIdx : entities)
+            for (const auto eIdx : entities)
             {
-                if(isBox)
+                if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
                 {
                     // check in which subcontrolvolume(s) we are
                     const auto element = boundingBoxTree.entitySet().entity(eIdx);
@@ -303,21 +305,21 @@ public:
 
                     const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside
-                    std::vector<unsigned int> scvIndices;
-                    for (auto&& scv : scvs(fvGeometry))
-                    {
+                    constexpr int dim = GridGeometry::GridView::dimension;
+                    Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
+                    for (const auto& scv : scvs(fvGeometry))
                         if (intersectsPointGeometry(globalPos, scv.geometry()))
                             scvIndices.push_back(scv.indexInElement());
-                    }
-                    // for all scvs that where tested positiv add the point sources
+
+                    // for all scvs that tested positive add the point sources
                     // to the element/scv to point source map
-                    for (auto scvIdx : scvIndices)
+                    for (const auto scvIdx : scvIndices)
                     {
                         const auto key = std::make_pair(eIdx, scvIdx);
                         if (pointSourceMap.count(key))
-                            pointSourceMap.at(key).push_back(source);
+                            pointSourceMap.at(key).emplace_back(std::move(source));
                         else
-                            pointSourceMap.insert({key, {source}});
+                            pointSourceMap.insert({key, {std::move(source)}});
                         // split equally on the number of matched scvs
                         auto& s = pointSourceMap.at(key).back();
                         s.setEmbeddings(scvIndices.size()*s.embeddings());
@@ -328,9 +330,9 @@ public:
                     // add the pointsource to the DOF map
                     const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
                     if (pointSourceMap.count(key))
-                        pointSourceMap.at(key).push_back(source);
+                        pointSourceMap.at(key).emplace_back(std::move(source));
                     else
-                        pointSourceMap.insert({key, {source}});
+                        pointSourceMap.insert({key, {std::move(source)}});
                 }
             }
         }
