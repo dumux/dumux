@@ -483,14 +483,9 @@ public:
         std::vector<PointSource> sources;
         asImp_().addPointSources(sources);
 
-        // if there are point sources compute the DOF to point source map
+        // if there are point sources calculate point source locations and save them in a map
         if (!sources.empty())
-        {
-            // calculate point source locations and save them in a map
-            PointSourceHelper::computePointSourceMap(*gridGeometry_,
-                                                     sources,
-                                                     pointSourceMap_);
-        }
+            PointSourceHelper::computePointSourceMap(*gridGeometry_, sources, pointSourceMap_, paramGroup());
     }
 
     /*!
