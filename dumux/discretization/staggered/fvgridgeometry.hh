@@ -28,6 +28,7 @@
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -204,6 +205,8 @@ public:
     using SubControlVolume = typename T::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename T::SubControlVolumeFace;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<T>;
     //! export the grid view type
     using GridView = GV;
     //! export the dof type indices
@@ -467,6 +470,8 @@ public:
     using SubControlVolume = typename T::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename T::SubControlVolumeFace;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<T>;
     //! export the grid view type
     using GridView = GV;
     //! export the dof type indices

@@ -34,6 +34,7 @@
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/subcontrolvolume.hh>
@@ -115,6 +116,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
     using DofMapper = typename Traits::VertexMapper;
     //! export the finite element cache type
@@ -372,6 +375,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
     using DofMapper = typename Traits::VertexMapper;
     //! export the finite element cache type
