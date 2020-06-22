@@ -49,11 +49,10 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 // As mentioned at the beginning of the documentation of this example, DuMu<sup>x</sup>
-// provides specialized implementations of control volumes and faces for
-// rotation-symmetric problems. These take care of adjusting volume and area
+// provides specialized implementations of the extrusion type for rotational symmetric geometries.
+// The extrusion class takes care of adjusting volume and area
 // computations to account for the extrusion about the symmetry axes.
-// These implementations are exported by the `RotationSymmetricGridGeometryTraits`.
-#include <dumux/discretization/rotationsymmetricgridgeometrytraits.hh>
+#include <dumux/discretization/extrusion.hh>
 
 // The classes that define the problem and parameters used in this simulation
 #include "problem.hh"
@@ -107,9 +106,8 @@ public:
 };
 // [[/codeblock]]
 
-// As mentioned before, DuMu<sup>x</sup> provides specialized implementations of sub-control
-// volumes and faces for rotation-symmetric problems, which are exported by the
-// `RotationSymmetricGridGeometryTraits`.
+// As mentioned before, we modify the areas and volumes used
+// for integrals over the control volume and the control volume faces by changing the extrusion type.
 // Here, we pass these traits to the grid geometry of the box scheme (the scheme
 // that we use here) and specialize the `GridGeometry` property accordingly.
 // [[codeblock]]
@@ -121,12 +119,10 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
 
-    // The default traits for box grid geometries
-    using DefaultTraits = BoxDefaultGridGeometryTraits<GridView>;
-
-    // On the basis of the default traits, define the traits for rotational symmetry.
-    // These will export the corresponding rotation-symmetric sub-control volumes and faces.
-    using GGTraits = RotationSymmetricGridGeometryTraits<DefaultTraits, RotationPolicy::disc>;
+    // We take the default traits as basis and exchange the extrusion type
+    // The first axis (x-axis) is the radial axis, hence the zero. That means we rotate about the second axis (y-axis).
+    struct GGTraits : public BoxDefaultGridGeometryTraits<GridView>
+    { using Extrusion = RotationalExtrusion<0>; };
 
 public:
     // Pass the above traits to the box grid geometry such that it uses the
