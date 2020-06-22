@@ -37,6 +37,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/geometry/makegeometry.hh>
 #include <dumux/common/geometry/intersectspointgeometry.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -51,6 +52,7 @@ class FluxOverSurface
     using GridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -256,7 +258,7 @@ public:
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const Scalar extrusionFactor = harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
-            result[0] = elemFaceVars[scvf].velocitySelf() * scvf.area() * extrusionFactor * scvf.directionSign();
+            result[0] = elemFaceVars[scvf].velocitySelf() * Extrusion::area(scvf) * extrusionFactor * scvf.directionSign();
             return result;
         };
 

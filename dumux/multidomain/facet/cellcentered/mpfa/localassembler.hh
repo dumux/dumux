@@ -31,6 +31,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerbase.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerhelper.hh>
@@ -54,6 +55,7 @@ class MpfaOFacetCouplingInteractionVolumeAssembler
 {
     using ParentType = InteractionVolumeAssemblerBase< P, EG, EV >;
     using Helper = InteractionVolumeAssemblerHelper;
+    using Extrusion = Extrusion_t<typename EG::GridGeometry>;
 
     template< class IV >
     using Scalar = typename IV::Traits::MatVecTraits::FaceVector::value_type;
@@ -227,7 +229,7 @@ public:
                     rho /= numOutsideFaces + 1;
 
                 deltaG[localDofIdx] -= curXiFactor*alpha_inside;
-                deltaG[localDofIdx] *= rho*curGlobalScvf.area();
+                deltaG[localDofIdx] *= rho*Extrusion::area(curGlobalScvf);
             }
             // use average density between facet and cell density on interior Dirichlet boundaries
             else if (curIsInteriorBoundary)
@@ -241,13 +243,13 @@ public:
                 rho = getRho(this->elemVolVars()[curGlobalScvf.outsideScvIdx()]);
 
             // add "inside" & "outside" alphas to gravity containers
-            g[faceIdx] = alpha_inside*rho*curGlobalScvf.area();
+            g[faceIdx] = alpha_inside*rho*Extrusion::area(curGlobalScvf);
 
             if (isSurfaceGrid && !curIsInteriorBoundary)
             {
                 unsigned int i = 0;
                 for (const auto& alpha : alpha_outside)
-                    outsideG[faceIdx][i++] = alpha*rho*curGlobalScvf.area();
+                    outsideG[faceIdx][i++] = alpha*rho*Extrusion::area(curGlobalScvf);
             }
         }
 
@@ -432,7 +434,7 @@ private:
 
                     // On surface grids we use the square root of the extrusion factor as approximation of the aperture
                     using std::sqrt;
-                    const auto wFacet = 2.0*curGlobalScvf.area()*posVolVars.extrusionFactor()
+                    const auto wFacet = 2.0*Extrusion::area(curGlobalScvf)*posVolVars.extrusionFactor()
                                            *vtmv(curGlobalScvf.unitOuterNormal(), facetTensor, curGlobalScvf.unitOuterNormal())
                                            / (dim < dimWorld ? sqrt(facetVolVars.extrusionFactor()) : facetVolVars.extrusionFactor());
 

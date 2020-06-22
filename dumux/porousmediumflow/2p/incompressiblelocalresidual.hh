@@ -33,6 +33,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
@@ -58,8 +59,9 @@ class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -103,7 +105,7 @@ public:
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
-        const auto poreVolume = scv.volume()*curVolVars.porosity();
+        const auto poreVolume = Extrusion::volume(scv)*curVolVars.porosity();
         const auto dt = this->timeLoop().timeStepSize();
 
         // partial derivative of the phase storage terms w.r.t. S_n

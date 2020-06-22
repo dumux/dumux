@@ -38,6 +38,7 @@
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/flux/box/fourierslaw.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -56,8 +57,9 @@ class BoxFacetCouplingFouriersLaw
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
@@ -115,7 +117,7 @@ public:
             gradT /= gradT.two_norm2();
             gradT *= (facetVolVars.temperature() - T);
 
-            return -1.0*scvf.area()
+            return -1.0*Extrusion::area(scvf)
                        *insideVolVars.extrusionFactor()
                        *vtmv(scvf.unitOuterNormal(),
                              facetVolVars.effectiveThermalConductivity(),
@@ -142,7 +144,7 @@ public:
                 gradT.axpy(temperatures[scv.localDofIndex()], fluxVarCache.gradN(scv.indexInElement()));
 
             // apply matrix thermal conductivity and return the flux
-            return -1.0*scvf.area()
+            return -1.0*Extrusion::area(scvf)
                        *insideVolVars.extrusionFactor()
                        *vtmv(scvf.unitOuterNormal(),
                          insideVolVars.effectiveThermalConductivity(),

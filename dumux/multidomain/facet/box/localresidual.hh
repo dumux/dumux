@@ -29,6 +29,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -43,12 +44,14 @@ class BoxFacetCouplingLocalResidual : public FVLocalResidual<TypeTag>
     using ParentType = FVLocalResidual<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
@@ -112,7 +115,7 @@ public:
                 auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
-                neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
+                neumannFluxes *= Extrusion::area(scvf)*elemVolVars[scv].extrusionFactor();
 
                 flux += neumannFluxes;
             }

@@ -27,6 +27,7 @@
 
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -52,6 +53,7 @@ class StaggeredLocalResidual
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using FaceSubControlVolume = typename GridGeometry::Traits::FaceSubControlVolume;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
 
     using CellCenterResidual = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
@@ -123,7 +125,7 @@ public:
 
             // subtract the source term from the local rate
             auto source = asImp_().computeSourceForCellCenter(problem, element, fvGeometry, curElemVolVars, curElemFaceVars, scv);
-            source *= scv.volume()*curExtrusionFactor;
+            source *= Extrusion::volume(scv)*curExtrusionFactor;
             residual -= source;
     }
 
@@ -169,7 +171,7 @@ public:
 
         storage = std::move(curCCStorage);
         storage -= std::move(prevCCStorage);
-        storage *= scv.volume();
+        storage *= Extrusion::volume(scv);
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;
@@ -243,13 +245,12 @@ public:
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         const auto extrusionFactor = elemVolVars[scv].extrusionFactor();
 
-        // contruct staggered scv (half of the element)
-        auto scvCenter = scvf.center() - scv.center();
-        scvCenter *= 0.5;
-        FaceSubControlVolume faceScv(scvCenter, 0.5*scv.volume());
+        // construct staggered scv (half of the element)
+        auto faceScvCenter = scvf.center() + scv.center();
+        faceScvCenter *= 0.5;
+        FaceSubControlVolume faceScv(faceScvCenter, 0.5*scv.volume());
 
-        // multiply by 0.5 because we only consider half of a staggered control volume here
-        source *= faceScv.volume()*extrusionFactor;
+        source *= Extrusion::volume(faceScv)*extrusionFactor;
         residual -= source;
     }
 
@@ -286,12 +287,12 @@ public:
 
         const auto extrusionFactor = curElemVolVars[scv].extrusionFactor();
 
-        // contruct staggered scv (half of the element)
-        auto scvCenter = scvf.center() - scv.center();
-        scvCenter *= 0.5;
-        FaceSubControlVolume faceScv(scvCenter, 0.5*scv.volume());
+        // construct staggered scv (half of the element)
+        auto faceScvCenter = scvf.center() + scv.center();
+        faceScvCenter *= 0.5;
+        FaceSubControlVolume faceScv(faceScvCenter, 0.5*scv.volume());
 
-        storage *= faceScv.volume()*extrusionFactor;
+        storage *= Extrusion::volume(faceScv)*extrusionFactor;
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;

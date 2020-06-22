@@ -28,6 +28,7 @@
 #include <dumux/common/math.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 namespace Dumux {
@@ -46,7 +47,8 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -97,12 +99,11 @@ public:
             flux = avgLambda * (insideTemperature - outsideTemperature) / (insideDistance + outsideDistance);
         }
 
-        flux *= scvf.area();
+        flux *= Extrusion::area(scvf);
         return flux;
     }
-
-
 };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif

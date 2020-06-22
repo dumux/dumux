@@ -28,6 +28,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux {
@@ -46,9 +47,11 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
@@ -143,7 +146,7 @@ public:
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
         {
-            tij = scvf.area()*ti;
+            tij = Extrusion::area(scvf)*ti;
         }
         // otherwise we compute a tpfa harmonic mean
         else
@@ -164,7 +167,7 @@ public:
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = scvf.area()*(ti * tj)/(ti + tj);
+                tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
         }
 
         return tij;

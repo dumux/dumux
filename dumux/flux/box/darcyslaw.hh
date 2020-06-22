@@ -32,6 +32,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -63,6 +64,7 @@ class BoxDarcysLaw
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -116,7 +118,7 @@ public:
             gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
         // apply the permeability and return the flux
-        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*scvf.area();
+        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*Extrusion::area(scvf);
     }
 
     // compute transmissibilities ti for analytical jacobians
@@ -145,7 +147,7 @@ public:
         std::vector<Scalar> ti(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
             ti[scv.indexInElement()] =
-                -1.0*scvf.area()*vtmv(scvf.unitOuterNormal(), K, fluxVarCache.gradN(scv.indexInElement()));
+                -1.0*Extrusion::area(scvf)*vtmv(scvf.unitOuterNormal(), K, fluxVarCache.gradN(scv.indexInElement()));
 
         return ti;
     }

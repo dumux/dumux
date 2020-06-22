@@ -31,7 +31,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/method.hh>
-
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -48,8 +48,10 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
@@ -111,7 +113,7 @@ public:
         }
 
         // comute the heat conduction flux
-        return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*scvf.area();
+        return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*Extrusion::area(scvf);
     }
 };
 

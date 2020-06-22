@@ -31,6 +31,7 @@
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -51,8 +52,9 @@ class FVLocalResidual
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
@@ -114,7 +116,7 @@ public:
             auto localScvIdx = scv.localDofIndex();
             const auto& volVars = elemVolVars[scv];
             storage[localScvIdx] = asImp().computeStorage(problem, scv, volVars);
-            storage[localScvIdx] *= scv.volume() * volVars.extrusionFactor();
+            storage[localScvIdx] *= Extrusion::volume(scv) * volVars.extrusionFactor();
         }
 
         return storage;
@@ -307,7 +309,7 @@ public:
         storage *= curVolVars.extrusionFactor();
 
         storage -= prevStorage;
-        storage *= scv.volume();
+        storage *= Extrusion::volume(scv);
         storage /= timeLoop_->timeStepSize();
 
         residual[scv.localDofIndex()] += storage;
@@ -336,7 +338,7 @@ public:
         //! Compute source with the model specific storage residual
         const auto& curVolVars = curElemVolVars[scv];
         NumEqVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
-        source *= scv.volume()*curVolVars.extrusionFactor();
+        source *= Extrusion::volume(scv)*curVolVars.extrusionFactor();
 
         //! subtract source from local rate (sign convention in user interface)
         residual[scv.localDofIndex()] -= source;

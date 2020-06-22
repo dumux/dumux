@@ -28,6 +28,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
@@ -52,10 +53,11 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
 {
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -196,7 +198,8 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using MpfaHelper = typename GridGeometry::MpfaHelper;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
 
@@ -639,7 +642,7 @@ private:
                             return max(1e-20, vv.diffusionCoefficient(0, 0, compIdx));
                     } ();
 
-                    auto eps = 1e-7*computeTpfaTransmissibility(scvf, scv, D, vv.extrusionFactor())*scvf.area();
+                    auto eps = 1e-7*computeTpfaTransmissibility(scvf, scv, D, vv.extrusionFactor())*Extrusion::area(scvf);
                     localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD, eps);
                 }
 

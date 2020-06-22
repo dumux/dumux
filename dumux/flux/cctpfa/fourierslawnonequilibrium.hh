@@ -26,6 +26,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -45,9 +46,11 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cct
     using Implementation = FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVarsCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
@@ -122,7 +125,7 @@ public:
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-            return scvf.area()*ti;
+            return Extrusion::area(scvf)*ti;
         else // otherwise we compute a tpfa harmonic mean
         {
             const auto outsideScvIdx = scvf.outsideScvIdx();
@@ -141,7 +144,7 @@ public:
             if (ti*tj <= 0.0)
                 return 0.0;
             else
-                return scvf.area()*(ti * tj)/(ti + tj);
+                return Extrusion::area(scvf)*(ti * tj)/(ti + tj);
         }
     }
 };
