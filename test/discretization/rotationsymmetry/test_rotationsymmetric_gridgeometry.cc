@@ -31,10 +31,7 @@
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
-#include <dumux/discretization/rotationpolicy.hh>
-#include <dumux/discretization/rotationsymmetricscv.hh>
-#include <dumux/discretization/rotationsymmetricscvf.hh>
-#include <dumux/discretization/rotationsymmetricgridgeometrytraits.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -49,11 +46,11 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
         fvGeometry.bind(element);
 
         for (const auto& scv : scvs(fvGeometry))
-            volume += scv.volume();
+            volume += GG::Extrusion::volume(scv);
 
         for (const auto& scvf : scvfs(fvGeometry))
             if (scvf.boundary())
-                surface += scvf.area();
+                surface += GG::Extrusion::area(scvf);
     }
 
     // compare to reference
@@ -75,7 +72,9 @@ int main (int argc, char *argv[]) try
     // test the disc policy
     {
         using Grid = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<double, 1>>;
-        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::disc>;
+
+        struct GGTraits : public CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>
+        { using Extrusion = RotationalExtrusion<0>; };
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
@@ -104,7 +103,8 @@ int main (int argc, char *argv[]) try
     // test the ball policy
     {
         using Grid = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<double, 1>>;
-        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::ball>;
+        struct GGTraits : public CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>
+        { using Extrusion = SphericalExtrusion; };
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
@@ -133,7 +133,8 @@ int main (int argc, char *argv[]) try
     // test the toroid policy
     {
         using Grid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::toroid>;
+        struct GGTraits : public CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>
+        { using Extrusion = RotationalExtrusion<0>; };
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
@@ -165,7 +166,8 @@ int main (int argc, char *argv[]) try
     // test the toroid policy for perfect cylinder
     {
         using Grid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::toroid>;
+        struct GGTraits : public CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>
+        { using Extrusion = RotationalExtrusion<0>; };
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
