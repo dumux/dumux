@@ -30,6 +30,7 @@
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/pointsource.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -47,37 +48,64 @@ class IntegrationPointSource : public IdPointSource<GlobalPosition, SourceValues
 
 public:
     //! Constructor for integration point sources
+    [[deprecated("Call constructor with a single element index instead! Will be removed after 3.3")]]
     IntegrationPointSource(GlobalPosition pos, SourceValues values, IdType id,
                            Scalar qpweight, Scalar integrationElement,
                            const std::vector<std::size_t>& elementIndices)
       : ParentType(pos, values, id),
         qpweight_(qpweight), integrationElement_(integrationElement),
-        elementIndices_(elementIndices) {}
+        elementIndex_(elementIndices[0]) {}
 
     //! Constructor for integration point sources, when there is no
     // value known at the time of initialization
+    [[deprecated("Call constructor with a single element index instead! Will be removed after 3.3")]]
     IntegrationPointSource(GlobalPosition pos, IdType id,
                            Scalar qpweight, Scalar integrationElement,
                            const std::vector<std::size_t>& elementIndices)
       : ParentType(pos, id),
         qpweight_(qpweight), integrationElement_(integrationElement),
-        elementIndices_(elementIndices) {}
+        elementIndex_(elementIndices[0]) {}
 
+    //! Constructor for integration point sources
+    IntegrationPointSource(GlobalPosition pos, SourceValues values, IdType id,
+                           Scalar qpweight, Scalar integrationElement,
+                           std::size_t elementIndex)
+    : ParentType(pos, values, id)
+    , qpweight_(qpweight)
+    , integrationElement_(integrationElement)
+    , elementIndex_(elementIndex)
+    {}
+
+    //! Constructor for integration point sources, when there is no
+    //! value known at the time of initialization
+    IntegrationPointSource(GlobalPosition pos, IdType id,
+                           Scalar qpweight, Scalar integrationElement,
+                           std::size_t elementIndex)
+    : ParentType(pos, id)
+    , qpweight_(qpweight)
+    , integrationElement_(integrationElement)
+    , elementIndex_(elementIndex)
+    {}
 
     Scalar quadratureWeight() const
-    {
-        return qpweight_;
-    }
+    { return qpweight_; }
 
     Scalar integrationElement() const
-    {
-        return integrationElement_;
-    }
+    { return integrationElement_; }
 
-    const std::vector<std::size_t>& elementIndices() const
-    {
-        return elementIndices_;
-    }
+    void setQuadratureWeight(const Scalar qpWeight)
+    { return qpweight_ = qpWeight; }
+
+    void setIntegrationElement(const Scalar ie)
+    { integrationElement_ = ie; }
+
+    [[deprecated("Use elementIndex() instead. Will be removed after 3.3")]]
+    std::vector<std::size_t> elementIndices() const
+    { return std::vector<std::size_t>({elementIndex_}); }
+
+    //! The index of the element this intergration point source is associated with
+    std::size_t elementIndex() const
+    { return elementIndex_; }
 
     //! Convenience = operator overload modifying only the values
     IntegrationPointSource& operator= (const SourceValues& values)
@@ -96,7 +124,7 @@ public:
 private:
     Scalar qpweight_;
     Scalar integrationElement_;
-    std::vector<std::size_t> elementIndices_;
+    std::size_t elementIndex_;
 };
 
 /*!
@@ -110,29 +138,29 @@ public:
     //! calculate a DOF index to point source map from given vector of point sources
     template<class GridGeometry, class PointSource, class PointSourceMap>
     static void computePointSourceMap(const GridGeometry& gridGeometry,
-                                      std::vector<PointSource>& sources,
-                                      PointSourceMap& pointSourceMap)
+                                      const std::vector<PointSource>& sources,
+                                      PointSourceMap& pointSourceMap,
+                                      const std::string& paramGroup = "")
     {
-        for (auto&& source : sources)
+        for (const auto& source : sources)
         {
-            // compute in which elements the point source falls
-            const auto& entities = source.elementIndices();
-            // split the source values equally among all concerned entities
-            source.setEmbeddings(source.embeddings()*entities.size());
-            // loop over all intersected elements
-            for (unsigned int eIdx : entities)
+            // get the index of the element in which the point source falls
+            const auto eIdx = source.elementIndex();
+            if constexpr (GridGeometry::discMethod == DiscretizationMethod::box)
             {
-                if (GridGeometry::discMethod == DiscretizationMethod::box)
+                // check in which subcontrolvolume(s) we are
+                const auto element = gridGeometry.boundingBoxTree().entitySet().entity(eIdx);
+                auto fvGeometry = localView(gridGeometry);
+                fvGeometry.bindElement(element);
+                const auto globalPos = source.position();
+
+                static const bool boxPointSourceLumping = getParamFromGroup<bool>(paramGroup, "PointSource.EnableBoxLumping", true);
+                if (boxPointSourceLumping)
                 {
-                    // check in which subcontrolvolume(s) we are
-                    const auto element = gridGeometry.boundingBoxTree().entitySet().entity(eIdx);
-                    auto fvGeometry = localView(gridGeometry);
-                    fvGeometry.bindElement(element);
-                    const auto globalPos = source.position();
                     // loop over all sub control volumes and check if the point source is inside
                     constexpr int dim = GridGeometry::GridView::dimension;
                     Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
-                    for (auto&& scv : scvs(fvGeometry))
+                    for (const auto& scv : scvs(fvGeometry))
                         if (intersectsPointGeometry(globalPos, scv.geometry()))
                             scvIndices.push_back(scv.indexInElement());
 
@@ -150,15 +178,37 @@ public:
                         s.setEmbeddings(scvIndices.size()*s.embeddings());
                     }
                 }
+
+                // distribute the sources using the basis function weights
                 else
                 {
-                    // add the pointsource to the DOF map
-                    const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
-                    if (pointSourceMap.count(key))
-                        pointSourceMap.at(key).push_back(source);
-                    else
-                        pointSourceMap.insert({key, {source}});
+                    const auto& localBasis = fvGeometry.feLocalBasis();
+                    const auto ipLocal = element.geometry().local(globalPos);
+                    using Scalar = std::decay_t<decltype(source.values()[0])>;
+                    std::vector<typename Dune::FieldVector<Scalar, 1>> shapeValues;
+                    localBasis.evaluateFunction(ipLocal, shapeValues);
+                    for (const auto& scv : scvs(fvGeometry))
+                    {
+                        const auto key = std::make_pair(eIdx, scv.indexInElement());
+                        if (pointSourceMap.count(key))
+                            pointSourceMap.at(key).push_back(source);
+                        else
+                            pointSourceMap.insert({key, {source}});
+
+                        // adjust the integration element
+                        auto& s = pointSourceMap.at(key).back();
+                        s.setIntegrationElement(shapeValues[scv.indexInElement()]*s.integrationElement());
+                    }
                 }
+            }
+            else
+            {
+                // add the pointsource to the DOF map
+                const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
+                if (pointSourceMap.count(key))
+                    pointSourceMap.at(key).push_back(source);
+                else
+                    pointSourceMap.insert({key, {source}});
             }
         }
     }
