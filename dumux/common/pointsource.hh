@@ -317,9 +317,9 @@ public:
                     {
                         const auto key = std::make_pair(eIdx, scvIdx);
                         if (pointSourceMap.count(key))
-                            pointSourceMap.at(key).emplace_back(std::move(source));
+                            pointSourceMap.at(key).push_back(source);
                         else
-                            pointSourceMap.insert({key, {std::move(source)}});
+                            pointSourceMap.insert({key, {source}});
                         // split equally on the number of matched scvs
                         auto& s = pointSourceMap.at(key).back();
                         s.setEmbeddings(scvIndices.size()*s.embeddings());
@@ -330,9 +330,9 @@ public:
                     // add the pointsource to the DOF map
                     const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
                     if (pointSourceMap.count(key))
-                        pointSourceMap.at(key).emplace_back(std::move(source));
+                        pointSourceMap.at(key).push_back(source);
                     else
-                        pointSourceMap.insert({key, {std::move(source)}});
+                        pointSourceMap.insert({key, {source}});
                 }
             }
         }
