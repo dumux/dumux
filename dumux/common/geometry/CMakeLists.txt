@@ -1,6 +1,7 @@
 install(FILES
 boundingboxtree.hh
 diameter.hh
+distance.hh
 geometricentityset.hh
 geometryintersection.hh
 grahamconvexhull.hh
