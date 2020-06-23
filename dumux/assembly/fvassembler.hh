@@ -37,8 +37,41 @@
 #include "diffmethod.hh"
 #include "boxlocalassembler.hh"
 #include "cclocalassembler.hh"
+#include "fclocalassembler.hh"
 
 namespace Dumux {
+
+template<DiscretizationMethod diffMethod>
+struct LocalAssemblerChooser;
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::box>
+{
+    template<class TypeTag, class Impl, DiffMethod dM, bool isImplicit>
+    using type = BoxLocalAssembler<TypeTag, Impl, dM, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::ccmpfa>
+{
+    template<class TypeTag, class Impl, DiffMethod dM, bool isImplicit>
+    using type = CCLocalAssembler<TypeTag, Impl, dM, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::cctpfa>
+{
+    template<class TypeTag, class Impl, DiffMethod dM, bool isImplicit>
+    using type = CCLocalAssembler<TypeTag, Impl, dM, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethod::fcstaggered>
+{
+    template<class TypeTag, class Impl, DiffMethod dM, bool isImplicit>
+    using type = FaceCenteredLocalAssembler<TypeTag, Impl, dM, isImplicit>;
+};
+
 
 /*!
  * \ingroup Assembly
@@ -60,8 +93,8 @@ class FVAssembler
     static constexpr bool isBox = discMethod == DiscretizationMethod::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
-    using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>,
-                                                     CCLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>>;
+    using LocalAssembler = typename LocalAssemblerChooser<discMethod>::template type<TypeTag, ThisType, diffMethod, isImplicit>;
+
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
