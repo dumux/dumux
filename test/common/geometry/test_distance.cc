@@ -34,6 +34,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/geometry/distance.hh>
+#include <dumux/common/geometry/normal.hh>
 
 // helper function to make point geometry from field vector
 template<class Point, int dimWorld>
@@ -52,25 +53,6 @@ Segment makeSegment(const Dune::FieldVector<typename Segment::ctype, dimWorld>& 
     using GlobalPosition = Dune::FieldVector<typename Segment::ctype, dimWorld>;
     using Corners = std::vector<GlobalPosition>;
     return { Dune::GeometryTypes::line, Corners{{p1, p2}} };
-}
-
-// helper function to make a vector normal to the given one
-template<class ctype, int dimWorld>
-Dune::FieldVector<ctype, dimWorld>
-makeNormalVector(const Dune::FieldVector<ctype, dimWorld>& v)
-{
-    static_assert(dimWorld > 1, "This only works in 2d or 3d");
-
-    Dune::FieldVector<ctype, dimWorld> n(0.0);
-
-    // treat 3d vectors with entries (0, 0, z) differently
-    if (dimWorld == 2 || Dune::FloatCmp::ne(v[0], 0.0)
-                      || Dune::FloatCmp::ne(v[1], 0.0))
-    { n[0] = -v[1]; n[1] = v[0]; }
-    else
-    { n[0] = 1.0; }
-
-    return n;
 }
 
 // sample a point on a sphere with the given radius
@@ -124,7 +106,7 @@ void runTests()
             checkGeometryDistance(scale, distance(origin, p), "point-point");
 
             // test point-segment distance (where projection is on the segment)
-            auto n = makeNormalVector(p.corner(0));
+            auto n = normal(p.corner(0));
             n *= scale/n.two_norm();
 
             auto segment = makeSegment<Segment>(origin.corner(0) + n, p.corner(0) + n);
