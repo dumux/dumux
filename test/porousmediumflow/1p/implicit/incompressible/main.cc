@@ -146,7 +146,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // solver the linear problem
-    LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
+    LinearPDESolver solver(assembler, linearSolver);
     solver.solve(x);
 
     // output result to vtk
