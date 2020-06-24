@@ -127,7 +127,7 @@ namespace Detail {
 
 // helper struct to compute distance between two geometries, specialized below
 template<class Geo1, class Geo2,
-         int dimworld = Geo1::coorddimension,
+         int dimWorld = Geo1::coorddimension,
          int dim1 = Geo1::mydimension, int dim2 = Geo2::mydimension>
 struct GeometryDistance
 {
@@ -140,13 +140,31 @@ struct GeometryDistance
 };
 
 // distance point-point
-template<class Geo1, class Geo2, int dimworld>
-struct GeometryDistance<Geo1, Geo2, dimworld, 0, 0>
+template<class Geo1, class Geo2, int dimWorld>
+struct GeometryDistance<Geo1, Geo2, dimWorld, 0, 0>
 {
     static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
     static auto distance(const Geo1& geo1, const Geo2& geo2)
-    { return distance(geo1.corner(0), geo2.corner(0)); }
-}
+    { return Dumux::distance(geo1.corner(0), geo2.corner(0)); }
+};
+
+// distance segment-point
+template<class Geo1, class Geo2, int dimWorld>
+struct GeometryDistance<Geo1, Geo2, dimWorld, 1, 0>
+{
+    static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
+    static auto distance(const Geo1& geo1, const Geo2& geo2)
+    { return distancePointSegment(geo2.corner(0), geo1); }
+};
+
+// distance point-segment
+template<class Geo1, class Geo2, int dimWorld>
+struct GeometryDistance<Geo1, Geo2, dimWorld, 0, 1>
+{
+    static_assert(Geo1::coorddimension == Geo2::coorddimension, "Geometries have to have the same coordinate dimensions");
+    static auto distance(const Geo1& geo1, const Geo2& geo2)
+    { return distancePointSegment(geo1.corner(0), geo2); }
+};
 
 } // end namespace Detail
 
