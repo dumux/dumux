@@ -4,6 +4,7 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 ### Improvements and Enhancements
 
 - __Dune version__: DuMu<sup>x</sup> now requires Dune >=2.7
+- The DuMu<sup>x</sup> install script has been translated to Python to improve portability. The old shell script will be removed after release 3.3.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
