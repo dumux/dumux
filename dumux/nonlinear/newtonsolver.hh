@@ -1034,7 +1034,7 @@ private:
      * Throws Dumux::NumericalProblem if the linear solver didn't
      * converge.
      *
-     * Specialization for linear solvers that can handle MultiType matrices.
+     * Specialization for regular vector types (not MultiTypeBlockVector)
      *
      */
     template<class V = SolutionVector>
