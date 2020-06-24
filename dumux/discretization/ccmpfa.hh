@@ -160,7 +160,7 @@ template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::CCMpfaModel> { using type = CCLocalResidual<TypeTag>; };
 } // namespace Properties
 
-namespace Impl {
+namespace Detail {
 
 template<class Problem>
 struct ProblemTraits<Problem, DiscretizationMethod::ccmpfa>
@@ -175,7 +175,7 @@ public:
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
 };
 
-} // end namespace Impl
+} // end namespace Detail
 
 } // namespace Dumux
 

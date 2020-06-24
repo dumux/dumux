@@ -36,7 +36,7 @@
 
 namespace Dumux::Vtk {
 
-namespace Impl {
+namespace Detail {
 
 template<class Field>
 double accessEntry(const Field& f, [[maybe_unused]] int mycomp, [[maybe_unused]] int i)
@@ -52,7 +52,7 @@ double accessEntry(const Field& f, [[maybe_unused]] int mycomp, [[maybe_unused]]
         return f[i];
 }
 
-} // end namespace Impl
+} // end namespace Detail
 
 /*!
  * \ingroup InputOutput
@@ -79,7 +79,7 @@ public:
 
     //! evaluate
     double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const final
-    { return Impl::accessEntry(field_, mycomp, mapper_.index(e)); }
+    { return Detail::accessEntry(field_, mycomp, mapper_.index(e)); }
 
     //! get output precision for the field
     Dumux::Vtk::Precision precision() const final
@@ -138,7 +138,7 @@ public:
 
         std::vector<Dune::FieldVector<ctype, 1>> cornerValues(nVertices);
         for (unsigned i = 0; i < nVertices; ++i)
-            cornerValues[i] = Impl::accessEntry(field_, mycomp, mapper_.subIndex(e, i, dim));
+            cornerValues[i] = Detail::accessEntry(field_, mycomp, mapper_.subIndex(e, i, dim));
 
         // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
         const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));

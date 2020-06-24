@@ -43,7 +43,7 @@ namespace Dumux {
 
 // implementation details of the integrate functions
 #ifndef DOXYGEN
-namespace Impl {
+namespace Detail {
 
 struct HasLocalFunction
 {
@@ -92,7 +92,7 @@ struct FieldTypeImpl<T, typename std::enable_if<(sizeof(std::declval<T>()[0]) > 
 template<class T>
 using FieldType = typename FieldTypeImpl<T>::type;
 
-} // end namespace Impl
+} // end namespace Detail
 #endif
 
 /*!
@@ -102,13 +102,13 @@ using FieldType = typename FieldTypeImpl<T>::type;
  * \param order the order of the quadrature rule
  */
 template<class GridGeometry, class SolutionVector,
-         typename std::enable_if_t<!Impl::hasLocalFunction<SolutionVector>(), int> = 0>
+         typename std::enable_if_t<!Detail::hasLocalFunction<SolutionVector>(), int> = 0>
 auto integrateGridFunction(const GridGeometry& gg,
                            const SolutionVector& sol,
                            std::size_t order)
 {
     using GridView = typename GridGeometry::GridView;
-    using Scalar = typename Impl::FieldType< std::decay_t<decltype(sol[0])> >;
+    using Scalar = typename Detail::FieldType< std::decay_t<decltype(sol[0])> >;
 
     Scalar integral(0.0);
     for (const auto& element : elements(gg.gridView()))
@@ -135,14 +135,14 @@ auto integrateGridFunction(const GridGeometry& gg,
  * \note dune functions currently doesn't support composing two functions
  */
 template<class GridGeometry, class Sol1, class Sol2,
-         typename std::enable_if_t<!Impl::hasLocalFunction<Sol1>(), int> = 0>
+         typename std::enable_if_t<!Detail::hasLocalFunction<Sol1>(), int> = 0>
 auto integrateL2Error(const GridGeometry& gg,
                       const Sol1& sol1,
                       const Sol2& sol2,
                       std::size_t order)
 {
     using GridView = typename GridGeometry::GridView;
-    using Scalar = typename Impl::FieldType< std::decay_t<decltype(sol1[0])> >;
+    using Scalar = typename Detail::FieldType< std::decay_t<decltype(sol1[0])> >;
 
     Scalar l2norm(0.0);
     for (const auto& element : elements(gg.gridView()))
@@ -176,7 +176,7 @@ auto integrateL2Error(const GridGeometry& gg,
  * \note overload for a Dune::Funtions::GridFunction
  */
 template<class GridView, class F,
-         typename std::enable_if_t<Impl::hasLocalFunction<F>(), int> = 0>
+         typename std::enable_if_t<Detail::hasLocalFunction<F>(), int> = 0>
 auto integrateGridFunction(const GridView& gv,
                            const F& f,
                            std::size_t order)
@@ -185,7 +185,7 @@ auto integrateGridFunction(const GridView& gv,
 
     using Element = typename GridView::template Codim<0>::Entity;
     using LocalPosition = typename Element::Geometry::LocalCoordinate;
-    using Scalar = typename Impl::FieldType< std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))> >;
+    using Scalar = typename Detail::FieldType< std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))> >;
 
     Scalar integral(0.0);
     for (const auto& element : elements(gv))
@@ -216,7 +216,7 @@ auto integrateGridFunction(const GridView& gv,
  * \note dune functions currently doesn't support composing two functions
  */
 template<class GridView, class F, class G,
-         typename std::enable_if_t<Impl::hasLocalFunction<F>(), int> = 0>
+         typename std::enable_if_t<Detail::hasLocalFunction<F>(), int> = 0>
 auto integrateL2Error(const GridView& gv,
                       const F& f,
                       const G& g,
@@ -227,7 +227,7 @@ auto integrateL2Error(const GridView& gv,
 
     using Element = typename GridView::template Codim<0>::Entity;
     using LocalPosition = typename Element::Geometry::LocalCoordinate;
-    using Scalar = typename Impl::FieldType< std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))> >;
+    using Scalar = typename Detail::FieldType< std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))> >;
 
     Scalar l2norm(0.0);
     for (const auto& element : elements(gv))

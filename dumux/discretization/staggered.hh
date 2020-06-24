@@ -203,7 +203,7 @@ public:
 
 } // namespace Properties
 
-namespace Impl {
+namespace Detail {
 
 template<class Problem>
 struct ProblemTraits<Problem, DiscretizationMethod::staggered>
@@ -218,7 +218,7 @@ public:
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
 };
 
-} // end namespace Impl
+} // end namespace Detail
 
 } // namespace Dumux
 

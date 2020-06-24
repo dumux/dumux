@@ -208,7 +208,7 @@ private:
     std::vector<std::vector<Scalar>> sincos_;
 };
 
-namespace Impl {
+namespace Detail {
 //! check if a point is in an ellipse
 template<class GlobalPosition>
 inline bool pointInEllipse(const GlobalPosition& p,
@@ -273,7 +273,7 @@ ellipseIntegrationPoints(const GlobalPosition& center,
     // return points and integration element
     return {points, aStep*bStep};
 }
-} // end namespace Impl
+} // end namespace Detail
 
 /*!
  * \ingroup EmbeddedCoupling
@@ -336,7 +336,7 @@ public:
         auto startZ = bottomCenter;
         startZ.axpy(0.5*zStep, zAxis);
         auto [ellipseIPs, ellipseIntegrationElement]
-            = Impl::ellipseIntegrationPoints(startZ, firstUnitAxis, secondUnitAxis, a, b, normal, characteristicLength);
+            = Detail::ellipseIntegrationPoints(startZ, firstUnitAxis, secondUnitAxis, a, b, normal, characteristicLength);
 
         // compute total number of points
         const auto abPoints = ellipseIPs.size();
@@ -434,7 +434,7 @@ public:
 
         // generate integration points
         std::tie(points_, integrationElement_)
-            = Impl::ellipseIntegrationPoints(center, firstUnitAxis, secondUnitAxis, a, b, normal, characteristicLength);
+            = Detail::ellipseIntegrationPoints(center, firstUnitAxis, secondUnitAxis, a, b, normal, characteristicLength);
 
         // store number of sample points
         const auto abPoints = points_.size();

@@ -30,7 +30,7 @@
 
 namespace Dumux {
 
-namespace Impl {
+namespace Detail {
 
 // the functor testing an expression for validity
 // Expression: can be for example a lambda expression
@@ -68,7 +68,7 @@ public:
     { return testArgument_<Argument>(int()); }
 };
 
-} // end namespace Impl
+} // end namespace Detail
 
 
 /*!
@@ -91,7 +91,7 @@ public:
  */
 template <typename Expression>
 constexpr auto isValid(const Expression& t)
-{ return Impl::ValidityTestFunctor<Expression>(); }
+{ return Detail::ValidityTestFunctor<Expression>(); }
 
 } // end namespace Dumux
 

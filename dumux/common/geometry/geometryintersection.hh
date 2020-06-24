@@ -114,7 +114,7 @@ using DefaultPolicy = typename DefaultPolicyChooser<Geometry1, Geometry2>::type;
 
 } // end namespace IntersectionPolicy
 
-namespace Impl {
+namespace Detail {
 
 /*!
  * \ingroup Geometry
@@ -198,7 +198,7 @@ bool computeSegmentIntersection(const Geo1& geo1, const Geo2& geo2, ctype baseEp
     return true;
 }
 
-} // end namespace Impl
+} // end namespace Detail
 
 /*!
  * \ingroup Geometry
@@ -503,7 +503,7 @@ private:
              return n;
          };
 
-         return Impl::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
+         return Detail::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
      }
 };
 
@@ -796,7 +796,7 @@ private:
              return n;
          };
 
-         return Impl::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
+         return Detail::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
      }
 };
 
@@ -1156,7 +1156,7 @@ private:
             return n;
         };
 
-        return Impl::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
+        return Detail::computeSegmentIntersection(geo1, geo2, eps_, tfirst, tlast, getFacetCorners, computeNormal);
     }
 
     /*!
