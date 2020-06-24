@@ -8,6 +8,7 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - For the "sequential" models, the property `BoundaryTypes` has been simply renamed to `SequentialBoundaryTypes`
+- __Quadmath__: Dumux::Quad has been removed without deprecation. Use Dune::Float128 instead.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.3:
 

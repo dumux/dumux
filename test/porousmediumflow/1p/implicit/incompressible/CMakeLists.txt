@@ -27,9 +27,8 @@ dumux_add_test(NAME test_1p_incompressible_tpfa
 dumux_add_test(NAME test_1p_incompressible_tpfa_quad
               LABELS porousmediumflow 1p
               SOURCES main.cc
-              CMAKE_GUARD HAVE_QUAD
+              CMAKE_GUARD HAVE_QUADMATH
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfaQuad NUMDIFFMETHOD=DiffMethod::analytic
-              LINK_LIBRARIES ${QUADMATH_LIBRARIES}
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
