@@ -4,6 +4,7 @@
 One click install script for dumux
 """
 import os
+import sys
 import subprocess
 from distutils.spawn import find_executable
 from pkg_resources import parse_version
@@ -22,15 +23,36 @@ def check_cpp_version():
         raise Exception("g++ greater than or equal to {} is required for dumux releases >=3.2!".format(requiredversion))
 
 
+def run_command(command):
+    with open("../installdumux.log", "a") as log:
+        popen = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        for line in popen.stdout:
+            log.write(line)
+            print(line, end='')
+        for line in popen.stderr:
+            log.write(line)
+            print(line, end='')
+        popen.stdout.close()
+        popen.stderr.close()
+        return_code = popen.wait()
+        if return_code:
+            print("\n")
+            message = "\n    (Error) The command {} returned with non-zero exit code\n".format(command)
+            message += "\n    If you can't fix the problem yourself consider reporting your issue\n"
+            message += "    on the mailing list (dumux@listserv.uni-stuttgart.de) and attach the file 'installdumux.log'\n"
+            show_message(message)
+            sys.exit(1)
+
+
 def git_clone(url, branch=None):
     clone = ["git", "clone"]
     if branch:
         clone += ["-b", branch]
-    result = subprocess.run([*clone, url])
-    if result.returncode != 0:
-        print("-- Failed to clone the repositories. Look for repository-specific errors.")
-        raise Exception(result.stderr)
+    result = run_command(command=[*clone, url])
 
+
+# clear the log file
+open('installdumux.log', 'w').close()
 
 #################################################################
 #################################################################
@@ -95,11 +117,7 @@ if not os.path.isfile("cmake.opts"):
 else:
     print("-- The file cmake.opts already exists. The existing file will be used to configure dumux.")
 
-
-result = subprocess.run(["./dune-common/bin/dunecontrol", "--opts=cmake.opts", "all"])
-if result.returncode != 0:
-    print("-- Failed to build the dune libaries.")
-    raise Exception(result.stderr)
+run_command(command=["./dune-common/bin/dunecontrol", "--opts=cmake.opts", "all"])
 
 show_message("(3/3) Step completed. Succesfully configured and built dune and dumux.")
 
