@@ -19,9 +19,7 @@
 /*!
  * \file
  * \ingroup Nonlinear
- * \brief Reference implementation of the Newton solver.
- *
- * Usually this solver should be sufficient.
+ * \brief Reference implementation of a Newton solver.
  */
 #ifndef DUMUX_NEWTON_SOLVER_HH
 #define DUMUX_NEWTON_SOLVER_HH
