@@ -98,7 +98,9 @@ auto hybridInnerProduct(const V& v1, const V& v2, Scalar init, Reduce&& r, Trans
     return init;
 }
 
-// TODO: Document why this is computed like this
+// Maximum relative shift at a degree of freedom.
+// For (primary variables) values below 1.0 we use
+// an absolute shift.
 template<class Scalar, class V>
 auto maxRelativeShift(const V& v1, const V& v2)
 -> std::enable_if_t<Dune::IsNumber<V>::value, Scalar>
@@ -107,6 +109,8 @@ auto maxRelativeShift(const V& v1, const V& v2)
     return abs(v1 - v2)/max<Scalar>(1.0, abs(v1 + v2)*0.5);
 }
 
+// Maximum relative shift for generic vector types.
+// Recursively calls maxRelativeShift until Dune::IsNumber is true.
 template<class Scalar, class V>
 auto maxRelativeShift(const V& v1, const V& v2)
 -> std::enable_if_t<!Dune::IsNumber<V>::value, Scalar>
