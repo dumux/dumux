@@ -215,7 +215,7 @@ public:
 
 
 // Projector construction details
-namespace Impl {
+namespace Detail {
 
 /*!
  * \brief Reduces a mass matrix and projection matrix such that they are composed
@@ -585,7 +585,7 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
     }
 }
 
-} // end namespace Implementation
+} // end namespace Detail
 
 
 /*!
@@ -610,7 +610,7 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
     static constexpr int targetDim = FEBasisTarget::GridView::dimension;
     static_assert(targetDim <= domainDim, "makeProjectorPair() expects targetDim < domainDim, please swap arguments");
 
-    return Impl::makeProjectorPair<true>(feBasisDomain, feBasisTarget, glue);
+    return Detail::makeProjectorPair<true>(feBasisDomain, feBasisTarget, glue);
 }
 
 /*!
@@ -633,7 +633,7 @@ auto makeProjector(const FEBasisDomain& feBasisDomain,
     static constexpr int targetDim = FEBasisTarget::GridView::dimension;
     static_assert(targetDim <= domainDim, "makeProjectorPair() expects targetDim < domainDim, please swap arguments");
 
-    return Impl::makeProjectorPair<false>(feBasisDomain, feBasisTarget, glue).first;
+    return Detail::makeProjectorPair<false>(feBasisDomain, feBasisTarget, glue).first;
 }
 
 /*!
@@ -657,7 +657,7 @@ auto makeProjectionMatricesPair(const FEBasisDomain& feBasisDomain,
     static constexpr int targetDim = FEBasisTarget::GridView::dimension;
     static_assert(targetDim <= domainDim, "makeProjectionMatrixPair() expects targetDim < domainDim, please swap arguments");
 
-    return Impl::createProjectionMatrices<true>(feBasisDomain, feBasisTarget, glue);
+    return Detail::createProjectionMatrices<true>(feBasisDomain, feBasisTarget, glue);
 }
 
 /*!
@@ -678,7 +678,7 @@ auto makeProjectionMatrices(const FEBasisDomain& feBasisDomain,
     static constexpr int targetDim = FEBasisTarget::GridView::dimension;
     static_assert(targetDim <= domainDim, "makeProjectionMatrixPair() expects targetDim < domainDim, please swap arguments");
 
-    return Impl::createProjectionMatrices<false>(feBasisDomain, feBasisTarget, glue).first;
+    return Detail::createProjectionMatrices<false>(feBasisDomain, feBasisTarget, glue).first;
 }
 
 } // end namespace Dumux

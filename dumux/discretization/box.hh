@@ -107,7 +107,7 @@ struct BaseLocalResidual<TypeTag, TTag::BoxModel> { using type = BoxLocalResidua
 
 } // namespace Properties
 
-namespace Impl {
+namespace Detail {
 
 template<class Problem>
 struct ProblemTraits<Problem, DiscretizationMethod::box>
@@ -122,7 +122,7 @@ public:
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
 };
 
-} // end namespace Impl
+} // end namespace Detail
 
 } // namespace Dumux
 

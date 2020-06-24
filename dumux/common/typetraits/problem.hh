@@ -30,10 +30,10 @@
 namespace Dumux {
 
 // forward declare
-namespace Impl {
+namespace Detail {
 template<class Problem, DiscretizationMethod dm>
 struct ProblemTraits;
-} // end namespace Impl
+} // end namespace Detail
 
 /*!
  * \ingroup Common
@@ -43,7 +43,7 @@ template<class Problem>
 struct ProblemTraits
 {
     using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using BoundaryTypes = typename Impl::template ProblemTraits<Problem, GridGeometry::discMethod>::BoundaryTypes;
+    using BoundaryTypes = typename Detail::template ProblemTraits<Problem, GridGeometry::discMethod>::BoundaryTypes;
 };
 
 } // end namespace Dumux
