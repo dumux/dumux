@@ -1,22 +1,25 @@
 [TimeLoop]
-DtInitial = 1 # [s]
-TEnd = 2 # [s]
+DtInitial = 0.00001 # [s]
+TEnd = 0.1 # [s]
 
 [Grid]
-UpperRight = 10 1
-Cells = 100 50
+LowerLeft = 0 0
+UpperRight = 7.2 2
+Cells = 417 115
+Image = grids/logo_mod.pbm
 
 [Problem]
 Name = test_channel_navierstokes # name passed to the output routines
 InletVelocity = 1000
 EnableGravity = false
+DirichletPoint = 4.65323 1.31305
 
 [Component]
 LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
 [ Newton ]
-MaxSteps = 10
+MaxSteps = 30
 MaxRelativeShift = 1e-5
 
 [Vtk]

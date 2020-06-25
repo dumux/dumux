@@ -27,6 +27,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/io/grid/gridmanager.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
@@ -65,7 +66,12 @@ struct FluidSystem<TypeTag, TTag::ChannelTest>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::ChannelTest> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::ChannelTest>
+{
+    using HostGrid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
+    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
+};
+
 
 // Set the problem property
 template<class TypeTag>
@@ -205,6 +211,28 @@ public:
         return values;
     }
 
+    /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     * \param pvIdx The primary variable index in the solution vector
+     */
+    template<class SubControlVolume>
+    bool isDirichletCell(const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const SubControlVolume& scv,
+                         int pvIdx) const
+    {
+        static auto center = getParam<GlobalPosition>("Problem.DirichletPoint");
+        auto isLowerLeftCell = [&](const SubControlVolume& scv)
+        { return (scv.center() - center).two_norm() < 1e-4; };
+
+        // set a fixed pressure in one cell
+        return (isLowerLeftCell(scv) && pvIdx == Indices::pressureIdx);
+    }
+
    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
@@ -223,7 +251,10 @@ public:
 #endif
         }
         else
+        {
             values[Indices::velocityXIdx] = 0.0;
+            values[Indices::velocityYIdx] = 0.0;
+        }
 
         return values;
     }

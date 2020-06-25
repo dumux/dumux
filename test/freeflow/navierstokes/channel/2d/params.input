@@ -3,8 +3,10 @@ DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
 [Grid]
-UpperRight = 10 1
-Cells = 100 50
+LowerLeft = 0 0
+UpperRight = 5 2
+Cells = 167 42
+Image = grids/dumux_binary_coarse.pbm
 
 [Problem]
 Name = test_channel_stokes # name passed to the output routines

@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES "params.input" "params_navierstokes.input" "params_convection.input" "params_conduction.input")
+dune_symlink_to_source_files(FILES "params.input" "params_navierstokes.input" "params_convection.input" "params_conduction.input" "grids")
 
 add_executable(test_ff_channel EXCLUDE_FROM_ALL main.cc)
 
