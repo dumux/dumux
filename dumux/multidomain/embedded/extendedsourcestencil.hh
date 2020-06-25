@@ -53,7 +53,7 @@ class ExtendedSourceStencil
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto lowDimIdx = stypename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
 
     template<std::size_t id>
     static constexpr bool isBox()
