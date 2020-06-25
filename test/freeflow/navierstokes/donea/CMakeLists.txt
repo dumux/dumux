@@ -1,3 +1,6 @@
+dumux_add_test(NAME test_donea_new
+               SOURCES main_new.cc)
+
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
               SOURCES main.cc
