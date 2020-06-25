@@ -28,8 +28,10 @@
 #include <vector>
 #include <cmath>
 
-#include <dumux/common/math.hh>
 #include <dune/common/exceptions.hh>
+
+#include <dumux/common/math.hh>
+#include <dumux/common/geometry/normal.hh>
 
 namespace Dumux::EmbeddedCoupling {
 
@@ -54,11 +56,6 @@ void circlePoints(std::vector<GlobalPosition>& points,
     assert(sincos.size() % 2 == 0 && "Sample angles have to be pairs of sin/cos so size needs to be even.");
     static_assert(GlobalPosition::dimension == 3, "Only implemented for world dimension 3");
 
-    using std::abs;
-    using ctype = typename GlobalPosition::value_type;
-
-    constexpr ctype eps = 1.5e-7;
-
     // resize the points vector
     const std::size_t numPoints = sincos.size()/2;
     points.resize(numPoints);
@@ -68,16 +65,7 @@ void circlePoints(std::vector<GlobalPosition>& points,
     n /= n.two_norm();
 
     // calculate a vector u perpendicular to n
-    GlobalPosition u;
-    if (abs(n[0]) < eps && abs(n[1]) < eps)
-        if (abs(n[2]) < eps)
-            DUNE_THROW(Dune::MathError, "The normal vector has to be non-zero!");
-        else
-            u = {0, 1, 0};
-    else
-        u = {-n[1], n[0], 0};
-
-    u *= radius/u.two_norm();
+    auto u = unitNormal(n); u*= radius;
 
     // the circle parameterization is p(t) = r*cos(t)*u + r*sin(t)*(n x u) + c
     auto tangent = crossProduct(u, n);

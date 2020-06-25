@@ -33,6 +33,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/geometry/distance.hh>
 #include <dumux/multidomain/embedded/pointsourcedata.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
@@ -1040,7 +1041,7 @@ public:
                     this->pointSourceData().emplace_back(std::move(psData));
 
                     // compute average distance to bulk cell
-                    this->averageDistanceToBulkCell().push_back(this->computeDistance(outside.geometry(), globalPos));
+                    this->averageDistanceToBulkCell().push_back(averageDistancePointGeometry(globalPos, outside.geometry()));
 
                     // export the lowdim coupling stencil
                     // we insert all vertices / elements and make it unique later

@@ -36,6 +36,7 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/geometry/distance.hh>
 #include <dumux/common/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/multidomain/couplingmanager.hh>
@@ -318,7 +319,7 @@ public:
                     this->pointSourceData().emplace_back(std::move(psData));
 
                     // compute average distance to bulk cell
-                    averageDistanceToBulkCell_.push_back(computeDistance(outside.geometry(), globalPos));
+                    averageDistanceToBulkCell_.push_back(averageDistancePointGeometry(globalPos, outside.geometry()));
 
                     // export the lowdim coupling stencil
                     // we insert all vertices / elements and make it unique later
@@ -475,16 +476,6 @@ protected:
 
         // intersect the bounding box trees
         glue_->build(bulkGridGeometry.boundingBoxTree(), lowDimGridGeometry.boundingBoxTree());
-    }
-
-    template<class Geometry, class GlobalPosition>
-    Scalar computeDistance(const Geometry& geometry, const GlobalPosition& p) const
-    {
-        Scalar avgDist = 0.0;
-        const auto& quad = Dune::QuadratureRules<Scalar, bulkDim>::rule(geometry.type(), 5);
-        for (auto&& qp : quad)
-            avgDist += (geometry.global(qp.position())-p).two_norm()*qp.weight();
-        return avgDist;
     }
 
     //! Return reference to point source data vector member
