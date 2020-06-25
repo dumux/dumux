@@ -169,7 +169,7 @@ private:
     template<std::size_t id>
     const auto& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<id> domainId, const Element<id>& element) const
     {
-        if constexpr (id == bulkIdx())
+        if constexpr (domainId == bulkIdx)
         {
             const auto bulkElementIdx = couplingManager.problem(bulkIdx).gridGeometry().elementMapper().index(element);
             if (sourceStencils_.count(bulkElementIdx))
