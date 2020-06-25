@@ -52,10 +52,8 @@ class ExtendedSourceStencil
     template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
-    template<std::size_t id>
-    static constexpr std::size_t subDomainIdx = typename MDTraits::template SubDomain<id>::Index();
-    static constexpr std::size_t bulkIdx = subDomainIdx<0>;
-    static constexpr std::size_t lowDimIdx = subDomainIdx<1>;
+    static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto lowDimIdx = stypename MDTraits::template SubDomain<1>::Index();
 
     template<std::size_t id>
     static constexpr bool isBox()
@@ -169,16 +167,16 @@ public:
 private:
     //! the extended source stencil due to the source average (always empty for lowdim, but may be filled for bulk)
     template<std::size_t id>
-    const auto& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<id> bulkDomain, const Element<id>& bulkElement) const
+    const auto& extendedSourceStencil_(const CouplingManager& couplingManager, Dune::index_constant<id> domainId, const Element<id>& element) const
     {
-        if constexpr (subDomainIdx<id> == bulkIdx)
+        if constexpr (id == bulkIdx())
         {
-            const auto bulkElementIdx = couplingManager.problem(bulkIdx).gridGeometry().elementMapper().index(bulkElement);
+            const auto bulkElementIdx = couplingManager.problem(bulkIdx).gridGeometry().elementMapper().index(element);
             if (sourceStencils_.count(bulkElementIdx))
                 return sourceStencils_.at(bulkElementIdx);
         }
-
-        return couplingManager.emptyStencil(subDomainIdx<id>);
+        
+        return couplingManager.emptyStencil(domainId);
     }
 
     //! the additional stencil for the kernel evaluations / circle averages
