@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_ROTATION_SYMMETRIC_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_ROTATION_SYMMETRIC_SUBCONTROLVOLUMEFACE_HH
 
+#warning "This header is deprecated and will be removed after release 3.3"
 #include <cmath>
 #include <dumux/discretization/rotationpolicy.hh>
 
@@ -36,7 +37,7 @@ namespace Dumux {
  * \tparam rotationPolicy the rotation policy (see enum RotationPolicy)
  */
 template<class SubControlVolumeFace, RotationPolicy rotationPolicy>
-class RotationSymmetricSubControlVolumeFace;
+class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricSubControlVolumeFace;
 
 /*!
  * \ingroup Discretization
@@ -45,7 +46,7 @@ class RotationSymmetricSubControlVolumeFace;
  * \note Specialization for the 'disc' policy (1d grid --> 2d disc)
  */
 template<class SubControlVolumeFace>
-class RotationSymmetricSubControlVolumeFace<SubControlVolumeFace, RotationPolicy::disc>
+class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricSubControlVolumeFace<SubControlVolumeFace, RotationPolicy::disc>
 : public SubControlVolumeFace
 {
     using Scalar = typename SubControlVolumeFace::Traits::Scalar;
@@ -70,7 +71,7 @@ public:
  * \note Specialization for the 'ball' policy (1d grid --> 3d ball)
  */
 template<class SubControlVolumeFace>
-class RotationSymmetricSubControlVolumeFace<SubControlVolumeFace, RotationPolicy::ball>
+class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricSubControlVolumeFace<SubControlVolumeFace, RotationPolicy::ball>
 : public SubControlVolumeFace
 {
     using Scalar = typename SubControlVolumeFace::Traits::Scalar;
@@ -96,7 +97,7 @@ public:
  * \note We rotate about the second axis
  */
 template<class SubControlVolumeFace>
-class RotationSymmetricSubControlVolumeFace<SubControlVolumeFace, RotationPolicy::toroid>
+class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricSubControlVolumeFace<SubControlVolumeFace, RotationPolicy::toroid>
 : public SubControlVolumeFace
 {
     using Scalar = typename SubControlVolumeFace::Traits::Scalar;

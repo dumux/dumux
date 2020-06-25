@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_ROTATION_POLICY_HH
 #define DUMUX_DISCRETIZATION_ROTATION_POLICY_HH
 
+#warning "This header is deprecated and will be removed after release 3.3"
+
 namespace Dumux {
 
 /*!
@@ -33,7 +35,7 @@ namespace Dumux {
  * - ball (or shell): rotate a segment around a point on the line through the segment
  * - toroid: rotate a polygon around one of its axis (we rotate about the second axis)
  */
-enum class RotationPolicy
+enum class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationPolicy
 { disc, ball, toroid };
 
 } // end namespace Dumux

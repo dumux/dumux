@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_ROTATION_SYMMETRIC_GG_TRAITS_HH
 #define DUMUX_DISCRETIZATION_ROTATION_SYMMETRIC_GG_TRAITS_HH
 
+#warning "This header is deprecated and will be removed after release 3.3"
 #include <dumux/discretization/rotationpolicy.hh>
 #include <dumux/discretization/rotationsymmetricscv.hh>
 #include <dumux/discretization/rotationsymmetricscvf.hh>
@@ -37,7 +38,7 @@ namespace Dumux {
  * \tparam rotPolicy The rotation policy (see RotationPolicy enum class)
  */
 template<class BaseTraits, RotationPolicy rotPolicy>
-struct RotationSymmetricGridGeometryTraits : public BaseTraits
+struct [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricGridGeometryTraits : public BaseTraits
 {
     using SubControlVolume = RotationSymmetricSubControlVolume<typename BaseTraits::SubControlVolume, rotPolicy>;
     using SubControlVolumeFace = RotationSymmetricSubControlVolumeFace<typename BaseTraits::SubControlVolumeFace, rotPolicy>;
