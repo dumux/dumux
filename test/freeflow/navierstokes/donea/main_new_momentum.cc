@@ -24,14 +24,9 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
-
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -45,9 +40,6 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/facecentered/staggered/fvgridgeometry.hh>
 
-#include <dumux/assembly/staggeredfvassembler.hh>
-
-
 #include "problem_new.hh"
 
 int main(int argc, char** argv) try
@@ -55,7 +47,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::DoneaTestNew;
+    using TypeTag = Properties::TTag::DoneaTestNewMomentum;
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -80,18 +72,13 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
-    Dune::Timer timer;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
 
-    // the coupling manager
-    using FakeCouplingManager = int;
-
-    // // the problem (boundary conditions)
+    // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry, FakeCouplingManager());
-
+    auto problem = std::make_shared<Problem>(gridGeometry);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -107,19 +94,6 @@ int main(int argc, char** argv) try
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    // // intialize the vtk output module
-    // using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    // StaggeredVtkOutputModule<NewGridVars, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    // IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    // vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
-    // vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
-    // vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
-    // vtkWriter.write(0.0);
-
-    // // use the staggered FV assembler
-    // using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    // auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, couplingManager);
-
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -132,7 +106,6 @@ int main(int argc, char** argv) try
     nonLinearSolver.solve(x);
 
     std::vector<Dune::FieldVector<double,2>> velocity(gridGeometry->gridView().size(0));
-
     for (const auto element : elements(gridGeometry->gridView()))
     {
         auto fvGeometry = localView(*gridGeometry);
@@ -140,38 +113,19 @@ int main(int argc, char** argv) try
 
         auto elemVolVars = localView(gridVariables->curGridVolVars());
         elemVolVars.bind(element, fvGeometry, x);
-
         const auto eIdx = gridGeometry->elementMapper().index(element);
 
         for (const auto& scv : scvs(fvGeometry))
-        {
             velocity[eIdx][scv.directionIndex()] += 0.5*elemVolVars[scv].velocity();
-        }
-
     }
 
-
-
     Dune::VTKWriter<std::decay_t<decltype(gridGeometry->gridView())>> writer(gridGeometry->gridView());
-
     using Field = Vtk::template Field<std::decay_t<decltype(gridGeometry->gridView())>>;
-
     writer.addCellData(Field(gridGeometry->gridView(), gridGeometry->elementMapper(), velocity,
-                                                           "velocity",
-                                                           /*numComp*/2, /*codim*/0).get());
+                        "velocity",
+                        /*numComp*/2, /*codim*/0).get());
 
-    writer.write("file_name_base");
-
-    // // write vtk output
-    // problem->printL2Error(x);
-    // vtkWriter.write(1.0);
-
-    // timer.stop();
-
-    // const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-    // std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-    //           << comm.size() << " processes.\n"
-    //           << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+    writer.write("donea_new_momentum");
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
@@ -180,8 +134,8 @@ int main(int argc, char** argv) try
     // print dumux end message
     if (mpiHelper.rank() == 0)
     {
-        // Parameters::print();
-        // DumuxMessage::print(/*firstCall=*/false);
+        Parameters::print();
+        DumuxMessage::print(/*firstCall=*/false);
     }
 
     return 0;

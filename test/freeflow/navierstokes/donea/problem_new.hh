@@ -36,8 +36,14 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/massandenergy/model.hh>
+#include <dumux/freeflow/navierstokes/massandenergy/problem.hh>
 #include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/cctpfa.hh>
 #include "../l2error.hh"
+
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 
 
 namespace Dumux
@@ -45,12 +51,22 @@ namespace Dumux
 template <class TypeTag>
 class DoneaTestProblemNew;
 
+
 namespace Properties
 {
 // Create new type tags
 namespace TTag {
-struct DoneaTestNew { using InheritsFrom = std::tuple<NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct DoneaTestNew {};
+struct DoneaTestNewMomentum { using InheritsFrom = std::tuple<DoneaTestNew, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct DoneaTestNewMass { using InheritsFrom = std::tuple<DoneaTestNew, NavierStokesMassAndEnergy, CCTpfaModel>; };
 } // end namespace TTag
+
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DoneaTestNew>
+{
+    using type = Dumux::DoneaTestProblemNew<TypeTag> ;
+};
 
 // the fluid system
 template<class TypeTag>
@@ -64,16 +80,39 @@ struct FluidSystem<TypeTag, TTag::DoneaTestNew>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTestNew> { using type = Dune::YaspGrid<2>; };
 
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DoneaTestNew> { using type = Dumux::DoneaTestProblemNew<TypeTag> ; };
-
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DoneaTestNew> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTestNew> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTestNew> { static constexpr bool value = true; };
+
+}
+
+namespace Impl {
+
+template<class TypeTag>
+constexpr bool isMomentumProblem()
+{
+    return GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::fcstaggered;
+};
+
+template<class TypeTag>
+using BaseProblem = std::conditional_t<isMomentumProblem<TypeTag>(),
+                                       NavierStokesMomentumProblem<TypeTag>,
+                                       NavierStokesMassAndEnergyProblem<TypeTag>>;
+
+template<class TypeTag>
+using BoundaryTypes = std::conditional_t<isMomentumProblem<TypeTag>(),
+                                         Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::dim()>,
+                                         Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>>;
+template<class TypeTag>
+using NumEqVector = std::conditional_t<isMomentumProblem<TypeTag>(),
+                                       Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::dim()>,
+                                       GetPropType<TypeTag, Properties::NumEqVector>>;
+
+template<class TypeTag>
+using PrimaryVariables = NumEqVector<TypeTag>;
 
 }
 
@@ -86,16 +125,19 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTestNew> { static cons
  * is available and can be compared to the numerical solution.
  */
 template <class TypeTag>
-class DoneaTestProblemNew : public NavierStokesMomentumProblem<TypeTag>
+class DoneaTestProblemNew : public Impl::BaseProblem<TypeTag>
 {
-    using ParentType = NavierStokesMomentumProblem<TypeTag>;
+    using ParentType = Impl::BaseProblem<TypeTag>;
 
-    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::dim()>;
+    using BoundaryTypes = Impl::BoundaryTypes<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
+    using NumEqVector = Impl::NumEqVector<TypeTag>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using PrimaryVariables = Impl::PrimaryVariables<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
@@ -104,10 +146,19 @@ class DoneaTestProblemNew : public NavierStokesMomentumProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+
 public:
-    template<class CouplingManager>
-    DoneaTestProblemNew(std::shared_ptr<const GridGeometry> gridGeometry, CouplingManager cm)
-    : ParentType(gridGeometry, cm)
+    DoneaTestProblemNew(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
+    , couplingManager_(couplingManager)
+    {
+        printL2Error_ = getParam<bool>("Problem.PrintL2Error");
+        // createAnalyticalSolution_();
+    }
+
+    DoneaTestProblemNew(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         // createAnalyticalSolution_();
@@ -149,20 +200,27 @@ public:
      *
      * \param globalPos The global position
      */
-    auto sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        std::array<double, 2> source;
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
+        if constexpr (Impl::isMomentumProblem<TypeTag>())
+        {
+            NumEqVector source;
+            Scalar x = globalPos[0];
+            Scalar y = globalPos[1];
 
-        source[Indices::momentumXBalanceIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
-                                             + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-                                             + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-                                             + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-        source[Indices::momentumYBalanceIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
-                                             + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-                                             + 24.0*y*y*y - 12.0*y*y*y*y;
-        return source;
+            source[Indices::momentumXBalanceIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
+                                                + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
+                                                + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
+                                                + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
+            source[Indices::momentumYBalanceIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
+                                                + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
+                                                + 24.0*y*y*y - 12.0*y*y*y*y;
+            return source;
+        }
+        else
+        {
+            return NumEqVector(0.0);
+        }
     }
     // \}
    /*!
@@ -181,8 +239,15 @@ public:
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity and pressure everywhere
-        values.setDirichlet(Indices::velocityXIdx);
-        values.setDirichlet(Indices::velocityYIdx);
+        if constexpr (Impl::isMomentumProblem<TypeTag>())
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+        }
+        else
+        {
+            values.setDirichlet(0/* Indices::pressureIdx */);
+        }
 
         return values;
     }
@@ -211,10 +276,21 @@ public:
      *
      * \param globalPos The global position
      */
-    auto dirichletAtPos(const GlobalPosition& globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
+        const auto sol = analyticalSolution(globalPos);
+        PrimaryVariables values;
+
         // use the values of the analytical solution
-        return analyticalSolution(globalPos);
+        if constexpr (Impl::isMomentumProblem<TypeTag>())
+        {
+            values[Indices::velocityXIdx] = sol[0];
+            values[Indices::velocityYIdx] = sol[1];
+        }
+        else
+            values[0] = sol[2];
+
+        return values;
     }
 
     /*!
@@ -226,12 +302,11 @@ public:
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
+        std::array<Scalar, 3> values;
 
-        std::array<double, 3> values;
-        values[Indices::pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
-        values[Indices::velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-        values[Indices::velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
-
+        values[0] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);        // vx
+        values[1] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);   // vy
+        values[2] = x * (1.0-x);                                                      //p
         return values;
     }
 
@@ -249,18 +324,22 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.0;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
-
-        return values;
+        return PrimaryVariables(0.0);
     }
 
     Scalar pressureAtPos(const GlobalPosition& globalPos) const
     {
-        return analyticalSolution(globalPos)[Indices::pressureIdx];
+        return analyticalSolution(globalPos)[2];
     }
+
+    Scalar densityAtPos(const GlobalPosition& globalPos) const
+    {
+        return 1;
+    }
+
+    Scalar effectiveViscosityAtPos(const GlobalPosition& globalPos) const
+    { return 1; }
+
 
    /*!
      * \brief Returns the analytical solution for the pressure
@@ -286,9 +365,39 @@ public:
         return analyticalVelocityOnFace_;
     }
 
-    template<class ...Args>
-    Scalar effectiveViscosity(Args&&...) const
-    { return 1.0; }
+    //! Enable internal Dirichlet constraints
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !Impl::isMomentumProblem<TypeTag>(); }
+
+    /*!
+     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
+     *        If true is returned for a dof, the equation for this dof is replaced
+     *        by the constraint that its primary variable values must match the
+     *        user-defined values obtained from the function internalDirichlet(),
+     *        which must be defined in the problem.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        std::bitset<PrimaryVariables::dimension> values;
+
+        if (scv.dofIndex() == 0)
+            values.set(0);
+        // the pure Neumann problem is only defined up to a constant
+        // we create a well-posed problem by fixing the pressure at one dof
+        return values;
+    }
+
+    /*!
+     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return PrimaryVariables(analyticalSolution(scv.center())[2]); }
+
 
 private:
 
@@ -333,6 +442,7 @@ private:
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
+    std::shared_ptr<CouplingManager> couplingManager_;
 };
 } // end namespace Dumux
 

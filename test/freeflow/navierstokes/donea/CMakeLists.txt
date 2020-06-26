@@ -1,5 +1,8 @@
-dumux_add_test(NAME test_donea_new
-               SOURCES main_new.cc)
+dumux_add_test(NAME test_donea_new_momentum
+               SOURCES main_new_momentum.cc)
+
+dumux_add_test(NAME test_donea_new_coupled
+               SOURCES main_new_coupled.cc)
 
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
