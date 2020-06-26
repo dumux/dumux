@@ -169,6 +169,38 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
     return pattern;
 }
 
+/*!
+ * \ingroup MultiDomain
+ * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
+ *        for the staggered scheme (degrees of freedom on cell centers)
+ */
+template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
+         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::fcstaggered), int> = 0>
+Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
+                                                Dune::index_constant<i> domainI,
+                                                const GridGeometryI& gridGeometryI,
+                                                Dune::index_constant<j> domainJ,
+                                                const GridGeometryJ& gridGeometryJ)
+{
+    Dune::MatrixIndexSet pattern(gridGeometryI.numDofs(), gridGeometryJ.numDofs());
+
+    for (const auto& elementI : elements(gridGeometryI.gridView()))
+    {
+        const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
+        auto fvGeometry = localView(gridGeometryI);
+        fvGeometry.bindElement(elementI);
+
+        for (const auto& scv : scvs(fvGeometry))
+            for (const auto globalJ : stencil)
+            {
+                assert(globalJ < gridGeometryJ.numDofs());
+                pattern.add(scv.dofIndex(), globalJ);
+            }
+    }
+
+    return pattern;
+}
+
 } // end namespace Dumux
 
 #endif
