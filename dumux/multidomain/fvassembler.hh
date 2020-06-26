@@ -43,6 +43,7 @@
 #include "subdomaincclocalassembler.hh"
 #include "subdomainboxlocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
+#include "subdomainfclocalassembler.hh"
 
 #include <dumux/discretization/method.hh>
 
@@ -127,6 +128,12 @@ private:
     struct SubDomainAssemblerType<DiscretizationMethod::staggered, id>
     {
         using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+    };
+
+    template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethod::fcstaggered, id>
+    {
+        using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
