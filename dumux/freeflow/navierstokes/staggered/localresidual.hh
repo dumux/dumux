@@ -24,10 +24,12 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
+#include <dune/common/hybridutilities.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
-#include <dune/common/hybridutilities.hh>
 #include <dumux/freeflow/nonisothermal/localresidual.hh>
 
 namespace Dumux {
@@ -68,6 +70,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
@@ -217,7 +220,7 @@ public:
                 for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
                     if (bcTypes.isNeumann(eqIdx + cellCenterOffset))
-                        result[eqIdx] = neumannFluxes[eqIdx + cellCenterOffset] * extrusionFactor * scvf.area();
+                        result[eqIdx] = neumannFluxes[eqIdx + cellCenterOffset] * extrusionFactor * Extrusion::area(scvf);
                 }
             }
 
@@ -289,7 +292,7 @@ public:
                 // add a given Neumann flux for the face on the boundary itself ...
                 const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
                 result = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
-                                         * extrusionFactor * scvf.area();
+                                         * extrusionFactor * Extrusion::area(scvf);
 
                 // ... and treat the fluxes of the remaining (frontal and lateral) faces of the staggered control volume
                 result += fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
@@ -334,7 +337,7 @@ private:
             if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
             {
                 boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
-                                                           * extrusionFactor * scvf.area();
+                                                           * extrusionFactor * Extrusion::area(scvf);
             }
         }
     }

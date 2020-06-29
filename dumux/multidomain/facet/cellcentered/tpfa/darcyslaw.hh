@@ -34,6 +34,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 #include <dumux/flux/cctpfa/darcyslaw.hh>
 
@@ -144,6 +145,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -190,7 +192,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
             // compute alpha := n^T*K*g and add to flux (use arithmetic mean for density)
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
             const auto rho = 0.5*(insideVolVars.density(phaseIdx) + facetVolVars.density(phaseIdx));
-            const auto rhoTimesArea = rho*scvf.area();
+            const auto rhoTimesArea = rho*Extrusion::area(scvf);
             const auto alpha_inside = rhoTimesArea*insideVolVars.extrusionFactor()
                                       *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
 
@@ -260,10 +262,10 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = scvf.area()*computeTpfaTransmissibility(scvf,
-                                                                 insideScv,
-                                                                 insideVolVars.permeability(),
-                                                                 insideVolVars.extrusionFactor());
+        const auto wIn = Extrusion::area(scvf)
+                         *computeTpfaTransmissibility(scvf, insideScv,
+                                                      insideVolVars.permeability(),
+                                                      insideVolVars.extrusionFactor());
 
         // proceed depending on the interior BC types used
         const auto iBcTypes = problem.interiorBoundaryTypes(element, scvf);
@@ -272,7 +274,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = 2.0*scvf.area()*insideVolVars.extrusionFactor()
+            const auto wFacet = 2.0*Extrusion::area(scvf)*insideVolVars.extrusionFactor()
                                    /facetVolVars.extrusionFactor()
                                    *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
 
@@ -287,10 +289,10 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
             {
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-                const auto wOut = -1.0*scvf.area()*computeTpfaTransmissibility(scvf,
-                                                                               fvGeometry.scv(outsideScvIdx),
-                                                                               outsideVolVars.permeability(),
-                                                                               outsideVolVars.extrusionFactor());
+                const auto wOut = -1.0*Extrusion::area(scvf)
+                                  *computeTpfaTransmissibility(scvf, fvGeometry.scv(outsideScvIdx),
+                                                               outsideVolVars.permeability(),
+                                                               outsideVolVars.extrusionFactor());
 
                 if ( !Dune::FloatCmp::eq(xi, 1.0, 1e-6) )
                 {
@@ -408,6 +410,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -479,7 +482,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
         if (Dune::FloatCmp::ne(xi, 1.0, 1e-6))
             DUNE_THROW(Dune::InvalidStateException, "Xi != 1.0 cannot be used on surface grids");
 
-        const auto area = scvf.area();
+        const auto area = Extrusion::area(scvf);
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];

@@ -31,6 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
@@ -46,9 +47,11 @@ class TracerLocalResidual: public GetPropType<TypeTag, Properties::BaseLocalResi
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
@@ -205,7 +208,7 @@ public:
 
         const auto porosity = curVolVars.porosity();
         const auto rho = useMoles ? curVolVars.molarDensity() : curVolVars.density();
-        const auto d_storage = scv.volume()*porosity*rho*saturation/this->timeLoop().timeStepSize();
+        const auto d_storage = Extrusion::volume(scv)*porosity*rho*saturation/this->timeLoop().timeStepSize();
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             partialDerivatives[compIdx][compIdx] += d_storage;

@@ -35,6 +35,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 #include <dumux/flux/cctpfa/fourierslaw.hh>
@@ -73,6 +74,7 @@ class CCTpfaFacetCouplingFouriersLawImpl<TypeTag, /*isNetwork*/false>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -192,10 +194,10 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = scvf.area()*computeTpfaTransmissibility(scvf,
-                                                                 insideScv,
-                                                                 insideVolVars.effectiveThermalConductivity(),
-                                                                 insideVolVars.extrusionFactor());
+        const auto wIn = Extrusion::area(scvf)
+                         *computeTpfaTransmissibility(scvf, insideScv,
+                                                      insideVolVars.effectiveThermalConductivity(),
+                                                      insideVolVars.extrusionFactor());
 
         // proceed depending on the interior BC types used
         const auto iBcTypes = problem.interiorBoundaryTypes(element, scvf);
@@ -204,7 +206,7 @@ public:
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = 2.0*scvf.area()*insideVolVars.extrusionFactor()
+            const auto wFacet = 2.0*Extrusion::area(scvf)*insideVolVars.extrusionFactor()
                                    /facetVolVars.extrusionFactor()
                                    *vtmv(scvf.unitOuterNormal(),
                                          facetVolVars.effectiveThermalConductivity(),
@@ -221,10 +223,10 @@ public:
             {
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-                const auto wOut = -1.0*scvf.area()*computeTpfaTransmissibility(scvf,
-                                                                               fvGeometry.scv(outsideScvIdx),
-                                                                               outsideVolVars.effectiveThermalConductivity(),
-                                                                               outsideVolVars.extrusionFactor());
+                const auto wOut = -1.0*Extrusion::area(scvf)
+                                  *computeTpfaTransmissibility(scvf, fvGeometry.scv(outsideScvIdx),
+                                                               outsideVolVars.effectiveThermalConductivity(),
+                                                               outsideVolVars.extrusionFactor());
 
                 if ( !Dune::FloatCmp::eq(xi, 1.0, 1e-6) )
                 {
@@ -278,6 +280,7 @@ class CCTpfaFacetCouplingFouriersLawImpl<TypeTag, /*isNetwork*/true>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -388,10 +391,10 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = scvf.area()*computeTpfaTransmissibility(scvf,
-                                                                 insideScv,
-                                                                 insideVolVars.effectiveThermalConductivity(),
-                                                                 insideVolVars.extrusionFactor());
+        const auto wIn = Extrusion::area(scvf)
+                         *computeTpfaTransmissibility(scvf, insideScv,
+                                                      insideVolVars.effectiveThermalConductivity(),
+                                                      insideVolVars.extrusionFactor());
 
         // proceed depending on the interior BC types used
         const auto iBcTypes = problem.interiorBoundaryTypes(element, scvf);
@@ -403,7 +406,7 @@ public:
             // as an approximate average distance from scvf ip to facet center
             using std::sqrt;
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = 2.0*scvf.area()*insideVolVars.extrusionFactor()
+            const auto wFacet = 2.0*Extrusion::area(scvf)*insideVolVars.extrusionFactor()
                                    /sqrt(facetVolVars.extrusionFactor())
                                    *vtmv(scvf.unitOuterNormal(),
                                          facetVolVars.effectiveThermalConductivity(),

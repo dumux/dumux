@@ -33,6 +33,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/adaptive/griddatatransfer.hh>
@@ -52,6 +53,7 @@ class TwoPGridDataTransfer : public GridDataTransfer
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -160,7 +162,7 @@ public:
                         VolumeVariables volVars;
                         volVars.update(adaptedValues.u, *problem_, element, scv);
 
-                        const auto poreVolume = scv.volume()*volVars.porosity();
+                        const auto poreVolume = Extrusion::volume(scv)*volVars.porosity();
                         adaptedValues.associatedMass[phase1Idx] += poreVolume * volVars.density(phase1Idx) * volVars.saturation(phase1Idx);
                         adaptedValues.associatedMass[phase0Idx] += poreVolume * volVars.density(phase0Idx) * volVars.saturation(phase0Idx);
                     }
@@ -231,7 +233,7 @@ public:
                 if (!isBox)
                     elemSol[0] /= adaptedValues.count;
 
-                const auto elementVolume = element.geometry().volume();
+                const auto elementVolume = Extrusion::volume(element.geometry());
                 for (const auto& scv : scvs(fvGeometry))
                 {
                     VolumeVariables volVars;
@@ -263,7 +265,7 @@ public:
                     // For the box scheme, add mass & mass coefficient to container (saturations are recalculated at the end)
                     else
                     {
-                        const auto scvVolume = scv.volume();
+                        const auto scvVolume = Extrusion::volume(scv);
                         if (formulation == p0s1)
                         {
                             massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase1Idx) * volVars.porosity();
@@ -316,10 +318,11 @@ public:
                         // overwrite the saturation by a mass conservative one here
                         Scalar massCoeffSon = 0.0;
                         if (formulation == p0s1)
-                            massCoeffSon = scv.volume() * volVars.density(phase1Idx) * volVars.porosity();
+                            massCoeffSon = Extrusion::volume(scv) * volVars.density(phase1Idx) * volVars.porosity();
                         else if (formulation == p1s0)
-                            massCoeffSon = scv.volume() * volVars.density(phase0Idx) * volVars.porosity();
-                        sol_[scv.dofIndex()][saturationIdx] = (scv.volume() / fatherElement.geometry().volume() * massFather)/massCoeffSon;
+                            massCoeffSon = Extrusion::volume(scv) * volVars.density(phase0Idx) * volVars.porosity();
+                        sol_[scv.dofIndex()][saturationIdx] =
+                            ( Extrusion::volume(scv)/Extrusion::volume(fatherElement.geometry())*massFather )/massCoeffSon;
                     }
                 }
                 else
@@ -339,14 +342,14 @@ public:
                                                                         scv.dofPosition());
 
                     // compute mass & mass coeffients for the scvs (saturations are recalculated at the end)
-                    const auto fatherElementVolume = fatherGeometry.volume();
+                    const auto fatherElementVolume = Extrusion::volume(fatherGeometry);
                     for (const auto& scv : scvs(fvGeometry))
                     {
                         VolumeVariables volVars;
                         volVars.update(elemSolSon, *problem_, element, scv);
 
                         const auto dofIdxGlobal = scv.dofIndex();
-                        const auto scvVolume = scv.volume();
+                        const auto scvVolume = Extrusion::volume(scv);
                         if (formulation == p0s1)
                         {
                             massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase1Idx) * volVars.porosity();

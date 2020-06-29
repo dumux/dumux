@@ -34,6 +34,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/assembly/initialsolution.hh>
 
@@ -58,6 +59,7 @@ class FVProblem
     using GridView = typename GridGeometry::GridView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -440,7 +442,7 @@ public:
             // Add the contributions to the dof source values
             // We divide by the volume. In the local residual this will be multiplied with the same
             // factor again. That's because the user specifies absolute values in kg/s.
-            const auto volume = scv.volume()*elemVolVars[scv].extrusionFactor();
+            const auto volume = Extrusion::volume(scv)*elemVolVars[scv].extrusionFactor();
 
             for (const auto& ps : pointSourceMap_.at(key))
             {

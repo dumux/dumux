@@ -35,6 +35,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/box/darcyslaw.hh>
 
 namespace Dumux {
@@ -51,8 +52,9 @@ class BoxFacetCouplingDarcysLaw
     using DefaultBoxDarcysLaw = BoxDarcysLaw<Scalar, GridGeometry>;
 
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
@@ -120,7 +122,7 @@ public:
                 gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
             // apply facet permeability and return the flux
-            return -1.0*scvf.area()
+            return -1.0*Extrusion::area(scvf)
                        *insideVolVars.extrusionFactor()
                        *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), gradP);
         }
@@ -152,7 +154,7 @@ public:
                 gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
             // apply matrix permeability and return the flux
-            return -1.0*scvf.area()
+            return -1.0*Extrusion::area(scvf)
                        *insideVolVars.extrusionFactor()
                        *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), gradP);
         }

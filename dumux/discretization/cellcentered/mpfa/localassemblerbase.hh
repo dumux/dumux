@@ -34,6 +34,7 @@
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/discretization/extrusion.hh>
 #include "localassemblerhelper.hh"
 
 namespace Dumux {
@@ -57,6 +58,7 @@ class InteractionVolumeAssemblerBase
     using Problem = P;
     using FVElementGeometry = EG;
     using ElementVolumeVariables = EV;
+    using Extrusion = Extrusion_t<typename EG::GridGeometry>;
     using Helper = InteractionVolumeAssemblerHelper;
 
     template< class IV >
@@ -212,20 +214,20 @@ class InteractionVolumeAssemblerBase
 
                 rho /= numOutsideFaces + 1;
                 deltaG[localDofIdx] -= alpha_inside;
-                deltaG[localDofIdx] *= rho*curGlobalScvf.area();
+                deltaG[localDofIdx] *= rho*Extrusion::area(curGlobalScvf);
             }
             // use density resulting from Dirichlet BCs
             else
                 rho = getRho(elemVolVars()[curGlobalScvf.outsideScvIdx()]);
 
             // add "inside" & "outside" alphas to gravity containers
-            g[faceIdx] = alpha_inside*rho*curGlobalScvf.area();
+            g[faceIdx] = alpha_inside*rho*Extrusion::area(curGlobalScvf);
 
             if (isSurfaceGrid)
             {
                 unsigned int i = 0;
                 for (const auto& alpha : alpha_outside)
-                    outsideG[faceIdx][i++] = alpha*rho*curGlobalScvf.area();
+                    outsideG[faceIdx][i++] = alpha*rho*Extrusion::area(curGlobalScvf);
             }
         }
 

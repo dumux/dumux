@@ -37,6 +37,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
@@ -76,6 +77,7 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -176,7 +178,7 @@ public:
         {
             const auto& curVolVars = elemVolVars[scv];
             auto source = this->localResidual().computeSource(problem(), element, this->fvGeometry(), elemVolVars, scv);
-            source *= -scv.volume()*curVolVars.extrusionFactor();
+            source *= -Extrusion::volume(scv)*curVolVars.extrusionFactor();
             residual[scv.indexInElement()] = std::move(source);
         }
 

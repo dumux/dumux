@@ -31,6 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/flux/maxwellstefandiffusioncoefficients.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
@@ -53,8 +54,10 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box, refere
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
@@ -129,7 +132,7 @@ public:
            normalX[compIdx] = gradX *scvf.unitOuterNormal();
         }
          reducedDiffusionMatrix.solve(reducedFlux,normalX);
-         reducedFlux *= -1.0*rho*scvf.area();
+         reducedFlux *= -1.0*rho*Extrusion::area(scvf);
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {

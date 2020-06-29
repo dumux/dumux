@@ -176,11 +176,12 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
+        using Extrusion = typename GridGeometry<i>::Extrusion;
         const auto ti = computeTpfaTransmissibility(scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
         const auto tj = computeTpfaTransmissibility(flipScvf, outsideScv, outsideVolVars.permeability(), outsideVolVars.extrusionFactor());
         Scalar tij = 0.0;
         if (ti*tj > 0.0)
-            tij = scvf.area()*(ti * tj)/(ti + tj);
+            tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
 
         if (enableGravity)
         {
@@ -196,7 +197,7 @@ public:
             const auto pInside = insideVolVars.pressure(0);
             const auto pOutside = outsideVolVars.pressure(0);
 
-            flux = tij*(pInside - pOutside) + rho*scvf.area()*alpha_inside - rho*tij/tj*(alpha_inside - alpha_outside);
+            flux = tij*(pInside - pOutside) + rho*Extrusion::area(scvf)*alpha_inside - rho*tij/tj*(alpha_inside - alpha_outside);
 
         }
         else
@@ -220,7 +221,7 @@ public:
                      + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
 
         // make this a area-specific flux
-        flux /= scvf.area()*insideVolVars.extrusionFactor();
+        flux /= Extrusion::area(scvf)*insideVolVars.extrusionFactor();
         return flux;
     }
 

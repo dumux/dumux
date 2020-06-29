@@ -29,6 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -51,7 +52,8 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered, 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
@@ -187,7 +189,7 @@ public:
             reducedDiffusionMatrixInside.mv(helperVector, reducedFlux);
         }
 
-        reducedFlux *= -scvf.area();
+        reducedFlux *= -Extrusion::area(scvf);
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {

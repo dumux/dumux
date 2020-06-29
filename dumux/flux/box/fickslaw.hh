@@ -31,6 +31,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -52,9 +53,11 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box, referenceSystem
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using FluxVarCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
@@ -151,7 +154,7 @@ public:
 
             ti[compIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), D, fluxVarCache.gradN(scv.indexInElement()))*scvf.area();
+                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), D, fluxVarCache.gradN(scv.indexInElement()))*Extrusion::area(scvf);
         }
 
         return ti;
@@ -203,7 +206,7 @@ private:
         Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
         for (auto&& scv : scvs(fvGeometry))
             gradX.axpy(massOrMoleFraction(scv), fluxVarsCache.gradN(scv.indexInElement()));
-        return -1.0*preFactor*vtmv(scvf.unitOuterNormal(), D, gradX)*scvf.area();
+        return -1.0*preFactor*vtmv(scvf.unitOuterNormal(), D, gradX)*Extrusion::area(scvf);
     }
 };
 

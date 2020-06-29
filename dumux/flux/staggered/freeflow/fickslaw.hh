@@ -33,6 +33,7 @@
 #include <dumux/common/math.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -54,7 +55,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered, reference
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -140,7 +142,7 @@ public:
         const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
         flux[FluidSystem::getMainComponent(0)] = -cumulativeFlux;
 
-        flux *= scvf.area();
+        flux *= Extrusion::area(scvf);
 
         return flux;
     }

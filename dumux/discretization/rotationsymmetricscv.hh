@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_ROTATION_SYMMETRIC_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_ROTATION_SYMMETRIC_SUBCONTROLVOLUME_HH
 
+#warning "This header is deprecated and will be removed after release 3.3"
 #include <cmath>
 #include <dumux/discretization/rotationpolicy.hh>
 
@@ -36,7 +37,7 @@ namespace Dumux {
  * \tparam rotationPolicy the rotation policy (see enum RotationPolicy)
  */
 template<class SubControlVolume, RotationPolicy rotationPolicy>
-class RotationSymmetricSubControlVolume;
+class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricSubControlVolume;
 
 /*!
  * \ingroup Discretization
@@ -45,7 +46,7 @@ class RotationSymmetricSubControlVolume;
  * \note Specialization for the 'disc' policy (1d grid --> 2d disc)
  */
 template<class SubControlVolume>
-class RotationSymmetricSubControlVolume<SubControlVolume, RotationPolicy::disc>
+class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricSubControlVolume<SubControlVolume, RotationPolicy::disc>
 : public SubControlVolume
 {
     using Scalar = typename SubControlVolume::Traits::Scalar;
@@ -72,7 +73,7 @@ public:
  * \note Specialization for the 'ball' policy (1d grid --> 3d ball)
  */
 template<class SubControlVolume>
-class RotationSymmetricSubControlVolume<SubControlVolume, RotationPolicy::ball>
+class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricSubControlVolume<SubControlVolume, RotationPolicy::ball>
 : public SubControlVolume
 {
     using Scalar = typename SubControlVolume::Traits::Scalar;
@@ -100,7 +101,7 @@ public:
  * \note We rotate about the second axis
  */
 template<class SubControlVolume>
-class RotationSymmetricSubControlVolume<SubControlVolume, RotationPolicy::toroid>
+class [[deprecated("Will be removed after release 3.3. Use Extrusion from extrusion.hh")]] RotationSymmetricSubControlVolume<SubControlVolume, RotationPolicy::toroid>
 : public SubControlVolume
 {
     using Scalar = typename SubControlVolume::Traits::Scalar;

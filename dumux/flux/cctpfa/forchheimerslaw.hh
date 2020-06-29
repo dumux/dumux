@@ -33,6 +33,7 @@
 #include <dumux/common/typetraits/typetraits.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/cctpfa/darcyslaw.hh>
 
 namespace Dumux {
@@ -142,6 +143,7 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -232,7 +234,7 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
     {
         const auto velocity = velocity_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
         Scalar flux = velocity * scvf.unitOuterNormal();
-        flux *= scvf.area();
+        flux *= Extrusion::area(scvf);
         return flux;
     }
 
@@ -354,7 +356,7 @@ private:
 
         // Convert to Darcy velocity
         DimWorldVector darcyVelocity = scvf.unitOuterNormal();
-        darcyVelocity *= darcyFlux / scvf.area();
+        darcyVelocity *= darcyFlux / Extrusion::area(scvf);
 
         // Get the harmonic mean of the square root of permeability
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];

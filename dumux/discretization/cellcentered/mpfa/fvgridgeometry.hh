@@ -29,6 +29,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 
@@ -96,6 +97,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<Traits>;
     //! export the connectivity map type
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
     //! export dof mapper type
@@ -463,6 +466,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<Traits>;
     //! export the connectivity map type
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
     //! export dof mapper type

@@ -30,6 +30,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -48,7 +49,9 @@ class BoxLocalResidual : public FVLocalResidual<TypeTag>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
@@ -114,7 +117,7 @@ public:
                 auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
-                neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
+                neumannFluxes *= Extrusion::area(scvf)*elemVolVars[scv].extrusionFactor();
 
                 // only add fluxes to equations for which Neumann is set
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)

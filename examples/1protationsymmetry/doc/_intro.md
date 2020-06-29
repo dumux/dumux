@@ -85,10 +85,7 @@ we identify $`| \sigma | = 2 \pi r_\sigma`$ for the case of rotational symmetry
 on a disc. Here, $`r_\sigma`$ refers to the radius at which the face is situated
 in the one-dimensional discretization.
 
-In DuMu<sup>x</sup>, this is realized in the classes `RotationSymmetricSubControlVolume` and
-`RotationSymmetricSubControlVolumeFace`, which implement one-dimensional control
-volumes and faces, that take into account the extrusion about the rotation axes
-of symmetry in the computations of volumes and areas. This will be discussed in part 1
-of the documentation.
+In DuMu<sup>x</sup>, this is rotational extrusion is approximated by using modified control volume
+volumes and control volume face areas for the mid-point integration rule.
 
 # Implementation & Post processing

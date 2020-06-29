@@ -27,14 +27,12 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
-#include <dumux/discretization/rotationpolicy.hh>
-#include <dumux/discretization/rotationsymmetricscv.hh>
-#include <dumux/discretization/rotationsymmetricscvf.hh>
-#include <dumux/discretization/rotationsymmetricgridgeometrytraits.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -49,14 +47,38 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
         fvGeometry.bind(element);
 
         for (const auto& scv : scvs(fvGeometry))
-            volume += scv.volume();
+            volume += GG::Extrusion::volume(scv);
 
         for (const auto& scvf : scvfs(fvGeometry))
             if (scvf.boundary())
-                surface += scvf.area();
+                surface += GG::Extrusion::area(scvf);
+
+        // compare volume and integrated volume of one scv
+        const auto& scv = *(scvs(fvGeometry).begin());
+        const auto scvGeometry = scv.geometry();
+
+        double volScv = 0.0;
+        const auto ruleScv = Dune::QuadratureRules<double, GG::GridView::dimension>::rule(scvGeometry.type(), 3);
+        for (const auto& qp : ruleScv)
+            volScv += qp.weight()*GG::Extrusion::integrationElement(scvGeometry, qp.position());
+
+        if (!Dune::FloatCmp::eq(volScv, GG::Extrusion::volume(scv)))
+            DUNE_THROW(Dune::Exception, "Integration not correct! Integrated: " << volScv << ", direct: " << GG::Extrusion::volume(scv));
+
+        // compare area and integration area of one scvf
+        const auto& scvf = *(scvfs(fvGeometry).begin());
+        const auto scvfGeometry = scvf.geometry();
+
+        double volScvf = 0.0;
+        const auto ruleScvf = Dune::QuadratureRules<double, GG::GridView::dimension-1>::rule(scvfGeometry.type(), 3);
+        for (const auto& qp : ruleScvf)
+            volScvf += qp.weight()*GG::Extrusion::integrationElement(scvfGeometry, qp.position());
+
+        if (!Dune::FloatCmp::eq(volScvf, GG::Extrusion::area(scvf)))
+            DUNE_THROW(Dune::Exception, "Integration not correct! Integrated: " << volScvf << ", direct: " << GG::Extrusion::area(scvf));
     }
 
-    // compare to reference
+    // compare total volume/surface area to reference
     if (!Dune::FloatCmp::eq(refVolume, volume))
         DUNE_THROW(Dune::Exception, "Volume not correct! Reference: " << refVolume << ", computed: " << volume);
     if (!Dune::FloatCmp::eq(refSurface, surface))
@@ -72,10 +94,12 @@ int main (int argc, char *argv[]) try
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
 
-    // test the disc policy
+    // test disc extrusion 1d->2d
     {
         using Grid = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<double, 1>>;
-        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::disc>;
+
+        struct GGTraits : public CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>
+        { using Extrusion = RotationalExtrusion<0>; };
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
@@ -97,14 +121,15 @@ int main (int argc, char *argv[]) try
         const double refSurface = 2.0*M_PI*(innerRadius + outerRadius);
         runTest(gg, refVolume, refSurface);
 
-        std::cout << "Successfully tested disc (annulus) policy." << std::endl;
+        std::cout << "Successfully tested disc extrusion." << std::endl;
 
-    } // end disc policy
+    } // end disc extrusion
 
-    // test the ball policy
+    // test spherical extrusion 1d->3d
     {
         using Grid = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<double, 1>>;
-        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::ball>;
+        struct GGTraits : public CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>
+        { using Extrusion = SphericalExtrusion; };
         using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
         using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
 
@@ -121,23 +146,20 @@ int main (int argc, char *argv[]) try
         GridGeometry gg(leafGridView);
         gg.update();
 
-        // compute the annulus area and the surface
+        // compute the ball volume and the surface
         const double refVolume = 4.0/3.0*M_PI*(outerRadius*outerRadius*outerRadius - innerRadius*innerRadius*innerRadius);
         const double refSurface = 4.0*M_PI*(innerRadius*innerRadius + outerRadius*outerRadius);
         runTest(gg, refVolume, refSurface);
 
-        std::cout << "Successfully tested ball (shell) policy." << std::endl;
+        std::cout << "Successfully tested spherical extrusion." << std::endl;
 
-    } // end ball policy
+    } // end spherical extrusion
 
-    // test the toroid policy
+    // test rotational extrusion 2d->3d
     {
-        using Grid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::toroid>;
-        using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
-        using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
-
         // make a grid
+        using Grid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
+        using GlobalPosition = typename Grid::template Codim<0>::Geometry::GlobalCoordinate;
         const double innerRadius = 0.1;
         const double outerRadius = 1.0;
         const double height = 0.5;
@@ -145,53 +167,47 @@ int main (int argc, char *argv[]) try
         GlobalPosition upper({outerRadius, height});
         std::array<unsigned int, Grid::dimension> els({20, 20});
         std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
-
-        // obtain leaf and make GridGeometry
         auto leafGridView = grid->leafGridView();
-        GridGeometry gg(leafGridView);
-        gg.update();
 
-        // compute the annulus area and the surface
-        const auto centroidRadius = 0.5*(innerRadius + outerRadius);
-        const auto width = (outerRadius - innerRadius);
-        const double refVolume = height*width*2.0*M_PI*centroidRadius;
-        const double refSurface = (2.0*height + 2.0*width)*2.0*M_PI*centroidRadius;
-        runTest(gg, refVolume, refSurface);
+        {
+            // make GridGeometry
+            struct GGTraits : public CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>
+            { using Extrusion = RotationalExtrusion<0>; };
+            using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
 
-        std::cout << "Successfully tested toroid policy." << std::endl;
+            // make GridGeometry
+            GridGeometry gg(leafGridView);
+            gg.update();
 
-    } // end toroid policy
+            // compute the volume and the surface
+            const auto centroidRadius = 0.5*(innerRadius + outerRadius);
+            const auto width = (outerRadius - innerRadius);
+            const double refVolume = height*width*2.0*M_PI*centroidRadius;
+            const double refSurface = (2.0*height + 2.0*width)*2.0*M_PI*centroidRadius;
+            runTest(gg, refVolume, refSurface);
 
-    // test the toroid policy for perfect cylinder
-    {
-        using Grid = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>;
-        using GGTraits = RotationSymmetricGridGeometryTraits<CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>, RotationPolicy::toroid>;
-        using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
-        using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
+            std::cout << "Successfully tested rotational extrusion with y-rotation axis." << std::endl;
+        }
 
-        // make a grid
-        const double innerRadius = 0.0;
-        const double outerRadius = 1.1;
-        const double minY = -0.25;
-        const double height = 0.5;
-        GlobalPosition lower({innerRadius, minY});
-        GlobalPosition upper({outerRadius, minY+height});
-        std::array<unsigned int, Grid::dimension> els({20, 20});
-        std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
+        {
+            // make GridGeometry
+            struct GGTraits : public CCTpfaDefaultGridGeometryTraits<typename Grid::LeafGridView>
+            { using Extrusion = RotationalExtrusion<1>; };
+            using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, /*caching=*/false, GGTraits>;
+            GridGeometry gg(leafGridView);
+            gg.update();
 
-        // obtain leaf and make GridGeometry
-        auto leafGridView = grid->leafGridView();
-        GridGeometry gg(leafGridView);
-        gg.update();
+            // compute the volume and the surface
+            const auto centroidRadius = 0.5*height;
+            const auto width = (outerRadius - innerRadius);
+            const double refVolume = height*width*2.0*M_PI*centroidRadius;
+            const double refSurface = 2.0*M_PI*height*width + 2*M_PI*height*height;
+            runTest(gg, refVolume, refSurface);
 
-        // compute the annulus area and the surface
-        const double refVolume = height*M_PI*outerRadius*outerRadius;
-        const double refSurface = 2.0*M_PI*outerRadius*height + 2.0*M_PI*outerRadius*outerRadius;
-        runTest(gg, refVolume, refSurface);
+            std::cout << "Successfully tested rotational extrusion with x-rotation axis." << std::endl;
+        }
 
-        std::cout << "Successfully tested toroid policy for perfect cylinder." << std::endl;
-
-    } // end toroid policy
+    } // end rotational extrusion
 
     return 0;
 }

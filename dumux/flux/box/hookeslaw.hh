@@ -29,6 +29,7 @@
 
 #include <dumux/flux/hookeslaw.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -42,7 +43,8 @@ template<class ScalarType, class GridGeometry>
 class HookesLaw<ScalarType, GridGeometry, DiscretizationMethod::box>
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -74,7 +76,7 @@ public:
 
         ForceVector scvfForce(0.0);
         sigma.mv(scvf.unitOuterNormal(), scvfForce);
-        scvfForce *= scvf.area();
+        scvfForce *= Extrusion::area(scvf);
 
         return scvfForce;
     }

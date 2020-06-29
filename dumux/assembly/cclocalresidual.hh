@@ -28,6 +28,7 @@
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -46,7 +47,9 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
@@ -100,7 +103,7 @@ public:
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
+                neumannFluxes *= Extrusion::area(scvf)*elemVolVars[scv].extrusionFactor();
 
                 flux += neumannFluxes;
             }

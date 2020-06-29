@@ -28,6 +28,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/rans/twoeq/komega/fluxvariables.hh>
 
@@ -62,12 +63,14 @@ class KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
 
@@ -155,7 +158,7 @@ public:
             flux[turbulentKineticEnergyEqIdx]
                 += coeff_k / distance
                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                   * scvf.area();
+                   * Extrusion::area(scvf);
         }
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
                                   || bcTypes.isSymmetry())))
@@ -163,7 +166,7 @@ public:
             flux[dissipationEqIdx]
                 += coeff_w / distance
                    * (insideVolVars.dissipation() - outsideVolVars.dissipation())
-                   * scvf.area();
+                   * Extrusion::area(scvf);
         }
         return flux;
     }
@@ -184,7 +187,7 @@ public:
         return ParentType::computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache)
                + ParentType::computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache)
                + 2.0 / ModelTraits::dim() * insideVolVars.density() * insideVolVars.turbulentKineticEnergy()
-                 * scvf.area() * scvf.directionSign() * insideVolVars.extrusionFactor();
+                 * Extrusion::area(scvf) * scvf.directionSign() * insideVolVars.extrusionFactor();
     }
 };
 

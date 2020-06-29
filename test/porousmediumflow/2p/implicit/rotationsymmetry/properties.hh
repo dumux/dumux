@@ -25,7 +25,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/box.hh>
-#include <dumux/discretization/rotationsymmetricgridgeometrytraits.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/porousmediumflow/2p/model.hh>
 
@@ -82,7 +82,7 @@ struct GridGeometry<TypeTag, TTag::TwoPRotationalSymmetryDome>
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Traits = RotationSymmetricGridGeometryTraits<BoxDefaultGridGeometryTraits<GridView>, RotationPolicy::toroid>;
+    struct Traits : public BoxDefaultGridGeometryTraits<GridView> { using Extrusion = RotationalExtrusion<0>; };
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache, Traits>;
 };
 

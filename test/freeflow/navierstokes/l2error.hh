@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <cmath>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -50,6 +51,7 @@ public:
     static auto calculateL2Error(const Problem& problem, const SolutionVector& curSol)
     {
         using GridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
+        using Extrusion = Extrusion_t<GridGeometry>;
         PrimaryVariables sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
 
         const int numFaceDofs = problem.gridGeometry().numFaceDofs();
@@ -73,9 +75,9 @@ public:
                 const auto& posCellCenter = scv.dofPosition();
                 const auto analyticalSolutionCellCenter = problem.analyticalSolution(posCellCenter)[Indices::pressureIdx];
                 const auto numericalSolutionCellCenter = curSol[GridGeometry::cellCenterIdx()][dofIdxCellCenter][Indices::pressureIdx - ModelTraits::dim()];
-                sumError[Indices::pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
-                sumReference[Indices::pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
-                totalVolume += scv.volume();
+                sumError[Indices::pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * Extrusion::volume(scv);
+                sumReference[Indices::pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * Extrusion::volume(scv);
+                totalVolume += Extrusion::volume(scv);
 
                 // treat face dofs
                 for (auto&& scvf : scvfs(fvGeometry))
@@ -87,7 +89,9 @@ public:
                     directionIndex[dofIdxFace] = dirIdx;
                     errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
                     velocityReference[dofIdxFace] = squaredDiff_(analyticalSolutionFace, 0.0);
-                    const Scalar staggeredHalfVolume = 0.5 * scv.volume();
+                    auto faceScvCenter = scv.center() + scvf.center(); faceScvCenter *= 0.5;
+                    typename GridGeometry::Traits::FaceSubControlVolume faceScv(faceScvCenter, 0.5*scv.volume());
+                    const Scalar staggeredHalfVolume = Extrusion::volume(faceScv);
                     staggeredVolume[dofIdxFace] = staggeredVolume[dofIdxFace] + staggeredHalfVolume;
                 }
             }

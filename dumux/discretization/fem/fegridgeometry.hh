@@ -31,6 +31,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/fem/feelementgeometry.hh>
 
 namespace Dumux {
@@ -71,6 +72,8 @@ public:
 
     //! export the grid view type
     using GridView = typename FEB::GridView;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<Traits>;
     //! export the type of finite element basis
     using FEBasis = FEB;
     //! export local view

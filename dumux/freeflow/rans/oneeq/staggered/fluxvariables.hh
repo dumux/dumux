@@ -28,6 +28,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/rans/oneeq/fluxvariables.hh>
 
@@ -63,12 +64,14 @@ class OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::s
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
 
     static constexpr int viscosityTildeEqIdx = Indices::viscosityTildeEqIdx - ModelTraits::dim();
@@ -138,7 +141,7 @@ public:
             flux[viscosityTildeEqIdx]
                 += coeff / distance
                    * (insideVolVars.viscosityTilde() - outsideVolVars.viscosityTilde())
-                   * scvf.area();
+                   * Extrusion::area(scvf);
         }
         return flux;
     }

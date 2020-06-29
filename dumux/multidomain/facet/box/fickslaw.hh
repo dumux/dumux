@@ -37,6 +37,7 @@
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/flux/box/fickslaw.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -54,7 +55,8 @@ class BoxFacetCouplingFicksLaw
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -130,7 +132,7 @@ public:
                 auto gradX = preGradX;
                 gradX *= (massOrMoleFraction(facetVolVars, referenceSystem, phaseIdx, compIdx) - x);
 
-                componentFlux[compIdx] = -1.0*rho*scvf.area()
+                componentFlux[compIdx] = -1.0*rho*Extrusion::area(scvf)
                                              *insideVolVars.extrusionFactor()
                                              *vtmv(scvf.unitOuterNormal(),
                                                    facetVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx),
@@ -168,7 +170,7 @@ public:
                     gradX.axpy(xFractions[scv.localDofIndex()], fluxVarCache.gradN(scv.indexInElement()));
 
                 // apply matrix diffusion coefficient and return the flux
-                componentFlux[compIdx] = -1.0*rho*scvf.area()
+                componentFlux[compIdx] = -1.0*rho*Extrusion::area(scvf)
                                              *insideVolVars.extrusionFactor()
                                              *vtmv(scvf.unitOuterNormal(),
                                                    insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx),
