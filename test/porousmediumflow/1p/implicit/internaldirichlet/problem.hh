@@ -25,6 +25,7 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_INTERNAL_DIRICHLET_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_INTERNAL_DIRICHLET_HH
 
+#include <bitset>
 #include <dumux/common/boundarytypes.hh>
 #include <test/porousmediumflow/1p/implicit/incompressible/problem.hh>
 
@@ -36,8 +37,7 @@ namespace Properties {
 // Create new type tags
 namespace TTag {
 struct OnePInternalDirichlet {};
-// internal Dirichlet BC are currently not implemented for cc-models
-//struct OnePInternalDirichletTpfa { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleTpfa>; };
+struct OnePInternalDirichletTpfa { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleTpfa>; };
 struct OnePInternalDirichletBox { using InheritsFrom = std::tuple<OnePInternalDirichlet, OnePIncompressibleBox>; };
 } // end namespace TTag
 
@@ -61,10 +61,14 @@ class OnePTestProblemInternalDirichlet : public OnePTestProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NeumannValues = GetPropType<TypeTag, Properties::NumEqVector>;
-    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using BoundaryTypes = Dumux::BoundaryTypes<ModelTraits::numEq()>;
+    using Indices = typename ModelTraits::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    static constexpr auto numEq = ModelTraits::numEq();
 
 public:
     OnePTestProblemInternalDirichlet(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -118,11 +122,15 @@ public:
      * \param element The finite element
      * \param scv The sub-control volume
      */
-    bool hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    std::bitset<numEq> hasInternalDirichletConstraint(const Element& element,
+                                                      const SubControlVolume& scv) const
     {
         // the pure Neumann problem is only defined up to a constant
         // we create a well-posed problem by fixing the pressure at one dof in the middle of the domain
-        return (scv.dofIndex() == static_cast<std::size_t>(this->gridGeometry().numDofs()/2));
+        std::bitset<numEq> values;
+        if (scv.dofIndex() == static_cast<std::size_t>(this->gridGeometry().numDofs()/2))
+            values.set(Indices::pressureIdx);
+        return values;
     }
 
     /*!
