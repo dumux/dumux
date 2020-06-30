@@ -203,15 +203,30 @@ public:
     /*!
      * \brief Updates the the primary variables state at the boundary.
      *
-     * Required when a Dirichlet BC differes from the initial conditon (only for box method).
+     * Required when a Dirichlet BC differs from the initial condition (only for box method).
      */
     template<class Problem, class GridVariables, class SolutionVector>
+    [[deprecated("Use updateDirichletConstraints() instead. Will be remove after 3.3")]]
     void updateBoundary(const Problem& problem,
                         const typename GridVariables::GridGeometry& gridGeometry,
                         GridVariables& gridVariables,
                         SolutionVector& sol)
     {
-        if constexpr (GridVariables::GridGeometry::discMethod == DiscretizationMethod::box)
+        updateDirichletConstraints(problem, gridGeometry, gridVariables, sol);
+    }
+
+    /*!
+     * \brief Updates the the primary variables state at the boundary.
+     *
+     * Required when a Dirichlet constraint (at a boundary or internal) differs from the initial condition.
+     */
+    template<class Problem, class GridVariables, class SolutionVector>
+    void updateDirichletConstraints(const Problem& problem,
+                                    const typename GridVariables::GridGeometry& gridGeometry,
+                                    GridVariables& gridVariables,
+                                    SolutionVector& sol)
+    {
+        if constexpr (GridVariables::GridGeometry::discMethod == DiscretizationMethod::box || Problem::enableInternalDirichletConstraints())
         {
             std::vector<bool> stateChanged(sol.size(), false);
             std::size_t countChanged = 0;
@@ -221,8 +236,8 @@ public:
                 auto fvGeometry = localView(gridGeometry);
                 fvGeometry.bindElement(element);
 
-                // skip if the element is not at a boundary
-                if (!fvGeometry.hasBoundaryScvf())
+                // skip if the element is not at a boundary or if no internal Dirichlet constraints are set
+                if (!Problem::enableInternalDirichletConstraints() && !fvGeometry.hasBoundaryScvf())
                     continue;
 
                 auto elemVolVars = localView(gridVariables.curGridVolVars());
@@ -230,38 +245,30 @@ public:
 
                 for (const auto& scv : scvs(fvGeometry))
                 {
-                    // this implies that state is set equal for all scvs associated with the dof
                     const auto dofIdx = scv.dofIndex();
-                    if (!gridGeometry.dofOnBoundary(dofIdx) || stateChanged[dofIdx])
+
+                    if (stateChanged[dofIdx])
                         continue;
 
-                    const auto bcTypes = problem.boundaryTypes(element, scv);
-                    if (bcTypes.hasDirichlet())
+                    if constexpr (GridVariables::GridGeometry::discMethod == DiscretizationMethod::box)
                     {
-                        const auto dirichletValues = problem.dirichlet(element, scv);
-
-                        if (sol[dofIdx].state() != dirichletValues.state())
+                        if (gridGeometry.dofOnBoundary(dofIdx))
                         {
-                            if (verbosity() > 1)
-                                std::cout << "Changing primary variable state at boundary (" << sol[dofIdx].state()
-                                          << ") to the one given by the Dirichlet condition (" << dirichletValues.state() << ") at dof " << dofIdx
-                                          << ", coordinates: " << scv.dofPosition()
-                                          << std::endl;
-
-                            // make sure the solution vector has the right state (given by the Dirichlet BC)
-                            sol[dofIdx].setState(dirichletValues.state());
-                            stateChanged[dofIdx] = true;
-                            ++countChanged;
-
-                            // overwrite initial with Dirichlet values
-                            for (int eqIdx = 0; eqIdx < SolutionVector::block_type::dimension; ++eqIdx)
+                            if (handleDirichletBoundaryCondition_(problem, element, scv, sol))
                             {
-                                if (bcTypes.isDirichlet(eqIdx))
-                                {
-                                    const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                                    sol[dofIdx][pvIdx] = dirichletValues[pvIdx];
-                                }
+                                stateChanged[dofIdx] = true;
+                                ++countChanged;
+                                continue;
                             }
+                        }
+                    }
+
+                    if constexpr (Problem::enableInternalDirichletConstraints())
+                    {
+                        if (handleInternalDirichletConstraint_(problem, element, scv, sol))
+                        {
+                                stateChanged[dofIdx] = true;
+                                ++countChanged;
                         }
                     }
                 }
@@ -285,7 +292,7 @@ public:
             }
 
             if (verbosity_ > 0 && countChanged > 0)
-                std::cout << "Changed primary variable states and solution values at boundary to Dirichlet states and values at " << countChanged << " dof locations on processor "
+                std::cout << "Changed primary variable states and solution values to Dirichlet states and values at " << countChanged << " dof locations on processor "
                           << gridGeometry.gridView().comm().rank() << "." << std::endl;
         }
     }
@@ -338,10 +345,27 @@ protected:
                            const typename Geometry::SubControlVolume& scv,
                            const Problem& problem)
     {
-        if constexpr (Geometry::GridGeometry::discMethod != DiscretizationMethod::box)
+        // Dofs can be only constrained when using the Box method or when imposing internal Dirichlet constraints
+        if constexpr (Geometry::GridGeometry::discMethod != DiscretizationMethod::box && !Problem::enableInternalDirichletConstraints())
             return false;
 
-        else
+        // check for internally constrained Dofs
+        const auto isInternallyConstrainedDof = [&]()
+        {
+            if constexpr (!Problem::enableInternalDirichletConstraints())
+                return false;
+            else
+            {
+                const auto internalDirichletConstraints = problem.hasInternalDirichletConstraint(element, scv);
+                return internalDirichletConstraints.any();
+            }
+        };
+
+        if (isInternallyConstrainedDof())
+            return true;
+
+        // check for a Dirichlet BC when using the Box method
+        if constexpr (Geometry::GridGeometry::discMethod == DiscretizationMethod::box)
         {
             if (!fvGeometry.hasBoundaryScvf())
                 return false;
@@ -353,9 +377,87 @@ protected:
             const auto bcTypes = problem.boundaryTypes(element, scv);
             if (bcTypes.hasDirichlet())
                 return true;
-
-            return false;
         }
+
+        return false;
+    }
+
+    template<class Problem, class Element, class SubControlVolume, class SolutionVector>
+    bool handleDirichletBoundaryCondition_(const Problem& problem,
+                                           const Element& element,
+                                           const SubControlVolume& scv,
+                                           SolutionVector& sol)
+    {
+        bool changed = false;
+        const auto bcTypes = problem.boundaryTypes(element, scv);
+        if (bcTypes.hasDirichlet())
+        {
+            const auto dirichletValues = problem.dirichlet(element, scv);
+            const auto dofIdx = scv.dofIndex();
+
+            if (sol[dofIdx].state() != dirichletValues.state())
+            {
+                if (verbosity() > 1)
+                    std::cout << "Changing primary variable state at boundary (" << sol[dofIdx].state()
+                                << ") to the one given by the Dirichlet condition (" << dirichletValues.state() << ") at dof " << dofIdx
+                                << ", coordinates: " << scv.dofPosition()
+                                << std::endl;
+
+                // make sure the solution vector has the right state (given by the Dirichlet BC)
+                sol[dofIdx].setState(dirichletValues.state());
+                changed = true;
+
+                // overwrite initial with Dirichlet values
+                for (int eqIdx = 0; eqIdx < SolutionVector::block_type::dimension; ++eqIdx)
+                {
+                    if (bcTypes.isDirichlet(eqIdx))
+                    {
+                        const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                        sol[dofIdx][pvIdx] = dirichletValues[pvIdx];
+                    }
+                }
+            }
+        }
+
+        return changed;
+    }
+
+    template<class Problem, class Element, class SubControlVolume, class SolutionVector>
+    bool handleInternalDirichletConstraint_(const Problem& problem,
+                                            const Element& element,
+                                            const SubControlVolume& scv,
+                                            SolutionVector& sol)
+    {
+        bool changed = false;
+
+        const auto internalDirichletConstraints = problem.hasInternalDirichletConstraint(element, scv);
+        if (internalDirichletConstraints.none())
+            return changed;
+
+        const auto dirichletValues = problem.internalDirichlet(element, scv);
+        const auto dofIdx = scv.dofIndex();
+
+        if (sol[dofIdx].state() != dirichletValues.state())
+        {
+            if (verbosity() > 1)
+                std::cout << "Changing primary variable state at internal DOF (" << sol[dofIdx].state()
+                            << ") to the one given by the internal Dirichlet constraint (" << dirichletValues.state() << ") at dof " << dofIdx
+                            << ", coordinates: " << scv.dofPosition()
+                            << std::endl;
+
+            // make sure the solution vector has the right state (given by the Dirichlet constraint)
+            sol[dofIdx].setState(dirichletValues.state());
+            changed = true;
+
+            // overwrite initial with Dirichlet values
+            for (int pvIdx = 0; pvIdx < SolutionVector::block_type::dimension; ++pvIdx)
+            {
+                if (internalDirichletConstraints[pvIdx])
+                    sol[dofIdx][pvIdx] = dirichletValues[pvIdx];
+            }
+        }
+
+        return changed;
     }
 
     std::vector<bool> wasSwitched_;
