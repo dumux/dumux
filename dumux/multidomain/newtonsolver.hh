@@ -167,7 +167,7 @@ private:
         const auto& problem = this->assembler().problem(id);
         const auto& gridGeometry = this->assembler().gridGeometry(id);
         auto& gridVariables = this->assembler().gridVariables(id);
-        priVarSwitch.updateBoundary(problem, gridGeometry, gridVariables, sol[id]);
+        priVarSwitch.updateDirichletConstraints(problem, gridGeometry, gridVariables, sol[id]);
     }
 
     /*!

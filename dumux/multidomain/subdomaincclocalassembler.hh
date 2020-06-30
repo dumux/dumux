@@ -84,8 +84,6 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using CouplingManager = typename Assembler::CouplingManager;
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
-    static_assert(!Problem::enableInternalDirichletConstraints(), "Internal Dirichlet constraints are currently not implemented for cc-methods!");
-
 public:
     //! export the domain id of this sub-domain
     static constexpr auto domainId = typename Dune::index_constant<id>();
@@ -282,6 +280,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
 {
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, ThisType, /*implicit=*/true>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -406,15 +405,54 @@ public:
                                                       eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
 
             // add the current partial derivatives to the global jacobian matrix
-            for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+            if constexpr (Problem::enableInternalDirichletConstraints())
             {
-                // the diagonal entries
-                A[globalI][globalI][eqIdx][pvIdx] += partialDerivs[0][eqIdx];
+                // check if own element has internal Dirichlet constraint
+                const auto internalDirichletConstraintsOwnElement = this->problem().hasInternalDirichletConstraint(this->element(), scv);
+                const auto dirichletValues = this->problem().internalDirichlet(this->element(), scv);
+
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                {
+                    if (internalDirichletConstraintsOwnElement[eqIdx])
+                    {
+                        origResiduals[0][eqIdx] = this->curElemVolVars()[scv].priVars()[eqIdx] - dirichletValues[eqIdx];
+                        A[globalI][globalI][eqIdx][pvIdx] = (eqIdx == pvIdx) ? 1.0 : 0.0;
+                    }
+                    else
+                        A[globalI][globalI][eqIdx][pvIdx] += partialDerivs[0][eqIdx];
+                }
 
                 // off-diagonal entries
                 j = 1;
                 for (const auto& dataJ : connectivityMap[globalI])
-                    A[dataJ.globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
+                {
+                    const auto& neighborElement = neighborElements[j-1];
+                    const auto& neighborScv = fvGeometry.scv(dataJ.globalJ);
+                    const auto internalDirichletConstraintsNeighbor = this->problem().hasInternalDirichletConstraint(neighborElement, neighborScv);
+
+                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    {
+                        if (internalDirichletConstraintsNeighbor[eqIdx])
+                            A[dataJ.globalJ][globalI][eqIdx][pvIdx] = 0.0;
+                        else
+                            A[dataJ.globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j][eqIdx];
+                    }
+
+                    ++j;
+                }
+            }
+            else // no internal Dirichlet constraints specified
+            {
+                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                {
+                    // the diagonal entries
+                    A[globalI][globalI][eqIdx][pvIdx] += partialDerivs[0][eqIdx];
+
+                    // off-diagonal entries
+                    j = 1;
+                    for (const auto& dataJ : connectivityMap[globalI])
+                        A[dataJ.globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
+                }
             }
 
             // restore the original state of the scv's volume variables
@@ -526,8 +564,31 @@ public:
                                                           epsCoupl(priVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                 // add the current partial derivatives to the global jacobian matrix
-                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                    A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+                if constexpr (Problem::enableInternalDirichletConstraints())
+                {
+                    const auto& scv = fvGeometry.scv(globalI);
+                    const auto internalDirichletConstraints = this->problem().hasInternalDirichletConstraint(this->element(), scv);
+                    if (internalDirichletConstraints.none())
+                    {
+                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                            A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+                    }
+                    else
+                    {
+                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                        {
+                            if (internalDirichletConstraints[eqIdx])
+                                A[globalI][globalJ][eqIdx][pvIdx] = 0.0;
+                            else
+                                A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+                        }
+                    }
+                }
+                else
+                {
+                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+                }
 
                 // restore the current element solution
                 priVarsJ[pvIdx] = origPriVarsJ[pvIdx];
@@ -560,6 +621,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr auto domainI = Dune::index_constant<id>();
@@ -645,8 +707,28 @@ public:
 
             // add the current partial derivatives to the global jacobian matrix
             // only diagonal entries for explicit jacobians
-            for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
+            if constexpr (Problem::enableInternalDirichletConstraints())
+            {
+                // check if own element has internal Dirichlet constraint
+                const auto internalDirichletConstraints = this->problem().hasInternalDirichletConstraint(this->element(), scv);
+                const auto dirichletValues = this->problem().internalDirichlet(this->element(), scv);
+
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                {
+                    if (internalDirichletConstraints[eqIdx])
+                    {
+                        residual[eqIdx] = this->curElemVolVars()[scv].priVars()[eqIdx] - dirichletValues[eqIdx];
+                        A[globalI][globalI][eqIdx][pvIdx] = (eqIdx == pvIdx) ? 1.0 : 0.0;
+                    }
+                    else
+                        A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
+                }
+            }
+            else
+            {
+                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                    A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
+            }
 
             // restore the original state of the scv's volume variables
             curVolVars = origVolVars;
@@ -687,6 +769,7 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*
     using LocalResidualValues = GetPropType<TypeTag, Properties::NumEqVector>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     enum { dim = GridView::dimension };
@@ -749,8 +832,35 @@ public:
             }
         }
 
-        // return element residual
-        return this->evalLocalResidual()[0];
+        if constexpr (Problem::enableInternalDirichletConstraints())
+        {
+            // check if own element has internal Dirichlet constraint
+            const auto internalDirichletConstraints = this->problem().hasInternalDirichletConstraint(this->element(), scv);
+            const auto dirichletValues = this->problem().internalDirichlet(this->element(), scv);
+
+            auto residual = this->evalLocalResidual()[0];
+
+            for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+            {
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                {
+                    if (internalDirichletConstraints[eqIdx])
+                    {
+                        residual[eqIdx] = this->curElemVolVars()[scv].priVars()[eqIdx] - dirichletValues[eqIdx];
+                        A[globalI][globalI][eqIdx][pvIdx] = (eqIdx == pvIdx) ? 1.0 : 0.0;
+
+                        // inner faces
+                        for (const auto& scvf : scvfs(fvGeometry))
+                            if (!scvf.boundary())
+                                A[globalI][fvGeometry.scv(scvf.outsideScvIdx()).dofIndex()][eqIdx][pvIdx] = 0.0;
+                    }
+                }
+            }
+            return residual;
+        }
+        else
+            // return element residual
+            return this->evalLocalResidual()[0];
     }
 
     /*!
@@ -782,6 +892,20 @@ public:
         {
             const auto& elementJ = this->assembler().gridGeometry(domainJ).element(globalJ);
             this->couplingManager().addCouplingDerivatives(A[globalI][globalJ], domainI, element, fvGeometry, curElemVolVars, domainJ, elementJ);
+
+            // add the current partial derivatives to the global jacobian matrix
+            if constexpr (Problem::enableInternalDirichletConstraints())
+            {
+                const auto& scv = fvGeometry.scv(globalI);
+                const auto internalDirichletConstraints = this->problem().hasInternalDirichletConstraint(this->element(), scv);
+                if (internalDirichletConstraints.any())
+                {
+                    for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                            if (internalDirichletConstraints[eqIdx])
+                                A[globalI][globalJ][eqIdx][pvIdx] = 0.0;
+                }
+            }
         }
     }
 };
