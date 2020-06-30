@@ -808,7 +808,7 @@ protected:
         const auto& problem = this->assembler().problem();
         const auto& gridGeometry = this->assembler().gridGeometry();
         auto& gridVariables = this->assembler().gridVariables();
-        priVarSwitch_->updateBoundary(problem, gridGeometry, gridVariables, sol);
+        priVarSwitch_->updateDirichletConstraints(problem, gridGeometry, gridVariables, sol);
     }
 
     /*!
