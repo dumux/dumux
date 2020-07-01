@@ -123,6 +123,62 @@ public:
     }
 };
 
+/*
+ * \ingroup Discretization
+ * \brief Flux stencil specialization for the cell-centered wmpfa scheme
+ * \tparam FVElementGeometry The local view on the finite volume grid geometry
+ */
+template<class FVElementGeometry>
+class FluxStencil<FVElementGeometry, DiscretizationMethod::ccwmpfa>
+{
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+
+public:
+    //! We don't know yet how many faces couple to a neighboring element
+    //! Each cell I couples to a cell J always only via one face
+    using ScvfStencilIForJ = std::vector<GridIndexType>;
+
+    //! The flux stencil type
+    using Stencil = typename SubControlVolumeFace::Traits::GridIndexStorage;
+
+    //! Returns the indices of the elements required for flux calculation on an scvf.
+    static Stencil stencil(const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const SubControlVolumeFace& scvf)
+    {
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+
+        //ToDo correct stencil! At the moment simply all neighors of neighbors are added
+        Stencil stencil({scvf.insideScvIdx()});
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (scvf.boundary())
+                continue;
+
+            stencil.push_back(scvf.outsideScvIdx());
+
+            const auto outsideScvIdx = scvf.outsideScvIdx();
+            const auto outsideElement = gridGeometry.element(outsideScvIdx);
+            auto fvGeometryJ = localView(gridGeometry);
+            fvGeometryJ.bind(outsideElement);
+
+            for (const auto& scvfJ : scvfs(fvGeometryJ))
+            {
+                if (scvfJ.boundary() || scvf.insideScvIdx() == scvfJ.outsideScvIdx())
+                    continue;
+
+                stencil.push_back(scvfJ.outsideScvIdx());
+            }
+        }
+
+        return stencil;
+    }
+};
+
 } // end namespace Dumux
 
 #endif
