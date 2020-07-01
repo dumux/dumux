@@ -407,6 +407,19 @@ public:
     using ParentType::ParentType;
 };
 
+/*!
+ * \ingroup Assembly
+ * \brief The partial reassembler engine specialized for the cellcentered WMPFA method
+ */
+template<class Assembler>
+class PartialReassemblerEngine<Assembler, DiscretizationMethod::ccwmpfa>
+: public PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
+{
+    using ParentType = PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>;
+public:
+    using ParentType::ParentType;
+};
+
 //! helper struct to determine whether the an engine class has vertex colors
 struct hasVertexColor
 {

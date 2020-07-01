@@ -85,7 +85,8 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
  */
 template<bool isImplicit, class GridGeometry,
          typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::cctpfa)
-                                     || (GridGeometry::discMethod == DiscretizationMethod::ccmpfa) ), int> = 0>
+                                     || (GridGeometry::discMethod == DiscretizationMethod::ccmpfa)
+                                     || (GridGeometry::discMethod == DiscretizationMethod::ccwmpfa)), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     const auto numDofs = gridGeometry.numDofs();
