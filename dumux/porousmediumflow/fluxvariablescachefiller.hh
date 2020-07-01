@@ -702,6 +702,193 @@ private:
     const SecondaryLocalFaceData* secondaryLocalFaceData_;
 };
 
+//! Specialization of the flux variables cache filler for the cell centered mpfa method
+template<class TypeTag>
+class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
+{
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+
+    using InterpolationOperator = typename ElementFluxVariablesCache::InterpolationOperator;
+    using FaceDataHandle = typename ElementFluxVariablesCache::FaceDataHandle;
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    static constexpr bool advectionEnabled = ModelTraits::enableAdvection();
+    static constexpr bool diffusionEnabled = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool heatConductionEnabled = ModelTraits::enableEnergyBalance();
+
+    static constexpr bool advectionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
+    static constexpr bool diffusionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
+    static constexpr bool heatConductionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
+
+public:
+    //! This cache filler is always solution-dependent, as it updates the
+    //! vectors of cell unknowns with which the transmissibilities have to be
+    //! multiplied in order to obtain the fluxes.
+    static constexpr bool isSolDependent = true;
+
+    //! The constructor. Sets problem pointer.
+    PorousMediumFluxVariablesCacheFillerImplementation(const Problem& problem)
+    : problemPtr_(&problem) {}
+
+    /*!
+     * \brief function to fill the flux variables caches
+     *
+     * \param fluxVarsCacheStorage Class that holds the scvf flux vars caches
+     * \param scvfFluxVarsCache The flux var cache to be updated corresponding to the given scvf
+     * \param DataStorage Class that stores the interpolation operator & handles
+     * \param element The element
+     * \param fvGeometry The finite volume geometry
+     * \param elemVolVars The element volume variables (primary/secondary variables)
+     * \param scvf The corresponding sub-control volume face
+     * \param forceUpdateAll if true, forces all caches to be updated (even the solution-independent ones)
+     */
+    template<class FluxVarsCacheStorage, class FluxVariablesCache, class DataStorage>
+    void fill(FluxVarsCacheStorage& fluxVarsCacheStorage,
+              FluxVariablesCache& scvfFluxVarsCache,
+              DataStorage& dataStorage,
+              const Element& element,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars,
+              const SubControlVolumeFace& scvf,
+              bool forceUpdateAll = false)
+    {
+        // Set pointers
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+
+        const auto& intOp = fluxVarsCacheStorage.interpolationOperator(fvGeometry.scv(scvf.insideScvIdx()));
+        faceHandlePtr_ = &dataStorage.facesDataHandles[scvf.index()];
+
+                // fill the physics-related quantities of the caches
+        if (forceUpdateAll)
+        {
+            if constexpr (advectionEnabled)
+            {
+                // lambda to obtain the permeability tensor
+                auto getTensor = [&elemVolVars] (typename GridView::IndexSet::IndexType index) { return elemVolVars[index].permeability(); };
+                prepareHandle_(faceHandlePtr_->advectionHandle(), intOp.advectionInterpolator(), getTensor, fvGeometry, scvf);
+                fillAdvection_(scvfFluxVarsCache, faceHandlePtr_->advectionHandle(), intOp.advectionInterpolator(), element, fvGeometry, elemVolVars, scvf);
+            }
+            // if constexpr (diffusionEnabled)
+            // {
+            //     fillDiffusion_(scvfFluxVarsCache, intOp, faceDataHandle(), element, fvGeometry, elemVolVars, scvf);
+            // }
+            // if constexpr (heatConductionEnabled)
+            // {
+            //     fillHeatConduction_(scvfFluxVarsCache, intOp, faceDataHandle(), element, fvGeometry, elemVolVars, scvf);
+            // }
+        }
+        else
+        {
+            if constexpr (advectionEnabled && advectionIsSolDependent)
+            {
+                // lambda to obtain the permeability tensor
+                auto getTensor = [&elemVolVars] (typename GridView::IndexSet::IndexType index) { return elemVolVars[index].permeability(); };
+                prepareHandle_(faceHandlePtr_->advectionHandle(), intOp.advectionInterpolator(), getTensor, fvGeometry, scvf);
+                fillAdvection_(scvfFluxVarsCache, faceHandlePtr_->advectionHandle(), intOp.advectionInterpolator(), element, fvGeometry, elemVolVars, scvf);
+            }
+            // if constexpr (diffusionEnabled && diffusionIsSolDependent)
+            // {
+            //     fillDiffusion_(scvfFluxVarsCache, intOp, faceDataHandle().diffusionHandle(), element, fvGeometry, elemVolVars, scvf);
+            // }
+            // if constexpr (heatConductionEnabled && heatConductionIsSolDependent)
+            // {
+            //     fillHeatConduction_(scvfFluxVarsCache, intOp, faceDataHandle(), element, fvGeometry, elemVolVars, scvf);
+            // }
+        }
+    }
+
+    const FaceDataHandle& faceDataHandle() const
+    {
+        return *faceHandlePtr_;
+    }
+
+private:
+    template< class Handle, class IntOP, class TensorFunction >
+    void prepareHandle_(Handle& handle, const IntOP& intOp, const TensorFunction& tensor, const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    {
+        handle.decompose(intOp, tensor, fvGeometry, scvf);
+    }
+
+    //! method to fill the advective quantities
+    template<class FluxVariablesCache, class AdvectionHandle, class AdvectionInterpolator>
+    void fillAdvection_(FluxVariablesCache& scvfFluxVarsCache,
+                        AdvectionHandle& handle,
+                        const AdvectionInterpolator& intOp,
+                        const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf)
+    {
+        // using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
+        // using AdvectionFiller = typename AdvectionType::Cache::Filler;
+
+        // // forward to the filler for the advective quantities
+        // AdvectionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
+    }
+
+    // //! method to fill the diffusive quantities
+    // template<class FluxVariablesCache>
+    // void fillDiffusion_(FluxVariablesCache& scvfFluxVarsCache,
+    //                     typename FaceDataHandle::DiffusionHandle& handle,
+    //                     const typename InterpolationOperator::DiffusionInterpolator& intOp,
+    //                     const Element& element,
+    //                     const FVElementGeometry& fvGeometry,
+    //                     const ElementVolumeVariables& elemVolVars,
+    //                     const SubControlVolumeFace& scvf)
+    // {
+    //     // using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
+    //     // using DiffusionFiller = typename DiffusionType::Cache::Filler;
+    //     // using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+
+    //     // static constexpr int numPhases = ModelTraits::numFluidPhases();
+    //     // static constexpr int numComponents = ModelTraits::numFluidComponents();
+
+    //     // // forward to the filler of the diffusive quantities
+    //     // if constexpr (FluidSystem::isTracerFluidSystem())
+    //     //     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+    //     //         for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
+    //     //             DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element, fvGeometry, elemVolVars, scvf, *this);
+    //     // else
+    //     //     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+    //     //         for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
+    //     //             if (compIdx != FluidSystem::getMainComponent(phaseIdx))
+    //     //                 DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element, fvGeometry, elemVolVars, scvf, *this);
+    // }
+
+    // //! method to fill the quantities related to heat conduction
+    // template<class FluxVariablesCache>
+    // void fillHeatConduction_(FluxVariablesCache& scvfFluxVarsCache,
+    //                          typename FaceDataHandle::HeatConductionHandle& handle,
+    //                          const typename InterpolationOperator::HeatConductionInterpolator& intOp,
+    //                          const Element& element,
+    //                          const FVElementGeometry& fvGeometry,
+    //                          const ElementVolumeVariables& elemVolVars,
+    //                          const SubControlVolumeFace& scvf)
+    // {
+    //     // using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
+    //     // using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
+
+    //     // // forward to the filler of the diffusive quantities
+    //     // HeatConductionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
+    // }
+
+    const Problem& problem() const { return *problemPtr_; }
+
+    const Problem* problemPtr_;
+    FaceDataHandle* faceHandlePtr_;
+};
+
 } // end namespace Dumux
 
 #endif

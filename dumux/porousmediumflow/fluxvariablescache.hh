@@ -144,6 +144,18 @@ private:
     unsigned int idxInOutsideFaces_;    // index of scvf among outside scvfs of iv-local "positive" face (only surface grids)
 };
 
+// specialization for the cell centered wmpfa method
+template<class TypeTag>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
+: public AdvectionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableAdvection()>
+, public DiffusionCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableMolecularDiffusion()>
+, public EnergyCacheChooser<TypeTag, GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance()>
+{
+public:
+    //! export type used for scalar values
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+};
+
 } // end namespace Dumux
 
 #endif
