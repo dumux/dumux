@@ -111,7 +111,7 @@ private:
 
     //! Adds discretization-specific fields (nothing by default).
     template <class OutputModule>
-    static void additionalOutput_(OutputModule& out)
+    static void additionalOutput_(OutputModule& out, std::false_type)
     { }
 
     //! Adds discretization-specific fields (velocity vectors on the faces for the staggered discretization).
