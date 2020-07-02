@@ -46,10 +46,45 @@ class HapInterpolatorBase
 
     using Scalar = typename Position::value_type;
 
+    struct Entry
+    {
+        Entry()
+        {entry = {-1,0.0};}
+
+        Entry(std::size_t idx, Scalar weight)
+        {
+            entry = {idx, weight};
+        }
+
+        Scalar weight() const
+        {return entry.second;}
+
+        std::size_t dofIndex() const
+        {return entry.first;}
+
+        private:
+            std::pair<std::size_t,Scalar> entry;
+    };
+
     struct LocalInterpolationData
     {
-        Position point;
-        std::pair<Scalar, Scalar> weights;
+        LocalInterpolationData() = default;
+
+        LocalInterpolationData(Position p, Entry e1, Entry e2)
+        {
+            position_ = p;
+            entries_ = {e1,e2};
+        }
+
+        const std::array<Entry, 2>& entries() const
+        { return entries_;}
+
+        Position position() const
+        {return position_;}
+
+        private:
+            Position position_ = {};
+            std::array<Entry, 2> entries_ = {Entry(), Entry()};
     };
 
 public:
@@ -70,6 +105,8 @@ public:
         interpolationData_.resize(fvGeometry.numScvf());
         for (auto&& scvf : scvfs(fvGeometry))
         {
+            const auto insideScvIdx = scvf.insideScvIdx();
+            const auto outsideScvIdx = scvf.outsideScvIdx();
             if(!scvf.boundary())
             {
                 const auto insideScvIdx = scvf.insideScvIdx();
@@ -89,15 +126,15 @@ public:
                 const auto omegaK = distL*tauK / (distL*tauK + distK*tauL);
                 const auto omegaL = distK*tauL / (distL*tauK + distK*tauL);
 
-                auto point = (omegaK * centerK) + (omegaL * centerL)
+                auto position = (omegaK * centerK) + (omegaL * centerL)
                                 + (distL*distK / (distL*tauK + distK*tauL))
                                    * mv(tensor(insideVolVars) - tensor(outsideVolVars), scvf.unitOuterNormal());
 
-                interpolationData_[scvf.localIndex()] = (LocalInterpolationData({point, std::make_pair(omegaK, omegaL)}));
+                interpolationData_[scvf.localIndex()] = LocalInterpolationData(position, Entry(insideScvIdx, omegaK), Entry(outsideScvIdx, omegaL) );
             }
             else
             {
-                interpolationData_[scvf.localIndex()] = (LocalInterpolationData({scvf.center(), std::make_pair(1.0, 0.0)}));
+                interpolationData_[scvf.localIndex()] = LocalInterpolationData(scvf.center(), Entry(insideScvIdx, 0.0), Entry(outsideScvIdx, 1.0) );
             }
         }
         isUpdated_ = true;
@@ -114,7 +151,7 @@ public:
         std::vector<Position> distances;
         distances.resize(fvGeometry.numScvf());
         for (auto&& scvf : scvfs(fvGeometry))
-            distances[scvf.localIndex()]= (interpolationData_[scvf.localIndex()].point - fvGeometry.scv(scvf.insideScvIdx()).center());
+            distances[scvf.localIndex()]= (interpolationData_[scvf.localIndex()].position() - fvGeometry.scv(scvf.insideScvIdx()).center());
 
         return distances;
     }
@@ -125,9 +162,19 @@ public:
         std::vector<Position> distances;
         distances.resize(fvGeometry.numScvf());
         for (auto&& scvf : scvfs(fvGeometry))
-            distances[scvf.localIndex()]= (interpolationData_[scvf.localIndex()].point - fvGeometry.scv(scvf.insideScvIdx()).center());
+            distances[scvf.localIndex()]= (interpolationData_[scvf.localIndex()].position() - fvGeometry.scv(scvf.insideScvIdx()).center());
 
         return distances;
+    }
+
+    const LocalInterpolationData getInterpolationData(std::size_t localIdx) const
+    {
+        return interpolationData_[localIdx];
+    }
+
+    LocalInterpolationData getInterpolationData(std::size_t localIdx)
+    {
+        return interpolationData_[localIdx];
     }
 
 
@@ -146,6 +193,8 @@ class HapInterpolationOperator
 public:
     //! state the traits type publicly
     using Traits = T;
+    using GridGeometry = typename T::GridGeometry;
+    using GridView = typename T::GridView;
     using Position = typename T::GlobalPosition;
     using Scalar = typename Position::value_type;
 
