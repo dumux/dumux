@@ -86,6 +86,8 @@ This file contains the __ component class__ which defines the name and molar mas
 ```cpp
 // including the base component
 #include <dumux/material/components/base.hh>
+
+#include <dumux/common/parameters.hh>
 ```
 
 ### The suspended biomass component
