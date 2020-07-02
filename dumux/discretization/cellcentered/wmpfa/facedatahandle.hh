@@ -61,19 +61,32 @@ template<class IntOp, class PhysicsTraits, bool EnableAdvection>
 class AdvectionDataHandle
 {
     using Scalar = typename IntOp::Scalar;
-    using OneSidedStencil = std::vector<std::size_t>;
-    using Stencils = std::pair<OneSidedStencil,OneSidedStencil>;
-    using OneSidedCoefficients = std::vector<Scalar>;
-    using Coefficients = std::pair<OneSidedCoefficients,OneSidedCoefficients>;
+    //ToDo get the index types
+    using SubControlVolume = typename IntOp::GridGeometry::SubControlVolume;
+    using GridIndexType = typename SubControlVolume::Traits::GridIndexType;
+    using LocalIndexType = typename SubControlVolume::Traits::LocalIndexType;
+    using Position = typename IntOp::Position;
+
+    struct Entry{
+        Scalar coefficient;
+        GridIndexType index;
+        Position position;
+    };
+    using Entries = std::vector<Entry>;
 
     using Interpolator = typename IntOp::AdvectionInterpolator;
 
     static constexpr int numPhases = PhysicsTraits::numPhases;
 
 public:
+    void clear()
+    {
+        visited_ = 0;
+        entries_.clear();
+    }
 
-    template<class TF, class FVElementGeometry, class SubControlVolumeFace>
-    void decompose(const Interpolator& intOp, const TF& tensor, const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    template<class TF, class EG, class SCVF>
+    void decompose(const Interpolator& intOp, const TF& tensor, const EG& fvGeometry, const SCVF& scvf)
     {
         boundaryFace_ = scvf.boundary();
         const auto coNormal = mv(tensor(scvf.insideScvIdx()), scvf.unitOuterNormal());
@@ -84,29 +97,52 @@ public:
         else
         {
             WMpfaHelper::eraseZeros(coeff, indices);
+            updateEntries(intOp, indices, coeff, fvGeometry, scvf);
+        }
 
-            if(scvf.insideScvIdx() < scvf.outsideScvIdx())
+        ++visited_;
+    }
+
+    template<class Indices, class Coeff, class EG, class SCVF>
+    void updateEntries(const Interpolator& intOp, const Indices& indices, const Coeff& coeff, const EG& fvGeometry, const SCVF& scvf)
+    {
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+        auto& entries = entries_[visited_];
+        entries.push_back({0.0, scv.dofIndex(), scv.center()});
+        for(std::size_t i=0; i<indices.size(); ++i)
+        {
+            const auto& intData = intOp.getInterpolationData(indices[i]);
+            for(const auto& e : intData.entries())
             {
-                coefficients_[0].first = std::move(coeff);
-                stencils_[0].first = std::move(indices);
-            }
-            else
-            {
-                coefficients_[0].second = std::move(coeff);
-                stencils_[0].second = std::move(indices);
+                if(e.dofIndex() != scvf.insideScvIdx())
+                {
+                    auto c = coeff[scvf.localIndex()]*e.weight();
+                    entries[0].coefficient += c;
+                    //ToDo pos is not needed for each entry!!!
+                    entries.push_back({c, e.dofIndex(), intData.position()});
+                }
             }
         }
+        scvfIndices_[visited_] = scvf.index();
+        scvIndices_[visited_] = scvf.insideScvIdx();
+    }
+
+    const auto& subFluxData(GridIndexType idx) const
+    {
+        return (idx == scvIndices_[0]) ? entries_[0] : entries_[1];
     }
 
     bool valid()
     {
-        return (!boundaryFace_ && coefficients_[0].first.size() > 0 && coefficients_[0].second.size() > 0)
-                || (boundaryFace_ && coefficients_[0].first.size() > 0);
+        return ((!boundaryFace_ && entries_[0].size() > 0 && entries_[1].size() > 0)
+                || (boundaryFace_ && entries_[0].size() > 0)) && visited_ == 2;
     }
 
 private:
-    std::array<Coefficients, 1 > coefficients_;
-    std::array<Stencils, 1 > stencils_;
+    int visited_;
+    std::array<GridIndexType, 2> scvfIndices_;
+    std::array<GridIndexType, 2> scvIndices_;
+    std::array<Entries, 2> entries_;
     bool boundaryFace_;
 };
 
