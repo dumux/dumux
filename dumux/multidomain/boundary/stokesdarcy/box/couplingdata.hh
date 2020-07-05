@@ -305,7 +305,7 @@ public:
             }
 
             //Add the integrated segment velocity to the sum
-            velocity.axpy(-data.segmentGeometry.integrationElement(qp.position())*qp.weight()/data.volVars.viscosity(data.darcyScvfIdx), mv(K,gradP));
+            velocity.axpy(-data.segmentGeometry.integrationElement(qp.position())*qp.weight()/data.volVars.viscosity(darcyPhaseIdx), mv(K,gradP));
           }
         }
       }
@@ -384,7 +384,7 @@ public:
             }
 
             //Add the integrated segment velocity to the sum
-            velocity.axpy(-data.segmentGeometry.integrationElement(qp.position())*qp.weight()*epsInterface*epsInterface/data.volVars.viscosity(data.darcyScvfIdx), mv(M,gradP));
+            velocity.axpy(-data.segmentGeometry.integrationElement(qp.position())*qp.weight()*epsInterface*epsInterface/data.volVars.viscosity(darcyPhaseIdx), mv(M,gradP));
           }
         }
       }
