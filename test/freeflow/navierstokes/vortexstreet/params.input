@@ -1,0 +1,16 @@
+[TimeLoop]
+DtInitial = 3e-3 # [s]
+MaxTimeStepSize = 3e-3 # [s]
+TEnd = 5 # [s]
+
+[Grid]
+UpperRight = 400e-3 200e-3
+Cells = 200 100
+CylinderRadius = 7e-3
+CylinderPosition = 56.6e-3 101.5e-3
+
+[Problem]
+Name = test_karman_vortex_street
+EnableGravity = false
+EnableInertiaTerms = true
+ReynoldsNumber = 250
