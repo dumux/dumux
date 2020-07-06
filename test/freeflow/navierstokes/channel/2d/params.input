@@ -12,10 +12,15 @@ InletVelocity = 1
 EnableGravity = false
 EnableInertiaTerms = false
 OutletCondition = Outflow
+PrintMatrix = false
+UseVelocityProfile = false
 
 [Component]
 LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
+
+GasDensity = 1
+GasKinematicViscosity = 1e-6
 
 [ Newton ]
 MaxSteps = 10
@@ -27,10 +32,13 @@ WriteFaceData = false
 [Assembly]
 NumericDifference.BaseEpsilon =  1e-3
 
-# This test does actually not require setting the primary variable magnitues.
+# This test does actually not require setting the primary variable magnitudes.
 # This rather serves as a demonstration of how to use the feature.
 # [CellCenter.Assembly]
 # NumericDifference.PriVarMagnitude = 1e5 # pressure is in the order of 1e5
-
-[Face.Assembly]
+#
+# [Face.Assembly]
 # NumericDifference.PriVarMagnitude = 1 # velocity is in the order of 1
+
+[FreeFlow]
+EnableDilatationTerm = false
