@@ -541,17 +541,10 @@ public:
         {
             uCurrentIter = uLastIter;
             uCurrentIter -= deltaU;
+            solutionChanged_(uCurrentIter);
 
             if (enableResidualCriterion_)
                 computeResidualReduction_(uCurrentIter);
-
-            else
-            {
-                // If we get here, the convergence criterion does not require
-                // additional residual evaluations. Thus, the grid variables have
-                // not yet been updated to the new uCurrentIter.
-                this->assembler().updateGridVariables(uCurrentIter);
-            }
         }
     }
 
@@ -781,6 +774,14 @@ public:
     { convergenceWriter_ = nullptr; }
 
 protected:
+
+    /*!
+     * \brief Update solution-depended quantities like grid variables after the solution has changed.
+     */
+    virtual void solutionChanged_(const SolutionVector &uCurrentIter)
+    {
+        this->assembler().updateGridVariables(uCurrentIter);
+    }
 
     void computeResidualReduction_(const SolutionVector &uCurrentIter)
     {
@@ -1048,6 +1049,7 @@ private:
             uCurrentIter = deltaU;
             uCurrentIter *= -lambda;
             uCurrentIter += uLastIter;
+            solutionChanged_(uCurrentIter);
 
             computeResidualReduction_(uCurrentIter);
 

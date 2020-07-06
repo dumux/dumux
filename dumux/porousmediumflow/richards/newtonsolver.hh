@@ -108,16 +108,11 @@ private:
             }
         }
 
+        // update the grid variables
+        this->solutionChanged_(uCurrentIter);
+
         if (this->enableResidualCriterion())
             this->computeResidualReduction_(uCurrentIter);
-
-        else
-        {
-            // If we get here, the convergence criterion does not require
-            // additional residual evalutions. Thus, the grid variables have
-            // not yet been updated to the new uCurrentIter.
-            this->assembler().updateGridVariables(uCurrentIter);
-        }
     }
 };
 
