@@ -1,5 +1,7 @@
 dune_symlink_to_source_files(FILES "params.input" "params_navierstokes.input" "params_convection.input" "params_conduction.input")
 
+add_executable(test_ff_channel_new EXCLUDE_FROM_ALL main_new.cc)
+
 add_executable(test_ff_channel EXCLUDE_FROM_ALL main.cc)
 
 dumux_add_test(NAME test_ff_stokes_channel_outflow
