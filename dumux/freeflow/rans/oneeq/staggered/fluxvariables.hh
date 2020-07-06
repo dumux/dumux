@@ -117,20 +117,20 @@ public:
         insideCoeff *= insideVolVars.extrusionFactor();
         outsideCoeff *= outsideVolVars.extrusionFactor();
 
-        // average and distance
-        Scalar coeff = arithmeticMean(insideCoeff, outsideCoeff,
-                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
-                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm());
-        Scalar distance = 0.0;
 
-        // adapt boundary handling
+        Scalar coeff = 0.0;
+        Scalar distance = 0.0;
         if (scvf.boundary())
         {
-            distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
             coeff = insideCoeff;
+            distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
         }
         else
         {
+            // average and distance
+            coeff = arithmeticMean(insideCoeff, outsideCoeff,
+                                  (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
+                                  (insideScv.dofPosition() - scvf.ipGlobal()).two_norm());
             distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
         }
 

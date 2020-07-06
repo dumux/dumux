@@ -130,24 +130,24 @@ public:
         insideCoeff_e *= insideVolVars.extrusionFactor();
         outsideCoeff_e *= outsideVolVars.extrusionFactor();
 
-        // average and distance
-        Scalar coeff_k = arithmeticMean(insideCoeff_k, outsideCoeff_k,
-                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
-                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm());
-        Scalar coeff_e = arithmeticMean(insideCoeff_e, outsideCoeff_e,
-                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
-                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm());
+        Scalar coeff_k = 0.0;
+        Scalar coeff_e = 0.0;
         Scalar distance = 0.0;
-
-        // adapt boundary handling
         if (scvf.boundary())
         {
-            distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
             coeff_k = insideCoeff_k;
             coeff_e = insideCoeff_e;
+            distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
         }
         else
         {
+            // average and distance
+            coeff_k = arithmeticMean(insideCoeff_k, outsideCoeff_k,
+                                    (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
+                                    (insideScv.dofPosition() - scvf.ipGlobal()).two_norm());
+            coeff_e = arithmeticMean(insideCoeff_e, outsideCoeff_e,
+                                    (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
+                                    (insideScv.dofPosition() - scvf.ipGlobal()).two_norm());
             distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
         }
 
