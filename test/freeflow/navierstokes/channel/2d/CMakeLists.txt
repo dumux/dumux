@@ -1,5 +1,7 @@
 add_input_file_links()
 
+add_executable(test_ff_channel_new EXCLUDE_FROM_ALL main_new.cc)
+
 add_executable(test_ff_channel EXCLUDE_FROM_ALL main.cc)
 
 dumux_add_test(NAME test_ff_stokes_channel_outflow
@@ -13,6 +15,17 @@ dumux_add_test(NAME test_ff_stokes_channel_outflow
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition Outflow
                              -Problem.Name test_ff_stokes_channel_outflow")
 
+dumux_add_test(NAME test_ff_stokes_channel_outflow_new
+              TARGET test_ff_channel_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_outflow_new-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel_new params.input -Problem.OutletCondition Outflow
+                             -Problem.Name test_ff_stokes_channel_outflow_new")
+
 dumux_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
               TARGET test_ff_channel
               LABELS freeflow navierstokes
@@ -23,6 +36,17 @@ dumux_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxdy-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition NeumannX_DirichletY
                              -Problem.Name test_ff_stokes_channel_nxdy")
+
+dumux_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y_new
+              TARGET test_ff_channel_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxdy_new-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel_new params.input -Problem.OutletCondition NeumannX_DirichletY
+                             -Problem.Name test_ff_stokes_channel_nxdy_new")
 
 dumux_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
               TARGET test_ff_channel
@@ -36,6 +60,18 @@ dumux_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
                          -Problem.Name test_ff_stokes_channel_nxny -Problem.OutletCondition NeumannX_NeumannY
                          -Problem.UseVelocityProfile true -Problem.OutletPressure 0 -Problem.IsStationary 1")
 
+dumux_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y_new
+              TARGET test_ff_channel_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_neumann-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxny_new-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel_new params.input -Grid.UpperRight \"2 1\" -Grid.Cells \"50 25\"
+                         -Problem.Name test_ff_stokes_channel_nxny_new -Problem.OutletCondition NeumannX_NeumannY
+                         -Problem.UseVelocityProfile true -Problem.OutletPressure 0 -Problem.IsStationary 1")
+
 dumux_add_test(NAME test_ff_stokes_channel_do_nothing
               TARGET test_ff_channel
               LABELS freeflow navierstokes
@@ -46,6 +82,17 @@ dumux_add_test(NAME test_ff_stokes_channel_do_nothing
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_do_nothing-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition DoNothing -Grid.UpperRight \"2 1\" -Grid.Cells \"50 25\"
                          -Problem.Name test_ff_stokes_channel_do_nothing -Problem.OutletCondition DoNothing -Problem.UseVelocityProfile true -Problem.OutletPressure 0")
+
+dumux_add_test(NAME test_ff_stokes_channel_do_nothing_new
+              TARGET test_ff_channel_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_do_nothing-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_do_nothing_new-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel_new params.input -Problem.OutletCondition DoNothing -Grid.UpperRight \"2 1\" -Grid.Cells \"50 25\"
+                         -Problem.Name test_ff_stokes_channel_do_nothing_new -Problem.OutletCondition DoNothing -Problem.UseVelocityProfile true -Problem.OutletPressure 0")
 
 dumux_add_test(NAME test_ff_navierstokes_channel
               TARGET test_ff_channel
@@ -58,6 +105,18 @@ dumux_add_test(NAME test_ff_navierstokes_channel
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params_navierstokes.input
                              -Vtk.WriteFaceData 1
                              -Problem.Name test_ff_navierstokes_channel")
+
+dumux_add_test(NAME test_ff_navierstokes_channel_new
+              TARGET test_ff_channel_new
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_channel-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_channel_new-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel_new params_navierstokes.input
+                             -Vtk.WriteFaceData 1
+                             -Problem.Name test_ff_navierstokes_channel_new")
 
 add_executable(test_ff_stokesni_channel EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_stokesni_channel PUBLIC "NONISOTHERMAL=1")
@@ -84,3 +143,29 @@ dumux_add_test(NAME test_ff_stokesni_channel_conduction
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel params_conduction.input
                              -Problem.Name test_ff_stokesni_channel_conduction"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-20})
+
+ add_executable(test_ff_stokesni_channel_new EXCLUDE_FROM_ALL main_new.cc)
+ target_compile_definitions(test_ff_stokesni_channel_new PUBLIC "NONISOTHERMAL=1")
+
+dumux_add_test(NAME test_ff_stokesni_channel_convection_new
+               TARGET test_ff_stokesni_channel_new
+               LABELS freeflow navierstokes
+               CMAKE_GUARD HAVE_UMFPACK
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS       --script fuzzy
+                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokesni_channel_convection-reference.vtu
+                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_convection_new-00005.vtu
+                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_new params_convection.input
+                              -Problem.Name test_ff_stokesni_channel_convection_new")
+
+dumux_add_test(NAME test_ff_stokesni_channel_conduction_new
+               TARGET test_ff_stokesni_channel_new
+               LABELS freeflow navierstokes
+               CMAKE_GUARD HAVE_UMFPACK
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS       --script fuzzy
+                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokesni_channel_conduction-reference.vtu
+                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_conduction_new-00004.vtu
+                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_new params_conduction.input
+                              -Problem.Name test_ff_stokesni_channel_conduction_new"
+                              --zeroThreshold {"velocity_liq \(m/s\)":1e-20})
