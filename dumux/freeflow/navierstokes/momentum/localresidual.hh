@@ -84,10 +84,11 @@ public:
      */
     NumEqVector computeStorage(const Problem& problem,
                                const SubControlVolume& scv,
-                               const VolumeVariables& volVars) const
+                               const VolumeVariables& volVars,
+                               const bool isPreviousStorage = false) const
     {
         const auto& element = problem.gridGeometry().element(scv.elementIndex());
-        return problem.density(element, scv) * volVars.velocity();
+        return problem.density(element, scv, isPreviousStorage) * volVars.velocity();
     }
 
         /*!
