@@ -34,14 +34,8 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief Helper class for calculating the velocity gradients for the Navier-Stokes model using the staggered grid discretization.
  */
-template<class Scalar, class GridGeometry>
 class StaggeredVelocityGradients
 {
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 
@@ -50,26 +44,26 @@ public:
      *
      * \verbatim
      *              ---------=======                 == and # staggered half-control-volume
-     *              |       #      | current scvf
+     *              |       #      | current scv
      *              |       #      |                 # staggered face over which fluxes are calculated
      *   vel.Opp <~~|       O~~>   x~~~~> vel.Self
      *              |       #      |                 x dof position
-     *        scvf  |       #      |
+     *              |       #      |
      *              --------========                 -- element
      *
-     *                                               O position at which gradient is evaluated
+     *                                               O position at which gradient is evaluated (integration point)
      * \endverbatim
      */
     template<class FVElementGeometry, class ElemVolVars>
-    static Scalar velocityGradII(const FVElementGeometry fvGeometry,
-                                 const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                 const ElemVolVars& elemVolVars)
+    static auto velocityGradII(const FVElementGeometry fvGeometry,
+                               const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                               const ElemVolVars& elemVolVars)
     {
         assert(scvf.isFrontal());
         // The velocities of the dof at interest and the one of the opposite scvf.
-        const Scalar velocitySelf = elemVolVars[scvf.insideScvIdx()].velocity();
-        const Scalar velocityOpposite = elemVolVars[scvf.outsideScvIdx()].velocity();
-        const Scalar distance = (fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() - fvGeometry.scv(scvf.insideScvIdx()).dofPosition()).two_norm();
+        const auto velocitySelf = elemVolVars[scvf.insideScvIdx()].velocity();
+        const auto velocityOpposite = elemVolVars[scvf.outsideScvIdx()].velocity();
+        const auto distance = (fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() - fvGeometry.scv(scvf.insideScvIdx()).dofPosition()).two_norm();
 
         return (velocityOpposite - velocitySelf) / distance * scvf.directionSign();
     }
@@ -79,39 +73,36 @@ public:
      *
      * \verbatim
      *              ----------------
-     *              |              |vel.
-     *              |              |Parallel
-     *              |              |~~~~>       ------->
-     *              |              |             ------>     * gradient
-     *              |              |              ----->
-     *       scvf   ---------######O:::::::::      ---->     || and # staggered half-control-volume (own element)
-     *              |      ||      | curr. ::       --->
-     *              |      ||      | scvf  ::        -->     :: staggered half-control-volume (neighbor element)
-     *              |      ||      x~~~~>  ::         ->
-     *              |      ||      | vel.  ::                # lateral staggered faces over which fluxes are calculated
-     *        scvf  |      ||      | Self  ::
-     *              ---------#######:::::::::                x dof position
-     *                 scvf
-     *                                                       -- elements
+     *              |              |outer                    || and # staggered half-control-volume (own element)
+     *              |              |vel.        gradient
+     *              |              |~~~~>       ------->     :: staggered half-control-volume (neighbor element)
+     *              |              |             ------>
+     *              | lateral scvf |              ----->     x dof position
+     *              ---------######O:::::::::      ---->
+     *              |      ||      |       ::       --->     -- elements
+     *              |      ||      |       ::        -->
+     *              |      || scv  x~~~~>  ::         ->     O position at which gradient is evaluated (integration point)
+     *              |      ||      | inner ::
+     *              |      ||      | vel.  ::
+     *              ---------#######:::::::::
      *
-     *                                                       O position at which gradient is evaluated
+     *
      * \endverbatim
      */
     template<class FVElementGeometry, class ElemVolVars>
-    static Scalar velocityGradIJ(const FVElementGeometry fvGeometry,
-                                 const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                 const ElemVolVars& elemVolVars)
+    static auto velocityGradIJ(const FVElementGeometry fvGeometry,
+                               const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                               const ElemVolVars& elemVolVars)
     {
         assert(scvf.isLateral());
-        const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
 
-        const Scalar innerParallelVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
-        const Scalar outerParallelVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+        const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
+        const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
 
-        const Scalar distance = orthogonalScvf.boundary() ? (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition() - orthogonalScvf.ipGlobal()).two_norm()
-                                                          : (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition() - fvGeometry.scv(orthogonalScvf.outsideScvIdx()).dofPosition()).two_norm();
+        const auto distance = scvf.boundary() ? (fvGeometry.scv(scvf.insideScvIdx()).dofPosition() - scvf.ipGlobal()).two_norm()
+                                              : (fvGeometry.scv(scvf.insideScvIdx()).dofPosition() - fvGeometry.scv(scvf.outsideScvIdx()).dofPosition()).two_norm();
 
-        return (outerParallelVelocity - innerParallelVelocity) / distance * orthogonalScvf.directionSign();
+        return (outerVelocity - innerVelocity) / distance * scvf.directionSign();
     }
 
     /*!
@@ -123,174 +114,42 @@ public:
      *                      |  |  ^
      *                      |  |  |  ^
      *                      |  |  |  |  ^
-     *                      |  |  |  |  |  ^
+     *                      |  |  |  |  |  ^       || and # staggered half-control-volume (own element)
      *                      |  |  |  |  |  |
-     *
+     *                                             :: staggered half-control-volume (neighbor element)
      *              ----------------
-     *              |              |
-     *              |    in.norm.  |
-     *              |       vel.   |
-     *              |       ^      |        ^ out.norm.vel.
-     *              |       |      |        |
-     *       scvf   ---------######O:::::::::       || and # staggered half-control-volume (own element)
-     *              |      ||      | curr. ::
-     *              |      ||      | scvf  ::       :: staggered half-control-volume (neighbor element)
-     *              |      ||      x~~~~>  ::
-     *              |      ||      | vel.  ::       # lateral staggered faces over which fluxes are calculated
-     *        scvf  |      ||      | Self  ::
-     *              ---------#######:::::::::       x dof position
-     *                 scvf
-     *                                              -- elements
+     *              |     inner    |      outer    x dof position (of own scv)
+     *              |      vel.    |       vel.
+     *              |       ^      |        ^      -- elements
+     *              |       | lat. |        |
+     *              |       | scvf |        |      O position at which gradient is evaluated (integration point)
+     *              ---------######O:::::::::
+     *              |      ||      |       ::
+     *              |      ||      |       ::
+     *              |      || scv  x       ::
+     *              |      ||      |       ::
+     *              |      ||      |       ::
+     *              ---------#######:::::::::
      *
-     *                                              O position at which gradient is evaluated
+     *
      * \endverbatim
      */
     template<class FVElementGeometry, class ElemVolVars>
-    static Scalar velocityGradJI(const FVElementGeometry fvGeometry,
-                                 const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                 const ElemVolVars& elemVolVars)
+    static auto velocityGradJI(const FVElementGeometry fvGeometry,
+                               const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                               const ElemVolVars& elemVolVars)
     {
         assert(scvf.isLateral());
+        const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
 
+        const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+        const auto outerVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
 
-        const Scalar innerLateralVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-        const Scalar outerLateralVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
+        const auto distance = orthogonalScvf.boundary() ? (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition() - orthogonalScvf.ipGlobal()).two_norm()
+                                                        : (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition() - fvGeometry.scv(orthogonalScvf.outsideScvIdx()).dofPosition()).two_norm();
 
-        const Scalar distance = scvf.boundary() ? (fvGeometry.scv(scvf.insideScvIdx()).dofPosition() - scvf.ipGlobal()).two_norm()
-                                                : (fvGeometry.scv(scvf.insideScvIdx()).dofPosition() - fvGeometry.scv(scvf.outsideScvIdx()).dofPosition()).two_norm();
-
-
-        return (outerLateralVelocity - innerLateralVelocity) / distance * scvf.directionSign();
+        return (outerVelocity - innerVelocity) / distance * orthogonalScvf.directionSign();
     }
-
-    // /*!
-    //  * \brief Returns the Beavers-Jospeh slip velocity for a scvf which lies on the boundary itself.
-    //  *
-    //  * \verbatim
-    //  *                  in.norm.  B-J slip
-    //  *                     vel.   vel.
-    //  *                     ^       ^
-    //  *                     |       |
-    //  *       scvf   ---------######|*               * boundary
-    //  *              |      ||      |* curr.
-    //  *              |      ||      |* scvf          || and # staggered half-control-volume (own element)
-    //  *              |      ||      x~~~~>
-    //  *              |      ||      |* vel.          # lateral staggered faces
-    //  *        scvf  |      ||      |* Self
-    //  *              ---------#######*                x dof position
-    //  *                 scvf
-    //  *                                              -- element
-    //  * \endverbatim
-    //  *
-    //  */
-    // template<class Problem, class StaggeredFVElementGeometry, class FaceVariables>
-    // static Scalar beaversJosephVelocityAtCurrentScvf(const Problem& problem,
-    //                                                  const Element& element,
-    //                                                  const StaggeredFVElementGeometry staggeredFVGeometry,
-    //                                                  const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
-    //                                                  const FaceVariables& faceVars,
-    //                                                  const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-    //                                                  const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
-    // {
-    //     assert(staggeredScvf.isLateral());
-    //     const auto& staggeredScv = staggeredFVGeometry.scv(staggeredScvf.insideScvIdx());
-
-    //     const auto tangentialVelocityGradient = [&]()
-    //     {
-    //         // If the current scvf is on a boundary and if a Dirichlet BC for the pressure or a BJ condition for
-    //         // the slip velocity is set there, assume a tangential velocity gradient of zero along the lateral face
-    //         // (towards the current scvf).
-    //         static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),
-    //                                                        "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
-
-    //         if (unsymmetrizedGradientForBJ)
-    //             return 0.0;
-    //         else if (staggeredScvf.boundary() && lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScv.directionIndex())))
-    //             return 0.0;
-    //         else
-    //             return velocityGradIJ(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
-    //     }();
-
-    //     for (const auto& scvfOnBoundary : scvfs(staggeredFVGeometry))
-    //     {
-    //         if (scvfOnBoundary.isFrontal() && scvfOnBoundary.boundary())
-    //         {
-    //             GlobalPosition orientation(0.0);
-    //             orientation[staggeredScvf.directionIndex()] = 1.0;
-    //             const Scalar innerLateralVelocity = faceVars.velocityLateralInside(staggeredFVGeometry.localLateralFaceIndex(staggeredScvf));
-    //             const Scalar distanceNormalToBoundary = staggeredFVGeometry.tangentialDistanceForGradient(staggeredScvf);
-
-    //             return problem.beaversJosephVelocity(element,
-    //                                                  scvfOnBoundary,
-    //                                                  orientation,
-    //                                                  innerLateralVelocity,
-    //                                                  distanceNormalToBoundary,
-    //                                                  tangentialVelocityGradient);
-    //         }
-    //     }
-
-    //     DUNE_THROW(Dune::InvalidStateException, "No boundary scvf found"); // TODO make convenience function in fvGeometry
-
-    // }
-
-    // /*!
-    //  * \brief Returns the Beavers-Jospeh slip velocity for a lateral scvf which lies on the boundary.
-    //  *
-    //  * \verbatim
-    //  *                             B-J slip                  * boundary
-    //  *              ************** vel. *****
-    //  *       scvf   ---------##### ~~~~> ::::                || and # staggered half-control-volume (own element)
-    //  *              |      ||      | curr. ::
-    //  *              |      ||      | scvf  ::                :: staggered half-control-volume (neighbor element)
-    //  *              |      ||      x~~~~>  ::
-    //  *              |      ||      | vel.  ::                # lateral staggered faces
-    //  *        scvf  |      ||      | Self  ::
-    //  *              ---------#######:::::::::                x dof position
-    //  *                 scvf
-    //  *                                                       -- elements
-    //  * \endverbatim
-    //  */
-    // template<class Problem, class StaggeredFVElementGeometry, class FaceVariables>
-    // static Scalar beaversJosephVelocityAtLateralScvf(const Problem& problem,
-    //                                                  const Element& element,
-    //                                                  const StaggeredFVElementGeometry staggeredFVGeometry,
-    //                                                  const typename StaggeredFVElementGeometry::StaggeredSubControlVolumeFace& staggeredScvf,
-    //                                                  const FaceVariables& faceVars,
-    //                                                  const std::optional<BoundaryTypes>& currentScvfBoundaryTypes,
-    //                                                  const std::optional<BoundaryTypes>& lateralFaceBoundaryTypes)
-    // {
-    //     assert(staggeredScvf.isLateral());
-    //     const auto& staggeredScv = staggeredFVGeometry.scv(staggeredScvf.insideScvIdx());
-
-    //     const auto tangentialVelocityGradient = [&]()
-    //     {
-    //         // If the current scvf is on a boundary and if a Dirichlet BC for the pressure or a BJ condition for
-    //         // the slip velocity is set there, assume a tangential velocity gradient of zero along the lateral face
-    //         // (towards the current scvf).
-    //         static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),
-    //                                                        "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
-
-    //         if (unsymmetrizedGradientForBJ)
-    //             return 0.0;
-    //         else if (staggeredScv.boundary() && currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScvf.directionIndex())))
-    //             return 0.0;
-    //         else
-    //             return velocityGradJI(problem, element, staggeredFVGeometry, staggeredScvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes);
-    //     }();
-
-    //     GlobalPosition orientation(0.0);
-    //     orientation[staggeredScv.directionIndex()] = 1.0;
-    //     const Scalar innerParallelVelocity = faceVars.velocitySelf();
-    //     const Scalar distanceNormalToBoundary = staggeredFVGeometry.normalDistanceForGradient(staggeredScvf);
-
-    //     return problem.beaversJosephVelocity(element,
-    //                                          staggeredScvf,
-    //                                          orientation,
-    //                                          innerParallelVelocity,
-    //                                          distanceNormalToBoundary,
-    //                                          tangentialVelocityGradient);
-    // }
-
 };
 
 } // end namespace Dumux
