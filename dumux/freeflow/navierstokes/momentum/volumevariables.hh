@@ -64,7 +64,6 @@ public:
     {
         priVars_ = elemSol[scv.indexInElement()];
         extrusionFactor_ = 1;// TODO problem.extrusionFactor(element, scv, elemSol);
-        density_ = problem.density(element, scv);
     }
 
     /*!
@@ -81,9 +80,6 @@ public:
 
     Scalar velocity() const
     { return priVars_[0]; }
-
-    Scalar density() const
-    { return density_; }
 
     /*!
      * \brief Return a component of primary variable vector
@@ -102,8 +98,6 @@ public:
 protected:
     PrimaryVariables priVars_;
     Scalar extrusionFactor_;
-    Scalar pressure_;
-    Scalar density_;
 };
 
 } // end namespace Dumux
