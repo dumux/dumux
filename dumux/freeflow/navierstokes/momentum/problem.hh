@@ -188,7 +188,8 @@ public:
      */
     Scalar density(const Element& element,
                    const FVElementGeometry& fvGeometry,
-                   const SubControlVolumeFace& scvf) const
+                   const SubControlVolumeFace& scvf,
+                   const bool considerPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().densityAtPos(scvf.ipGlobal());
@@ -201,12 +202,13 @@ public:
      * \note  Overload this if a fixed density shall be prescribed.
      */
     Scalar density(const Element& element,
-                   const SubControlVolume& scv) const
+                   const SubControlVolume& scv,
+                   const bool considerPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().densityAtPos(scv.dofPosition());
         else
-            return couplingManager_->density(element, scv);
+            return couplingManager_->density(element, scv, considerPreviousTimeStep);
     }
 
     /*!
