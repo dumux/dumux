@@ -932,6 +932,31 @@ public:
 
 /*!
  * \ingroup Linear
+ * \brief A Uzawa preconditioned BiCGSTAB solver for saddle-point problems
+ */
+template <class LinearSolverTraits>
+class SimpleBiCGSTABBackend : public LinearSolver
+{
+public:
+    using LinearSolver::LinearSolver;
+
+    template<class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    {
+        using Preconditioner = SeqSimple<Matrix, Vector, Vector>;
+        using Solver = Dune::BiCGSTABSolver<Vector>;
+        static const auto solverParams = LinearSolverParameters<LinearSolverTraits>::createParameterTree(this->paramGroup());
+        return IterativePreconditionedSolverImpl::template solveWithParamTree<Preconditioner, Solver>(A, x, b, solverParams);
+    }
+
+    std::string name() const
+    {
+        return "Uzawa preconditioned BiCGSTAB solver";
+    }
+};
+
+/*!
+ * \ingroup Linear
  * \brief A simple ilu0 block diagonal preconditioner
  */
 template<class M, class X, class Y, int blockLevel = 2>
