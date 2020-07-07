@@ -79,6 +79,7 @@ private:
     {
         FVElementGeometry<freeFlowMassIdx> fvGeometry;
         ElementVolumeVariables<freeFlowMassIdx> curElemVolVars;
+        ElementVolumeVariables<freeFlowMassIdx> prevElemVolVars;
         std::size_t eIdx;
     };
 
@@ -107,6 +108,17 @@ public:
         this->updateSolution(curSol);
 
         computeCouplingStencils_();
+    }
+
+    void init(std::shared_ptr<Problem<freeFlowMomentumIdx>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIdx>> massProblem,
+              GridVariablesTuple&& gridVariables,
+              const SolutionVector& curSol,
+              const SolutionVector& prevSol)
+    {
+        init(momentumProblem, massProblem, gridVariables, curSol);
+        prevSol_ = &prevSol;
+        isTransient_ = true;
     }
 
     // \}
@@ -138,22 +150,28 @@ public:
      */
     Scalar density(const Element<freeFlowMomentumIdx>& element,
                    const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
-                   const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+                   const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+                   const bool considerPreviousTimeStep = false) const
     {
+        assert(!(considerPreviousTimeStep && !isTransient_));
         bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element);
         const auto& scv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
-        return momentumCouplingContext_[0].curElemVolVars[scv].density();
+        return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[scv].density()
+                                        : momentumCouplingContext_[0].curElemVolVars[scv].density();
     }
 
     /*!
      * \brief Returns the density at a given sub control volume.
      */
     Scalar density(const Element<freeFlowMomentumIdx>& element,
-                   const SubControlVolume<freeFlowMomentumIdx>& scv) const
+                   const SubControlVolume<freeFlowMomentumIdx>& scv,
+                   const bool considerPreviousTimeStep = false) const
     {
+        assert(!(considerPreviousTimeStep && !isTransient_));
         bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element);
         const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
-        return momentumCouplingContext_[0].curElemVolVars[massScv].density();
+        return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].density()
+                                        : momentumCouplingContext_[0].curElemVolVars[massScv].density();
     }
 
     /*!
@@ -278,14 +296,21 @@ public:
         const auto eIdx = this->problem(freeFlowMomentumIdx).gridGeometry().elementMapper().index(elementI);
         if (momentumCouplingContext_.empty() || momentumCouplingContext_[0].eIdx != eIdx)
         {
+
             auto fvGeometry = localView(this->problem(freeFlowMassIdx).gridGeometry());
             fvGeometry.bindElement(elementI);
 
-            auto elemVolVars = localView(gridVars_(freeFlowMassIdx).curGridVolVars());
-            elemVolVars.bindElement(elementI, fvGeometry, this->curSol());
+            auto curElemVolVars = localView(gridVars_(freeFlowMassIdx).curGridVolVars());
+            curElemVolVars.bindElement(elementI, fvGeometry, this->curSol());
+
+            auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIdx).prevGridVolVars())
+                                                : localView(gridVars_(freeFlowMassIdx).curGridVolVars());
+
+            if (isTransient_)
+                prevElemVolVars.bindElement(elementI, fvGeometry, *prevSol_);
 
             momentumCouplingContext_.clear();
-            momentumCouplingContext_.emplace_back(MomentumCouplingContext{std::move(fvGeometry), elemVolVars, eIdx});
+            momentumCouplingContext_.emplace_back(MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars), eIdx});
         }
     }
 
@@ -471,6 +496,9 @@ public:
     * \brief A tuple of std::shared_ptrs to the grid variables of the sub problems
     */
     GridVariablesTuple gridVariables_;
+
+    const SolutionVector* prevSol_;
+    bool isTransient_;
 
 
 };
