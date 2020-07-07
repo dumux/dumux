@@ -53,13 +53,13 @@ namespace Dumux {
  * \tparam isImplicit if to use an implicit or explicit time discretization
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
-class StaggeredFVAssembler: public MultiDomainFVAssembler<StaggeredMultiDomainTraits<TypeTag, TypeTag>,
-                                                          StaggeredCouplingManager<StaggeredMultiDomainTraits<TypeTag, TypeTag>>,
-                                                          diffMethod>
+class StaggeredFVAssembler : public MultiDomainFVAssembler<StaggeredMultiDomainTraits<TypeTag, TypeTag>,
+                                                           StaggeredCouplingManager<StaggeredMultiDomainTraits<TypeTag, TypeTag>>,
+                                                           diffMethod, isImplicit>
 {
     using ParentType = MultiDomainFVAssembler<StaggeredMultiDomainTraits<TypeTag, TypeTag>,
                                               StaggeredCouplingManager<StaggeredMultiDomainTraits<TypeTag, TypeTag>>,
-                                              diffMethod>;
+                                              diffMethod, isImplicit>;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
