@@ -82,45 +82,11 @@ public:
                          const ElementFluxVariablesCache& elemFluxVarsCache,
                          const SubControlVolumeFace& scvf) const
     {
-        NumEqVector flux(0.0);
+        if (elemBcTypes.hasNeumann())
+            return this->asImp().computeFluxWithNeumannBoundaries(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
 
-        // inner faces
-        if (!scvf.boundary())
-        {
-            flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        }
 
-        // boundary faces
-        else
-        {
-            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-
-            if (scv.boundary())
-            {}
-            else if (scvf.isLateral())
-            {
-                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-            }
-        //     const auto& bcTypes = elemBcTypes[scv.localDofIndex()];
-
-        //     // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
-        //     // For Dirichlet there is no addition to the residual here but they
-        //     // are enforced strongly by replacing the residual entry afterwards.
-        //     if (bcTypes.hasNeumann())
-        //     {
-        //         auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-
-        //         // multiply neumann fluxes with the area and the extrusion factor
-        //         neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
-
-        //         // only add fluxes to equations for which Neumann is set
-        //         for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-        //             if (bcTypes.isNeumann(eqIdx))
-        //                 flux[eqIdx] += neumannFluxes[eqIdx];
-        //     }
-        }
-
-        return flux;
+        return this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
     }
 };
 

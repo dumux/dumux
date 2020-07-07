@@ -86,12 +86,12 @@ public:
                                const SubControlVolume& scv,
                                const VolumeVariables& volVars) const
     {
-        // partial time derivative of the phase mass
-        return volVars.density() * volVars.velocity();
+        const auto& element = problem.gridGeometry().element(scv.elementIndex());
+        return problem.density(element, scv) * volVars.velocity();
     }
 
         /*!
-     * \brief Evaluatex the mass flux over a face of a sub control volume.
+     * \brief Evaluates the mass flux over a face of a sub control volume.
      *
      * \param problem The problem
      * \param element The element
@@ -114,6 +114,119 @@ public:
         flux += fluxVars.diffusiveMomentumFlux();
         flux += fluxVars.pressureContribution();
         return flux;
+    }
+
+    //! Evaluate flux residuals for one sub control volume face when the element features at least one Neumann boundary condition
+    //! This requires special care.
+    NumEqVector computeFluxWithNeumannBoundaries(const Problem& problem,
+                                                 const Element& element,
+                                                 const FVElementGeometry& fvGeometry,
+                                                 const ElementVolumeVariables& elemVolVars,
+                                                 const ElementBoundaryTypes& elemBcTypes,
+                                                 const ElementFluxVariablesCache& elemFluxVarsCache,
+                                                 const SubControlVolumeFace& scvf) const
+    {
+        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered); // TODO overload this method for different discretizations
+        assert(elemBcTypes.hasNeumann());
+
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+
+        if (scv.boundary())
+        {
+            // This is the most simple case for a frontal scvf lying directly on the boundary.
+            // Just evaluate the Neumann flux for the normal velocity component.
+            //
+            //     ---------------- *                || frontal face of staggered half-control-volume
+            //     |      ||      # *
+            //     |      ||      # *                D  dof position (coincides with integration point where
+            //     |      || scv  D *                   the Neumann flux is evaluated, here for x component)
+            //     |      ||      # *
+            //     |      ||      # *                -- element boundaries
+            //     ---------------- *
+            //  y                                     * domain boundary
+            //  ^
+            //  |                                     # current scvf over which Neumann flux is evaluated
+            //  ----> x
+            //
+            if (scvf.boundary() && scvf.isFrontal())
+            {
+                const auto& bcTypes = elemBcTypes[scvf.localIndex()];
+                if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.directionIndex()))
+                {
+                    const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                    return neumannFluxes[scvf.directionIndex()] * scvf.area() * elemVolVars[scv].extrusionFactor();
+                }
+            }
+            else if (scvf.isLateral())
+            {
+                // If a sub control volume lies on a boundary, Neumann fluxes also need to be considered for its lateral faces,
+                // even though those do not necessarily lie on a boundary (only their edges / integration points are touching the boundary).
+                // We cannot simply calculate momentum fluxes across the lateral boundary in this situation because we might not
+                // have enough information at the boundary to do so.
+                // We first need to find the scv's frontal face on the boundary to check if there actually is a Neumann BC.
+                // Afterwards, we use the actual (lateral) scvf to retrieve the Neumann flux at its integration point intersecting with the boundary.
+                //
+                //
+                //     ---------######O *                || frontal face of staggered half-control-volume
+                //     |      ||      : *
+                //     |      ||      : *                D  dof position
+                //     |      || scv  D *
+                //     |      ||      : *               -- element boundaries
+                //     |      ||      : *
+                //     ---------------- *                * domain boundary
+                //
+                //  y                                    # current scvf over which Neumann flux is evaluated
+                //  ^
+                //  |                                    : frontal scvf on boundary
+                //  ----> x
+                //                                       O integration point at which Neumann flux is evaluated (here for y component)
+                //
+                for (const auto& otherScvf : scvfs(fvGeometry))
+                {
+                    if (otherScvf.isFrontal() && otherScvf.boundary())
+                    {
+                        const auto& bcTypes = elemBcTypes[otherScvf.localIndex()];
+                        if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.directionIndex()))
+                        {
+                            const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                            return neumannFluxes[scvf.directionIndex()] * scvf.area() * elemVolVars[scv].extrusionFactor();
+                        }
+                    }
+                }
+            }
+        }
+        else if (scvf.boundary())
+        {
+            // Here, the lateral face does lie on a boundary. Retrive the Neumann flux component for
+            // the corresponding scvs' DOF orientation.
+            //
+            //
+            //     *****************
+            //     ---------######O                 || frontal face of staggered half-control-volume
+            //     |      ||      :
+            //     |      ||      :                 D  dof position
+            //     |      || scv  D
+            //     |      ||      :                -- element boundaries
+            //     |      ||      :
+            //     ----------------                 * domain boundary
+            //
+            //  y                                    # current scvf over which Neumann flux is evaluated
+            //  ^
+            //  |                                    : frontal scvf on boundary
+            //  ----> x
+            //                                       O integration point at which Neumann flux is evaluated (here for x component)
+            //
+            assert(scvf.isLateral());
+            const auto& bcTypes = elemBcTypes[scvf.localIndex()];
+            if (bcTypes.hasNeumann() && bcTypes.isNeumann(scv.directionIndex()))
+            {
+                const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                return neumannFluxes[scv.directionIndex()] * scvf.area() * elemVolVars[scv].extrusionFactor();
+            }
+        }
+
+        // Default: Neither the scvf itself nor a lateral one considers a Neumann flux. We just calculate the flux as normal.
+        return this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
     }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
