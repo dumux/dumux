@@ -73,7 +73,7 @@ class NavierStokesMomentumFluxVariables
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
-    using VelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry>;
+    using VelocityGradients = StaggeredVelocityGradients;
 
     static constexpr bool normalizePressure = getPropValue<TypeTag, Properties::NormalizePressure>();
 
@@ -89,15 +89,10 @@ public:
      */
     NumEqVector diffusiveMomentumFlux() const
     {
-        NumEqVector result(0.0);
-        const auto& scvf = this->scvFace();
-
-        if (scvf.isFrontal())
-            result += frontalDiffusiveMomentumFlux();
+        if (this->scvFace().isFrontal())
+            return frontalDiffusiveMomentumFlux();
         else
-            result += lateralDiffusiveMomentumFlux();
-
-        return result;
+            return lateralDiffusiveMomentumFlux();
     }
 
         /*!
@@ -186,14 +181,14 @@ public:
             //     currentScvfBoundaryTypes->isDirichlet(Indices::velocity(staggeredScvf.directionIndex())) ||
             //     currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScvf.directionIndex())))
             // {
-                const Scalar velocityGrad_ji = VelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
+                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
                 // Account for the orientation of the staggered normal face's outer normal vector.
                 result -= mu * velocityGrad_ji * scvf.directionSign();
             // }
         }
 
         // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
-        const Scalar velocityGrad_ij = VelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
+        const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
         result -= mu * velocityGrad_ij * scvf.directionSign();
 
         // Account for the area of the staggered lateral face.
