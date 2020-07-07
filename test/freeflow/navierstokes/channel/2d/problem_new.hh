@@ -249,50 +249,22 @@ public:
                 values.setDirichlet(Indices::velocityXIdx);
                 values.setDirichlet(Indices::velocityYIdx);
 
-                // if (isOutlet_(globalPos))
-                //     values.setAllNeumann();
+
+
+                if (isOutlet_(globalPos))
+                    values.setAllNeumann();
             }
             else
-                values.setDirichlet(0);
-                // values.setNeumann(0);
+            {
+
+                values.setNeumann(0);
+            }
+                // values.setDirichlet(0);
 
         // }
 
         return values;
     }
-
-        //! Enable internal Dirichlet constraints
-    static constexpr bool enableInternalDirichletConstraints()
-    { return !Impl::isMomentumProblem<TypeTag>(); }
-
-    /*!
-     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
-     *        If true is returned for a dof, the equation for this dof is replaced
-     *        by the constraint that its primary variable values must match the
-     *        user-defined values obtained from the function internalDirichlet(),
-     *        which must be defined in the problem.
-     *
-     * \param element The finite element
-     * \param scv The sub-control volume
-     */
-    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
-    {
-        std::bitset<PrimaryVariables::dimension> values;
-
-        if (scv.dofIndex() == 0)
-            values.set(0);
-        // the pure Neumann problem is only defined up to a constant
-        // we create a well-posed problem by fixing the pressure at one dof
-        return values;
-    }
-
-    /*!
-     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
-     * \param element The finite element
-     * \param scv The sub-control volume
-     */
-    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(0); }
 
 
    /*!
@@ -344,13 +316,29 @@ public:
         NumEqVector values(0.0);
 
         if constexpr (Impl::isMomentumProblem<TypeTag>())
-        {}
+        {
+            values[0] = 8e4 - outletPressure_;
+            // values[1] = -dudy(scvf.ipGlobal()[1], inletVelocity_) * this->effectiveViscosity(element, fvGeometry, scvf);
+
+            if (scvf.isLateral() && !fvGeometry.scv(scvf.insideScvIdx()).boundary())
+            {
+                const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
+                values[1] -= mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
+            }
+
+            if (scvf.isLateral() && fvGeometry.scv(scvf.insideScvIdx()).boundary())
+            {
+                const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
+                values[1] -= mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)* scvf.directionSign();
+            }
         else
         {
             if (isInlet_(scvf.ipGlobal()) || isOutlet_(scvf.ipGlobal()))
             {
                 const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-                return elemFluxVarsCache[scvf].normalVelocity() * insideDensity * directionIndex(scvf.unitOuterNormal());
+                const auto dirIdx = directionIndex(scvf.unitOuterNormal());
+                const auto sign = Dumux::sign(scvf.unitOuterNormal()[dirIdx]);
+                values = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * sign;
             }
         }
 

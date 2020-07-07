@@ -134,8 +134,6 @@ int main(int argc, char** argv) try
     massProblem->applyInitialSolution(x[massIdx]);
     auto xOld = x;
 
-    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
-
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
@@ -144,10 +142,12 @@ int main(int argc, char** argv) try
     // the grid variables
     using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
     auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
-    momentumGridVariables->init(x[momentumIdx]);
 
     using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
     auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
+
+    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    momentumGridVariables->init(x[momentumIdx]);
     massGridVariables->init(x[massIdx]);
 
     // intialize the vtk output module
