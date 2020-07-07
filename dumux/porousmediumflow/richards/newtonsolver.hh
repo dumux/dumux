@@ -25,7 +25,7 @@
 #ifndef DUMUX_RICHARDS_NEWTON_SOLVER_HH
 #define DUMUX_RICHARDS_NEWTON_SOLVER_HH
 
-#include <dumux/common/properties.hh>
+#include <algorithm>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/elementsolution.hh>
 
@@ -37,8 +37,6 @@ namespace Dumux {
  * This solver 'knows' what a 'physically meaningful' solution is
  * and can thus do update smarter than the plain Newton solver.
  *
- * \todo make this typetag independent by extracting anything model specific from assembler
- *       or from possible ModelTraits.
  */
 template <class Assembler, class LinearSolver>
 class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
@@ -96,14 +94,13 @@ private:
                     const Scalar pcOld = pn - pw;
                     const Scalar SwOld = max(0.0, MaterialLaw::sw(materialLawParams, pcOld));
 
-                    // convert into minimum and maximum wetting phase
-                    // pressures
+                    // convert into minimum and maximum wetting phase pressures
                     const Scalar pwMin = pn - MaterialLaw::pc(materialLawParams, SwOld - 0.2);
                     const Scalar pwMax = pn - MaterialLaw::pc(materialLawParams, SwOld + 0.2);
 
                     // clamp the result
-                    using std::min; using std::max;
-                    uCurrentIter[dofIdxGlobal][pressureIdx] = max(pwMin, min(uCurrentIter[dofIdxGlobal][pressureIdx], pwMax));
+                    using std::clamp;
+                    uCurrentIter[dofIdxGlobal][pressureIdx] = clamp(uCurrentIter[dofIdxGlobal][pressureIdx], pwMin, pwMax);
                 }
             }
         }
