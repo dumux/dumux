@@ -317,20 +317,31 @@ public:
 
         if constexpr (Impl::isMomentumProblem<TypeTag>())
         {
-            values[0] = 8e4 - outletPressure_;
-            // values[1] = -dudy(scvf.ipGlobal()[1], inletVelocity_) * this->effectiveViscosity(element, fvGeometry, scvf);
+            values[0] = 8e4 - outletPressure_; // TODO use helper?
 
-            if (scvf.isLateral() && !fvGeometry.scv(scvf.insideScvIdx()).boundary())
+            if (outletCondition_ == OutletCondition::doNothing)
+                values[1] = 0;
+            else if (outletCondition_ == OutletCondition::outflow) // TODO put in outflow helper
             {
-                const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
-                values[1] -= mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
-            }
+                if (scvf.isLateral() && !fvGeometry.scv(scvf.insideScvIdx()).boundary())
+                {
+                    const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
+                    values[1] = -mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
+                }
 
-            if (scvf.isLateral() && fvGeometry.scv(scvf.insideScvIdx()).boundary())
-            {
-                const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
-                values[1] -= mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)* scvf.directionSign();
+                if (scvf.isLateral() && fvGeometry.scv(scvf.insideScvIdx()).boundary())
+                {
+                    const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
+                    values[1] = -mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
+                }
             }
+            else
+            {
+                assert(outletCondition_ == OutletCondition::neumannXneumannY);
+                values[1] = -dudy(scvf.ipGlobal()[1], inletVelocity_) * this->effectiveViscosity(element, fvGeometry, scvf) * scvf.directionSign();
+            }
+        }
+
         else
         {
             if (isInlet_(scvf.ipGlobal()) || isOutlet_(scvf.ipGlobal()))
@@ -341,17 +352,6 @@ public:
                 values = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * sign;
             }
         }
-
-
-
-        // values[scvf.directionIndex()] = initialAtPos(scvf.center())[Indices::pressureIdx];
-
-        // // make sure to normalize the pressure if the property is set true
-        // if (getPropValue<TypeTag, Properties::NormalizePressure>())
-        //     values[scvf.directionIndex()] -= initialAtPos(scvf.center())[Indices::pressureIdx];
-
-        // if (outletCondition_ != OutletCondition::doNothing)
-        //     values[1] = -dudy(scvf.center()[1], inletVelocity_) * elemVolVars[scvf.insideScvIdx()].viscosity();
 
         return values;
     }
