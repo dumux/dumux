@@ -146,7 +146,7 @@ int main(int argc, char** argv) try
     using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
     auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
 
-    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
     momentumGridVariables->init(x[momentumIdx]);
     massGridVariables->init(x[massIdx]);
 
@@ -161,8 +161,8 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
                                                  std::make_tuple(momentumGridGeometry, massGridGeometry),
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
-                                                 couplingManager);//,
-                                                //  timeLoop, xOld);
+                                                 couplingManager,
+                                                 timeLoop, xOld);
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -171,8 +171,8 @@ int main(int argc, char** argv) try
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    nonLinearSolver.solve(x);
-    vtkWriter.write(1);
+    // nonLinearSolver.solve(x);
+    // vtkWriter.write(1);
 
     // // set up two surfaces over which fluxes are calculated
     // FluxOverSurface<GridVariables,
@@ -212,50 +212,50 @@ int main(int argc, char** argv) try
     // const auto p1outlet = GlobalPosition{xMax, yMax};
     // flux.addSurface("outlet", p0outlet, p1outlet);
 
-    // // time loop
-    // timeLoop->start(); do
-    // {
-    //     // solve the non-linear system with time step control
-    //     nonLinearSolver.solve(x, *timeLoop);
+    // time loop
+    timeLoop->start(); do
+    {
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
-    //     // make the new solution the old solution
-    //     xOld = x;
-    //     momentumGridVariables->advanceTimeStep();
-    //     massGridVariables->advanceTimeStep();
+        // make the new solution the old solution
+        xOld = x;
+        momentumGridVariables->advanceTimeStep();
+        massGridVariables->advanceTimeStep();
 
-    //     // advance to the time loop to the next step
-    //     timeLoop->advanceTimeStep();
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
 
-    //     // write vtk output
-    //     vtkWriter.write(timeLoop->time());
+        // write vtk output
+        vtkWriter.write(timeLoop->time());
 
-    //     // // calculate and print mass fluxes over the planes
-    //     // flux.calculateMassOrMoleFluxes();
-    //     // if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
-    //     // {
-    //     //     std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
-    //     //     std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-    //     // }
-    //     // else
-    //     // {
-    //     //     std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
-    //     //     std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-    //     // }
+        // // calculate and print mass fluxes over the planes
+        // flux.calculateMassOrMoleFluxes();
+        // if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
+        // {
+        //     std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
+        //     std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        // }
+        // else
+        // {
+        //     std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
+        //     std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        // }
 
-    //     // // calculate and print volume fluxes over the planes
-    //     // flux.calculateVolumeFluxes();
-    //     // std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
-    //     // std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
+        // // calculate and print volume fluxes over the planes
+        // flux.calculateVolumeFluxes();
+        // std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
+        // std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
-    //     // report statistics of this time step
-    //     timeLoop->reportTimeStep();
+        // report statistics of this time step
+        timeLoop->reportTimeStep();
 
-    //     // set new dt as suggested by newton solver
-    //     timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        // set new dt as suggested by newton solver
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
-    // } while (!timeLoop->finished());
+    } while (!timeLoop->finished());
 
-    // timeLoop->finalize(leafGridView.comm());
+    timeLoop->finalize(leafGridView.comm());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
