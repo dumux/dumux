@@ -45,7 +45,10 @@ for curFile in args['files']:
     counter += 1
 
     # load vtk file
-    vtkFile = XMLUnstructuredGridReader(FileName=curFile)
+    if os.path.splitext(curFile)[1] == ".vtp":
+        vtkFile = XMLPolyDataReader(FileName=curFile)
+    else:
+        vtkFile = XMLUnstructuredGridReader(FileName=curFile)
     SetActiveSource(vtkFile)
 
     # apply and configure PlotOverLine filter
