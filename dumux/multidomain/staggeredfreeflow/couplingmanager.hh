@@ -116,7 +116,7 @@ public:
               const SolutionVector& curSol,
               const SolutionVector& prevSol)
     {
-        init(momentumProblem, massProblem, gridVariables, curSol);
+        init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
         prevSol_ = &prevSol;
         isTransient_ = true;
     }
