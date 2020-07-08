@@ -23,25 +23,28 @@ except ImportError:
     print("`paraview.simple` not found. Make sure using pvpython instead of python.")
 
 # import locations
-commonOutDirectory = False
 outDirectory = args['outputDirectory']
-if not outDirectory == '':
-    outDirectory += '/'
-    commonOutDirectory = True
-    if not os.path.exists(outDirectory):
-        os.makedirs(outDirectory)
+if not outDirectory == '' and not os.path.exists(outDirectory):
+    os.makedirs(outDirectory)
 
 # loop over all vtk files
 counter = 1
 for curFile in args['files']:
+
+    # if no output directory was specified, use the directory of the given file
+    curOutDirectory = outDirectory
+    if curOutDirectory == '':
+        curOutDirectory = os.path.dirname( os.path.abspath(curFile) )
+
+    # if no basename was specified, reuse the file name for the .csv file
+    if args['outFile'] == '':
+        csvFileName = os.path.join(curOutDirectory, os.path.splitext(os.path.basename(curFile))[0] + ".csv")
+    else:
+        csvFileName = os.path.join(curOutDirectory, args['outFile'] + ".csv")
+
     # print progress to command line
-    fileWithoutPath = os.path.basename(curFile)
-    if not commonOutDirectory:
-        abspath = os.path.abspath(curFile)
-        outDirectory = os.path.dirname(abspath) + '/'
-    basename = os.path.splitext(fileWithoutPath)[0]
     if args['verbosity'] == 1:
-        print("Processing file ({}/{}): {}".format(counter, len(args['files']), fileWithoutPath))
+        print("Processing file ({}/{}): {}".format(counter, len(args['files']), os.path.basename(curFile)))
     counter += 1
 
     # load vtk file
@@ -58,16 +61,13 @@ for curFile in args['files']:
     plotOverLine.Source.Point2 = args['point2']
 
     # write output to csv writer
-    if not args['outFile'] == '':
-        basename = args['outFile']
-    csvFile = outDirectory + basename + '.csv'
-    writer = CreateWriter(csvFile, plotOverLine)
+    writer = CreateWriter(csvFileName, plotOverLine)
     writer.UpdatePipeline()
 
     # print the parameters and the column numbers
     if args['verbosity'] == 2:
-        with open(csvFile) as f:
-            print(csvFile)
+        with open(csvFileName) as f:
+            print(csvFileName)
             reader = csv.reader(f)
             paramList = list(reader)
             paramCounter=1
