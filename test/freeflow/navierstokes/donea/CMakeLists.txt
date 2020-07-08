@@ -1,9 +1,6 @@
 dumux_add_test(NAME test_donea_new_momentum
                SOURCES main_new_momentum.cc)
 
-dumux_add_test(NAME test_donea_new_coupled
-               SOURCES main_new_coupled.cc)
-
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
               LABELS freeflow navierstokes
               SOURCES main.cc
@@ -26,6 +23,18 @@ dumux_add_test(NAME test_ff_stokes_donea
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
+                             -Problem.Name test_ff_stokes_donea")
+
+dumux_add_test(NAME test_donea_new_coupled
+              LABELS freeflow navierstokes
+              SOURCES main_new_coupled.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS ENABLECACHING=1
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_donea_new_coupled params.input
                              -Problem.Name test_ff_stokes_donea")
 
 dune_symlink_to_source_files(FILES "params.input")

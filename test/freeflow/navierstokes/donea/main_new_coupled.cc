@@ -159,6 +159,10 @@ int main(int argc, char** argv) try
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NewStaggeredFreeFlowVelocityOutput<MassGridVariables>>());
+    const auto exactPressure = massProblem->getAnalyticalPressureSolution();
+    const auto exactVelocity = momentumProblem->getAnalyticalVelocitySolution();
+    vtkWriter.addField(exactPressure, "pressureExact");
+    vtkWriter.addField(exactVelocity, "velocityExact");
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -168,8 +172,7 @@ int main(int argc, char** argv) try
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-
-    // // linearize & solve
+    // linearize & solve
     nonLinearSolver.solve(x);
 
     vtkWriter.write(1.0);
@@ -209,14 +212,14 @@ int main(int argc, char** argv) try
     vtk.addCellData(faceData, "velcocityScalar");
     vtk.write("facedata", Dune::VTK::ascii);
 
-    // problem->printL2Error(x);
+    // massProblem->printL2Error(x);
 
-    // timer.stop();
+    timer.stop();
 
-    // const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-    // std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-    //           << comm.size() << " processes.\n"
-    //           << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+              << comm.size() << " processes.\n"
+              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

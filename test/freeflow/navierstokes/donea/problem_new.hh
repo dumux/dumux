@@ -154,14 +154,12 @@ public:
     , couplingManager_(couplingManager)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-        // createAnalyticalSolution_();
     }
 
     DoneaTestProblemNew(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-        // createAnalyticalSolution_();
     }
 
    /*!
@@ -169,23 +167,23 @@ public:
      */
     // \{
 
-    void printL2Error(const SolutionVector& curSol) const
-    {
-        if(printL2Error_)
-        {
-            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto l2error = L2Error::calculateL2Error(*this, curSol);
-            const int numCellCenterDofs = this->gridGeometry().gridView().size(0);
-            const int numFaceDofs = this->gridGeometry().numDofs();
-            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                    << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                    << std::endl;
-        }
-    }
+    // void printL2Error(const SolutionVector& curSol) const
+    // {
+    //     if(printL2Error_)
+    //     {
+    //         using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
+    //         const auto l2error = L2Error::calculateL2Error(*this, curSol);
+    //         const int numCellCenterDofs = this->gridGeometry().gridView().size(0);
+    //         const int numFaceDofs = this->gridGeometry().numDofs();
+    //         std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
+    //                 << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
+    //                 << std::scientific
+    //                 << "L2(p) = " << l2error.first[/*Indices::pressureIdx*/0] << " / " << l2error.second[/*Indices::pressureIdx*/0]
+    //                 << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
+    //                 << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
+    //                 << std::endl;
+    //     }
+    // }
 
    /*!
      * \brief Return the temperature within the domain in [K].
@@ -250,25 +248,6 @@ public:
         }
 
         return values;
-    }
-
-    /*!
-     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scv The sub control volume
-     * \param pvIdx The primary variable index in the solution vector
-     */
-    bool isDirichletCell(const Element& element,
-                         const typename GridGeometry::LocalView& fvGeometry,
-                         const typename GridGeometry::SubControlVolume& scv,
-                         int pvIdx) const
-    {
-        bool onBoundary = false;
-        for (const auto& scvf : scvfs(fvGeometry))
-            onBoundary = std::max(onBoundary, scvf.boundary());
-        return onBoundary;
     }
 
    /*!
@@ -344,25 +323,42 @@ public:
    /*!
      * \brief Returns the analytical solution for the pressure
      */
-    auto& getAnalyticalPressureSolution() const
+    template<bool enable = !Impl::isMomentumProblem<TypeTag>(), std::enable_if_t<enable, int> = 0>
+    const std::vector<Scalar> getAnalyticalPressureSolution() const
     {
-        return analyticalPressure_;
+        std::vector<Scalar> analyticalPressure(this->gridGeometry().gridView().size(0));
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto ccDofIdx = scv.dofIndex();
+                const auto ccDofPosition = scv.dofPosition();
+                const auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
+                analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[/*Indices::pressureIdx*/2];
+            }
+        }
+
+        return analyticalPressure;
     }
 
    /*!
      * \brief Returns the analytical solution for the velocity
      */
-    auto& getAnalyticalVelocitySolution() const
+    template<bool enable = Impl::isMomentumProblem<TypeTag>(), std::enable_if_t<enable, int> = 0>
+    const std::vector<VelocityVector> getAnalyticalVelocitySolution() const
     {
-        return analyticalVelocity_;
-    }
+        std::vector<VelocityVector> analyticalVelocity(this->gridGeometry().gridView().size(0));
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            const auto& pos = element.geometry().center();
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
+            for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
+                analyticalVelocity[eIdx][dirIdx] = analyticalSolution(pos)[Indices::velocity(dirIdx)];
+        }
 
-   /*!
-     * \brief Returns the analytical solution for the velocity at the faces
-     */
-    auto& getAnalyticalVelocitySolutionOnFace() const
-    {
-        return analyticalVelocityOnFace_;
+        return analyticalVelocity;
     }
 
     //! Enable internal Dirichlet constraints
@@ -383,8 +379,20 @@ public:
     {
         std::bitset<PrimaryVariables::dimension> values;
 
-        if (scv.dofIndex() == 0)
+        auto fvGeometry = localView(this->gridGeometry());
+        fvGeometry.bindElement(element);
+
+        bool onBoundary = false;
+        for (const auto& scvf : scvfs(fvGeometry))
+            onBoundary = std::max(onBoundary, scvf.boundary());
+
+        if (onBoundary)
             values.set(0);
+
+        // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
+
+        // if (scv.dofIndex() == 0)
+        //     values.set(0);
         // the pure Neumann problem is only defined up to a constant
         // we create a well-posed problem by fixing the pressure at one dof
         return values;
@@ -401,47 +409,7 @@ public:
 
 private:
 
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    void createAnalyticalSolution_()
-    {
-        analyticalPressure_.resize(this->gridGeometry().gridView().size(0));
-        analyticalVelocity_.resize(this->gridGeometry().gridView().size(0));
-        analyticalVelocityOnFace_.resize(this->gridGeometry().numDofs());
-
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto ccDofIdx = scv.dofIndex();
-                auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
-
-                // velocities on faces
-                for (auto&& scv : scvs(fvGeometry))
-                {
-                    const auto faceDofIdx = scv.dofIndex();
-                    const auto faceDofPosition = scv.dofPosition();
-                    const auto dirIdx = scv.directionIndex();
-                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
-                }
-
-                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
-
-                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
-                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-            }
-        }
-     }
-
     bool printL2Error_;
-    std::vector<Scalar> analyticalPressure_;
-    std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 } // end namespace Dumux
