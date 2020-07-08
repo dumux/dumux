@@ -112,6 +112,7 @@ public:
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         NumEqVector flux(0.0);
+        flux += fluxVars.advectiveMomentumFlux();
         flux += fluxVars.diffusiveMomentumFlux();
         flux += fluxVars.pressureContribution();
         return flux;
