@@ -28,7 +28,7 @@ if not outDirectory == '' and not os.path.exists(outDirectory):
     os.makedirs(outDirectory)
 
 # loop over all vtk files
-counter = 1
+counter = 0
 for curFile in args['files']:
 
     # if no output directory was specified, use the directory of the given file
@@ -39,13 +39,15 @@ for curFile in args['files']:
     # if no basename was specified, reuse the file name for the .csv file
     if args['outFile'] == '':
         csvFileName = os.path.join(curOutDirectory, os.path.splitext(os.path.basename(curFile))[0] + ".csv")
+    elif len(args['files']) > 1:
+        csvFileName = os.path.join(curOutDirectory, args['outFile'] + "_" + str(counter) + ".csv")
     else:
         csvFileName = os.path.join(curOutDirectory, args['outFile'] + ".csv")
+    counter += 1
 
     # print progress to command line
     if args['verbosity'] == 1:
         print("Processing file ({}/{}): {}".format(counter, len(args['files']), os.path.basename(curFile)))
-    counter += 1
 
     # load vtk file
     if os.path.splitext(curFile)[1] == ".vtp":
