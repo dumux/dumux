@@ -64,10 +64,10 @@ for curFile in args['files']:
     # print the parameters and the column numbers
     if args['verbosity'] == 2:
         with open(csvFile) as f:
-            print csvFile
+            print(csvFile)
             reader = csv.reader(f)
             paramList = list(reader)
             paramCounter=1
             for param in paramList[0]:
-                print "%-2i   %s" % (paramCounter, param)
+                print("%-2i   %s" % (paramCounter, param))
                 paramCounter += 1
