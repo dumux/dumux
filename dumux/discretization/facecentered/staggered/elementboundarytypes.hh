@@ -24,7 +24,6 @@
 #ifndef DUMUX_FACECENTERED_STAGGERED_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_FACECENTERED_STAGGERED_ELEMENT_BOUNDARY_TYPES_HH
 
-#include <cassert>
 #include <vector>
 
 namespace Dumux {
