@@ -87,6 +87,20 @@ public:
     /*!
      * \brief Returns the diffusive momentum flux due to viscous forces
      */
+    NumEqVector advectiveMomentumFlux() const
+    {
+        if (!this->problem().enableInertiaTerms())
+            return NumEqVector(0.0);
+
+        if (this->scvFace().isFrontal())
+            return frontalAdvectiveMomentumFlux();
+        else
+            return lateralAdvectiveMomentumFlux();
+    }
+
+    /*!
+     * \brief Returns the diffusive momentum flux due to viscous forces
+     */
     NumEqVector diffusiveMomentumFlux() const
     {
         if (this->scvFace().isFrontal())
@@ -222,12 +236,81 @@ public:
         const auto pressure = this->problem().pressure(this->element(), this->fvGeometry(), this->scvFace());
 
         // Account for the orientation of the staggered face's normal outer normal vector
-        // (pointing in opposite direction of the scvf's one).
         result += pressure * scvf.directionSign();
 
         // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf
         // our velocity dof of interest lives on.
         return result * scvf.area() * this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
+    }
+
+    NumEqVector frontalAdvectiveMomentumFlux() const
+    {
+        NumEqVector flux(0.0);
+        const auto& scvf = this->scvFace();
+        assert(scvf.isFrontal());
+
+        const auto& problem = this->problem();
+        const auto& elemVolVars = this->elemVolVars();
+        const auto velocitySelf = elemVolVars[scvf.insideScvIdx()].velocity();
+        const auto velocityOpposite = elemVolVars[scvf.outsideScvIdx()].velocity();
+
+        // Get the average velocity at the center of the element (i.e. the location of the staggered face).
+        const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
+        const Scalar density = this->problem().density(this->element(), this->fvGeometry(), scvf);
+        const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
+
+        // TODO use higher order helper
+        static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+        const Scalar transportedMomentum = selfIsUpstream ? (upwindWeight * velocitySelf + (1.0 - upwindWeight) * velocityOpposite) * density
+                                                          : (upwindWeight * velocityOpposite + (1.0 - upwindWeight) * velocitySelf) * density;
+
+        return  transportingVelocity * transportedMomentum * scvf.directionSign() * scvf.area();
+    }
+
+    NumEqVector lateralAdvectiveMomentumFlux() const
+    {
+        NumEqVector flux(0.0);
+        const auto& scvf = this->scvFace();
+        assert(scvf.isLateral());
+
+        const auto& problem = this->problem();
+        const auto& elemVolVars = this->elemVolVars();
+        const auto fvGeometry = this->fvGeometry();
+
+        // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
+        // of interest is located.
+        const Scalar transportingVelocity = [&]()
+        {
+            const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+            const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+            const auto outerVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+
+            if (orthogonalScvf.boundary())
+                return 0.5 * (innerVelocity + outerVelocity);
+            else
+            {
+                // average the transporting volume by weighting with the scv volumes
+                const auto insideVolume = fvGeometry.scv(orthogonalScvf.insideScvIdx()).volume();
+                const auto outsideVolume = fvGeometry.scv(orthogonalScvf.outsideScvIdx()).volume();
+                return (insideVolume*innerVelocity + outsideVolume*outerVelocity) / (insideVolume + outsideVolume);
+            }
+        }();
+
+        const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
+
+        const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
+        const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
+
+        const auto insideMomentum = innerVelocity * this->problem().density(this->element(),  fvGeometry.scv(scvf.insideScvIdx()));
+        const auto outsideMomentum = outerVelocity * this->problem().density(this->element(), fvGeometry.scv(scvf.insideScvIdx())); // TODO this is still the wrong density
+
+        // TODO use higher order helper
+        static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+
+        const Scalar transportedMomentum = selfIsUpstream ? (upwindWeight * insideMomentum + (1.0 - upwindWeight) * outsideMomentum)
+                                                          : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
+
+        return  transportingVelocity * transportedMomentum * scvf.directionSign() * scvf.area();
     }
 
 
