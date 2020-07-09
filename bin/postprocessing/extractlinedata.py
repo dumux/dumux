@@ -19,8 +19,8 @@ args = vars(parser.parse_args())
 
 try:
     from paraview.simple import *
-except ImportError:
-    print("`paraview.simple` not found. Make sure using pvpython instead of python.")
+except:
+    raise ImportError("`paraview.simple` not found. Make sure using pvpython instead of python.")
 
 # import locations
 outDirectory = args['outputDirectory']
