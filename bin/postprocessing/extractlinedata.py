@@ -19,33 +19,41 @@ args = vars(parser.parse_args())
 
 try:
     from paraview.simple import *
-except ImportError:
-    print("`paraview.simple` not found. Make sure using pvpython instead of python.")
+except:
+    raise ImportError("`paraview.simple` not found. Make sure using pvpython instead of python.")
 
 # import locations
-commonOutDirectory = False
 outDirectory = args['outputDirectory']
-if not outDirectory == '':
-    outDirectory += '/'
-    commonOutDirectory = True
-    if not os.path.exists(outDirectory):
-        os.makedirs(outDirectory)
+if outDirectory.strip():
+    os.makedirs(outDirectory, exist_ok=True)
 
 # loop over all vtk files
-counter = 1
+counter = 0
 for curFile in args['files']:
-    # print progress to command line
-    fileWithoutPath = os.path.basename(curFile)
-    if not commonOutDirectory:
-        abspath = os.path.abspath(curFile)
-        outDirectory = os.path.dirname(abspath) + '/'
-    basename = os.path.splitext(fileWithoutPath)[0]
-    if args['verbosity'] == 1:
-        print("Processing file ({}/{}): {}".format(counter, len(args['files']), fileWithoutPath))
+
+    # if no output directory was specified, use the directory of the given file
+    curOutDirectory = outDirectory
+    if curOutDirectory == '':
+        curOutDirectory = os.path.dirname( os.path.abspath(curFile) )
+
+    # if no basename was specified, reuse the file name for the .csv file
+    if args['outFile'] == '':
+        csvFileName = os.path.join(curOutDirectory, os.path.splitext(os.path.basename(curFile))[0] + ".csv")
+    elif len(args['files']) > 1:
+        csvFileName = os.path.join(curOutDirectory, args['outFile'] + "_" + str(counter) + ".csv")
+    else:
+        csvFileName = os.path.join(curOutDirectory, args['outFile'] + ".csv")
     counter += 1
 
+    # print progress to command line
+    if args['verbosity'] == 1:
+        print("Processing file ({}/{}): {}".format(counter, len(args['files']), os.path.basename(curFile)))
+
     # load vtk file
-    vtkFile = XMLUnstructuredGridReader(FileName=curFile)
+    if os.path.splitext(curFile)[1] == ".vtp":
+        vtkFile = XMLPolyDataReader(FileName=curFile)
+    else:
+        vtkFile = XMLUnstructuredGridReader(FileName=curFile)
     SetActiveSource(vtkFile)
 
     # apply and configure PlotOverLine filter
@@ -55,19 +63,13 @@ for curFile in args['files']:
     plotOverLine.Source.Point2 = args['point2']
 
     # write output to csv writer
-    if not args['outFile'] == '':
-        basename = args['outFile']
-    csvFile = outDirectory + basename + '.csv'
-    writer = CreateWriter(csvFile, plotOverLine)
+    writer = CreateWriter(csvFileName, plotOverLine)
     writer.UpdatePipeline()
 
     # print the parameters and the column numbers
     if args['verbosity'] == 2:
-        with open(csvFile) as f:
-            print csvFile
-            reader = csv.reader(f)
-            paramList = list(reader)
-            paramCounter=1
-            for param in paramList[0]:
-                print "%-2i   %s" % (paramCounter, param)
-                paramCounter += 1
+        with open(csvFileName) as csvFile:
+            print(csvFileName)
+            paramList = list(csv.reader(csvFile))[0]
+            for i, param in enumerate(paramList):
+                print("{:>5}  {}".format(i+1, param))
