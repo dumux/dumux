@@ -112,7 +112,7 @@ public:
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccwmpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
-    static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
+    static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
 
     //! export the grid view type
     using GridView = GV;

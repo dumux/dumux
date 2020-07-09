@@ -82,7 +82,14 @@ public:
     void clear()
     {
         visited_ = 0;
-        entries_.clear();
+        entries_[0].clear();
+        entries_[1].clear();
+    }
+
+    void prepare()
+    {
+        if(visited_ == 2 || boundaryFace_)
+            clear();
     }
 
     template<class TF, class EG, class SCVF>
@@ -116,7 +123,7 @@ public:
             {
                 if(e.dofIndex() != scvf.insideScvIdx())
                 {
-                    auto c = coeff[scvf.localIndex()]*e.weight();
+                    auto c = coeff[i]*e.weight();
                     entries[0].coefficient += c;
                     //ToDo pos is not needed for each entry!!!
                     entries.push_back({c, e.dofIndex(), intData.position()});
@@ -125,6 +132,13 @@ public:
         }
         scvfIndices_[visited_] = scvf.index();
         scvIndices_[visited_] = scvf.insideScvIdx();
+
+        if(boundaryFace_)
+        {
+            ++visited_;
+            scvfIndices_[visited_] = scvf.index();
+            scvIndices_[visited_] = scvf.outsideScvIdx();
+        }
     }
 
     const auto& subFluxData(GridIndexType idx) const
@@ -143,7 +157,7 @@ private:
     std::array<GridIndexType, 2> scvfIndices_;
     std::array<GridIndexType, 2> scvIndices_;
     std::array<Entries, 2> entries_;
-    bool boundaryFace_;
+    bool boundaryFace_ = {false};
 };
 
 //! Data handle for quantities related to diffusion
