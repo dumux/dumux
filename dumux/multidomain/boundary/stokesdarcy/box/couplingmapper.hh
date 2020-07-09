@@ -197,7 +197,7 @@ public:
                         typename IntersectionAlgorithm::Intersection rawIs;
                         if(IntersectionAlgorithm::intersection(darcyScvfGeometry, stokesScvf.geometry(), rawIs))
                         {
-                            const auto is = typename CouplingSegment::Geometry(Dune::GeometryTypes::simplex(dim), rawIs);
+                            const auto is = typename CouplingSegment::Geometry(Dune::GeometryTypes::simplex(dim-1), rawIs);
                             isCoupledDarcyScvf_[darcyEIdx][darcyScvf.index()] = true;
                             darcyElementToStokesElementMap_[darcyEIdx].push_back({stokesEIdx, stokesScvf.index(), darcyScvf.index(), is});
                             stokesElementToDarcyElementMap_[stokesEIdx].push_back({darcyEIdx, darcyScvf.index(), stokesScvf.index(), is});
