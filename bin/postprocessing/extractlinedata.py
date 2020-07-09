@@ -24,8 +24,8 @@ except:
 
 # import locations
 outDirectory = args['outputDirectory']
-if not outDirectory == '' and not os.path.exists(outDirectory):
-    os.makedirs(outDirectory)
+if outDirectory.strip():
+    os.makedirs(outDirectory, exist_ok=True)
 
 # loop over all vtk files
 counter = 0
@@ -68,11 +68,8 @@ for curFile in args['files']:
 
     # print the parameters and the column numbers
     if args['verbosity'] == 2:
-        with open(csvFileName) as f:
+        with open(csvFileName) as csvFile:
             print(csvFileName)
-            reader = csv.reader(f)
-            paramList = list(reader)
-            paramCounter=1
-            for param in paramList[0]:
-                print("%-2i   %s" % (paramCounter, param))
-                paramCounter += 1
+            paramList = list(csv.reader(csvFile))[0]
+            for i, param in enumerate(paramList):
+                print("{:>5}  {}".format(i+1, param))
