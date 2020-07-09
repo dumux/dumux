@@ -112,6 +112,17 @@ namespace CCWMpfa {
                     volVars.emplace_back(std::move(dirichletVolVars));
                     volVarIndices.push_back(scvf.outsideScvIdx());
                 }
+                else
+                {
+                    VolumeVariables dirichletVolVars;
+                    dirichletVolVars.update(elementSolution<FVElemGeom>(problem.dirichlet(element, scvf)),
+                                            problem,
+                                            element,
+                                            scvI);
+
+                    volVars.emplace_back(std::move(dirichletVolVars));
+                    volVarIndices.push_back(scvf.outsideScvIdx());
+                }
             }
         }
         return std::make_pair(volVars, volVarIndices);
@@ -175,30 +186,30 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        if (!fvGeometry.hasBoundaryScvf())
-            return;
-
         clear_();
 
-        auto&& [volVars, indices] = CCWMpfa::boundaryVolVars<VolumeVariables, std::size_t>(gridVolVars().problem(), element, fvGeometry);
-        std::move(volVars.begin(), volVars.end(), std::back_inserter(boundaryVolumeVariables_));
-        std::move(indices.begin(), indices.end(), std::back_inserter(boundaryVolVarIndices_));
+        if (fvGeometry.hasBoundaryScvf())
+        {
+            auto&& [volVars, indices] = CCWMpfa::boundaryVolVars<VolumeVariables, std::size_t>(gridVolVars().problem(), element, fvGeometry);
+            std::move(volVars.begin(), volVars.end(), std::back_inserter(boundaryVolumeVariables_));
+            std::move(indices.begin(), indices.end(), std::back_inserter(boundaryVolVarIndices_));
+        }
+
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto globalI = gridGeometry.elementMapper().index(element);
+        const auto& assemblyMapI = gridGeometry.connectivityMap()[globalI];
 
         // add boundary volVars of neighbors
-        for (const auto& scvf : scvfs(fvGeometry))
+        for (const auto& dataJ : assemblyMapI)
         {
-            if (scvf.boundary())
-                continue;
-
-            const auto outsideScvIdx = scvf.outsideScvIdx();
-            const auto outsideElement = fvGeometry.gridGeometry().element(outsideScvIdx);
-            auto fvGeometryJ = localView(fvGeometry.gridGeometry());
-            fvGeometryJ.bind(outsideElement);
+            const auto& elementJ = gridGeometry.element(dataJ.globalJ);
+            auto fvGeometryJ = localView(gridGeometry);
+            fvGeometryJ.bind(elementJ);
 
             if (!fvGeometryJ.hasBoundaryScvf())
                 continue;
 
-            auto&& [volVars, indices]  = CCWMpfa::boundaryVolVars<VolumeVariables, std::size_t>(gridVolVars().problem(), outsideElement, fvGeometryJ);
+            auto&& [volVars, indices]  = CCWMpfa::boundaryVolVars<VolumeVariables, std::size_t>(gridVolVars().problem(), elementJ, fvGeometryJ);
             std::move(volVars.begin(), volVars.end(), std::back_inserter(boundaryVolumeVariables_));
             std::move(indices.begin(), indices.end(), std::back_inserter(boundaryVolVarIndices_));
         }
@@ -229,6 +240,10 @@ private:
     int getLocalIdx_(const int volVarIdx) const
     {
         auto it = std::find(boundaryVolVarIndices_.begin(), boundaryVolVarIndices_.end(), volVarIdx);
+        if(it == boundaryVolVarIndices_.end())
+        {
+            int shit = 1;
+        }
         assert(it != boundaryVolVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
         return std::distance(boundaryVolVarIndices_.begin(), it);
     }

@@ -732,10 +732,9 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     static constexpr bool heatConductionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
 
 public:
-    //! This cache filler is always solution-dependent, as it updates the
-    //! vectors of cell unknowns with which the transmissibilities have to be
-    //! multiplied in order to obtain the fluxes.
-    static constexpr bool isSolDependent = true;
+    static constexpr bool isSolDependent = (advectionEnabled && advectionIsSolDependent) ||
+                                           (diffusionEnabled && diffusionIsSolDependent) ||
+                                           (heatConductionEnabled && heatConductionIsSolDependent);
 
     //! The constructor. Sets problem pointer.
     PorousMediumFluxVariablesCacheFillerImplementation(const Problem& problem)
@@ -817,6 +816,7 @@ private:
     template< class Handle, class IntOP, class TensorFunction >
     void prepareHandle_(Handle& handle, const IntOP& intOp, const TensorFunction& tensor, const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
     {
+        handle.prepare();
         handle.decompose(intOp, tensor, fvGeometry, scvf);
     }
 
@@ -830,11 +830,11 @@ private:
                         const ElementVolumeVariables& elemVolVars,
                         const SubControlVolumeFace& scvf)
     {
-        // using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
-        // using AdvectionFiller = typename AdvectionType::Cache::Filler;
+        using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
+        using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
-        // // forward to the filler for the advective quantities
-        // AdvectionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
+        // forward to the filler for the advective quantities
+        AdvectionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
     }
 
     // //! method to fill the diffusive quantities

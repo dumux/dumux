@@ -147,12 +147,12 @@ public:
 
     //! Returns the indices of the elements required for flux calculation on an scvf.
     static Stencil stencil(const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf)
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvf)
     {
         const auto& gridGeometry = fvGeometry.gridGeometry();
 
-        //ToDo correct stencil! At the moment simply all neighors of neighbors are added
+        //ToDo correct stencil! At the moment simply all neighors of the neighbor are added
         Stencil stencil({scvf.insideScvIdx()});
         for (const auto& scvf : scvfs(fvGeometry))
         {
@@ -160,7 +160,10 @@ public:
                 continue;
 
             stencil.push_back(scvf.outsideScvIdx());
+        }
 
+        if (!scvf.boundary())
+        {
             const auto outsideScvIdx = scvf.outsideScvIdx();
             const auto outsideElement = gridGeometry.element(outsideScvIdx);
             auto fvGeometryJ = localView(gridGeometry);
