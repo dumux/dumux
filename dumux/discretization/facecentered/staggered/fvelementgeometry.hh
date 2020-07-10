@@ -103,6 +103,26 @@ public:
                                                  ScvfIterator(fvGeometry.scvfIndices_().end(), fvGeometry));
     }
 
+    //! iterator range for sub control volumes faces. Iterates over
+    //! all scvfs of the bound element belonging to the given sub control volume.
+    //! This is a free function found by means of ADL
+    //! To iterate over all sub control volume faces of this FVElementGeometry use
+    //! for (auto&& scvf : scvfs(fvGeometry, scv))
+    friend inline auto
+    scvfs(const FaceCenteredStaggeredFVElementGeometry& fvGeometry, const SubControlVolume& scv)
+    {
+        using IndexContainerType = std::decay_t<decltype(fvGeometry.scvfIndices_())>;
+        using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, IndexContainerType, ThisType>;
+        const auto localScvIdx = scv.indexInElement();
+        const auto eIdx = fvGeometry.eIdx_;
+        const auto begin = fvGeometry.scvfIndices_().begin() + fvGeometry.gridGeometry().firstLocalScvfIdxOfScv(eIdx, localScvIdx);
+        const auto end = localScvIdx < fvGeometry.numScv()-1 ? fvGeometry.scvfIndices_().begin()
+                                                               + fvGeometry.gridGeometry().firstLocalScvfIdxOfScv(eIdx, localScvIdx+1)
+                                                             : fvGeometry.scvfIndices_().end();
+        return Dune::IteratorRange<ScvfIterator>(ScvfIterator(begin, fvGeometry),
+                                                 ScvfIterator(end, fvGeometry));
+    }
+
     //! number of sub control volumes in this fv element geometry
     std::size_t numScv() const
     {

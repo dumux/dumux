@@ -195,6 +195,7 @@ public:
         scvIndicesOfElement_.resize(numElements);
         scvfIndicesOfElement_.resize(numElements);
         hasBoundaryScvf_.resize(numElements, false);
+        scvfOfScvInfo_.resize(numElements);
 
         outSideBoundaryVolVarIdx_ = 0;
         numBoundaryScv_ = 0;
@@ -277,6 +278,7 @@ public:
             const auto eIdx = this->elementMapper().index(element);
             const auto& globalScvIndices = scvIndicesOfElement_[eIdx];
             const auto& globalScvfIndices = scvfIndicesOfElement_[eIdx];
+            scvfOfScvInfo_[eIdx].reserve(globalScvfIndices.size());
 
             SmallLocalIndexType localScvIdx = 0; // also corresponds to local element face index (one scv per face)
             SmallLocalIndexType localScvfIdx = 0;
@@ -287,6 +289,9 @@ public:
                 const auto directionIdx = Dumux::directionIndex(intersection.centerUnitOuterNormal());
                 const auto intersectionGeometry = intersection.geometry();
                 const auto elementCenter = element.geometry().center();
+
+                // store the local index of the first scvf corresponding to the scv on the current intersection
+                scvfOfScvInfo_[eIdx].push_back(localScvfIdx);
 
                 // the sub control volume
                 const auto scvCenter = 0.5*(intersectionGeometry.center() + elementCenter);
@@ -437,6 +442,9 @@ public:
     const IntersectionMapper& intersectionMapper() const
     { return intersectionMapper_; }
 
+    SmallLocalIndexType firstLocalScvfIdxOfScv(const GridIndexType eIdx, const SmallLocalIndexType localScvIdx) const
+    { return scvfOfScvInfo_[eIdx][localScvIdx]; }
+
 private:
 
     // mappers
@@ -449,6 +457,7 @@ private:
     GridIndexType numBoundaryScvf_;
     GridIndexType outSideBoundaryVolVarIdx_;
     std::vector<bool> hasBoundaryScvf_;
+    std::vector<std::vector<SmallLocalIndexType>> scvfOfScvInfo_;
 
     std::vector<std::array<GridIndexType, numScvsPerElement>> scvIndicesOfElement_;
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
