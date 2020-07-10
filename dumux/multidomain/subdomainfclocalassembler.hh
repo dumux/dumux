@@ -407,7 +407,6 @@ public:
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-            const auto scvIdx = scv.index();
             auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
             const VolumeVariables origVolVars(curVolVars);
 
@@ -446,11 +445,8 @@ public:
                     if (!this->assembler().isStationaryProblem())
                         evalStorage(residual, scv);
 
-                    for (const auto& scvf : scvfs(fvGeometry)) // TODO allow iteration over scvfs of scv
-                    {
-                        if (scvf.insideScvIdx() == scvIdx)
-                            evalFlux(residual, scvf);
-                    }
+                    for (const auto& scvf : scvfs(fvGeometry, scv))
+                        evalFlux(residual, scvf);
 
                     return residual;
                 };
@@ -507,24 +503,21 @@ public:
                         ElementResidualVector residual(element.subEntities(2));
                         residual = 0;
 
-                        for (const auto& scvf : scvfs(fvGeometry))
+                        for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
-                            if (scvf.insideScvIdx() == scvIdx)
+                            if (scvf.outsideScvIdx() == scvJ.index())
                             {
-                                if (scvf.outsideScvIdx() == scvJ.index())
+                                evalFlux(residual, scvf);
+                                return residual;
+                            }
+
+                            if (scvf.isLateral())
+                            {
+                                const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
                                 {
                                     evalFlux(residual, scvf);
                                     return residual;
-                                }
-
-                                if (scvf.isLateral())
-                                {
-                                    const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
-                                    if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
-                                    {
-                                        evalFlux(residual, scvf);
-                                        return residual;
-                                    }
                                 }
                             }
                         }
@@ -538,24 +531,21 @@ public:
                         ElementResidualVector result(element.subEntities(2));
                         result = 0;
 
-                        for (const auto& scvf : scvfs(fvGeometry))
+                        for (const auto& scvf : scvfs(fvGeometry, scv))
                         {
-                            if (scvf.insideScvIdx() == scvIdx)
+                            if (scvf.outsideScvIdx() == scvJ.index())
                             {
-                                if (scvf.outsideScvIdx() == scvJ.index())
+                                evalFlux(result, scvf);
+                                return result;
+                            }
+
+                            if (scvf.isLateral())
+                            {
+                                const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
                                 {
                                     evalFlux(result, scvf);
                                     return result;
-                                }
-
-                                if (scvf.isLateral())
-                                {
-                                    const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
-                                    if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
-                                    {
-                                        evalFlux(result, scvf);
-                                        return result;
-                                    }
                                 }
                             }
                         }
