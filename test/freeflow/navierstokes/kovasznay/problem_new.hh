@@ -156,7 +156,7 @@ public:
     : ParentType(gridGeometry, couplingManager)
     , couplingManager_(couplingManager)
     {
-        printL2Error_ = getParam<bool>("Problem.PrintL2Error");
+        // printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         // std::cout<< "upwindSchemeOrder is: " << GridGeometry::upwindStencilOrder() << "\n";
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         Scalar reynoldsNumber = 1.0 / kinematicViscosity_;

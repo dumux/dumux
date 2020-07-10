@@ -166,7 +166,10 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // linearize & solve
+    Dune::Timer timer;
     nonLinearSolver.solve(x);
+    timer.stop();
+
 
     vtkWriter.write(1.0);
     // // the assembler with time loop for instationary problem
@@ -191,10 +194,10 @@ int main(int argc, char** argv) try
 
     // timer.stop();
 
-    // const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-    // std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-    //           << comm.size() << " processes.\n"
-    //           << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+              << comm.size() << " processes.\n"
+              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
 
     ////////////////////////////////////////////////////////////
