@@ -74,6 +74,9 @@ private:
 
     using GridVariablesTuple = typename Traits::template TupleOfSharedPtr<GridVariables>;
 
+    using FluidSystem = typename VolumeVariables<freeFlowMassIdx>::FluidSystem;
+    // static_assert(std::is_same_v<FluidSystem, typename VolumeVariables<freeFlowMomentumIdx>::FluidSystem>);
+
 
     struct MomentumCouplingContext
     {
@@ -480,9 +483,27 @@ public:
 
             massAndEnergyFvGeometry.bindElement(element);
             momentumToMassAndEnergyStencils_[eIdx].push_back(eIdx);
-            // for (const auto& scvf : scvfs(massAndEnergyFvGeometry))
-            //     if (!scvf.boundary())
-            //         momentumToMassAndEnergyStencils_[eIdx].push_back(scvf.outsideScvIdx());
+
+            [[maybe_unused]] auto addOutsideElementDependencies = [&]()
+            {
+                for (const auto& scvf : scvfs(massAndEnergyFvGeometry))
+                    if (!scvf.boundary())
+                        momentumToMassAndEnergyStencils_[eIdx].push_back(scvf.outsideScvIdx());
+            };
+
+            // we always need the neighbor mass dofs in the momentum stencil in case of variable viscosity
+            if constexpr (!FluidSystem::viscosityIsConstant(0/*phaseIdx*/))
+            {
+                addOutsideElementDependencies();
+                continue;
+            }
+
+            // if intertia is considered, we need the neighbor mass dofs in the momentum stencil in case of variable density
+            if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/))
+            {
+                if (this->problem(freeFlowMomentumIdx.enableInertiaTerms()))
+                    addOutsideElementDependencies();
+            }
         }
     }
 
