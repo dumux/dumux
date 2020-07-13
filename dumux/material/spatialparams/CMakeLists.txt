@@ -1,3 +1,5 @@
+add_subdirectory(porenetwork)
+
 install(FILES
 fv.hh
 fv1p.hh

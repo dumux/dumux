@@ -1,3 +1,5 @@
+add_subdirectory(porenetwork)
+
 install(FILES
 cakegridmanager.hh
 cpgridmanager.hh
