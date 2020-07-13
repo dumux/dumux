@@ -1,0 +1,12 @@
+[Grid]
+File = ./grids/pnm_converted.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+ElementParameters = ThroatRadius ThroatLength ThroatLabel
+
+[Problem]
+Name = test_pnm_1p # name passed to the output routines
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 1
