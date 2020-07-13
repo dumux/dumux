@@ -1,0 +1,10 @@
+install(FILES
+emptycache.hh
+porenetworklocalrules.hh
+porenetworklocalrulesparams.hh
+regularizedporenetworklocalrules.hh
+regularizedporenetworklocalrulesparams.hh
+thresholdcapillarypressures.hh
+transmissibility1p.hh
+transmissibility2p.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/porenetwork)
