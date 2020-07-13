@@ -1,0 +1,21 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+File = ./../grids/pnm_converted.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[Problem]
+Name = test_pnm_1pni # name passed to the output routines
+Verbose = true
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 0
+
+[Component]
+SolidHeatCapacity = 1.0 # for compatibility
+SolidDensity = 1.0 # for compatibility
+SolidThermalConductivity = 1.0 # for compatibility
