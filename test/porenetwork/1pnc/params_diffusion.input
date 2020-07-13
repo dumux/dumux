@@ -1,0 +1,20 @@
+[TimeLoop]
+DtInitial = 1e-7 # [s]
+TEnd = 1e5 # [s]
+
+[Grid]
+File = ../1p/grids/pnm_converted.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[Problem]
+Name = test_pnm_1p2c_diffusion # name passed to the output routines
+Verbose = true
+InletPressure = 1e5
+OutletPressure = 1e5
+InletMoleFraction = 1e-4
+OutletMoleFraction = 0
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 0
