@@ -12,6 +12,7 @@ add_subdirectory(material)
 add_subdirectory(multidomain)
 add_subdirectory(nonlinear)
 add_subdirectory(parallel)
+add_subdirectory(porenetworkflow)
 add_subdirectory(porousmediumflow)
 
 # if Python bindings are enabled, include necessary sub directories.
