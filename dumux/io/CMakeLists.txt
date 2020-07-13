@@ -12,6 +12,7 @@ name.hh
 ploteffectivediffusivitymodel.hh
 plotmateriallaw.hh
 plotmateriallaw3p.hh
+plotpnmmateriallaw.hh
 plotthermalconductivitymodel.hh
 pointcloudvtkwriter.hh
 rasterimagereader.hh
