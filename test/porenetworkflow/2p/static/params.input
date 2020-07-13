@@ -1,0 +1,28 @@
+[Grid]
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 10 10 10
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+ParameterType = lognormal
+MeanPoreRadius = 4.5e-5
+StandardDeviationPoreRadius = 3e-6
+BoundaryFaceMarker = 2 3 1 1 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+PruningSeedIndices = 2 3
+Sanitize = true
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+UseDeprecatedRandomParameterBehavior = true
+
+[Problem]
+Name = test_pnm_2p_static # name passed to the output routines
+InitialPc = 3000 # [Pa]
+FinalPc = 7000 # [Pa]
+NumSteps = 50 # the number of episodes to run
+PlotPcS = false
+SurfaceTension = 0.0725
+ContactAngle = 0.0
+InletPoreLabel = 2
+OutletPoreLabel = 3

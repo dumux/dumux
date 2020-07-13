@@ -8,6 +8,7 @@ add_subdirectory(linear)
 add_subdirectory(material)
 add_subdirectory(multidomain)
 add_subdirectory(nonlinear)
+add_subdirectory(porenetworkflow)
 add_subdirectory(porousmediumflow)
 add_subdirectory(discretization)
 

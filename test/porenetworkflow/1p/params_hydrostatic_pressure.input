@@ -1,0 +1,24 @@
+[Grid]
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 4 4 4
+PoreRadius = 2e-5
+ThroatRadius = 2e-6
+BoundaryFaceMarker = 1 1 1 1 2 1
+PriorityList = 4 5 0 1 2 3
+
+[Problem]
+Name = test_pnm_1p_gravity # name passed to the output routines
+EnableGravity = true
+
+[Vtk]
+AddVelocity = 1
+
+[LinearSolver]
+MaxIterations = 1000
+Preconditioner.Iterations = 10
+Preconditioner.Relaxation = 1.0
+ResidualReduction = 1e-20
+Verbosity = 0

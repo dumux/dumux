@@ -1,0 +1,64 @@
+[Test]
+Name = random-params
+
+[Generic3D.Grid]
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 5 5 5
+
+ParameterType = lognormal
+MeanPoreRadius = 1e-5
+StandardDeviationPoreRadius = 3e-6
+PoreGeometry = Sphere
+
+BoundaryFaceMarker = 2 3 1 1 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+PruningSeedIndices = 2 3
+Sanitize = false
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+
+[Dgf3D.Grid]
+File = dgfGrid.dgf
+PruningSeedIndices = 2 3
+Sanitize = true
+
+[Generic2D.Grid]
+UpperRight = 1e-3 1e-3
+NumPores = 5 5
+
+ParameterType = lognormal
+MeanPoreRadius = 1e-5
+StandardDeviationPoreRadius = 3e-6
+PoreGeometry = Cube
+
+BoundaryFaceMarker = 2 3 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0.4 0.4 0.4 0.4
+RemoveThroatsOnBoundary = 0 1 2 3
+PruningSeedIndices = 2 3
+Sanitize = false
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+
+[Dgf2D.Grid]
+File = dgfGrid.dgf
+PruningSeedIndices = 2 3
+Sanitize = true
+
+[Generic1D.Grid]
+UpperRight = 1e-3
+NumPores = 20
+
+ParameterType = lognormal
+MeanPoreRadius = 1e-5
+StandardDeviationPoreRadius = 3e-6
+PoreGeometry = Cylinder
+PoreHeight = 1e-5
+
+BoundaryFaceMarker = 1 1
+ParameterRandomNumberSeed = 22
+
+[Dgf1D.Grid]
+File = dgfGrid.dgf

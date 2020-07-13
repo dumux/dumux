@@ -1,0 +1,26 @@
+[TimeLoop]
+DtInitial = 1e-1 # [s]
+TEnd = 1e2 # [s]
+MaxTimeStepSize = 2
+
+[Grid]
+File = ../1p/grids/pnm_converted.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[Problem]
+Name = test_pnm_1p2c # name passed to the output routines
+Verbose = true
+InletPressure = 1.00001e5
+OutletPressure = 1e5
+InletMoleFraction = 1e-4
+OutletMoleFraction = 0
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 1
+
+[Component]
+SolidHeatCapacity = 1.0 # for compatibility
+SolidDensity = 1.0 # for compatibility
+SolidThermalConductivity = 1.0 # for compatibility

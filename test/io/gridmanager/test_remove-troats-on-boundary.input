@@ -1,0 +1,14 @@
+[Test]
+Name = remove-throats-on-boundary
+WriteVTK = false
+
+[Grid]
+UpperRight = 1e-3 1e-3
+NumPores = 5 5
+
+PoreRadius = 1e-4
+ThroatRadius = 1e-5
+PoreGeometry = Sphere
+
+BoundaryFaceMarker = 0 1 2 3
+DeletionProbability = 0 0 1 1
