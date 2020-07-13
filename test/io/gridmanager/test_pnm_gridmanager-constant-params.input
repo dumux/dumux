@@ -1,0 +1,62 @@
+[Test]
+Name = constant-params
+
+[Generic3D.Grid]
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 5 5 5
+
+PoreRadius = 1e-5
+PoreGeometry = Sphere
+ThroatRadius = 1e-6
+ThroatLength = 1e-4
+
+BoundaryFaceMarker = 2 3 1 1 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+CapPoresOnBoundaries = 0 2 3 4 5
+PruningSeedIndices = 2 3
+Sanitize = false
+DeletionRandomNumberSeed = 33
+
+[Dgf3D.Grid]
+File = dgfGrid.dgf
+PruningSeedIndices = 2 3
+Sanitize = true
+
+[Generic2D.Grid]
+UpperRight = 1e-3 1e-3
+NumPores = 5 5
+
+PoreRadius = 1e-5
+PoreGeometry = Cube
+ThroatRadius = 1e-6
+ThroatLength = 1e-4
+
+BoundaryFaceMarker = 2 3 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0.4 0.4 0.4 0.4
+RemoveThroatsOnBoundary = 0 1 2 3
+PruningSeedIndices = 2 3
+Sanitize = false
+DeletionRandomNumberSeed = 33
+
+[Dgf2D.Grid]
+File = dgfGrid.dgf
+PruningSeedIndices = 2 3
+Sanitize = true
+
+[Generic1D.Grid]
+UpperRight = 1e-3
+NumPores = 20
+
+PoreRadius = 1e-5
+PoreGeometry = Cylinder
+PoreHeight = 1e-5
+ThroatRadius = 1e-6
+ThroatLength = 1e-4
+
+BoundaryFaceMarker = 1 1
+
+[Dgf1D.Grid]
+File = dgfGrid.dgf
