@@ -240,10 +240,6 @@ private:
     int getLocalIdx_(const int volVarIdx) const
     {
         auto it = std::find(boundaryVolVarIndices_.begin(), boundaryVolVarIndices_.end(), volVarIdx);
-        if(it == boundaryVolVarIndices_.end())
-        {
-            int shit = 1;
-        }
         assert(it != boundaryVolVarIndices_.end() && "Could not find the current volume variables for volVarIdx!");
         return std::distance(boundaryVolVarIndices_.begin(), it);
     }

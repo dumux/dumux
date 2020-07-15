@@ -72,24 +72,22 @@ class AdvectionDataHandle
         GridIndexType index;
         Position position;
     };
+
+public:
     using Entries = std::vector<Entry>;
 
     using Interpolator = typename IntOp::AdvectionInterpolator;
 
     static constexpr int numPhases = PhysicsTraits::numPhases;
 
-public:
     void clear()
     {
-        visited_ = 0;
-        entries_[0].clear();
-        entries_[1].clear();
+        entries_.clear();
     }
 
     void prepare()
     {
-        if(visited_ == 2 || boundaryFace_)
-            clear();
+        clear();
     }
 
     template<class TF, class EG, class SCVF>
@@ -106,16 +104,13 @@ public:
             WMpfaHelper::eraseZeros(coeff, indices);
             updateEntries(intOp, indices, coeff, fvGeometry, scvf);
         }
-
-        ++visited_;
     }
 
     template<class Indices, class Coeff, class EG, class SCVF>
     void updateEntries(const Interpolator& intOp, const Indices& indices, const Coeff& coeff, const EG& fvGeometry, const SCVF& scvf)
     {
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        auto& entries = entries_[visited_];
-        entries.push_back({0.0, scv.dofIndex(), scv.center()});
+        entries_.push_back({0.0, scv.dofIndex(), scv.center()});
         for(std::size_t i=0; i<indices.size(); ++i)
         {
             const auto& intData = intOp.getInterpolationData(indices[i]);
@@ -124,39 +119,30 @@ public:
                 if(e.dofIndex() != scvf.insideScvIdx())
                 {
                     auto c = coeff[i]*e.weight();
-                    entries[0].coefficient += c;
+                    entries_[0].coefficient += c;
                     //ToDo pos is not needed for each entry!!!
-                    entries.push_back({c, e.dofIndex(), intData.position()});
+                    entries_.push_back({-1.0*c, e.dofIndex(), intData.position()});
                 }
             }
         }
-        scvfIndices_[visited_] = scvf.index();
-        scvIndices_[visited_] = scvf.insideScvIdx();
-
-        if(boundaryFace_)
-        {
-            ++visited_;
-            scvfIndices_[visited_] = scvf.index();
-            scvIndices_[visited_] = scvf.outsideScvIdx();
-        }
+        scvfIndices_ = scvf.index();
+        scvIndices_ = scvf.insideScvIdx();
     }
 
-    const auto& subFluxData(GridIndexType idx) const
+    const auto& subFluxData() const
     {
-        return (idx == scvIndices_[0]) ? entries_[0] : entries_[1];
+        return entries_;
     }
 
     bool valid()
     {
-        return ((!boundaryFace_ && entries_[0].size() > 0 && entries_[1].size() > 0)
-                || (boundaryFace_ && entries_[0].size() > 0)) && visited_ == 2;
+        return entries_.size() > 0;
     }
 
 private:
-    int visited_;
-    std::array<GridIndexType, 2> scvfIndices_;
-    std::array<GridIndexType, 2> scvIndices_;
-    std::array<Entries, 2> entries_;
+    GridIndexType scvfIndices_;
+    GridIndexType scvIndices_;
+    Entries entries_;
     bool boundaryFace_ = {false};
 };
 
