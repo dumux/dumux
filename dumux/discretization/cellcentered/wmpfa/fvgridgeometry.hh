@@ -239,21 +239,18 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
         }
 
-        // Make the flip index set for network, surface, and periodic grids
-        if (this->isPeriodic())
+        // Make the flip index set
+        flipScvfIndices_.resize(scvfs_.size());
+        for (auto&& scvf : scvfs_)
         {
-            flipScvfIndices_.resize(scvfs_.size());
-            for (auto&& scvf : scvfs_)
-            {
-                if (scvf.boundary())
-                    continue;
+            if (scvf.boundary())
+                continue;
 
-                flipScvfIndices_[scvf.index()].resize(scvf.numOutsideScvs());
-                const auto insideScvIdx = scvf.insideScvIdx();
-                // check which outside scvf has the insideScvIdx index in its outsideScvIndices
-                for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-                    flipScvfIndices_[scvf.index()][i] = findFlippedScvfIndex_(insideScvIdx, scvf.outsideScvIdx(i));
-            }
+            flipScvfIndices_[scvf.index()].resize(scvf.numOutsideScvs());
+            const auto insideScvIdx = scvf.insideScvIdx();
+            // check which outside scvf has the insideScvIdx index in its outsideScvIndices
+            for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+                flipScvfIndices_[scvf.index()][i] = findFlippedScvfIndex_(insideScvIdx, scvf.outsideScvIdx(i));
         }
 
         // build the connectivity map for an effecient assembly
