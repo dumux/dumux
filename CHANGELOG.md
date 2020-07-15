@@ -41,6 +41,9 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 
 - __Examples__: The documentation of the examples has been improved further, focusing on readability and convenience. Further, three additional examples are included the folder `examples`. To get an overview, point your browser to https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples.
 
+- __Linear solvers__: There is a new ISTL solver factory backend which allows to choose solvers at runtime (requires dune-istl 2.7) and also enables more parallel solvers (requires dune-istl > 2.7.1).
+
+
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
