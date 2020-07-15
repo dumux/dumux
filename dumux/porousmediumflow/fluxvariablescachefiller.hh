@@ -762,9 +762,6 @@ public:
               const SubControlVolumeFace& scvf,
               bool forceUpdateAll = false)
     {
-        // Set pointers
-        const auto& gridGeometry = fvGeometry.gridGeometry();
-
         const auto& intOp = fluxVarsCacheStorage.interpolationOperator(fvGeometry.scv(scvf.insideScvIdx()));
         faceHandlePtr_ = &dataStorage.facesDataHandles[scvf.index()];
 
