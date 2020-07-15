@@ -73,8 +73,9 @@ class HapInterpolatorBase
     {
         LocalInterpolationData() = default;
 
-        LocalInterpolationData(Position p, Entry e1, Entry e2)
+        LocalInterpolationData(GridIndexType idx, Position p, Entry e1, Entry e2)
         {
+            scvfIdx_ = idx;
             position_ = p;
             entries_ = {e1,e2};
         }
@@ -85,7 +86,11 @@ class HapInterpolatorBase
         Position position() const
         {return position_;}
 
+        GridIndexType scvfIdx() const
+        {return scvfIdx_;}
+
         private:
+            GridIndexType scvfIdx_ = {};
             Position position_ = {};
             std::array<Entry, 2> entries_ = {Entry(), Entry()};
     };
@@ -133,11 +138,11 @@ public:
                                 + (distL*distK / (distL*tauK + distK*tauL))
                                    * mv(tensor(insideVolVars) - tensor(outsideVolVars), scvf.unitOuterNormal());
 
-                interpolationData_[scvf.localIndex()] = LocalInterpolationData(position, Entry(insideScvIdx, omegaK), Entry(outsideScvIdx, omegaL) );
+                interpolationData_[scvf.localIndex()] = LocalInterpolationData(scvf.index(), position, Entry(insideScvIdx, omegaK), Entry(outsideScvIdx, omegaL) );
             }
             else
             {
-                interpolationData_[scvf.localIndex()] = LocalInterpolationData(scvf.center(), Entry(insideScvIdx, 0.0), Entry(outsideScvIdx, 1.0) );
+                interpolationData_[scvf.localIndex()] = LocalInterpolationData(scvf.index(), scvf.center(), Entry(insideScvIdx, 0.0), Entry(outsideScvIdx, 1.0) );
             }
         }
         isUpdated_ = true;

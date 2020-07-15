@@ -90,8 +90,8 @@ public:
         clear();
     }
 
-    template<class TF, class EG, class SCVF>
-    void decompose(const Interpolator& intOp, const TF& tensor, const EG& fvGeometry, const SCVF& scvf)
+    template<class Problem, class TF, class EG, class SCVF>
+    void decompose(const Problem& problem, const Interpolator& intOp, const TF& tensor, const EG& fvGeometry, const SCVF& scvf)
     {
         boundaryFace_ = scvf.boundary();
         const auto coNormal = mv(tensor(scvf.insideScvIdx()), scvf.unitOuterNormal());
@@ -102,26 +102,41 @@ public:
         else
         {
             WMpfaHelper::eraseZeros(coeff, indices);
-            updateEntries(intOp, indices, coeff, fvGeometry, scvf);
+            updateEntries(problem, intOp, indices, coeff, fvGeometry, scvf);
         }
     }
 
-    template<class Indices, class Coeff, class EG, class SCVF>
-    void updateEntries(const Interpolator& intOp, const Indices& indices, const Coeff& coeff, const EG& fvGeometry, const SCVF& scvf)
+    template<class Problem, class Indices, class Coeff, class EG, class SCVF>
+    void updateEntries(const Problem& problem, const Interpolator& intOp, const Indices& indices, const Coeff& coeff, const EG& fvGeometry, const SCVF& scvf)
     {
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         entries_.push_back({0.0, scv.dofIndex(), scv.center()});
         for(std::size_t i=0; i<indices.size(); ++i)
         {
             const auto& intData = intOp.getInterpolationData(indices[i]);
-            for(const auto& e : intData.entries())
+            bool skipEntries = false;
+            if (fvGeometry.hasBoundaryScvf())
             {
-                if(e.dofIndex() != scvf.insideScvIdx())
+                const auto& scvfJ = fvGeometry.scvf(intData.scvfIdx());
+                if(scvfJ.boundary())
                 {
-                    auto c = coeff[i]*e.weight();
-                    entries_[0].coefficient += c;
-                    //ToDo pos is not needed for each entry!!!
-                    entries_.push_back({-1.0*c, e.dofIndex(), intData.position()});
+                    const auto& bcTypes = problem.boundaryTypes(fvGeometry.gridGeometry().element(scvfJ.insideScvIdx()), scvfJ);
+                    if(bcTypes.hasNeumann())
+                        skipEntries = true;
+                }
+            }
+
+            if(!skipEntries)
+            {
+                for(const auto& e : intData.entries())
+                {
+                    if(e.dofIndex() != scvf.insideScvIdx())
+                    {
+                        auto c = coeff[i]*e.weight();
+                        entries_[0].coefficient += c;
+                        //ToDo pos is not needed for each entry!!!
+                        entries_.push_back({-1.0*c, e.dofIndex(), intData.position()});
+                    }
                 }
             }
         }

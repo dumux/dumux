@@ -814,7 +814,7 @@ private:
     void prepareHandle_(Handle& handle, const IntOP& intOp, const TensorFunction& tensor, const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
     {
         handle.prepare();
-        handle.decompose(intOp, tensor, fvGeometry, scvf);
+        handle.decompose(problem(), intOp, tensor, fvGeometry, scvf);
     }
 
     //! method to fill the advective quantities
