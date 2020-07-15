@@ -40,9 +40,12 @@ class EmptyInterpolator {};
 template< class T, bool Enable>
 class HapInterpolatorBase
 {
+    using GridGeometry = typename T::GridGeometry;
     using GridView = typename T::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Position = typename T::GlobalPosition;
+
+    using GridIndexType = typename GridGeometry::SubControlVolume::Traits::GridIndexType;
 
     using Scalar = typename Position::value_type;
 
@@ -51,7 +54,7 @@ class HapInterpolatorBase
         Entry()
         {entry = {-1,0.0};}
 
-        Entry(std::size_t idx, Scalar weight)
+        Entry(GridIndexType idx, Scalar weight)
         {
             entry = {idx, weight};
         }
@@ -59,11 +62,11 @@ class HapInterpolatorBase
         Scalar weight() const
         {return entry.second;}
 
-        std::size_t dofIndex() const
+        GridIndexType dofIndex() const
         {return entry.first;}
 
         private:
-            std::pair<std::size_t,Scalar> entry;
+            std::pair<GridIndexType,Scalar> entry;
     };
 
     struct LocalInterpolationData
@@ -167,12 +170,12 @@ public:
         return distances;
     }
 
-    const LocalInterpolationData getInterpolationData(std::size_t localIdx) const
+    const LocalInterpolationData getInterpolationData(GridIndexType localIdx) const
     {
         return interpolationData_[localIdx];
     }
 
-    LocalInterpolationData getInterpolationData(std::size_t localIdx)
+    LocalInterpolationData getInterpolationData(GridIndexType localIdx)
     {
         return interpolationData_[localIdx];
     }
