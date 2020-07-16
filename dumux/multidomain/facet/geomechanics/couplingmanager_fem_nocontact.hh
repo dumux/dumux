@@ -344,7 +344,7 @@ public:
     Scalar<facetFlowId> computeAperture(const Element<facetFlowId>& element,
                                         const typename GridGeometry<facetFlowId>::SubControlVolume& scv,
                                         Scalar<facetFlowId> initialAperture) const
-    { return computeAperture(element, scv, initialAperture, curSol_[mechanicsId]); }
+    { return computeAperture(element, scv, initialAperture, this->getSol()[mechanicsId]); }
 
     /*!
      * \brief Evaluates the coupling element residual of a mechanical domain element
