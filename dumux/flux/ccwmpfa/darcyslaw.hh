@@ -29,6 +29,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cellcentered/wmpfa/methods.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux {
@@ -94,6 +95,53 @@ private:
     const AdvectionDataHandle* handle_;
 };
 
+
+template<WMpfaMethod method>
+class WMpfaDarcysLawsFluxCalculator;
+
+template<>
+class WMpfaDarcysLawsFluxCalculator<WMpfaMethod::avgmpfa>
+{
+public:
+
+    template<class Scalar, class ElementVolumeVariables, class FluxData, class SolValues>
+    static void flux(Scalar& flux,
+                     const ElementVolumeVariables& elemVolVars,
+                     const FluxData& dIJ,
+                     const FluxData& dJI,
+                     const SolValues& solValues)
+    {
+        Scalar fluxIJ = 0.0;
+        Scalar fluxJI = 0.0;
+        Scalar wIJ = 0.5;
+        Scalar wJI = 0.5;
+        std::for_each(dIJ.cbegin(), dIJ.cend(),
+                        [&fluxIJ, &elemVolVars, &solValues](const auto& e)
+                        { fluxIJ += e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+
+        std::for_each(dJI.cbegin(), dJI.cend(),
+                        [&fluxJI, &elemVolVars, &solValues](const auto& e)
+                        { fluxJI += e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+
+        flux = (wIJ*fluxIJ - wJI*fluxJI);
+    }
+
+    template<class Scalar, class ElementVolumeVariables, class FluxData, class SolValues>
+    static void boundaryFlux(Scalar& flux,
+                             const ElementVolumeVariables& elemVolVars,
+                             const FluxData& dIJ,
+                             const SolValues& solValues)
+    {
+        Scalar fluxIJ = 0.0;
+        Scalar wIJ = 1.0;
+        std::for_each(dIJ.cbegin(), dIJ.cend(),
+                        [&fluxIJ, &elemVolVars, &solValues](const auto& e)
+                        { fluxIJ += e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+
+        flux = wIJ*fluxIJ;
+    }
+};
+
 /*!
  * \ingroup CCWMpfaFlux
  * \brief Specialization of the CCWMpfaDarcysLaw grids where dim=dimWorld
@@ -116,6 +164,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
 
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using FluxCalculator = WMpfaDarcysLawsFluxCalculator<WMpfaMethod::avgmpfa>;
 
   public:
     //! state the discretization method this implementation belongs to
@@ -146,6 +196,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
 
         const auto& subFluxDataIJ = dataHandle.subFluxData();
 
+        Scalar flux = 0.0;
+
         if (enableGravity)
         {
             // do averaging for the density over all neighboring elements
@@ -155,81 +207,36 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
 
             auto pseudoPotential = [&elemVolVars, phaseIdx, &g, &rho](const auto& volVars, const auto& x)
-                                    { return volVars.pressure(phaseIdx) - rho*(g*x);};
+                                        { return volVars.pressure(phaseIdx) - rho*(g*x);};
 
-            Scalar fluxIJ = 0.0;
-            Scalar wIJ = 0.5;
-            std::for_each(subFluxDataIJ.cbegin(), subFluxDataIJ.cend(),
-                            [&fluxIJ, &elemVolVars, &pseudoPotential](const auto& e)
-                             { fluxIJ += e.coefficient * pseudoPotential(elemVolVars[e.index], e.position); } );
-
-            Scalar fluxJI = 0.0;
-            Scalar wJI = 0.5;
             if(!scvf.boundary())
             {
                 const auto& flippedScvf = fvGeometry.flipScvf(scvf.index());
                 const auto& dataHandleJ = elemFluxVarsCache[flippedScvf].dataHandle();
                 const auto& subFluxDataJI = dataHandleJ.subFluxData();
-                std::for_each(subFluxDataJI.cbegin(), subFluxDataJI.cend(),
-                                [&fluxJI, &elemVolVars, &pseudoPotential](const auto& e)
-                                { fluxJI += e.coefficient * pseudoPotential(elemVolVars[e.index], e.position); } );
+                FluxCalculator::flux(flux, elemVolVars, subFluxDataIJ, subFluxDataJI, pseudoPotential);
             }
             else
-            {
-                wIJ = 1.0;
-                wJI = 0.0;
-            }
-
-            return scvf.area() * (wIJ*fluxIJ - wJI*fluxJI);
+                FluxCalculator::boundaryFlux(flux, elemVolVars, subFluxDataIJ, pseudoPotential);
         }
         else
         {
-            auto pressure = [&elemVolVars, phaseIdx](const auto& volVars)
-                                    { return volVars.pressure(phaseIdx);};
+            auto pressure = [&elemVolVars, phaseIdx](const auto& volVars, const auto& x)
+                                { return volVars.pressure(phaseIdx);};
 
-            Scalar fluxIJ = 0.0;
-            Scalar wIJ = 0.5;
-            std::for_each(subFluxDataIJ.cbegin(), subFluxDataIJ.cend(),
-                            [&fluxIJ, &elemVolVars, &pressure](const auto& e)
-                             { fluxIJ += e.coefficient * pressure(elemVolVars[e.index]); } );
-
-            Scalar fluxJI = 0.0;
-            Scalar wJI = 0.5;
             if(!scvf.boundary())
             {
                 const auto& flippedScvf = fvGeometry.flipScvf(scvf.index());
                 const auto& dataHandleJ = elemFluxVarsCache[flippedScvf].dataHandle();
                 const auto& subFluxDataJI = dataHandleJ.subFluxData();
-                std::for_each(subFluxDataJI.cbegin(), subFluxDataJI.cend(),
-                                [&fluxJI, &elemVolVars, &pressure](const auto& e)
-                                { fluxJI += e.coefficient * pressure(elemVolVars[e.index]); } );
+                FluxCalculator::flux(flux, elemVolVars, subFluxDataIJ, subFluxDataJI, pressure);
             }
             else
-            {
-                wIJ = 1.0;
-                wJI = 0.0;
-            }
-
-            return scvf.area() * (wIJ*fluxIJ - wJI*fluxJI);
+                FluxCalculator::boundaryFlux(flux, elemVolVars, subFluxDataIJ, pressure);
         }
 
-        return 0.0;
+        return scvf.area() * flux;
     }
-
-private:
-    template<class Problem, class VolumeVariables,
-             std::enable_if_t<!Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
-    static decltype(auto) getPermeability_(const Problem& problem,
-                                           const VolumeVariables& volVars,
-                                           const GlobalPosition& scvfIpGlobal)
-    { return volVars.permeability(); }
-
-    template<class Problem, class VolumeVariables,
-             std::enable_if_t<Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
-    static decltype(auto) getPermeability_(const Problem& problem,
-                                           const VolumeVariables& volVars,
-                                           const GlobalPosition& scvfIpGlobal)
-    { return problem.spatialParams().permeabilityAtPos(scvfIpGlobal); }
 };
 
 } // end namespace Dumux

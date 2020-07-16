@@ -30,9 +30,9 @@ namespace Dumux {
      * \brief The available weighted mpfa schemes in Dumux
      * \ingroup CCWMpfaDiscretization
      */
-    enum class WMpfaMethods : unsigned int
+    enum class WMpfaMethod
     {
-        avgMethod, nltpfa, nlmpfa
+        avgmpfa, nltpfa, nlmpfa
     };
 
 } // end namespace Dumux
