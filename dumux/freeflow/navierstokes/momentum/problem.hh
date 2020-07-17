@@ -29,7 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/fvproblem.hh>
 #include <dumux/discretization/method.hh>
-
+#include <dumux/freeflow/navierstokes/momentum/boundarytypes.hh>
 
 namespace Dumux {
 
@@ -71,8 +71,13 @@ class NavierStokesMomentumProblem : public FVProblem<TypeTag>
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
 public:
+
+    //! export the boundary types
+    using BoundaryTypes = NavierStokesMomentumBoundaryTypes<ModelTraits::numEq()>;
+
     /*!
      * \brief The constructor
      * \param gridGeometry The finite volume grid geometry
@@ -188,8 +193,7 @@ public:
      */
     Scalar density(const Element& element,
                    const FVElementGeometry& fvGeometry,
-                   const SubControlVolumeFace& scvf,
-                   const bool considerPreviousTimeStep = false) const
+                   const SubControlVolumeFace& scvf) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().densityAtPos(scvf.ipGlobal());
@@ -203,12 +207,12 @@ public:
      */
     Scalar density(const Element& element,
                    const SubControlVolume& scv,
-                   const bool considerPreviousTimeStep = false) const
+                   const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().densityAtPos(scv.dofPosition());
         else
-            return couplingManager_->density(element, scv, considerPreviousTimeStep);
+            return couplingManager_->density(element, scv, isPreviousTimeStep);
     }
 
     /*!
