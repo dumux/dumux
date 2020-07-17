@@ -112,6 +112,28 @@ public:
         DUNE_THROW(Dune::NotImplemented, "velocityAtPos not implemented");
     }
 
+    /*!
+     * \brief Returns the density at a given sub control volume face.
+     * \note  Overload this if a fixed density shall be prescribed.
+     */
+    Scalar density(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const SubControlVolumeFace& scvf) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().densityAtPos(scvf.ipGlobal());
+        else
+            return couplingManager_->density(element, fvGeometry, scvf);
+    }
+
+    /*!
+     * \brief Returns the density at a given position.
+     */
+    Scalar densityAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "densityAtPos not implemented");
+    }
+
 private:
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
