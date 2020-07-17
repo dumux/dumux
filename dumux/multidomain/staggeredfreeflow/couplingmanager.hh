@@ -94,7 +94,7 @@ private:
 
 public:
 
-    static constexpr auto pressureIdx = VolumeVariables<freeFlowMomentumIdx>::Indices::pressureIdx;
+    static constexpr auto pressureIdx = VolumeVariables<freeFlowMassIdx>::Indices::pressureIdx;
 
     /*!
      * \brief Methods to be accessed by main
