@@ -57,7 +57,7 @@
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
-#include "./../indices.hh"
+#include "indices.hh"
 // #include "iofields.hh"
 
 #include <dumux/material/fluidstates/immiscible.hh>
@@ -106,7 +106,7 @@ struct NavierStokesMomentumModelTraits
     { return TurbulenceModel::none; }
 
     //! the indices
-    using Indices = NavierStokesIndices<dim()>;
+    using Indices = NavierStokesMomentumIndices<dim()>;
 };
 
 /*!
