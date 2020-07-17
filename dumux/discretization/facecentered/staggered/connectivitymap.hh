@@ -52,7 +52,7 @@ public:
         map_.clear();
         map_.resize(gridGeometry.numScv());
 
-        for (const auto& element: elements(gridGeometry.gridView()))
+        for (const auto& element: elements(gridGeometry.gridView(), Dune::Partitions::interior))
         {
             // restrict the FvGeometry locally and bind to the element
             auto fvGeometry = localView(gridGeometry);
@@ -101,6 +101,7 @@ public:
                     // |v| insideScv
                     // |f|
                     const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                    assert(orthogonalScvf.isLateral());
                     map_[ownScvIndex].push_back(fvGeometry.scv(orthogonalScvf.insideScvIdx()).index());
                     if (!orthogonalScvf.boundary())
                         map_[ownScvIndex].push_back(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).index());

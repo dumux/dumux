@@ -225,23 +225,24 @@ public:
             {
                 scvsIndexSet[localScvIdx] = scvIdx++; // one scv per element face
 
-                if (!intersection.neighbor())
-                {
-                    ++numBoundaryScv_; // frontal face
-                    numBoundaryScv_ += numLateralScvfsPerScv; // boundary scvs for lateral faces
-                }
-
-
                 // the frontal sub control volume face at the element center
                 scvfsIndexSet.push_back(scvfIdx++);
 
-                // the frontal sub control volume face at a domain boundary (coincides with element face)
-                if (intersection.boundary())
-                    scvfsIndexSet.push_back(scvfIdx++);
+                // handle physical domain boundary
+                if (onDomainBoundary_(intersection))
+                {
+                    ++numBoundaryScv_; // frontal face
+                    numBoundaryScv_ += numLateralScvfsPerScv; // boundary scvs for lateral faces
+                    scvfsIndexSet.push_back(scvfIdx++); // the frontal sub control volume face on the boundary coincides with element face
+                }
 
                 // the lateral sub control volume faces
                 for (const auto lateralFacetIndex : geometryHelper.localLaterFaceIndices(localScvIdx))
                 {
+                    const auto& lateralIntersection = geometryHelper.getIntersection(lateralFacetIndex, element);
+                    if (onProcessorBoundary_(lateralIntersection))
+                        continue;
+
                     const auto& lateralFacet = geometryHelper.getFacet(lateralFacetIndex, element);
                     const auto integrationPointIndex = geometryHelper.getGlobalCommonEntityIndex(geometryHelper.getFacet(localScvIdx, element),
                                                                                                  lateralFacet);
@@ -304,7 +305,7 @@ public:
                                    directionIdx,
                                    sign(intersection.centerUnitOuterNormal()[directionIdx]),
                                    this->elementMapper().index(element),
-                                   !intersection.neighbor());
+                                   onDomainBoundary_(intersection));
 
                 // the frontal sub control volume face at the element center
                 scvfs_.emplace_back(elementCenter,
@@ -321,7 +322,7 @@ public:
                                     false);
 
                 // the frontal sub control volume face at a domain boundary (coincides with element face)
-                if (intersection.boundary())
+                if (onDomainBoundary_(intersection))
                 {
                     ++numBoundaryScvf_;
                     const auto boundaryCenter = intersectionGeometry.center();
@@ -344,11 +345,14 @@ public:
                 const auto lateralFaceIndices = geometryHelper.localLaterFaceIndices(localScvIdx);
                 for (const auto lateralFacetIndex : lateralFaceIndices)
                 {
+                    const auto& lateralIntersection = geometryHelper.getIntersection(lateralFacetIndex, element);
+                    if (onProcessorBoundary_(lateralIntersection))
+                        continue;
+
                     const auto& lateralFacet =  geometryHelper.getFacet(lateralFacetIndex, element);
                     const auto& lateralFacetGeometry = lateralFacet.geometry();
-                    const auto& lateralIntersection = geometryHelper.getIntersection(lateralFacetIndex, element);
 
-                    if (lateralIntersection.neighbor())
+                    if (lateralIntersection.neighbor()) // TODO: periodic?
                         geometryHelper.update(element, lateralIntersection.outside());
 
                     // helper lambda to get the lateral scvf's local inside and outside scv indices TODO maybe remove
@@ -394,10 +398,10 @@ public:
                                         globalScvfIndices[localScvfIdx],
                                         globalScvfIdxToGlobalScvfIdxWithCommonEntity.at(globalScvfIndices[localScvfIdx]),
                                         SubControlVolumeFace::FaceType::lateral,
-                                        lateralIntersection.boundary()); // TODO neighbor? periodic? parallel?
+                                        onDomainBoundary_(lateralIntersection));
                     ++localScvfIdx;
 
-                    if (lateralIntersection.boundary())
+                    if (onDomainBoundary_(lateralIntersection))
                     {
                         ++numBoundaryScvf_;
                         hasBoundaryScvf_[eIdx] = true;
@@ -446,6 +450,16 @@ public:
     { return scvfOfScvInfo_[eIdx][localScvIdx]; }
 
 private:
+
+    bool onDomainBoundary_(const typename GridView::Intersection& intersection) const
+    {
+        return !intersection.neighbor() && intersection.boundary();
+    }
+
+    bool onProcessorBoundary_(const typename GridView::Intersection& intersection) const
+    {
+        return !intersection.neighbor() && !intersection.boundary();
+    }
 
     // mappers
     ConnectivityMap connectivityMap_;
