@@ -29,7 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/fvproblem.hh>
 #include <dumux/discretization/method.hh>
-
+#include <dumux/freeflow/navierstokes/massandenergy/boundarytypes.hh>
 
 namespace Dumux {
 
@@ -57,8 +57,13 @@ class NavierStokesMassAndEnergyProblem : public FVProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
 public:
+
+    //! export the boundary types
+    using BoundaryTypes = NavierStokesMassAndEnergyBoundaryTypes<ModelTraits::numEq(), typename ModelTraits::Indices>;
+
     /*!
      * \brief The constructor
      * \param gridGeometry The finite volume grid geometry
