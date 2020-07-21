@@ -135,7 +135,7 @@ public:
                         auto c = coeff[i]*e.weight();
                         entries_[0].coefficient += c;
                         //ToDo pos is not needed for each entry!!!
-                        entries_.push_back({-1.0*c, e.dofIndex(), intData.position()});
+                        entries_.push_back({c, e.dofIndex(), intData.position()});
                     }
                 }
             }

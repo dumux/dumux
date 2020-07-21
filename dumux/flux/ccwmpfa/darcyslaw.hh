@@ -95,7 +95,6 @@ private:
     const AdvectionDataHandle* handle_;
 };
 
-
 template<WMpfaMethod method>
 class WMpfaDarcysLawsFluxCalculator;
 
@@ -104,8 +103,9 @@ class WMpfaDarcysLawsFluxCalculator<WMpfaMethod::avgmpfa>
 {
 public:
 
-    template<class Scalar, class ElementVolumeVariables, class FluxData, class SolValues>
+    template<class Scalar, class SubControlVolumeFace, class ElementVolumeVariables, class FluxData, class SolValues>
     static void flux(Scalar& flux,
+                     const SubControlVolumeFace& scvf,
                      const ElementVolumeVariables& elemVolVars,
                      const FluxData& dIJ,
                      const FluxData& dJI,
@@ -113,32 +113,97 @@ public:
     {
         Scalar fluxIJ = 0.0;
         Scalar fluxJI = 0.0;
-        Scalar wIJ = 0.5;
-        Scalar wJI = 0.5;
-        std::for_each(dIJ.cbegin(), dIJ.cend(),
+
+        fluxIJ += dIJ[0].coefficient * solValues(elemVolVars[dIJ[0].index], dIJ[0].position);
+        std::for_each(dIJ.cbegin()+1, dIJ.cend(),
                         [&fluxIJ, &elemVolVars, &solValues](const auto& e)
-                        { fluxIJ += e.coefficient * solValues(elemVolVars[e.index], e.position); } );
-
-        std::for_each(dJI.cbegin(), dJI.cend(),
+                        { fluxIJ -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+        fluxJI += dJI[0].coefficient * solValues(elemVolVars[dJI[0].index], dJI[0].position);
+        std::for_each(dJI.cbegin()+1, dJI.cend(),
                         [&fluxJI, &elemVolVars, &solValues](const auto& e)
-                        { fluxJI += e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+                        { fluxJI -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
 
-        flux = (wIJ*fluxIJ - wJI*fluxJI);
+        flux = scvf.area()*(0.5*fluxIJ - 0.5*fluxJI);
     }
 
-    template<class Scalar, class ElementVolumeVariables, class FluxData, class SolValues>
+    template <class Scalar, class SubControlVolumeFace, class ElementVolumeVariables, class FluxData, class SolValues>
     static void boundaryFlux(Scalar& flux,
+                             const SubControlVolumeFace& scvf,
                              const ElementVolumeVariables& elemVolVars,
                              const FluxData& dIJ,
                              const SolValues& solValues)
     {
         Scalar fluxIJ = 0.0;
-        Scalar wIJ = 1.0;
-        std::for_each(dIJ.cbegin(), dIJ.cend(),
+        fluxIJ += dIJ[0].coefficient * solValues(elemVolVars[dIJ[0].index], dIJ[0].position);
+        std::for_each(dIJ.cbegin()+1, dIJ.cend(),
                         [&fluxIJ, &elemVolVars, &solValues](const auto& e)
-                        { fluxIJ += e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+                        { fluxIJ -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
 
-        flux = wIJ*fluxIJ;
+        flux = scvf.area()*fluxIJ;
+    }
+};
+
+template<>
+class WMpfaDarcysLawsFluxCalculator<WMpfaMethod::nltpfa>
+{
+public:
+
+    template<class Scalar, class SubControlVolumeFace, class ElementVolumeVariables, class FluxData, class SolValues>
+    static void flux(Scalar& flux,
+                     const SubControlVolumeFace& scvf,
+                     const ElementVolumeVariables& elemVolVars,
+                     const FluxData& dIJ,
+                     const FluxData& dJI,
+                     const SolValues& solValues)
+    {
+        Scalar lambdaIJ = 0.0;
+        Scalar lambdaJI = 0.0;
+        Scalar tIJ = 0.0;
+        Scalar tJI = 0.0;
+        std::for_each(dIJ.cbegin()+1, dIJ.cend(),
+                        [&lambdaIJ, &tJI, &scvf, &elemVolVars, &solValues](const auto& e)
+                        {
+                            (e.index == scvf.outsideScvIdx())
+                            ? tJI +=  e.coefficient
+                            : lambdaIJ += e.coefficient * solValues(elemVolVars[e.index], e.position);
+                        } );
+
+        std::for_each(dJI.cbegin()+1, dJI.cend(),
+                        [&lambdaJI, &tIJ, &scvf, &elemVolVars, &solValues](const auto& e)
+                        {
+                            (e.index == scvf.insideScvIdx())
+                            ? tIJ +=  e.coefficient
+                            : lambdaJI += e.coefficient * solValues(elemVolVars[e.index], e.position);
+                        } );
+
+        auto calcAbs = [](Scalar a){ return std::abs(a) + 1e-8; };
+
+        Scalar wIJ = (calcAbs(lambdaJI))/(calcAbs(lambdaIJ) + calcAbs(lambdaJI));
+        Scalar wJI = (calcAbs(lambdaIJ))/(calcAbs(lambdaIJ) + calcAbs(lambdaJI));
+
+        tIJ *= wJI;
+        tIJ += wIJ*dIJ[0].coefficient;
+        tJI *= wIJ;
+        tJI += wJI*dJI[0].coefficient;
+
+        flux = scvf.area()*( tIJ * solValues(elemVolVars[dIJ[0].index], dIJ[0].position)
+                            -tJI * solValues(elemVolVars[dJI[0].index], dJI[0].position));
+    }
+
+    template<class Scalar, class SubControlVolumeFace, class ElementVolumeVariables, class FluxData, class SolValues>
+    static void boundaryFlux(Scalar& flux,
+                             const SubControlVolumeFace& scvf,
+                             const ElementVolumeVariables& elemVolVars,
+                             const FluxData& dIJ,
+                             const SolValues& solValues)
+    {
+        Scalar fluxIJ = 0.0;
+        fluxIJ += dIJ[0].coefficient * solValues(elemVolVars[dIJ[0].index], dIJ[0].position);
+        std::for_each(dIJ.cbegin()+1, dIJ.cend(),
+                        [&fluxIJ, &elemVolVars, &solValues](const auto& e)
+                        { fluxIJ -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+
+        flux = scvf.area()*fluxIJ;
     }
 };
 
@@ -165,7 +230,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using FluxCalculator = WMpfaDarcysLawsFluxCalculator<WMpfaMethod::avgmpfa>;
+    static constexpr WMpfaMethod method = getPropValue<TypeTag, Properties::DiscretizationSubmethod>();
 
   public:
     //! state the discretization method this implementation belongs to
@@ -184,6 +249,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
+        using FluxCalculator = WMpfaDarcysLawsFluxCalculator<method>;
+
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
@@ -214,10 +281,10 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
                 const auto& flippedScvf = fvGeometry.flipScvf(scvf.index());
                 const auto& dataHandleJ = elemFluxVarsCache[flippedScvf].dataHandle();
                 const auto& subFluxDataJI = dataHandleJ.subFluxData();
-                FluxCalculator::flux(flux, elemVolVars, subFluxDataIJ, subFluxDataJI, pseudoPotential);
+                FluxCalculator::flux(flux, scvf, elemVolVars, subFluxDataIJ, subFluxDataJI, pseudoPotential);
             }
             else
-                FluxCalculator::boundaryFlux(flux, elemVolVars, subFluxDataIJ, pseudoPotential);
+                FluxCalculator::boundaryFlux(flux, scvf, elemVolVars, subFluxDataIJ, pseudoPotential);
         }
         else
         {
@@ -229,13 +296,13 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccwmpfa>
                 const auto& flippedScvf = fvGeometry.flipScvf(scvf.index());
                 const auto& dataHandleJ = elemFluxVarsCache[flippedScvf].dataHandle();
                 const auto& subFluxDataJI = dataHandleJ.subFluxData();
-                FluxCalculator::flux(flux, elemVolVars, subFluxDataIJ, subFluxDataJI, pressure);
+                FluxCalculator::flux(flux, scvf, elemVolVars, subFluxDataIJ, subFluxDataJI, pressure);
             }
             else
-                FluxCalculator::boundaryFlux(flux, elemVolVars, subFluxDataIJ, pressure);
+                FluxCalculator::boundaryFlux(flux, scvf, elemVolVars, subFluxDataIJ, pressure);
         }
 
-        return scvf.area() * flux;
+        return flux;
     }
 };
 

@@ -41,6 +41,7 @@
 #include <dumux/discretization/cellcentered/wmpfa/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/wmpfa/gridfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/wmpfa/subcontrolvolumeface.hh>
+#include <dumux/discretization/cellcentered/wmpfa/methods.hh>
 
 #include <dumux/discretization/cellcentered/wmpfa/interpolationoperator.hh>
 #include <dumux/discretization/cellcentered/wmpfa/facedatahandle.hh>
@@ -115,6 +116,12 @@ struct ElementBoundaryTypes<TypeTag, TTag::CCWMpfaModel> { using type = CCElemen
 //! Set the BaseLocalResidual to CCLocalResidual
 template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::CCWMpfaModel> { using type = CCLocalResidual<TypeTag>; };
+
+template<class TypeTag, class MyTypeTag>
+struct DiscretizationSubmethod { using type = UndefinedProperty; };
+
+template<class TypeTag>
+struct DiscretizationSubmethod<TypeTag, TTag::CCWMpfaModel> { static constexpr WMpfaMethod value = WMpfaMethod::avgmpfa; };
 } // namespace Properties
 
 namespace Detail {
