@@ -230,10 +230,11 @@ public:
         //TODO by Lars: viscosity?
         //TODO by Lars: ij should be 0 for unsymm, is this fullfilled? yes, but just if nTangential/bj/pressure bc is used
         // Averaging the gradients to get evaluation at the center
+        std::cout<<"velGrad ij, ji: "<< velocityGrad_ij << ";   " << velocityGrad_ji <<std::endl;
         momentumFlux += 1.0/numSubFaces*Nsbl * (velocityGrad_ji + velocityGrad_ij);
       }
       momentumFlux *= scvf.directionSign();
-
+        std::cout<<"momFlux" << momentumFlux<<std::endl;
       return momentumFlux;
     }
 
@@ -321,25 +322,30 @@ public:
     }
 
 
-    // TODO by Lars: Review!
     /*!
-    * \brief Returns the velocity vector with a different permeability tensor
+    * \brief Returns the averaged velocity vector at the interface of the porous medium with a different permeability tensor according to darcys law
     *
-    * For the new interface condition by Elissa Eggenweiler, a pm-velocity with altered permeability tensor needs to be evaluated
+    * For the new tangential interface condition by Elissa Eggenweiler, a porous medium velocity with altered permeability tensor needs to be evaluated.
+    * We use darcys law and perform an integral average over all coupling segments.
     *
     */
     VelocityVector newPorousMediumInterfaceVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
+      static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
+      using JacobianType = Dune::FieldMatrix<Scalar, 1, darcyDim>;
+      std::vector<JacobianType> shapeDerivatives;
+      std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+
       VelocityVector velocity(0.0); //  velocity darcy
       VelocityVector gradP(0.0);    // pressure gradient darcy
       Scalar rho(0.0);              // density darcy
+      Scalar intersectionLength = 0.0; //(total)intersection length could differ from scfv length
 
       //Getting needed information from the darcy domain
       const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
-
       static const bool enableGravity = getParamFromGroup<bool>(this->couplingManager().problem(darcyIdx).paramGroup(), "Problem.EnableGravity");
 
-      // Iteraton over the different coupling segments
+      // Iteration over the different coupling segments
       for (const auto& data : stokesContext)
       {
         //We are on (one of) the correct scvf(s)
@@ -350,8 +356,11 @@ public:
           const auto& darcyFvGeometry = data.fvGeometry;
           const auto& localBasis = darcyFvGeometry.feLocalBasis();
 
+
+          // Darcy Permeability
+          const auto& K = data.volVars.permeability();
+
           // INTEGRATION, second order as box provides linear functions
-          static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
           const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
           //Loop over all quadrature points in the rule
           for (const auto& qp : rule)
@@ -363,39 +372,40 @@ public:
             //reset pressure gradient and rho at this qp
             gradP=0.0;
             rho=0.0;
-            //Darcy parameters
+            //TODO: Is this needed?
+            shapeValues.clear();
+            shapeDerivatives.clear();
+
+            // darcy spatial dependent parameters
             const auto& epsInterface = this->couplingManager().problem(darcyIdx).spatialParams().epsInterfaceAtPos(ipGlobal);
             const auto& M = this->couplingManager().problem(darcyIdx).spatialParams().matrixNTangentialAtPos(ipGlobal);
 
-            //initialize the shape values
-            //TODO by Lars: move definitions outside the loop?
-            std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+            //calculate the shape and derivative values at the qp
             localBasis.evaluateFunction(ipElementLocal, shapeValues);
-            //and derivative values
-            using JacobianType = Dune::FieldMatrix<Scalar, 1, darcyDim>;
-            std::vector<JacobianType> shapeDerivatives;
             localBasis.evaluateJacobian(ipElementLocal, shapeDerivatives);
 
             //calc pressure gradient and rho at qp, every scv belongs to one node
             for (const auto& scv : scvs(data.fvGeometry)){
-              gradP.axpy(elemVolVars[scv].pressure(darcyPhaseIdx),shapeDerivatives[scv.indexInElement()][0]);
+              //gradP += p_i* (J^-T * L'_i)
+              data.element.geometry().jacobianInverseTransposed(ipElementLocal).usmv(elemVolVars[scv].pressure(darcyPhaseIdx), shapeDerivatives[scv.indexInElement()][0], gradP);
               if (enableGravity){
                 rho += elemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
               }
             }
-            //account gravity
-            //TODO by Lars: Gravity changes darcy's law for calculating the velocity: Why is -rho*g correct?
+            //account for gravity
+            //TODO by Lars: Gravity changes darcy's law for calculating the velocity: Why is -rho*g the correct sign?
             if (enableGravity){
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
             }
-
-            //Add the integrated segment velocity to the sum
-            velocity.axpy(-data.segmentGeometry.integrationElement(qp.position())*qp.weight()*epsInterface*epsInterface/data.volVars.viscosity(darcyPhaseIdx), mv(M,gradP));
+            //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
+            //TODO: which fits dumux style better?
+            M.usmv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP, velocity);
+            //alternativ: velocity.axpy(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, mv(M,gradP));
           }
+          intersectionLength += data.segmentGeometry.volume();
         }
       }
-      //The integration is performed to get the average of the darcy velocity over one stokes face
-      velocity /= scvf.area();
+      velocity /= intersectionLength; //averaging
       return velocity;
     }
 };
