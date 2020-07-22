@@ -75,8 +75,6 @@ class NavierStokesMomentumFluxVariables
     using Indices = typename ModelTraits::Indices;
     using VelocityGradients = StaggeredVelocityGradients;
 
-    static constexpr bool normalizePressure = getPropValue<TypeTag, Properties::NormalizePressure>();
-
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
