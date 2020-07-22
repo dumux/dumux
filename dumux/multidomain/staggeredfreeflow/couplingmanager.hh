@@ -174,6 +174,32 @@ public:
     }
 
 
+    //! TODO: this is just a prototype. May be removed after some testing
+    Scalar extrapolatedPressure(const Element<freeFlowMomentumIdx>& element,
+                                const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                                const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    {
+        const auto ownCellPressure = pressure(element, fvGeometry, scvf);
+        assert (scvf.boundary() && scvf.isFrontal());
+
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+
+        for (const auto is : intersections(fvGeometry.gridGeometry().gridView(), element))
+        {
+            if ((is.centerUnitOuterNormal() * scvf.unitOuterNormal() + 1) < 1e-9)
+            {
+                const auto& outsideElement = is.outside();
+                const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(outsideElement);
+                const auto& outsideScv = momentumCouplingContext_[0].fvGeometry.scv(eIdx);
+                const auto p = momentumCouplingContext_[0].curElemVolVars[outsideScv].pressure() - this->problem(freeFlowMassIdx).initial(outsideElement)[pressureIdx];
+                const auto slope = (ownCellPressure - p) / (element.geometry().center() - outsideScv.center()).two_norm();
+
+                return ownCellPressure + slope * (element.geometry().center() - scvf.center()).two_norm(); // only works if boundary is on the right
+            }
+        }
+        DUNE_THROW(Dune::InvalidStateException, "No intersection found");
+    }
+
     /*!
      * \name member functions concerning the coupling stencils
      */
