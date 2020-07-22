@@ -220,18 +220,22 @@ public:
         const Scalar velocityGrad_ji = StokesVelocityGradients::velocityGradJI(
           this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
           currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
-        const Scalar velocityGrad_ij = StokesVelocityGradients::velocityGradIJ(
+        Scalar velocityGrad_ij = StokesVelocityGradients::velocityGradIJ(
             this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
             currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
+        const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
+                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+        //TODO: Remove calculation above in this case
+        if (unsymmetrizedGradientForBJ){
+            velocityGrad_ij = 0.0;
+        }
+
         // Calculating additional term for momentum flux
-        //TODO by Lars: inverted sign...
         const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
-        //TODO by Lars: viscosity?
-        //TODO by Lars: ij should be 0 for unsymm, is this fullfilled? yes, but just if nTangential/bj/pressure bc is used
         // Averaging the gradients to get evaluation at the center
-        std::cout<<"velGrad ij, ji: "<< velocityGrad_ij << ";   " << velocityGrad_ji <<std::endl;
-        momentumFlux += 1.0/numSubFaces*Nsbl * (velocityGrad_ji + velocityGrad_ij);
+        const Scalar viscosity = stokesElemVolVars[scvf.insideScvIdx()].effectiveViscosity();
+        momentumFlux -= 1.0/numSubFaces * viscosity * Nsbl * (velocityGrad_ji + velocityGrad_ij);
       }
       momentumFlux *= scvf.directionSign();
         std::cout<<"momFlux" << momentumFlux<<std::endl;

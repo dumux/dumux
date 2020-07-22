@@ -254,7 +254,7 @@ public:
               + velocitySelf) / (betaBJ*distanceNormalToBoundary + 1.0);
     }
 
-    //TODO: I assume an inverted sign for factorNTangential...
+    //TODO: viscosity?
     //! helper function to evaluate the slip velocity on the boundary when the new tangential condition is used
     const Scalar nTangentialVelocity(const Element& element,
                                        const SubControlVolume& scv,
@@ -263,7 +263,8 @@ public:
                                        const Scalar velocitySelf, //vel auf stehendem
                                        const Scalar tangentialVelocityGradient) const //dv/dx=0
     {
-        const Scalar factor = 1.0/(asImp_().epsInterface(faceOnPorousBoundary) * asImp_().factorNTangential(faceOnPorousBoundary));
+        //const Scalar viscosity = elemVolVars[scvf.insideScvIdx()].effectiveViscosity();
+        const Scalar factor = -1.0/(asImp_().epsInterface(faceOnPorousBoundary) * asImp_().factorNTangential(faceOnPorousBoundary));
         const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
 
         // create a unit normal vector oriented in positive coordinate direction
