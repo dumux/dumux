@@ -500,9 +500,9 @@ namespace InterpolationPolicy { struct Linear; }
  * \param params the parameters used for interpolation (depends on the policy used)
  * \param ip the interpolation point
  */
-template <class Policy = InterpolationPolicy::Linear, class Scalar, class Parameter>
-Scalar interpolate(Scalar ip, Parameter&& params)
-{ return Policy::interpolate(ip, std::forward<Parameter>(params)); }
+template <class Policy = InterpolationPolicy::Linear, class Scalar, class ... Parameter>
+Scalar interpolate(Scalar ip, Parameter&& ... params)
+{ return Policy::interpolate(ip, std::forward<Parameter>(params) ...); }
 
 /*!
  * \ingroup Common
@@ -540,12 +540,9 @@ struct LinearTable
      * \param table the table as a pair of sorted vectors (have to be same size)
      * \note if the interpolation point is out of bounds this will return the bounds
      */
-    template<class Scalar, class RandomAccessContainer>
-    static constexpr Scalar interpolate(Scalar ip, const std::pair<RandomAccessContainer, RandomAccessContainer>& table)
+    template<class Scalar, class RandomAccessContainer0, class RandomAccessContainer1>
+    static constexpr Scalar interpolate(Scalar ip, const RandomAccessContainer0& range, const RandomAccessContainer1& values)
     {
-        const auto& range = table.first;
-        const auto& values = table.second;
-
         // check bounds
         if (ip > range.back()) return values.back();
         if (ip < range[0]) return values[0];
@@ -557,6 +554,13 @@ struct LinearTable
 
         const auto ipLinear = (ip - range[lookUpIndex-1])/(range[lookUpIndex] - range[lookUpIndex-1]);
         return Dumux::interpolate<Linear>(ipLinear, std::array<Scalar, 2>{{values[lookUpIndex-1], values[lookUpIndex]}});
+    }
+
+    template<class Scalar, class RandomAccessContainer>
+    static constexpr Scalar interpolate(Scalar ip, const std::pair<RandomAccessContainer, RandomAccessContainer>& table)
+    {
+        const auto& [range, values] = table;
+        return interpolate(ip, range, values);
     }
 };
 
