@@ -114,22 +114,12 @@ public:
 
         NumEqVector flux;
 
-        const auto dirIdx = directionIndex(scvf.unitOuterNormal());
-        const auto sign = Dumux::sign(scvf.unitOuterNormal()[dirIdx]);
-
-        flux = problem.faceVelocity(element, fvGeometry, scvf) * sign * scvf.area(); // TODO density
-        // for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        // {
-        //     // the physical quantities for which we perform upwinding
-        //     auto upwindTerm = [phaseIdx](const auto& volVars)
-        //                       { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
-
-        //     auto eqIdx = conti0EqIdx + phaseIdx;
-        //     flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+        // the physical quantities for which we perform upwinding
+        auto upwindTerm = [](const auto& volVars) { return volVars.density(); };
+        flux = fluxVars.advectiveFlux(upwindTerm);
 
         //     //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
         //     EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
-        // }
 
         // //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
         // EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
@@ -138,17 +128,6 @@ public:
     }
 
     private:
-
-     /*!
-    * \ingroup StaggeredDiscretization
-    * \brief Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
-    */
-    template<class Vector>
-    static auto directionIndex(Vector&& vector)
-    {
-        const auto eps = 1e-8;
-        return std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - vector.begin();
-    }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
