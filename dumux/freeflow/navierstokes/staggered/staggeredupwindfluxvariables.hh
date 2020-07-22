@@ -583,8 +583,7 @@ private:
         // Find out what boundary type is set on the lateral face
         const bool useZeroGradient = lateralFaceBoundaryTypes && (lateralFaceBoundaryTypes->isSymmetry()
                                                                   || lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
-        const bool lateralFaceHasBJS = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex()));
-        const bool lateralFaceHasNTangential = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isNTangential(Indices::velocity(scvf.directionIndex()));
+        const bool lateralFaceHasSlipCondition = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isSlipCondition(Indices::velocity(scvf.directionIndex()));
         const bool lateralFaceHasDirichletVelocity = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex()));
         const Scalar velocitySelf = faceVars.velocitySelf();
 
@@ -593,12 +592,8 @@ private:
         if (useZeroGradient)
             return velocitySelf;
 
-        if (lateralFaceHasBJS)
-            return VelocityGradients::beaversJosephVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
-                                                                         currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
-
-        else if(lateralFaceHasNTangential)
-            return VelocityGradients::nTangentialVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
+        if (lateralFaceHasSlipCondition)
+            return VelocityGradients::slipVelocityAtLateralScvf(problem, element, fvGeometry, scvf,  faceVars,
                                                                          currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
         else if(lateralFaceHasDirichletVelocity)
         {
