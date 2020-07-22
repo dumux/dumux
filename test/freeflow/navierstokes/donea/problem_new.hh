@@ -129,7 +129,7 @@ class DoneaTestProblemNew : public Impl::BaseProblem<TypeTag>
 {
     using ParentType = Impl::BaseProblem<TypeTag>;
 
-    using BoundaryTypes = Impl::BoundaryTypes<TypeTag>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -244,7 +244,7 @@ public:
         }
         else
         {
-            values.setDirichlet(0/* Indices::pressureIdx */);
+            values.setNeumann(Indices::conti0EqIdx);
         }
 
         return values;
