@@ -75,9 +75,10 @@ public:
     {
         for (const auto& scvf : scvfs(fvGeometry))
         {
+            // TODO generalize for unstructured meshes
             const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
             const auto dirIdx = directionIndex_(scvf.unitOuterNormal());
-            velocity[eIdx][dirIdx] += 0.5*elemVolVars.gridVolVars().problem().faceVelocity(element, fvGeometry, scvf);
+            velocity[eIdx][dirIdx] += 0.5*elemVolVars.gridVolVars().problem().faceVelocity(element, fvGeometry, scvf)[dirIdx];
         }
     }
 
