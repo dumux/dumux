@@ -48,7 +48,7 @@
  *
  * The solid or mineral phases are assumed to consist of a single component.
  * Their mass balance consist only of a storage and a source term:
- *  \f$\frac{\partial \varrho_\lambda \phi_\lambda )} {\partial t}
+ *  \f$\frac{\partial ( \varrho_\lambda \phi_\lambda )} {\partial t}
  *  = q_\lambda\f$
  *
  * All equations are discretized using a vertex-centered finite volume (box)
