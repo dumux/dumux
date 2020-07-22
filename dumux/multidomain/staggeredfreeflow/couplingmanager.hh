@@ -77,6 +77,9 @@ private:
     using FluidSystem = typename VolumeVariables<freeFlowMassIdx>::FluidSystem;
     // static_assert(std::is_same_v<FluidSystem, typename VolumeVariables<freeFlowMomentumIdx>::FluidSystem>);
 
+    using VelocityVector = typename SubControlVolumeFace<freeFlowMassIdx>::GlobalPosition;
+    static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIdx>::GlobalPosition>);
+
 
     struct MomentumCouplingContext
     {
@@ -158,9 +161,19 @@ public:
     {
         assert(!(considerPreviousTimeStep && !isTransient_));
         bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element);
-        const auto& scv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
-        return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[scv].density()
-                                        : momentumCouplingContext_[0].curElemVolVars[scv].density();
+        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+        const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+
+        auto rho = [&](const auto& elemVolVars)
+        {
+            // TODO distance weighting
+            return 0.5*(elemVolVars[insideMassScv].density() + elemVolVars[outsideMassScv].density());
+        };
+
+        return considerPreviousTimeStep ? rho(momentumCouplingContext_[0].prevElemVolVars)
+                                        : rho(momentumCouplingContext_[0].curElemVolVars);
     }
 
     /*!
@@ -185,19 +198,43 @@ public:
                               const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
     {
         bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element);
-        const auto& scv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
-        return momentumCouplingContext_[0].curElemVolVars[scv].viscosity();
+
+        const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+        if (scvf.boundary())
+            return momentumCouplingContext_[0].curElemVolVars[insideMassScv].viscosity();
+
+        const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+
+        auto mu = [&](const auto& elemVolVars)
+        {
+            // TODO distance weighting
+            return 0.5*(elemVolVars[insideMassScv].viscosity() + elemVolVars[outsideMassScv].viscosity());
+        };
+
+        return mu(momentumCouplingContext_[0].curElemVolVars);
     }
 
      /*!
      * \brief Returns the velocity at a given sub control volume face.
      */
-    Scalar faceVelocity(const Element<freeFlowMassIdx>& element,
-                        const SubControlVolumeFace<freeFlowMassIdx>& scvf) const
+    VelocityVector faceVelocity(const Element<freeFlowMassIdx>& element,
+                                const SubControlVolumeFace<freeFlowMassIdx>& scvf) const
     {
         bindCouplingContext(Dune::index_constant<freeFlowMassIdx>(), element);
         const auto& scvJ = massAndEnergyCouplingContext_[0].fvGeometry.scv(scvf.index());
-        return this->curSol()[freeFlowMomentumIdx][scvJ.dofIndex()];
+
+        // create a unit normal vector oriented in positive coordinate direction
+        auto velocity = scvf.unitOuterNormal();
+        using std::abs;
+        std::for_each(velocity.begin(), velocity.end(), [](auto& v){ v = abs(v); });
+
+        // create the actual velocity vector
+        velocity *= this->curSol()[freeFlowMomentumIdx][scvJ.dofIndex()];
+
+        return velocity;
     }
 
     /*!
@@ -299,12 +336,11 @@ public:
         const auto eIdx = this->problem(freeFlowMomentumIdx).gridGeometry().elementMapper().index(elementI);
         if (momentumCouplingContext_.empty() || momentumCouplingContext_[0].eIdx != eIdx)
         {
-
             auto fvGeometry = localView(this->problem(freeFlowMassIdx).gridGeometry());
-            fvGeometry.bindElement(elementI);
+            fvGeometry.bind(elementI);
 
             auto curElemVolVars = localView(gridVars_(freeFlowMassIdx).curGridVolVars());
-            curElemVolVars.bindElement(elementI, fvGeometry, this->curSol());
+            curElemVolVars.bind(elementI, fvGeometry, this->curSol());
 
             auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIdx).prevGridVolVars())
                                                 : localView(gridVars_(freeFlowMassIdx).curGridVolVars());
@@ -366,15 +402,16 @@ public:
             bindCouplingContext(domainI, localAssemblerI.element());
 
             const auto& problem = this->problem(domainJ);
-            const auto& element = localAssemblerI.element();
-            const auto elemSol = elementSolution(element, this->curSol()[domainJ], problem.gridGeometry());
+            const auto& deflectedElement = problem.gridGeometry().element(dofIdxGlobalJ);
+            const auto elemSol = elementSolution(deflectedElement, this->curSol()[domainJ], problem.gridGeometry());
             const auto& fvGeometry = momentumCouplingContext_[0].fvGeometry;
-            const auto& scv = (*scvs(fvGeometry).begin());
+            const auto scvIdxJ = dofIdxGlobalJ;
+            const auto& scv = fvGeometry.scv(scvIdxJ);
 
             if constexpr (ElementVolumeVariables<freeFlowMassIdx>::GridVolumeVariables::cachingEnabled)
-                gridVars_(freeFlowMassIdx).curGridVolVars().volVars(scv).update(std::move(elemSol), problem, element, scv);
+                gridVars_(freeFlowMassIdx).curGridVolVars().volVars(scv).update(std::move(elemSol), problem, deflectedElement, scv);
             else
-                momentumCouplingContext_[0].curElemVolVars[scv].update(std::move(elemSol), problem, element, scv);
+                momentumCouplingContext_[0].curElemVolVars[scv].update(std::move(elemSol), problem, deflectedElement, scv);
         }
     }
 
@@ -501,7 +538,7 @@ public:
             // if intertia is considered, we need the neighbor mass dofs in the momentum stencil in case of variable density
             if constexpr (FluidSystem::isCompressible(0/*phaseIdx*/))
             {
-                if (this->problem(freeFlowMomentumIdx.enableInertiaTerms()))
+                if (this->problem(freeFlowMomentumIdx).enableInertiaTerms())
                     addOutsideElementDependencies();
             }
         }
