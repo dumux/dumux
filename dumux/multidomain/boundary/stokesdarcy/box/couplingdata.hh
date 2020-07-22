@@ -403,7 +403,7 @@ public:
             }
             //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
             //TODO: which fits dumux style better?
-            M.usmv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP, velocity);
+            M.usmv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)*data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP, velocity);
             //alternativ: velocity.axpy(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, mv(M,gradP));
           }
           intersectionLength += data.segmentGeometry.volume();
