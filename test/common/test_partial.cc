@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <tuple>
+#include <type_traits>
 
 #include <dune/common/indices.hh>
 #include <dune/common/classname.hh>
@@ -48,6 +49,24 @@ void runTest()
 
     if (!Dune::FloatCmp::eq(std::get<2>(m)[0][0], 5.0))
         DUNE_THROW(Dune::Exception, "Modifying referenced partial vector failed! (m = " << std::get<2>(m)[0][0] << ", p = " << std::get<1>(p)[0][0] << ")");
+
+    const auto mConst = m;
+    auto pConst = partial(mConst, _0, _2);
+    static_assert(std::is_const_v<std::remove_reference_t<decltype(std::get<0>(pConst))>>);
+    static_assert(std::is_const_v<std::remove_reference_t<decltype(std::get<1>(pConst))>>);
+
+    if (!Dune::FloatCmp::eq(std::get<0>(mConst)[0][0], std::get<0>(pConst)[0][0]))
+        DUNE_THROW(Dune::Exception, "Values differ! (mConst = " << std::get<0>(mConst)[0][0] << ", pConst = " << std::get<0>(pConst)[0][0] << ")");
+
+    const auto& mConstRef = m;
+    auto pConstRef = partial(mConstRef, _0, _2);
+    static_assert(std::is_const_v<std::remove_reference_t<decltype(std::get<0>(pConstRef))>>);
+    static_assert(std::is_const_v<std::remove_reference_t<decltype(std::get<1>(pConstRef))>>);
+
+    std::get<2>(m)[0][0] = 10.0;
+
+    if (!Dune::FloatCmp::eq(std::get<1>(pConstRef)[0][0], 10.0))
+        DUNE_THROW(Dune::Exception, "Modifying referenced partial vector failed! (m = " << std::get<2>(m)[0][0] << ", pConstRef = " << std::get<1>(pConstRef)[0][0] << ")");
 }
 
 } // end namespace Dumux
@@ -60,7 +79,6 @@ int main(int argc, char* argv[]) try
     runTest<std::tuple>();
 
     return 0;
-
 }
 catch (const Dune::Exception& e)
 {

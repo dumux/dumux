@@ -43,6 +43,17 @@ auto partial(Dune::MultiTypeBlockVector<Args...>& v, Dune::index_constant<i>... 
 }
 
 /*!
+ * \brief a function to get a MultiTypeBlockVector with const references to some entries of another MultiTypeBlockVector
+ * \param v a MultiTypeBlockVector
+ * \param indices the indices of the entries that should be referenced
+ */
+template<class ...Args, std::size_t ...i>
+auto partial(const Dune::MultiTypeBlockVector<Args...>& v, Dune::index_constant<i>... indices)
+{
+    return Dune::MultiTypeBlockVector<std::add_lvalue_reference_t<const std::decay_t<std::tuple_element_t<indices, std::tuple<Args...>>>>...>(v[indices]...);
+}
+
+/*!
  * \brief a function to get a tuple with references to some entries of another tuple
  * \param v a tuple
  * \param indices a tuple of indices of the entries that should be referenced
@@ -51,6 +62,17 @@ template<class ...Args, std::size_t ...i>
 auto partial(std::tuple<Args...>& v, Dune::index_constant<i>... indices)
 {
     return std::tuple<std::add_lvalue_reference_t<std::decay_t<std::tuple_element_t<indices, std::tuple<Args...>>>>...>(std::get<indices>(v)...);
+}
+
+/*!
+ * \brief a function to get a tuple with const references to some entries of another tuple
+ * \param v a tuple
+ * \param indices a tuple of indices of the entries that should be referenced
+ */
+template<class ...Args, std::size_t ...i>
+auto partial(const std::tuple<Args...>& v, Dune::index_constant<i>... indices)
+{
+    return std::tuple<std::add_lvalue_reference_t<const std::decay_t<std::tuple_element_t<indices, std::tuple<Args...>>>>...>(std::get<indices>(v)...);
 }
 
 /*!
