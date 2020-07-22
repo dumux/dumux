@@ -130,7 +130,8 @@ template<class TypeTag, class MyTypeTag>
 struct SecondaryInteractionVolume { using type = UndefinedProperty; };          //!< The secondary interaction volume type used e.g. on the boundaries
 template<class TypeTag, class MyTypeTag>
 struct DualGridNodalIndexSet { using type = UndefinedProperty; };               //!< The type used for the nodal index sets of the dual grid
-
+template<class TypeTag, class MyTypeTag>
+struct DiscretizationSubmethod { using type = UndefinedProperty; };             //!< The type used for an mpfa submethod belonging to a specific family of schemes
 /////////////////////////////////////////////////////////////
 // Properties used by models involving flow in porous media:
 /////////////////////////////////////////////////////////////

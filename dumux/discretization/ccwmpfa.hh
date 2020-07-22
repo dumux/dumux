@@ -117,9 +117,6 @@ struct ElementBoundaryTypes<TypeTag, TTag::CCWMpfaModel> { using type = CCElemen
 template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::CCWMpfaModel> { using type = CCLocalResidual<TypeTag>; };
 
-template<class TypeTag, class MyTypeTag>
-struct DiscretizationSubmethod { using type = UndefinedProperty; };
-
 template<class TypeTag>
 struct DiscretizationSubmethod<TypeTag, TTag::CCWMpfaModel> { static constexpr WMpfaMethod value = WMpfaMethod::avgmpfa; };
 } // namespace Properties
