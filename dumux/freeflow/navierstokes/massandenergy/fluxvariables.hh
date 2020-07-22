@@ -34,6 +34,7 @@
 
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/flux/upwindscheme.hh>
 
 
 namespace Dumux {
@@ -42,7 +43,7 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
  */
-template<class TypeTag>
+template<class TypeTag, class UpwindScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>>
 class NavierStokesMassAndEnergyFluxVariables
 : public FluxVariablesBase<GetPropType<TypeTag, Properties::Problem>,
                            typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView,
@@ -75,10 +76,27 @@ class NavierStokesMassAndEnergyFluxVariables
 
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
+    static constexpr bool enableAdvection = true; // TODO
+
 
 public:
 
-
+    /*!
+     * \brief Returns the advective flux computed by the respective law.
+     */
+    template<typename FunctionType>
+    Scalar advectiveFlux(const FunctionType& upwindTerm) const
+    {
+        if constexpr (enableAdvection)
+        {
+            const auto& scvf = this->scvFace();
+            const auto velocity = this->problem().faceVelocity(this->element(), this->fvGeometry(), scvf);
+            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*scvf.area();
+            return UpwindScheme::apply(*this, upwindTerm, volumeFlux, 0/*phaseIdx*/);
+        }
+        else
+            return 0.0;
+    }
 };
 
 } // end namespace Dumux
