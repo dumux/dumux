@@ -90,16 +90,12 @@ public:
     /*!
      * \brief Returns the normal velocity at a given sub control volume face.
      */
-    Scalar faceVelocity(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const SubControlVolumeFace& scvf) const
+    GlobalPosition faceVelocity(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const SubControlVolumeFace& scvf) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-        {
-            auto v = asImp_().velocityAtPos(scvf.ipGlobal());
-            v *= scvf.unitOuterNormal();
-            return v;
-        }
+            return asImp_().velocityAtPos(scvf.ipGlobal());
         else
             return couplingManager_->faceVelocity(element, scvf);
     }
