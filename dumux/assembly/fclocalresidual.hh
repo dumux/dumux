@@ -127,8 +127,8 @@ public:
         //
 
         //! Compute storage with the model specific storage residual
-        NumEqVector prevStorage = this->asImp().computeStorage(problem, scv, prevVolVars);
-        NumEqVector storage = this->asImp().computeStorage(problem, scv, curVolVars, true);
+        NumEqVector prevStorage = this->asImp().computeStorage(problem, scv, prevVolVars, true/*isPreviousStorage*/);
+        NumEqVector storage = this->asImp().computeStorage(problem, scv, curVolVars, false/*isPreviousStorage*/);
 
         prevStorage *= prevVolVars.extrusionFactor();
         storage *= curVolVars.extrusionFactor();
