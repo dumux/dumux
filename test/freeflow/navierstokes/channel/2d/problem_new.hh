@@ -314,28 +314,30 @@ public:
 
         if constexpr (Impl::isMomentumProblem<TypeTag>())
         {
-            values[0] = 8e4 - outletPressure_; // TODO use helper?
+            values[Indices::momentumXBalanceIdx] = outletPressure_; // TODO use helper?
+            if constexpr (getPropValue<TypeTag, Properties::NormalizePressure>())
+                values[Indices::momentumXBalanceIdx] -= outletPressure_;
 
             if (outletCondition_ == OutletCondition::doNothing)
-                values[1] = 0;
+                values[Indices::momentumYBalanceIdx] = 0;
             else if (outletCondition_ == OutletCondition::outflow) // TODO put in outflow helper
             {
                 if (scvf.isLateral() && !fvGeometry.scv(scvf.insideScvIdx()).boundary())
                 {
                     const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
-                    values[1] = -mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
+                    values[Indices::momentumYBalanceIdx] = -mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
                 }
 
                 if (scvf.isLateral() && fvGeometry.scv(scvf.insideScvIdx()).boundary())
                 {
                     const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
-                    values[1] = -mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
+                    values[Indices::momentumYBalanceIdx] = -mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
                 }
             }
             else
             {
                 assert(outletCondition_ == OutletCondition::neumannXneumannY);
-                values[1] = -dudy(scvf.ipGlobal()[1], inletVelocity_) * this->effectiveViscosity(element, fvGeometry, scvf) * scvf.directionSign();
+                values[Indices::momentumYBalanceIdx] = -dudy(scvf.ipGlobal()[1], inletVelocity_) * this->effectiveViscosity(element, fvGeometry, scvf) * scvf.directionSign();
             }
         }
 
@@ -344,7 +346,7 @@ public:
             if (isInlet_(scvf.ipGlobal()) || isOutlet_(scvf.ipGlobal()))
             {
                 const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-                values = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+                values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
             }
         }
 
@@ -390,7 +392,7 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values;
 
