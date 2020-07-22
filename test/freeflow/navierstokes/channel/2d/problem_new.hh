@@ -284,15 +284,12 @@ public:
 //                 values[Indices::temperatureIdx] = 293.15;
 // #endif
 //         }
-//         else
-//         {
-//             if constexpr (Impl::isMomentumProblem<TypeTag>())
-//             {
-//                 values[Indices::velocityXIdx] = 0.0;
-//             }
-//         }
+
         if constexpr (Impl::isMomentumProblem<TypeTag>())
-            values[Indices::velocityXIdx] = parabolicProfile(globalPos[1],1);
+        {
+            values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
+        }
+
 
         return values;
     }
@@ -347,9 +344,7 @@ public:
             if (isInlet_(scvf.ipGlobal()) || isOutlet_(scvf.ipGlobal()))
             {
                 const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-                const auto dirIdx = directionIndex(scvf.unitOuterNormal());
-                const auto sign = Dumux::sign(scvf.unitOuterNormal()[dirIdx]);
-                values = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * sign;
+                values = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
             }
         }
 
