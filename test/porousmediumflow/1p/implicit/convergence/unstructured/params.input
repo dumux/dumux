@@ -1,0 +1,17 @@
+[Grid]
+UpperRight = 1 1
+Cells = 40 40
+Refinement = 0
+
+[Problem]
+Name = convergence
+
+[Problem]
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
