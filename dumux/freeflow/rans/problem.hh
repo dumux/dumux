@@ -527,10 +527,10 @@ private:
                     }
                 }
 
-                // Calculate the BJS-velocity by accounting for all sub faces.
-                std::vector<int> bjsNumFaces(dim, 0);
-                std::vector<unsigned int> bjsNeighbor(dim, 0);
-                DimVector bjsVelocityAverage(0.0);
+                // Calculate the slip-velocity by accounting for all sub faces.
+                std::vector<int> slipNumFaces(dim, 0);
+                std::vector<unsigned int> slipNeighbor(dim, 0);
+                DimVector slipVelocityAverage(0.0);
                 DimVector normalNormCoordinate(0.0);
                 unsigned int velIdx = Indices::velocity(scvfNormDim);
                 const int numSubFaces = scvf.pairData().size();
@@ -538,34 +538,34 @@ private:
                 {
                     const auto& lateralFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData()[localSubFaceIdx].localLateralFaceIdx);
 
-                    // adapt calculations for Beavers-Joseph-Saffman condition
+                    // adapt calculations for slip condition
                     unsigned int normalNormDim = lateralFace.directionIndex();
-                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBeaversJoseph(Indices::velocity(velIdx))))
+                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isSlipCondition(Indices::velocity(velIdx))))
                     {
                         unsigned int neighborIdx = neighborIndex(elementIdx, normalNormDim, 0);
                         if (lateralFace.center()[normalNormDim] < cellCenter(elementIdx)[normalNormDim])
                             neighborIdx = neighborIndex(elementIdx, normalNormDim, 1);
 
                         const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, scvf, lateralFace, ccVelocity(elementIdx, velIdx), 0.0);
-                        if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
+                        slipVelocityAverage[normalNormDim] += ParentType::slipVelocity(element, scv, scvf, lateralFace, velocity_[elementIdx][velIdx], 0.0);
+                        if (slipNumFaces[normalNormDim] > 0 && neighborIdx != slipNeighbor[normalNormDim])
                             DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
-                        bjsNeighbor[normalNormDim] = neighborIdx;
+                        slipNeighbor[normalNormDim] = neighborIdx;
                         normalNormCoordinate[normalNormDim] = lateralFace.center()[normalNormDim];
-                        bjsNumFaces[normalNormDim]++;
+                        slipNumFaces[normalNormDim]++;
                     }
                 }
                 for (unsigned dirIdx = 0; dirIdx < dim; ++dirIdx)
                 {
-                    if (bjsNumFaces[dirIdx] == 0)
+                    if (slipNumFaces[dirIdx] == 0)
                         continue;
 
-                    unsigned int neighborIdx = bjsNeighbor[dirIdx];
-                    bjsVelocityAverage[dirIdx] /= bjsNumFaces[dirIdx];
+                    unsigned int neighborIdx = slipNeighbor[dirIdx];
+                    slipVelocityAverage[dirIdx] /= slipNumFaces[dirIdx];
 
                     velocityGradients_[elementIdx][velIdx][dirIdx]
-                        = (ccVelocity(neighborIdx, velIdx) - bjsVelocityAverage[dirIdx])
-                        / (cellCenter(neighborIdx)[dirIdx] - normalNormCoordinate[dirIdx]);
+                        = (velocity_[neighborIdx][velIdx] - slipVelocityAverage[dirIdx])
+                          / (cellCenter_[neighborIdx][dirIdx] - normalNormCoordinate[dirIdx]);
 
                 }
             }

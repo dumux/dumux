@@ -321,9 +321,9 @@ public:
                 lateralFaceBoundaryTypes.emplace(problem.boundaryTypes(element, lateralFace));
             }
 
-            // If the current scvf is on a bounary and if there is a Neumann or Beavers-Joseph-(Saffmann) BC for the stress in tangential direction,
+            // If the current scvf is on a bounary and if there is a Neumann or SlipCondition BC for the stress in tangential direction,
             // assign this value for the lateral momentum flux. No further calculations are required. We assume that all lateral faces
-            // have the same type of BC (Neumann or Beavers-Joseph-(Saffmann)), but we sample the value at their actual positions.
+            // have the same type of BC (Neumann or SlipCondition), but we sample the value at their actual positions.
             if (currentScvfBoundaryTypes)
             {
                 // Handle Neumann BCs.
@@ -343,10 +343,9 @@ public:
                 // It is not clear how to evaluate the BJ condition here.
                 // For symmetry reasons, our own scvf should then have the same Neumann flux as the lateral face.
                 // TODO: We should clarify if this is the correct approach.
-                bool bj = currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralScvf.directionIndex()));
-                bool nTangential = currentScvfBoundaryTypes->isNTangential(Indices::velocity(lateralScvf.directionIndex()));
+                bool slipCondition = currentScvfBoundaryTypes->isSlipCondition(Indices::velocity(lateralScvf.directionIndex()));
                 bool neumann = lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex()));
-                if ( (bj || nTangential) && lateralFaceBoundaryTypes && neumann)
+                if ( slipCondition && lateralFaceBoundaryTypes && neumann)
                 {
                     FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
@@ -389,11 +388,10 @@ public:
             // Check the consistency of the boundary conditions, exactly one of the following must be set
             if (lateralFaceBoundaryTypes)
             {
-                std::bitset<4> admittableBcTypes;
+                std::bitset<3> admittableBcTypes;
                 admittableBcTypes.set(0, lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
                 admittableBcTypes.set(1, lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex())));
-                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex())));
-                admittableBcTypes.set(3, lateralFaceBoundaryTypes->isNTangential(Indices::velocity(scvf.directionIndex())));
+                admittableBcTypes.set(2, lateralFaceBoundaryTypes->isSlipCondition(Indices::velocity(scvf.directionIndex())));
                 if (admittableBcTypes.count() != 1)
                 {
                     DUNE_THROW(Dune::InvalidStateException, "Invalid boundary conditions for lateral scvf "
@@ -522,14 +520,10 @@ private:
                     const auto lateralBoundaryFace = makeStaggeredBoundaryFace(scvf, lateralBoundaryFacePos);
                     return problem.dirichlet(element, lateralBoundaryFace)[Indices::velocity(lateralFace.directionIndex())];
                 }
-                else if (bcTypes.isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())))
+                else if (bcTypes.isSlipCondition(Indices::velocity(lateralFace.directionIndex())))
                 {
-                    return VelocityGradients::beaversJosephVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
+                    return VelocityGradients::slipVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
                                                                                  currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
-                }
-                else if (bcTypes.isNTangential(Indices::velocity(lateralFace.directionIndex()))){
-                  return VelocityGradients::nTangentialVelocityAtCurrentScvf(problem, element, fvGeometry, scvf,  faceVars,
-                                                                               currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
                 }
                 else
                     return faceVars.velocityLateralInside(localSubFaceIdx);
@@ -599,8 +593,7 @@ private:
         {
             if (!scvf.boundary() ||
                 currentScvfBoundaryTypes->isDirichlet(Indices::velocity(lateralFace.directionIndex())) ||
-                currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(lateralFace.directionIndex())) ||
-                currentScvfBoundaryTypes->isNTangential(Indices::velocity(lateralFace.directionIndex()))
+                currentScvfBoundaryTypes->isSlipCondition(Indices::velocity(lateralFace.directionIndex()))
                )
             {
                 const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(problem, element, fvGeometry, scvf, faceVars, currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);

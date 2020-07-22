@@ -52,7 +52,7 @@ public:
         ParentType::resetEq(eqIdx);
 
         boundaryInfo_[eqIdx].isSymmetry = false;
-        boundaryInfo_[eqIdx].isBeaversJoseph = false;
+        boundaryInfo_[eqIdx].isSlipCondition = false;
     }
 
     /*!
@@ -77,10 +77,20 @@ public:
      * \brief Set a boundary condition for a single equation to
      *        Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
      */
+    [[deprecated("Use setSlipCondition(eqIdx) instead! Will be removed after release 3.5.")]]
     void setBeaversJoseph(const int eqIdx)
     {
+        setSlipCondition(eqIdx);
+    }
+
+    /*!
+     * \brief Set a boundary condition for a single equation to
+     *        slip condition: e.g. Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
+     */
+    void setSlipCondition(const int eqIdx)
+    {
         resetEq(eqIdx);
-        boundaryInfo_[eqIdx].isBeaversJoseph = true;
+        boundaryInfo_[eqIdx].isSlipCondition = true;
     }
 
     /*!
@@ -89,17 +99,37 @@ public:
      *
      * \param eqIdx The index of the equation
      */
+    [[deprecated("Use isSlipCondition(eqIdx) instead! Will be removed after release 3.5.")]]
     bool isBeaversJoseph(const int eqIdx) const
     { return boundaryInfo_[eqIdx].isBeaversJoseph; }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        slip condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isSlipCondition(const int eqIdx) const
+    { return boundaryInfo_[eqIdx].isSlipCondition; }
 
     /*!
      * \brief Returns true if some equation is used to specify a
      *        Beavers-Joseph(-Saffman) boundary condition.
      */
+    [[deprecated("Use hasSlipCondition(eqIdx) instead! Will be removed after release 3.5.")]]
     bool hasBeaversJoseph() const
     {
+        return hasSlipCondition();
+    }
+
+    /*!
+     * \brief Returns true if some equation is used to specify a
+     *        slip condition.
+     */
+    bool hasSlipCondition() const
+    {
         for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isBeaversJoseph)
+            if (boundaryInfo_[i].isSlipCondition)
                 return true;
         return false;
     }
@@ -109,7 +139,7 @@ protected:
     struct NavierStokesBoundaryInfo
     {
         bool isSymmetry : 1;
-        bool isBeaversJoseph : 1;
+        bool isSlipCondition : 1;
     };
 
     std::array<NavierStokesBoundaryInfo, numEq> boundaryInfo_;
