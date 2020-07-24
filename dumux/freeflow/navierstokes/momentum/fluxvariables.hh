@@ -145,6 +145,22 @@ public:
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
         result -= factor * mu * velocityGrad_ii * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
 
+        static const bool enableDilatationTerm = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
+        if (enableDilatationTerm)
+        {
+            Scalar divergence = 0.0;
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto frontalScvf  = *(scvfs(fvGeometry, scv).begin());
+                assert(frontalScvf.isFrontal() && !frontalScvf.boundary());
+                divergence += VelocityGradients::velocityGradII(fvGeometry, frontalScvf, elemVolVars);
+            }
+            // std::cout << "divergence at " << scvf.center() << " is " << divergence << std::endl;
+            // std::cout << std::setprecision(15) << "old term " << factor * mu * velocityGrad_ii * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor() << ", div term " << 2.0/3.0 * mu * divergence * scvf.directionSign() * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor() << std::endl;
+            result += 2.0/3.0 * mu * divergence * scvf.directionSign() * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        }
+
+
         return result;
     }
 
