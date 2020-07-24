@@ -318,6 +318,9 @@ public:
             if constexpr (getPropValue<TypeTag, Properties::NormalizePressure>())
                 values[Indices::momentumXBalanceIdx] -= outletPressure_;
 
+            if (this->enableInertiaTerms() && isOutlet_(scvf.ipGlobal()))
+                    values[Indices::momentumXBalanceIdx] += elemVolVars[scvf.insideScvIdx()].velocity() * elemVolVars[scvf.insideScvIdx()].velocity() * this->density(element, fvGeometry, scvf) * scvf.directionSign();
+
             if (outletCondition_ == OutletCondition::doNothing)
                 values[Indices::momentumYBalanceIdx] = 0;
             else if (outletCondition_ == OutletCondition::outflow) // TODO put in outflow helper
