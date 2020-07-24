@@ -99,11 +99,12 @@ public:
 
             // check if boundary is a pure dirichlet boundary
             const auto& problem = gridVolVars().problem();
-            // const auto bcTypes = problem.boundaryTypes(element, scvf);
-            // if (bcTypes.hasOnlyDirichlet()) TODO
-            // {
-                const auto& scvI = fvGeometry.scv(scvf.insideScvIdx());
-                typename VolumeVariables::PrimaryVariables pv(problem.dirichlet(element, scvf)[scvI.directionIndex()]);
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
+
+            auto addBoundaryVolVars = [&](const auto& scvFace)
+            {
+                const auto& scvI = fvGeometry.scv(scvFace.insideScvIdx());
+                typename VolumeVariables::PrimaryVariables pv(problem.dirichlet(element, scvFace)[scvI.directionIndex()]);
                 const auto dirichletPriVars = elementSolution<FVElementGeometry>(pv);
 
                 VolumeVariables volVars;
@@ -113,8 +114,21 @@ public:
                                scvI);
 
                 boundaryVolumeVariables_.emplace_back(std::move(volVars));
-                boundaryVolVarIndices_.push_back(scvf.outsideScvIdx());
-            // }
+                boundaryVolVarIndices_.push_back(scvFace.outsideScvIdx());
+            };
+
+            if (bcTypes.hasOnlyDirichlet())
+            {
+                addBoundaryVolVars(scvf);
+                continue;
+            }
+
+            // treat domain corners
+            if (const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf); orthogonalScvf.boundary())
+            {
+                if (const auto orthogonalBcTypes = problem.boundaryTypes(element, orthogonalScvf); orthogonalBcTypes.hasOnlyDirichlet())
+                    addBoundaryVolVars(scvf);
+            }
         }
         assert(boundaryVolumeVariables_.size() == boundaryVolVarIndices_.size());
     }
