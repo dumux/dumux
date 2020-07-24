@@ -107,7 +107,23 @@ public:
         enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
     }
 
-        /*!
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param element The finite element
+     * \param scvf The sub control volume face
+     */
+    auto boundaryTypes(const Element &element,
+                       const SubControlVolumeFace &scvf) const
+    {
+        // Forward it to the method which only takes the global coordinate.
+        // We evaluate the boundary type at the center of the sub control volume face
+        // in order to avoid ambiguities at domain corners.
+        return asImp_().boundaryTypesAtPos(scvf.center());
+    }
+
+    /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume face.
      *
