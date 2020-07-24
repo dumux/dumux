@@ -263,7 +263,7 @@ public:
                                        const Scalar velocitySelf, //vel auf stehendem
                                        const Scalar tangentialVelocityGradient) const //dv/dx=0
     {
-        //const Scalar viscosity = elemVolVars[scvf.insideScvIdx()].effectiveViscosity();
+        //const Scalar viscosity = elemVolVars[scvf.insideScvIdx()].Viscosity();
         const Scalar factor = -1.0/(asImp_().epsInterface(faceOnPorousBoundary) * asImp_().factorNTangential(faceOnPorousBoundary));
         const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
 

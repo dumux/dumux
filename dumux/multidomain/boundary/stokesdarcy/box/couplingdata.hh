@@ -234,7 +234,7 @@ public:
         // Calculating additional term for momentum flux
         const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
         // Averaging the gradients to get evaluation at the center
-        const Scalar viscosity = stokesElemVolVars[scvf.insideScvIdx()].effectiveViscosity();
+        const Scalar viscosity = stokesElemVolVars[scvf.insideScvIdx()].viscosity();
         momentumFlux -= 1.0/numSubFaces * viscosity * Nsbl * (velocityGrad_ji + velocityGrad_ij);
       }
       momentumFlux *= scvf.directionSign();
