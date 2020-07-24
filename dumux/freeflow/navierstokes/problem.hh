@@ -231,6 +231,22 @@ public:
         return VelocityVector(0.0);
     }
 
+    //! helper function to evaluate the slip velocity on the boundary
+    const Scalar slipVelocity(const Element& element,
+                                       const SubControlVolume& scv,
+                                       const SubControlVolumeFace& ownScvf,
+                                       const SubControlVolumeFace& faceOnPorousBoundary,
+                                       const Scalar velocitySelf,
+                                       const Scalar tangentialVelocityGradient) const
+    {
+        if (getParamFromGroup<bool>("Problem", "NewIc", false)){
+            return nTangentialVelocity(element, scv,ownScvf, faceOnPorousBoundary, velocitySelf, tangentialVelocityGradient);
+        }
+        else{
+            return beaversJosephVelocity(element, scv,ownScvf, faceOnPorousBoundary, velocitySelf, tangentialVelocityGradient);
+        }
+    }
+
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used
     const Scalar beaversJosephVelocity(const Element& element,
                                        const SubControlVolume& scv,

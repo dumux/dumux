@@ -54,8 +54,7 @@ public:
 
         boundaryInfo_[eqIdx].visited = false;
         boundaryInfo_[eqIdx].isSymmetry = false;
-        boundaryInfo_[eqIdx].isBeaversJoseph = false;
-        boundaryInfo_[eqIdx].isNTangential = false;
+        boundaryInfo_[eqIdx].isSlipCondition = false;
     }
 
     /*!
@@ -95,27 +94,28 @@ public:
         static_assert(AlwaysFalse<T>::value, "Setting all boundary types to Neumann not permitted!");
     }
 
+    // TODO: deprecate!
     /*!
      * \brief Set a boundary condition for a single equation to
      *        Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
      */
     void setBeaversJoseph(unsigned eqIdx)
     {
-        resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = true;
-        boundaryInfo_[eqIdx].isBeaversJoseph = true;
+        setSlipCondition(eqIdx);
     }
     /*!
      * \brief Set a boundary condition for a single equation to
-     *        new slip condition by Elissa Eggenweiler
+     *        slip condition: bjs,bj or the new one by Elissa Eggenweiler
      */
-    void setNTangential(unsigned eqIdx)
+    void setSlipCondition(unsigned eqIdx)
     {
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
-        boundaryInfo_[eqIdx].isNTangential = true;
+        boundaryInfo_[eqIdx].isSlipCondition = true;
     }
 
+
+    // TODO: Deprecate/Remove? Where used?
     /*!
      * \brief Returns true if an equation is used to specify a
      *        Beavers-Joseph(-Saffman) boundary condition.
@@ -123,37 +123,35 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isBeaversJoseph(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isBeaversJoseph; }
+    { return isSlipCondition(eqIdx); }
 
     /*!
      * \brief Returns true if an equation is used to specify a
-     *        nTangential boundary condition.
+     *        slip condition
      *
      * \param eqIdx The index of the equation
      */
-    bool isNTangential(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isNTangential; }
+    bool isSlipCondition(unsigned eqIdx) const
+    { return boundaryInfo_[eqIdx].isSlipCondition; }
 
+    // TODO: Deprecate/Remove? Where used?
     /*!
      * \brief Returns true if some equation is used to specify a
      *        Beavers-Joseph(-Saffman) boundary condition.
      */
     bool hasBeaversJoseph() const
     {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isBeaversJoseph)
-                return true;
-        return false;
+        return hasSlipCondition();
     }
 
     /*!
      * \brief Returns true if some equation is used to specify a
-     *        nTangential boundary condition.
+     *        slip condition
      */
-    bool hasNTangential() const
+    bool hasSlipCondition() const
     {
         for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isNTangential)
+            if (boundaryInfo_[i].isSlipCondition)
                 return true;
         return false;
     }
@@ -163,8 +161,7 @@ protected:
     {
         bool visited;
         bool isSymmetry;
-        bool isBeaversJoseph;
-        bool isNTangential;
+        bool isSlipCondition;
     };
 
     std::array<StaggeredFreeFlowBoundaryInfo, numEq> boundaryInfo_;

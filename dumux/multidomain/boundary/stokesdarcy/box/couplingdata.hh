@@ -83,12 +83,34 @@ public:
     /*!
      * \brief Returns the momentum flux across the coupling boundary.
      *
+     * Calls (old/new)MomentumCouplingCondition depending on the value of the parameter "Problem.NewIc"
+     * Defaults to oldMomentumCouplingCondition
+     *
+     */
+    template<class ElementFaceVariables>
+    Scalar momentumCouplingCondition(const Element<stokesIdx>& element,
+                                     const FVElementGeometry<stokesIdx>& fvGeometry,
+                                     const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
+                                     const ElementFaceVariables& stokesElemFaceVars,
+                                     const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        if (getParamFromGroup<bool>("Problem", "NewIc", false)){
+            return newMomentumCouplingCondition(element, fvGeometry, stokesElemVolVars, stokesElemFaceVars, scvf);
+        }
+        else{
+            return oldMomentumCouplingCondition(element, fvGeometry, stokesElemVolVars, stokesElemFaceVars, scvf);
+        }
+    }
+
+    /*!
+     * \brief Returns the momentum flux across the coupling boundary.
+     *
      * For the normal momentum coupling, the porous medium side of the coupling condition
      * is evaluated, i.e. -[p n]^pm.
      *
      */
     template<class ElementFaceVariables>
-    Scalar momentumCouplingCondition(const Element<stokesIdx>& element,
+    Scalar oldMomentumCouplingCondition(const Element<stokesIdx>& element,
                                      const FVElementGeometry<stokesIdx>& fvGeometry,
                                      const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
                                      const ElementFaceVariables& stokesElemFaceVars,
@@ -149,7 +171,7 @@ public:
     *
     */
     template<class ElementFaceVariables>
-    Scalar nMomentumCouplingCondition(const Element<stokesIdx>& element,
+    Scalar newMomentumCouplingCondition(const Element<stokesIdx>& element,
                                       const FVElementGeometry<stokesIdx>& fvGeometry,
                                       const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
                                       const ElementFaceVariables& stokesElemFaceVars,
@@ -223,10 +245,10 @@ public:
             this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
             currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
-        const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
+        const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
                                                            "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
         //TODO: Remove calculation above in this case
-        if (unsymmetrizedGradientForBJ){
+        if (unsymmetrizedGradientForIC){
             velocityGrad_ij = 0.0;
         }
 
@@ -241,13 +263,30 @@ public:
     }
 
     /*!
+     * \brief Returns the averaged velocity vector at the interface of the porous medium according to darcys law
+     *
+     * Calls standardPorousMediumVelocity/newPorousMediumInterfaceVelocity depending on the value of the parameter "Problem.NewIc"
+     * Defaults to standardPorousMediumVelocity
+     *
+     */
+    VelocityVector porousMediumVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    {
+        if (getParamFromGroup<bool>("Problem", "NewIc", false)){
+            return newPorousMediumInterfaceVelocity(element, scvf);
+        }
+        else{
+            return standardPorousMediumVelocity(element, scvf);
+        }
+    }
+
+    /*!
     * \brief Returns the averaged velocity vector at the interface of the porous medium according to darcys law
     *
     * The tangential porous medium velocity needs to be evaluated for the tangential coupling at the
     * stokes-darcy interface. We use darcys law and perform an integral average over all coupling segments.
     *
     */
-    VelocityVector porousMediumVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
+    VelocityVector standardPorousMediumVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
       static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
       using JacobianType = Dune::FieldMatrix<Scalar, 1, darcyDim>;
