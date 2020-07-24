@@ -183,17 +183,15 @@ public:
                 //  ----> x
                 //                                       O integration point at which Neumann flux is evaluated (here for y component)
                 //
-                for (const auto& otherScvf : scvfs(fvGeometry))
+                auto scvfIter = scvfs(fvGeometry, scv).begin();
+                ++scvfIter;
+                const auto frontalScvfOnBoundary  = *scvfIter; //TODO convenience function
+                assert(frontalScvfOnBoundary.isFrontal() && frontalScvfOnBoundary.boundary());
+                const auto& bcTypes = elemBcTypes[frontalScvfOnBoundary.localIndex()];
+                if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.directionIndex()))
                 {
-                    if (otherScvf.isFrontal() && otherScvf.boundary())
-                    {
-                        const auto& bcTypes = elemBcTypes[otherScvf.localIndex()];
-                        if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.directionIndex()))
-                        {
-                            const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                            return neumannFluxes[scvf.directionIndex()] * scvf.area() * elemVolVars[scv].extrusionFactor();
-                        }
-                    }
+                    const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                    return neumannFluxes[scvf.directionIndex()] * scvf.area() * elemVolVars[scv].extrusionFactor();
                 }
             }
         }
