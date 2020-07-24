@@ -316,10 +316,11 @@ public:
                                     intersectionGeometry.volume(),
                                     directionIdx,
                                     -sign(intersection.centerUnitOuterNormal()[directionIdx]),
-                                    globalScvfIndices[localScvfIdx++],
+                                    globalScvfIndices[localScvfIdx],
                                     0, // should not be used
                                     SubControlVolumeFace::FaceType::frontal,
                                     false);
+                ++localScvfIdx;
 
                 // the frontal sub control volume face at a domain boundary (coincides with element face)
                 if (onDomainBoundary_(intersection))
@@ -334,10 +335,11 @@ public:
                                         intersectionGeometry.volume(),
                                         directionIdx,
                                         sign(intersection.centerUnitOuterNormal()[directionIdx]),
-                                        globalScvfIndices[localScvfIdx++],
+                                        globalScvfIndices[localScvfIdx],
                                         0, // should not be used
                                         SubControlVolumeFace::FaceType::frontal,
                                         true);
+                    ++localScvfIdx;
                     hasBoundaryScvf_[eIdx] = true;
                 }
 
