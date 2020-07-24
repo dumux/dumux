@@ -212,6 +212,10 @@ public:
         return asImp_().alphaBJ(scvf) / sqrt(asImp_().permeability(element, scvf));
     }
 
+    //TODO: Elissa, maybe you can write a small description, see above for these functions
+    /*!
+     * \brief Returns the ... value,
+     */
     Scalar epsInterface(const SubControlVolumeFace& scvf) const
     { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the epsInterface value must be returned in the acutal problem");}
 
@@ -224,7 +228,7 @@ public:
      */
     VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        return VelocityVector(0.0);//TODO: -> Dont force implementation?
+        return VelocityVector(0.0);
     }
 
     //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph condition is used

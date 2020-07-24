@@ -142,9 +142,10 @@ public:
     //TODO by Lars: Review!
     //TODO by Lars: Use momentumCouplingCondition(...)/introduce new method to remove dulplicated code?
     /*!
-    * \brief Returns the new interface condition momentum flux across the coupling boundary.
+    * \brief Returns the momentum flux across the coupling boundary which is calculated according to the new interface condition
     *
-    * For the new momentum coupling, the porous medium side and a difference to the usual momentum flux is calculated
+    * For the new normal momentum coupling, the porous medium side and also the stokes side is evaluated.
+    * [p]^pm + N_s^{bl} \tau T n
     *
     */
     template<class ElementFaceVariables>
@@ -193,22 +194,20 @@ public:
       if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
       momentumFlux -= this->couplingManager().problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
 
-      //######## New (n) stokes contribution #################
-      const std::size_t numSubFaces = scvf.pairData().size(); //numer of adjacent sub faces?
+      //######## New stokes contribution #################
+      const std::size_t numSubFaces = scvf.pairData().size();
 
-      // Account for all sub faces.
+      // Account for all sub faces
       for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
       {
         const auto eIdx = scvf.insideScvIdx();
         const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
 
-        // If the current scvf is on a boundary, check if there is a Neumann BC for the stress in tangential direction.
-        // Create a boundaryTypes object (will be empty if not at a boundary).
+        // Create a boundaryTypes object (will be empty if not at a boundary)
         std::optional<BoundaryTypes<stokesIdx>> currentScvfBoundaryTypes;
         if (scvf.boundary())
             currentScvfBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, scvf));
 
-        // Getting boundary type for lateral face
         std::optional<BoundaryTypes<stokesIdx>> lateralFaceBoundaryTypes;
         if (lateralScvf.boundary())
         {
@@ -216,7 +215,7 @@ public:
         }
 
 
-        // Getting velocity gradients
+        // Get velocity gradients
         const Scalar velocityGrad_ji = StokesVelocityGradients::velocityGradJI(
           this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
           currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
@@ -231,22 +230,21 @@ public:
             velocityGrad_ij = 0.0;
         }
 
-        // Calculating additional term for momentum flux
+        // Calculate stokes contribution to momentum flux: N_s^{bl} \tau T n
         const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
-        // Averaging the gradients to get evaluation at the center
         const Scalar viscosity = stokesElemVolVars[scvf.insideScvIdx()].viscosity();
+        // Averaging the gradients over the subfaces to get evaluation at the center
         momentumFlux -= 1.0/numSubFaces * viscosity * Nsbl * (velocityGrad_ji + velocityGrad_ij);
       }
       momentumFlux *= scvf.directionSign();
-        std::cout<<"momFlux" << momentumFlux<<std::endl;
       return momentumFlux;
     }
 
     /*!
     * \brief Returns the averaged velocity vector at the interface of the porous medium according to darcys law
     *
-    * The tangential porous medium velocity needs to be evaluated at the stokes domain for the tangential (bj and nTangential)
-    * coupling at the stokes-darcy interface. We use darcys law and perform an integral average over all coupling segments.
+    * The tangential porous medium velocity needs to be evaluated for the tangential coupling at the
+    * stokes-darcy interface. We use darcys law and perform an integral average over all coupling segments.
     *
     */
     VelocityVector porousMediumVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
@@ -259,7 +257,7 @@ public:
       VelocityVector velocity(0.0); //  velocity darcy
       VelocityVector gradP(0.0);    // pressure gradient darcy
       Scalar rho(0.0);              // density darcy
-      Scalar intersectionLength = 0.0; //(total)intersection length could differ from scfv length
+      Scalar intersectionLength = 0.0; //(total)intersection length, could differ from scfv length
 
       //Getting needed information from the darcy domain
       const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
@@ -313,7 +311,7 @@ public:
             if (enableGravity){
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
             }
-            //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*K/mu*gradP
+            //Add the integrated segment velocity to the sum: v+= -weight_k * sqrt(det(A^T*A))*K/mu*gradP
             //TODO: which fits dumux style better?
             K.usmv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx), gradP, velocity);
             //alternativ: velocity.axpy(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx), mv(K,gradP));
@@ -327,7 +325,7 @@ public:
 
 
     /*!
-    * \brief Returns the averaged velocity vector at the interface of the porous medium with a different permeability tensor according to darcys law
+    * \brief Returns the averaged velocity vector at the interface of the porous medium according to darcys law with a different permeability tensor
     *
     * For the new tangential interface condition by Elissa Eggenweiler, a porous medium velocity with altered permeability tensor needs to be evaluated.
     * We use darcys law and perform an integral average over all coupling segments.
