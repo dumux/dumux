@@ -39,6 +39,8 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/facecentered/staggered/fvgridgeometry.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/istlsolverfactorybackend.hh>
 
 #include "problem_new.hh"
 
@@ -95,8 +97,9 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = Dumux::UMFPackBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
+    const auto dofMapper = LinearSolverTraits<GridGeometry>::DofMapper(gridGeometry->gridView());
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), dofMapper);
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
