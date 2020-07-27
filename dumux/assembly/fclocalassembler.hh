@@ -91,6 +91,7 @@ public:
         if (partialReassembler
             && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
+            assert(false); // TODO remove
             const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
                 res[scv.dofIndex()] += residual[scv.localDofIndex()];
@@ -98,11 +99,16 @@ public:
         else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
+
+            if (this->element().partitionType() != Dune::InteriorEntity)
+                return; // TODO hack
+
             for (const auto& scv : scvs(this->fvGeometry()))
                 res[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
         else
         {
+            assert(false); // TODO remove
             // using GridGeometry = typename GridVariables::GridGeometry;
             // using GridView = typename GridGeometry::GridView;
             // static constexpr auto dim = GridView::dimension;
