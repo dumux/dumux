@@ -56,7 +56,7 @@ public:
         {
             // restrict the FvGeometry locally and bind to the element
             auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(element);
+            fvGeometry.bind(element);
 
             // loop over sub control faces
             for (const auto& scvf : scvfs(fvGeometry))
