@@ -36,9 +36,8 @@
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
-#include <dumux/freeflow/navierstokes/momentum/problem.hh>
-#include <dumux/freeflow/navierstokes/massandenergy/model.hh>
-#include <dumux/freeflow/navierstokes/massandenergy/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include "../l2error.hh"
@@ -58,7 +57,7 @@ namespace Properties {
 namespace TTag {
 struct KovasznayTest {};
 struct KovasznayTestMomentum { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct KovasznayTestMass { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMassAndEnergy, CCTpfaModel>; };
+struct KovasznayTestMass { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 
@@ -90,32 +89,6 @@ template<class TypeTag>
 struct UpwindSchemeOrder<TypeTag, TTag::KovasznayTest> { static constexpr int value = UPWINDSCHEMEORDER; };
 } // end namespace Properties
 
-namespace Impl {
-
-template<class TypeTag>
-constexpr bool isMomentumProblem()
-{
-    return GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::fcstaggered;
-};
-
-template<class TypeTag>
-using BaseProblem = std::conditional_t<isMomentumProblem<TypeTag>(),
-                                       NavierStokesMomentumProblem<TypeTag>,
-                                       NavierStokesMassAndEnergyProblem<TypeTag>>;
-
-template<class TypeTag>
-using BoundaryTypes = std::conditional_t<isMomentumProblem<TypeTag>(),
-                                         Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::dim()>,
-                                         Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>>;
-template<class TypeTag>
-using NumEqVector = std::conditional_t<isMomentumProblem<TypeTag>(),
-                                       Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::dim()>,
-                                       GetPropType<TypeTag, Properties::NumEqVector>>;
-
-template<class TypeTag>
-using PrimaryVariables = NumEqVector<TypeTag>;
-
-}
 
 /*!
  * \ingroup NavierStokesTests
@@ -126,19 +99,19 @@ using PrimaryVariables = NumEqVector<TypeTag>;
  * and is chosen in a way such that an exact solution is available.
  */
 template <class TypeTag>
-class KovasznayTestProblem : public Impl::BaseProblem<TypeTag>
+class KovasznayTestProblem :  public NavierStokesProblem<TypeTag>
 {
-    using ParentType = Impl::BaseProblem<TypeTag>;
+    using ParentType = NavierStokesProblem<TypeTag>;
 
-    using BoundaryTypes = Impl::BoundaryTypes<TypeTag>;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = Impl::NumEqVector<TypeTag>;
+    using NumEqVector = typename ParentType::NumEqVector;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = Impl::PrimaryVariables<TypeTag>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
@@ -232,7 +205,7 @@ public:
         PrimaryVariables values(0.0);
         const auto sol = analyticalSolution(globalPos);
         // use the values of the analytical solution
-        if constexpr (Impl::isMomentumProblem<TypeTag>())
+        if constexpr (ParentType::isMomentumProblem())
         {
             values[Indices::velocityXIdx] = sol[0];
             values[Indices::velocityYIdx] = sol[1];
@@ -304,7 +277,7 @@ public:
 
         //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
-    { return !Impl::isMomentumProblem<TypeTag>(); }
+    { return !ParentType::isMomentumProblem(); }
 
     /*!
      * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
