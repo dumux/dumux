@@ -19,17 +19,14 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (face-centered methods)
+ * \ingroup StaggeredDiscretization
+ * \brief An assembler for Jacobian and residual contribution per element (face-centered staggered methods)
  */
 #ifndef DUMUX_FC_LOCAL_ASSEMBLER_HH
 #define DUMUX_FC_LOCAL_ASSEMBLER_HH
 
-#include <dune/common/reservedvector.hh>
-#include <dune/grid/common/gridenums.hh> // for GhostEntity
-#include <dune/istl/matrixindexset.hh>
+#include <dune/grid/common/gridenums.hh>
 
-#include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
@@ -38,14 +35,26 @@
 #include <dumux/assembly/fvlocalassemblerbase.hh>
 #include <dumux/assembly/entitycolor.hh>
 #include <dumux/assembly/partialreassembler.hh>
-#include <dumux/discretization/fluxstencil.hh>
 #include <dumux/discretization/facecentered/staggered/elementsolution.hh>
 
 namespace Dumux {
 
+namespace Detail {
+
+struct NoOp
+{
+    template<class... Args>
+    constexpr void operator()(Args&&...) const {}
+};
+
+template<class X, class Y>
+using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
+
+}
+
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
+ * \ingroup StaggeredDiscretization
  * \brief A base class for all local cell-centered assemblers
  * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
@@ -60,11 +69,7 @@ class FaceCenteredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>; // TODO
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-
-    static_assert(!Assembler::Problem::enableInternalDirichletConstraints(), "Internal Dirichlet constraints are currently not implemented for cc-methods!");
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
@@ -75,63 +80,70 @@ public:
     void bindLocalViews()
     {
         ParentType::bindLocalViews();
-        this->elemBcTypes().update(this->problem(), this->element(), this->fvGeometry());
+        this->elemBcTypes().update(this->asImp_().problem(), this->element(), this->fvGeometry());
     }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template <class PartialReassembler = DefaultPartialReassembler>
+    template <class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Detail::NoOp>
     void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables,
-                                     const PartialReassembler* partialReassembler)
+                                     const PartialReassembler* partialReassembler,
+                                     const CouplingFunction& maybeAssembleCouplingBlocks = CouplingFunction())
     {
+        static_assert(!std::decay_t<decltype(this->asImp_().problem())>::enableInternalDirichletConstraints(), "Internal Dirichlet constraints are currently not implemented for face-centered staggered models!");
+
         this->asImp_().bindLocalViews();
-        const auto eIdxGlobal = this->assembler().gridGeometry().elementMapper().index(this->element());
+        const auto& gridGeometry = this->asImp_().problem().gridGeometry();
+        const auto eIdxGlobal = gridGeometry.elementMapper().index(this->element());
         if (partialReassembler
             && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
             const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
                 res[scv.dofIndex()] += residual[scv.localDofIndex()];
+
+            // assemble the coupling blocks for coupled models (does nothing if not coupled)
+            maybeAssembleCouplingBlocks(residual);
         }
         else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
-            for (const auto& scv : scvs(this->fvGeometry()))
-                res[scv.dofIndex()] += residual[scv.localDofIndex()];
+
+            if (this->element().partitionType() == Dune::InteriorEntity)
+            {
+                for (const auto& scv : scvs(this->fvGeometry()))
+                    res[scv.dofIndex()] += residual[scv.localDofIndex()];
+            }
+            else
+            {
+                // handle residual and matrix entries for parallel runs
+                for (const auto& scv : scvs(this->fvGeometry()))
+                {
+                    // set the matrix entries of all DOFs withing the overlap region (except the border DOF)
+                    // to 1.0 and the residual entries to 0.0
+                    const auto& facet = this->element().template subEntity <1> (scv.indexInElement());
+                    if (facet.partitionType() > Dune::BorderEntity) // TODO is this always guaranteed to be correct?
+                    {
+                        const auto idx = gridGeometry.gridView().indexSet().index(facet);
+                        jac[idx][idx] = 1.0;
+                        res[idx] = 0;
+                    }
+
+                    // make sure that the residual at border entities is consistent by adding the
+                    // the contribution from the neighboring overlap element's scv
+                    if (facet.partitionType() == Dune::BorderEntity)
+                        res[scv.dofIndex()] += residual[scv.localDofIndex()];
+                }
+            }
+
+            // assemble the coupling blocks for coupled models (does nothing if not coupled)
+            maybeAssembleCouplingBlocks(residual);
         }
         else
-        {
-            // using GridGeometry = typename GridVariables::GridGeometry;
-            // using GridView = typename GridGeometry::GridView;
-            // static constexpr auto dim = GridView::dimension;
+            DUNE_THROW(Dune::NotImplemented, "Ghost elements not supported");
 
-            int numFacesLocal = this->element().subEntities(2);
-
-            for (int i = 0; i < numFacesLocal; ++i)
-            {
-                auto face = this->element().template subEntity<2>(i);
-
-                if (face.partitionType() == Dune::InteriorEntity ||
-                    face.partitionType() == Dune::BorderEntity)
-                {
-                    // do not change the non-ghost vertices
-                    continue;
-                }
-
-                // set main diagonal entries for the vertex
-                int globalI = this->assembler().gridGeometry().gridView().indexSet().subIndex(face, i, 2);
-
-                typedef typename JacobianMatrix::block_type BlockType;
-                BlockType &J = jac[globalI][globalI];
-                for (int j = 0; j < BlockType::rows; ++j)
-                    J[j][j] = 1.0;
-
-                // set residual for the face
-                res[globalI] = 0;
-            }
-        }
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
@@ -207,7 +219,9 @@ public:
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
     }
 
-        //! Enforce Dirichlet constraints
+    /*!
+     * \brief Enforce Dirichlet constraints
+     */
     template<typename ApplyFunction>
     void enforceDirichletConstraints(const ApplyFunction& applyDirichlet)
     {
@@ -235,7 +249,7 @@ public:
                     if (bcTypes.hasDirichlet())
                     {
                         const auto& scv = this->fvGeometry().scv(scvf.insideScvIdx());
-                        const PrimaryVariables dirichletValues(this->problem().dirichlet(this->element(), scvf)[scv.directionIndex()]); // TODO
+                        const PrimaryVariables dirichletValues(this->asImp_().problem().dirichlet(this->element(), scvf)[scv.directionIndex()]); // TODO
 
                         // set the Dirichlet conditions in residual and jacobian
                         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -252,33 +266,46 @@ public:
             }
         }
     }
+
+    /*!
+     * \brief Update the coupling context for coupled models.
+     * \note This does nothing per default (not a coupled model).
+     */
+    template<class... Args>
+    void maybeUpdateCouplingContext(Args&&...) {}
+
+    /*!
+     * \brief Update the additional domain derivatives for coupled models.
+     * \note This does nothing per default (not a coupled model).
+     */
+    template<class... Args>
+    void maybeEvalAdditionalDomainDerivatives(Args&&...) {}
 };
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
+ * \ingroup StaggeredDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (Face-centered methods)
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
+template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true, class Implementation = void>
 class FaceCenteredLocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
+ * \ingroup StaggeredDiscretization
  * \brief Face-centered scheme local assembler using numeric differentiation and implicit time discretization
  */
-template<class TypeTag, class Assembler>
-class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
+template<class TypeTag, class Assembler, class Implementation>
+class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true, Implementation>
 : public FaceCenteredLocalAssemblerBase<TypeTag, Assembler,
-                                        FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>, true >
+                                        Detail::Impl<Implementation, FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true, Implementation>>, true>
 {
-    using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
-    using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
+    using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true, Implementation>;
+    using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, Detail::Impl<Implementation, ThisType>, true>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -286,19 +313,15 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*impl
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
-    enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
-
-    using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
-    static constexpr int maxElementStencilSize = GridGeometry::maxElementStencilSize;
     static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
 
 public:
 
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
     /*!
@@ -312,10 +335,11 @@ public:
                                                           const PartialReassembler* partialReassembler = nullptr)
     {
         // get some aliases for convenience
-        const auto& problem = this->problem();
+        const auto& problem = this->asImp_().problem();
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& curSol = this->curSol();
+        const auto& curSol = this->asImp_().curSol();
+
         auto&& curElemVolVars = this->curElemVolVars();
 
         // get the vector of the actual element residuals
@@ -338,8 +362,6 @@ public:
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
         {
-            // NumEqVector residual(0.0);
-
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
             const auto scvIdx = scv.index();
@@ -371,6 +393,7 @@ public:
                     // update the volume variables and compute element residual
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
                     curVolVars.update(elemSol, problem, element, scv);
+                    this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
 
                     ElementResidualVector residual(element.subEntities(2));
                     residual = 0;
@@ -390,10 +413,11 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
                                                           eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
+
 
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                 {
@@ -401,7 +425,8 @@ public:
                     // the residual of equation 'eqIdx' at dof 'i'
                     // depending on the primary variable 'pvIdx' at dof
                     // 'col'.
-                    A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
+                    // if (element.partitionType() == Dune::InteriorEntity)
+                        A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
                 }
 
                 // restore the original state of the scv's volume variables
@@ -409,6 +434,7 @@ public:
 
                 // restore the original element solution
                 elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
+                this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
                 // TODO additional dof dependencies
 
             }
@@ -436,6 +462,7 @@ public:
                         // update the volume variables and compute element residual
                         otherElemSol[scvJ.localDofIndex()][pvIdx] = priVar;
                         curOtherVolVars.update(otherElemSol, problem, otherElement, scvJ);
+                        this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
 
                         ElementResidualVector residual(element.subEntities(2));
                         residual = 0;
@@ -496,8 +523,8 @@ public:
                     }();
 
                     // derive the residuals numerically
-                    static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                    static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                    static const NumericEpsilon<Scalar, numEq> eps_{problem.paramGroup()};
+                    static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
                     NumericDifferentiation::partialDerivative(evalResiduals, otherElemSol[scvJ.localDofIndex()][pvIdx], partialDerivsFluxOnly, origFluxResidual,
                                                             eps_(otherElemSol[scvJ.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
@@ -507,7 +534,44 @@ public:
                         // the residual of equation 'eqIdx' at dof 'i'
                         // depending on the primary variable 'pvIdx' at dof
                         // 'col'.
-                        A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        if (element.partitionType() == Dune::InteriorEntity)
+                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        else
+                        {
+                            const auto& facetI = element.template subEntity <1> (scv.indexInElement());
+                            const auto& facetJ = element.template subEntity <1> (scvJ.indexInElement());
+                            // add contribution of opposite scv lying within the overlap zone TODO this only works for overlap=1 --> make more robust
+                            if (facetI.partitionType() == 1 && facetJ.partitionType() == 3)
+                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        }
+
+                        // treat normal/parallel scvs for parallel runs TODO description, put in function
+                        if (problem.gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
+                        {
+                            const auto& myfacet = element.template subEntity <1> (scv.indexInElement());
+                            if (myfacet.partitionType() == 1) // TODO
+                            {
+                                for (const auto& scvf : scvfs(fvGeometry, scv))
+                                {
+                                    if (scvf.isFrontal() || scvf.boundary())
+                                        continue;
+
+                                    // parallel scvs TODO drawing
+                                    if (scvf.outsideScvIdx() == scvJ.index())
+                                        A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                    else
+                                    {
+                                        // normal scvs
+                                        const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                                        if (orthogonalScvf.boundary())
+                                            continue;
+
+                                        if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // restore the original state of the scv's volume variables
@@ -515,10 +579,15 @@ public:
 
                     // restore the original element solution
                     otherElemSol[scvJ.localDofIndex()][pvIdx] = curSol[scvJ.dofIndex()][pvIdx];
+                    this->asImp_().maybeUpdateCouplingContext(scvJ, otherElemSol, pvIdx);
                     // TODO additional dof dependencies
                 }
             }
         }
+
+        // evaluate additional derivatives that might arise from the coupling
+        this->asImp_().maybeEvalAdditionalDomainDerivatives(origResiduals, A, gridVariables);
+
         return origResiduals;
     }
 };
@@ -526,8 +595,8 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief Cell-centered scheme local assembler using numeric differentiation and explicit time discretization
+ * \ingroup StaggeredDiscretization
+ * \brief TODO docme
  */
 template<class TypeTag, class Assembler>
 class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
@@ -537,7 +606,6 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*impl
     using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
@@ -638,8 +706,8 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief Cell-centered scheme local assembler using analytic (hand-coded) differentiation and implicit time discretization
+ * \ingroup StaggeredDiscretization
+ * \brief TODO docme
  */
 template<class TypeTag, class Assembler>
 class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
@@ -648,7 +716,6 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*imp
 {
     using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
     using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
@@ -759,8 +826,8 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief Cell-centered scheme local assembler using analytic (hand-coded) differentiation and explicit time discretization
+ * \ingroup StaggeredDiscretization
+ * \brief TODO docme
  */
 template<class TypeTag, class Assembler>
 class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false>
@@ -769,7 +836,6 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*imp
 {
     using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
     using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
