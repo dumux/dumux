@@ -22,6 +22,8 @@
  * \brief Test for the staggered grid Navier-Stokes model (Donea 2003, \cite Donea2003).
  */
 
+ bool printstuff = false;
+
 #include <config.h>
 
 #include <iostream>
@@ -39,6 +41,9 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/facecentered/staggered/fvgridgeometry.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/istlsolverfactorybackend.hh>
+#include <dumux/io/vtk/intersectionwriter.hh>
 
 #include "problem_new.hh"
 
@@ -95,8 +100,9 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = Dumux::UMFPackBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
+    const auto dofMapper = LinearSolverTraits<GridGeometry>::DofMapper(gridGeometry->gridView());
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), dofMapper);
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
@@ -106,7 +112,8 @@ int main(int argc, char** argv) try
     nonLinearSolver.solve(x);
 
     std::vector<Dune::FieldVector<double,2>> velocity(gridGeometry->gridView().size(0));
-    for (const auto element : elements(gridGeometry->gridView()))
+    std::vector<Dune::FieldVector<double,2>> faceVelocityVector(x.size());
+    for (const auto& element : elements(gridGeometry->gridView()))
     {
         auto fvGeometry = localView(*gridGeometry);
         fvGeometry.bind(element);
@@ -116,7 +123,10 @@ int main(int argc, char** argv) try
         const auto eIdx = gridGeometry->elementMapper().index(element);
 
         for (const auto& scv : scvs(fvGeometry))
+        {
             velocity[eIdx][scv.directionIndex()] += 0.5*elemVolVars[scv].velocity();
+            faceVelocityVector[scv.dofIndex()][scv.directionIndex()] = elemVolVars[scv].velocity();
+        }
     }
 
     Dune::VTKWriter<std::decay_t<decltype(gridGeometry->gridView())>> writer(gridGeometry->gridView());
@@ -125,7 +135,41 @@ int main(int argc, char** argv) try
                         "velocity",
                         /*numComp*/2, /*codim*/0).get());
 
+    std::vector<int> rank;
+    rank.resize(gridGeometry->gridView().size(0));
+
+    for (const auto& element : elements(gridGeometry->gridView(), Dune::Partitions::interior))
+    {
+        const auto eIdxGlobal = gridGeometry->elementMapper().index(element);
+        rank[eIdxGlobal] = gridGeometry->gridView().comm().rank();
+    }
+
+    writer.addCellData(rank, "rank");
+
     writer.write("donea_new_momentum");
+
+
+    ConformingIntersectionWriter faceVtk(gridGeometry->gridView());
+
+    std::vector<std::size_t> dofIdx(x.size());
+        for (const auto& facet : facets(gridGeometry->gridView()))
+    {
+        const auto idx = gridGeometry->gridView().indexSet().index(facet);
+        dofIdx[idx] = idx;
+    }
+    faceVtk.addField(dofIdx, "dofIdx");
+
+    faceVtk.addField(faceVelocityVector, "velocityVector");
+
+    auto partionType = [&](const auto& is, const auto idx)
+    {
+        const auto& facet = is.inside().template subEntity <1> (is.indexInInside());
+        return facet.partitionType();
+    };
+
+    faceVtk.addField(partionType, "partitionType");
+
+    faceVtk.write("facedata_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
