@@ -18,3 +18,10 @@ MaxRelativeShift = 1e-5
 
 [Vtk]
 WriteFaceData = false
+
+[LinearSolver]
+Type = bicgstabsolver
+Verbosity = 2
+
+[LinearSolver.Preconditioner]
+Type = ssor
