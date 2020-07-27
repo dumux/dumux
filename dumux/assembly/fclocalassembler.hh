@@ -91,6 +91,7 @@ public:
         if (partialReassembler
             && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
+            assert(false); // TODO remove
             const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
                 res[scv.dofIndex()] += residual[scv.localDofIndex()];
@@ -98,39 +99,62 @@ public:
         else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
-            for (const auto& scv : scvs(this->fvGeometry()))
-                res[scv.dofIndex()] += residual[scv.localDofIndex()];
+
+            if (this->element().partitionType() == Dune::InteriorEntity)
+            {
+                for (const auto& scv : scvs(this->fvGeometry()))
+                    res[scv.dofIndex()] += residual[scv.localDofIndex()];
+            }
+            else
+            {
+                for (const auto& scv : scvs(this->fvGeometry()))
+                {
+                    const auto& facet = this->element().template subEntity <1> (scv.indexInElement());
+                    if (facet.partitionType() > 1) // TODO Index
+                    {
+                        const auto idx = this->assembler().gridGeometry().gridView().indexSet().index(facet);
+                        jac[idx][idx] = 1.0;
+                        res[idx] = 0;
+                    }
+
+                    assert(Dune::BorderEntity == 1);
+
+                    if (facet.partitionType() == 1)
+                        res[scv.dofIndex()] += residual[scv.localDofIndex()];
+                }
+            }
         }
         else
         {
+            assert(false); // TODO remove
             // using GridGeometry = typename GridVariables::GridGeometry;
             // using GridView = typename GridGeometry::GridView;
             // static constexpr auto dim = GridView::dimension;
 
-            int numFacesLocal = this->element().subEntities(2);
-
-            for (int i = 0; i < numFacesLocal; ++i)
-            {
-                auto face = this->element().template subEntity<2>(i);
-
-                if (face.partitionType() == Dune::InteriorEntity ||
-                    face.partitionType() == Dune::BorderEntity)
-                {
-                    // do not change the non-ghost vertices
-                    continue;
-                }
-
-                // set main diagonal entries for the vertex
-                int globalI = this->assembler().gridGeometry().gridView().indexSet().subIndex(face, i, 2);
-
-                typedef typename JacobianMatrix::block_type BlockType;
-                BlockType &J = jac[globalI][globalI];
-                for (int j = 0; j < BlockType::rows; ++j)
-                    J[j][j] = 1.0;
-
-                // set residual for the face
-                res[globalI] = 0;
-            }
+            // int numFacesLocal = this->element().subEntities(2);
+            //
+            // for (int i = 0; i < numFacesLocal; ++i)
+            // {
+            //     auto face = this->element().template subEntity<2>(i);
+            //
+            //     if (face.partitionType() == Dune::InteriorEntity ||
+            //         face.partitionType() == Dune::BorderEntity)
+            //     {
+            //         // do not change the non-ghost vertices
+            //         continue;
+            //     }
+            //
+            //     // set main diagonal entries for the vertex
+            //     int globalI = this->assembler().gridGeometry().gridView().indexSet().subIndex(face, i, 2);
+            //
+            //     typedef typename JacobianMatrix::block_type BlockType;
+            //     BlockType &J = jac[globalI][globalI];
+            //     for (int j = 0; j < BlockType::rows; ++j)
+            //         J[j][j] = 1.0;
+            //
+            //     // set residual for the face
+            //     res[globalI] = 0;
+            // }
         }
 
         auto applyDirichlet = [&] (const auto& scvI,
@@ -338,8 +362,6 @@ public:
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
         {
-            // NumEqVector residual(0.0);
-
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
             const auto scvIdx = scv.index();
@@ -395,13 +417,15 @@ public:
                 NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
                                                           eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
+
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                 {
                     // A[i][col][eqIdx][pvIdx] is the rate of change of
                     // the residual of equation 'eqIdx' at dof 'i'
                     // depending on the primary variable 'pvIdx' at dof
                     // 'col'.
-                    A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
+                    // if (element.partitionType() == Dune::InteriorEntity)
+                        A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
                 }
 
                 // restore the original state of the scv's volume variables
@@ -507,7 +531,44 @@ public:
                         // the residual of equation 'eqIdx' at dof 'i'
                         // depending on the primary variable 'pvIdx' at dof
                         // 'col'.
-                        A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        if (element.partitionType() == Dune::InteriorEntity)
+                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        else
+                        {
+                            const auto& facetI = element.template subEntity <1> (scv.indexInElement());
+                            const auto& facetJ = element.template subEntity <1> (scvJ.indexInElement());
+                            // add contribution of opposite scv lying within the overlap zone TODO this only works for overlap=1 --> make more robust
+                            if (facetI.partitionType() == 1 && facetJ.partitionType() == 3)
+                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        }
+
+                        // treat normal/parallel scvs for parallel runs TODO description, put in function
+                        if (this->problem().gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
+                        {
+                            const auto& myfacet = element.template subEntity <1> (scv.indexInElement());
+                            if (myfacet.partitionType() == 1) // TODO
+                            {
+                                for (const auto& scvf : scvfs(fvGeometry, scv))
+                                {
+                                    if (scvf.isFrontal() || scvf.boundary())
+                                        continue;
+
+                                    // parallel scvs TODO drawing
+                                    if (scvf.outsideScvIdx() == scvJ.index())
+                                        A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                    else
+                                    {
+                                        // normal scvs
+                                        const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                        if (orthogonalScvf.boundary())
+                                            continue;
+
+                                        if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // restore the original state of the scv's volume variables
