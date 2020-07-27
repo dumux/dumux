@@ -35,9 +35,8 @@
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
-#include <dumux/freeflow/navierstokes/momentum/problem.hh>
-#include <dumux/freeflow/navierstokes/massandenergy/model.hh>
-#include <dumux/freeflow/navierstokes/massandenergy/problem.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include "../l2error.hh"
@@ -58,7 +57,7 @@ namespace Properties
 namespace TTag {
 struct DoneaTestNew {};
 struct DoneaTestNewMomentum { using InheritsFrom = std::tuple<DoneaTestNew, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct DoneaTestNewMass { using InheritsFrom = std::tuple<DoneaTestNew, NavierStokesMassAndEnergy, CCTpfaModel>; };
+struct DoneaTestNewMass { using InheritsFrom = std::tuple<DoneaTestNew, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -89,33 +88,6 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTestNew> { static cons
 
 }
 
-namespace Impl {
-
-template<class TypeTag>
-constexpr bool isMomentumProblem()
-{
-    return GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethod::fcstaggered;
-};
-
-template<class TypeTag>
-using BaseProblem = std::conditional_t<isMomentumProblem<TypeTag>(),
-                                       NavierStokesMomentumProblem<TypeTag>,
-                                       NavierStokesMassAndEnergyProblem<TypeTag>>;
-
-template<class TypeTag>
-using BoundaryTypes = std::conditional_t<isMomentumProblem<TypeTag>(),
-                                         Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::dim()>,
-                                         Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>>;
-template<class TypeTag>
-using NumEqVector = std::conditional_t<isMomentumProblem<TypeTag>(),
-                                       Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::dim()>,
-                                       GetPropType<TypeTag, Properties::NumEqVector>>;
-
-template<class TypeTag>
-using PrimaryVariables = NumEqVector<TypeTag>;
-
-}
-
 /*!
  * \ingroup NavierStokesTests
  * \brief  Test problem for the staggered grid (Donea 2003, \cite Donea2003).
@@ -125,9 +97,9 @@ using PrimaryVariables = NumEqVector<TypeTag>;
  * is available and can be compared to the numerical solution.
  */
 template <class TypeTag>
-class DoneaTestProblemNew : public Impl::BaseProblem<TypeTag>
+class DoneaTestProblemNew : public NavierStokesProblem<TypeTag>
 {
-    using ParentType = Impl::BaseProblem<TypeTag>;
+    using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -135,9 +107,9 @@ class DoneaTestProblemNew : public Impl::BaseProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using NumEqVector = Impl::NumEqVector<TypeTag>;
+    using NumEqVector = typename ParentType::NumEqVector;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-    using PrimaryVariables = Impl::PrimaryVariables<TypeTag>;
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
@@ -200,7 +172,7 @@ public:
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        if constexpr (Impl::isMomentumProblem<TypeTag>())
+        if constexpr (ParentType::isMomentumProblem())
         {
             NumEqVector source;
             Scalar x = globalPos[0];
@@ -237,7 +209,7 @@ public:
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity and pressure everywhere
-        if constexpr (Impl::isMomentumProblem<TypeTag>())
+        if constexpr (ParentType::isMomentumProblem())
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
@@ -261,7 +233,7 @@ public:
         PrimaryVariables values;
 
         // use the values of the analytical solution
-        if constexpr (Impl::isMomentumProblem<TypeTag>())
+        if constexpr (ParentType::isMomentumProblem())
         {
             values[Indices::velocityXIdx] = sol[0];
             values[Indices::velocityYIdx] = sol[1];
@@ -323,7 +295,7 @@ public:
    /*!
      * \brief Returns the analytical solution for the pressure
      */
-    template<bool enable = !Impl::isMomentumProblem<TypeTag>(), std::enable_if_t<enable, int> = 0>
+    template<bool enable = !ParentType::isMomentumProblem(), std::enable_if_t<enable, int> = 0>
     const std::vector<Scalar> getAnalyticalPressureSolution() const
     {
         std::vector<Scalar> analyticalPressure(this->gridGeometry().gridView().size(0));
@@ -346,7 +318,7 @@ public:
    /*!
      * \brief Returns the analytical solution for the velocity
      */
-    template<bool enable = Impl::isMomentumProblem<TypeTag>(), std::enable_if_t<enable, int> = 0>
+    template<bool enable = ParentType::isMomentumProblem(), std::enable_if_t<enable, int> = 0>
     const std::vector<VelocityVector> getAnalyticalVelocitySolution() const
     {
         std::vector<VelocityVector> analyticalVelocity(this->gridGeometry().gridView().size(0));
@@ -363,7 +335,7 @@ public:
 
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
-    { return !Impl::isMomentumProblem<TypeTag>(); }
+    { return !ParentType::isMomentumProblem(); }
 
     /*!
      * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
