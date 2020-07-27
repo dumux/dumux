@@ -1,12 +1,14 @@
 [Grid]
 UpperRight = 1 1
 Cells = 40 40
+Overlap = 1
 
 [Problem]
 Name = test_donea # name passed to the output routines
 EnableGravity = false
 PrintL2Error = false
 EnableInertiaTerms = false
+PrintMatrix = false
 
 [Component]
 LiquidDensity  = 1.0
@@ -18,3 +20,18 @@ MaxRelativeShift = 1e-5
 
 [Vtk]
 WriteFaceData = false
+
+[LinearSolver]
+Type = bicgstabsolver
+# Type = restartedgmressolver
+Verbosity = 1
+ResidualReduction = 1e-13
+
+[LinearSolver.Preconditioner]
+Type = amg
+AmgAccumulationMode = atOnce
+AmgMaxLevel = 2
+Verbosity = 2
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
