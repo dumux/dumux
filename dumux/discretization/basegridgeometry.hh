@@ -76,8 +76,8 @@ public:
      */
     BaseGridGeometry(const GridView& gridView)
     : gridView_(gridView)
-    , elementMapper_(gridView, Dune::mcmgElementLayout())
-    , vertexMapper_(gridView, Dune::mcmgVertexLayout())
+    , elementMapper_(makeElementMapper_(gridView))
+    , vertexMapper_(makeVertexMapper_(gridView))
     , bBoxMin_(std::numeric_limits<double>::max())
     , bBoxMax_(-std::numeric_limits<double>::max())
     {
@@ -190,6 +190,24 @@ public:
     { periodic_ = value; }
 
 private:
+
+    //! Return an instance of the element mapper
+    ElementMapper makeElementMapper_(const GridView& gridView) const
+    {
+        if constexpr (std::is_same_v<ElementMapper, Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>)
+            return ElementMapper(gridView, Dune::mcmgElementLayout());
+        else
+            return ElementMapper(gridView);
+    }
+
+    //! Return an instance of the vertex mapper
+    VertexMapper makeVertexMapper_(const GridView& gridView) const
+    {
+        if constexpr (std::is_same_v<VertexMapper, Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>)
+            return VertexMapper(gridView, Dune::mcmgVertexLayout());
+        else
+            return VertexMapper(gridView);
+    }
 
     //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
     void computeGlobalBoundingBox_()
