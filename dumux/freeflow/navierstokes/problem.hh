@@ -212,13 +212,15 @@ public:
         return asImp_().alphaBJ(scvf) / sqrt(asImp_().permeability(element, scvf));
     }
 
-    //TODO: Elissa, maybe you can write a small description, see above for these functions
     /*!
-     * \brief Returns the ... value,
+     * \brief Returns the scale separation value eps = (macroscopicLength/LengthOfPeriodicityCell).
      */
     Scalar epsInterface(const SubControlVolumeFace& scvf) const
     { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the epsInterface value must be returned in the acutal problem");}
 
+    /*!
+     * \brief Returns the boundary layer constant N^bl computed based on the exact pore geometry.
+     */
     Scalar factorNTangential(const SubControlVolumeFace& scvf) const
     { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNTangential value must be returned in the acutal problem");}
 
