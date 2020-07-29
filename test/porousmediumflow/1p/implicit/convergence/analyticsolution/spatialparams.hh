@@ -31,6 +31,8 @@
 #include <dune/common/fmatrix.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
+#include <dune/geometry/quadraturerules.hh>
+
 namespace Dumux {
 
 /*!
@@ -60,7 +62,9 @@ public:
 
     ConvergenceTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {}
+    {
+        c_ = getParam<Scalar>("Problem.C");
+    }
 
    /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
@@ -81,14 +85,12 @@ public:
         using std::sin;
         using std::exp;
 
-        static constexpr Scalar c = 0.9;
-        static constexpr Scalar omega = M_PI;
-
-        const Scalar x = scv.center()[0];
+        const auto globalPos = element.geometry().center();
+        const Scalar x = globalPos[0];
         K[0][0] = 1.0;
-        K[0][1] = -c/(2*omega) * sin(omega*x);
+        K[0][1] = -c_/(2*omega_) * sin(omega_*x);
         K[1][0] = K[0][1];
-        K[1][1] = exp(-2)*(1 + c*cos(omega*x));
+        K[1][1] = exp(-2)*(1 + c_*cos(omega_*x));
 
         return K;
     }
@@ -101,7 +103,9 @@ public:
     { return 0.4; }
 
 private:
+    static constexpr Scalar omega_ = M_PI;
     Scalar permeability_;
+    Scalar c_;
 };
 
 } // end namespace Dumux

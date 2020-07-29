@@ -63,7 +63,7 @@ def checkConvRates():
         return float(sum(numbers)) / len(numbers)
 
     # check the rates, we expect rates around 2
-    if mean(rates["p"]) < 2.05 and mean(rates["p"]) < 1.95:
+    if mean(rates["p"]) < 2.2 and mean(rates["p"]) < 1.8:
         sys.stderr.write("*"*70 + "\n" + "The convergence rates for pressure were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 

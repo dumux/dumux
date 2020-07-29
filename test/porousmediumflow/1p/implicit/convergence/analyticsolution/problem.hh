@@ -28,6 +28,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dune/geometry/quadraturerules.hh>
+
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/common/boundarytypes.hh>
@@ -47,8 +49,9 @@ class ConvergenceProblem;
 namespace Properties {
 // Create new type tags
 namespace TTag {
-struct OnePConvergence { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+struct OnePConvergence { using InheritsFrom = std::tuple<OneP>; };
 struct OnePConvergenceTpfa { using InheritsFrom = std::tuple<OnePConvergence, CCTpfaModel>; };
+struct OnePConvergenceMpfa { using InheritsFrom = std::tuple<OnePConvergence, CCMpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -74,6 +77,14 @@ struct SpatialParams<TypeTag, TTag::OnePConvergence>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = ConvergenceTestSpatialParams<GridGeometry, Scalar>;
 };
+
+// Enable caching
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
 
 } // end namespace Properties
 
@@ -108,7 +119,9 @@ public:
 
     ConvergenceProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {}
+    {
+        c_ = getParam<Scalar>("Problem.C");
+    }
 
     /*!
      * \name Problem parameters
@@ -144,7 +157,7 @@ public:
         return values;
     }
 
-        /*!
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param element The element for which the Dirichlet boundary condition is set
@@ -154,7 +167,7 @@ public:
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
-        const auto p = analyticalSolution(scvf.center())[pressureIdx];
+        const auto p = analyticalSolution(scvf.ipGlobal())[pressureIdx];
         return PrimaryVariables(p);
     }
 
@@ -164,27 +177,27 @@ public:
      * \name Volume terms
      */
     // \{
-    /*!
-     * \brief Evaluates the source term for all phases within a given
-     *        sub control volume.
-     *
-     * \param globalPos The global position
-     */
-    NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
+
+    //! \copydoc Dumux::FVProblem::source()
+    template<class ElementVolumeVariables>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
     {
+        const auto globalPos = element.geometry().center();
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
         using std::exp; using std::sin; using std::cos;
-        static constexpr Scalar omega = M_PI;
-        static constexpr Scalar c = 0.9;
-        const Scalar cosOmegaX = cos(omega*x);
+        const Scalar cosOmegaX = cos(omega_*x);
         static const Scalar expTwo = exp(2);
         const Scalar expYPlusOne = exp(y+1);
 
-        const Scalar result = (-(c*cosOmegaX + 1)*exp(y - 1)
-                                             + 1.5*c*expYPlusOne*cosOmegaX
-                                             + omega*omega*(expYPlusOne - expTwo + 2))
-                                             *sin(omega*x);
+        const Scalar result = ( -(c_*cosOmegaX + 1)*exp(y - 1)
+                                + 1.5*c_*expYPlusOne*cosOmegaX
+                                + omega_*omega_*(expYPlusOne - expTwo + 2))
+                              * sin(omega_*x);
+
         return NumEqVector(result);
     }
 
@@ -213,19 +226,17 @@ public:
         Dune::FieldVector<Scalar, 3> sol(0.0);
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
-        static constexpr Scalar omega = M_PI;
-        static constexpr Scalar c = 0.9;
         using std::exp; using std::sin; using std::cos;
-        const Scalar sinOmegaX = sin(omega*x);
-        const Scalar cosOmegaX = cos(omega*x);
+        const Scalar sinOmegaX = sin(omega_*x);
+        const Scalar cosOmegaX = cos(omega_*x);
         static const Scalar expTwo = exp(2);
         const Scalar expYPlusOne = exp(y+1);
 
         sol[pressureIdx] = (expYPlusOne + 2 - expTwo)*sinOmegaX + 10.0;
-        sol[velocityXIdx] = c/(2*omega)*expYPlusOne*sinOmegaX*sinOmegaX
-                            -omega*(expYPlusOne + 2 - expTwo)*cosOmegaX;
-        sol[velocityYIdx] = (0.5*c*(expYPlusOne + 2 - expTwo)*cosOmegaX
-                            -(c*cosOmegaX + 1)*exp(y-1))*sinOmegaX;
+        sol[velocityXIdx] = c_/(2*omega_)*expYPlusOne*sinOmegaX*sinOmegaX
+                            -omega_*(expYPlusOne + 2 - expTwo)*cosOmegaX;
+        sol[velocityYIdx] = (0.5*c_*(expYPlusOne + 2 - expTwo)*cosOmegaX
+                            -(c_*cosOmegaX + 1)*exp(y-1))*sinOmegaX;
 
         return sol;
     }
@@ -234,6 +245,8 @@ public:
 
 private:
     static constexpr Scalar eps_ = 1e-7;
+    static constexpr Scalar omega_ = M_PI;
+    Scalar c_;
 };
 } // end namespace Dumux
 
