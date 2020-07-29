@@ -29,7 +29,7 @@ dune_module_file = "dune.module"
 if not os.path.exists(dune_module_file):
     sys.exit("\n"
              "ERROR: Could not find dune.module.\n"
-             "Be sure that you are inside your module!")
+             "Make sure that you are inside your module!")
 
 file_object = open(dune_module_file, "r")
 for line in file_object:
