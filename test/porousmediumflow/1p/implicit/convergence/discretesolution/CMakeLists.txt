@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES "params.input" "ploterrors.py")
+dune_symlink_to_source_files(FILES "params.input")
 
 # executable for tpfa tests
 add_executable(test_1p_convergence_tpfa EXCLUDE_FROM_ALL main.cc)
