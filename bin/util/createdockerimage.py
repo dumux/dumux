@@ -3,14 +3,25 @@
 import os
 import sys
 import shutil
+import argparse
+from argparse import RawTextHelpFormatter
 
+parser = argparse.ArgumentParser(
+    description="This is to be run inside an extracted module, e.g. created by the extractmodulepart script.\n\n" + \
+                "USAGE: " + sys.argv[0] + "-i INSTALL_DEP_SCRIPT\n\n" + \
+                "INSTALL_DEP_SCRIPT defaults to the file install{MODULE_NAME}.sh." + \
+                "You can also manually specify a script installing the DUNE dependencies for your module\n",
+    formatter_class=RawTextHelpFormatter
+)
+
+parser.add_argument('-i', '--installScript', help="Specify the script that installs dependencies")
+args = vars(parser.parse_args());
+
+# prints a status message with lines of '=' characters above and below
 def show_message(message):
     print("=" * 54)
     print(message)
     print("=" * 54)
-
-def print_help():
-    pass
 
 # get the module name
 dune_module_file = "dune.module"
