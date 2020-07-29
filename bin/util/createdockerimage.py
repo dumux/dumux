@@ -8,8 +8,8 @@ from argparse import RawTextHelpFormatter
 
 parser = argparse.ArgumentParser(
     description="This is to be run inside an extracted module, e.g. created by the extractmodulepart script.\n\n" + \
-                "USAGE: " + sys.argv[0] + "-i INSTALL_DEP_SCRIPT\n\n" + \
-                "INSTALL_DEP_SCRIPT defaults to the file install{MODULE_NAME}.sh." + \
+                "USAGE: " + sys.argv[0] + "-i installDepScript\n\n" + \
+                "installDepScript defaults to the file install{moduleName}.sh." + \
                 "You can also manually specify a script installing the DUNE dependencies for your module\n",
     formatter_class=RawTextHelpFormatter
 )
@@ -18,43 +18,38 @@ parser.add_argument('-i', '--installScript', help="Specify the script that insta
 args = vars(parser.parse_args());
 
 # prints a status message with lines of '=' characters above and below
-def show_message(message):
+def showMessage(message):
     print("=" * 54)
     print(message)
     print("=" * 54)
 
 # get the module name
-dune_module_file = "dune.module"
-#dune_module_file = "dune.module"
-if not os.path.exists(dune_module_file):
+if not os.path.exists("dune.module"):
     sys.exit("\n"
              "ERROR: Could not find dune.module.\n"
              "Make sure that you are inside your module!")
 
-file_object = open(dune_module_file, "r")
-for line in file_object:
+for line in open("dune.module", 'r').readlines():
     if "Module:" in line:
-        module_name = line.split()[1]
+        moduleName = line.split()[1]
     if "Maintainer:" in line:
-        module_maintainer = line.split()[1]
-# docker only support lower case so we convert the name
-docker_tag = module_name.lower()
+        moduleMaintainer = line.split()[1]
 
-show_message("Creating a Docker image from module {}".format(module_name))
+# docker only supports lower case so we convert the name
+dockerTag = moduleName.lower()
+showMessage("Creating a Docker image from module {}".format(moduleName))
 
-# if install_dep_script was not specified use the default
-#install_dep_script = "install{}.sh".format(module_name)
-install_dep_script = "install.sh"
-print("--> Using install script: {} to install dependencies for module {}."
-      .format(install_dep_script, module_name))
+# if installScript was not specified use the default
+installDepScript = args['installScript']
+if installDepScript == None: installDepScript = "install" + moduleName + ".sh"
+print("--> Using install script: {} to install dependencies for module {}.".format(installDepScript, moduleName))
 
 # make it executable
-os.system("chmod +x {}".format(install_dep_script))
+os.system("chmod +x {}".format(installDepScript))
 
 # remove docker folder if exist
 if os.path.exists("docker"):
-    print("\nA docker folder already exists. Continue anyway?"
-          "- will be overwritten - [y/N]\n")
+    print("\nA docker folder already exists. Continue anyway? - will be overwritten - [y/N]\n")
     delete = input()
     if delete == "y" or delete == "Y":
         shutil.rmtree("docker")
@@ -62,20 +57,20 @@ if os.path.exists("docker"):
     else:
         sys.exit("Abort.")
 
-# dockerignore file
-dockerignore = open(".dockerignore", "w+")
-dockerignore.writelines(["build*\n", "CMakeFiles"])
-dockerignore.close()
-print("--> Created dockerignore file.")
+# dockerIgnore file
+dockerIgnore = open(".dockerIgnore", "w+")
+dockerIgnore.writelines(["build*\n", "CMakeFiles"])
+dockerIgnore.close()
+print("--> Created dockerIgnore file.")
 
 # make docker folder
 os.mkdir("docker")
 
 # also copy it here in case we build here
-shutil.copyfile(".dockerignore","docker/.dockerignore")
+shutil.copyfile(".dockerIgnore", "docker/.dockerIgnore")
 
 # setpermissions helper script
-setpermissions_content = [
+setPermissionsContent = [
     '#!/bin/bash',
     '# The user can pass the user and group id by passing',
     '# --env HOST_UID=$(id -u $USER) --env HOST_GID=$(id -g $USER)',
@@ -95,45 +90,45 @@ setpermissions_content = [
     'find /dumux -maxdepth 1 | sed "1d" | grep -v "/dumux/shared" | xargs chown -R dumux:dumux 2> /dev/null || true',
     '']
 setpermissions = open("docker/setpermissions.sh", "x")
-setpermissions.write('\n'.join(setpermissions_content) + "\n")
+setpermissions.write('\n'.join(setPermissionsContent) + "\n")
 setpermissions.close()
 print("--> Created permission helper script for easier container setup.")
 
-welcome_content = [
-    "Welcome to the dumux-pub Docker container {}. You can run pre-compiled examples".format(module_name),
-    "in the folder {}/build-cmake/appl, or compile them there using make <example>.".format(module_name),
+welcomeContent = [
+    "Welcome to the dumux-pub Docker container {}. You can run pre-compiled examples".format(moduleName),
+    "in the folder {}/build-cmake/appl, or compile them there using make <example>.".format(moduleName),
     "The container doesn't have graphics support.",
     "Copying the output like VTK files to the folder /dumux/shared will make them available",
     "outside this container on the host for display."]
 welcome = open("docker/WELCOME", "x")
-welcome.write('\n'.join(welcome_content) + "\n")
+welcome.write('\n'.join(welcomeContent) + "\n")
 welcome.close()
 print("--> Created welcome message displayed on Docker container startup.")
 
-readme_content = [
-    '# readme for the dumux pub table {}'.format(module_name),
+readmeContent = [
+    '# readme for the dumux pub table {}'.format(moduleName),
     '',
-    'You created a Docker image {}. Next steps:'.format(docker_tag),
+    'You created a Docker image {}. Next steps:'.format(dockerTag),
     '',
-    '* Try your container by running pubtable_{} open'.format(docker_tag),
+    '* Try your container by running pubtable_{} open'.format(dockerTag),
     '  See below for instructions how to share files with the host system.',
     '',
     '* Push the docker image to DockerHub or the GitLab Docker registry of your dumux-pub module.',
     '  Look at the Registry tab of your dumux-pub module for help.',
     '',
-    '* Replace the image name in pubtable_{} with the actual image name'.format(docker_tag),
+    '* Replace the image name in pubtable_{} with the actual image name'.format(dockerTag),
     '  e.g. git.iws.uni-stuttgart.de:4567/dumux-pub/koch2017a.',
     '',
     '* [Optional] Add the Dockerfile to the git repository.',
     '',
-    '* Add the pubtable_{} script to the git repository (this is for the user)'.format(docker_tag),
+    '* Add the pubtable_{} script to the git repository (this is for the user)'.format(dockerTag),
     '  and add the following lines to your README.md:',
     '',
-    'Using the pub table {} with docker'.format(module_name),
+    'Using the pub table {} with docker'.format(moduleName),
     '=============================================',
     '',
     'In order to run simulations of this pub table look',
-    'at the convenience script pubtable_{}.'.format(docker_tag),
+    'at the convenience script pubtable_{}.'.format(dockerTag),
     'First download the script from the git repository.',
     '',
     'The simplest way is to spin up a container',
@@ -142,7 +137,7 @@ readme_content = [
     'change to the new folder',
     '$ cd dumux',
     'and open the pub table by running',
-    '$ pubtable_{} open'.format(docker_tag),
+    '$ pubtable_{} open'.format(dockerTag),
     '',
     'The container will spin up. It will mount the "dumux"',
     'directory into the container at /dumux/shared. Put files',
@@ -151,16 +146,16 @@ readme_content = [
     'you want to visualize on the host machine.',
     '']
 readme = open("docker/README.md", "x")
-readme.write('\n'.join(readme_content) + "\n")
+readme.write('\n'.join(readmeContent) + "\n")
 readme.close()
 print("--> Created README.md on how to use the docker image.")
 
-putable_content = [
+pubTableContent = [
     '#!/usr/bin/env bash',
     '',
     '# TODO set the image name here to a global address',
     "# e.g. 'git.iws.uni-stuttgart.de:4567/dumux-pub/koch2017a'",
-    'PUB_IMAGE_NAME={}'.format(docker_tag),
+    'PUB_IMAGE_NAME={}'.format(dockerTag),
     '',
     '# the host directory that is mounted into...',
     'SHARED_DIR_HOST="$(pwd)"',
@@ -176,10 +171,10 @@ putable_content = [
     'help ()',
     '{',
     '    echo ""',
-    '    echo "Usage: pubtable_{} <command> [options]"'.format(docker_tag),
+    '    echo "Usage: pubtable_{} <command> [options]"'.format(dockerTag),
     '    echo ""',
-    '    echo "  pubtable_{} open [image]      - open a pub table."'.format(docker_tag),
-    '    echo "  pubtable_{} help              - display this message."'.format(docker_tag),
+    '    echo "  pubtable_{} open [image]      - open a pub table."'.format(dockerTag),
+    '    echo "  pubtable_{} help              - display this message."'.format(dockerTag),
     '    echo ""',
     '    echo "Optionally supply an Docker image name to the open command."',
     '    echo ""',
@@ -193,7 +188,7 @@ putable_content = [
     '             -e HOST_UID=$(id -u \$USER) \\',
     '             -e HOST_GID=$(id -g \$USER) \\',
     '             -v $SHARED_DIR_HOST:\$SHARED_DIR_CONTAINER \\',
-    '             --name dumuxpub_ \\'.format(docker_tag),
+    '             --name dumuxpub_ \\'.format(dockerTag),
     '             $IMAGE /bin/bash"',
     ' ',
     '    CONTAINER_NAME=\$(executeandlog \$COMMAND | tail -n 1)',
@@ -210,18 +205,18 @@ putable_content = [
     '    exit 1',
     'fi',
     '']
-putable = open("docker/putable_{}".format(docker_tag), "x")
-putable.write('\n'.join(putable_content) + "\n")
-putable.close()
-os.system("chmod +x docker/putable_{}".format(docker_tag))
-print("--> Created pubtable_{} script to spin up the docker container.".format(docker_tag))
+pubTable = open("docker/pubTable_{}".format(dockerTag), "x")
+pubTable.write('\n'.join(pubTableContent) + "\n")
+pubTable.close()
+os.system("chmod +x docker/pubTable_{}".format(dockerTag))
+print("--> Created pubtable_{} script to spin up the docker container.".format(dockerTag))
 
-dockerfile_content = [
-    '# {} docker container'.format(module_name),
+dockerFileContent = [
+    '# {} docker container'.format(moduleName),
     '# see https://github.com/phusion/baseimage-docker for information on the base image',
     '# It is Ubuntu LTS customized for better Docker compatibility',
     'FROM phusion/baseimage:0.9.22',
-    'MAINTAINER {}'.format(module_maintainer),
+    'MAINTAINER {}'.format(moduleMaintainer),
     '',
     '# run Ubuntu update as advised on https://github.com/phusion/baseimage-docker',
     'RUN apt-get update \\',
@@ -267,8 +262,8 @@ dockerfile_content = [
     'RUN touch /etc/service/syslog-forwarder/down',
     '',
     '# copy the extracted dumux-pub module and make dumux own it',
-    'COPY . /dumux/{}'.format(module_name),
-    'RUN chown -R dumux:dumux /dumux/{}'.format(module_name),
+    'COPY . /dumux/{}'.format(moduleName),
+    'RUN chown -R dumux:dumux /dumux/{}'.format(moduleName),
     '',
     '# switch to the dumux user and set the working directory',
     'USER dumux',
@@ -282,15 +277,15 @@ dockerfile_content = [
     'COPY ./docker/WELCOME /dumux/WELCOME',
     '',
     '# install dumux-pub module dependencies',
-    'COPY {} /dumux/{}'.format(install_dep_script, install_dep_script),
-    'RUN ./{} && rm -f /dumux/{}'.format(install_dep_script, install_dep_script),
+    'COPY {} /dumux/{}'.format(installDepScript, installDepScript),
+    'RUN ./{} && rm -f /dumux/{}'.format(installDepScript, installDepScript),
     '',
     '# configure module',
     'RUN /dumux/dune-common/bin/dunecontrol --opts=/dumux/dumux/optim.opts all',
     '',
     '# build doxygen documentation and tests',
     '# all applications that use dune_add_test will be built like this',
-    'RUN cd {}/build-cmake && make doc && make -j4 build_tests'.format(module_name),
+    'RUN cd {}/build-cmake && make doc && make -j4 build_tests'.format(moduleName),
     '',
     '# switch back to root',
     'USER root',
@@ -303,7 +298,7 @@ dockerfile_content = [
     'CMD ["/bin/bash","-i"]',
     '']
 dockerfile = open("docker/Dockerfile", "x")
-dockerfile.write('\n'.join(dockerfile_content) + "\n")
+dockerfile.write('\n'.join(dockerFileContent) + "\n")
 dockerfile.close()
 
 print("--> Created Dockerfile. You can adapt it to your needs, or\n"
@@ -311,12 +306,12 @@ print("--> Created Dockerfile. You can adapt it to your needs, or\n"
 build = input()
 if build == "y" or build == "Y":
     print("Building Docker image... this may take several minutes.")
-    os.system("docker build -f docker/Dockerfile -t {} .".format(docker_tag))
+    os.system("docker build -f docker/Dockerfile -t {} .".format(dockerTag))
     print("\n"
-          + "Successfully built docker image: {}. Have a look at docker/README.md.\n".format(docker_tag)
-          + "Check the container running docker run -it {} /bin/bash \n".format(docker_tag)
+          + "Successfully built docker image: {}. Have a look at docker/README.md.\n".format(dockerTag)
+          + "Check the container running docker run -it {} /bin/bash \n".format(dockerTag)
           + "in the same directory as the Dockerfile.\n"
-          + "And try using the convenience script pubtable_{}, see docker/README.md.".format(docker_tag))
+          + "And try using the convenience script pubtable_{}, see docker/README.md.".format(dockerTag))
 else:
-    print("You can build your Docker image later by running docker build -f docker/Dockerfile -t {} .\n".format(docker_tag)
+    print("You can build your Docker image later by running docker build -f docker/Dockerfile -t {} .\n".format(dockerTag)
           + "in your module directory, i.e. above the docker folder containing Dockerfile.")
