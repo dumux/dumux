@@ -31,8 +31,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
-#include <dune/geometry/quadraturerules.hh>
-
 namespace Dumux {
 
 /*!
@@ -66,18 +64,12 @@ public:
         c_ = getParam<Scalar>("Problem.C");
     }
 
-   /*!
-     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
+    /*!
+     * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     * \return the intrinsic permeability
+     * \param globalPos The global position where we evaluate
      */
-    template<class SubControlVolume, class ElementSolution>
-    PermeabilityType permeability(const Element& element,
-                                  const SubControlVolume& scv,
-                                  const ElementSolution& elemSol) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         PermeabilityType K(0.0);
 
@@ -85,7 +77,6 @@ public:
         using std::sin;
         using std::exp;
 
-        const auto globalPos = element.geometry().center();
         const Scalar x = globalPos[0];
         K[0][0] = 1.0;
         K[0][1] = -c_/(2*omega_) * sin(omega_*x);

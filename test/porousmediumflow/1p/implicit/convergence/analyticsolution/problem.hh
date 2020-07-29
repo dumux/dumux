@@ -28,10 +28,9 @@
 #include <dune/common/fvector.hh>
 #include <dune/grid/yaspgrid.hh>
 
-#include <dune/geometry/quadraturerules.hh>
-
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/common/boundarytypes.hh>
 
 #include <dumux/material/components/constant.hh>
@@ -52,6 +51,7 @@ namespace TTag {
 struct OnePConvergence { using InheritsFrom = std::tuple<OneP>; };
 struct OnePConvergenceTpfa { using InheritsFrom = std::tuple<OnePConvergence, CCTpfaModel>; };
 struct OnePConvergenceMpfa { using InheritsFrom = std::tuple<OnePConvergence, CCMpfaModel>; };
+struct OnePConvergenceBox { using InheritsFrom = std::tuple<OnePConvergence, BoxModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -102,9 +102,6 @@ class ConvergenceProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -142,13 +139,12 @@ public:
     // \{
 
     /*!
-      * \brief Specifies which kind of boundary condition should be
-      *        used for which equation on a given boundary control volume.
-      *
-      * \param element The element
-      * \param scvf The boundary sub control volume face
-      */
-    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary control volume.
+     *
+     * \param globalPos The position of the center of the finite volume
+     */
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
 
@@ -160,14 +156,13 @@ public:
     /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
-     * \param element The element for which the Dirichlet boundary condition is set
-     * \param scvf The boundary subcontrolvolumeface
+     * \param globalPos The center of the finite volume which ought to be set.
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        const auto p = analyticalSolution(scvf.ipGlobal())[pressureIdx];
+        const auto p = analyticalSolution(globalPos)[pressureIdx];
         return PrimaryVariables(p);
     }
 
@@ -178,17 +173,24 @@ public:
      */
     // \{
 
-    //! \copydoc Dumux::FVProblem::source()
-    template<class ElementVolumeVariables>
-    NumEqVector source(const Element &element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume &scv) const
+    /*!
+     * \brief Evaluates the source term for all phases within a given
+     *        sub-control volume.
+     *
+     * For this method, the \a priVars parameter stores the rate mass
+     * of a component is generated or annihilated per volume
+     * unit. Positive values mean that mass is created, negative ones
+     * mean that it vanishes.
+     *
+     * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
+     */
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        const auto globalPos = element.geometry().center();
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
-        using std::exp; using std::sin; using std::cos;
+        using std::exp;
+        using std::sin;
+        using std::cos;
         const Scalar cosOmegaX = cos(omega_*x);
         static const Scalar expTwo = exp(2);
         const Scalar expYPlusOne = exp(y+1);
@@ -206,12 +208,12 @@ public:
     /*!
      * \brief Evaluates the initial value for a control volume.
      *
-     * \param element The element
+     * \param globalPos The position for which the initial condition should be evaluated
      *
-     * For this method, the \a priVars parameter stores primary
+     * For this method, the \a values parameter stores primary
      * variables.
      */
-    PrimaryVariables initial(const Element &element) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         return PrimaryVariables(0.0);
     }

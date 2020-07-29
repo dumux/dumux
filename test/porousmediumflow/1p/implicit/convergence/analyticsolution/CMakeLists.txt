@@ -9,6 +9,10 @@ target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=One
 add_executable(test_1p_convergence_analytic_mpfa EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
 
+# executable for box tests
+add_executable(test_1p_convergence_analytic_box EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_1p_convergence_analytic_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
+
 # using tpfa and structured grid with zero off-diagonal permeability entries
 dumux_add_test(NAME test_1p_convergence_analytic_tpfa_structured
               TARGET test_1p_convergence_analytic_tpfa
@@ -33,4 +37,21 @@ dumux_add_test(NAME test_1p_convergence_analytic_mpfa_unstructured
               COMMAND ./convergencetest.py
               CMD_ARGS test_1p_convergence_analytic_mpfa params.input
                        -Problem.Name test_1p_convergence_analytic_mpfa_unstructured
+                       -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
+
+# using box and structured grid
+dumux_add_test(NAME test_1p_convergence_analytic_box_structured
+              TARGET test_1p_convergence_analytic_box
+              LABELS porousmediumflow 1p
+              COMMAND ./convergencetest.py
+              CMD_ARGS test_1p_convergence_analytic_box params.input
+                       -Problem.Name test_1p_convergence_analytic_box_structured)
+
+# using box and unstructured grid
+dumux_add_test(NAME test_1p_convergence_analytic_box_unstructured
+              TARGET test_1p_convergence_analytic_box
+              LABELS porousmediumflow 1p
+              COMMAND ./convergencetest.py
+              CMD_ARGS test_1p_convergence_analytic_box params.input
+                       -Problem.Name test_1p_convergence_analytic_box_unstructured
                        -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
