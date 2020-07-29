@@ -33,7 +33,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/indextraits.hh>
-#include <dumux/common/geometry/distance.hh>
+#include <dumux/geometry/distance.hh>
 #include <dumux/multidomain/embedded/pointsourcedata.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>

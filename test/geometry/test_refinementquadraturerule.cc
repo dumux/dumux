@@ -7,7 +7,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/geometry/affinegeometry.hh>
-#include <dumux/common/geometry/refinementquadraturerule.hh>
+#include <dumux/geometry/refinementquadraturerule.hh>
 
 int main (int argc, char *argv[]) try
 {

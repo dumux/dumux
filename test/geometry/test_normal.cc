@@ -28,7 +28,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 
-#include <dumux/common/geometry/normal.hh>
+#include <dumux/geometry/normal.hh>
 
 template<class P>
 void testOrthogonality(const P& normal, const P& vector, double scale, const std::string& caseName = "")

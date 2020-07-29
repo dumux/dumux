@@ -10,8 +10,8 @@
 #include <dune/common/timer.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
-#include <dumux/common/geometry/geometryintersection.hh>
-#include <dumux/common/geometry/triangulation.hh>
+#include <dumux/geometry/geometryintersection.hh>
+#include <dumux/geometry/triangulation.hh>
 #include "writetriangulation.hh"
 
 template<int dimworld = 3>

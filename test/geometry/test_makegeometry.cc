@@ -28,9 +28,9 @@
  #include <random>
 
 #include <dune/common/float_cmp.hh>
-#include <dumux/common/geometry/intersectspointgeometry.hh>
-#include <dumux/common/geometry/makegeometry.hh>
-#include <dumux/common/geometry/grahamconvexhull.hh>
+#include <dumux/geometry/intersectspointgeometry.hh>
+#include <dumux/geometry/makegeometry.hh>
+#include <dumux/geometry/grahamconvexhull.hh>
 
 //! test if the ordering of the input points has an effect on the resulting geometry
 template<class GlobalPosition>

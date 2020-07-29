@@ -16,10 +16,10 @@
 #endif
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/geometry/boundingboxtree.hh>
-#include <dumux/common/geometry/geometricentityset.hh>
-#include <dumux/common/geometry/intersectingentities.hh>
-#include "../writetriangulation.hh"
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/geometricentityset.hh>
+#include <dumux/geometry/intersectingentities.hh>
+#include <test/geometry/writetriangulation.hh>
 
 namespace Dumux {
 

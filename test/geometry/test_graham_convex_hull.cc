@@ -13,8 +13,8 @@
 #include <dune/common/timer.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/geometry/triangulation.hh>
-#include <dumux/common/geometry/grahamconvexhull.hh>
+#include <dumux/geometry/triangulation.hh>
+#include <dumux/geometry/grahamconvexhull.hh>
 
 #include "writetriangulation.hh"
 

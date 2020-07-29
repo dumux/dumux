@@ -33,8 +33,8 @@
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
-#include <dumux/common/geometry/distance.hh>
-#include <dumux/common/geometry/normal.hh>
+#include <dumux/geometry/distance.hh>
+#include <dumux/geometry/normal.hh>
 
 // helper function to make point geometry from field vector
 template<class Point, int dimWorld>

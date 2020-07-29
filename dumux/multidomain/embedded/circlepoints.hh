@@ -31,7 +31,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/geometry/normal.hh>
+#include <dumux/geometry/normal.hh>
 
 namespace Dumux::EmbeddedCoupling {
 

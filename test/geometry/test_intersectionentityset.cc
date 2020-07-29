@@ -13,8 +13,8 @@
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/alugrid/grid.hh>
 
-#include <dumux/common/geometry/geometricentityset.hh>
-#include <dumux/common/geometry/intersectionentityset.hh>
+#include <dumux/geometry/geometricentityset.hh>
+#include <dumux/geometry/intersectionentityset.hh>
 
 int main (int argc, char *argv[]) try
 {

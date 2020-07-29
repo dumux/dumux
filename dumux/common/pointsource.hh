@@ -31,9 +31,9 @@
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/geometry/boundingboxtree.hh>
-#include <dumux/common/geometry/intersectspointgeometry.hh>
-#include <dumux/common/geometry/intersectingentities.hh>
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/intersectspointgeometry.hh>
+#include <dumux/geometry/intersectingentities.hh>
 
 #include <dumux/discretization/method.hh>
 

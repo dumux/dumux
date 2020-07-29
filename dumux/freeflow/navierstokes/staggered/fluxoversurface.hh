@@ -35,8 +35,8 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/geometry/makegeometry.hh>
-#include <dumux/common/geometry/intersectspointgeometry.hh>
+#include <dumux/geometry/makegeometry.hh>
+#include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
