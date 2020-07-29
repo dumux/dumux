@@ -18,60 +18,15 @@
  * \file
  * \ingroup Geometry
  * \brief Helper functions for normals
+ * DEPRECATED will be removed once this header is removed
  */
-#ifndef DUMUX_GEOMETRY_NORMAL_HH
-#define DUMUX_GEOMETRY_NORMAL_HH
+#ifndef DUMUX_COMMON_GEOMETRY_NORMAL_HH
+#define DUMUX_COMMON_GEOMETRY_NORMAL_HH
 
-#include <algorithm>
-#include <dune/common/float_cmp.hh>
+#warning "This header is deprecated and will be removed after release 3.3. Please use dumux/geometry/normal.hh"
 
-namespace Dumux {
-
-/*!
- * \ingroup Geometry
- * \brief Create a vector normal to the given one (v is expected to be non-zero)
- * \note This returns some orthogonal vector with arbitrary length
- */
-template<class Vector>
-inline Vector normal(const Vector& v)
-{
-    static_assert(Vector::size() > 1, "normal expects a coordinate dimension > 1");
-
-    if constexpr (Vector::size() == 2)
-        return Vector({-v[1], v[0]});
-
-    const auto it = std::find_if(v.begin(), v.end(), [](const auto& x) { return Dune::FloatCmp::ne(x, 0.0); });
-    const auto index = std::distance(v.begin(), it);
-    if (index != Vector::size()-1)
-    {
-        Vector normal(0.0);
-        normal[index] = -v[index+1];
-        normal[index+1] = v[index];
-        return normal;
-    }
-    else
-    {
-        Vector normal(0.0);
-        normal[index-1] = -v[index];
-        normal[index] = v[index-1];
-        return normal;
-
-    }
-}
-
-/*!
- * \ingroup Geometry
- * \brief Create a vector normal to the given one (v is expected to be non-zero)
- * \note This returns some orthogonal vector with unit length
- */
-template<class Vector>
-inline Vector unitNormal(const Vector& v)
-{
-    auto normal = Dumux::normal(v);
-    normal /= normal.two_norm();
-    return normal;
-}
-
-} // end namespace Dumux
+// This header, and all other geometry headers have been moved to their own folder.
+// Please use the geometry headers in dumux/geometry/, as this will be removed after release 3.3.
+#include <dumux/geometry/normal.hh>
 
 #endif
