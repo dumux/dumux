@@ -19,7 +19,7 @@
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/geometricentityset.hh>
 #include <dumux/common/geometry/intersectingentities.hh>
-#include <test/common/geometry/writetriangulation.hh>
+#include "../writetriangulation.hh"
 
 namespace Dumux {
 

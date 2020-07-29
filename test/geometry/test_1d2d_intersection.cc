@@ -12,7 +12,6 @@
 
 #include <dumux/common/geometry/geometryintersection.hh>
 
-
 #ifndef DOXYGEN
 Dune::MultiLinearGeometry<double, 1, 2>
 makeLine(std::initializer_list<Dune::FieldVector<double, 2>>&& c, std::integral_constant<int, 2>)

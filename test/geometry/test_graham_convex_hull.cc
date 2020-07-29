@@ -15,7 +15,8 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/geometry/triangulation.hh>
 #include <dumux/common/geometry/grahamconvexhull.hh>
-#include <test/common/geometry/writetriangulation.hh>
+
+#include "writetriangulation.hh"
 
 template<class Scalar>
 class UniformDistributedRandomNumber

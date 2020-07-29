@@ -12,7 +12,7 @@
 
 #include <dumux/common/geometry/geometryintersection.hh>
 #include <dumux/common/geometry/triangulation.hh>
-#include <test/common/geometry/writetriangulation.hh>
+#include "writetriangulation.hh"
 
 template<int dimworld = 3>
 void testSegTriangle(const Dune::FieldVector<double, dimworld>& a,

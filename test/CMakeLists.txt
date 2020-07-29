@@ -1,5 +1,6 @@
 add_subdirectory(common)
 add_subdirectory(geomechanics)
+add_subdirectory(geometry)
 add_subdirectory(flux)
 add_subdirectory(freeflow)
 add_subdirectory(io)
