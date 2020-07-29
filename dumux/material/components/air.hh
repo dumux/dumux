@@ -109,6 +109,12 @@ public:
     { return true; }
 
     /*!
+     * \brief Returns true if the gas phase viscosity is constant
+     */
+    static constexpr bool gasViscosityIsConstant()
+    { return false; }
+
+    /*!
      * \brief The pressure \f$\mathrm{[Pa]}\f$ of gaseous Air at a given density and temperature.
      *
      * Ideal gas is assumed.
