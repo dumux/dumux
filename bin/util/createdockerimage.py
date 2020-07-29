@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
-
 import os
 import sys
 import shutil
 import argparse
 from argparse import RawTextHelpFormatter
 
+# require python 3
+if sys.version_info[0] < 3:
+    sys.exit("\nERROR: Python3 required")
+
+# input argument parser
 parser = argparse.ArgumentParser(
-    description="This is to be run inside an extracted module, e.g. created by the extractmodulepart script.\n\n" + \
-                "USAGE: " + sys.argv[0] + "-i installDepScript\n\n" + \
-                "installDepScript defaults to the file install{moduleName}.sh." + \
-                "You can also manually specify a script installing the DUNE dependencies for your module\n",
-    formatter_class=RawTextHelpFormatter
+        description="This is to be run inside an extracted module, e.g. created by the extractmodulepart script.\n\n" + \
+                    "USAGE: python3 " + sys.argv[0] + " -i installDepScript\n\n" + \
+                    "installDepScript defaults to the file install{moduleName}.sh." + \
+                    "You can also manually specify a script installing the DUNE dependencies for your module\n",
+        formatter_class=RawTextHelpFormatter
 )
 
 parser.add_argument('-i', '--installScript', help="Specify the script that installs dependencies")
