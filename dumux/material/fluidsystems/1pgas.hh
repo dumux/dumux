@@ -132,6 +132,15 @@ public:
     { return Component::gasIsIdeal(); }
 
     /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
+     *        have a constant viscosity.
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool viscosityIsConstant(int phaseIdx)
+    { return Component::gasViscosityIsConstant(); }
+
+    /*!
      * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
      */
     static Scalar molarMass(int compIdx = 0)
