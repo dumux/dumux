@@ -61,7 +61,13 @@ public:
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
-    //! calculate the diffusive energy fluxes
+    /*!
+     * \brief Returns the heat flux within the porous medium
+     *        (in J/s) across the given sub-control volume face.
+     * \note This law assumes thermal equilibrium between the fluid
+     *       and solid phases, and uses an effective thermal conductivity
+     *       for the overall aggregate.
+     */
     template<class Problem>
     static Scalar flux(const Problem& problem,
                        const Element& element,

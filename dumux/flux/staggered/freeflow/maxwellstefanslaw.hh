@@ -88,6 +88,11 @@ public:
 
     using DiffusionCoefficientsContainer = MaxwellStefanDiffusionCoefficients<Scalar, numPhases, numComponents>;
 
+    /*!
+     * \brief Returns the diffusive fluxes of all components within
+     *        a fluid phase across the given sub-control volume face.
+     *        The computed fluxes are given in kg/s.
+     */
     template<class ElementVolumeVariables>
     static CellCenterPrimaryVariables flux(const Problem& problem,
                                            const Element& element,
