@@ -18,6 +18,9 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 ### Deleted classes/files, property names, constants/enums:
 
 - Everything that has been deprecated before release 3.2 has been removed.
+- All of the geometry headers previously saved in `dumux/common/geometry` have been relocated to `dumux/geometry`. 
+  The headers in `dumux/common/geometry` are deprecated and will be removed in 3.3. The geometry tests have been moved from `test/common/geometry` 
+  and `test/common/boundingboxtree` to `test/geometry`.
 
 ### Other noteworthy changes:
 - after release 3.2, DuMu<sup>x</sup> releases earlier than 2.12 will no longer be automatically tested or supported.
