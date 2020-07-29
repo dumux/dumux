@@ -128,7 +128,12 @@ public:
 
     using DiffusionCoefficientsContainer = FickianDiffusionCoefficients<Scalar, numPhases, numComponents>;
 
-    //! return diffusive fluxes for all components in a phase
+    /*!
+     * \brief Returns the diffusive fluxes of all components within
+     *        a fluid phase across the given sub-control volume face.
+     *        The computed fluxes are given in mole/s or kg/s, depending
+     *        on the template parameter ReferenceSystemFormulation.
+     */
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,

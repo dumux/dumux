@@ -151,7 +151,16 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
     //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<ThisType, GridGeometry>;
 
-    //! Compute the advective flux
+    /*!
+     * \brief Returns the advective flux of a fluid phase
+     *        across the given sub-control volume face.
+     * \note This assembles the term
+     *       \f$-|\sigma| \mathbf{n}^T \mathbf{K} \left( \nabla p - \rho \mathbf{g} \right)\f$,
+     *       where \f$|\sigma|\f$ is the area of the face and \f$\mathbf{n}\f$ is the outer
+     *       normal vector. Thus, the flux is given in N*m, and can be converted
+     *       into a volume flux (m^3/s) or mass flux (kg/s) by applying an upwind scheme
+     *       for the mobility or the product of density and mobility, respectively.
+     */
     template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -306,7 +315,16 @@ public:
     //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<ThisType, GridGeometry>;
 
-    //! Compute the advective flux
+    /*!
+     * \brief Returns the advective flux of a fluid phase
+     *        across the given sub-control volume face.
+     * \note This assembles the term
+     *       \f$-|\sigma| \mathbf{n}^T \mathbf{K} \left( \nabla p - \rho \mathbf{g} \right)\f$,
+     *       where \f$|\sigma|\f$ is the area of the face and \f$\mathbf{n}\f$ is the outer
+     *       normal vector. Thus, the flux is given in N*m, and can be converted
+     *       into a volume flux (m^3/s) or mass flux (kg/s) by applying an upwind scheme
+     *       for the mobility or the product of density and mobility, respectively.
+     */
     template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
     static Scalar flux(const Problem& problem,
                        const Element& element,

@@ -108,7 +108,13 @@ public:
     //! export the type for the corresponding cache
     using Cache = TpfaFouriersLawCache;
 
-    //! Compute the heat condution flux assuming thermal equilibrium
+    /*!
+     * \brief Returns the heat flux within the porous medium
+     *        (in J/s) across the given sub-control volume face.
+     * \note This law assumes thermal equilibrium between the fluid
+     *       and solid phases, and uses an effective thermal conductivity
+     *       for the overall aggregate.
+     */
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
