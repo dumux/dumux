@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief Test for the one-phase CC model
+ * \brief Convergence test with analytic solution
  */
 
 #include <config.h>
@@ -49,47 +49,6 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include "problem.hh"
-
-/*!
-* \brief Creates analytical solution.
-* Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
-* \param problem the problem for which to evaluate the analytical solution
-*/
-template<class Scalar, class Problem>
-auto createAnalyticalSolution(const Problem& problem)
-{
-    const auto& gridGeometry = problem.gridGeometry();
-    using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
-
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto dimWorld = GridView::dimensionworld;
-
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
-
-    std::vector<Scalar> analyticalPressure;
-    std::vector<VelocityVector> analyticalVelocity;
-
-    analyticalPressure.resize(gridGeometry.numDofs());
-    analyticalVelocity.resize(gridGeometry.numDofs());
-
-    for (const auto& element : elements(gridGeometry.gridView()))
-    {
-        auto fvGeometry = localView(gridGeometry);
-        fvGeometry.bindElement(element);
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto ccDofIdx = scv.dofIndex();
-            const auto ccDofPosition = scv.dofPosition();
-            const auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition);
-            analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[dim];
-
-            for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                analyticalVelocity[ccDofIdx][dirIdx] = analyticalSolutionAtCc[dirIdx];
-        }
-    }
-
-    return std::make_tuple(analyticalPressure, analyticalVelocity);
-}
 
 template<class Problem, class SolutionVector>
 void printL2Error(const Problem& problem, const SolutionVector& x)
@@ -192,7 +151,7 @@ int main(int argc, char** argv) try
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = ILU0BiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

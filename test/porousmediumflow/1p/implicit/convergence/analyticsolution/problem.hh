@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoundaryTests
- * \brief The convergence test
+ * \ingroup OnePTests
+ * \brief The properties & problem setup for the convergence test with analytic solution
  */
 
 #ifndef DUMUX_CONVERGENCE_TEST_ONEP_PROBLEM_HH
@@ -89,8 +89,8 @@ struct EnableGridGeometryCache<TypeTag, TTag::OnePConvergence> { static constexp
 } // end namespace Properties
 
 /*!
- * \ingroup BoundaryTests
- * \brief The convergence test
+ * \ingroup OnePTests
+ * \brief The properties & problem setup for the convergence test with analytic solution
  */
 template <class TypeTag>
 class ConvergenceProblem : public PorousMediumFlowProblem<TypeTag>
@@ -111,9 +111,10 @@ class ConvergenceProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr auto pressureIdx = 2;
 
 public:
-    //! export the Indices
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-
+    /*!
+     * \brief The constructor.
+     * \param gridGeometry The finite-volume grid geometry
+     */
     ConvergenceProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -242,8 +243,6 @@ public:
 
         return sol;
     }
-
-    // \}
 
 private:
     static constexpr Scalar eps_ = 1e-7;

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoundaryTests
- * \brief The spatial parameters class for the test problem using the 1p cc model.
+ * \ingroup OnePTests
+ * \brief The spatial params of the incompressible single-phase convergence test with analytic solution
  */
 
 #ifndef DUMUX_CONVERGENCE_TEST_ONEP_SPATIALPARAMS_HH
@@ -34,9 +34,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoundaryTests
- * \brief The spatial parameters class for the test problem using the
- *        1p cc model.
+ * \ingroup OnePTests
+ * \brief The spatial params of the incompressible single-phase convergence test with analytic solution
  */
 template<class GridGeometry, class Scalar>
 class ConvergenceTestSpatialParams
