@@ -109,6 +109,74 @@ private:
     const FVElementGeometry* fvGeometryPtr_;
 };
 
+/*!
+ * \ingroup Discretization
+ * \brief Iterators over sub control volume faces of an fv geometry and a given sub control volume
+ * \note usage: for(const auto& scvf : scvfs(fvGeometry, scv))
+ */
+template<class SubControlVolumeFace, class Vector, class FVElementGeometry>
+class SkippingScvfIterator : public Dune::ForwardIteratorFacade<SkippingScvfIterator<SubControlVolumeFace,
+                                                                                     Vector,
+                                                                                     FVElementGeometry>,
+                                                                 const SubControlVolumeFace>
+{
+    using ThisType = SkippingScvfIterator<SubControlVolumeFace, Vector, FVElementGeometry>;
+    using Iterator = typename Vector::const_iterator;
+public:
+
+    static ThisType makeBegin(const Vector& vector, const FVElementGeometry& fvGeometry, const std::size_t scvIdx)
+    {
+        auto begin = vector.begin();
+        const auto end = vector.end();
+
+        while (true)
+        {
+            if (begin == end || fvGeometry.scvf(*begin).insideScvIdx() == scvIdx)
+                break;
+            else
+                begin++;
+        }
+
+        return SkippingScvfIterator(begin, end, fvGeometry, scvIdx);
+    }
+
+    static ThisType makeEnd(const Vector& vector, const FVElementGeometry& fvGeometry, const std::size_t scvIdx)
+    {
+        return SkippingScvfIterator(vector.end(), vector.end(), fvGeometry, scvIdx);
+    }
+
+    //! dereferencing yields a subcontrol volume face
+    const SubControlVolumeFace& dereference() const
+    {
+        return fvGeometryPtr_->scvf(*it_);
+    }
+
+    bool equals(const ThisType& other) const
+    {
+        return it_ == other.it_;
+    }
+
+    void increment()
+    {
+        while (true)
+        {
+            it_++;
+            if (it_ == itEnd_ || dereference().insideScvIdx() == scvIdx_)
+                break;
+        }
+    }
+
+private:
+
+    SkippingScvfIterator(const Iterator& itBegin, const Iterator& itEnd, const FVElementGeometry& fvGeometry, const std::size_t scvIdx)
+    : it_(itBegin), fvGeometryPtr_(&fvGeometry), itEnd_(itEnd), scvIdx_(scvIdx) {}
+
+    Iterator it_;
+    const FVElementGeometry* fvGeometryPtr_;
+    const Iterator itEnd_;
+    std::size_t scvIdx_;
+};
+
 } // end namespace Dumux
 
 #endif
