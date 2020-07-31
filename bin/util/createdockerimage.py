@@ -288,7 +288,7 @@ dockerFileContent = [
     'RUN ./{} && rm -f /dumux/{}'.format(installDepScript, installDepScript),
     '',
     '# configure module',
-    'RUN /dumux/dune-common/bin/dunecontrol --opts=/dumux/dumux/optim.opts all',
+    'RUN /dumux/dune-common/bin/dunecontrol --opts=/dumux/dumux/cmake.opts all',
     '',
     '# build doxygen documentation and tests',
     '# all applications that use dune_add_test will be built like this',
