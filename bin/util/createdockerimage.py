@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import argparse
+import subprocess
 from argparse import RawTextHelpFormatter
 
 # require python 3
@@ -315,7 +316,10 @@ print("--> Created Dockerfile. You can adapt it to your needs, or\n"
 build = input()
 if build == "y" or build == "Y":
     print("Building Docker image... this may take several minutes.")
-    os.system("docker build -f docker/Dockerfile -t {} .".format(dockerTag))
+    try:
+        subprocess.run(['docker', 'build', '-f', 'docker/Dockerfile', '-t', dockerTag, '.'], check=True)
+    except:
+        sys.exit("ERROR: docker image build failed")
     print("\n"
           + "Successfully built docker image: {}. Have a look at docker/README.md.\n".format(dockerTag)
           + "Check the container running docker run -it {} /bin/bash \n".format(dockerTag)
