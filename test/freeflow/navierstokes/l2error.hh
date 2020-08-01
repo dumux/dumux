@@ -26,9 +26,123 @@
 
 #include <vector>
 #include <cmath>
+#include <type_traits>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+template<class T>
+struct L2ErrorResult
+{
+    T absolute;
+    T relative;
+};
+
+class L2Error
+{
+public:
+
+    template<class Problem, class SolutionVector, class Restriction>
+    static auto calculate(const Problem& problem, const SolutionVector& sol, const Restriction& include)
+    {
+        using GridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
+        using Extrusion = Extrusion_t<GridGeometry>;
+        using PrimaryVariables = std::decay_t<decltype(sol[0])>;
+        PrimaryVariables sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
+        typename PrimaryVariables::value_type totalVolume = 0.0;
+
+        for (const auto& element : elements(problem.gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(problem.gridGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                if (include(scv))
+                {
+                    const PrimaryVariables analyticalSolution = getAnalyticalSolution_(problem, scv);
+                    const PrimaryVariables numericalSolution = sol[scv.dofIndex()];
+                    const auto volume = Extrusion::volume(scv);
+
+                    for (int i = 0; i < PrimaryVariables::size(); ++i)
+                    {
+                        sumError[i] += squaredDiff_(analyticalSolution[i], numericalSolution[i]) * volume;
+                        sumReference[i] += analyticalSolution[i] * analyticalSolution[i] * volume;
+                    }
+
+                    totalVolume += volume;
+                }
+            }
+        }
+
+        // get the absolute and relative discrete L2-error
+        for (int i = 0; i < PrimaryVariables::size(); ++i)
+        {
+            using std::sqrt;
+            l2NormAbs[i] = sqrt(sumError[i] / totalVolume);
+            l2NormRel[i] = sqrt(sumError[i] / sumReference[i]);
+        }
+
+        return L2ErrorResult<PrimaryVariables>{l2NormAbs, l2NormRel};
+    }
+private:
+
+    template<class Problem, class SubControlVolume>
+    static auto getAnalyticalSolution_(const Problem& problem, const SubControlVolume& scv)
+    {
+        using GridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
+        if constexpr (GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
+            return problem.analyticalSolution(scv.dofPosition())[scv.directionIndex()];
+        else
+            return problem.analyticalSolution(scv.dofPosition());
+    }
+
+    template<class T>
+    static T squaredDiff_(const T& a, const T& b)
+    {
+        return (a-b)*(a-b);
+    }
+};
+
+}
+
+/*!
+ * \ingroup NavierStokesTests
+ * \brief Routine to calculate the discrete L2 error
+ */
+template<class Problem, class SolutionVector>
+auto calculateL2Error(const Problem& problem, const SolutionVector& sol)
+{
+    using GridGeometry = std::decay_t<decltype(problem.gridGeometry())>;
+
+    // Specialization for the face-centered staggered discretization of the momentum equations.
+    // As there is only one primary variable per DOF (the scalar normal velocity), we need to
+    // calculate the errors separately for each coordinate direction and combine the result in the end.
+    if constexpr (Problem::isMomentumProblem() && GridGeometry::discMethod == DiscretizationMethod::fcstaggered)
+    {
+        using GlobalPosition = typename GridGeometry::LocalView::SubControlVolumeFace::GlobalPosition;
+        using PrimaryVariables = std::decay_t<decltype(problem.analyticalSolution(GlobalPosition(0.0)))>;
+        PrimaryVariables absolute;
+        PrimaryVariables relative;
+        static_assert(PrimaryVariables::size() == GridGeometry::GridView::dimension);
+
+        // get the L2 norm for each coordinate direction
+        for (int i = 0; i < PrimaryVariables::size(); ++i)
+        {
+            const auto error = Detail::L2Error::calculate(problem, sol, [i](const auto& scv){ return scv.directionIndex() == i; });
+            absolute[i] = error.absolute;
+            relative[i] = error.relative;
+        }
+
+        // join the result
+        return Detail::L2ErrorResult<PrimaryVariables>{absolute, relative};
+    }
+    else
+        return Detail::L2Error::calculate(problem, sol, [](const auto& scv){ return true; });
+}
 
 /*!
  * \ingroup NavierStokesTests
