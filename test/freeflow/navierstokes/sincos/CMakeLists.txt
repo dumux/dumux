@@ -15,6 +15,20 @@ dumux_add_test(NAME test_ff_navierstokes_sincos
               -Problem.IsStationary true
               -Component.LiquidKinematicViscosity 0.001)
 
+dumux_add_test(NAME test_ff_navierstokes_sincos_new
+              SOURCES main_new.cc
+              LABELS freeflow
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS LINEARSOLVER=UMFPackBackend
+              COMMAND ./convergencetest.py
+              CMD_ARGS       test_ff_navierstokes_sincos_new params.input
+              -Grid.UpperRight "6.28 6.28"
+              -Grid.Cells "150 150"
+              -Problem.Name test_ff_navierstokes_sincos_stationary_convergence
+              -Problem.IsStationary true
+              -Component.LiquidKinematicViscosity 0.001)
+
 dumux_add_test(NAME test_ff_navierstokes_sincos_instationary
               TARGET test_ff_navierstokes_sincos
               LABELS freeflow
