@@ -154,24 +154,18 @@ public:
             cellCenter_[elementIdx] = element.geometry().center();
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
-                static const int problemWallNormalAxis
-                    = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", -1);
-                int searchAxis = problemWallNormalAxis;
+                int searchAxis = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", -1);
 
                 // search along wall normal axis of the intersection
-                if (problemWallNormalAxis < 0 || problemWallNormalAxis >= dim)
-                {
+                if (searchAxis < 0 || searchAxis >= dim)
                     searchAxis = wallNormalAxisTemp[i];
-                }
 
-                GlobalPosition global = element.geometry().center();
-                global -= wallPositions[i];
-                // second and argument ensures to use only aligned elements
-                if (abs(global[searchAxis]) < wallDistance_[elementIdx]
-                    && abs(global[searchAxis]) < global.two_norm() + 1e-8
-                    && abs(global[searchAxis]) > global.two_norm() - 1e-8)
+                GlobalPosition cellToWallVector = (cellCenter_[elementIdx] - wallPositions[i]);
+                Scalar distanceToWallFace = cellToWallVector.two_norm();
+
+                if (distanceToWallFace < wallDistance_[elementIdx])
                 {
-                    wallDistance_[elementIdx] = abs(global[searchAxis]);
+                    wallDistance_[elementIdx] = distanceToWallFace;
                     wallElementIdx_[elementIdx] = wallElements[i];
                     wallNormalAxis_[elementIdx] = searchAxis;
                     sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
