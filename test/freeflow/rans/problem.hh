@@ -99,11 +99,14 @@ struct Problem<TypeTag, TTag::RANSModel>
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::RANSModel> { static constexpr bool value = true; };
-
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::RANSModel> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::RANSModel> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct HasFlatWallGeometry<TypeTag, TTag::RANSModel> { static constexpr bool value = true; };
+
 } // end namespace Properties
 
 /*!

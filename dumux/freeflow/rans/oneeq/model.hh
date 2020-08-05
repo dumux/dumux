@@ -98,8 +98,8 @@ namespace Dumux::Properties {
  *
  * \tparam dimension The dimension of the problem
  */
-template<int dimension>
-struct OneEqModelTraits : RANSModelTraits<dimension>
+template<int dimension, bool HasFlatWallGeometry>
+struct OneEqModelTraits : RANSModelTraits<dimension, HasFlatWallGeometry>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -136,8 +136,9 @@ struct ModelTraits<TypeTag, TTag::OneEq>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
 public:
-    using type = OneEqModelTraits<dim>;
+    using type = OneEqModelTraits<dim, hasFlatWallGeometry>;
 };
 
 //! The flux variables
@@ -201,7 +202,8 @@ struct ModelTraits<TypeTag, TTag::OneEqNI>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
-    using IsothermalTraits = OneEqModelTraits<dim>;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
+    using IsothermalTraits = OneEqModelTraits<dim, hasFlatWallGeometry>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

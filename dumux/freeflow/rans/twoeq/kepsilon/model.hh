@@ -86,8 +86,8 @@ namespace Properties {
  *
  * \tparam dimension The dimension of the problem
  */
-template<int dimension>
-struct KEpsilonModelTraits : RANSModelTraits<dimension>
+template<int dimension, bool HasFlatWallGeometry>
+struct KEpsilonModelTraits : RANSModelTraits<dimension, HasFlatWallGeometry>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -124,8 +124,9 @@ struct ModelTraits<TypeTag, TTag::KEpsilon>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
 public:
-    using type = KEpsilonModelTraits<dim>;
+    using type = KEpsilonModelTraits<dim, hasFlatWallGeometry>;
 };
 
 //! The flux variables
@@ -189,7 +190,8 @@ struct ModelTraits<TypeTag, TTag::KEpsilonNI>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
-    using IsothermalTraits = KEpsilonModelTraits<dim>;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
+    using IsothermalTraits = KEpsilonModelTraits<dim, hasFlatWallGeometry>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

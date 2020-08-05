@@ -68,9 +68,10 @@ struct RANS { using InheritsFrom = std::tuple<NavierStokes>; };
  *
  * \tparam dimension The dimension of the problem
  */
-template<int dimension>
+template<int dimension, bool HasFlatWallGeometry>
 struct RANSModelTraits : NavierStokesModelTraits<dimension>
 {
+    static constexpr bool hasFlatWallGeometry() { return HasFlatWallGeometry; }
     //! The model does include a turbulence model
     static constexpr bool usesTurbulenceModel() { return true; }
 };
@@ -82,13 +83,17 @@ struct ModelTraits<TypeTag, TTag::RANS>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
 public:
-    using type = RANSModelTraits<dim>;
+    using type = RANSModelTraits<dim, hasFlatWallGeometry>;
 };
 
 //! The specific I/O fields
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::RANS> { using type = RANSIOFields; };
+
+template<class TypeTag>
+struct HasFlatWallGeometry<TypeTag, TTag::RANS> { static constexpr bool value = false; }; //!< As a default, do not output channel specific turbulence metrics
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Reynolds-averaged Navier-Stokes model
@@ -107,8 +112,9 @@ struct ModelTraits<TypeTag, TTag::RANSNI>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
 
-    using IsothermalTraits = RANSModelTraits<dim>;
+    using IsothermalTraits = RANSModelTraits<dim, hasFlatWallGeometry>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

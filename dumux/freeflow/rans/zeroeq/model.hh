@@ -61,9 +61,11 @@ struct ZeroEq { using InheritsFrom = std::tuple<RANS>; };
  *
  * \tparam dimension The dimension of the problem
  */
-template<int dimension>
-struct ZeroEqModelTraits : RANSModelTraits<dimension>
+template<int dimension, bool HasFlatWallGeometry>
+struct ZeroEqModelTraits : RANSModelTraits<dimension, HasFlatWallGeometry>
 {
+    static constexpr bool hasFlatWallGeometry() { return HasFlatWallGeometry; }
+
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
 
@@ -78,8 +80,9 @@ struct ModelTraits<TypeTag, TTag::ZeroEq>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
 public:
-    using type = ZeroEqModelTraits<dim>;
+    using type = ZeroEqModelTraits<dim, hasFlatWallGeometry>;
 };
 
 //! Set the volume variables property
@@ -119,7 +122,8 @@ struct ModelTraits<TypeTag, TTag::ZeroEqNI>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
-    using IsothermalTraits = ZeroEqModelTraits<dim>;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
+    using IsothermalTraits = ZeroEqModelTraits<dim, hasFlatWallGeometry>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

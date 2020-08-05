@@ -91,8 +91,8 @@ namespace Properties {
  *
  * \tparam dimension The dimension of the problem
  */
-template<int dimension>
-struct KOmegaModelTraits : RANSModelTraits<dimension>
+template<int dimension, bool HasFlatWallGeometry>
+struct KOmegaModelTraits : RANSModelTraits<dimension, HasFlatWallGeometry>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -129,8 +129,9 @@ struct ModelTraits<TypeTag, TTag::KOmega>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
 public:
-    using type = KOmegaModelTraits<dim>;
+    using type = KOmegaModelTraits<dim, hasFlatWallGeometry>;
 };
 
 //! The flux variables
@@ -195,7 +196,8 @@ struct ModelTraits<TypeTag, TTag::KOmegaNI>
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr int dim = GridView::dimension;
-    using IsothermalTraits = KOmegaModelTraits<dim>;
+    static constexpr bool hasFlatWallGeometry = getPropValue<TypeTag, Properties::HasFlatWallGeometry>();
+    using IsothermalTraits = KOmegaModelTraits<dim, hasFlatWallGeometry>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

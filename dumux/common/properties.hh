@@ -276,6 +276,8 @@ struct SherwoodFormulation { using type = UndefinedProperty; };
 
 template<class TypeTag, class MyTypeTag>
 struct NormalizePressure { using type = UndefinedProperty; }; //!<  Returns whether to normalize the pressure term in the momentum balance or not
+template<class TypeTag, class MyTypeTag>
+struct HasFlatWallGeometry { using type = UndefinedProperty; }; //!<  Returns whether the channel in a turbulence test is flat. If so, additional output is provided.
 
 /////////////////////////////////////////////////////////////
 // Properties used by multidomain simulations
