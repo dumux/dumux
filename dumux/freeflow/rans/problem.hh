@@ -266,13 +266,10 @@ public:
                 velocity_[elementIdx][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
         }
 
-        // calculate cell-center-averaged velocity gradients, maximum, and minimum values
+        // calculate cell-center-averaged velocity gradients
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = wallElementIdx_[elementIdx];
-
-            Scalar maxVelocity = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
@@ -285,25 +282,6 @@ public:
                     if (abs(cellCenter_[neighborIdx_[elementIdx][dimIdx][1]][dimIdx]
                             - cellCenter_[neighborIdx_[elementIdx][dimIdx][0]][dimIdx]) < 1e-8)
                         velocityGradients_[elementIdx][velIdx][dimIdx] = 0.0;
-                }
-
-                if (abs(velocity_[elementIdx][dimIdx]) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
-                {
-                    velocityMaximum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
-                }
-                if (abs(velocity_[elementIdx][dimIdx]) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
-                {
-                    velocityMinimum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
-                }
-
-                if (0 <= flowNormalAxis && flowNormalAxis < dim)
-                {
-                    flowNormalAxis_[elementIdx] = flowNormalAxis;
-                }
-                else if (abs(maxVelocity) < abs(velocity_[elementIdx][dimIdx]))
-                {
-                    maxVelocity = abs(velocity_[elementIdx][dimIdx]);
-                    flowNormalAxis_[elementIdx] = dimIdx;
                 }
             }
 
@@ -374,6 +352,10 @@ public:
 
                 }
             }
+
+            // calculate the cell-centered maximum and minimum velocities
+            if constexpr (hasFlatWallGeometry)
+                calculateMinMaxVelocities(flowNormalAxis, elementIdx);
         }
 
         // calculate or call all secondary variables
@@ -434,6 +416,30 @@ public:
             }
         }
     }
+
+    template<bool enable = hasFlatWallGeometry, typename std::enable_if_t<enable, int> = 0>
+    void calculateMinMaxVelocities(Scalar flowNormalAxis, const unsigned int elementIdx)
+    {
+        Scalar maxVelocity = 0.0;
+        const unsigned int wallElementIdx = wallElementIdx_[elementIdx];
+        for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+        {
+            if (abs(velocity_[elementIdx][dimIdx]) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
+                velocityMaximum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
+
+            if (abs(velocity_[elementIdx][dimIdx]) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
+                velocityMinimum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
+
+            if (0 <= flowNormalAxis && flowNormalAxis < dim)
+                flowNormalAxis_[elementIdx] = flowNormalAxis;
+            else if (abs(maxVelocity) < abs(velocity_[elementIdx][dimIdx]))
+            {
+                maxVelocity = abs(velocity_[elementIdx][dimIdx]);
+                flowNormalAxis_[elementIdx] = dimIdx;
+            }
+        }
+    }
+
 
     /*!
      * \brief Returns whether a wall function should be used at a given face
