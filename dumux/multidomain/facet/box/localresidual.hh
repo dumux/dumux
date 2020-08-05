@@ -110,22 +110,18 @@ public:
             const auto& bcTypes = elemBcTypes[scv.localDofIndex()];
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
-            if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
+            if (bcTypes.hasNeumann())
             {
                 auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 neumannFluxes *= Extrusion::area(scvf)*elemVolVars[scv].extrusionFactor();
 
-                flux += neumannFluxes;
+                // only add fluxes to equations for which Neumann is set
+                for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                    if (bcTypes.isNeumann(eqIdx))
+                        flux[eqIdx] += neumannFluxes[eqIdx];
             }
-
-            // for Dirichlet there is no addition to the residual here but they
-            // are enforced strongly by replacing the residual entry afterwards
-            else if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                return flux;
-            else
-                DUNE_THROW(Dune::NotImplemented, "Mixed boundary conditions. Use pure boundary conditions by converting Dirichlet BCs to Robin BCs");
         }
 
         return flux;
