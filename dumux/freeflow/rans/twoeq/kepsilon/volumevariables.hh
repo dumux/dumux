@@ -44,6 +44,7 @@ class KEpsilonVolumeVariables
 public:
     //! export the indices type
     using Indices = typename Traits::ModelTraits::Indices;
+    static constexpr bool hasFlatWallGeometry = Traits::ModelTraits::hasFlatWallGeometry();
 
     /*!
      * \brief Update all quantities for a given control volume

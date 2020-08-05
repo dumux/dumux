@@ -49,6 +49,7 @@ class RANSVolumeVariables
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
+    static constexpr bool hasFlatWallGeometry = Traits::ModelTraits::hasFlatWallGeometry();
 
 public:
 
@@ -93,19 +94,24 @@ public:
 
         // calculate characteristic properties of the turbulent flow
         elementIdx_ = problem.gridGeometry().elementMapper().index(element);
-        wallElementIdx_ = problem.wallElementIdx_[elementIdx_];
         wallDistance_ = problem.wallDistance_[elementIdx_];
         velocity_ = problem.velocity_[elementIdx_];
-        velocityMaximum_ = problem.velocityMaximum_[wallElementIdx_];
         velocityGradients_ = problem.velocityGradients_[elementIdx_];
+        karmanConstant_ = problem.karmanConstant();
+
+        wallElementIdx_ = problem.wallElementIdx_[elementIdx_];
         const auto flowNormalAxis = problem.flowNormalAxis_[elementIdx_];
         const auto wallNormalAxis = problem.wallNormalAxis_[elementIdx_];
-        uStar_ = sqrt(problem.kinematicViscosity_[wallElementIdx_]
-                      * abs(problem.velocityGradients_[wallElementIdx_][flowNormalAxis][wallNormalAxis]));
-        uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
-        yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementIdx_];
-        uPlus_ = velocity_[flowNormalAxis] / uStar_;
-        karmanConstant_ = problem.karmanConstant();
+
+        if constexpr (hasFlatWallGeometry)
+        {
+            velocityMaximum_ = problem.velocityMaximum_[wallElementIdx_];
+            uStar_ = sqrt(problem.kinematicViscosity_[wallElementIdx_]
+                   * abs(problem.velocityGradients_[wallElementIdx_][flowNormalAxis][wallNormalAxis]));
+            uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
+            yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementIdx_];
+            uPlus_ = velocity_[flowNormalAxis] / uStar_;
+        }
     }
 
     /*!
@@ -123,6 +129,7 @@ public:
     /*!
      * \brief Return the maximum velocity vector \f$\mathrm{[m/s]}\f$ of the wall segment.
      */
+    template<bool enable = hasFlatWallGeometry, std::enable_if_t<enable, int> = 0>
     DimVector velocityMaximum() const
     { return velocityMaximum_; }
 
@@ -147,18 +154,21 @@ public:
     /*!
      * \brief Return the wall friction velocity \f$\mathrm{[m/s]}\f$
      */
+    template<bool enable = hasFlatWallGeometry, std::enable_if_t<enable, int> = 0>
     Scalar uStar() const
     { return uStar_; }
 
     /*!
      * \brief Return the dimensionless wall distance \f$\mathrm{[-]}\f$.
      */
+    template<bool enable = hasFlatWallGeometry, std::enable_if_t<enable, int> = 0>
     Scalar yPlus() const
     { return yPlus_; }
 
     /*!
      * \brief Return the dimensionless velocity \f$\mathrm{[-]}\f$.
      */
+    template<bool enable = hasFlatWallGeometry, std::enable_if_t<enable, int> = 0>
     Scalar uPlus() const
     { return uPlus_; }
 
@@ -255,18 +265,20 @@ protected:
     { return dynamicEddyViscosity_  = value; }
 
     DimVector velocity_;
-    DimVector velocityMaximum_;
     DimMatrix velocityGradients_;
     std::size_t elementIdx_;
     std::size_t wallElementIdx_;
     Scalar wallDistance_;
     Scalar karmanConstant_;
-    Scalar uStar_;
-    Scalar yPlus_;
-    Scalar uPlus_;
     Scalar dynamicEddyViscosity_ = 0.0;
     Scalar eddyDiffusivity_ = 0.0;
     Scalar eddyThermalConductivity_ = 0.0;
+
+    DimVector velocityMaximum_;
+    Scalar uStar_;
+    Scalar yPlus_;
+    Scalar uPlus_;
+
 };
 } // end namespace Dumux
 
