@@ -482,21 +482,17 @@ public:
      * \param scvf The sub control volume face.
      */
     bool isOnWall(const SubControlVolumeFace& scvf) const
-    {
-        return asImp_().isOnWallAtPos(scvf.center());
-    }
+    { return asImp_().isOnWallAtPos(scvf.center()); }
 
     /*!
      * \brief Returns whether a given point is on a wall
      *
      * \param globalPos The position in global coordinates.
+     *
+     * Throw an exception if no walls are implemented
      */
     bool isOnWallAtPos(const GlobalPosition &globalPos) const
-    {
-        // Throw an exception if no walls are implemented
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide an isOnWall() method.");
-    }
+    { DUNE_THROW(Dune::InvalidStateException, "The problem does not provide an isOnWall() method."); }
 
     /*!
      * \brief Returns the sand-grain roughness \f$\mathrm{[m]}\f$ at a given position
@@ -504,9 +500,7 @@ public:
      * \param globalPos The position in global coordinates.
      */
     Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
-    {
-        return 0.0;
-    }
+    { return 0.0; }
 
     /*!
      * \brief Returns the Karman constant
@@ -516,9 +510,7 @@ public:
 
     //! \brief Returns the \f$ \beta_{\omega} \f$ constant
     const Scalar betaOmega() const
-    {
-        return 0.0708;
-    }
+    { return 0.0708; }
 
     /*!
      * \brief Return the turbulent Prandtl number \f$ [-] \f$ which is used to convert
