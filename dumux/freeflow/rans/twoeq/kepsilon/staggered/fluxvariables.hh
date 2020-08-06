@@ -97,11 +97,11 @@ public:
         // calculate advective flux
         auto upwindTermK = [](const auto& volVars)
         {
-            return volVars.turbulentKineticEnergy();
+            return volVars.turbulentKineticEnergy() * volVars.density();
         };
         auto upwindTermEpsilon = [](const auto& volVars)
         {
-            return volVars.dissipation();
+            return volVars.dissipation() * volVars.density();
         };
 
         flux[turbulentKineticEnergyEqIdx]
@@ -116,19 +116,10 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective diffusion coefficients
-        Scalar insideCoeff_k = insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaK();
-        Scalar outsideCoeff_k = outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaK();
-        Scalar insideCoeff_e = insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaEpsilon();
-        Scalar outsideCoeff_e = outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaEpsilon();
-        static const auto kEpsilonEnableKinematicViscosity_
-            = getParamFromGroup<bool>(problem.paramGroup(), "KEpsilon.EnableKinematicViscosity", true);
-        if (kEpsilonEnableKinematicViscosity_)
-        {
-            insideCoeff_k += insideVolVars.kinematicViscosity();
-            outsideCoeff_k += outsideVolVars.kinematicViscosity();
-            insideCoeff_e += insideVolVars.kinematicViscosity();
-            outsideCoeff_e += outsideVolVars.kinematicViscosity();
-        }
+        Scalar insideCoeff_k = (insideVolVars.dynamicEddyViscosity() / insideVolVars.sigmaK()) + insideVolVars.viscosity();
+        Scalar outsideCoeff_k = (outsideVolVars.dynamicEddyViscosity() / outsideVolVars.sigmaK()) + outsideVolVars.viscosity();
+        Scalar insideCoeff_e = (insideVolVars.dynamicEddyViscosity() / insideVolVars.sigmaEpsilon()) + insideVolVars.viscosity();
+        Scalar outsideCoeff_e = (outsideVolVars.dynamicEddyViscosity() / outsideVolVars.sigmaEpsilon()) + outsideVolVars.viscosity();
 
         // scale by extrusion factor
         insideCoeff_k *= insideVolVars.extrusionFactor();

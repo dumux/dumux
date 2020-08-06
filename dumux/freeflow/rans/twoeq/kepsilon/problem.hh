@@ -325,7 +325,7 @@ public:
     {
         unsigned int elementIdx = asImp_().gridGeometry().elementMapper().index(element);
         return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementIdx, elemFaceVars[scvf].velocitySelf())
-                                    * elemVolVars[scvf.insideScvIdx()].density());
+                                    * asImp_().storedDensity(elementIdx) );
     }
 
     //! \brief Returns the flux for non-isothermal and compositional RANS models
