@@ -4,10 +4,8 @@ Cells = 10 10
 Refinement = 0
 
 [Problem]
-Name = convergence
-
-[Problem]
 EnableGravity = false
+Name = convergence
 C = 0.9
 
 [Component]

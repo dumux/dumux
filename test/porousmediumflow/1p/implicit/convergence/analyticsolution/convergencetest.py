@@ -4,13 +4,16 @@ from math import *
 import subprocess
 import sys
 
-if len(sys.argv) < 2:
-    sys.stderr.write('Please provide a single argument <testname> to the script\n')
+if len(sys.argv) < 3:
+    sys.stderr.write("Please provide the following arguments:\n"  \
+                     "   - the name of the executable\n" \
+                     "   - the name to be used for generated output files\n" \
+                     "   - (optional) runtime arguments to be passed to the executable\n")
     sys.exit(1)
 
-executableName = str(sys.argv[1])
-testargs = [str(i) for i in sys.argv][2:]
-testname = testargs[2]
+executableName = sys.argv[1]
+testname = sys.argv[2]
+testargs = [str(i) for i in sys.argv][3:] if len(sys.argv) > 3 else ['params.input']
 
 # remove the old log files
 subprocess.call(['rm', testname + '.log'])
@@ -18,7 +21,10 @@ print("Removed old log file ({})!".format(testname + '.log'))
 
 # do the runs with different refinement
 for i in [0, 1, 2, 3]:
-    subprocess.call(['./' + executableName] + testargs + ['-Grid.Refinement', str(i)])
+    subprocess.call(['./' + executableName]
+                    + testargs
+                    + ['-Problem.Name', testname]
+                    + ['-Grid.Refinement', str(i)])
 
 def checkRates():
     # check the rates and append them to the log file

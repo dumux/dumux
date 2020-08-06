@@ -23,25 +23,22 @@ dumux_add_test(NAME test_1p_convergence_analytic_tpfa_structured
                TARGET test_1p_convergence_analytic_tpfa
                LABELS porousmediumflow 1p
                COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_tpfa params.input
-                        -Problem.Name test_1p_convergence_analytic_tpfa_structured
-                        -Problem.C 0.0)
+               CMD_ARGS test_1p_convergence_analytic_tpfa
+                        tpfa_structured params.input -Problem.C 0.0)
 
 # using mpfa and structured grid
 dumux_add_test(NAME test_1p_convergence_analytic_mpfa_structured
                TARGET test_1p_convergence_analytic_mpfa
                LABELS porousmediumflow 1p
                COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_mpfa params.input
-                        -Problem.Name test_1p_convergence_analytic_mpfa_structured)
+               CMD_ARGS test_1p_convergence_analytic_mpfa mpfa_structured)
 
 # using box and structured grid
 dumux_add_test(NAME test_1p_convergence_analytic_box_structured
                TARGET test_1p_convergence_analytic_box
                LABELS porousmediumflow 1p
                COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_box params.input
-                        -Problem.Name test_1p_convergence_analytic_box_structured)
+               CMD_ARGS test_1p_convergence_analytic_box box_structured)
 
 # tests on ustructured grids in case UG is found
 if (dune-uggrid_FOUND)
@@ -50,18 +47,16 @@ if (dune-uggrid_FOUND)
                    TARGET test_1p_convergence_analytic_mpfa
                    LABELS porousmediumflow 1p
                    COMMAND ./convergencetest.py
-                   CMD_ARGS test_1p_convergence_analytic_mpfa params.input
-                            -Problem.Name test_1p_convergence_analytic_mpfa_unstructured
-                            -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
+                   CMD_ARGS test_1p_convergence_analytic_mpfa mpfa_unstructured
+                            params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
 
     # using box and unstructured grid
     dumux_add_test(NAME test_1p_convergence_analytic_box_unstructured
                    TARGET test_1p_convergence_analytic_box
                    LABELS porousmediumflow 1p
                    COMMAND ./convergencetest.py
-                   CMD_ARGS test_1p_convergence_analytic_box params.input
-                            -Problem.Name test_1p_convergence_analytic_box_unstructured
-                            -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
+                   CMD_ARGS test_1p_convergence_analytic_box box_unstructured
+                            params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
 
 # otherwise define test with the same name but enforce skip
 else()
