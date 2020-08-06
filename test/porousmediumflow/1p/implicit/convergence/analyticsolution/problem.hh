@@ -25,6 +25,7 @@
 #ifndef DUMUX_CONVERGENCE_TEST_ONEP_PROBLEM_HH
 #define DUMUX_CONVERGENCE_TEST_ONEP_PROBLEM_HH
 
+#include <cmath>
 #include <dune/common/fvector.hh>
 #include <dune/grid/yaspgrid.hh>
 
@@ -101,7 +102,6 @@ class ConvergenceProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -117,9 +117,8 @@ public:
      */
     ConvergenceProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {
-        c_ = getParam<Scalar>("Problem.C");
-    }
+    , c_(getParam<Scalar>("Problem.C"))
+    {}
 
     /*!
      * \name Problem parameters
@@ -128,7 +127,6 @@ public:
 
     /*!
      * \brief Returns the temperature within the domain in [K].
-     *
      */
     Scalar temperature() const
     { return 273.15 + 10; } // 10°C
@@ -145,23 +143,18 @@ public:
      *
      * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-
         values.setAllDirichlet();
-
         return values;
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
-     *
+     * \brief Evaluates Dirichlet boundary conditions.
      * \param globalPos The center of the finite volume which ought to be set.
-     *
-     * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         const auto p = analyticalSolution(globalPos)[pressureIdx];
         return PrimaryVariables(p);
@@ -185,7 +178,7 @@ public:
      *
      * The units must be according to either using mole or mass fractions (mole/(m^3*s) or kg/(m^3*s)).
      */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
@@ -208,20 +201,13 @@ public:
 
     /*!
      * \brief Evaluates the initial value for a control volume.
-     *
      * \param globalPos The position for which the initial condition should be evaluated
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
 
     /*!
      * \brief Returns the analytical solution of the problem at a given position.
-     *
      * \param globalPos The global position
      */
     auto analyticalSolution(const GlobalPosition& globalPos) const
@@ -251,4 +237,4 @@ private:
 };
 } // end namespace Dumux
 
-#endif //DUMUX_DARCY_SUBPROBLEM_HH
+#endif

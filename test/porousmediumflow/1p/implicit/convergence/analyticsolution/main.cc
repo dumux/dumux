@@ -21,17 +21,12 @@
  * \ingroup OnePTests
  * \brief Convergence test with analytic solution
  */
-
 #include <config.h>
-
-#include <ctime>
 #include <iostream>
+#include <iomanip>
 
-#include <dune/common/float_cmp.hh>
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
 
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
@@ -42,9 +37,6 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/pointcloudvtkwriter.hh>
-
-#include <dumux/discretization/method.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -76,7 +68,7 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
     const auto numDofs = problem.gridGeometry().numDofs();
     std::ostream tmp(std::cout.rdbuf());
     tmp << std::setprecision(8) << "** L2 error (abs) for "
-            << std::setw(6) << numDofs << " cc dofs "
+            << std::setw(6) << numDofs << " dofs "
             << std::scientific
             << "L2 error = " << l2error
             << std::endl;
@@ -117,9 +109,6 @@ int main(int argc, char** argv) try
 
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
-
-    // start timer
-    Dune::Timer timer;
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -164,8 +153,6 @@ int main(int argc, char** argv) try
     // output result to vtk
     vtkWriter.write(1.0);
 
-    timer.stop();
-
     printL2Error(*problem, x);
 
     if (mpiHelper.rank() == 0)
@@ -192,9 +179,4 @@ catch (Dune::Exception &e)
 {
     std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
     return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }
