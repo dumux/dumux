@@ -19,31 +19,15 @@
  * \ingroup Geometry
  * \brief A function to compute a geometry's diameter, i.e.
  *        the longest distance between points of a geometry
+ * DEPRECATED will be removed once this header is removed
  */
-#ifndef DUMUX_GEOMETRY_DIAMETER_HH
-#define DUMUX_GEOMETRY_DIAMETER_HH
+#ifndef DUMUX_COMMON_GEOMETRY_DIAMETER_HH
+#define DUMUX_COMMON_GEOMETRY_DIAMETER_HH
 
-#include <algorithm>
+#warning "This header is deprecated and will be removed after release 3.3. Please use dumux/geometry/diameter.hh"
 
-namespace Dumux {
-
-/*!
- * \ingroup Geometry
- * \brief Computes the longest distance between points of a geometry
- * \note Useful e.g. to compute the maximum cell diameter of a grid
- */
-template<class Geometry>
-typename Geometry::ctype diameter(const Geometry& geo)
-{
-    using std::max;
-    typename Geometry::ctype h = 0.0;
-    for (std::size_t i = 0; i < geo.corners(); ++i)
-        for (std::size_t j = i + 1; j < geo.corners(); ++j)
-            h = max(h, (geo.corner(i)-geo.corner(j)).two_norm());
-
-    return h;
-}
-
-} // end namespace Dumux
+// This header, and all other geometry headers have been moved to their own folder.
+// Please use the geometry headers in dumux/geometry/, as this will be removed after release 3.3.
+#include <dumux/geometry/diameter.hh>
 
 #endif

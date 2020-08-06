@@ -22,7 +22,7 @@
 #ifndef DUMUX_TEST_INTERSECTION_HH
 #define DUMUX_TEST_INTERSECTION_HH
 
-#include <dumux/common/geometry/intersectspointgeometry.hh>
+#include <dumux/geometry/intersectspointgeometry.hh>
 
 namespace Dumux {
 

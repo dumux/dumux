@@ -5,8 +5,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/common/geometry/boundingboxtree.hh>
-#include <dumux/common/geometry/intersectingentities.hh>
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/intersectingentities.hh>
 
 template<int dimworld>
 void testIntersectingEntityCartesianGrid()

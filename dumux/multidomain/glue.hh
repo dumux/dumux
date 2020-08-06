@@ -26,9 +26,9 @@
 #ifndef DUMUX_MULTIDOMAIN_GLUE_HH
 #define DUMUX_MULTIDOMAIN_GLUE_HH
 
-#include <dumux/common/geometry/geometricentityset.hh>
-#include <dumux/common/geometry/boundingboxtree.hh>
-#include <dumux/common/geometry/intersectionentityset.hh>
+#include <dumux/geometry/geometricentityset.hh>
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/intersectionentityset.hh>
 
 namespace Dumux {
 

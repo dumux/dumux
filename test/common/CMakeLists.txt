@@ -1,6 +1,4 @@
-add_subdirectory(boundingboxtree)
 add_subdirectory(functions)
-add_subdirectory(geometry)
 add_subdirectory(integrate)
 add_subdirectory(math)
 add_subdirectory(parameters)

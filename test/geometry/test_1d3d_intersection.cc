@@ -9,7 +9,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
-#include <dumux/common/geometry/geometryintersection.hh>
+#include <dumux/geometry/geometryintersection.hh>
 
 
 #ifndef DOXYGEN

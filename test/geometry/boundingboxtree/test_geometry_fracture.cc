@@ -14,10 +14,10 @@
 #include <dune/foamgrid/dgffoam.hh>
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/geometry/boundingboxtree.hh>
-#include <dumux/common/geometry/geometricentityset.hh>
-#include <dumux/common/geometry/intersectingentities.hh>
-#include <test/common/geometry/writetriangulation.hh>
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/geometricentityset.hh>
+#include <dumux/geometry/intersectingentities.hh>
+#include <test/geometry/writetriangulation.hh>
 
 int main (int argc, char *argv[]) try
 {

@@ -34,7 +34,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
 
-#include <dumux/common/geometry/intersectingentities.hh>
+#include <dumux/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {

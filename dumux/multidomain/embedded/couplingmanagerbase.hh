@@ -36,8 +36,8 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/geometry/distance.hh>
-#include <dumux/common/geometry/intersectingentities.hh>
+#include <dumux/geometry/distance.hh>
+#include <dumux/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/glue.hh>

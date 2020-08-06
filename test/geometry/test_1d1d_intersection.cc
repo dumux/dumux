@@ -7,7 +7,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
 
-#include <dumux/common/geometry/geometryintersection.hh>
+#include <dumux/geometry/geometryintersection.hh>
 
 #ifndef DOXYGEN
 template<int dimWorld>
