@@ -40,7 +40,7 @@
 
 #include <dumux/assembly/fvassembler.hh>
 
-#include "problem.hh"
+#include "properties.hh"
 
 template<class Problem, class SolutionVector>
 void printL2Error(const Problem& problem, const SolutionVector& x)
