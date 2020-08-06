@@ -82,8 +82,8 @@ public:
     {
         CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
 
-        storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy();
-        storage[dissipationEqIdx] = volVars.dissipationTilde();
+        storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy() * volVars.density();
+        storage[dissipationEqIdx] = volVars.dissipationTilde() * volVars.density();
 
         return storage;
     }
@@ -101,22 +101,22 @@ public:
         const auto& volVars = elemVolVars[scv];
 
         // production
-        source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.kinematicEddyViscosity()
+        source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.dynamicEddyViscosity()
                                                * volVars.stressTensorScalarProduct();
         source[dissipationEqIdx] += volVars.cOneEpsilon() * volVars.fOne()
                                     * volVars.dissipationTilde() / volVars.turbulentKineticEnergy()
-                                    * 2.0 * volVars.kinematicEddyViscosity()
+                                    * 2.0 * volVars.dynamicEddyViscosity()
                                     * volVars.stressTensorScalarProduct();
 
         // destruction
-        source[turbulentKineticEnergyEqIdx] -= volVars.dissipationTilde();
-        source[dissipationEqIdx] -= volVars.cTwoEpsilon() * volVars.fTwo()
+        source[turbulentKineticEnergyEqIdx] -= volVars.dissipationTilde() * volVars.density();
+        source[dissipationEqIdx] -= volVars.cTwoEpsilon() * volVars.fTwo() * volVars.density()
                                     * volVars.dissipationTilde() * volVars.dissipationTilde()
                                     / volVars.turbulentKineticEnergy();
 
         // dampening functions
-        source[turbulentKineticEnergyEqIdx] -= volVars.dValue();
-        source[dissipationEqIdx] += volVars.eValue();
+        source[turbulentKineticEnergyEqIdx] -= volVars.dValue() * volVars.density();
+        source[dissipationEqIdx] += volVars.eValue() * volVars.density();
 
         return source;
     }
