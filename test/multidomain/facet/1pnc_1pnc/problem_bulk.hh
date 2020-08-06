@@ -27,6 +27,11 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+// defined in CMakeLists.txt
+#ifndef USEMIXEDBCS
+#define USEMIXEDBCS false
+#endif
+
 namespace Dumux {
 
 /*!
@@ -64,7 +69,11 @@ class OnePNCBulkProblem : public PorousMediumFlowProblem<TypeTag>
     {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx)
+        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx),
+        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
+
+        // equation indices
+        contiH2OEqIdx = Indices::conti0EqIdx + H2OIdx
     };
 
 public:
@@ -95,8 +104,15 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
+#if !USEMIXEDBCS
         if (globalPos[1] < 1e-6 || globalPos[1] > this->gridGeometry().bBoxMax()[1] - 1e-6)
             values.setAllDirichlet();
+#else
+        if (globalPos[1] < 1e-6)
+            values.setAllDirichlet();
+        if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - 1e-6)
+            values.setDirichlet(contiH2OEqIdx);
+#endif
         return values;
     }
 

@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
+  <PolyData>
+    <Piece NumberOfLines="14" NumberOfPoints="15">
+      <PointData Scalars="p">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
+          100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
+          100000 100000 100000
+        </DataArray>
+        <DataArray type="Float32" Name="rho" NumberOfComponents="1" format="ascii">
+          999.689 999.689 999.689 999.689 999.689 999.689 999.689 999.689 999.689 999.689 999.689 999.689
+          999.689 999.689 999.689
+        </DataArray>
+        <DataArray type="Float32" Name="mu" NumberOfComponents="1" format="ascii">
+          0.00130753 0.00130753 0.00130753 0.00130753 0.00130753 0.00130753 0.00130753 0.00130753 0.00130753 0.00130753 0.00130753 0.00130753
+          0.00130753 0.00130753 0.00130753
+        </DataArray>
+        <DataArray type="Float32" Name="delp" NumberOfComponents="1" format="ascii">
+          -5.09317e-10 -6.25732e-10 -6.8394e-10 -6.98492e-10 -7.567e-10 -7.71252e-10 -8.00355e-10 -8.00355e-10 -8.14907e-10 -8.00355e-10 -7.71252e-10 -7.42148e-10
+          -6.98492e-10 -6.40284e-10 -5.52973e-10
+        </DataArray>
+        <DataArray type="Float32" Name="x^H2O_liq" NumberOfComponents="1" format="ascii">
+          0.999237 0.999237 0.999238 0.999238 0.999239 0.99924 0.99924 0.999241 0.999241 0.999242 0.999242 0.999243
+          0.999243 0.999243 0.999243
+        </DataArray>
+        <DataArray type="Float32" Name="x^N2_liq" NumberOfComponents="1" format="ascii">
+          0.000763276 0.000762866 0.000762325 0.000761722 0.00076109 0.000760454 0.000759832 0.000759238 0.000758684 0.00075818 0.000757735 0.000757357
+          0.000757055 0.000756838 0.00075672
+        </DataArray>
+        <DataArray type="Float32" Name="X^H2O_liq" NumberOfComponents="1" format="ascii">
+          0.998814 0.998814 0.998815 0.998816 0.998817 0.998818 0.998819 0.99882 0.998821 0.998822 0.998822 0.998823
+          0.998823 0.998824 0.998824
+        </DataArray>
+        <DataArray type="Float32" Name="X^N2_liq" NumberOfComponents="1" format="ascii">
+          0.00118638 0.00118575 0.00118491 0.00118397 0.00118299 0.001182 0.00118103 0.00118011 0.00117925 0.00117847 0.00117777 0.00117719
+          0.00117672 0.00117638 0.0011762
+        </DataArray>
+      </PointData>
+      <CellData Scalars="process rank">
+        <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
+          0 0 0 0 0 0 0 0 0 0 0 0
+          0 0
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Coordinates" NumberOfComponents="3" format="ascii">
+          0.5 0.25 0 0.5 0.285714 0 0.5 0.321429 0 0.5 0.357143 0
+          0.5 0.392857 0 0.5 0.428571 0 0.5 0.464286 0 0.5 0.5 0
+          0.5 0.535714 0 0.5 0.571429 0 0.5 0.607143 0 0.5 0.642857 0
+          0.5 0.678571 0 0.5 0.714286 0 0.5 0.75 0
+        </DataArray>
+      </Points>
+      <Lines>
+        <DataArray type="Int32" Name="connectivity" NumberOfComponents="1" format="ascii">
+          0 1 1 2 2 3 3 4 4 5 5 6
+          6 7 7 8 8 9 9 10 10 11 11 12
+          12 13 13 14
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" NumberOfComponents="1" format="ascii">
+          2 4 6 8 10 12 14 16 18 20 22 24
+          26 28
+        </DataArray>
+      </Lines>
+    </Piece>
+  </PolyData>
+</VTKFile>
