@@ -162,8 +162,6 @@ public:
         return momentumFlux;
     }
 
-    //TODO by Lars: Review!
-    //TODO by Lars: Use momentumCouplingCondition(...)/introduce new method to remove dulplicated code?
     /*!
     * \brief Returns the momentum flux across the coupling boundary which is calculated according to the new interface condition
     *
@@ -179,17 +177,9 @@ public:
                                       const SubControlVolumeFace<stokesIdx>& scvf) const
     {
       Scalar momentumFlux(0.0);
-      const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
       //######## darcy contribution #################
-      // integrate darcy pressure over each coupling segment and average
-      for (const auto& data : stokesContext)
-      {
-        if (scvf.index() == data.stokesScvfIdx)
-        {
-          const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
-          const auto& elemVolVars = *(data.elementVolVars);
-          const auto& darcyFvGeometry = data.fvGeometry;
-          const auto& localBasis = darcyFvGeometry.feLocalBasis();
+        momentumFlux = oldMomentumCouplingCondition(element,fvGeometry,stokesElemVolVars,stokesElemFaceVars,scvf);
+        momentumFlux*= scvf.directionSign(); //Revert sign change, should be applied to total flux
 
       //######## New stokes contribution #################
         static const bool unsymmetrizedGradientForBeaversJoseph = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
@@ -209,7 +199,9 @@ public:
         // Create a boundaryTypes object (will be empty if not at a boundary)
         std::optional<BoundaryTypes<stokesIdx>> currentScvfBoundaryTypes;
         if (scvf.boundary())
+            {
             currentScvfBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, scvf));
+            }
 
         std::optional<BoundaryTypes<stokesIdx>> lateralFaceBoundaryTypes;
         if (lateralScvf.boundary())
@@ -226,10 +218,9 @@ public:
             this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
             currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
-        static const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
-                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
         //TODO: Remove calculation above in this case
-        if (unsymmetrizedGradientForIC){
+            if (unsymmetrizedGradientForIC)
+            {
             velocityGrad_ij = 0.0;
         }
 
