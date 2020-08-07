@@ -99,7 +99,7 @@ public:
      * \brief Set a boundary condition for a single equation to
      *        Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
      */
-    [[deprecated("Use setSlipCondition")]]
+    [[deprecated("This method will be removed after release (3.n). Use setSlipCondition instead!")]]
     void setBeaversJoseph(unsigned eqIdx)
     {
         setSlipCondition(eqIdx);
@@ -123,7 +123,7 @@ public:
      *
      * \param eqIdx The index of the equation
      */
-    [[deprecated("Use isSlipCondition")]]
+    [[deprecated("This method will be removed after release (3.n). Use isSlipCondition instead!")]]
     bool isBeaversJoseph(unsigned eqIdx) const
     { return isSlipCondition(eqIdx); }
 
@@ -141,7 +141,7 @@ public:
      * \brief Returns true if some equation is used to specify a
      *        Beavers-Joseph(-Saffman) boundary condition.
      */
-    [[deprecated("Use hasSlipCondition")]]
+    [[deprecated("This method will be removed after release (3.n). Use hasSlipCondition instead!")]]
     bool hasBeaversJoseph() const
     {
         return hasSlipCondition();
