@@ -191,33 +191,13 @@ public:
           const auto& darcyFvGeometry = data.fvGeometry;
           const auto& localBasis = darcyFvGeometry.feLocalBasis();
 
-          // do second order integration as box provides linear functions
-          static constexpr int darcyDim = GridGeometry<darcyIdx>::GridView::dimension;
-          const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
-          for (const auto& qp : rule)
-          {
-            const auto& ipLocal = qp.position();
-            const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
-            const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
-
-            std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
-            localBasis.evaluateFunction(ipElementLocal, shapeValues);
-
-            Scalar pressure = 0.0;
-            for (const auto& scv : scvs(data.fvGeometry))
-            pressure += elemVolVars[scv].pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
-
-            momentumFlux += pressure*data.segmentGeometry.integrationElement(qp.position())*qp.weight();
-          }
-        }
-      }
-      momentumFlux /= scvf.area();
-
-      // normalize pressure
-      if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
-      momentumFlux -= this->couplingManager().problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
-
       //######## New stokes contribution #################
+        static const bool unsymmetrizedGradientForBeaversJoseph = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
+                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+        // TODO: how to deprecate unsymmBeaverJoseph?
+        // Replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
+        static const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
+                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForIC", unsymmetrizedGradientForBeaversJoseph);
       const std::size_t numSubFaces = scvf.pairData().size();
 
       // Account for all sub faces
