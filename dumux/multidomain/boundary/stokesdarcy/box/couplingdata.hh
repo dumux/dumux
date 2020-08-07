@@ -94,7 +94,8 @@ public:
                                      const ElementFaceVariables& stokesElemFaceVars,
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        if (getParamFromGroup<bool>("Problem", "NewIc", false)){
+        static const bool newIc_ = getParamFromGroup<bool>("Problem", "NewIc", false);
+        if (newIc_){
             return newMomentumCouplingCondition(element, fvGeometry, stokesElemVolVars, stokesElemFaceVars, scvf);
         }
         else{
@@ -245,7 +246,7 @@ public:
             this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
             currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
-        const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
+        static const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
                                                            "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
         //TODO: Remove calculation above in this case
         if (unsymmetrizedGradientForIC){
@@ -271,7 +272,8 @@ public:
      */
     VelocityVector porousMediumVelocity(const Element<stokesIdx>& element, const SubControlVolumeFace<stokesIdx>& scvf) const
     {
-        if (getParamFromGroup<bool>("Problem", "NewIc", false)){
+        static const bool newIc_ = getParamFromGroup<bool>("Problem", "NewIc", false);
+        if (newIc_){
             return newPorousMediumInterfaceVelocity(element, scvf);
         }
         else{
@@ -346,14 +348,11 @@ public:
               }
             }
             //account for gravity
-            //TODO by Lars: Gravity changes darcy's law for calculating the velocity: Why is -rho*g the correct sign?
             if (enableGravity){
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
             }
             //Add the integrated segment velocity to the sum: v+= -weight_k * sqrt(det(A^T*A))*K/mu*gradP
-            //TODO: which fits dumux style better?
             K.usmv(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx), gradP, velocity);
-            //alternativ: velocity.axpy(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx), mv(K,gradP));
           }
           intersectionLength += data.segmentGeometry.volume();
         }
@@ -434,15 +433,11 @@ public:
               }
             }
             //account for gravity
-            //TODO by Lars: Gravity changes darcy's law for calculating the velocity: Why is -rho*g the correct sign?
             if (enableGravity){
               gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
             }
             //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
-            //TODO: which fits dumux style better?
-            M.usmv(qp.weight()*data.segmentGeometry.integrationElement(ipLocal)*data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP, velocity);
-            //alternativ: velocity.axpy(-qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, mv(M,gradP));
-          }
+            M.usmv(qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP, velocity);          }
           intersectionLength += data.segmentGeometry.volume();
         }
       }

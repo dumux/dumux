@@ -241,7 +241,8 @@ public:
                                        const Scalar velocitySelf,
                                        const Scalar tangentialVelocityGradient) const
     {
-        if (getParamFromGroup<bool>("Problem", "NewIc", false)){
+        static const bool newIc_ = getParamFromGroup<bool>("Problem", "NewIc", false);
+        if (newIc_){
             return nTangentialVelocity(element, scv,ownScvf, faceOnPorousBoundary, velocitySelf, tangentialVelocityGradient);
         }
         else{
@@ -271,7 +272,6 @@ public:
               + velocitySelf) / (betaBJ*distanceNormalToBoundary + 1.0);
     }
 
-    //TODO: viscosity?
     //! helper function to evaluate the slip velocity on the boundary when the new tangential condition is used
     const Scalar nTangentialVelocity(const Element& element,
                                        const SubControlVolume& scv,
@@ -280,7 +280,6 @@ public:
                                        const Scalar velocitySelf, //vel auf stehendem
                                        const Scalar tangentialVelocityGradient) const //dv/dx=0
     {
-        //const Scalar viscosity = elemVolVars[scvf.insideScvIdx()].Viscosity();
         const Scalar factor = -1.0/(asImp_().epsInterface(faceOnPorousBoundary) * asImp_().factorNTangential(faceOnPorousBoundary));
         const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
 
