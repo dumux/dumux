@@ -228,13 +228,17 @@ public:
      * \brief Returns the scale separation value eps = (macroscopicLength/LengthOfPeriodicityCell).
      */
     Scalar epsInterface(const SubControlVolumeFace& scvf) const
-    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the epsInterface value must be returned in the acutal problem");}
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the epsInterface value must be returned in the acutal problem");
+    }
 
     /*!
      * \brief Returns the boundary layer constant N^bl computed based on the exact pore geometry.
      */
     Scalar factorNTangential(const SubControlVolumeFace& scvf) const
-    { DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNTangential value must be returned in the acutal problem");}
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNTangential value must be returned in the acutal problem");
+    }
 
 
     /*!
@@ -256,13 +260,12 @@ public:
         static const bool newIc_ = getParamFromGroup<bool>("Problem", "NewIc", false);
         // du/dy + dv/dx = factor * (u_boundary-uPM)
         Scalar factor;
-        if (newIc_){
-            //return nTangentialVelocity(element, scv,ownScvf, faceOnPorousBoundary, velocitySelf, tangentialVelocityGradient);
+        if (newIc_)
+        {
             factor = -1.0 / asImp_().epsInterface(faceOnPorousBoundary) / asImp_().factorNTangential(faceOnPorousBoundary);
-
         }
-        else{
-            //return beaversJosephVelocity(element, scv,ownScvf, faceOnPorousBoundary, velocitySelf, tangentialVelocityGradient);
+        else
+        {
             factor = asImp_().betaBJ(element, faceOnPorousBoundary); //beta = alpha/sqrt(K)
         }
         const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
