@@ -28,9 +28,8 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
-#include <dumux/multidomain/couplingmanager.hh> //TODO by Lars: Why is this the right coupling manager, not the one in this folder?
+#include <dumux/multidomain/couplingmanager.hh> //TODO: Why is this the right coupling manager, not the one in this folder?
 
-//Needed for nMomentumCouplingCondition
 #include <dumux/freeflow/navierstokes/staggered/velocitygradients.hh>
 #include <dumux/discretization/staggered/freeflow/boundarytypes.hh>
 #include <optional>
@@ -63,9 +62,7 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
-    // Needed for velocityPorousMedium
     using VelocityVector = typename Element<stokesIdx>::Geometry::GlobalCoordinate;
-    // Needed for nMomentum
     template<std::size_t id> using BoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::BoundaryTypes>;
     using StokesVelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry<stokesIdx>, BoundaryTypes<stokesIdx>, Indices<stokesIdx>>;
 
@@ -83,8 +80,11 @@ public:
     /*!
      * \brief Returns the momentum flux across the coupling boundary.
      *
-     * Calls (old/new)MomentumCouplingCondition depending on the value of the parameter "Problem.NewIc"
-     * Defaults to oldMomentumCouplingCondition
+     * Calculates the classical or new (normal)momentumCouplingCondition depending on the value of the parameter "Problem.NewIc"
+     * Defaults to classical momentumCouplingCondition.
+     *
+     * For the normal momentum coupling, the porous medium side of the coupling condition
+     * is evaluated, i.e. -[p n]^pm. For the new normal momentum coupling, the stokes term -viscosity*Nsbl*tau.T*grad(v_ff)*n is added.
      *
      */
     template<class ElementFaceVariables>
@@ -95,31 +95,11 @@ public:
                                      const SubControlVolumeFace<stokesIdx>& scvf) const
     {
         static const bool newIc_ = getParamFromGroup<bool>("Problem", "NewIc", false);
-        if (newIc_){
-            return newMomentumCouplingCondition(element, fvGeometry, stokesElemVolVars, stokesElemFaceVars, scvf);
-        }
-        else{
-            return oldMomentumCouplingCondition(element, fvGeometry, stokesElemVolVars, stokesElemFaceVars, scvf);
-        }
-    }
 
-    /*!
-     * \brief Returns the momentum flux across the coupling boundary.
-     *
-     * For the normal momentum coupling, the porous medium side of the coupling condition
-     * is evaluated, i.e. -[p n]^pm.
-     *
-     */
-    template<class ElementFaceVariables>
-    Scalar oldMomentumCouplingCondition(const Element<stokesIdx>& element,
-                                     const FVElementGeometry<stokesIdx>& fvGeometry,
-                                     const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
-                                     const ElementFaceVariables& stokesElemFaceVars,
-                                     const SubControlVolumeFace<stokesIdx>& scvf) const
-    {
         Scalar momentumFlux(0.0);
-        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
+        //######## darcy contribution #################
+        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
         // integrate darcy pressure over each coupling segment and average
         for (const auto& data : stokesContext)
         {
@@ -157,78 +137,51 @@ public:
         if(getPropValue<SubDomainTypeTag<stokesIdx>, Properties::NormalizePressure>())
             momentumFlux -= this->couplingManager().problem(stokesIdx).initial(scvf)[Indices<stokesIdx>::pressureIdx];
 
-        momentumFlux *= scvf.directionSign();
-
-        return momentumFlux;
-    }
-
-    /*!
-    * \brief Returns the momentum flux across the coupling boundary which is calculated according to the new interface condition
-    *
-    * For the new normal momentum coupling, the porous medium side and also the stokes side is evaluated.
-    * [p]^pm + N_s^{bl} \tau T n
-    *
-    */
-    template<class ElementFaceVariables>
-    Scalar newMomentumCouplingCondition(const Element<stokesIdx>& element,
-                                      const FVElementGeometry<stokesIdx>& fvGeometry,
-                                      const ElementVolumeVariables<stokesIdx>& stokesElemVolVars,
-                                      const ElementFaceVariables& stokesElemFaceVars,
-                                      const SubControlVolumeFace<stokesIdx>& scvf) const
-    {
-        Scalar momentumFlux(0.0);
-        //######## darcy contribution #################
-        momentumFlux = oldMomentumCouplingCondition(element,fvGeometry,stokesElemVolVars,stokesElemFaceVars,scvf);
-        momentumFlux*= scvf.directionSign(); //Revert sign change, should be applied to total flux
-
-        //######## New stokes contribution #################
-        static const bool unsymmetrizedGradientForBeaversJoseph = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
-                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
-        // TODO: how to deprecate unsymmBeaverJoseph?
-        // Replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
-        static const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
-                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForIC", unsymmetrizedGradientForBeaversJoseph);
-        const std::size_t numSubFaces = scvf.pairData().size();
-
-        // Account for all sub faces
-        for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+        if (newIc_)
         {
-            const auto eIdx = scvf.insideScvIdx();
-            const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+            //######## New stokes contribution #################
+            static const bool unsymmetrizedGradientForBeaversJoseph = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
+                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+            // TODO: how to deprecate unsymmBeaverJoseph?
+            // Replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
+            static const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
+                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForIC", unsymmetrizedGradientForBeaversJoseph);
+            const std::size_t numSubFaces = scvf.pairData().size();
 
-            // Create a boundaryTypes object (will be empty if not at a boundary)
-            std::optional<BoundaryTypes<stokesIdx>> currentScvfBoundaryTypes;
-            if (scvf.boundary())
+            // Account for all sub faces
+            for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
             {
-                currentScvfBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, scvf));
+                const auto eIdx = scvf.insideScvIdx();
+                const auto& lateralScvf = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+
+                // Create a boundaryTypes object (will be empty if not at a boundary)
+                std::optional<BoundaryTypes<stokesIdx>> currentScvfBoundaryTypes;
+                if (scvf.boundary())
+                {
+                    currentScvfBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, scvf));
+                }
+
+                std::optional<BoundaryTypes<stokesIdx>> lateralFaceBoundaryTypes;
+                if (lateralScvf.boundary())
+                {
+                    lateralFaceBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, lateralScvf));
+                }
+
+
+                // Get velocity gradients
+                const Scalar velocityGrad_ji = StokesVelocityGradients::velocityGradJI(
+                    this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
+                    currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+                const Scalar velocityGrad_ij = unsymmetrizedGradientForIC ? 0.0 : StokesVelocityGradients::velocityGradIJ(
+                    this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
+                    currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
+
+                // Calculate stokes contribution to momentum flux: N_s^{bl} \tau T n
+                const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
+                const Scalar viscosity = stokesElemVolVars[scvf.insideScvIdx()].viscosity();
+                // Averaging the gradients over the subfaces to get evaluation at the center
+                momentumFlux -= 1.0/numSubFaces * viscosity * Nsbl * (velocityGrad_ji + velocityGrad_ij);
             }
-
-            std::optional<BoundaryTypes<stokesIdx>> lateralFaceBoundaryTypes;
-            if (lateralScvf.boundary())
-            {
-                lateralFaceBoundaryTypes.emplace(this->couplingManager().problem(stokesIdx).boundaryTypes(element, lateralScvf));
-            }
-
-
-            // Get velocity gradients
-            const Scalar velocityGrad_ji = StokesVelocityGradients::velocityGradJI(
-                this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
-                currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
-            Scalar velocityGrad_ij = StokesVelocityGradients::velocityGradIJ(
-                this->couplingManager().problem(stokesIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
-                currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
-
-            //TODO: Remove calculation above in this case
-            if (unsymmetrizedGradientForIC)
-            {
-                velocityGrad_ij = 0.0;
-            }
-
-            // Calculate stokes contribution to momentum flux: N_s^{bl} \tau T n
-            const Scalar Nsbl = this->couplingManager().problem(darcyIdx).spatialParams().factorNMomentumAtPos(scvf.center());
-            const Scalar viscosity = stokesElemVolVars[scvf.insideScvIdx()].viscosity();
-            // Averaging the gradients over the subfaces to get evaluation at the center
-            momentumFlux -= 1.0/numSubFaces * viscosity * Nsbl * (velocityGrad_ji + velocityGrad_ij);
         }
         momentumFlux *= scvf.directionSign();
         return momentumFlux;
@@ -290,30 +243,28 @@ public:
                     //reset pressure gradient and rho at this qp
                     gradP=0.0;
                     rho=0.0;
-                    //TODO: Is this needed? -> Numerisch ausprobieren, sollte überschrieben werden, siehe doxygen dune
-                    shapeValues.clear();
-                    shapeDerivatives.clear();
 
                     //calculate the shape and derivative values at the qp
                     localBasis.evaluateFunction(ipElementLocal, shapeValues);
                     localBasis.evaluateJacobian(ipElementLocal, shapeDerivatives);
 
-
-
                     //calc pressure gradient and rho at qp, every scv belongs to one node
                     for (const auto& scv : scvs(data.fvGeometry)){
                         //gradP += p_i* (J^-T * L'_i)
                         data.element.geometry().jacobianInverseTransposed(ipElementLocal).usmv(elemVolVars[scv].pressure(darcyPhaseIdx), shapeDerivatives[scv.indexInElement()][0], gradP);
-                        if (enableGravity){
+                        if (enableGravity)
+                        {
                             rho += elemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
                         }
                     }
                     //account for gravity
-                    if (enableGravity){
+                    if (enableGravity)
+                    {
                         gradP.axpy(-rho, this->couplingManager().problem(darcyIdx).spatialParams().gravity(ipGlobal));
                     }
 
-                    if(newIc_){
+                    if(newIc_)
+                    {
                         // darcy spatial dependent parameters
                         const auto& epsInterface = this->couplingManager().problem(darcyIdx).spatialParams().epsInterfaceAtPos(ipGlobal);
                         const auto& M = this->couplingManager().problem(darcyIdx).spatialParams().matrixNTangentialAtPos(ipGlobal);
