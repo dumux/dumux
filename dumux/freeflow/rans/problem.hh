@@ -491,6 +491,12 @@ public:
                    "The problem does not provide an isOnWall() method.");
     }
 
+    bool hasChannelGeometry() const
+    {
+        static const bool hasChannelGeometry = getParamFromGroup<bool>(this->paramGroup(), "RANS.HasChannelGeometry");
+        return hasChannelGeometry;
+    }
+
     /*!
      * \brief Returns the sand-grain roughness \f$\mathrm{[m]}\f$ at a given position
      *
