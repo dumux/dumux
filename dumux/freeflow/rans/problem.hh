@@ -76,6 +76,7 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
     static constexpr auto dim = GridView::dimension;
+    static constexpr int numCorners = SubControlVolumeFace::numCornersPerFace;
     using DimVector = GlobalPosition;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
@@ -116,10 +117,14 @@ public:
         kinematicViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         sandGrainRoughness_.resize(this->gridGeometry().elementMapper().size(), 0.0);
 
-        // retrieve all wall intersections and corresponding elements
-        std::vector<unsigned int> wallElements;
-        std::vector<GlobalPosition> wallPositions;
-        std::vector<unsigned int> wallNormalAxisTemp;
+        // store the element indicies for all elements with an intersection on the wall
+        std::vector<unsigned int> wallElementIndicies;
+
+        // for each wall element, store the location of the face center and each corner.
+        std::vector<std::array<GlobalPosition, numCorners+1>> wallPositions;
+
+        // for each wall element, store the faces normal axis
+        std::vector<unsigned int> wallNormalAxis;
 
         const auto gridView = this->gridGeometry().gridView();
         auto fvGeometry = localView(this->gridGeometry());
@@ -135,9 +140,18 @@ public:
 
                 if (asImp_().isOnWall(scvf))
                 {
-                    wallElements.push_back(this->gridGeometry().elementMapper().index(element));
-                    wallPositions.push_back(scvf.center());
-                    wallNormalAxisTemp.push_back(scvf.directionIndex());
+                    // element has an scvf on the wall, store element index
+                    wallElementIndicies.push_back(this->gridGeometry().elementMapper().index(element));
+
+                    // store the location of the wall adjacent face's center and all corners
+                    std::array<GlobalPosition, numCorners+1> wallElementPosition;
+                    wallElementPosition[0] = scvf.center();
+                    for (int i = 1; i <= numCorners; i++)
+                        wallElementPosition[i] = scvf.corner(i);
+                    wallPositions.push_back(wallElementPosition);
+
+                    // Store the wall adjacent face's normal direction
+                    wallNormalAxis.push_back(scvf.directionIndex());
                 }
             }
         }
@@ -158,17 +172,20 @@ public:
 
                 // search along wall normal axis of the intersection
                 if (searchAxis < 0 || searchAxis >= dim)
-                    searchAxis = wallNormalAxisTemp[i];
+                    searchAxis = wallNormalAxis[i];
 
-                GlobalPosition cellToWallVector = (cellCenter_[elementIdx] - wallPositions[i]);
-                Scalar distanceToWallFace = cellToWallVector.two_norm();
+                // Find the minimum distance from the cell center to the wall face (center and corners)
+                std::array<Scalar,numCorners+1> cellToWallDistances;
+                for (unsigned int j = 0; j < wallPositions[i].size(); j++)
+                    cellToWallDistances[j] = (cellCenter_[elementIdx] - wallPositions[i][j]).two_norm();
+                Scalar distanceToWall = *std::min_element(cellToWallDistances.begin(), cellToWallDistances.end());
 
-                if (distanceToWallFace < wallDistance_[elementIdx])
+                if (distanceToWall < wallDistance_[elementIdx])
                 {
-                    wallDistance_[elementIdx] = distanceToWallFace;
-                    wallElementIdx_[elementIdx] = wallElements[i];
+                    wallDistance_[elementIdx] = distanceToWall;
+                    wallElementIdx_[elementIdx] = wallElementIndicies[i];
                     wallNormalAxis_[elementIdx] = searchAxis;
-                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
+                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i][0]);
                 }
             }
         }

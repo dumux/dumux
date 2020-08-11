@@ -142,6 +142,8 @@ class FreeFlowStaggeredSubControlVolumeFace
 public:
     using GlobalPosition = typename T::GlobalPosition;
 
+    static constexpr int numCornersPerFace = 2 * (dim - 1);
+
     //! State the traits public and thus export all types
     using Traits = T;
 
