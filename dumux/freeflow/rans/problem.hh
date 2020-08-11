@@ -126,6 +126,8 @@ public:
         // for each wall element, store the faces normal axis
         std::vector<unsigned int> wallNormalAxis;
 
+        int searchAxis = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", -1);
+
         const auto gridView = this->gridGeometry().gridView();
         auto fvGeometry = localView(this->gridGeometry());
 
@@ -155,21 +157,20 @@ public:
                 }
             }
         }
+        // output the number of wall adjacent faces. Check that this is non-zero.
         std::cout << "NumWallIntersections=" << wallPositions.size() << std::endl;
         if (wallPositions.size() == 0)
             DUNE_THROW(Dune::InvalidStateException,
                        "No wall intersections have been found. Make sure that the isOnWall(globalPos) is working properly.");
 
 
-        // search for shortest distance to wall for each element
+        // search for shortest distance to the wall for each element
         for (const auto& element : elements(gridView))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             cellCenter_[elementIdx] = element.geometry().center();
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
-                int searchAxis = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", -1);
-
                 // search along wall normal axis of the intersection
                 if (searchAxis < 0 || searchAxis >= dim)
                     searchAxis = wallNormalAxis[i];
@@ -211,13 +212,9 @@ public:
                     if (abs(cellCenter_[elementIdx][dimIdx] - cellCenter_[neighborIdx][dimIdx]) > 1e-8)
                     {
                         if (cellCenter_[elementIdx][dimIdx] > cellCenter_[neighborIdx][dimIdx])
-                        {
                             neighborIdx_[elementIdx][dimIdx][0] = neighborIdx;
-                        }
                         if (cellCenter_[elementIdx][dimIdx] < cellCenter_[neighborIdx][dimIdx])
-                        {
                             neighborIdx_[elementIdx][dimIdx][1] = neighborIdx;
-                        }
                     }
                 }
             }
@@ -243,8 +240,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                        "You have to call updateStaticWallProperties() once before you call updateDynamicWallProperties().");
 
-        static const int flowNormalAxis
-            = getParamFromGroup<int>(this->paramGroup(), "RANS.FlowNormalAxis", -1);
+        static const int flowNormalAxis = getParamFromGroup<int>(this->paramGroup(), "RANS.FlowNormalAxis", -1);
 
         // re-initialize min and max values
         velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), DimVector(1e-16));
