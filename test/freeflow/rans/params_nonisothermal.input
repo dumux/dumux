@@ -21,7 +21,7 @@ EnableGravity = false
 [RANS]
 EddyViscosityModel = "baldwinLomax"
 TurbulentPrandtlNumber = 0.85
-
+WallNormalAxis = 1
 
 [Assembly]
 NumericDifferenceMethod = 0

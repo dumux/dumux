@@ -21,6 +21,9 @@ EnableGravity = false
 [KEpsilon]
 YPlusThreshold = 10. # should be small (10-30) for coarse grids
 
+[RANS]
+WallNormalAxis = 1
+
 [Assembly]
 NumericDifferenceMethod = 0
 NumericDifference.BaseEpsilon = 1e-8

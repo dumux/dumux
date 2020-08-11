@@ -21,6 +21,7 @@ YPlusThreshold = 10. # should be small (10-30) for coarse grids
 
 [RANS]
 TurbulentPrandtlNumber = 0.85
+WallNormalAxis = 1
 
 [Assembly]
 NumericDifferenceMethod = 0
