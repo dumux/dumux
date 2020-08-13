@@ -1,4 +1,5 @@
 add_subdirectory(convergencetest)
+add_subdirectory(bj_newic)
 
 add_input_file_links()
 

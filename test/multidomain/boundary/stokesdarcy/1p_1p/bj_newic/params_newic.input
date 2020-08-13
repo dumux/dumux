@@ -1,0 +1,49 @@
+[Darcy.Grid]
+UpperRight = 1 1
+Cells = 20 20
+
+[Stokes.Grid]
+LowerLeft = 0 1
+UpperRight = 1 2
+Cells = 20 20
+
+[Stokes.Problem]
+Name = stokes
+
+[Darcy.Problem]
+Name = darcy
+
+[Darcy.SpatialParams]
+Porosity = 1.0
+Permeability_xx = 1.0 # m^2
+Permeability_xy = 0.0 # m^2
+Permeability_yy = 1.0 # m^2
+# remove later!
+AlphaBeaversJoseph = 1.0
+
+[Darcy.InterfaceParams]
+epsInterface = 1.0
+N_s_bl = 0.5
+N_1_bl = -3.0
+M_1_bl = 1.0
+M_2_bl = 1.0
+
+[Vtk]
+OutputName = test_md_boundary_stokes1p_darcy1p_newic
+
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false
+NewIc = true
+TestCase = NewICNonSymmetrized
+
+[Stokes.FreeFlow]
+EnableUnsymmetrizedVelocityGradientForIC = true
+EnableUnsymmetrizedVelocityGradient = true
+
+[Vtk]
+AddVelocity = 1
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 2.0
