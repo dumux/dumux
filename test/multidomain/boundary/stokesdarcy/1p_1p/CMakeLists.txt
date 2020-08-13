@@ -1,4 +1,5 @@
 add_subdirectory(convergencetest)
+add_subdirectory(BJandNewIC)
 
 add_input_file_links()
 
