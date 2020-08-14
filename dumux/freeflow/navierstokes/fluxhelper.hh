@@ -22,8 +22,11 @@
 
 #include <type_traits>
 #include <dune/common/float_cmp.hh>
+#include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocitygradients.hh>
 
 namespace Dumux {
 
@@ -151,7 +154,118 @@ public:
 
         return flux;
     }
+
+    template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class ElementFluxVariablesCache, class Scalar>
+    static auto fixedPressureMomentumFlux(const Problem& problem,
+                                          const Element& element,
+                                          const FVElementGeometry& fvGeometry,
+                                          const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                          const ElementVolumeVariables& elemVolVars,
+                                          const ElementFluxVariablesCache& elemFluxVarsCache,
+                                          const Scalar pressure,
+                                          const bool zeroNormalVelocityGradient = true)
+    {
+        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered);
+        using NumEqVector = decltype(problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf));
+        NumEqVector flux;
+
+        if (scvf.isFrontal())
+        {
+            // pressure contribution
+            flux[scvf.directionIndex()] = pressure - problem.referencePressure(element, fvGeometry, scvf);
+
+            if (problem.enableInertiaTerms())
+            {
+                const auto v = elemVolVars[scvf.insideScvIdx()].velocity();
+                flux[scvf.directionIndex()] += v*v * problem.density(element, fvGeometry, scvf) * scvf.directionSign();
+            }
         }
+
+        // if no zero velocity gradient is desired we are done here, ....
+        if (!zeroNormalVelocityGradient)
+            return flux;
+
+        // ..., otherwise, make sure the flow does not diverge by accounting for the off-diagonal entries of the stress tensor
+        // TODO normal viscous term?
+
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+
+        if (scvf.isLateral())
+        {
+            // viscous terms
+            const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf);
+
+            // lateral face normal to boundary (integration point touches boundary)
+            if (scv.boundary())
+                flux[scvf.directionIndex()] -= mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)
+                                               * scvf.directionSign();
+            // lateral face coinciding with boundary
+            else if (scvf.boundary())
+                flux[scv.directionIndex()] -= mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars)
+                                              * scvf.directionSign();
+
+            // advective terms
+            if (problem.enableInertiaTerms())
+            {
+                const auto transportingVelocity = [&]()
+                {
+                    const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                    const auto innerTransportingVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+
+                    if (scvf.boundary())
+                    {
+                        if (const auto bcTypes = problem.boundaryTypes(element, scvf); bcTypes.isDirichlet(scvf.directionIndex()))
+                            return problem.dirichlet(element, scvf)[scvf.directionIndex()];
+                        else
+                            return
+                                innerTransportingVelocity; // fallback
+                    }
+                    else
+                    {
+                        static const bool useOldScheme = getParam<bool>("FreeFlow.UseOldTransportingVelocity", true); // TODO how to deprecate?
+                        if (useOldScheme)
+                            return innerTransportingVelocity;
+                        else
+                        {
+                            // average the transporting velocity by weighting with the scv volumes
+                            const auto insideVolume = fvGeometry.scv(orthogonalScvf.insideScvIdx()).volume();
+                            const auto outsideVolume = fvGeometry.scv(orthogonalScvf.outsideScvIdx()).volume();
+                            const auto outerTransportingVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+                            return (insideVolume*innerTransportingVelocity + outsideVolume*outerTransportingVelocity) / (insideVolume + outsideVolume);
+                        }
+                    }
+                }();
+
+                // lateral face normal to boundary (integration point touches boundary)
+                if (scv.boundary())
+                {
+                    const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
+                    const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
+                    const auto rho = problem.getInsideAndOutsideDensity(element, fvGeometry, scvf);
+
+                    const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
+
+                    const auto insideMomentum = innerVelocity * rho.first;
+                    const auto outsideMomentum = outerVelocity * rho.second;
+
+                    static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+
+                    const auto transportedMomentum =  selfIsUpstream ? (upwindWeight * insideMomentum + (1.0 - upwindWeight) * outsideMomentum)
+                                                                     : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
+
+                    flux[scvf.directionIndex()] += transportingVelocity * transportedMomentum * scvf.directionSign();
+                }
+
+                // lateral face coinciding with boundary
+                else if (scvf.boundary())
+                {
+                    const auto insideDensity = problem.density(element, fvGeometry.scv(scvf.insideScvIdx()));
+                    const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
+                    flux[scv.directionIndex()] += innerVelocity * transportingVelocity * insideDensity * scvf.directionSign();
+                }
+            }
+        }
+
 
         return flux;
     }
