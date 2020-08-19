@@ -1,0 +1,13 @@
+[Grid]
+UpperRight = 1 1
+Cells = 10 10
+Refinement = 0
+
+[Problem]
+EnableGravity = false
+Name = convergence
+C = 0.9
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
