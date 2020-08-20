@@ -215,7 +215,7 @@ cat <<EOT >> Dockerfile
 # $MODULE_NAME docker container
 # see https://github.com/phusion/baseimage-docker for information on the base image
 # It is Ubuntu LTS customized for better Docker compatibility
-FROM phusion/baseimage:0.9.22
+FROM phusion/baseimage:18.04-1.0.0
 MAINTAINER $MODULE_MAINTAINER
 
 # run Ubuntu update as advised on https://github.com/phusion/baseimage-docker
@@ -257,10 +257,6 @@ RUN useradd -m --home-dir /dumux dumux \\
     && chmod +x /etc/my_init.d/setpermissions.sh \\
     && usermod -a -G video dumux
 
-# Turn off verbose syslog messages as described here:
-# https://github.com/phusion/baseimage-docker/issues/186
-RUN touch /etc/service/syslog-forwarder/down
-
 # copy the extracted dumux-pub module and make dumux own it
 COPY . /dumux/$MODULE_NAME
 RUN chown -R dumux:dumux /dumux/$MODULE_NAME
@@ -281,7 +277,7 @@ COPY $INSTALL_DEP_SCRIPT /dumux/$INSTALL_DEP_SCRIPT
 RUN ./$INSTALL_DEP_SCRIPT && rm -f /dumux/$INSTALL_DEP_SCRIPT
 
 # configure module
-RUN /dumux/dune-common/bin/dunecontrol --opts=/dumux/dumux/optim.opts all
+RUN /dumux/dune-common/bin/dunecontrol --opts=/dumux/dumux/cmake.opts all
 
 # build doxygen documentation and tests
 # all applications that use dune_add_test will be built like this
