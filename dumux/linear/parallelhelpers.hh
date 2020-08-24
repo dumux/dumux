@@ -700,6 +700,7 @@ public:
         {
             if (entity.partitionType() == Dune::BorderEntity)
             {
+                std::cout << "at proc " << gridView_.comm().rank() << ": border ent at " << entity.geometry().center() << std::endl;
                 const int localIdx = mapper_.index(entity);
                 IdType dofIdxGlobal = gridView_.grid().globalIdSet().id(entity);
 
