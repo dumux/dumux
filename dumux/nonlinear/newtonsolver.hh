@@ -541,6 +541,54 @@ public:
         {
             uCurrentIter = uLastIter;
             uCurrentIter -= deltaU;
+
+            if (comm_.size() > 1 )
+            {
+                if (comm_.rank() == 0)
+                {
+                    std::cout << "on proc " <<  comm_.rank() << std::endl;
+                    std::cout << "sol before commm: " << std::endl;
+                    for (const auto& i : uCurrentIter)
+                    std::cout << "proc " << comm_.rank() << ": " <<  i << std::endl;
+
+                    std::cout << "sol done: " << std::endl;
+
+                }
+
+                // std::vector<Scalar> blubb(this->assembler().gridGeometry().numDofs());
+                const auto gridView = this->assembler().gridGeometry().gridView();
+
+                // for(const  auto &facet   : facets   (gridView))
+                // {
+                //     std::cout << "index is " << this->assembler().gridGeometry().gridView().indexSet().index(facet) << std::endl;
+                // }
+
+                // for (const auto& e : elements(gridView))
+                // {
+                    // for (const auto& is : intersections(gridView, e))
+                        // std::cout << "index is " << this->assembler().gridGeometry().gridView().indexSet().index(is) << std::endl;
+                // }
+
+
+                VectorCommDataHandleEqual<std::decay_t<decltype(gridView.indexSet())>, std::decay_t<decltype(uCurrentIter)>, 1>
+                handle(gridView.indexSet(), uCurrentIter);
+                gridView.communicate(handle,
+                                     Dune::InteriorBorder_All_Interface,
+                                     // Dune::InteriorBorder_InteriorBorder_Interface,
+                                     Dune::ForwardCommunication);
+
+                if (comm_.rank() == 0)
+                {
+                     std::cout << "sol after commm: " << std::endl;
+                     for (const auto& i : uCurrentIter)
+                         std::cout << "proc " << comm_.rank() << ": " <<  i << std::endl;
+
+                     std::cout << "sol after done: " << std::endl;
+                }
+
+
+            }
+
             solutionChanged_(uCurrentIter);
 
             if (enableResidualCriterion_)
@@ -1107,9 +1155,17 @@ private:
         Dune::BlockVector<BlockType> xTmp; xTmp.resize(b.size());
         Dune::BlockVector<BlockType> bTmp(xTmp);
 
+        static const bool printmatrix = getParam<bool>("Problem.PrintMatrix", false);
+        if (printmatrix)
+            Dune::printmatrix(std::cout, A, "", "");
+
+        if (printmatrix)
+            Dune::printvector(std::cout, b, "", "");
+
         Detail::assign(bTmp, b);
         const int converged = ls.solve(A, xTmp, bTmp);
         Detail::assign(x, xTmp);
+
 
         return converged;
     }
@@ -1163,9 +1219,17 @@ private:
         const std::size_t numRows = M.N();
         assert(numRows == M.M());
 
+        static const bool printmatrix = getParam<bool>("Problem.PrintMatrix", false);
+        if (printmatrix)
+            Dune::printmatrix(std::cout, M, "", "");
+
         // create the vector the IterativeSolver backend can handle
         const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
         assert(bTmp.size() == numRows);
+
+        if (printmatrix)
+            Dune::printvector(std::cout, bTmp, "", "");
+
 
         // create a blockvector to which the linear solver writes the solution
         using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
