@@ -22,6 +22,8 @@
  * \brief Test for the staggered grid Navier-Stokes model (Donea 2003, \cite Donea2003).
  */
 
+ bool printstuff = false;
+
 #include <config.h>
 
 #include <iostream>
@@ -41,6 +43,7 @@
 #include <dumux/discretization/facecentered/staggered/fvgridgeometry.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
+#include <dumux/io/vtk/intersectionwriter.hh>
 
 #include "problem_new.hh"
 
@@ -129,6 +132,70 @@ int main(int argc, char** argv) try
                         /*numComp*/2, /*codim*/0).get());
 
     writer.write("donea_new_momentum");
+
+    using GridView = std::decay_t<decltype(gridGeometry->gridView())>;
+    using SolVec = std::decay_t<decltype(x)>;
+
+    class ScalarFunction
+    {
+        public:
+        typedef Dune::VTK::SkeletonFunctionTraits<std::decay_t<decltype(gridGeometry->gridView())>, typename std::decay_t<decltype(gridGeometry->gridView())>::ctype>
+        Traits;
+
+        ScalarFunction(const GridView& gv, const SolVec& s) : gv_(gv), s_(s) {}
+
+        //! return number of components
+        unsigned dimRange() const { return 1; }
+
+        void evaluate(const typename Traits::Cell& c,
+                        const typename Traits::Domain& xl,
+                        typename Traits::Range& result) const
+        {
+            assert(c.conforming());
+
+
+            const auto globalIdx = gv_.indexSet().subIndex(c.inside(), c.indexInInside(), 1);
+            result.resize(1, s_[globalIdx]);
+        }
+
+        private:
+        const GridView gv_;
+        const SolVec& s_;
+    };
+
+    class ScalarFunction2
+    {
+        public:
+        typedef Dune::VTK::SkeletonFunctionTraits<std::decay_t<decltype(gridGeometry->gridView())>, typename std::decay_t<decltype(gridGeometry->gridView())>::ctype>
+        Traits;
+
+        ScalarFunction2(const GridView& gv, const SolVec& s) : gv_(gv), s_(s) {}
+
+        //! return number of components
+        unsigned dimRange() const { return 1; }
+
+        void evaluate(const typename Traits::Cell& c,
+                        const typename Traits::Domain& xl,
+                        typename Traits::Range& result) const
+        {
+            assert(c.conforming());
+
+
+            const auto globalIdx = gv_.indexSet().subIndex(c.inside(), c.indexInInside(), 1);
+            result.resize(1, globalIdx);
+        }
+
+        private:
+        const GridView gv_;
+        const SolVec& s_;
+    };
+
+    auto faceData = std::make_shared<ScalarFunction>(gridGeometry->gridView(), x);
+    auto faceData2 = std::make_shared<ScalarFunction2>(gridGeometry->gridView(), x);
+    ConformingIntersectionWriter vtk(gridGeometry->gridView());
+    vtk.addCellData(faceData, "velcocityScalar");
+    vtk.addCellData(faceData2, "dofIdx");
+    vtk.write("facedata_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
