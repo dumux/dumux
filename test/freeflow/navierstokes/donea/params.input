@@ -1,6 +1,7 @@
 [Grid]
 UpperRight = 1 1
-Cells = 40 40
+Cells = 8 8
+Overlap = 1
 
 [Problem]
 Name = test_donea # name passed to the output routines
@@ -14,7 +15,7 @@ LiquidKinematicViscosity = 1.0
 
 [ Newton ]
 MaxSteps = 10
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-3
 
 [Vtk]
 WriteFaceData = false
