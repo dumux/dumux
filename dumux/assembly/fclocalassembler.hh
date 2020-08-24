@@ -98,6 +98,7 @@ public:
         }
         else if (!this->elementIsGhost())
         {
+
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
 
             if (this->element().partitionType() != Dune::InteriorEntity)
@@ -325,7 +326,17 @@ public:
         auto&& curElemVolVars = this->curElemVolVars();
 
         // get the vector of the actual element residuals
+
+        // if (this->problem().gridGeometry().gridView().comm().size() > 1)
+            // if (this->problem().gridGeometry().gridView().comm().rank() == 0 )
+                // ::printstuff = true;
+
+
         const auto origResiduals = this->evalLocalResidual();
+        // ::printstuff = false;
+
+
+
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         //                                                                                              //
@@ -453,6 +464,26 @@ public:
                                 if (scvf.outsideScvIdx() == scvJ.index())
                                 {
                                     evalFlux(residual, scvf);
+
+                                    // if (this->problem().gridGeometry().gridView().comm().size() > 1)
+                                    // {
+                                    //     if (scvf.isLateral())
+                                    //     {
+                                    //         const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                    //         if (!orthogonalScvf.boundary())
+                                    //         {
+                                    //             const auto& outsideElement = fvGeometry.gridGeometry().element(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).elementIndex());
+                                    //             if (outsideElement.partitionType() != Dune::InteriorEntity)
+                                    //             {
+                                    //                 std::cout << " parallel at " << scv.dofPosition() << std::endl;
+                                    //                 residual *= 2.0;
+                                    //             }
+                                    //         }
+                                    //     }
+                                    // }
+
+
+
                                     return residual;
                                 }
 
@@ -462,6 +493,22 @@ public:
                                     if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
                                     {
                                         evalFlux(residual, scvf);
+
+                                        // if (this->problem().gridGeometry().gridView().comm().size() > 1)
+                                        // {
+                                        //     if (scvf.isLateral())
+                                        //     {
+                                        //         // const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                        //         if (!orthogonalScvf.boundary())
+                                        //         {
+                                        //             const auto& outsideElement = fvGeometry.gridGeometry().element(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).elementIndex());
+                                        //             if (outsideElement.partitionType() != Dune::InteriorEntity)
+                                        //                 residual *= 2.0;
+                                        //         }
+                                        //     }
+                                        // }
+
+
                                         return residual;
                                     }
                                 }
@@ -484,6 +531,21 @@ public:
                                 if (scvf.outsideScvIdx() == scvJ.index())
                                 {
                                     evalFlux(result, scvf);
+
+                                    // if (this->problem().gridGeometry().gridView().comm().size() > 1)
+                                    // {
+                                    //     if (scvf.isLateral())
+                                    //     {
+                                    //         const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                    //         if (!orthogonalScvf.boundary())
+                                    //         {
+                                    //             const auto& outsideElement = fvGeometry.gridGeometry().element(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).elementIndex());
+                                    //             if (outsideElement.partitionType() != Dune::InteriorEntity)
+                                    //                 result *= 2.0;
+                                    //         }
+                                    //     }
+                                    // }
+
                                     return result;
                                 }
 
@@ -493,6 +555,21 @@ public:
                                     if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
                                     {
                                         evalFlux(result, scvf);
+
+                                        // if (this->problem().gridGeometry().gridView().comm().size() > 1)
+                                        // {
+                                        //     if (scvf.isLateral())
+                                        //     {
+                                        //         // const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                        //         if (!orthogonalScvf.boundary())
+                                        //         {
+                                        //             const auto& outsideElement = fvGeometry.gridGeometry().element(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).elementIndex());
+                                        //             if (outsideElement.partitionType() != Dune::InteriorEntity)
+                                        //                 result *= 2.0;
+                                        //         }
+                                        //     }
+                                        // }
+
                                         return result;
                                     }
                                 }
@@ -514,6 +591,86 @@ public:
                         // depending on the primary variable 'pvIdx' at dof
                         // 'col'.
                         A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+
+                        // if (this->problem().gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
+                        // {
+                        //     for (const auto& scvf : scvfs(fvGeometry, scv))
+                        //     {
+                        //         if (scvf.isFrontal())
+                        //             continue;
+                        //
+                        //         if (scvf.outsideScvIdx() == scvJ.index())
+                        //         {
+                        //             const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                        //             if (!orthogonalScvf.boundary())
+                        //             {
+                        //                 const auto& outsideElement = fvGeometry.gridGeometry().element(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).elementIndex());
+                        //                 if (outsideElement.partitionType() != Dune::InteriorEntity)
+                        //                 {
+                        //                     std::cout << " parallel at " << scv.dofPosition() << std::endl;
+                        //                     A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        //                 }
+                        //             }
+                        //         }
+                        //         else
+                        //         {
+                        //             const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                        //             if (!orthogonalScvf.boundary())
+                        //                 continue;
+                        //         //
+                        //             if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                        //             {
+                        //                 const auto& outsideElement = fvGeometry.gridGeometry().element(scvJ.elementIndex());
+                        //
+                        //                 if (scvJ.elementIndex() == 4)
+                        //                     std::cout <<"blarg " << std::endl;
+                        //
+                        //                 if (this->problem().gridGeometry().gridView().comm().rank() == 0 && scvJ.elementIndex() == 4)
+                        //                 {
+                        //                     assert(outsideElement.partitionType() != Dune::InteriorEntity);
+                        //                 }
+                        //
+                        //
+                        //                 if (outsideElement.partitionType() != Dune::InteriorEntity)
+                        //                 {
+                        //                     std::cout << "outside elem " << scvJ.elementIndex() << std::endl;
+                        //                     std::cout << " parallel at " << scv.dofPosition() << std::endl;
+                        //                     A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        //                 }
+                        //         //
+                        //             }
+                        //         }
+                        //     }
+                        // //     if (scvf.isLateral())
+                        // //     {
+                        // //         const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                        // //         if (!orthogonalScvf.boundary())
+                        // //         {
+                        // //             const auto& outsideElement = fvGeometry.gridGeometry().element(fvGeometry.scv(orthogonalScvf.outsideScvIdx()).elementIndex());
+                        // //             if (outsideElement.partitionType() != Dune::InteriorEntity)
+                        // //             {
+                        // //                 std::cout << " parallel at " << scv.dofPosition() << std::endl;
+                        // //                 residual *= 2.0;
+                        // //             }
+                        // //         }
+                        // //     }
+                        // }
+
+                        if (this->problem().gridGeometry().gridView().comm().size() > 1)
+                        {
+                            if (this->problem().gridGeometry().gridView().comm().rank() == 0 && dofIdx == 49 && scvJ.dofIndex() == 4)
+                            std::cout << "in elem " << scv.elementIndex() << ": deriv 49 to 4 " << partialDerivsFluxOnly[scv.localDofIndex()][eqIdx] << std::endl;
+
+                            // if (this->problem().gridGeometry().gridView().comm().rank() == 0 && dofIdx == 49 && scvJ.dofIndex() == 50)
+                            //     std::cout << "deriv 49 to 50 " << partialDerivsFluxOnly[scv.localDofIndex()][eqIdx] << std::endl;
+
+                        }
+                        else
+                        {
+                            if (dofIdx == 76 && scvJ.dofIndex() == 3)
+                            std::cout << "in elem " << scv.elementIndex() << ": deriv 76 to 3 " << partialDerivsFluxOnly[scv.localDofIndex()][eqIdx] << std::endl;
+                        }
+
                     }
 
                     // restore the original state of the scv's volume variables
