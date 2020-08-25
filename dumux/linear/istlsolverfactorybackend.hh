@@ -257,6 +257,29 @@ private:
         // construct solver
         auto solver = getSolverFromFactory_(linearOperator);
 
+        static const bool printmatrix = getParam<bool>("Problem.PrintMatrix", false);
+
+        if (printmatrix)
+        {
+            static int counter = 0;
+
+            std::ofstream logFile;
+            const auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
+            logFile.open("solver_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+
+            Dune::printmatrix(logFile, A, "", "");
+            logFile.close();
+
+            logFile.open("solver_residual_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+            Dune::printvector(logFile, b, "", "");
+
+            ++counter;
+
+        }
+
+
+
+
         // solve linear system
         solver->apply(x, b, result_);
 #else
