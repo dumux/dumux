@@ -190,11 +190,73 @@ int main(int argc, char** argv) try
         const SolVec& s_;
     };
 
+    class ScalarFunction3
+    {
+        public:
+        typedef Dune::VTK::SkeletonFunctionTraits<std::decay_t<decltype(gridGeometry->gridView())>, typename std::decay_t<decltype(gridGeometry->gridView())>::ctype>
+        Traits;
+
+        ScalarFunction3(const GridView& gv, const SolVec& s) : gv_(gv), s_(s) {}
+
+        //! return number of components
+        unsigned dimRange() const { return 1; }
+
+        void evaluate(const typename Traits::Cell& c,
+                        const typename Traits::Domain& xl,
+                        typename Traits::Range& result) const
+        {
+            assert(c.conforming());
+
+            const auto& facet = c.inside().template subEntity <1> (c.indexInInside());
+
+
+            const auto globalIdx = gv_.indexSet().index(facet);
+            result.resize(1, globalIdx);
+        }
+
+        private:
+        const GridView gv_;
+        const SolVec& s_;
+    };
+
+    class ScalarFunction4
+    {
+        public:
+        typedef Dune::VTK::SkeletonFunctionTraits<std::decay_t<decltype(gridGeometry->gridView())>, typename std::decay_t<decltype(gridGeometry->gridView())>::ctype>
+        Traits;
+
+        ScalarFunction4(const GridView& gv, const SolVec& s) : gv_(gv), s_(s) {}
+
+        //! return number of components
+        unsigned dimRange() const { return 1; }
+
+        void evaluate(const typename Traits::Cell& c,
+                        const typename Traits::Domain& xl,
+                        typename Traits::Range& result) const
+        {
+            assert(c.conforming());
+
+            const auto& facet = c.inside().template subEntity <1> (c.indexInInside());
+            //
+            //
+            // const auto globalIdx = gv_.indexSet().index(facet);
+            result.resize(1, facet.partitionType());
+        }
+
+        private:
+        const GridView gv_;
+        const SolVec& s_;
+    };
+
     auto faceData = std::make_shared<ScalarFunction>(gridGeometry->gridView(), x);
     auto faceData2 = std::make_shared<ScalarFunction2>(gridGeometry->gridView(), x);
+    auto faceData3 = std::make_shared<ScalarFunction3>(gridGeometry->gridView(), x);
+    auto faceData4 = std::make_shared<ScalarFunction4>(gridGeometry->gridView(), x);
     ConformingIntersectionWriter vtk(gridGeometry->gridView());
     vtk.addCellData(faceData, "velcocityScalar");
     vtk.addCellData(faceData2, "dofIdx");
+    vtk.addCellData(faceData3, "dofIdxViaFacet");
+    vtk.addCellData(faceData4, "partitionType");
     vtk.write("facedata_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
 
     ////////////////////////////////////////////////////////////
