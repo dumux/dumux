@@ -8,14 +8,15 @@ Name = test_donea # name passed to the output routines
 EnableGravity = false
 PrintL2Error = false
 EnableInertiaTerms = false
+PrintMatrix = true
 
 [Component]
 LiquidDensity  = 1.0
 LiquidKinematicViscosity = 1.0
 
 [ Newton ]
-MaxSteps = 10
-MaxRelativeShift = 1e-3
+MaxSteps = 30
+MaxRelativeShift = 1e-4
 
 [Vtk]
 WriteFaceData = false
@@ -23,6 +24,17 @@ WriteFaceData = false
 [LinearSolver]
 Type = bicgstabsolver
 Verbosity = 2
+ResidualReduction = 1e-20
 
 [LinearSolver.Preconditioner]
 Type = ssor
+
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-3
+
+# [Assembly]
+# NumericDifferenceMethod = 0
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
