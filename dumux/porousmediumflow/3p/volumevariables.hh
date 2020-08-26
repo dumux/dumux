@@ -47,7 +47,7 @@ class ThreePVolumeVariables
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
-    using Indices = typename Traits::ModelTraits::Indices;
+    using Idx = typename Traits::ModelTraits::Indices;
     using FS = typename Traits::FluidSystem;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 
@@ -56,9 +56,9 @@ class ThreePVolumeVariables
         gPhaseIdx = FS::gPhaseIdx,
         nPhaseIdx = FS::nPhaseIdx,
 
-        swIdx = Indices::swIdx,
-        snIdx = Indices::snIdx,
-        pressureIdx = Indices::pressureIdx
+        swIdx = Idx::swIdx,
+        snIdx = Idx::snIdx,
+        pressureIdx = Idx::pressureIdx
     };
 
 public:
@@ -66,6 +66,8 @@ public:
     using FluidState = typename Traits::FluidState;
     //! Export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
+    //! Export the indices
+    using Indices = Idx;
     //! Export type of solid state
     using SolidState = typename Traits::SolidState;
     //! Export type of solid system

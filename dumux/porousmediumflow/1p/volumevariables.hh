@@ -49,7 +49,6 @@ class OnePVolumeVariables
     using EnergyVolVars = EnergyVolumeVariables<Traits, OnePVolumeVariables<Traits> >;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using Indices = typename Traits::ModelTraits::Indices;
     using PermeabilityType = typename Traits::PermeabilityType;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
 public:
@@ -57,6 +56,8 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! Export the fluid state type
     using FluidState = typename Traits::FluidState;
+    //! Export the indices
+    using Indices = typename Traits::ModelTraits::Indices;
     //! Export type of solid state
     using SolidState = typename Traits::SolidState;
     //! Export type of solid system

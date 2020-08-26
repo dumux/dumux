@@ -278,7 +278,6 @@ class NonEquilibriumVolumeVariablesImplementation<Traits,
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
     using ModelTraits = typename Traits::ModelTraits;
-    using Indices = typename ModelTraits::Indices;
     using FS = typename Traits::FluidSystem;
     static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
     static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
@@ -288,7 +287,9 @@ class NonEquilibriumVolumeVariablesImplementation<Traits,
     using NumFluidPhasesArray = std::array<Scalar, ModelTraits::numFluidPhases()>;
 
 public:
-     using FluidState = typename Traits::FluidState;
+    using Indices = typename ModelTraits::Indices;
+    using FluidState = typename Traits::FluidState;
+
     /*!
      * \brief Update all quantities for a given control volume
      *
@@ -603,7 +604,6 @@ class NonEquilibriumVolumeVariablesImplementation<Traits,
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
     using ModelTraits = typename Traits::ModelTraits;
-    using Indices = typename ModelTraits::Indices;
     static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
     static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
 
@@ -621,6 +621,8 @@ class NonEquilibriumVolumeVariablesImplementation<Traits,
                                               ModelTraits::numFluidPhases()+numEnergyEqSolid>;
 
 public:
+    using Indices = typename ModelTraits::Indices;
+
     /*!
      * \brief Update all quantities for a given control volume
      *

@@ -98,6 +98,8 @@ public:
     using FluidState = typename Traits::FluidState;
     //! Export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
+    //! Export the indices
+    using Indices = typename ModelTraits::Indices;
     //! Export type of solid state
     using SolidState = typename Traits::SolidState;
     //! Export type of solid system
