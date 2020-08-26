@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES "params.input" "params_navierstokes.input" "params_convection.input" "params_conduction.input")
+add_input_file_links()
 
 add_executable(test_ff_channel EXCLUDE_FROM_ALL main.cc)
 
@@ -31,9 +31,10 @@ dumux_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_neumann-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxny-00002.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxny-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Grid.UpperRight \"2 1\" -Grid.Cells \"50 25\"
-                         -Problem.Name test_ff_stokes_channel_nxny -Problem.OutletCondition NeumannX_NeumannY -Problem.UseVelocityProfile true -Problem.OutletPressure 0")
+                         -Problem.Name test_ff_stokes_channel_nxny -Problem.OutletCondition NeumannX_NeumannY
+                         -Problem.UseVelocityProfile true -Problem.OutletPressure 0 -Problem.IsStationary 1")
 
 dumux_add_test(NAME test_ff_stokes_channel_do_nothing
               TARGET test_ff_channel
