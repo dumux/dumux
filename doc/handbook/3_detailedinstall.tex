@@ -27,57 +27,21 @@ the modules were obtained, a version number is added to the module name).
 The name of each \Dune module is defined in the file \texttt{dune.module}, which is
 in the root directory of the respective module. This should not be changed by the user.
 
-Two possibilities exist to get the source code of \Dune and \Dumux.
-Firstly, \Dune and \Dumux can be downloaded as tar files from the respective \Dune and \Dumux website.
-They have to be extracted as described in the next paragraph.
-Secondly, the most recent source code
-(or, more generally, any of its previous revisions) can be obtained by direct access
-to the software repositories of the revision control system. This is described in the second paragraph.
-
 In section \ref{sec:prerequisites} we list some prerequisites for running \Dune and \Dumux.
 Please check in said paragraph whether you can fulfill them before continuing.
 
-\paragraph{Obtaining the software by installing tar files}
-The slightly old-fashionedly named tape-archive-file, shortly named tar file or
-tarball, is a common file format for distributing collections of files contained
-within these archives.
-The extraction from the tar files is done as follows:
-Download the \Dune tarballs from the \Dune website (version 2.6 or version 2.7) and the \Dumux tarballs from \href{https://zenodo.org/search?page=1&size=20&q=conceptrecid:2479594&all_versions&sort=-version}{Zenodo} or the \href{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/releases}{\Dumux Git-repository} to a certain folder in your file system.
-Create the common root directory, named \texttt{DUMUX} in the example below.
-Then extract the content of the tar files, e.\,g. with the command-line program
-\texttt{tar}.
-This can be achieved by the following shell commands. Replace \texttt{path\_to\_tarball}
-with the directory name where the downloaded files are actually located.
-After extraction, the actual name of the dumux subdirectory is \texttt{dumux-\DumuxVersion}
-(or whatever version you downloaded).
-
-\begin{lstlisting}[style=Bash]
-$ mkdir DUMUX
-$ cd DUMUX
-$ tar xzvf path_to_tarball_of/dune-common-2.7.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-geometry-2.7.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-grid-2.7.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-istl-2.7.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-localfunctions-2.7.0.tar.gz
-$ tar xzvf path_to_tarball_of/dumux-3.2.tar.gz
-\end{lstlisting}
-
-Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
-on the Dune grid interface, act similar.
-
 \paragraph{Obtaining \Dune and \Dumux from software repositories}
-Direct access to a software revision control system for downloading code can be of advantage later on.
-It is easier to keep up with code changes and to receive important bug fixes.
-\Dune and \Dumux use Git for their software repositories. To access them, a Git client is needed.
+\Dune and \Dumux use Git for their software repositories. To access them,
+you need to have a working installation of the version control software Git.
 
-In the technical language of Git, \emph{cloning a certain software version} means nothing more then fetching
+In the jargon of Git, \emph{cloning a certain software version} means nothing more then fetching
 a local copy from the software repository and laying it out in the file system.
 In addition to the software, some more files for the use of the software revision
-control system itself are created. If you have developer access to \Dumux, it is
+control system itself are created. (If you have developer access to \Dumux, it is
 also possible to do the opposite, i.\,e. to load up a modified revision of software
-into the software repository. This is usually termed as \emph{commit} and \emph{push}.
+into the software repository. This is usually termed as \emph{commit} and \emph{push}.)
 
-The installation procedure is done as follows:
+The download procedure is done as follows:
 Create a common root directory, named e.g. \texttt{DUMUX} in the lines below.
 Then, enter the previously created directory and check out the desired modules.
 As you see below, the check-out uses two different servers for getting the sources,
