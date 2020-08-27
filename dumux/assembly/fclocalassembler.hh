@@ -100,33 +100,25 @@ public:
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
 
-            if (this->element().partitionType() != Dune::InteriorEntity)
+            if (this->element().partitionType() == Dune::InteriorEntity)
             {
-                for (int i = 0; i < 4; ++i)
+                for (const auto& scv : scvs(this->fvGeometry()))
+                    res[scv.dofIndex()] += residual[scv.localDofIndex()];
+            }
+            else
+            {
+                for (int i = 0; i < this->element().subEntities(1); ++i)
                 {
+                    assert(this->element().subEntities(1) == 4);
                     const auto& facet = this->element().template subEntity <1> (i);
-                    if (facet.partitionType() > 1)
+                    const auto idx = this->assembler().gridGeometry().gridView().indexSet().index(facet);
+                    if (facet.partitionType() > 1) // TODO Index
                     {
-                        const auto idx = this->assembler().gridGeometry().gridView().indexSet().index(facet);
                         jac[idx][idx] = 1.0;
-
-                        // for (const auto& scv : scvs(this->fvGeometry()))
-                        // {
-                        //     if (scv.dofIndex() == idx)
-                        //     {
-                        //         res[idx] = this->curElemVolVars()[scv].priVars()[0] - dirichletValues[pvIdx];
-                        //     }
-                        // }
                         res[idx] = 0;
                     }
                 }
             }
-
-            if (this->element().partitionType() != Dune::InteriorEntity)
-                return; // TODO hack
-
-            for (const auto& scv : scvs(this->fvGeometry()))
-                res[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
         else
         {
@@ -135,30 +127,30 @@ public:
             // using GridView = typename GridGeometry::GridView;
             // static constexpr auto dim = GridView::dimension;
 
-            int numFacesLocal = this->element().subEntities(2);
-
-            for (int i = 0; i < numFacesLocal; ++i)
-            {
-                auto face = this->element().template subEntity<2>(i);
-
-                if (face.partitionType() == Dune::InteriorEntity ||
-                    face.partitionType() == Dune::BorderEntity)
-                {
-                    // do not change the non-ghost vertices
-                    continue;
-                }
-
-                // set main diagonal entries for the vertex
-                int globalI = this->assembler().gridGeometry().gridView().indexSet().subIndex(face, i, 2);
-
-                typedef typename JacobianMatrix::block_type BlockType;
-                BlockType &J = jac[globalI][globalI];
-                for (int j = 0; j < BlockType::rows; ++j)
-                    J[j][j] = 1.0;
-
-                // set residual for the face
-                res[globalI] = 0;
-            }
+            // int numFacesLocal = this->element().subEntities(2);
+            //
+            // for (int i = 0; i < numFacesLocal; ++i)
+            // {
+            //     auto face = this->element().template subEntity<2>(i);
+            //
+            //     if (face.partitionType() == Dune::InteriorEntity ||
+            //         face.partitionType() == Dune::BorderEntity)
+            //     {
+            //         // do not change the non-ghost vertices
+            //         continue;
+            //     }
+            //
+            //     // set main diagonal entries for the vertex
+            //     int globalI = this->assembler().gridGeometry().gridView().indexSet().subIndex(face, i, 2);
+            //
+            //     typedef typename JacobianMatrix::block_type BlockType;
+            //     BlockType &J = jac[globalI][globalI];
+            //     for (int j = 0; j < BlockType::rows; ++j)
+            //         J[j][j] = 1.0;
+            //
+            //     // set residual for the face
+            //     res[globalI] = 0;
+            // }
         }
 
         auto applyDirichlet = [&] (const auto& scvI,
@@ -549,48 +541,57 @@ public:
                         // 'col'.
                         if (element.partitionType() == Dune::InteriorEntity)
                             A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                        else
+                        {
+                            // for (const auto& scvf : scvfs(fvGeometry, scv))
+                            // {
+                            //     if (scvf.isFrontal() && !scvf().boundary())
+                            //     {
+
+                                    const auto& facetI = element.template subEntity <1> (scv.indexInElement());
+                                    const auto& facetJ = element.template subEntity <1> (scvJ.indexInElement());
+                                    if (facetI.partitionType() == 1 && facetJ.partitionType() == 3)
+                                        A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+
+                                // }
+                        }
 
                         if (this->problem().gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
                         {
-                            for (const auto& scvf : scvfs(fvGeometry, scv))
+                            const auto& myfacet = element.template subEntity <1> (scv.indexInElement());
+                            if (myfacet.partitionType() == 1) // TODO
                             {
-                                if (scvf.isFrontal())
-                                    continue;
-
-                                if (scvf.outsideScvIdx() != scvJ.index())
+                                for (const auto& scvf : scvfs(fvGeometry, scv))
                                 {
-                                    const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
-                                    if (orthogonalScvf.boundary())
+                                    if (scvf.isFrontal())
                                         continue;
 
-                                    if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
+                                    if (scvf.outsideScvIdx() != scvJ.index())
                                     {
-                                        const auto& facet = element.template subEntity <1> (scv.indexInElement());
-                                        if (facet.partitionType() != Dune::InteriorEntity)
+                                        const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                        if (orthogonalScvf.boundary())
+                                            continue;
+
+                                        if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
                                         {
-                                            std::cout << "facet center " << facet.geometry().center() << ", scvDofpos " << scv.dofPosition() << std::endl;
-                                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                            const auto& facet = element.template subEntity <1> (scv.indexInElement());
+                                            if (facet.partitionType() != Dune::InteriorEntity)
+                                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                        }
+                                    }
+                                    else
+                                    {
+                                        const auto& outsideElement = this->problem().gridGeometry().element(scvJ.elementIndex());
+                                        if (outsideElement.partitionType() != Dune::InteriorEntity)
+                                        {
+                                            const auto& facet = outsideElement.template subEntity <1> (scvJ.indexInElement());
+                                            if (facet.partitionType() == 2) // TODO
+                                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
                                         }
                                     }
                                 }
                             }
                         }
-
-                        if (this->problem().gridGeometry().gridView().comm().size() > 1)
-                        {
-                            if (this->problem().gridGeometry().gridView().comm().rank() == 0 && dofIdx == 49 && scvJ.dofIndex() == 4)
-                            std::cout << "in elem " << scv.elementIndex() << ": deriv 49 to 4 " << partialDerivsFluxOnly[scv.localDofIndex()][eqIdx] << std::endl;
-
-                            // if (this->problem().gridGeometry().gridView().comm().rank() == 0 && dofIdx == 49 && scvJ.dofIndex() == 50)
-                            //     std::cout << "deriv 49 to 50 " << partialDerivsFluxOnly[scv.localDofIndex()][eqIdx] << std::endl;
-
-                        }
-                        else
-                        {
-                            if (dofIdx == 76 && scvJ.dofIndex() == 3)
-                            std::cout << "in elem " << scv.elementIndex() << ": deriv 76 to 3 " << partialDerivsFluxOnly[scv.localDofIndex()][eqIdx] << std::endl;
-                        }
-
                     }
 
                     // restore the original state of the scv's volume variables
