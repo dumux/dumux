@@ -318,6 +318,53 @@ public:
         return pairData(localSubFaceIdx).hasParallelNeighbor[parallelDegreeIdx];
     }
 
+    /*!
+    * \brief Check if the face has a half parallel neighbor
+    *
+    * \param localSubFaceIdx The local index of the subface
+    *
+    * ------------
+    * |          |
+    * |          |
+    * |          |
+    * -----------------------
+    * | yyyyyyyy s          |
+    * | yyyyyyyy s          |
+    * | yyyyyyyy s          |
+    * -----------------------
+    * In this corner geometry, hasParallelNeighbor will return true for subcontrolvolumeface s belonging to the
+    * element filled by 'y's, but hasParallelNeighbor will return false for the subcontrolvolumeface that has the
+    * same dofIndex. We name this situation hasHalfParallelNeighbor.
+    */
+    bool hasHalfParallelNeighbor(const int localSubFaceIdx) const
+    {
+        return pairData(localSubFaceIdx).hasHalfParallelNeighbor;
+    }
+
+    /*!
+    * \brief Check if the face has a corner parallel neighbor
+    *
+    * \param localSubFaceIdx The local index of the subface
+    *
+    * ------------
+    * | yyyyyyyy s
+    * | yyyyyyyy s
+    * | yyyyyyyy s
+    * -----------------------
+    * |          |          |
+    * |          |          |
+    * |          |          |
+    * -----------------------
+    * In this corner geometry, hasParallelNeighbor will return true for subcontrolvolumeface s belonging to the
+    * element filled by 'y's. However, as there also might be a boundary velocity value known at the corner, which
+    * can be used instead of the standard parallel velocity in some cases, we want to identify this situation. We
+    * name it cornerParallelNeighbor.
+    */
+    bool hasCornerParallelNeighbor(const int localSubFaceIdx) const
+    {
+        return pairData(localSubFaceIdx).hasCornerParallelNeighbor;
+    }
+
    /*!
     * \brief Check if the face has an outer normal neighbor
     *
@@ -402,7 +449,7 @@ public:
     void setCenter(const GlobalPosition& center)
     { center_ = center; }
 
-    //! set the boudnary flag
+    //! set the boundary flag
     void setBoundary(bool boundaryFlag)
     { boundary_ = boundaryFlag; }
 

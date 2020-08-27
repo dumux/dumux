@@ -31,6 +31,10 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#if HAVE_DUNE_SUBGRID
+#include <dune/subgrid/subgrid.hh>
+#endif
+
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
@@ -39,10 +43,6 @@
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
-
-#ifndef DIM_3D
-#define DIM_3D 0
-#endif
 
 namespace Dumux {
 
@@ -64,13 +64,19 @@ struct FluidSystem<TypeTag, TTag::ThreeDChannelTest>
 };
 
 // Set the grid type
-#if DIM_3D
 template<class TypeTag>
-struct Grid<TypeTag, TTag::ThreeDChannelTest> { using type = Dune::YaspGrid<3>; };
+struct Grid<TypeTag, TTag::ThreeDChannelTest>
+{
+    static constexpr int dim = GRID_DIM;
+
+    using HostGrid = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, dim> >;
+
+#if HAVE_DUNE_SUBGRID
+    using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
 #else
-template<class TypeTag>
-struct Grid<TypeTag, TTag::ThreeDChannelTest> { using type = Dune::YaspGrid<2>; };
+    using type = HostGrid;
 #endif
+};
 
 // Set the problem property
 template<class TypeTag>
@@ -122,7 +128,7 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
 
-    static constexpr bool enablePseudoThreeDWallFriction = !DIM_3D;
+    static constexpr bool enablePseudoThreeDWallFriction = !(GRID_DIM == 3);
 
 public:
     ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -170,7 +176,7 @@ public:
     {
         auto source = NumEqVector(0.0);
 
-#if !DIM_3D
+#if GRID_DIM != 3
             static const Scalar height = getParam<Scalar>("Problem.Height");
             static const Scalar factor = getParam<Scalar>("Problem.PseudoWallFractionFactor", 8.0);
             source[scvf.directionIndex()] = this->pseudo3DWallFriction(scvf, elemVolVars, elemFaceVars, height, factor);

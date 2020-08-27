@@ -93,6 +93,26 @@ public:
      *
      *                                                       O position at which gradient is evaluated
      * \endverbatim
+     *
+     * ------------
+     * |     xxxx s
+     * |     xxxx a
+     * |     xxxx s
+     * -----------O-----------
+     * |     yyyy s zzzz     |
+     * |     yyyy b zzzz     |
+     * |     yyyy s zzzz     |
+     * -----------------------
+     *
+     * In a corner geometry (scvf is sas or sbs), we calculate the velocity gradient at O, by
+     * (velocity(a)-velocity(b))/distance(a,b) for the half-control volumes x and y, but by
+     * (velocity(O)-velocity(b))/distance(O,b) for z. This does not harm flux continuity (x and y use the same
+     * formulation). We do this different formulation for y (approximate gradient by central differncing) and
+     * z (approximate gradient by forward/backward differencing), because it is the natural way of implementing
+     * it and it is not clear which gradient is the better approximation in this case anyway.
+     * Particularly, for the frequent case of no-slip, no-flow boundaries, the velocity would be zero at O and a
+     * and thus, the gradient within the flow domain might be better approximated by velocity(b)/distanc(O,b)
+     * than by velocity(b)/distance(a,b).
      */
     template<class Problem, class FaceVariables>
     static Scalar velocityGradIJ(const Problem& problem,
