@@ -8,7 +8,7 @@
 #
 
 if [ "$1" = "-h" ]; then
-  echo "USAGE: ./getDumuxDuneVersions.sh"
+  echo "USAGE: ./getusedversions.sh"
   echo; exit
 fi
 
