@@ -107,16 +107,20 @@ public:
             }
             else
             {
-                for (int i = 0; i < this->element().subEntities(1); ++i)
+                for (const auto& scv : scvs(this->fvGeometry()))
                 {
-                    assert(this->element().subEntities(1) == 4);
-                    const auto& facet = this->element().template subEntity <1> (i);
-                    const auto idx = this->assembler().gridGeometry().gridView().indexSet().index(facet);
+                    const auto& facet = this->element().template subEntity <1> (scv.indexInElement());
                     if (facet.partitionType() > 1) // TODO Index
                     {
+                        const auto idx = this->assembler().gridGeometry().gridView().indexSet().index(facet);
                         jac[idx][idx] = 1.0;
                         res[idx] = 0;
                     }
+
+                    assert(Dune::BorderEntity == 1);
+
+                    if (facet.partitionType() == 1)
+                        res[scv.dofIndex()] += residual[scv.localDofIndex()];
                 }
             }
         }
@@ -420,7 +424,7 @@ public:
                     // the residual of equation 'eqIdx' at dof 'i'
                     // depending on the primary variable 'pvIdx' at dof
                     // 'col'.
-                    if (element.partitionType() == Dune::InteriorEntity)
+                    // if (element.partitionType() == Dune::InteriorEntity)
                         A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
                 }
 
@@ -533,10 +537,12 @@ public:
                         {
                             const auto& facetI = element.template subEntity <1> (scv.indexInElement());
                             const auto& facetJ = element.template subEntity <1> (scvJ.indexInElement());
+                            // add contribution of opposite scv lying within the overlap zone TODO this only works for overlap=1 --> make more robust
                             if (facetI.partitionType() == 1 && facetJ.partitionType() == 3)
                                 A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
                         }
 
+                        // treat normal/parallel scvs for parallel runs TODO description, put in function
                         if (this->problem().gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
                         {
                             const auto& myfacet = element.template subEntity <1> (scv.indexInElement());
@@ -544,31 +550,21 @@ public:
                             {
                                 for (const auto& scvf : scvfs(fvGeometry, scv))
                                 {
-                                    if (scvf.isFrontal())
+                                    if (scvf.isFrontal() || scvf.boundary())
                                         continue;
 
-                                    if (scvf.outsideScvIdx() != scvJ.index())
+                                    // parallel scvs TODO drawing
+                                    if (scvf.outsideScvIdx() == scvJ.index())
+                                        A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
+                                    else
                                     {
+                                        // normal scvs
                                         const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
                                         if (orthogonalScvf.boundary())
                                             continue;
 
                                         if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
-                                        {
-                                            const auto& facet = element.template subEntity <1> (scv.indexInElement());
-                                            if (facet.partitionType() != Dune::InteriorEntity)
-                                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
-                                        }
-                                    }
-                                    else
-                                    {
-                                        const auto& outsideElement = this->problem().gridGeometry().element(scvJ.elementIndex());
-                                        if (outsideElement.partitionType() != Dune::InteriorEntity)
-                                        {
-                                            const auto& facet = outsideElement.template subEntity <1> (scvJ.indexInElement());
-                                            if (facet.partitionType() == 2) // TODO
-                                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
-                                        }
+                                            A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
                                     }
                                 }
                             }
