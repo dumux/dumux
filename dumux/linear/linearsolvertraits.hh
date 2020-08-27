@@ -151,10 +151,6 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::box>
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
     { return gridView.overlapSize(0) == 0; }
-
-    template<class GridView>
-    static bool makeMatrixAndResidualConsistent(const GridView& gridView)
-    { return isNonOverlapping(gridView); }
 };
 
 //! Cell-centered tpfa: use overlapping model
@@ -173,10 +169,6 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa>
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
-    { return false; }
-
-    template<class GridView>
-    static bool makeMatrixAndResidualConsistent(const GridView& gridView)
     { return false; }
 };
 
@@ -226,10 +218,6 @@ private:
         assert(gridView.overlapSize(0) > 0);
         return false;
     }
-
-    template<class GridView>
-    static bool makeMatrixAndResidualConsistent(const GridView& gridView)
-    { return true; }
 };
 
 //! Cell-centered mpfa: use overlapping model
