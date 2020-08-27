@@ -186,12 +186,8 @@ public:
             if(scvf.index() == data.darcyScvfIdx)
             {
                 const Scalar velocity = data.velocity * scvf.unitOuterNormal();
-                const auto& fluxVarCache = elementFluxVarsCache[scvf];
-                const auto& shapeValues = fluxVarCache.shapeValues();
 
-                Scalar darcyDensity = 0.0;
-                for (auto&& scv : scvs(fvGeometry))
-                    darcyDensity += darcyElemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+                Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(darcyPhaseIdx);
 
                 const Scalar stokesDensity = data.volVars.density();
                 const bool insideIsUpstream = velocity > 0.0;
@@ -225,12 +221,8 @@ public:
                 const auto& elemVolVars = *(data.elementVolVars);
                 const auto& elemFluxVarsCache = *(data.elementFluxVarsCache);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
-                const auto& fluxVarCache = elemFluxVarsCache[darcyScvf];
-                const auto& shapeValues = fluxVarCache.shapeValues();
 
-                Scalar darcyDensity = 0.0;
-                for (auto&& scv : scvs(data.fvGeometry))
-                    darcyDensity += elemVolVars[scv].density(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+                const auto darcyDensity = elemVolVars[darcyScvf.insideScvIdx()].density(darcyPhaseIdx);
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += massFlux_(velocity, stokesDensity, darcyDensity, insideIsUpstream)*data.segmentGeometry.volume()/scvf.area();
@@ -261,13 +253,16 @@ public:
                 //const Scalar velocity = data.velocity * scvf.unitOuterNormal();
                 const Scalar velocity = -1*(data.velocity * scvf.unitOuterNormal());
 
+                const auto& stokesScvf = data.fvGeometry.scvf(data.stokesScvfIdx);
                 const auto& stokesVolVars = data.volVars;
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += -1*energyFlux_(data.fvGeometry,
                                        fvGeometry,
+                                       element,
                                        stokesVolVars,
                                        scvf,
+                                       stokesScvf,
                                        darcyElemVolVars,
                                        elementFluxVarsCache,
                                        velocity,
@@ -306,8 +301,10 @@ public:
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += energyFlux_(fvGeometry,
                                     data.fvGeometry,
+                                    data.element,
                                     stokesElemVolVars[scvf.insideScvIdx()],
                                     darcyScvf,
+                                    scvf,
                                     elemVolVars,
                                     elemFluxVarsCache,
                                     velocity,
@@ -338,8 +335,10 @@ private:
     template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     Scalar energyFlux_(const FVElementGeometry<stokesIdx>& stokesFvGeometry,
                        const FVElementGeometry<darcyIdx>& darcyFvGeometry,
+                       const Element<darcyIdx>& element,
                        const VolumeVariables<stokesIdx>& stokesVolVars,
                        const SubControlVolumeFace<darcyIdx>& scvf,
+                       const SubControlVolumeFace<stokesIdx>& scvfStokes,
                        const ElementVolumeVariables<darcyIdx>& darcyElemVolVars,
                        const ElementFluxVariablesCache<darcyIdx>& elementFluxVarsCache,
                        const Scalar velocity,
@@ -350,15 +349,16 @@ private:
 
         const auto& stokesScv = (*scvs(stokesFvGeometry).begin());
 
-        const auto& fluxVarCache = elementFluxVarsCache[scvf];
-        const auto& shapeValues = fluxVarCache.shapeValues();
+        const auto& localBasis = darcyFvGeometry.feLocalBasis();
+
+        const auto& ipElementLocal = element.geometry().local(scvfStokes.center());
+
+        std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+        localBasis.evaluateFunction(ipElementLocal, shapeValues);
 
         Scalar temperature = 0.0;
-        for (auto&& scv : scvs(darcyFvGeometry))
-        {
-            const auto& volVars = darcyElemVolVars[scv];
-            temperature += volVars.temperature()*shapeValues[scv.indexInElement()][0];
-        }
+        for (const auto& scv : scvs(darcyFvGeometry))
+            temperature += darcyElemVolVars[scv].temperature()*shapeValues[scv.indexInElement()][0];
 
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
 
