@@ -214,7 +214,7 @@ private:
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
-    { return true; }
+    { return false; }
 };
 
 //! Cell-centered mpfa: use overlapping model
