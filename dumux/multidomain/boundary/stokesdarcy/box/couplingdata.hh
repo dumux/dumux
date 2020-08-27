@@ -258,13 +258,12 @@ public:
         {
             if(scvf.index() == data.darcyScvfIdx)
             {
-                const auto& stokesVolVars = data.volVars;
-                const auto& stokesScvf = data.fvGeometry.scvf(data.stokesScvfIdx);
-                // always calculate the flux from stokes to darcy
-                const Scalar velocity = -stokesScvf.area()/scvf.area() *(data.velocity * scvf.unitOuterNormal());
-                const bool insideIsUpstream = velocity > 0.0;
+                //const Scalar velocity = data.velocity * scvf.unitOuterNormal();
+                const Scalar velocity = -1*(data.velocity * scvf.unitOuterNormal());
 
-                // the darcy flux is then multiplied by -1 (darcy flux = -stokes flux)
+                const auto& stokesVolVars = data.volVars;
+
+                const bool insideIsUpstream = velocity > 0.0;
                 flux += -1*energyFlux_(data.fvGeometry,
                                        fvGeometry,
                                        stokesVolVars,
@@ -273,9 +272,10 @@ public:
                                        elementFluxVarsCache,
                                        velocity,
                                        insideIsUpstream,
-                                       diffCoeffAvgType);
+                                       diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
             }
         }
+
         return flux;
     }
 
@@ -290,26 +290,33 @@ public:
                                    const SubControlVolumeFace<stokesIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
-        const auto& stokesVolVars = stokesElemVolVars[scvf.insideScvIdx()];
+         const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
-        const auto& elemVolVars = *(stokesContext.elementVolVars);
-        const auto& elemFluxVarsCache = *(stokesContext.elementFluxVarsCache);
+        Scalar flux = 0.0;
+        for (const auto& data : stokesContext)
+        {
+            if (scvf.index() == data.stokesScvfIdx)
+            {
+                const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
 
-        const auto& darcyScvf = stokesContext.fvGeometry.scvf(stokesContext.darcyScvfIdx);
+                const auto& elemVolVars = *(data.elementVolVars);
+                const auto& elemFluxVarsCache = *(data.elementFluxVarsCache);
+                const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
 
-        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
-        const bool insideIsUpstream = velocity > 0.0;
+                const bool insideIsUpstream = velocity > 0.0;
+                flux += energyFlux_(fvGeometry,
+                                    data.fvGeometry,
+                                    stokesElemVolVars[scvf.insideScvIdx()],
+                                    darcyScvf,
+                                    elemVolVars,
+                                    elemFluxVarsCache,
+                                    velocity,
+                                    insideIsUpstream,
+                                    diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
+            }
+        }
 
-        return energyFlux_(fvGeometry,
-                           stokesContext.fvGeometry,
-                           stokesVolVars,
-                           darcyScvf,
-                           elemVolVars,
-                           elemFluxVarsCache,
-                           velocity,
-                           insideIsUpstream,
-                           diffCoeffAvgType);
+        return flux;
     }
 
 private:
