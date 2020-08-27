@@ -786,8 +786,8 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
                                   std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
                                   ParallelHelper& pHelper)
 {
-    // if constexpr (ParallelTraits::isNonOverlapping)
-    // {
+    if (LinearSolverTraits::makeMatrixAndResidualConsistent(pHelper.gridView()))
+    {
         // extend the matrix pattern such that it is usable for a parallel solver
         // and make right-hand side consistent
         using GridView = typename LinearSolverTraits::GridView;
@@ -796,25 +796,19 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
         ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim> matrixHelper(pHelper.gridView(), pHelper.dofMapper());
         matrixHelper.extendMatrix(A, [&pHelper](auto idx){ return pHelper.isGhost(idx); });
         matrixHelper.sumEntries(A);
-
         pHelper.makeNonOverlappingConsistent(b);
+    }
 
-        // create commicator, operator, scalar product
-        const auto category = Dune::SolverCategory::overlapping;
-        comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
-        pHelper.createParallelIndexSet(*comm);
-        fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
-        sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
-    // }
-    // else
-    // {
-    //     // create commicator, operator, scalar product
-    //     const auto category = Dune::SolverCategory::overlapping;
-    //     comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
-    //     pHelper.createParallelIndexSet(*comm);
-    //     fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
-    //     sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
-    // }
+    // get the solver category
+    const auto category = ParallelTraits::isNonOverlapping
+                        ? Dune::SolverCategory::nonoverlapping
+                        : Dune::SolverCategory::overlapping;
+
+    // create communicator, operator, scalar product
+    comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
+    pHelper.createParallelIndexSet(*comm);
+    fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
+    sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
 }
 
 } // end namespace Dumux
