@@ -451,7 +451,7 @@ class NavierStokesProblemImpl<TypeTag, DiscretizationMethod::cctpfa> : public FV
 public:
 
     //! Export the boundary types.
-    using BoundaryTypes = BoundaryTypes<ModelTraits::numEq()>;
+    using BoundaryTypes = Dumux::BoundaryTypes<ModelTraits::numEq()>;
 
     //! Export the NumEqVector type for setting boundary conditions.
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
