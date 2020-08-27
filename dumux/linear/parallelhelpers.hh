@@ -700,7 +700,6 @@ public:
         {
             if (entity.partitionType() == Dune::BorderEntity)
             {
-                std::cout << "at proc " << gridView_.comm().rank() << ": border ent at " << entity.geometry().center() << std::endl;
                 const int localIdx = mapper_.index(entity);
                 IdType dofIdxGlobal = gridView_.grid().globalIdSet().id(entity);
 
@@ -787,8 +786,8 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
                                   std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
                                   ParallelHelper& pHelper)
 {
-    if constexpr (ParallelTraits::isNonOverlapping)
-    {
+    // if constexpr (ParallelTraits::isNonOverlapping)
+    // {
         // extend the matrix pattern such that it is usable for a parallel solver
         // and make right-hand side consistent
         using GridView = typename LinearSolverTraits::GridView;
@@ -801,21 +800,21 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
         pHelper.makeNonOverlappingConsistent(b);
 
         // create commicator, operator, scalar product
-        const auto category = Dune::SolverCategory::nonoverlapping;
-        comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
-        pHelper.createParallelIndexSet(*comm);
-        fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
-        sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
-    }
-    else
-    {
-        // create commicator, operator, scalar product
         const auto category = Dune::SolverCategory::overlapping;
         comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
         pHelper.createParallelIndexSet(*comm);
         fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
         sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
-    }
+    // }
+    // else
+    // {
+    //     // create commicator, operator, scalar product
+    //     const auto category = Dune::SolverCategory::overlapping;
+    //     comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
+    //     pHelper.createParallelIndexSet(*comm);
+    //     fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
+    //     sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
+    // }
 }
 
 } // end namespace Dumux
