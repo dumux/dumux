@@ -339,17 +339,7 @@ public:
         auto&& curElemVolVars = this->curElemVolVars();
 
         // get the vector of the actual element residuals
-
-        // if (this->problem().gridGeometry().gridView().comm().size() > 1)
-            // if (this->problem().gridGeometry().gridView().comm().rank() == 0 )
-                // ::printstuff = true;
-
-
         const auto origResiduals = this->evalLocalResidual();
-        // ::printstuff = false;
-
-
-
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         //                                                                                              //
@@ -368,8 +358,6 @@ public:
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
         {
-            // NumEqVector residual(0.0);
-
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
             const auto scvIdx = scv.index();
@@ -543,17 +531,10 @@ public:
                             A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
                         else
                         {
-                            // for (const auto& scvf : scvfs(fvGeometry, scv))
-                            // {
-                            //     if (scvf.isFrontal() && !scvf().boundary())
-                            //     {
-
-                                    const auto& facetI = element.template subEntity <1> (scv.indexInElement());
-                                    const auto& facetJ = element.template subEntity <1> (scvJ.indexInElement());
-                                    if (facetI.partitionType() == 1 && facetJ.partitionType() == 3)
-                                        A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
-
-                                // }
+                            const auto& facetI = element.template subEntity <1> (scv.indexInElement());
+                            const auto& facetJ = element.template subEntity <1> (scvJ.indexInElement());
+                            if (facetI.partitionType() == 1 && facetJ.partitionType() == 3)
+                                A[dofIdx][scvJ.dofIndex()][eqIdx][pvIdx] += partialDerivsFluxOnly[scv.localDofIndex()][eqIdx];
                         }
 
                         if (this->problem().gridGeometry().gridView().comm().size() > 1 && element.partitionType() == Dune::InteriorEntity)
