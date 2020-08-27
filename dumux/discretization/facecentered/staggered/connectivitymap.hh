@@ -52,6 +52,33 @@ public:
         map_.clear();
         map_.resize(gridGeometry.numScv());
 
+        for (const auto& element: elements(gridGeometry.gridView()))
+        {
+            if (element.partitionType() == Dune::InteriorEntity)
+                continue;
+            // restrict the FvGeometry locally and bind to the element
+            auto fvGeometry = localView(gridGeometry);
+            fvGeometry.bind(element);
+            // loop over sub control faces
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                if (scvf.isFrontal() && !scvf.boundary())
+                {
+                    const auto& ownScv = fvGeometry.scv(scvf.insideScvIdx());
+
+                    const auto& facet = element.template subEntity <1> (ownScv.indexInElement());
+                    if (facet.partitionType() == 1)
+                    {
+                        const auto& oppositeScv =  fvGeometry.scv(scvf.outsideScvIdx());
+                        map_[ownScv.index()].push_back(oppositeScv.index());
+                    }
+
+                }
+            }
+
+        }
+
+
         for (const auto& element: elements(gridGeometry.gridView(), Dune::Partitions::interior))
         {
             // restrict the FvGeometry locally and bind to the element
