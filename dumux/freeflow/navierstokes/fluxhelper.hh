@@ -22,6 +22,7 @@
 
 #include <type_traits>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/std/type_traits.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
@@ -30,8 +31,45 @@
 
 namespace Dumux {
 
+#ifndef DOXYGEN
+namespace Detail {
+// helper structs and functions detecting if the VolumeVariables belong to a non-isothermal model
+template <typename T>
+using NonisothermalDetector = decltype(std::declval<T>().energyEqIdx);
+
+template<class T>
+static constexpr bool isNonIsothermal()
+{ return Dune::Std::is_detected<NonisothermalDetector, T>::value; }
+
+
+} // end namespace Detail
+#endif
+
+
+struct NavierStokesUpwindTerms
+{
+    static auto totalMassFlux()
+    { return [](const auto& volVars) { return volVars.density(); }; }
+
+    static auto comoponentMoleFlux(const int compIdx)
+    { return [compIdx](const auto& volVars) { return volVars.molarDensity()*volVars.moleFraction(compIdx); }; }
+
+    static auto comoponentMassFlux(const int compIdx)
+    { return [compIdx](const auto& volVars) { return volVars.density()*volVars.massFraction(compIdx); }; }
+
+    static auto energyFlux()
+    { return [](const auto& volVars) { return volVars.density()*volVars.enthalpy(); }; }
+};
+
+struct NavierStokesMassOnePModelTraits;
+
+
+
+
+template<class ModelTraits>
 class NavierStokesBoundaryFluxHelper
 {
+
 
 public:
 
@@ -57,6 +95,33 @@ public:
                * volumeFlux;
     }
 
+    template<class Traits, class NumEqVector, class UpwindFunction>
+    static void addModelSpecificFlux(NumEqVector& flux,
+                                     const UpwindFunction& upwind)
+    {
+        // for non-isothermal models, first add the fluxes of the underlying
+        // isothermal model, then add the energy flux
+        if constexpr (Detail::isNonIsothermal<typename Traits::Indices>())
+        {
+            addModelSpecificFlux<typename Traits::IsothermalTraits>(flux, upwind);
+
+            auto upwindTerm = NavierStokesUpwindTerms::energyFlux();
+            flux[Traits::Indices::energyEqIdx] = upwind(upwindTerm);
+        }
+
+        // the 1p model: add the total mass flux
+        if constexpr (std::is_same_v<Traits, NavierStokesMassOnePModelTraits>)
+        {
+            auto upwindTerm = NavierStokesUpwindTerms::totalMassFlux();
+            flux[Traits::Indices::conti0EqIdx] = upwind(upwindTerm);
+        }
+
+        // TODO 1pnc
+
+        // TODO RANS
+
+        // TODO maybe use tag dispatch istead of constexpr if?
+    }
 
     /*!
      * \brief Return the area-specific outflow fluxes for all scalar balance equations.
@@ -96,13 +161,12 @@ public:
             }
         }();
 
-        static constexpr bool isCompositional = (VolumeVariables::numFluidComponents() > 1);
-
-        if constexpr (!isCompositional)
+        auto upwindFuntion = [&](const auto& upwindTerm)
         {
-            auto upwindTerm = [&](const VolumeVariables& volVars){ return volVars.density(); };
-            flux[VolumeVariables::Indices::conti0EqIdx] = advectiveScalarUpwindFlux(insideVolVars, outsideVolVars, scvf, volumeFlux, upwindWeight, upwindTerm);
-        }
+            return advectiveScalarUpwindFlux(insideVolVars, outsideVolVars, scvf, volumeFlux, upwindWeight, upwindTerm);
+        };
+
+        addModelSpecificFlux<ModelTraits>(flux, upwindFuntion);
 
         return flux;
     }
@@ -128,7 +192,7 @@ public:
         const bool insideIsUpstream = !signbit(volumeFlux);
         const VolumeVariables& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
-        if constexpr (VolumeVariables::FluidSystem::isCompressible(0/*phaseIdx*/) /*TODO viscosityIsConstant*/)
+        if constexpr (VolumeVariables::FluidSystem::isCompressible(0/*phaseIdx*/) /*TODO viscosityIsConstant*/ || NumEqVector::size() > 1)
         {
             static const bool verbose = getParamFromGroup<bool>(problem.paramGroup(), "Flux.EnableOutflowReversalWarning", true);
             if (verbose && !insideIsUpstream)
@@ -144,13 +208,12 @@ public:
         }
 
 
-        static constexpr bool isCompositional = (VolumeVariables::numFluidComponents() > 1);
-
-        if constexpr (!isCompositional)
+        auto upwindFuntion = [&](const auto& upwindTerm)
         {
-            auto upwindTerm = [&](const VolumeVariables& volVars){ return volVars.density(); };
-            flux[VolumeVariables::Indices::conti0EqIdx] = advectiveScalarUpwindFlux(insideVolVars, insideVolVars, scvf, volumeFlux, 1.0 /*upwindWeight*/, upwindTerm);
-        }
+            return advectiveScalarUpwindFlux(insideVolVars, insideVolVars, scvf, volumeFlux, 1.0 /*upwindWeight*/, upwindTerm);
+        };
+
+        addModelSpecificFlux<ModelTraits>(flux, upwindFuntion);
 
         return flux;
     }
@@ -165,6 +228,7 @@ public:
                                           const Scalar pressure,
                                           const bool zeroNormalVelocityGradient = true)
     {
+        // TODO density upwinding?
         static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethod::fcstaggered);
         using NumEqVector = decltype(problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf));
         NumEqVector flux;
@@ -172,7 +236,7 @@ public:
         if (scvf.isFrontal())
         {
             // pressure contribution
-            flux[scvf.directionIndex()] = pressure - problem.referencePressure(element, fvGeometry, scvf);
+            flux[scvf.directionIndex()] = (pressure - problem.referencePressure(element, fvGeometry, scvf)) * scvf.directionSign();
 
             if (problem.enableInertiaTerms())
             {
