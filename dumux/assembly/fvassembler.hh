@@ -154,9 +154,6 @@ public:
     {
         checkAssemblerState_();
 
-        // update the grid variables for the case of active caching
-        gridVariables_->update(curSol);
-
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
