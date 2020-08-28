@@ -26,6 +26,7 @@
 #define DUMUX_NAVIERSTOKES_MASS_1P_VOLUME_VARIABLES_HH
 
 #include <dumux/freeflow/navierstokes/scalarvolumevariables.hh>
+#include <dumux/freeflow/navierstokes/energy/volumevariables.hh>
 
 namespace Dumux {
 
@@ -34,9 +35,12 @@ namespace Dumux {
  * \brief Volume variables for the single-phase Navier-Stokes model.
  */
 template <class Traits>
-class NavierStokesMassOnePVolumeVariables : public NavierStokesScalarConservationModelVolumeVariables<Traits>
+class NavierStokesMassOnePVolumeVariables
+: public NavierStokesScalarConservationModelVolumeVariables<Traits>
+, public NavierStokesEnergyVolumeVariables<Traits, NavierStokesMassOnePVolumeVariables<Traits>>
 {
     using ParentType = NavierStokesScalarConservationModelVolumeVariables<Traits>;
+    using EnergyVolumeVariables = NavierStokesEnergyVolumeVariables<Traits, NavierStokesMassOnePVolumeVariables<Traits>>;
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
 public:
@@ -91,7 +95,8 @@ public:
                             const Scv& scv,
                             FluidState& fluidState)
     {
-        fluidState.setTemperature(/*phaseIdx=*/0, ParentType::getTemperature(elemSol, problem, element, scv));
+        fluidState.setTemperature(/*phaseIdx=*/0, EnergyVolumeVariables::getTemperature(elemSol, problem, element, scv));
+        EnergyVolumeVariables::updateEffectiveThermalConductivity();
 
         const auto& priVars = elemSol[scv.localDofIndex()];
         fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
@@ -110,9 +115,9 @@ public:
         value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
         fluidState.setViscosity(/*phaseIdx=*/0, value);
 
-        // // compute and set the enthalpy
-        // value = EnergyVolVars::enthalpy(fluidState, paramCache, /*phaseIdx=*/0);
-        // fluidState.setEnthalpy(/*phaseIdx=*/0, value); TODO energy volvars
+        // compute and set the enthalpy
+        value = EnergyVolumeVariables::enthalpy(fluidState, paramCache);
+        fluidState.setEnthalpy(/*phaseIdx=*/0, value);
     }
 
      /*!
