@@ -65,6 +65,10 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
     static constexpr auto sPhaseIdx = ModelTraits::numFluidPhases();
 
 public:
+    /*!
+     * \brief Returns the heat flux within a fluid or solid
+     *        phase (in J/s) across the given sub-control volume face.
+     */
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,

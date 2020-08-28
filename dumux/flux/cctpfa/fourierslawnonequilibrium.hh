@@ -71,7 +71,10 @@ public:
 
     using Cache = FluxVariablesCaching::EmptyHeatConductionCache;
 
-    //! Compute the heat condution flux assuming thermal equilibrium
+    /*!
+     * \brief Returns the heat flux within a fluid or solid
+     *        phase (in J/s) across the given sub-control volume face.
+     */
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,

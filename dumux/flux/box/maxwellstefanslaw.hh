@@ -79,6 +79,11 @@ public:
     static constexpr ReferenceSystemFormulation referenceSystemFormulation()
     { return referenceSystem; }
 
+    /*!
+     * \brief Returns the diffusive fluxes of all components within
+     *        a fluid phase across the given sub-control volume face.
+     *        The computed fluxes are given in kg/s.
+     */
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,

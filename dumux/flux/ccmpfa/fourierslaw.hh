@@ -154,7 +154,13 @@ public:
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFouriersLawCache;
 
-    //! Compute the conductive flux across an scvf
+    /*!
+     * \brief Returns the heat flux within the porous medium
+     *        (in J/s) across the given sub-control volume face.
+     * \note This law assumes thermal equilibrium between the fluid
+     *       and solid phases, and uses an effective thermal conductivity
+     *       for the overall aggregate.
+     */
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,

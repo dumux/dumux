@@ -63,7 +63,9 @@ public:
     //! state the discretization method this implementation belongs to
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
 
-    //! computes the force acting on a sub-control volume face
+    /*!
+     * \brief Computes the force (in Newton) acting on a sub-control volume face.
+     */
     template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
     static ForceVector force(const Problem& problem,
                              const Element& element,

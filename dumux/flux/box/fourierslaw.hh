@@ -55,6 +55,13 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    /*!
+     * \brief Returns the heat flux within the porous medium
+     *        (in J/s) across the given sub-control volume face.
+     * \note This law assumes thermal equilibrium between the fluid
+     *       and solid phases, and uses an effective thermal conductivity
+     *       for the overall aggregate.
+     */
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
