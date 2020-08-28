@@ -114,11 +114,22 @@ int main(int argc, char** argv) try
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+
+    const bool isStationary = getParam<bool>("Problem.IsStationary", false);
+
+    if (problem->hasAnalyticalSolution())
+    {
+        vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
+        vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
+        vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+    }
+
     vtkWriter.write(restartTime);
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    auto assembler = isStationary ? std::make_shared<Assembler>(problem, gridGeometry, gridVariables)
+                                  : std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
@@ -166,21 +177,18 @@ int main(int argc, char** argv) try
     const auto p1outlet = GlobalPosition{xMax, yMax};
     flux.addSurface("outlet", p0outlet, p1outlet);
 
-    // time loop
-    timeLoop->start(); do
+    if (isStationary)
     {
+        Dune::Timer timer;
+
         // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop);
+        nonLinearSolver.solve(x);
 
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
-
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
+        if(problem->hasAnalyticalSolution())
+            problem->printL2Error(x);
 
         // write vtk output
-        vtkWriter.write(timeLoop->time());
+        vtkWriter.write(1.0);
 
         // calculate and print mass fluxes over the planes
         flux.calculateMassOrMoleFluxes();
@@ -200,15 +208,54 @@ int main(int argc, char** argv) try
         std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
         std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
+        timer.stop();
+    }
+    else
+    {
+        // time loop
+        timeLoop->start(); do
+        {
+            // solve the non-linear system with time step control
+            nonLinearSolver.solve(x, *timeLoop);
 
-        // set new dt as suggested by newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+            // make the new solution the old solution
+            xOld = x;
+            gridVariables->advanceTimeStep();
 
-    } while (!timeLoop->finished());
+            // advance to the time loop to the next step
+            timeLoop->advanceTimeStep();
 
-    timeLoop->finalize(leafGridView.comm());
+            // write vtk output
+            vtkWriter.write(timeLoop->time());
+
+            // calculate and print mass fluxes over the planes
+            flux.calculateMassOrMoleFluxes();
+            if(GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
+            {
+                std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
+                std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+            }
+            else
+            {
+                std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
+                std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+            }
+
+            // calculate and print volume fluxes over the planes
+            flux.calculateVolumeFluxes();
+            std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
+            std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
+
+            // report statistics of this time step
+            timeLoop->reportTimeStep();
+
+            // set new dt as suggested by newton solver
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        } while (!timeLoop->finished());
+
+        timeLoop->finalize(leafGridView.comm());
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

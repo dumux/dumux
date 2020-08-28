@@ -37,6 +37,8 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
+#include "../../l2error.hh"
+
 namespace Dumux {
 template <class TypeTag>
 class ChannelTestProblem;
@@ -104,9 +106,13 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    static constexpr auto dimWorld = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimensionworld;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
@@ -121,6 +127,8 @@ public:
     : ParentType(gridGeometry)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
+        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+
         const auto tmp = getParam<std::string>("Problem.OutletCondition", "Outflow");
         if (tmp == "Outflow")
             outletCondition_ = OutletCondition::outflow;
@@ -135,12 +143,31 @@ public:
 
         useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", false);
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
+
+        hasAnalyticalSolution_ = (outletCondition_ == OutletCondition::neumannXneumannY);
+        if (hasAnalyticalSolution_)
+            createAnalyticalSolution_();
     }
 
    /*!
      * \name Problem parameters
      */
     // \{
+
+    void printL2Error(const SolutionVector& curSol) const
+    {
+        using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
+        const auto l2error = L2Error::calculateL2Error(*this, curSol);
+        const int numCellCenterDofs = this->gridGeometry().numCellCenterDofs();
+        const int numFaceDofs = this->gridGeometry().numFaceDofs();
+        std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
+                << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
+                << std::scientific
+                << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
+                << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
+                << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
+                << std::endl;
+    }
 
    /*!
      * \brief Returns the temperature within the domain in [K].
@@ -166,7 +193,7 @@ public:
     {
         BoundaryTypes values;
 
-        if(isInlet_(globalPos))
+        if (isInlet_(globalPos))
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
@@ -174,7 +201,7 @@ public:
             values.setDirichlet(Indices::temperatureIdx);
 #endif
         }
-        else if(isOutlet_(globalPos))
+        else if (isOutlet_(globalPos))
         {
             if (outletCondition_ == OutletCondition::outflow)
                 values.setDirichlet(Indices::pressureIdx);
@@ -205,11 +232,11 @@ public:
         return values;
     }
 
-   /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
-     *
-     * \param globalPos The center of the finite volume which ought to be set.
-     */
+    /*!
+      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
+      *
+      * \param globalPos The center of the finite volume which ought to be set.
+      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values = initialAtPos(globalPos);
@@ -219,13 +246,13 @@ public:
 #if NONISOTHERMAL
             // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
             if(time() >= 200.0)
-                values[Indices::temperatureIdx] = 293.15;
+                 values[Indices::temperatureIdx] = 293.15;
 #endif
         }
         else
             values[Indices::velocityXIdx] = 0.0;
 
-        return values;
+         return values;
     }
 
     /*!
@@ -285,6 +312,31 @@ public:
         return vMax * (4.0*yMin + 4*yMax - 8.0*y) / ((yMin-yMax)*(yMin-yMax));
     }
 
+    /*!
+     * \brief Return the analytical solution of the problem at a given position
+     *
+     * \param globalPos The global position
+     */
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    {
+        Scalar x = globalPos[0];
+        Scalar y = globalPos[1];
+
+        const Scalar yMin = this->gridGeometry().bBoxMin()[1];
+        const Scalar yMax = this->gridGeometry().bBoxMax()[1];
+
+        Scalar velocityQuadraticCoefficient = - inletVelocity_ / (0.25*(yMax - yMin)*(yMax - yMin));
+        Scalar pressureLinearCoefficient = 2.0 * velocityQuadraticCoefficient * kinematicViscosity_;
+        Scalar pressureConstant = -pressureLinearCoefficient * this->gridGeometry().bBoxMax()[0]  + outletPressure_;
+
+        PrimaryVariables values;
+        values[Indices::pressureIdx] =  pressureLinearCoefficient * x + pressureConstant;
+        values[Indices::velocityXIdx] = parabolicProfile(y, inletVelocity_);
+        values[Indices::velocityYIdx] = 0;
+
+        return values;
+    }
+
     // \}
 
    /*!
@@ -297,20 +349,21 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values;
+
         values[Indices::pressureIdx] = outletPressure_;
         values[Indices::velocityYIdx] = 0.0;
-
-#if NONISOTHERMAL
-        values[Indices::temperatureIdx] = 283.15;
-#endif
 
         if (useVelocityProfile_)
             values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
         else
             values[Indices::velocityXIdx] = inletVelocity_;
+
+#if NONISOTHERMAL
+        values[Indices::temperatureIdx] = 283.15;
+#endif
 
         return values;
     }
@@ -328,7 +381,73 @@ public:
         return timeLoop_->time();
     }
 
+/*!
+     * \brief Returns the analytical solution for the pressure
+     */
+    auto& getAnalyticalPressureSolution() const
+    {
+        return analyticalPressure_;
+    }
+
+   /*!
+     * \brief Returns the analytical solution for the velocity
+     */
+    auto& getAnalyticalVelocitySolution() const
+    {
+        return analyticalVelocity_;
+    }
+
+   /*!
+     * \brief Returns the analytical solution for the velocity at the faces
+     */
+    auto& getAnalyticalVelocitySolutionOnFace() const
+    {
+        return analyticalVelocityOnFace_;
+    }
+
+    bool hasAnalyticalSolution()
+    {
+        return hasAnalyticalSolution_;
+    }
+
 private:
+
+   /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    void createAnalyticalSolution_()
+    {
+        analyticalPressure_.resize(this->gridGeometry().numCellCenterDofs());
+        analyticalVelocity_.resize(this->gridGeometry().numCellCenterDofs());
+        analyticalVelocityOnFace_.resize(this->gridGeometry().numFaceDofs());
+
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto ccDofIdx = scv.dofIndex();
+                auto ccDofPosition = scv.dofPosition();
+                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
+
+                // velocities on faces
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    const auto faceDofIdx = scvf.dofIndex();
+                    const auto faceDofPosition = scvf.center();
+                    const auto dirIdx = scvf.directionIndex();
+                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
+                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
+                }
+
+                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
+
+                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
+                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
+            }
+        }
+     }
 
     bool isInlet_(const GlobalPosition& globalPos) const
     {
@@ -341,11 +460,18 @@ private:
     }
 
     static constexpr Scalar eps_=1e-6;
+    bool printL2Error_;
     Scalar inletVelocity_;
+    Scalar kinematicViscosity_;
     Scalar outletPressure_;
     OutletCondition outletCondition_;
     bool useVelocityProfile_;
+    bool hasAnalyticalSolution_;
     TimeLoopPtr timeLoop_;
+
+    std::vector<Scalar> analyticalPressure_;
+    std::vector<VelocityVector> analyticalVelocity_;
+    std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
 } // end namespace Dumux
 
