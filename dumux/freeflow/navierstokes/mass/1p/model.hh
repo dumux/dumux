@@ -57,7 +57,10 @@
 #include "indices.hh"
 #include "./../../iofields.hh"
 
+#include <dumux/flux/cctpfa/fourierslaw.hh>
+
 #include <dumux/discretization/method.hh>
+#include <dumux/freeflow/navierstokes/energy/model.hh>
 
 namespace Dumux {
 
@@ -67,12 +70,8 @@ namespace Dumux {
  *
  * \tparam dimension The dimension of the problem
  */
-template<int dimension>
 struct NavierStokesMassOnePModelTraits
 {
-    //! The dimension of the model
-    static constexpr int dim() { return dimension; }
-
     //! There are as many momentum balance equations as dimensions
     //! and one mass balance equation.
     static constexpr int numEq() { return 1; }
@@ -138,6 +137,7 @@ namespace Properties {
 namespace TTag {
 //! The type tag for the single-phase, isothermal Navier-Stokes model
 struct NavierStokesMassOneP{ using InheritsFrom = std::tuple<ModelProperties>; };
+struct NavierStokesMassOnePNI{ using InheritsFrom = std::tuple<NavierStokesMassOneP>; };
 
 }
 
@@ -145,13 +145,7 @@ struct NavierStokesMassOneP{ using InheritsFrom = std::tuple<ModelProperties>; }
 //!< states some specifics of the Navier-Stokes model
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::NavierStokesMassOneP>
-{
-private:
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    static constexpr auto dim = GridView::dimension;
-public:
-    using type = NavierStokesMassOnePModelTraits<dim>;
-};
+{ using type = NavierStokesMassOnePModelTraits; };
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -170,7 +164,8 @@ public:
 
 //! The local residual
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::NavierStokesMassOneP> { using type = NavierStokesMassOnePLocalResidual<TypeTag>; };
+struct LocalResidual<TypeTag, TTag::NavierStokesMassOneP>
+{ using type = NavierStokesMassOnePLocalResidual<TypeTag>; };
 
 //! Set the volume variables property
 template<class TypeTag>
@@ -214,9 +209,122 @@ public:
     using type = EmptyCouplingManager;
 };
 
-}
+///////////////////////////////////////////////////////////////////////////
+// Properties for the non-isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+
+//! Add temperature to the output
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokesMassOnePNI> { using type = NavierStokesEnergyIOFields<NavierStokesIOFields>; };
+
+//! The model traits of the non-isothermal model
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokesMassOnePNI> { using type = NavierStokesEnergyModelTraits<NavierStokesMassOnePModelTraits>; };
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::NavierStokesMassOnePNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
+
+    using BaseTraits = NavierStokesMassOnePVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using ETCM = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
+    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+public:
+    using type = NavierStokesMassOnePVolumeVariables<NITraits>;
+};
+
+//! Use the average for effective conductivities
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::NavierStokesMassOnePNI>
+{
+    struct type
+    {
+        template<class VolVars>
+        static auto effectiveThermalConductivity(const VolVars& volVars)
+        {
+            return volVars.fluidThermalConductivity();
+        }
+    };
+    // using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>;
+};
+
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::NavierStokesMassOnePNI>
+{ using type = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>; };
+
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOnePNI>
+{
+    struct Cache : public GetPropType<TypeTag, Properties::HeatConductionType>::Cache
+    {
+
+    };
+
+    using type = Cache;
+};
+
+template<class TypeTag>
+struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMassOnePNI>
+{
+    class Filler : public GetPropType<TypeTag, Properties::HeatConductionType>::Cache::Filler
+    {
+        using Problem = GetPropType<TypeTag, Properties::Problem>;
+        using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+        using GridView = typename GridGeometry::GridView;
+        using Element = typename GridView::template Codim<0>::Entity;
+
+        using FVElementGeometry = typename GridGeometry::LocalView;
+        using SubControlVolume = typename GridGeometry::SubControlVolume;
+        using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+        using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+
+    public:
+        static constexpr bool isSolDependent = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
+
+        Filler(const Problem& problem)
+        : problemPtr_(&problem) {}
+
+        template<class FluxVariablesCacheContainer, class FluxVariablesCache>
+        void fill(FluxVariablesCacheContainer& fluxVarsCacheContainer,
+                  FluxVariablesCache& scvfFluxVarsCache,
+                  const Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const SubControlVolumeFace& scvf,
+                  bool forceUpdateAll = false)
+        {
+            using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
+            using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
+
+            // forward to the filler of the diffusive quantities
+            HeatConductionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
+        }
+
+    private:
+        const Problem& problem() const
+        { return *problemPtr_; }
+
+        const Problem* problemPtr_;
+    };
+
+    using type = Filler;
+};
+
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::NavierStokesMassOnePNI> { static constexpr bool value = true; };
+
+} // end namespace Properties
 // }
 
-} // end namespace
+} // end namespace Dumux
 
 #endif // DUMUX_NAVIERSTOKES_MODEL_HH

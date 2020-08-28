@@ -27,6 +27,7 @@
 #include <dumux/assembly/cclocalresidual.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
+#include <dumux/freeflow/navierstokes/energy/localresidual.hh>
 
 namespace Dumux {
 
@@ -63,16 +64,14 @@ class NavierStokesMassOnePLocalResidual : public CCLocalResidual<TypeTag>
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
-
-
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using EnergyLocalResidual = NavierStokesEnergyLocalResidual<ModelTraits>;
 
     static_assert(GridGeometry::discMethod == DiscretizationMethod::cctpfa);
 
 public:
     //! Use the parent type's constructor
     using ParentType::ParentType;
-
 
     /*!
      * \brief Calculate the source term of the equation
@@ -87,7 +86,13 @@ public:
                                const SubControlVolume& scv,
                                const VolumeVariables& volVars) const
     {
-        return volVars.density();
+        NumEqVector storage(0.0);
+        storage[Indices::conti0EqIdx] = volVars.density();
+
+        //! The energy storage in the fluid phase
+        EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
+
+        return storage;
     }
 
     /*!
@@ -116,11 +121,11 @@ public:
         auto upwindTerm = [](const auto& volVars) { return volVars.density(); };
         flux = fluxVars.advectiveFlux(upwindTerm);
 
-        //     //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-        //     EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+        //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars);
 
-        // //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-        // EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
         return flux;
     }
