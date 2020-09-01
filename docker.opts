@@ -1,0 +1,56 @@
+GXX_RELEASE_WARNING_OPTS=" \
+    -Wall \
+    -Wunused \
+    -Wmissing-include-dirs \
+    -Wcast-align \
+    -Wno-missing-braces \
+    -Wmissing-field-initializers \
+    -Wno-sign-compare"
+
+GXX_RELEASE_OPTS=" \
+    -fdiagnostics-color=always \
+    -fno-strict-aliasing \
+    -fstrict-overflow \
+    -fno-finite-math-only \
+    -DNDEBUG=1 \
+    -O3 \
+    -march=x86-64 \
+    -mtune=generic \
+    -funroll-loops \
+    -g0"
+
+SPECIFIC_COMPILER=""
+# if you want to specify a specific compiler, do it by setting (comment the above line)
+#SPECIFIC_COMPILER="
+# -DCMAKE_C_COMPILER=/usr/bin/gcc-8
+# -DCMAKE_CXX_COMPILER=/usr/bin/g++-8
+#"
+
+SPECIFIC_GENERATOR=""
+# if you want to specify a specific make file generator (e.g. ninja), do it by setting (comment the above line)
+#SPECIFIC_GENERATOR="
+# -DCMAKE_GENERATOR='Ninja'
+# -DCMAKE_MAKE_PROGRAM='/usr/bin/ninja'
+#"
+
+OPM_FLAGS=""
+# to build opm it might be necessary to set manually the following variables (comment the above line)
+#OPM_FLAGS="
+#-DUSE_MPI=ON
+#-DOPM_CLANG_WITH_STDC++FS=ON
+#"
+
+# set this to "ON" if you want to be able to have the headercheck target
+DUMUX_ENABLE_HEADERCHECK=OFF
+
+# for debug opts you can set DCMAKE_BUILD_TYPE to "Debug" or "RelWithDebInfo"
+# you can also do this in any of the CMakeLists.txt in Dumux
+# just rerun cmake again afterwards (run cmake <path-to-build-dir>)
+
+CMAKE_FLAGS="$SPECIFIC_COMPILER $SPECIFIC_GENERATOR $OPM_FLAGS
+-DCMAKE_CXX_FLAGS_RELEASE='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS $DUMUX_DISABLE_PROP_MACROS'
+-DCMAKE_CXX_FLAGS_DEBUG='-O0 -g -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare $DUMUX_DISABLE_PROP_MACROS'
+-DCMAKE_CXX_FLAGS_RELWITHDEBINFO='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS -g -ggdb -Wall $DUMUX_DISABLE_PROP_MACROS'
+-DCMAKE_BUILD_TYPE=Release
+-DENABLE_HEADERCHECK=$DUMUX_ENABLE_HEADERCHECK
+"
