@@ -264,20 +264,20 @@ public:
         if constexpr (ParentType::isMomentumProblem())
         {
             if (outletCondition_ == OutletCondition::doNothing)
-                values = NavierStokesBoundaryFluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
+                values = NavierStokesBoundaryFluxHelper<ModelTraits>::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
             else if (outletCondition_ == OutletCondition::outflow)
-                values = NavierStokesBoundaryFluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/);
+                values = NavierStokesBoundaryFluxHelper<ModelTraits>::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/);
             else
             {
                 assert(outletCondition_ == OutletCondition::neumannXneumannY);
-                values = NavierStokesBoundaryFluxHelper::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
+                values = NavierStokesBoundaryFluxHelper<ModelTraits>::fixedPressureMomentumFlux(*this, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
                 values[Indices::momentumYBalanceIdx] = -dudy(scvf.ipGlobal()[1], inletVelocity_) * this->effectiveViscosity(element, fvGeometry, scvf) * scvf.directionSign();
             }
         }
         else
         {
             if (isOutlet_(scvf.ipGlobal()))
-                values = NavierStokesBoundaryFluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+                values = NavierStokesBoundaryFluxHelper<ModelTraits>::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
         }
 
         return values;

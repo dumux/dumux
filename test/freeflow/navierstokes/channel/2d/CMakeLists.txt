@@ -146,3 +146,26 @@ dumux_add_test(NAME test_ff_stokesni_channel_conduction
 
  add_executable(test_ff_stokesni_channel_new EXCLUDE_FROM_ALL main_new.cc)
  target_compile_definitions(test_ff_stokesni_channel_new PUBLIC "NONISOTHERMAL=1")
+
+dumux_add_test(NAME test_ff_stokesni_channel_convection_new
+               TARGET test_ff_stokesni_channel_new
+               LABELS freeflow navierstokes
+               CMAKE_GUARD HAVE_UMFPACK
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS       --script fuzzy
+                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokesni_channel_convection-reference.vtu
+                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_convection-00005.vtu
+                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_new params_convection.input
+                              -Problem.Name test_ff_stokesni_channel_convection")
+
+dumux_add_test(NAME test_ff_stokesni_channel_conduction_new
+               TARGET test_ff_stokesni_channel_new
+               LABELS freeflow navierstokes
+               CMAKE_GUARD HAVE_UMFPACK
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS       --script fuzzy
+                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokesni_channel_conduction-reference.vtu
+                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_conduction-00004.vtu
+                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_new params_conduction.input
+                              -Problem.Name test_ff_stokesni_channel_conduction"
+                              --zeroThreshold {"velocity_liq \(m/s\)":1e-20})
