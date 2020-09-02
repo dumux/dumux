@@ -49,6 +49,11 @@ public:
      *        Riemann solver after Torro and the reconstruction after
      *        Audusse and a flux limiter for small water depths.
      *
+     *        The computed water flux of the Riemann solver is given
+     *        in m^2/s, the momentum fluxes are given in m^3/s^2. The
+     *        Riemann flux is mltiplied by scv.area() to get the flux
+     *        over the face.
+     *
      * \todo The choice of the Riemann solver should be more flexible
      */
     template<class Problem, class FVElementGeometry, class ElementVolumeVariables>

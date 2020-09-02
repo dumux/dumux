@@ -51,6 +51,9 @@ namespace ShallowWater {
  * after Audusse but further solvers and reconstructions ca be
  * implemented.
  *
+ * The computed water flux (localFlux[0]) is given in m^2/s, the
+ * momentum fluxes (localFlux[1], localFlux[2]) are given in m^3/s^2.
+ *
  * \param waterDepthLeft water depth on the left side
  * \param waterDepthRight water depth on the right side
  * \param velocityXLeft veloctiyX on the left side
