@@ -51,7 +51,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_cuboid_new
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_cuboid-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_cuboid_new-00001.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_cuboid_new-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_new params.input
                              -Problem.Name test_ff_stokes_channel_3d_cuboid_new"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
@@ -63,7 +63,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_staircase_new
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_staircase-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_staircase_new-00001.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_staircase_new-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_new params.input
                              -Problem.Name test_ff_stokes_channel_3d_staircase_new -Problem.IsStaircaseGeometry true"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
@@ -76,7 +76,7 @@ dumux_add_test(NAME test_ff_stokes_channel_pseudo3d_new
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_pseudo3d-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_pseudo3d_new-00001.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_pseudo3d_new-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_pseudo3d_new params_pseudo.input
                              -Problem.Name test_ff_stokes_channel_pseudo3d_new"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
