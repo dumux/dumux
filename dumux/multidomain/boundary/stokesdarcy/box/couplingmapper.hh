@@ -22,18 +22,13 @@
  * \copydoc Dumux::StokesDarcyCouplingMapper
  */
 
-#ifndef DUMUX_STOKES_DARCY_BOX_COUPLINGMAPPER_HH
-#define DUMUX_STOKES_DARCY_BOX_COUPLINGMAPPER_HH
+#ifndef DUMUX_STOKES_DARCY_COUPLINGMAPPER_BOX_HH
+#define DUMUX_STOKES_DARCY_COUPLINGMAPPER_BOX_HH
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <utility>
-#include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
-#include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/geometry/affinegeometry.hh>
@@ -48,21 +43,11 @@ namespace Dumux {
 
 /*!
  * \ingroup StokesDarcyCoupling
- * \brief Coupling mapper for Stokes and Darcy domains with equal dimension.
+ * \brief Coupling mapper for Stokes and Darcy domains with equal dimension when using the Box scheme for the Darcy domain.
  */
 template<class MDTraits>
 class StokesDarcyCouplingMapperBox
 {
-    using Scalar = typename MDTraits::Scalar;
-
-public:
-    static constexpr auto stokesCellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto stokesFaceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto cellCenterIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto faceIdx = typename MDTraits::template SubDomain<1>::Index();
-    static constexpr auto stokesIdx = stokesCellCenterIdx;
-    static constexpr auto darcyIdx = typename MDTraits::template SubDomain<2>::Index();
-
 private:
     // obtain the type tags of the sub problems
     using StokesTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
@@ -84,11 +69,6 @@ private:
     static_assert(StokesGG::discMethod == DiscretizationMethod::staggered, "The free flow domain must use the staggered discretization");
     static_assert(DarcyGG::discMethod == DiscretizationMethod::box, "The Darcy domain must use the Box discretization");
 
-    // the sub domain type tags
-    template<std::size_t id>
-    using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-    using CouplingManager = GetPropType<StokesTypeTag, Properties::CouplingManager>;
-
 public:
 
     // export the type describing a coupling segment
@@ -106,17 +86,17 @@ public:
     /*!
      * \brief Main update routine
      */
-    template<class CouplingManager, class Stencils, class StencilsB>
+    template<class CouplingManager, class StencilA, class StencilB>
     void computeCouplingMapsAndStencils(const CouplingManager& couplingManager,
-                                        Stencils& darcyToStokesCellCenterStencils,
-                                        StencilsB& darcyToStokesFaceStencils,
-                                        Stencils& stokesCellCenterToDarcyStencils,
-                                        Stencils& stokesFaceToDarcyStencils)
+                                        StencilA& darcyToStokesCellCenterStencils,
+                                        StencilB& darcyToStokesFaceStencils,
+                                        StencilA& stokesCellCenterToDarcyStencils,
+                                        StencilA& stokesFaceToDarcyStencils)
     {
         computeCouplingMaps(couplingManager);
 
-        const auto& stokesProblem = couplingManager.problem(stokesIdx);
-        const auto& darcyProblem = couplingManager.problem(darcyIdx);
+        const auto& stokesProblem = couplingManager.problem(CouplingManager::freeFlowIdx);
+        const auto& darcyProblem = couplingManager.problem(CouplingManager::porousMediumIdx);
 
         const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
@@ -152,8 +132,8 @@ public:
     template<class CouplingManager>
     void computeCouplingMaps(const CouplingManager& couplingManager)
     {
-        const auto& stokesProblem = couplingManager.problem(stokesIdx);
-        const auto& darcyProblem = couplingManager.problem(darcyIdx);
+        const auto& stokesProblem = couplingManager.problem(CouplingManager::freeFlowIdx);
+        const auto& darcyProblem = couplingManager.problem(CouplingManager::porousMediumIdx);
 
         const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
