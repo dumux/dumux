@@ -329,7 +329,7 @@ public:
                                const LocalAssemblerI& localAssemblerI,
                                Dune::index_constant<freeFlowFaceIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<1>& priVars,
+                               const PrimaryVariables<freeFlowFaceIdx>& priVars,
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ] = priVars;
