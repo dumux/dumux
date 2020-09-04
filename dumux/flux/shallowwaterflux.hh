@@ -44,15 +44,15 @@ public:
 
     /*!
      * \ingroup Flux
-     * \brief Prepares the riemann problem for the advective flux for
-     *        the shallow water model. The actual model uses an exact
-     *        Riemann solver after Torro and the reconstruction after
-     *        Audusse and a flux limiter for small water depths.
+     * \brief Prepares the Riemann problem for the advective flux for
+     *        the 2D shallow water model. The actual model uses an
+     *        exact Riemann solver after Torro and the reconstruction
+     *        after Audusse and a flux limiter for small water depths.
      *
      *        The computed water flux of the Riemann solver is given
      *        in m^2/s, the momentum fluxes are given in m^3/s^2. The
-     *        Riemann flux is multiplied by scvf.area() to get the
-     *        flux over the face.
+     *        Riemann flux is multiplied by scvf.area() (given in m
+     *        for a 2D domain) to get the flux over the face.
      *
      * \todo The choice of the Riemann solver should be more flexible
      */

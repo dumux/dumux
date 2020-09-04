@@ -34,15 +34,15 @@ namespace ShallowWater {
 
 /*!
  * \ingroup ShallowWaterFlux
- * \brief Construct Riemann Problem and solve it
+ * \brief Construct a Riemann problem and solve it
  *
  *
- * Riemann Problem applies the hydrostatic reconstruction, uses the
+ * Riemann problem applies the hydrostatic reconstruction, uses the
  * Riemann invariants to transform the two-dimensional problem to an
  * one-dimensional problem and solves this new problem, and rotates
  * the problem back. Further it applies an flux limiter for the water
  * flux handle drying of elements.
- * The correction of the bed slope surce terme leads to an
+ * The correction of the bed slope surce term leads to an
  * non-symetric flux term at the interface for the momentum equations
  * since DuMuX computes the fluxes twice from each side this does not
  * matter.
@@ -53,6 +53,8 @@ namespace ShallowWater {
  *
  * The computed water flux (localFlux[0]) is given in m^2/s, the
  * momentum fluxes (localFlux[1], localFlux[2]) are given in m^3/s^2.
+ * Later this flux will be multiplied by the scvf.area() (given in m
+ * for a 2D problem) to get the flux over a face.
  *
  * \param waterDepthLeft water depth on the left side
  * \param waterDepthRight water depth on the right side
