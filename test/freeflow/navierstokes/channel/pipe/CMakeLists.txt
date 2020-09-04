@@ -6,3 +6,11 @@ dumux_add_test(NAME test_ff_stokes_channel_pipe
                CMAKE_GUARD HAVE_UMFPACK
                COMMAND ./convergencetest.py
                CMD_ARGS test_ff_stokes_channel_pipe)
+
+dumux_add_test(NAME test_ff_stokes_channel_pipe_new
+               LABELS freeflow navierstokes
+               SOURCES main_new.cc
+               LABELS freeflow
+               CMAKE_GUARD HAVE_UMFPACK
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_ff_stokes_channel_pipe_new)
