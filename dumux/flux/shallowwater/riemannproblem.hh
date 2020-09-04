@@ -42,8 +42,8 @@ namespace ShallowWater {
  * one-dimensional problem and solves this new problem, and rotates
  * the problem back. Further it applies an flux limiter for the water
  * flux handle drying of elements.
- * The correction of the bed slope surce term leads to an
- * non-symetric flux term at the interface for the momentum equations
+ * The correction of the bed slope source term leads to a
+ * non-symmetric flux term at the interface for the momentum equations
  * since DuMuX computes the fluxes twice from each side this does not
  * matter.
  *

@@ -43,7 +43,7 @@ struct RiemannSolution {
  * \ingroup ShallowWaterFlux
  * \brief Exact Riemann solver for the shallow water equations.
  *
- * The flux of the 2D shallow water euqations must be rotated
+ * The flux of the 2D shallow water equations must be rotated
  * to a 1D problem before the Riemann solver can be applied.
  * The computed water flux is given in m^2/s, the momentum
  * fluxes are given in m^3/s^2.
