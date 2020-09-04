@@ -7,10 +7,11 @@ LowerLeft = 0 0
 UpperRight = 7.2 2
 Cells = 417 115
 Image = grids/logo_mod.pbm
+Marker = 1
 
 [Problem]
 Name = test_channel_navierstokes # name passed to the output routines
-InletVelocity = 1000
+InletVelocity = 400
 EnableGravity = false
 DirichletPoint = 4.65323 1.31305
 
@@ -24,3 +25,12 @@ MaxRelativeShift = 1e-5
 
 [Vtk]
 WriteFaceData = false
+
+[Assembly]
+NumericDifference.BaseEpsilon =  1e-8
+
+[CellCenter.Assembly]
+NumericDifference.PriVarMagnitude = 1e5 # pressure is in the order of 1e5
+
+[Face.Assembly]
+NumericDifference.PriVarMagnitude = 400 # velocity is in the order of 1
