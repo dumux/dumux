@@ -25,12 +25,35 @@
 #ifndef DUMUX_STOKES_DARCY_BOX_COUPLINGDATA_HH
 #define DUMUX_STOKES_DARCY_BOX_COUPLINGDATA_HH
 
+#include <type_traits>
+#include <dune/common/std/type_traits.hh>
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 
 namespace Dumux {
+
+namespace Detail {
+    enum class ProjectionMethods
+    {
+        L2Projection, CenterEvaluation
+    };
+
+    template <typename T>
+    using has_projection_method = typename T::ProjectionMethod;
+
+    template<class T>
+    static constexpr ProjectionMethods getProjectionMethod()
+    {
+        if constexpr (Dune::Std::is_detected<has_projection_method, T>::value)
+            return T::ProjectionMethod::method;
+        else
+            return ProjectionMethods::L2Projection;
+    }
+};
+
+
 /*!
  * \ingroup StokesDarcyCoupling
  * \brief A base class which provides some common methods used for Stokes-Darcy coupling.
@@ -58,11 +81,10 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     static constexpr auto freeFlowIdx = CouplingManager::freeFlowIdx;
     static constexpr auto porousMediumIdx = CouplingManager::porousMediumIdx;
 
-    using AdvectionType = GetPropType<SubDomainTypeTag<porousMediumIdx>, Properties::AdvectionType>;
-    using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
-    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<porousMediumIdx>, GridGeometry<porousMediumIdx>::discMethod>;
-
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
+
+    using ProjectionMethods = Detail::ProjectionMethods;
+    static constexpr auto projectionMethod = Detail::getProjectionMethod<MDTraits>();
 
 public:
     StokesDarcyCouplingDataBoxBase(const CouplingManager& couplingmanager): ParentType(couplingmanager) {}
@@ -91,29 +113,37 @@ public:
         {
             if (scvf.index() == data.stokesScvfIdx)
             {
-                const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
-                const auto& elemVolVars = *(data.elementVolVars);
-                const auto& darcyFvGeometry = data.fvGeometry;
-                const auto& localBasis = darcyFvGeometry.feLocalBasis();
-
-                // do second order integration as box provides linear functions
-                static constexpr int darcyDim = GridGeometry<porousMediumIdx>::GridView::dimension;
-                const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
-                for (const auto& qp : rule)
+                if constexpr (projectionMethod == ProjectionMethods::L2Projection)
                 {
-                    const auto& ipLocal = qp.position();
-                    const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
-                    const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
+                    const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
+                    const auto& elemVolVars = *(data.elementVolVars);
+                    const auto& darcyFvGeometry = data.fvGeometry;
+                    const auto& localBasis = darcyFvGeometry.feLocalBasis();
 
-                    std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
-                    localBasis.evaluateFunction(ipElementLocal, shapeValues);
+                    // do second order integration as box provides linear functions
+                    static constexpr int darcyDim = GridGeometry<porousMediumIdx>::GridView::dimension;
+                    const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
+                    for (const auto& qp : rule)
+                    {
+                        const auto& ipLocal = qp.position();
+                        const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
+                        const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
 
-                    Scalar pressure = 0.0;
-                    for (const auto& scv : scvs(data.fvGeometry))
-                        pressure += elemVolVars[scv].pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+                        std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+                        localBasis.evaluateFunction(ipElementLocal, shapeValues);
 
-                    momentumFlux += pressure*data.segmentGeometry.integrationElement(qp.position())*qp.weight();
+                        Scalar pressure = 0.0;
+                        for (const auto& scv : scvs(data.fvGeometry))
+                            pressure += elemVolVars[scv].pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
+
+                        momentumFlux += pressure*data.segmentGeometry.integrationElement(qp.position())*qp.weight();
+                    }
                 }
+                else
+                {
+                    DUNE_THROW(Dune::NotImplemented, "Other projections methods than averaging are not yet implemented!");
+                }
+
             }
         }
 
@@ -217,7 +247,6 @@ public:
 
                 const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
                 const auto& elemVolVars = *(data.elementVolVars);
-                const auto& elemFluxVarsCache = *(data.elementFluxVarsCache);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
 
                 const auto darcyDensity = elemVolVars[darcyScvf.insideScvIdx()].density(darcyPhaseIdx);
@@ -248,7 +277,7 @@ public:
         {
             if(scvf.index() == data.darcyScvfIdx)
             {
-                //const Scalar velocity = data.velocity * scvf.unitOuterNormal();
+                //calculate the free-flow velocity
                 const Scalar velocity = -1*(data.velocity * scvf.unitOuterNormal());
 
                 const auto& stokesScvf = data.fvGeometry.scvf(data.stokesScvfIdx);
