@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 
+#include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/io/file/vtk/basicwriter.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 #include <dune/grid/io/file/vtk/skeletonfunction.hh>
