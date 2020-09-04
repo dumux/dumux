@@ -20,6 +20,8 @@
 #ifndef DUMUX_NAVIERSTOKES_BOUNDARY_FLUXHELPER_HH
 #define DUMUX_NAVIERSTOKES_BOUNDARY_FLUXHELPER_HH
 
+
+#include <mutex>
 #include <type_traits>
 #include <dune/common/float_cmp.hh>
 #include <dune/common/std/type_traits.hh>
@@ -256,6 +258,28 @@ public:
 
         if (scvf.isLateral())
         {
+
+            // lateral face normal to boundary (integration point touches boundary)
+            if (scv.boundary() && scvf.boundary())
+            {
+                // const auto& frontalScvfOnBoundary = fvGeometry.frontalScvfOnBoundary(scv);
+                const auto bcTypes = problem.boundaryTypes(element, scvf);
+                if (bcTypes.isNeumann(scv.directionIndex()))
+                {
+                    static std::mutex recursionPreventionMutex;
+                    if (!recursionPreventionMutex.try_lock())
+                        DUNE_THROW(Dune::InvalidStateException, "fixedPressureMomentumFlux() was called recursively. "\
+                                   << "To prevent a stack-overflow error, the simulation is aborted. "\
+                                   << "Double check your neumann() function to avoid ambiguities in your domain corners.");
+
+                    const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                    flux[scv.directionIndex()] = neumannFluxes[scv.directionIndex()];
+                    recursionPreventionMutex.unlock();
+
+                    return flux;
+                }
+            }
+
             // viscous terms
             const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf);
 
