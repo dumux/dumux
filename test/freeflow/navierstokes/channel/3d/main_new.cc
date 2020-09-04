@@ -212,7 +212,7 @@ int main(int argc, char** argv) try
 #endif
 
     // the second plane is at the middle of the channel
-        const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
+    const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
 #if GRID_DIM == 3
     const auto middleLowerLeft = GlobalPosition{planePosMiddleX, yMin, zMin};
     const auto middleUpperRight = GlobalPosition{planePosMiddleX, yMax, zMax};
@@ -220,7 +220,7 @@ int main(int argc, char** argv) try
 #else
     const auto middleLowerLeft = GlobalPosition{planePosMiddleX, yMin};
     const auto middleUpperRight = GlobalPosition{planePosMiddleX, yMax};
-flux.addPlane("middle", middleLowerLeft, middleUpperRight, 0);
+    flux.addPlane("middle", middleLowerLeft, middleUpperRight, 0);
 #endif
 
     // The last plane is placed at the outlet of the channel.
