@@ -145,12 +145,12 @@ public:
         // handle extrapolation
         if (extrapolate) {
             if (x < xMin()) {
-                Scalar m = evalDerivative(xMin(), /*segmentIdx=*/0);
+                Scalar m = evalDerivative_(xMin(), /*segmentIdx=*/0);
                 Scalar y0 = y_(0);
                 return y0 + m*(x - xMin());
             }
             else if (x > xMax()) {
-                Scalar m = evalDerivative(xMax(), /*segmentIdx=*/numSamples_()-1);
+                Scalar m = evalDerivative_(xMax(), /*segmentIdx=*/numSamples_()-2);
                 Scalar y0 = y_(numSamples_()-1);
                 return y0 + m*(x - xMax());
             }
@@ -179,7 +179,7 @@ public:
             if (Dune::FloatCmp::le(x, xMin()))
                 return evalDerivative_(xMin(), 0);
             else if (Dune::FloatCmp::ge(x, xMax()))
-                return evalDerivative_(xMax(), numSamples_() - 1);
+                return evalDerivative_(xMax(), numSamples_() - 2);
         }
 
         return evalDerivative_(x, segmentIdx_(x));
