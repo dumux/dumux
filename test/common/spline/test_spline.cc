@@ -131,6 +131,39 @@ void testNatural(const Spline &sp,
                    << (d3 - d2)/eps << " ought to be 0");
 }
 
+/*!
+ * \brief Tests extrapolation, see issue 925
+ *
+ * Note: tests only Spline<double, -1> since the implementation is common to
+ * to all spline classes.
+ */
+void testExtrapolation()
+{
+    std::vector<double> x = {0.0, 0.25, 0.5, 0.75, 1.0};
+    std::vector<double> y = {1.0, 1.0, 1.0, 1.0, 1.0};
+
+    Dumux::Spline<double, -1> sp(x, y);
+
+    double xi = sp.eval(0.6);
+    if (Dune::FloatCmp::ne(xi, 1.0))
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Spline interpolation gives "
+                   << xi << " ought to be 1");
+
+    xi = sp.eval(-0.1, /*interpolate=*/true);
+    if (Dune::FloatCmp::ne(xi, 1.0))
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Spline extrapolation at -0.1 gives "
+                   << xi << " ought to be 1");
+
+    xi = sp.eval(1.1, /*interpolate=*/true);
+    if (Dune::FloatCmp::ne(xi, 1.0))
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Spline extrapolation at 1.1 gives "
+                   << xi << " ought to be 1");
+}
+
+
 void testAll()
 {
     double x[] = { 0, 5, 7.5, 8.75, 9.375 };
@@ -238,6 +271,7 @@ void plot()
 int main(int argc, char** argv)
 {
     testAll();
+    testExtrapolation();
 
     plot();
     return 0;
