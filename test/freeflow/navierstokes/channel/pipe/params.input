@@ -20,3 +20,6 @@ LiquidDensity = 1000
 
 [Vtk]
 AddVelocity = 1
+
+[Assembly]
+NumericDifference.BaseEpsilon =  1e-3

@@ -101,7 +101,6 @@ int main(int argc, char** argv) try
     SolutionVector sol;
     sol[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
     sol[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
-    problem->applyInitialSolution(sol);
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
