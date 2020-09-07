@@ -61,7 +61,6 @@ int main(int argc, char* argv[]) try
             DUNE_THROW(Dune::InvalidStateException, "Ended with wrong end time!");
     }
 
-
     // check point timeLoop
     {
         if (mpiHelper.rank() == 0) std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
@@ -158,6 +157,44 @@ int main(int argc, char* argv[]) try
 
         timeLoop.advanceTimeStep();
         timeLoop.reportTimeStep();
+    }
+
+    // check if setting the checkpoint at the current time shows error message
+    {
+        // redirect std::cerr
+        std::stringstream cerrBuffer;
+        std::streambuf* cerrOriginal = std::cerr.rdbuf(cerrBuffer.rdbuf());
+
+        Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
+        timeLoop.setCheckPoint(tStart);
+
+        // get result and reset buffer
+        const auto result = cerrBuffer.str();
+        std::cerr.rdbuf(cerrOriginal);
+        std::cout << "Setting check point at the current time printed '" << result << "' to std::cerr" << std::endl;
+
+        if (result.empty())
+            DUNE_THROW(Dune::Exception, "Setting a checkpoint at the current time should print a warning to std::cerr");
+        if (Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.0, 1e-10*tEnd))
+            DUNE_THROW(Dune::Exception, "Time Loop reduced time step size to 0!");
+    }
+
+    // check if setting timestep to zero shows error message
+    {
+        // redirect std::cerr
+        std::stringstream cerrBuffer;
+        std::streambuf* cerrOriginal = std::cerr.rdbuf(cerrBuffer.rdbuf());
+
+        Dumux::TimeLoop<double> timeLoop(tStart, dt, tEnd);
+        timeLoop.setTimeStepSize(0.0);
+
+        // get result and reset buffer
+        const auto result = cerrBuffer.str();
+        std::cerr.rdbuf(cerrOriginal);
+        std::cout << "Setting zero time step printed '" << result << "' to std::cerr" << std::endl;
+
+        if (result.empty())
+            DUNE_THROW(Dune::Exception, "Setting a zero timeStepSize should print a warning to std::cerr");
     }
 
     return 0;

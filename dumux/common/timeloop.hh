@@ -256,6 +256,12 @@ public:
     {
         using std::min;
         timeStepSize_ = min(dt, maxTimeStepSize());
+        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, 1e-14*endTime_))
+        {
+            std::cerr << "You have set a very small timestep size (dt = "
+                      << timeStepSize_ << "). This might lead to numerical problems!"
+                      << std::endl;
+        }
     }
 
     /*!
@@ -590,7 +596,7 @@ private:
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
-        if (t < this->time())
+        if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*1e-7))
         {
             if (this->verbose())
                 std::cerr << "Couldn't insert checkpoint at t = " << t
