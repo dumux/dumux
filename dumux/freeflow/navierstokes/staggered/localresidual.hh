@@ -171,6 +171,7 @@ public:
 
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.
+        // https://doi.org/10.1007/978-3-540-68228-8 (page 301)
         if constexpr (ModelTraits::dim() == 2 && std::is_same_v<Extrusion, RotationalExtrusion<Extrusion::radialAxis>>)
         {
             if (scvf.directionIndex() == Extrusion::radialAxis)
