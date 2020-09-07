@@ -169,6 +169,24 @@ public:
         source += problem.gravity()[scvf.directionIndex()] * insideVolVars.density();
         source += problem.source(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())];
 
+        // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
+        // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.
+        // https://doi.org/10.1007/978-3-540-68228-8 (page 301)
+        if constexpr (ModelTraits::dim() == 2 && std::is_same_v<Extrusion, RotationalExtrusion<Extrusion::radialAxis>>)
+        {
+            if (scvf.directionIndex() == Extrusion::radialAxis)
+            {
+                // Velocity term
+                const auto r = scvf.center()[scvf.directionIndex()];
+                source -= -2.0*insideVolVars.effectiveViscosity() * elemFaceVars[scvf].velocitySelf() / (r*r);
+
+                // Pressure term (needed because we incorporate pressure in terms of a surface integral).
+                // grad(p) becomes div(pI) + (p/r)*n_r in cylindrical coordinates. The second term
+                // is new with respect to Cartesian coordinates and handled below as a source term.
+                source += insideVolVars.pressure()/r;
+            }
+        }
+
         return source;
     }
 
