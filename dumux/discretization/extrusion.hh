@@ -53,10 +53,13 @@ struct NoExtrusion
 /*!
  * \ingroup Discretization
  * \brief Rotation symmetric extrusion policy for rotating about an external axis
+ * \tparam radAx The radial axis perpendicular to the symmetry axis (0 = x, 1 = y)
  */
-template<int radialAxis = 0>
+template<int radAx = 0>
 struct RotationalExtrusion
 {
+    static constexpr int radialAxis = radAx;
+
     /*!
      * \brief Transformed sub-control-volume face area
      * \note Mid-point rule integrals are only exact for constants

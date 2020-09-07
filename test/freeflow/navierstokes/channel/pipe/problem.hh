@@ -109,7 +109,7 @@ public:
     { return analyticalSolution(globalPos); }
 
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    { return analyticalSolution(globalPos); }
+    { return PrimaryVariables(0.0); }
 
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
@@ -120,7 +120,7 @@ public:
         const auto y = globalPos[1] - this->gridGeometry().bBoxMin()[1];
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 2.0*meanInletVelocity_*(1.0 - r*r/(pipeRadius_*pipeRadius_));
-        values[Indices::pressureIdx] = 1e5 + (pipeLength_-y)*meanInletVelocity_*8.0*mu_/(pipeRadius_*pipeRadius_);
+        values[Indices::pressureIdx] = (pipeLength_-y)*meanInletVelocity_*8.0*mu_/(pipeRadius_*pipeRadius_);
 
         return values;
     }
