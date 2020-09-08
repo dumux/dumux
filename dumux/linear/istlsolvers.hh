@@ -233,6 +233,7 @@ private:
                 case Dune::SolverCategory::overlapping:
                     using OTraits = typename LinearSolverTraits::template ParallelOverlapping<Matrix, XVector>;
                     return solveParallel_<OTraits>(A, x, b);
+                default: DUNE_THROW(Dune::InvalidStateException, "Unknown solver category");
             }
         }
     }
