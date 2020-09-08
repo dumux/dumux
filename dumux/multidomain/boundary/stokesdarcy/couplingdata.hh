@@ -284,7 +284,7 @@ public:
     Scalar darcyPermeability(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
-        const auto perm = stokesContext.volVars.permeability();
+        const auto perm = stokesContext.permeability();
 
         return perm;
     }
@@ -297,7 +297,7 @@ public:
     Scalar darcyPermeability(const Element<freeFlowIdx>& element, const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
         const auto& stokesContext = couplingManager().stokesCouplingContext(element, scvf);
-        const auto perm = stokesContext.volVars.permeability();
+        const auto perm = stokesContext.permeability();
         const auto dirIdx = 1 - scvf.directionIndex();
 
         return perm[dirIdx][dirIdx];
