@@ -74,6 +74,14 @@ using DetectPVSwitch = typename Assembler::GridVariables::VolumeVariables::Prima
 template<class Assembler>
 using GetPVSwitch = Dune::Std::detected_or<int, DetectPVSwitch, Assembler>;
 
+// helper struct and function detecting if the linear solver features a norm() function
+template <class LinearSolver, class Residual>
+using NormDetector = decltype(std::declval<LinearSolver>().norm(std::declval<Residual>()));
+
+template<class LinearSolver, class Residual>
+static constexpr bool hasNorm()
+{ return Dune::Std::is_detected<NormDetector, LinearSolver, Residual>::value; }
+
 // helpers to implement max relative shift
 template<class C> using dynamicIndexAccess = decltype(std::declval<C>()[0]);
 template<class C> using staticIndexAccess = decltype(std::declval<C>()[Dune::Indices::_0]);
@@ -785,7 +793,11 @@ protected:
 
     void computeResidualReduction_(const SolutionVector &uCurrentIter)
     {
-        residualNorm_ = this->assembler().residualNorm(uCurrentIter);
+        if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
+            residualNorm_ = this->linearSolver().norm(uCurrentIter);
+        else
+            residualNorm_ = this->assembler().residualNorm(uCurrentIter);
+
         reduction_ = residualNorm_;
         reduction_ /= initialResidual_;
     }
