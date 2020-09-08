@@ -96,7 +96,7 @@ private:
     using CouplingMapper = StokesDarcyCouplingMapperBox<MDTraits>;
 
     // Each context object contains the data related to one coupling segment
-    struct StationaryStokesCouplingContext
+    struct StokesCouplingContext
     {
         Element<porousMediumIdx> element;
         FVElementGeometry<porousMediumIdx> fvGeometry;
@@ -108,7 +108,7 @@ private:
         typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
     };
 
-    struct StationaryDarcyCouplingContext
+    struct DarcyCouplingContext
     {
         Element<freeFlowIdx> element;
         FVElementGeometry<freeFlowIdx> fvGeometry;
@@ -116,6 +116,8 @@ private:
         std::size_t darcyScvfIdx;
         VelocityVector velocity;
         VolumeVariables<freeFlowIdx> volVars;
+        // Darcy context needs information from stokes context because of projection onto stokes faces
+        std::unique_ptr< std::vector<StokesCouplingContext> > stokesContext;
         typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
     };
 public:
@@ -188,7 +190,7 @@ public:
     using ParentType::evalCouplingResidual;
 
     /*!
-     * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Darcy information)
+     * \brief prepares all data and variables that are necessary to evaluate the residual of an Stokes element (i.e. Darcy information)
      */
     template<std::size_t i, class Assembler, std::enable_if_t<(i == freeFlowCellCenterIdx || i == freeFlowFaceIdx), int> = 0>
     void bindCouplingContext(Dune::index_constant<i> domainI, const Element<freeFlowCellCenterIdx>& element, const Assembler& assembler) const
@@ -198,38 +200,7 @@ public:
         const auto stokesElementIdx = this->problem(freeFlowIdx).gridGeometry().elementMapper().index(element);
         boundStokesElemIdx_ = stokesElementIdx;
 
-        // do nothing if the element is not coupled to the other domain
-        if(!couplingMapper_.stokesElementToDarcyElementMap().count(stokesElementIdx))
-            return;
-
-        // prepare the coupling context
-        const auto& couplingSegments = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
-        auto darcyFvGeometry = localView(this->problem(porousMediumIdx).gridGeometry());
-
-        for(const auto& couplingSegment : couplingSegments)
-        {
-            const auto& darcyElement = this->problem(porousMediumIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
-            darcyFvGeometry.bind(darcyElement);
-            const auto& scvf = darcyFvGeometry.scvf(couplingSegment.scvfIdx);
-            const auto& scv = darcyFvGeometry.scv(scvf.insideScvIdx());
-
-            auto darcyElemVolVars = localView(assembler.gridVariables(porousMediumIdx).curGridVolVars());
-            auto darcyElemFluxVarsCache = localView(assembler.gridVariables(porousMediumIdx).gridFluxVarsCache());
-
-            darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
-            darcyElemVolVars.bindElement(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
-            darcyElemFluxVarsCache.bind(darcyElement, darcyFvGeometry, darcyElemVolVars);
-
-            const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
-            VolumeVariables<porousMediumIdx> darcyVolVars;
-            darcyVolVars.update(darcyElemSol, this->problem(porousMediumIdx), darcyElement, scv);
-
-            // add the context
-            stokesCouplingContext_.push_back({darcyElement, darcyFvGeometry, couplingSegment.scvfIdx, couplingSegment.flipScvfIdx, darcyVolVars,
-                                              std::make_unique< ElementVolumeVariables<porousMediumIdx> >( std::move(darcyElemVolVars)),
-                                              std::make_unique< ElementFluxVariablesCache<porousMediumIdx> >( std::move(darcyElemFluxVarsCache)),
-                                              couplingSegment.geometry});
-        }
+        fillCouplingContext(element, assembler, stokesCouplingContext_);
     }
 
     /*!
@@ -275,7 +246,11 @@ public:
             // add the context
             darcyCouplingContext_.push_back({stokesElement, stokesFvGeometry,
                                              couplingSegment.scvfIdx, couplingSegment.flipScvfIdx,
-                                             faceVelocity, stokesVolVars, couplingSegment.geometry});
+                                             faceVelocity, stokesVolVars,
+                                             std::make_unique< std::vector<StokesCouplingContext> >(),
+                                             couplingSegment.geometry});
+
+            fillCouplingContext(stokesElement, assembler, *darcyCouplingContext_.back().stokesContext);
         }
     }
 
@@ -526,6 +501,25 @@ public:
             return emptyStencil_;
     }
 
+    using ParentType::extendJacobianPattern;
+    /*!
+     * \brief Extend the jacobian pattern of the darcy domain
+     */
+    template<class JacobianPattern>
+    void extendJacobianPattern(Dune::index_constant<porousMediumIdx> domainI, JacobianPattern& pattern) const
+    {
+        // add additional dof dependencies
+        const auto& gridGeometry = this->problem(domainI).gridGeometry();
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            const auto& dofs = extendedProjectionStencil_(domainI, element);
+
+            for (int i = 0; i < element.subEntities(GridView<domainI>::dimension); ++i)
+                for (const auto globalJ : dofs)
+                    pattern.add(this->problem(domainI).gridGeometry().vertexMapper().subIndex(element, i, GridView<domainI>::dimension), globalJ);
+        }
+    }
+
     // \}
 
     /*!
@@ -574,13 +568,77 @@ protected:
     std::vector<std::size_t>& emptyStencil()
     { return emptyStencil_; }
 
-    void removeDuplicates_(std::vector<std::size_t>& stencil)
+    void removeDuplicates_(std::vector<std::size_t>& stencil) const
     {
         std::sort(stencil.begin(), stencil.end());
         stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
     }
 
 private:
+    std::vector<std::size_t> extendedProjectionStencil_(Dune::index_constant<porousMediumIdx> domainI, const Element<porousMediumIdx>& element) const
+    {
+        std::vector<std::size_t> entries;
+
+        const auto& gridGeometry = this->problem(domainI).gridGeometry();
+        const auto eIdx = gridGeometry.elementMapper().index(element);
+        auto it = darcyToStokesCellCenterCouplingStencils_.find(eIdx);
+
+        // if element is coupled, take one of the neighbors and add coupling stencil to pattern
+        if (it != darcyToStokesCellCenterCouplingStencils_.end())
+        {
+            const auto& couplingStencil = it->second;
+
+            for (auto globalJ : couplingStencil)
+            {
+                if(stokesCellCenterCouplingStencils_.count(globalJ))
+                {
+                    const auto& darcyIndices = stokesCellCenterCouplingStencils_.at(globalJ);
+                    entries.insert(std::end(entries), std::begin(darcyIndices), std::end(darcyIndices));
+                }
+            }
+        }
+        removeDuplicates_(entries);
+        return entries;
+    }
+
+    template<class Assembler>
+    void fillCouplingContext(const Element<freeFlowCellCenterIdx>& element, const Assembler& assembler, std::vector<StokesCouplingContext>& couplingContext) const
+    {
+        const auto stokesElementIdx = this->problem(freeFlowIdx).gridGeometry().elementMapper().index(element);
+
+        // do nothing if the element is not coupled to the other domain
+        if(!couplingMapper_.stokesElementToDarcyElementMap().count(stokesElementIdx))
+            return;
+
+        // prepare the coupling context
+        const auto& couplingSegments = couplingMapper_.stokesElementToDarcyElementMap().at(stokesElementIdx);
+        auto darcyFvGeometry = localView(this->problem(porousMediumIdx).gridGeometry());
+
+        for(const auto& couplingSegment : couplingSegments)
+        {
+            const auto& darcyElement = this->problem(porousMediumIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
+            darcyFvGeometry.bind(darcyElement);
+            const auto& scvf = darcyFvGeometry.scvf(couplingSegment.scvfIdx);
+            const auto& scv = darcyFvGeometry.scv(scvf.insideScvIdx());
+
+            auto darcyElemVolVars = localView(assembler.gridVariables(porousMediumIdx).curGridVolVars());
+            auto darcyElemFluxVarsCache = localView(assembler.gridVariables(porousMediumIdx).gridFluxVarsCache());
+
+            darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
+            darcyElemVolVars.bindElement(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
+            darcyElemFluxVarsCache.bind(darcyElement, darcyFvGeometry, darcyElemVolVars);
+
+            const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
+            VolumeVariables<porousMediumIdx> darcyVolVars;
+            darcyVolVars.update(darcyElemSol, this->problem(porousMediumIdx), darcyElement, scv);
+
+            // add the context
+            stokesCouplingContext_.push_back({darcyElement, darcyFvGeometry, couplingSegment.scvfIdx, couplingSegment.flipScvfIdx, darcyVolVars,
+                                              std::make_unique< ElementVolumeVariables<porousMediumIdx> >( std::move(darcyElemVolVars)),
+                                              std::make_unique< ElementFluxVariablesCache<porousMediumIdx> >( std::move(darcyElemFluxVarsCache)),
+                                              couplingSegment.geometry});
+        }
+    }
 
     std::vector<bool> isCoupledDarcyDof_;
     std::shared_ptr<CouplingData> couplingData_;
@@ -594,8 +652,8 @@ private:
     ////////////////////////////////////////////////////////////////////////////
     //! The coupling context
     ////////////////////////////////////////////////////////////////////////////
-    mutable std::vector<StationaryStokesCouplingContext> stokesCouplingContext_;
-    mutable std::vector<StationaryDarcyCouplingContext> darcyCouplingContext_;
+    mutable std::vector<StokesCouplingContext> stokesCouplingContext_;
+    mutable std::vector<DarcyCouplingContext> darcyCouplingContext_;
 
     mutable std::size_t boundStokesElemIdx_;
     mutable std::size_t boundDarcyElemIdx_;
