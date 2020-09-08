@@ -162,6 +162,7 @@ public:
     }
 
     //! compute the residual and return it's vector norm
+    [[deprecated("Use norm(curSol) provided by the linear solver class instead. Will be deleted after 3.3")]]
     Scalar residualNorm(const SolutionVector& curSol) const
     {
         ResidualType residual(numDofs());
