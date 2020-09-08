@@ -102,10 +102,15 @@ private:
         FVElementGeometry<porousMediumIdx> fvGeometry;
         std::size_t darcyScvfIdx;
         std::size_t stokesScvfIdx;
-        VolumeVariables<porousMediumIdx> volVars;
         std::unique_ptr< ElementVolumeVariables<porousMediumIdx> > elementVolVars;
         std::unique_ptr< ElementFluxVariablesCache<porousMediumIdx> > elementFluxVarsCache;
         typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
+
+        auto permeability() const
+        {
+            const auto& darcyScvf = fvGeometry.scvf(darcyScvfIdx);
+            return (*elementVolVars)[darcyScvf.insideScvIdx()].permeability();
+        }
     };
 
     struct DarcyCouplingContext
@@ -180,6 +185,8 @@ public:
             removeDuplicates_(stencil.second);
         for(auto&& stencil : stokesFaceCouplingStencils_)
             removeDuplicates_(stencil.second);
+
+        calculateExtendedStencils_(porousMediumIdx);
     }
 
     /*!
@@ -250,7 +257,7 @@ public:
                                              std::make_unique< std::vector<StokesCouplingContext> >(),
                                              couplingSegment.geometry});
 
-            fillCouplingContext(stokesElement, assembler, *darcyCouplingContext_.back().stokesContext);
+            fillCouplingContext(stokesElement, assembler, (*darcyCouplingContext_.back().stokesContext));
         }
     }
 
@@ -266,6 +273,25 @@ public:
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+
+        for (auto& dataI : darcyCouplingContext_)
+        {
+            const auto& stokesContext = *(dataI.stokesContext);
+
+            for (const auto& dataJ : stokesContext)
+            {
+                const auto darcyElemSol = elementSolution(dataJ.element, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
+
+                for (auto&& scv : scvs(dataJ.fvGeometry))
+                {
+                    if(scv.dofIndex() == dofIdxGlobalJ)
+                    {
+                        auto& volVars = (*dataJ.elementVolVars)[scv];
+                        volVars.update(darcyElemSol, this->problem(porousMediumIdx), dataJ.element, scv);
+                    }
+                }
+            }
+        }
     }
 
     /*!
@@ -336,11 +362,6 @@ public:
         {
             //Derivatives are assumed to be always calculated with respect to unknowns associated with its own element
             const auto darcyElemSol = elementSolution(data.element, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
-
-            const auto& scvf = data.fvGeometry.scvf(data.darcyScvfIdx);
-            const auto& scv = data.fvGeometry.scv(scvf.insideScvIdx());
-            if(scv.dofIndex() == dofIdxGlobalJ)
-                data.volVars.update(darcyElemSol, this->problem(porousMediumIdx), data.element, scv);
 
             for (auto&& scv : scvs(data.fvGeometry))
             {
@@ -501,25 +522,6 @@ public:
             return emptyStencil_;
     }
 
-    using ParentType::extendJacobianPattern;
-    /*!
-     * \brief Extend the jacobian pattern of the darcy domain
-     */
-    template<class JacobianPattern>
-    void extendJacobianPattern(Dune::index_constant<porousMediumIdx> domainI, JacobianPattern& pattern) const
-    {
-        // add additional dof dependencies
-        const auto& gridGeometry = this->problem(domainI).gridGeometry();
-        for (const auto& element : elements(gridGeometry.gridView()))
-        {
-            const auto& dofs = extendedProjectionStencil_(domainI, element);
-
-            for (int i = 0; i < element.subEntities(GridView<domainI>::dimension); ++i)
-                for (const auto globalJ : dofs)
-                    pattern.add(this->problem(domainI).gridGeometry().vertexMapper().subIndex(element, i, GridView<domainI>::dimension), globalJ);
-        }
-    }
-
     // \}
 
     /*!
@@ -562,6 +564,130 @@ public:
         localBasis.evaluateFunction(ipLocal, shapeValues);
     }
 
+     using ParentType::extendJacobianPattern;
+    /*!
+     * \brief extend the jacobian pattern of the diagonal block of pm domain
+     *        by those entries that are not already in the uncoupled pattern
+     * \note Such additional dependencies arise from the coupling due to the
+     *       projected interface values that are used for diffusive fluxes
+     */
+    template<class JacobianPattern>
+    void extendJacobianPattern(Dune::index_constant<porousMediumIdx> domainI, JacobianPattern& pattern) const
+    {
+        // add additional dof dependencies
+        const auto& gridGeometry = this->problem(domainI).gridGeometry();
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            const auto& dofs = projectionStencil_(domainI, element);
+
+            for (int i = 0; i < element.subEntities(GridView<domainI>::dimension); ++i)
+                for (const auto globalJ : dofs)
+                    pattern.add(this->problem(domainI).gridGeometry().vertexMapper().subIndex(element, i, GridView<domainI>::dimension), globalJ);
+        }
+    }
+
+    using ParentType::evalAdditionalDomainDerivatives;
+    /*!
+     * \brief evaluate additional derivatives of the element residual of a domain with respect
+     *        to dofs in the same domain that are not in the regular stencil (per default this is not the case)
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     * \note This is the same for box and cc
+     */
+    template<class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDomainDerivatives(Dune::index_constant<porousMediumIdx> domainI,
+                                         const LocalAssemblerI& localAssemblerI,
+                                         const typename LocalAssemblerI::LocalResidual::ElementResidualVector&,
+                                         JacobianMatrixDiagBlock& A,
+                                         GridVariables& gridVariables)
+    {
+        // Since coupling only occurs via the fluxes, there are no
+        // additional derivatives for explicit time integration schemes
+        if (!LocalAssemblerI::isImplicit())
+            return;
+
+        const auto& curSol = this->curSol()[domainI];
+        constexpr auto numEq = std::decay_t<decltype(curSol[0])>::dimension;
+        const auto& elementI = localAssemblerI.element();
+        const auto& fvGeometryI = localAssemblerI.fvGeometry();
+
+        const auto extendedStencil = extendedStencil_(domainI, elementI);
+
+        // only do something if we have an extended stencil
+        if (extendedStencil.empty())
+            return;
+
+        auto calcCouplingFluxes = [&](auto& residual)
+        {
+            for (auto&& scvf : scvfs(fvGeometryI))
+            {
+                if(isCoupledEntity(domainI, elementI, scvf))
+                    localAssemblerI.localResidual().evalFlux(residual,
+                                                             this->problem(domainI),
+                                                             elementI,
+                                                             fvGeometryI,
+                                                             localAssemblerI.curElemVolVars(),
+                                                             localAssemblerI.elemBcTypes(),
+                                                             localAssemblerI.elemFluxVarsCache(),
+                                                             scvf);
+            }
+        };
+
+        // compute the undeflected residual (source only!)
+        // initialize the residual vector for all scvs in this element
+        typename LocalAssemblerI::LocalResidual::ElementResidualVector origResidual(fvGeometryI.numScv());
+        origResidual = 0.0;
+
+        calcCouplingFluxes(origResidual);
+
+        // compute derivate for all additional dofs in the circle stencil
+        for (const auto dofIndex : extendedStencil)
+        {
+            auto partialDerivs = origResidual;
+            const auto origPriVars = curSol[dofIndex];
+
+            // calculate derivatives w.r.t to the privars at the dof at hand
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+            {
+                // reset partial derivatives
+                partialDerivs = 0.0;
+
+                auto evalResiduals = [&](Scalar priVar)
+                {
+                    // update the coupling context (solution vector and recompute element residual)
+                    auto priVars = origPriVars;
+                    priVars[pvIdx] = priVar;
+                    typename LocalAssemblerI::LocalResidual::ElementResidualVector residual(fvGeometryI.numScv());
+                    residual = 0.0;
+                    this->updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, priVars, pvIdx);
+                    calcCouplingFluxes(residual);
+                    return residual;
+                };
+
+                // derive the residuals numerically
+                static const int numDiffMethod = getParam<int>("Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalResiduals, curSol[dofIndex][pvIdx],
+                                                          partialDerivs, origResidual, numDiffMethod);
+
+                // update the global stiffness matrix with the current partial derivatives
+                for (auto&& scvJ : scvs(localAssemblerI.fvGeometry()))
+                {
+                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                    {
+                        // A[i][col][eqIdx][pvIdx] is the rate of change of
+                        // the residual of equation 'eqIdx' at dof 'i'
+                        // depending on the primary variable 'pvIdx' at dof
+                        // 'col'.
+                        A[scvJ.dofIndex()][dofIndex][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
+                    }
+                }
+
+                // restore the original coupling context
+                this->updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, origPriVars, pvIdx);
+            }
+        }
+    }
+
 protected:
 
     //! Return a reference to an empty stencil
@@ -575,7 +701,39 @@ protected:
     }
 
 private:
-    std::vector<std::size_t> extendedProjectionStencil_(Dune::index_constant<porousMediumIdx> domainI, const Element<porousMediumIdx>& element) const
+            /*!
+     * \brief The coupling stencil of a Stokes face w.r.t. Darcy DOFs
+     */
+    const CouplingStencil& extendedStencil_(Dune::index_constant<porousMediumIdx> domainI,
+                                           const Element<porousMediumIdx>& element) const
+    {
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
+        if (extendedDarcyToDarcyCouplingStencils_.count(eIdx))
+            return extendedDarcyToDarcyCouplingStencils_.at(eIdx);
+        else
+            return emptyStencil_;
+    }
+
+    void calculateExtendedStencils_(Dune::index_constant<porousMediumIdx> domainI)
+    {
+        extendedDarcyToDarcyCouplingStencils_.clear();
+        // add additional dof dependencies
+        const auto& gridGeometry = this->problem(domainI).gridGeometry();
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            auto dofs = projectionStencil_(domainI, element);
+
+            auto fvGeometry = localView(gridGeometry);
+            fvGeometry.bind(element);
+            for (auto&& scv : scvs(fvGeometry))
+                dofs.erase(std::remove(dofs.begin(), dofs.end(), scv.dofIndex()), dofs.end());
+
+            auto darcyEIdx = gridGeometry.elementMapper().index(element);
+            extendedDarcyToDarcyCouplingStencils_[darcyEIdx] = dofs;
+        }
+    }
+
+    std::vector<std::size_t> projectionStencil_(Dune::index_constant<porousMediumIdx> domainI, const Element<porousMediumIdx>& element) const
     {
         std::vector<std::size_t> entries;
 
@@ -618,35 +776,29 @@ private:
         {
             const auto& darcyElement = this->problem(porousMediumIdx).gridGeometry().boundingBoxTree().entitySet().entity(couplingSegment.eIdx);
             darcyFvGeometry.bind(darcyElement);
-            const auto& scvf = darcyFvGeometry.scvf(couplingSegment.scvfIdx);
-            const auto& scv = darcyFvGeometry.scv(scvf.insideScvIdx());
 
             auto darcyElemVolVars = localView(assembler.gridVariables(porousMediumIdx).curGridVolVars());
             auto darcyElemFluxVarsCache = localView(assembler.gridVariables(porousMediumIdx).gridFluxVarsCache());
 
             darcyElemVolVars.bind(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
-            darcyElemVolVars.bindElement(darcyElement, darcyFvGeometry, this->curSol()[porousMediumIdx]);
             darcyElemFluxVarsCache.bind(darcyElement, darcyFvGeometry, darcyElemVolVars);
 
-            const auto darcyElemSol = elementSolution(darcyElement, this->curSol()[porousMediumIdx], this->problem(porousMediumIdx).gridGeometry());
-            VolumeVariables<porousMediumIdx> darcyVolVars;
-            darcyVolVars.update(darcyElemSol, this->problem(porousMediumIdx), darcyElement, scv);
-
             // add the context
-            stokesCouplingContext_.push_back({darcyElement, darcyFvGeometry, couplingSegment.scvfIdx, couplingSegment.flipScvfIdx, darcyVolVars,
-                                              std::make_unique< ElementVolumeVariables<porousMediumIdx> >( std::move(darcyElemVolVars)),
-                                              std::make_unique< ElementFluxVariablesCache<porousMediumIdx> >( std::move(darcyElemFluxVarsCache)),
-                                              couplingSegment.geometry});
+            couplingContext.push_back({darcyElement, darcyFvGeometry, couplingSegment.scvfIdx, couplingSegment.flipScvfIdx,
+                                       std::make_unique< ElementVolumeVariables<porousMediumIdx> >( std::move(darcyElemVolVars)),
+                                       std::make_unique< ElementFluxVariablesCache<porousMediumIdx> >( std::move(darcyElemFluxVarsCache)),
+                                       couplingSegment.geometry});
         }
     }
 
     std::vector<bool> isCoupledDarcyDof_;
     std::shared_ptr<CouplingData> couplingData_;
 
-    std::unordered_map<std::size_t, std::vector<std::size_t> > stokesCellCenterCouplingStencils_;
-    std::unordered_map<std::size_t, std::vector<std::size_t> > stokesFaceCouplingStencils_;
-    std::unordered_map<std::size_t, std::vector<std::size_t> > darcyToStokesCellCenterCouplingStencils_;
+    CouplingStencils stokesCellCenterCouplingStencils_;
+    CouplingStencils stokesFaceCouplingStencils_;
+    CouplingStencils darcyToStokesCellCenterCouplingStencils_;
     std::unordered_map<std::size_t, std::pair<std::vector<std::size_t>,std::vector<std::size_t>> > darcyToStokesFaceCouplingStencils_;
+    CouplingStencils extendedDarcyToDarcyCouplingStencils_;
     std::vector<std::size_t> emptyStencil_;
 
     ////////////////////////////////////////////////////////////////////////////
