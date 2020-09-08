@@ -122,7 +122,37 @@ public:
     }
 
 protected:
+    // calculate projection needed for darcy residual
+    template<class StokesContext, class Function>
+    Scalar calculateProjection(const Element<freeFlowIdx>& stokesElement,
+                               const SubControlVolumeFace<freeFlowIdx>& stokesScvf,
+                               const StokesContext& stokesContext,
+                               const Element<porousMediumIdx>& darcyElement,
+                               const ElementVolumeVariables<porousMediumIdx>& darcyElemVolVars,
+                               Function evalPriVar) const
+    {
+        Scalar projection = 0.0;
 
+        // integrate darcy pressure over each coupling segment and average
+        for (const auto& data : stokesContext)
+        {
+            if (stokesScvf.index() == data.stokesScvfIdx)
+            {
+                const auto darcyEIdxI = this->couplingManager().problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
+                const auto darcyEIdxJ = this->couplingManager().problem(porousMediumIdx).gridGeometry().elementMapper().index(data.element);
+                const auto& elemVolVars = (darcyEIdxI == darcyEIdxJ) ? darcyElemVolVars : *(data.elementVolVars);
+                const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
+
+                projection += calculateSegmentProjection(data.element, data.fvGeometry, darcyScvf, elemVolVars, data.segmentGeometry, evalPriVar);
+            }
+        }
+
+        projection /= stokesScvf.area();
+
+        return projection;
+    }
+
+    // calculate projection needed for stokes residual
     template<class StokesContext, class Function>
     Scalar calculateProjection(const Element<freeFlowIdx>& element,
                                const SubControlVolumeFace<freeFlowIdx>& scvf,
@@ -318,7 +348,7 @@ public:
                  auto temp = [](const auto& elemVolVars, const auto& scv)
                              { return elemVolVars[scv].temperature(); };
                 //Calculate the projected temperature value for the stokes face
-                auto temperature = this->calculateProjection(data.element, stokesScvf, *data.stokesContext, temp);
+                auto temperature = this->calculateProjection(data.element, stokesScvf, *data.stokesContext, element, darcyElemVolVars, temp);
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += -1*energyFlux_(data.fvGeometry,
