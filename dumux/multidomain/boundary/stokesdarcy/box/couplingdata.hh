@@ -105,49 +105,12 @@ public:
                                      const ElementFaceVariables& stokesElemFaceVars,
                                      const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
-        Scalar momentumFlux(0.0);
+        const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
+        auto pressure = [darcyPhaseIdx](const auto& elemVolVars, const auto& scv)
+                            { return elemVolVars[scv].pressure(darcyPhaseIdx); };
+
         const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
-
-        // integrate darcy pressure over each coupling segment and average
-        for (const auto& data : stokesContext)
-        {
-            if (scvf.index() == data.stokesScvfIdx)
-            {
-                if constexpr (projectionMethod == ProjectionMethods::L2Projection)
-                {
-                    const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
-                    const auto& elemVolVars = *(data.elementVolVars);
-                    const auto& darcyFvGeometry = data.fvGeometry;
-                    const auto& localBasis = darcyFvGeometry.feLocalBasis();
-
-                    // do second order integration as box provides linear functions
-                    static constexpr int darcyDim = GridGeometry<porousMediumIdx>::GridView::dimension;
-                    const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(data.segmentGeometry.type(), 2);
-                    for (const auto& qp : rule)
-                    {
-                        const auto& ipLocal = qp.position();
-                        const auto& ipGlobal = data.segmentGeometry.global(ipLocal);
-                        const auto& ipElementLocal = data.element.geometry().local(ipGlobal);
-
-                        std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
-                        localBasis.evaluateFunction(ipElementLocal, shapeValues);
-
-                        Scalar pressure = 0.0;
-                        for (const auto& scv : scvs(data.fvGeometry))
-                            pressure += elemVolVars[scv].pressure(darcyPhaseIdx)*shapeValues[scv.indexInElement()][0];
-
-                        momentumFlux += pressure*data.segmentGeometry.integrationElement(qp.position())*qp.weight();
-                    }
-                }
-                else
-                {
-                    DUNE_THROW(Dune::NotImplemented, "Other projections methods than averaging are not yet implemented!");
-                }
-
-            }
-        }
-
-        momentumFlux /= scvf.area();
+        Scalar momentumFlux = this->calculateProjection(element, scvf, stokesContext, pressure);
 
         // normalize pressure
         if(getPropValue<SubDomainTypeTag<freeFlowIdx>, Properties::NormalizePressure>())
@@ -157,6 +120,74 @@ public:
 
         return momentumFlux;
     }
+
+protected:
+
+    template<class StokesContext, class Function>
+    Scalar calculateProjection(const Element<freeFlowIdx>& element,
+                               const SubControlVolumeFace<freeFlowIdx>& scvf,
+                               const StokesContext& stokesContext,
+                               Function evalPriVar) const
+    {
+        Scalar projection = 0.0;
+
+        // integrate darcy pressure over each coupling segment and average
+        for (const auto& data : stokesContext)
+        {
+            if (scvf.index() == data.stokesScvfIdx)
+            {
+                const auto& elemVolVars = *(data.elementVolVars);
+                const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
+
+                projection += calculateSegmentProjection(data.element, data.fvGeometry, darcyScvf, elemVolVars, data.segmentGeometry, evalPriVar);
+            }
+        }
+
+        projection /= scvf.area();
+
+        return projection;
+    }
+
+    template<class SegementGeometry, class Function>
+    Scalar calculateSegmentProjection(const Element<porousMediumIdx>& element,
+                                      const FVElementGeometry<porousMediumIdx>& fvGeometry,
+                                      const SubControlVolumeFace<porousMediumIdx>& scvf,
+                                      const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
+                                      const SegementGeometry& segmentGeometry,
+                                      Function evalPriVar) const
+    {
+        Scalar segmentProjection = 0.0;
+        if constexpr (projectionMethod == ProjectionMethods::L2Projection)
+        {
+            const auto& localBasis = fvGeometry.feLocalBasis();
+
+            // do second order integration as box provides linear functions
+            static constexpr int darcyDim = GridGeometry<porousMediumIdx>::GridView::dimension;
+            const auto& rule = Dune::QuadratureRules<Scalar, darcyDim-1>::rule(segmentGeometry.type(), 2);
+            for (const auto& qp : rule)
+            {
+                const auto& ipLocal = qp.position();
+                const auto& ipGlobal = segmentGeometry.global(ipLocal);
+                const auto& ipElementLocal = element.geometry().local(ipGlobal);
+
+                std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+                localBasis.evaluateFunction(ipElementLocal, shapeValues);
+
+                Scalar value = 0.0;
+                for (const auto& scv : scvs(fvGeometry))
+                    value += evalPriVar(elemVolVars, scv)*shapeValues[scv.indexInElement()][0];
+
+                segmentProjection += value*segmentGeometry.integrationElement(qp.position())*qp.weight();
+            }
+        }
+        else
+        {
+            DUNE_THROW(Dune::NotImplemented, "Other projections methods than averaging are not yet implemented!");
+        }
+
+        return segmentProjection;
+    }
+
 };
 
 /*!
@@ -219,6 +250,7 @@ public:
 
                 const Scalar stokesDensity = data.volVars.density();
                 const bool insideIsUpstream = velocity > 0.0;
+                // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
                 flux += massFlux_(velocity, darcyDensity, stokesDensity, insideIsUpstream)*data.segmentGeometry.volume()/scvf.area();
             }
         }
@@ -238,13 +270,12 @@ public:
         const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
         Scalar flux = 0.0;
+        const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
+        const Scalar stokesDensity = stokesElemVolVars[scvf.insideScvIdx()].density();
         for (const auto& data : stokesContext)
         {
             if (scvf.index() == data.stokesScvfIdx)
             {
-                const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
-                const Scalar stokesDensity = stokesElemVolVars[scvf.insideScvIdx()].density();
-
                 const auto darcyPhaseIdx = couplingPhaseIdx(porousMediumIdx);
                 const auto& elemVolVars = *(data.elementVolVars);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
@@ -252,6 +283,7 @@ public:
                 const auto darcyDensity = elemVolVars[darcyScvf.insideScvIdx()].density(darcyPhaseIdx);
 
                 const bool insideIsUpstream = velocity > 0.0;
+                // Division by scvf.area() is needed, because the final flux results from multiplication with scvf.area()
                 flux += massFlux_(velocity, stokesDensity, darcyDensity, insideIsUpstream)*data.segmentGeometry.volume()/scvf.area();
             }
         }
@@ -283,16 +315,18 @@ public:
                 const auto& stokesScvf = data.fvGeometry.scvf(data.stokesScvfIdx);
                 const auto& stokesVolVars = data.volVars;
 
+                 auto temp = [](const auto& elemVolVars, const auto& scv)
+                             { return elemVolVars[scv].temperature(); };
+                //Calculate the projected temperature value for the stokes face
+                auto temperature = this->calculateProjection(data.element, stokesScvf, *data.stokesContext, temp);
+
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += -1*energyFlux_(data.fvGeometry,
-                                       fvGeometry,
-                                       element,
                                        stokesVolVars,
-                                       scvf,
                                        stokesScvf,
-                                       darcyElemVolVars,
-                                       elementFluxVarsCache,
+                                       darcyElemVolVars[scvf.insideScvIdx()],
                                        velocity,
+                                       temperature,
                                        insideIsUpstream,
                                        diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
             }
@@ -312,7 +346,12 @@ public:
                                    const SubControlVolumeFace<freeFlowIdx>& scvf,
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-         const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+        const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
+
+        auto temp = [](const auto& elemVolVars, const auto& scv)
+                    { return elemVolVars[scv].temperature(); };
+        //Calculate the projected temperature value for the stokes face
+        auto temperature = this->calculateProjection(element, scvf, stokesContext, temp);
 
         Scalar flux = 0.0;
         for (const auto& data : stokesContext)
@@ -322,19 +361,15 @@ public:
                 const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf() * scvf.directionSign();
 
                 const auto& elemVolVars = *(data.elementVolVars);
-                const auto& elemFluxVarsCache = *(data.elementFluxVarsCache);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += energyFlux_(fvGeometry,
-                                    data.fvGeometry,
-                                    data.element,
                                     stokesElemVolVars[scvf.insideScvIdx()],
-                                    darcyScvf,
                                     scvf,
-                                    elemVolVars,
-                                    elemFluxVarsCache,
+                                    elemVolVars[darcyScvf.insideScvIdx()],
                                     velocity,
+                                    temperature,
                                     insideIsUpstream,
                                     diffCoeffAvgType)*data.segmentGeometry.volume()/scvf.area();
             }
@@ -361,45 +396,28 @@ private:
      */
     template<bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     Scalar energyFlux_(const FVElementGeometry<freeFlowIdx>& stokesFvGeometry,
-                       const FVElementGeometry<porousMediumIdx>& darcyFvGeometry,
-                       const Element<porousMediumIdx>& element,
                        const VolumeVariables<freeFlowIdx>& stokesVolVars,
-                       const SubControlVolumeFace<porousMediumIdx>& scvf,
                        const SubControlVolumeFace<freeFlowIdx>& scvfStokes,
-                       const ElementVolumeVariables<porousMediumIdx>& darcyElemVolVars,
-                       const ElementFluxVariablesCache<porousMediumIdx>& elementFluxVarsCache,
+                       const VolumeVariables<porousMediumIdx>& darcyVolVars,
                        const Scalar velocity,
+                       const Scalar temperature,
                        const bool insideIsUpstream,
                        const DiffusionCoefficientAveragingType diffCoeffAvgType) const
     {
         Scalar flux(0.0);
 
-        const auto& stokesScv = (*scvs(stokesFvGeometry).begin());
-
-        const auto& localBasis = darcyFvGeometry.feLocalBasis();
-
-        const auto& ipElementLocal = element.geometry().local(scvfStokes.center());
-
-        std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
-        localBasis.evaluateFunction(ipElementLocal, shapeValues);
-
-        Scalar temperature = 0.0;
-        for (const auto& scv : scvs(darcyFvGeometry))
-            temperature += darcyElemVolVars[scv].temperature()*shapeValues[scv.indexInElement()][0];
-
-        const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
-
         const Scalar stokesTerm = stokesVolVars.density(couplingPhaseIdx(freeFlowIdx)) * stokesVolVars.enthalpy(couplingPhaseIdx(freeFlowIdx));
-        // ToDO interpolate using box basis functions
         const Scalar darcyTerm = darcyVolVars.density(couplingPhaseIdx(porousMediumIdx)) * darcyVolVars.enthalpy(couplingPhaseIdx(porousMediumIdx));
 
         flux += this->advectiveFlux(stokesTerm, darcyTerm, velocity, insideIsUpstream);
 
+        const auto& stokesScv = (*scvs(stokesFvGeometry).begin());
+
         const Scalar deltaT = temperature - stokesVolVars.temperature();
-        const Scalar dist = (scvf.ipGlobal() - stokesScv.center()).two_norm();
+        const Scalar dist = (scvfStokes.center() - stokesScv.center()).two_norm();
         if(diffCoeffAvgType == DiffusionCoefficientAveragingType::ffOnly)
         {
-            flux += -1*darcyVolVars.effectiveThermalConductivity() * deltaT / dist ;
+            flux += -1*stokesVolVars.effectiveThermalConductivity() * deltaT / dist ;
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Multidomain staggered box coupling only works for DiffusionCoefficientAveragingType = ffOnly");
