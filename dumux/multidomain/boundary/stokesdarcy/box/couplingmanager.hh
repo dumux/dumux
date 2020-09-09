@@ -40,6 +40,95 @@
 
 namespace Dumux {
 
+namespace Detail {
+    enum class ProjectionMethod
+    {
+        L2Projection, AreaWeightedDofEvaluation
+    };
+
+    template <typename T>
+    using ProjectionMethodDetector = decltype(std::declval<T>().projectionMethod());
+
+    template<class T>
+    static constexpr bool hasProjectionMethod()
+    { return Dune::Std::is_detected<ProjectionMethodDetector, T>::value; }
+
+
+    template<class T>
+    static constexpr ProjectionMethod projectionMethod()
+    {
+        if constexpr (hasProjectionMethod<T>())
+            return T::projectionMethod();
+        else
+            return ProjectionMethod::L2Projection;
+    }
+
+    // Each context object contains the data related to one coupling segment
+    template <class MDTraits, typename CouplingSegmentGeometry>
+    struct StokesCouplingContext
+    {
+    private:
+        template<std::size_t id>
+        using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
+
+        template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+        template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
+        template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
+        template<std::size_t id> using VolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
+        template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+        template<std::size_t id> using ElementFluxVariablesCache = typename GetPropType<SubDomainTypeTag<id>, Properties::GridFluxVariablesCache>::LocalView;
+        template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+
+        static constexpr auto porousMediumIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::porousMediumIdx;
+
+    public:
+        Element<porousMediumIdx> element;
+        FVElementGeometry<porousMediumIdx> fvGeometry;
+        std::size_t darcyScvfIdx;
+        std::size_t stokesScvfIdx;
+        std::unique_ptr< ElementVolumeVariables<porousMediumIdx> > elementVolVars;
+        std::unique_ptr< ElementFluxVariablesCache<porousMediumIdx> > elementFluxVarsCache;
+        CouplingSegmentGeometry segmentGeometry;
+
+        auto permeability() const
+        {
+            const auto& darcyScvf = fvGeometry.scvf(darcyScvfIdx);
+            return (*elementVolVars)[darcyScvf.insideScvIdx()].permeability();
+        }
+    };
+
+    template<class MDTraits, typename CouplingSegmentGeometry>
+    struct DarcyCouplingContext
+    {
+    private:
+        template<std::size_t id>
+        using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
+
+        template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+        template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
+        template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
+        template<std::size_t id> using VolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::VolumeVariables;
+        template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
+        template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+
+        static constexpr auto freeFlowIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::freeFlowIdx;
+
+        using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;
+
+    public:
+        Element<freeFlowIdx> element;
+        FVElementGeometry<freeFlowIdx> fvGeometry;
+        std::size_t stokesScvfIdx;
+        std::size_t darcyScvfIdx;
+        VelocityVector velocity;
+        VolumeVariables<freeFlowIdx> volVars;
+        // Darcy context needs information from stokes context because of projection onto stokes faces
+        using Container = StokesCouplingContext<MDTraits, CouplingSegmentGeometry>;
+        std::unique_ptr< std::vector<Container> > stokesContext;
+        CouplingSegmentGeometry segmentGeometry;
+    };
+};
+
 /*!
  * \ingroup StokesDarcyCoupling
  * \brief Coupling manager for Stokes and Darcy domains with equal dimension.
@@ -57,6 +146,8 @@ public:
     static constexpr auto freeFlowIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::freeFlowIdx;
     static constexpr auto porousMediumIdx = FreeFlowPorousMediumCouplingManagerBase<MDTraits>::porousMediumIdx;
 
+    using ProjectionMethod = Detail::ProjectionMethod;
+    static constexpr auto projectionMethod = Detail::projectionMethod<MDTraits>();
 private:
 
     using SolutionVector = typename MDTraits::SolutionVector;
@@ -94,37 +185,9 @@ private:
     using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;
 
     using CouplingMapper = StokesDarcyCouplingMapperBox<MDTraits>;
+    using StokesCouplingContext = Detail::StokesCouplingContext<MDTraits, typename CouplingMapper::CouplingSegment::Geometry>;
+    using DarcyCouplingContext = Detail::DarcyCouplingContext<MDTraits, typename CouplingMapper::CouplingSegment::Geometry>;
 
-    // Each context object contains the data related to one coupling segment
-    struct StokesCouplingContext
-    {
-        Element<porousMediumIdx> element;
-        FVElementGeometry<porousMediumIdx> fvGeometry;
-        std::size_t darcyScvfIdx;
-        std::size_t stokesScvfIdx;
-        std::unique_ptr< ElementVolumeVariables<porousMediumIdx> > elementVolVars;
-        std::unique_ptr< ElementFluxVariablesCache<porousMediumIdx> > elementFluxVarsCache;
-        typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
-
-        auto permeability() const
-        {
-            const auto& darcyScvf = fvGeometry.scvf(darcyScvfIdx);
-            return (*elementVolVars)[darcyScvf.insideScvIdx()].permeability();
-        }
-    };
-
-    struct DarcyCouplingContext
-    {
-        Element<freeFlowIdx> element;
-        FVElementGeometry<freeFlowIdx> fvGeometry;
-        std::size_t stokesScvfIdx;
-        std::size_t darcyScvfIdx;
-        VelocityVector velocity;
-        VolumeVariables<freeFlowIdx> volVars;
-        // Darcy context needs information from stokes context because of projection onto stokes faces
-        std::unique_ptr< std::vector<StokesCouplingContext> > stokesContext;
-        typename CouplingMapper::CouplingSegment::Geometry segmentGeometry;
-    };
 public:
 
     using ParentType::couplingStencil;
@@ -273,7 +336,6 @@ public:
                                int pvIdxJ)
     {
         this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
-
         for (auto& dataI : darcyCouplingContext_)
         {
             const auto& stokesContext = *(dataI.stokesContext);
@@ -759,8 +821,8 @@ private:
         return entries;
     }
 
-    template<class Assembler>
-    void fillCouplingContext(const Element<freeFlowCellCenterIdx>& element, const Assembler& assembler, std::vector<StokesCouplingContext>& couplingContext) const
+    template<class Assembler, class CouplingContext>
+    void fillCouplingContext(const Element<freeFlowCellCenterIdx>& element, const Assembler& assembler, std::vector<CouplingContext>& couplingContext) const
     {
         const auto stokesElementIdx = this->problem(freeFlowIdx).gridGeometry().elementMapper().index(element);
 

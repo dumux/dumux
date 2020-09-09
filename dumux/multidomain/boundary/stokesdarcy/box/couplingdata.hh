@@ -34,26 +34,6 @@
 
 namespace Dumux {
 
-namespace Detail {
-    enum class ProjectionMethods
-    {
-        L2Projection, CenterEvaluation
-    };
-
-    template <typename T>
-    using has_projection_method = typename T::ProjectionMethod;
-
-    template<class T>
-    static constexpr ProjectionMethods getProjectionMethod()
-    {
-        if constexpr (Dune::Std::is_detected<has_projection_method, T>::value)
-            return T::ProjectionMethod::method;
-        else
-            return ProjectionMethods::L2Projection;
-    }
-};
-
-
 /*!
  * \ingroup StokesDarcyCoupling
  * \brief A base class which provides some common methods used for Stokes-Darcy coupling.
@@ -83,9 +63,8 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
-    using ProjectionMethods = Detail::ProjectionMethods;
-    static constexpr auto projectionMethod = Detail::getProjectionMethod<MDTraits>();
-
+    using ProjectionMethod = typename CouplingManager::ProjectionMethod;
+    static constexpr auto projectionMethod = CouplingManager::projectionMethod;
 public:
     StokesDarcyCouplingDataBoxBase(const CouplingManager& couplingmanager): ParentType(couplingmanager) {}
 
@@ -136,6 +115,7 @@ protected:
         // integrate darcy pressure over each coupling segment and average
         for (const auto& data : stokesContext)
         {
+            //ToDo Is this if really necessary?
             if (stokesScvf.index() == data.stokesScvfIdx)
             {
                 const auto darcyEIdxI = this->couplingManager().problem(porousMediumIdx).gridGeometry().elementMapper().index(darcyElement);
@@ -143,7 +123,7 @@ protected:
                 const auto& elemVolVars = (darcyEIdxI == darcyEIdxJ) ? darcyElemVolVars : *(data.elementVolVars);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
 
-                projection += calculateSegmentProjection(data.element, data.fvGeometry, darcyScvf, elemVolVars, data.segmentGeometry, evalPriVar);
+                projection += calculateSegmentIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, data.segmentGeometry, evalPriVar);
             }
         }
 
@@ -164,12 +144,13 @@ protected:
         // integrate darcy pressure over each coupling segment and average
         for (const auto& data : stokesContext)
         {
+            //ToDo Is this if really necessary?
             if (scvf.index() == data.stokesScvfIdx)
             {
                 const auto& elemVolVars = *(data.elementVolVars);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
 
-                projection += calculateSegmentProjection(data.element, data.fvGeometry, darcyScvf, elemVolVars, data.segmentGeometry, evalPriVar);
+                projection += calculateSegmentIntegral(data.element, data.fvGeometry, darcyScvf, elemVolVars, data.segmentGeometry, evalPriVar);
             }
         }
 
@@ -179,7 +160,7 @@ protected:
     }
 
     template<class SegementGeometry, class Function>
-    Scalar calculateSegmentProjection(const Element<porousMediumIdx>& element,
+    Scalar calculateSegmentIntegral(const Element<porousMediumIdx>& element,
                                       const FVElementGeometry<porousMediumIdx>& fvGeometry,
                                       const SubControlVolumeFace<porousMediumIdx>& scvf,
                                       const ElementVolumeVariables<porousMediumIdx>& elemVolVars,
@@ -187,7 +168,7 @@ protected:
                                       Function evalPriVar) const
     {
         Scalar segmentProjection = 0.0;
-        if constexpr (projectionMethod == ProjectionMethods::L2Projection)
+        if constexpr (projectionMethod == ProjectionMethod::L2Projection)
         {
             const auto& localBasis = fvGeometry.feLocalBasis();
 
@@ -210,9 +191,13 @@ protected:
                 segmentProjection += value*segmentGeometry.integrationElement(qp.position())*qp.weight();
             }
         }
+        else if constexpr (projectionMethod == ProjectionMethod::AreaWeightedDofEvaluation)
+        {
+            segmentProjection = segmentGeometry.volume()*evalPriVar(elemVolVars, fvGeometry.scv(scvf.insideScvIdx()));
+        }
         else
         {
-            DUNE_THROW(Dune::NotImplemented, "Other projections methods than averaging are not yet implemented!");
+            DUNE_THROW(Dune::NotImplemented, "Unkown projection method!");
         }
 
         return segmentProjection;
@@ -252,6 +237,9 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
                   "Darcy Model must not be compositional");
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
+
+    using ProjectionMethod = typename CouplingManager::ProjectionMethod;
+    static constexpr auto projectionMethod = CouplingManager::projectionMethod;
 
 public:
     using ParentType::ParentType;
@@ -345,10 +333,19 @@ public:
                 const auto& stokesScvf = data.fvGeometry.scvf(data.stokesScvfIdx);
                 const auto& stokesVolVars = data.volVars;
 
-                 auto temp = [](const auto& elemVolVars, const auto& scv)
-                             { return elemVolVars[scv].temperature(); };
-                //Calculate the projected temperature value for the stokes face
-                auto temperature = this->calculateProjection(data.element, stokesScvf, *data.stokesContext, element, darcyElemVolVars, temp);
+                Scalar temperature = 0.0;
+
+                if constexpr (projectionMethod == ProjectionMethod::L2Projection)
+                {
+                    auto temp = [](const auto& elemVolVars, const auto& scv)
+                                 { return elemVolVars[scv].temperature(); };
+                    //Calculate the projected temperature value for the stokes face
+                    temperature = this->calculateProjection(data.element, stokesScvf, *data.stokesContext, element, darcyElemVolVars, temp);
+                }
+                else if constexpr (projectionMethod == ProjectionMethod::DofEvaluation)
+                {
+                    temperature = darcyElemVolVars[scvf.insideScvIdx()].temperature();
+                }
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += -1*energyFlux_(data.fvGeometry,
@@ -378,10 +375,15 @@ public:
     {
         const auto& stokesContext = this->couplingManager().stokesCouplingContextVector(element, scvf);
 
-        auto temp = [](const auto& elemVolVars, const auto& scv)
-                    { return elemVolVars[scv].temperature(); };
-        //Calculate the projected temperature value for the stokes face
-        auto temperature = this->calculateProjection(element, scvf, stokesContext, temp);
+        Scalar temperature = 0.0;
+        // if the L2 projection is used, then the temperature can directly be evaluated for the whole face
+        if constexpr (projectionMethod == ProjectionMethod::L2Projection)
+        {
+            auto temp = [](const auto& elemVolVars, const auto& scv)
+                        { return elemVolVars[scv].temperature(); };
+            //Calculate the projected temperature value for the stokes face
+            temperature = this->calculateProjection(element, scvf, stokesContext, temp);
+        }
 
         Scalar flux = 0.0;
         for (const auto& data : stokesContext)
@@ -392,6 +394,11 @@ public:
 
                 const auto& elemVolVars = *(data.elementVolVars);
                 const auto& darcyScvf = data.fvGeometry.scvf(data.darcyScvfIdx);
+
+                if constexpr (projectionMethod == ProjectionMethod::DofEvaluation)
+                {
+                    temperature = elemVolVars[darcyScvf.insideScvIdx()].temperature();
+                }
 
                 const bool insideIsUpstream = velocity > 0.0;
                 flux += energyFlux_(fvGeometry,
@@ -511,6 +518,8 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
     using MolecularDiffusionType = GetPropType<SubDomainTypeTag<freeFlowIdx>, Properties::MolecularDiffusionType>;
 
+    using ProjectionMethod = typename CouplingManager::ProjectionMethod;
+    static constexpr auto projectionMethod = CouplingManager::projectionMethod;
 public:
     using ParentType::ParentType;
     using ParentType::couplingPhaseIdx;
