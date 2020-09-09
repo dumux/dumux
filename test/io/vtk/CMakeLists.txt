@@ -9,8 +9,8 @@ dumux_add_test(NAME test_vtkreader_3d
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_3d
-                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p2c_richards2c_3d-reference.vtu test-3d"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p2c_richards2c_3d-reference.vtu
+                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p2c_richards2c_3d-reference.vtu test-3d"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p2c_richards2c_3d-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vtu)
 
 # dumux_add_test(NAME test_vtkreader_3d_structured_notimplemented
@@ -38,8 +38,8 @@ dumux_add_test(NAME test_vtkreader_2d3d
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_2d3d
-                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded2d3d_fracture1p_tpfa_2d-reference.vtu test-2d3d"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded2d3d_fracture1p_tpfa_2d-reference.vtu
+                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_2d3d_fracture1p_tpfa_2d-reference.vtu test-2d3d"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_2d3d_fracture1p_tpfa_2d-reference.vtu
                    ${CMAKE_CURRENT_BINARY_DIR}/test-2d3d.vtu)
 
 dumux_add_test(NAME test_vtkreader_1d
@@ -50,8 +50,8 @@ dumux_add_test(NAME test_vtkreader_1d
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_1d
-                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p_richards_tpfatpfa_1d-reference.vtp test-1d"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded1d3d_1p_richards_tpfatpfa_1d-reference.vtp
+                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p_richards_tpfatpfa_1d-reference.vtp test-1d"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p_richards_tpfatpfa_1d-reference.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test-1d.vtp)
 
 dumux_add_test(NAME test_vtkreader_1d_polyline
