@@ -415,7 +415,7 @@ public:
                 {
                     if (internalDirichletConstraintsOwnElement[eqIdx])
                     {
-                        origResiduals[0][eqIdx] = this->curElemVolVars()[scv].priVars()[eqIdx] - dirichletValues[eqIdx];
+                        origResiduals[0][eqIdx] = origVolVars.priVars()[eqIdx] - dirichletValues[eqIdx];
                         A[globalI][globalI][eqIdx][pvIdx] = (eqIdx == pvIdx) ? 1.0 : 0.0;
                     }
                     else
@@ -717,7 +717,7 @@ public:
                 {
                     if (internalDirichletConstraints[eqIdx])
                     {
-                        residual[eqIdx] = this->curElemVolVars()[scv].priVars()[eqIdx] - dirichletValues[eqIdx];
+                        residual[eqIdx] = origVolVars.priVars()[eqIdx] - dirichletValues[eqIdx];
                         A[globalI][globalI][eqIdx][pvIdx] = (eqIdx == pvIdx) ? 1.0 : 0.0;
                     }
                     else
@@ -846,7 +846,7 @@ public:
                 {
                     if (internalDirichletConstraints[eqIdx])
                     {
-                        residual[eqIdx] = this->curElemVolVars()[scv].priVars()[eqIdx] - dirichletValues[eqIdx];
+                        residual[eqIdx] = volVars.priVars()[eqIdx] - dirichletValues[eqIdx];
                         A[globalI][globalI][eqIdx][pvIdx] = (eqIdx == pvIdx) ? 1.0 : 0.0;
 
                         // inner faces
