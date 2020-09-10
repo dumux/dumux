@@ -142,7 +142,7 @@ public:
             throatRadius_[eIdx] = params[throatRadiusIdx];
             throatLength_[eIdx] = params[throatLengthIdx];
 
-            // use a default value of -1 if not throat label is given by the grid
+            // use a default value if no throat label is given by the grid
             static const bool gridHasThroatLabel = gridData.gridHasElementParameter("ThroatLabel");
             if (gridHasThroatLabel)
             {
@@ -150,7 +150,23 @@ public:
                 throatLabel_[eIdx] = params[throatLabelIdx];
             }
             else
-                throatLabel_[eIdx] = -1;
+            {
+                const auto vIdx0 = gridView.indexSet().subIndex(element, 0, dim);
+                const auto vIdx1 = gridView.indexSet().subIndex(element, 1, dim);
+
+                const auto poreLabel0 = poreLabel(vIdx0);
+                const auto poreLabel1 = poreLabel(vIdx1);
+
+                if (poreLabel0 >= 0 && poreLabel1 >= 0)
+                {
+                    std::cout << "\n Warning: Throat  "
+                              << eIdx << " connects two boundary pores with different pore labels. Using the greater pore label as throat label.\n"
+                              << "Set the throat labels explicitly in your grid file, if needed." << std::endl;
+                }
+
+                using std::max;
+                throatLabel_[eIdx] = max(poreLabel0, poreLabel1);
+            }
 
             if (!useSameShapeForAllThroats())
             {
