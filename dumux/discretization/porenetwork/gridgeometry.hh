@@ -139,10 +139,18 @@ public:
             const auto& params = gridData.parameters(element);
             static const auto throatRadiusIdx = gridData.parameterIndex("ThroatRadius");
             static const auto throatLengthIdx = gridData.parameterIndex("ThroatLength");
-            static const auto throatLabelIdx = gridData.parameterIndex("ThroatLabel");
             throatRadius_[eIdx] = params[throatRadiusIdx];
             throatLength_[eIdx] = params[throatLengthIdx];
-            throatLabel_[eIdx] = params[throatLabelIdx];
+
+            // use a default value of -1 if not throat label is given by the grid
+            static const bool gridHasThroatLabel = gridData.gridHasElementParameter("ThroatLabel");
+            if (gridHasThroatLabel)
+            {
+                static const auto throatLabelIdx = gridData.parameterIndex("ThroatLabel");
+                throatLabel_[eIdx] = params[throatLabelIdx];
+            }
+            else
+                throatLabel_[eIdx] = -1;
 
             if (!useSameShapeForAllThroats())
             {
@@ -240,9 +248,14 @@ public:
     const std::vector<Pore::Shape>& poreGeometry() const
     {
         if (useSameGeometryForAllPores())
-            DUNE_THROW(Dune::InvalidStateException, "All pores have the same geometry. Create your own vector if needed.");
-        else
-            return poreGeometry_;
+        {
+            // if a vector of pore geometries is requested (e.g., for vtk output),
+            // resize the container and fill it with the same value everywhere
+            const auto poreGeo = poreGeometry_[0];
+            poreGeometry_.resize(poreRadius_.size(), poreGeo);
+        }
+
+        return poreGeometry_;
     }
 
     //! Returns the throat's cross-sectional shape
@@ -253,9 +266,14 @@ public:
     const std::vector<Throat::Shape>& throatCrossSectionShape() const
     {
         if (useSameShapeForAllThroats())
-            DUNE_THROW(Dune::InvalidStateException, "All throats have the same shape. Create your own vector if needed.");
-        else
-            return throatGeometry_;
+        {
+            // if a vector of throat cross section shapes is requested (e.g., for vtk output),
+            // resize the container and fill it with the same value everywhere
+            const auto throatShape = throatGeometry_[0];
+            throatGeometry_.resize(throatRadius_.size(), throatShape);
+        }
+
+        return throatGeometry_;
     }
 
     //! Returns the throat's cross-sectional area
@@ -267,11 +285,6 @@ public:
     { return throatCrossSectionalArea_; }
 
     //! Returns the throat's shape factor
-    [[deprecated("Use throatShapeFactor instead. Will be removed soon.")]]
-    Scalar shapeFactor(const GridIndex eIdx) const
-    { return throatShapeFactor(eIdx); }
-
-    //! Returns the throat's shape factor
     Scalar throatShapeFactor(const GridIndex eIdx) const
     { return useSameShapeForAllThroats() ? throatShapeFactor_[0] : throatShapeFactor_[eIdx]; }
 
@@ -279,9 +292,14 @@ public:
     const std::vector<Scalar>& throatShapeFactor() const
     {
         if (useSameShapeForAllThroats())
-            DUNE_THROW(Dune::InvalidStateException, "All throats have the same shape. Create your own vector if needed.");
-        else
-            return throatShapeFactor_;
+        {
+            // if a vector of throat shape factors is requested (e.g., for vtk output),
+            // resize the container and fill it with the same value everywhere
+            const auto shapeFactor = throatShapeFactor_[0];
+            throatShapeFactor_.resize(throatRadius_.size(), shapeFactor);
+        }
+
+        return throatShapeFactor_;
     }
 
     //! Returns whether all pores feature the same shape
@@ -405,16 +423,16 @@ private:
         }
     }
 
-    std::vector<Pore::Shape> poreGeometry_;
-    std::vector<Throat::Shape> throatGeometry_;
-    std::vector<SmallLocalIndex> coordinationNumber_;
+    mutable std::vector<Pore::Shape> poreGeometry_;
     std::vector<Scalar> poreRadius_;
     std::vector<Scalar> poreVolume_;
     std::vector<Label> poreLabel_; // 0:no, 1:general, 2:coupling1, 3:coupling2, 4:inlet, 5:outlet
-    std::vector<Label> throatLabel_; // 0:no, 1:general, 2:coupling1, 3:coupling2, 4:inlet, 5:outlet
+    std::vector<SmallLocalIndex> coordinationNumber_;
+    mutable std::vector<Throat::Shape> throatGeometry_;
+    mutable std::vector<Scalar> throatShapeFactor_;
     std::vector<Scalar> throatRadius_;
     std::vector<Scalar> throatLength_;
-    std::vector<Scalar> throatShapeFactor_;
+    std::vector<Label> throatLabel_; // 0:no, 1:general, 2:coupling1, 3:coupling2, 4:inlet, 5:outlet
     std::vector<Scalar> throatCrossSectionalArea_;
     bool useSameGeometryForAllPores_;
     bool useSameShapeForAllThroats_;
