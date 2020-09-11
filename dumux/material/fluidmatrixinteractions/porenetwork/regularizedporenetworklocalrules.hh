@@ -157,8 +157,11 @@ public:
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
         const Scalar lowSw = params.lowSw();
+        const Scalar highSw = params.highSw();
         const Scalar pcLowSw = PNMLocalRules::pc(params, lowSw);
-        const Scalar pcHighSw = PNMLocalRules::pc(params, 1.0);
+        const Scalar pcHighSw = PNMLocalRules::pc(params, highSw);
+
+
 
         // low saturation / high pc:
         if(pc > pcLowSw)
@@ -167,8 +170,19 @@ public:
         }
 
         // high saturation / low pc:
-        if(pc < pcHighSw)
+        if (pc < pcHighSw)
         {
+            static const bool usePowerLaw = getParam<bool>("Regularization.UsePowerLawForHighSw", false);
+            if (usePowerLaw)
+            {
+                auto result = pc/pcHighSw * pc/pcHighSw * pc/pcHighSw * (1.0-highSw);
+
+                // TODO remove output, add unit test
+                // std::cout  <<" sw of pc " << pc << " is " << 1.0 - result << std::endl;
+                // std::cout << "corr. pc is " << RegularizedPNMLocalRules<Scalar, true, Params>::pc(params, 1.0 - result) << std::endl;
+                return 1.0 - result;
+            }
+
 //             const Scalar m = 1.0 / PNMLocalRules::dpc_dsw(params, poreRadius, 1.0);
 //             return 1.0 + m*(pc - pcHighSw);
             return 1.0;
