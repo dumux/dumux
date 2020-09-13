@@ -170,6 +170,7 @@ class PNMFVElementGeometry<GG, false>
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+
 public:
     //! export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
@@ -283,6 +284,9 @@ private:
             // get asssociated dof index
             const auto dofIdxGlobal = gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
+            // get the corners
+            auto corners = std::array{elementGeometry.corner(scvLocalIdx), elementGeometry.center()};
+
             // get the fractional volume asssociated with the scv
             const auto volume = gridGeometry().poreVolume(dofIdxGlobal) / gridGeometry().coordinationNumber(dofIdxGlobal);
 
@@ -290,7 +294,7 @@ private:
             scvs_[scvLocalIdx] = SubControlVolume(dofIdxGlobal,
                                                   scvLocalIdx,
                                                   eIdx_,
-                                                  elementGeometry.corner(scvLocalIdx),
+                                                  std::move(corners),
                                                   volume);
 
             if (gridGeometry().poreLabel(dofIdxGlobal) > 0)
