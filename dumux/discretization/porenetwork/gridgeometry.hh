@@ -42,6 +42,7 @@
 #include <dumux/discretization/porenetwork/subcontrolvolumeface.hh>
 #include <dumux/porenetworkflow/common/throatproperties.hh>
 #include <dumux/porenetworkflow/common/poreproperties.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -514,6 +515,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
     using DofMapper = typename Traits::VertexMapper;
     //! export the finite element cache type
@@ -582,13 +585,16 @@ public:
             {
                 const auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
 
+                // get the corners
+                auto corners = std::array{elementGeometry.corner(scvLocalIdx), elementGeometry.center()};
+
                 // get the fractional volume asssociated with the scv
                 const auto volume = this->poreVolume(dofIdxGlobal) / this->coordinationNumber(dofIdxGlobal);
 
                 scvs_[eIdx][scvLocalIdx] = SubControlVolume(dofIdxGlobal,
                                                             scvLocalIdx,
                                                             eIdx,
-                                                            elementGeometry.corner(scvLocalIdx),
+                                                            std::move(corners),
                                                             volume);
 
                 if (this->poreLabel(dofIdxGlobal) > 0)
@@ -691,6 +697,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the type of extrusion
+    using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
     using DofMapper = typename Traits::VertexMapper;
     //! export the finite element cache type
