@@ -46,6 +46,7 @@ struct PNMDefaultScvfGeometryTraits
 
     using Scalar = typename Grid::ctype;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using CornerStorage = std::array<Dune::FieldVector<Scalar, dimWorld>, 1>;
 };
 
 /*!

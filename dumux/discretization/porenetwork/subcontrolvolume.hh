@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUME_HH
 
+#include <dune/geometry/affinegeometry.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
@@ -47,6 +48,8 @@ struct PNMDefaultScvGeometryTraits
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename Grid::ctype;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using CornerStorage = std::array<GlobalPosition, 2>;
+    using Geometry = Dune::AffineGeometry<Scalar, 1, dimWorld>;
 };
 
 /*!
@@ -65,6 +68,8 @@ class PNMSubControlVolume
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
+    using CornerStorage = typename T::CornerStorage;
+    using Geometry = typename T::Geometry;
 
 public:
     //! export the type used for global coordinates
@@ -76,12 +81,14 @@ public:
     PNMSubControlVolume() = default;
 
     // the contructor in the box case
+    template<class Corners>
     PNMSubControlVolume(GridIndexType dofIndex,
                         LocalIndexType scvIdx,
                         GridIndexType elementIndex,
-                        const GlobalPosition& dofPosition,
+                        Corners&& corners,
                         const Scalar volume)
-    : center_(dofPosition),
+    : center_((corners[0]+corners[1])/2.0),
+      corners_(std::forward<CornerStorage>(corners)),
       volume_(volume),
       elementIndex_(elementIndex),
       localDofIdx_(scvIdx),
@@ -90,48 +97,48 @@ public:
 
     //! The center of the sub control volume (return pore center)
     const GlobalPosition& center() const
-    {
-        return center_;
-    }
+    { return center_; }
 
     //! The volume of the sub control volume (part of a pore)
     Scalar volume() const
-    {
-        return volume_;
-    }
+    { return volume_; }
 
     //! The element-local index of the dof this scv is embedded in
     LocalIndexType localDofIndex() const
-    {
-        return localDofIdx_;
-    }
+    { return localDofIdx_; }
 
     //! The element-local index of this scv.
     LocalIndexType indexInElement() const
-    {
-        return localDofIdx_;
-    }
+    { return localDofIdx_; }
 
     //! The index of the dof this scv is embedded in
     GridIndexType dofIndex() const
-    {
-        return dofIndex_;
-    }
+    { return dofIndex_; }
 
     // The position of the dof this scv is embedded in
     const GlobalPosition& dofPosition() const
-    {
-        return center_;
-    }
+    { return corners_[0]; }
 
     //! The global index of the element this scv is embedded in
     GridIndexType elementIndex() const
+    { return elementIndex_; }
+
+    //! Return the corner for the given local index
+    const GlobalPosition& corner(LocalIndexType localIdx) const
     {
-        return elementIndex_;
+        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
+        return corners_[localIdx];
+    }
+
+    //! The geometry of the sub control volume e.g. for integration
+    Geometry geometry() const
+    {
+        return Geometry(Dune::GeometryTypes::simplex(1), corners_);
     }
 
 private:
     GlobalPosition center_;
+    CornerStorage corners_;
     Scalar volume_;
     GridIndexType elementIndex_;
     LocalIndexType localDofIdx_;
