@@ -139,19 +139,9 @@ struct AdvectionType<TypeTag, TTag::PNMOneP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-
-    struct Transmissibility
-    {
-        using SinglePhase = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
-
-        struct Cache
-        {
-            using SinglePhase = typename GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>::Cache;
-        };
-    };
-
+    using TransmissibilityLaw = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
 public:
-    using type = Dumux::PoreNetworkCreepingFlow<Scalar, Transmissibility>;
+    using type = Dumux::PoreNetworkCreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 //////////////////////////////////////////////////////////////////

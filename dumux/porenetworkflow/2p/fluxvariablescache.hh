@@ -188,9 +188,9 @@ private:
     NumCornerVector wettingLayerArea_;
     std::size_t nPhaseIdx_;
 
-    typename AdvectionType::Cache::SinglePhase singlePhaseCache_;
-    typename AdvectionType::Cache::NonWettingPhase nonWettingPhaseCache_;
-    typename AdvectionType::Cache::WettingLayer wettingLayerCache_;
+    typename AdvectionType::Transmissibility::SinglePhaseCache singlePhaseCache_;
+    typename AdvectionType::Transmissibility::NonWettingPhaseCache nonWettingPhaseCache_;
+    typename AdvectionType::Transmissibility::WettingLayerCache wettingLayerCache_;
 };
 
 } // end namespace

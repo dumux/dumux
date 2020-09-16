@@ -100,19 +100,9 @@ struct AdvectionType<TypeTag, TTag::PNMOnePNC>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-
-    struct Transmissibility
-    {
-        using SinglePhase = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
-
-        struct Cache
-        {
-            using SinglePhase = typename GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>::Cache;
-        };
-    };
-
+    using TransmissibilityLaw = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
 public:
-    using type = Dumux::PoreNetworkCreepingFlow<Scalar, Transmissibility>;
+    using type = Dumux::PoreNetworkCreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 //! Set as default that no component mass balance is replaced by the total mass balance

@@ -67,7 +67,7 @@ struct CreviceResistanceFactorZhou
 template<class Scalar, class CreviceResistanceFactor = CreviceResistanceFactorZhou>
 struct RansohoffRadke
 {
-    class Cache
+    class WettingLayerCache
     {
         using NumCornerVector = Dune::ReservedVector<Scalar, 4>;
     public:
@@ -104,10 +104,10 @@ struct RansohoffRadke
     * \param ElementVolumeVariables The element volume variables
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar transmissibility(const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                   const FluxVariablesCache& fluxVarsCache)
+    static Scalar wettingLayerTransmissibility(const Element& element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                               const FluxVariablesCache& fluxVarsCache)
     {
         const Scalar throatLength = fluxVarsCache.throatLength();
         const Scalar rC = fluxVarsCache.curvatureRadius();
@@ -133,13 +133,13 @@ namespace NonWettingPhaseTransmissibility {
 template<class Scalar>
 struct Mogensen
 {
-    using Cache = EmptyCache;
+    using NonWettingPhaseCache = EmptyCache;
 
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar transmissibility(const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                   const FluxVariablesCache& fluxVarsCache)
+    static Scalar nonWettingPhaseTransmissibility(const Element& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                  const FluxVariablesCache& fluxVarsCache)
     {
         // Mogensen et al. (1999), does not really revover the single phase value
         using std::sqrt;
@@ -157,13 +157,13 @@ struct Mogensen
 template<class Scalar, class SinglePhaseTransmissibilityLaw>
 struct Valvatne
 {
-    using Cache = EmptyCache;
+    using NonWettingPhaseCache = EmptyCache;
 
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar transmissibility(const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                   const FluxVariablesCache& fluxVarsCache)
+    static Scalar nonWettingPhaseTransmissibility(const Element& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                  const FluxVariablesCache& fluxVarsCache)
     {
         // Tora et al. (2012), also does not fully recover single-phase value, but is closer
         using std::sqrt;
@@ -182,7 +182,7 @@ struct Valvatne
 template<class Scalar>
 struct BakkeOren
 {
-    using Cache = EmptyCache;
+    using NonWettingPhaseCache = EmptyCache;
 
     /*!
     * \brief Returns the conductivity of a throat.
@@ -190,10 +190,10 @@ struct BakkeOren
     * See Bakke & Oren (1997), eq. 9
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar transmissibility(const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                   const FluxVariablesCache& fluxVarsCache)
+    static Scalar nonWettingPhaseTransmissibility(const Element& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                  const FluxVariablesCache& fluxVarsCache)
     {
         // Tora et al. (2012), quite close for single-phase value of square
         using std::sqrt;
