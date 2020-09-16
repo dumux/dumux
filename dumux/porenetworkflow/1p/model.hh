@@ -113,9 +113,8 @@ struct SpatialParams<TypeTag, TTag::PNMOneP>
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Transmissibility = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
 public:
-    using type = PNMOnePSpatialParams<GridGeometry, Scalar, Transmissibility>;
+    using type = PNMOnePDefaultSpatialParams<GridGeometry, Scalar>;
 };
 
 //! The flux variables cache
