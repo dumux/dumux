@@ -56,8 +56,6 @@ struct PoreNetworkModel { using InheritsFrom = std::tuple<ModelProperties, BoxMo
 template<class TypeTag, class MyTypeTag>
 struct SinglePhaseTransmissibilityLaw { using type = UndefinedProperty; }; //!< The transmissibility type
 template<class TypeTag, class MyTypeTag>
-struct TwoPhaseTransmissibilityLaws { using type = UndefinedProperty; }; //!< The transmissibility type
-template<class TypeTag, class MyTypeTag>
 struct WettingLayerTransmissibilityLaw { using type = UndefinedProperty; }; //!< The transmissibility type
 template<class TypeTag, class MyTypeTag>
 struct NonWettingPhaseTransmissibilityLaw { using type = UndefinedProperty; }; //!< The transmissibility type

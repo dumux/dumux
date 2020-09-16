@@ -40,7 +40,7 @@ class TransmissibilityBruus
 {
 public:
 
-    using Cache = EmptyCache;
+    using SinglePhaseCache = EmptyCache;
 
     template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
     static Scalar singlePhaseTransmissibility(const Problem& problem,
@@ -58,22 +58,7 @@ public:
         return singlePhaseTransmissibility(shape, throatRadius, throatLength, area);
     }
 
-     //! Returns the conductivity of a throat when only one phase is present.
-    template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    [[deprecated("Use singlePhaseTransmissibility(shape, inscribedRadius, throatLength, area) instead. Will be removed soon.")]]
-    static Scalar singlePhaseTransmissibility(const Element& element,
-                                              const FVElementGeometry& fvGeometry,
-                                              const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                              const FluxVariablesCache& fluxVarsCache)
-    {
-        const auto shape = fluxVarsCache.shape();
-        const Scalar inscribedRadius = fluxVarsCache.throatRadius();
-        const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar area = fluxVarsCache.throatCrossSectionalArea();
-        return singlePhaseTransmissibility(shape, inscribedRadius, throatLength, area);
-    }
-
-     //! Returns the conductivity of a throat when only one phase is present.
+    //! Returns the conductivity of a throat when only one phase is present.
     static Scalar singlePhaseTransmissibility(const Throat::Shape shape,
                                               const Scalar inscribedRadius,
                                               const Scalar throatLength,
@@ -134,7 +119,7 @@ class TransmissibilityPatzekSilin
     static_assert(!interpolateK,  "Interpolation of k not implemented");
 public:
 
-    using Cache = EmptyCache;
+    using SinglePhaseCache = EmptyCache;
 
     template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
     static Scalar singlePhaseTransmissibility(const Problem& problem,
@@ -152,20 +137,6 @@ public:
     }
 
     //! Returns the conductivity of a throat when only one phase is present. See Patzek & Silin (2001)
-   template<class Element, class FVElementGeometry, class FluxVariablesCache>
-   [[deprecated("Use singlePhaseTransmissibility(shapeFactor, throatLength, area) instead. Will be removed soon.")]]
-   static Scalar singlePhaseTransmissibility(const Element& element,
-                                             const FVElementGeometry& fvGeometry,
-                                             const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                             const FluxVariablesCache& fluxVarsCache)
-   {
-       const auto shapeFactor = fluxVarsCache.shapeFactor();
-       const Scalar area = fluxVarsCache.throatCrossSectionalArea();
-       const Scalar throatLength = fluxVarsCache.throatLength();
-       return singlePhaseTransmissibility(shapeFactor, throatLength, area);
-   }
-
-     //! Returns the conductivity of a throat when only one phase is present. See Patzek & Silin (2001)
     static Scalar singlePhaseTransmissibility(const Scalar shapeFactor,
                                               const Scalar throatLength,
                                               const Scalar area)
@@ -189,13 +160,13 @@ private:
 };
 
 
-//! Used by Joeakar-Niasar, probably wrong, TODO: check and maybe remove
+//! Used by Joeakar-Niasar
 template<class Scalar>
 class TransmissibilityAzzamDullien
 {
 public:
 
-    using Cache = EmptyCache;
+    using SinglePhaseCache = EmptyCache;
 
     template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
     static Scalar singlePhaseTransmissibility(const Problem& problem,
@@ -205,19 +176,6 @@ public:
                                               const ElementVolumeVariables& elemVolVars,
                                               const FluxVariablesCache& fluxVarsCache,
                                               const int phaseIdx)
-    {
-        const Scalar throatRadius = fluxVarsCache.throatRadius();
-        const Scalar throatLength = fluxVarsCache.throatLength();
-        return singlePhaseTransmissibility(throatRadius, throatLength);
-    }
-
-    //! Returns the conductivity of a throat when only one phase is present.
-    template<class Element, class FVElementGeometry,  class FluxVariablesCache>
-    [[deprecated("Use singlePhaseTransmissibility(shapeFactor, inscribedRadius, throatLength, area) instead. Will be removed soon.")]]
-    static Scalar singlePhaseTransmissibility(const Element& element,
-                                              const FVElementGeometry& fvGeometry,
-                                              const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                              const FluxVariablesCache& fluxVarsCache)
     {
         const Scalar throatRadius = fluxVarsCache.throatRadius();
         const Scalar throatLength = fluxVarsCache.throatLength();
