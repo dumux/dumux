@@ -147,51 +147,19 @@ struct NonWettingPhaseTransmissibilityLaw<TypeTag, TTag::PNMTwoP>
     using type = NonWettingPhaseTransmissibility::BakkeOren<GetPropType<TypeTag, Properties::Scalar>>;
 };
 
-template<class TypeTag>
-struct TwoPhaseTransmissibilityLaws<TypeTag, TTag::PNMTwoP>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    struct Laws
-    {
-        using SinglePhaseTransmissibility = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
-        using WettingLayerTransmissibility = GetPropType<TypeTag, Properties::WettingLayerTransmissibilityLaw>;
-        using NonWettingPhaseTransmissibility = GetPropType<TypeTag, Properties::NonWettingPhaseTransmissibilityLaw>;
-    };
-public:
-    using type = Laws;
-};
-
 //! The advection type
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::PNMTwoP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-
-    class Transmissibility
-    {
-        using S = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
-        using W = GetPropType<TypeTag, Properties::WettingLayerTransmissibilityLaw>;
-        using N = GetPropType<TypeTag, Properties::NonWettingPhaseTransmissibilityLaw>;
-    public:
-
-        using SinglePhase = S;
-        using WettingLayer = W;
-        using NonWettingPhase = N;
-
-        struct Cache
-        {
-            using SinglePhase = typename S::Cache;
-            using WettingLayer = typename W::Cache;
-            using NonWettingPhase = typename N::Cache;
-        };
-    };
+    using S = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
+    using W = GetPropType<TypeTag, Properties::WettingLayerTransmissibilityLaw>;
+    using N = GetPropType<TypeTag, Properties::NonWettingPhaseTransmissibilityLaw>;
 
 public:
-    using type = Dumux::PoreNetworkCreepingFlow<Scalar, Transmissibility>;
+    using type = Dumux::PoreNetworkCreepingFlow<Scalar, S, W, N>;
 };
-
 
 //! The labels
 template<class TypeTag>

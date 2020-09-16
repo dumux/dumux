@@ -27,20 +27,29 @@
 namespace Dumux
 {
 
+namespace Detail {
+
+template<class... TransmissibilityLawTypes>
+struct Transmissibility : public TransmissibilityLawTypes...
+{};
+
+}
+
 /*!
  * \file
  * \ingroup PoreNetworkFlux
  * \brief Hagen–Poiseuille-type flux law to describe the advective flux for pore-network models.
  */
-template<class ScalarT, class TransmissibilityLawType>
+template<class ScalarT, class... TransmissibilityLawTypes>
 class PoreNetworkCreepingFlow
 {
 
 public:
     //! Export the Scalar type
     using Scalar = ScalarT;
-    using TransmissibilityLaw = TransmissibilityLawType;
-    using Cache = typename TransmissibilityLaw::Cache;
+
+    //! Export the transmissibility law
+    using Transmissibility = Detail::Transmissibility<TransmissibilityLawTypes...>;
 
     /*!
      * \brief Returns the advective flux of a fluid phase
@@ -102,7 +111,7 @@ public:
                                             const int phaseIdx)
     {
         if constexpr (ElementVolumeVariables::VolumeVariables::numFluidPhases() == 1)
-            return TransmissibilityLaw::SinglePhase::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+            return Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
         else
         {
             static_assert(ElementVolumeVariables::VolumeVariables::numFluidPhases() == 2);
@@ -114,12 +123,12 @@ public:
 
             if (phaseIdx == wPhaseIdx)
             {
-                return invaded ? TransmissibilityLaw::WettingLayer::transmissibility(element, fvGeometry, scvf, fluxVarsCache)
-                               : TransmissibilityLaw::SinglePhase::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                               : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
             }
             else // non-wetting phase
             {
-                return invaded ? TransmissibilityLaw::NonWettingPhase::transmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                return invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
                                : 0.0;
             }
         }

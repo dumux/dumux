@@ -98,7 +98,7 @@ private:
     Scalar throatLength_;
     Scalar throatRadius_;
 
-    typename AdvectionType::Cache::SinglePhase cache_;
+    typename AdvectionType::Transmissibility::SinglePhaseCache cache_;
 };
 
 } // end namespace
