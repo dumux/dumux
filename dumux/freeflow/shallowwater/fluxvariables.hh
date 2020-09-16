@@ -45,7 +45,7 @@ class ShallowWaterFluxVariables
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
-    //using DiffusionType = GetPropType<TypeTag, Properties::DiffusionType>;
+    using ViscousFluxType = GetPropType<TypeTag, Properties::ViscousFluxType>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
@@ -58,7 +58,6 @@ class ShallowWaterFluxVariables
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     static constexpr bool enableAdvection = ModelTraits::enableAdvection();
-    static constexpr bool enableDiffusion = ModelTraits::enableDiffusion();
 
 public:
 
@@ -79,20 +78,17 @@ public:
     }
 
     /*!
-     * \brief Returns the diffusive flux (e.g. diffusion of tracer)
+     * \brief Returns the viscous momentum flux
      *
      */
-    NumEqVector diffusiveFlux(const Problem& problem,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const ElementVolumeVariables& elemVolVars,
-                              const SubControlVolumeFace& scvf) const
+    NumEqVector viscousFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf) const
     {
-        // TODO: add diffusive flux (e.g. tracer and viscosity)
-        if (enableDiffusion)
-            return NumEqVector(0.0);
-
-        return NumEqVector(0.0);
+        // Add viscous momentum flux
+        return ViscousFluxType::flux(problem, element, fvGeometry, elemVolVars, scvf);
     }
 };
 

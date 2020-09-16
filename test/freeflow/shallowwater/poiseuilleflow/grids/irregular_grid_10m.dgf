@@ -1,0 +1,932 @@
+DGF
+Vertex             % the vertices of the grid
+0.0 -50.0             % vertex  0 
+400.0 -50.0             % vertex  1 
+400.0 50.0             % vertex  2 
+0.0 50.0             % vertex  3 
+200.0 -50.0             % vertex  4 
+400.0 0.0             % vertex  5 
+200.0 50.0             % vertex  6 
+0.0 0.0             % vertex  7 
+100.0 -50.0             % vertex  8 
+300.0 -50.0             % vertex  9 
+400.0 -25.0             % vertex  10 
+400.0 25.0             % vertex  11 
+300.0 50.0             % vertex  12 
+100.0 50.0             % vertex  13 
+0.0 25.0             % vertex  14 
+0.0 -25.0             % vertex  15 
+50.0 -50.0             % vertex  16 
+150.0 -50.0             % vertex  17 
+250.0 -50.0             % vertex  18 
+350.0 -50.0             % vertex  19 
+400.0 -37.5             % vertex  20 
+400.0 -12.5             % vertex  21 
+400.0 12.5             % vertex  22 
+400.0 37.5             % vertex  23 
+350.0 50.0             % vertex  24 
+250.0 50.0             % vertex  25 
+150.0 50.0             % vertex  26 
+50.0 50.0             % vertex  27 
+0.0 37.5             % vertex  28 
+0.0 12.5             % vertex  29 
+0.0 -12.5             % vertex  30 
+0.0 -37.5             % vertex  31 
+25.0 -50.0             % vertex  32 
+75.0 -50.0             % vertex  33 
+125.0 -50.0             % vertex  34 
+175.0 -50.0             % vertex  35 
+225.0 -50.0             % vertex  36 
+275.0 -50.0             % vertex  37 
+325.0 -50.0             % vertex  38 
+375.0 -50.0             % vertex  39 
+375.0 50.0             % vertex  40 
+325.0 50.0             % vertex  41 
+275.0 50.0             % vertex  42 
+225.0 50.0             % vertex  43 
+175.0 50.0             % vertex  44 
+125.0 50.0             % vertex  45 
+75.0 50.0             % vertex  46 
+25.0 50.0             % vertex  47 
+12.5 -50.0             % vertex  48 
+37.5 -50.0             % vertex  49 
+62.5 -50.0             % vertex  50 
+87.5 -50.0             % vertex  51 
+112.5 -50.0             % vertex  52 
+137.5 -50.0             % vertex  53 
+162.5 -50.0             % vertex  54 
+187.5 -50.0             % vertex  55 
+212.5 -50.0             % vertex  56 
+237.5 -50.0             % vertex  57 
+262.5 -50.0             % vertex  58 
+287.5 -50.0             % vertex  59 
+312.5 -50.0             % vertex  60 
+337.5 -50.0             % vertex  61 
+362.5 -50.0             % vertex  62 
+387.5 -50.0             % vertex  63 
+387.5 50.0             % vertex  64 
+362.5 50.0             % vertex  65 
+337.5 50.0             % vertex  66 
+312.5 50.0             % vertex  67 
+287.5 50.0             % vertex  68 
+262.5 50.0             % vertex  69 
+237.5 50.0             % vertex  70 
+212.5 50.0             % vertex  71 
+187.5 50.0             % vertex  72 
+162.5 50.0             % vertex  73 
+137.5 50.0             % vertex  74 
+112.5 50.0             % vertex  75 
+87.5 50.0             % vertex  76 
+62.5 50.0             % vertex  77 
+37.5 50.0             % vertex  78 
+12.5 50.0             % vertex  79 
+18.3013 39.8584             % vertex  80 
+10.955 19.119500000000002             % vertex  81 
+30.8449 38.956599999999995             % vertex  82 
+68.687 39.1991             % vertex  83 
+68.7694 -39.1695             % vertex  84 
+81.2612 -39.1704             % vertex  85 
+81.2255 39.18429999999999             % vertex  86 
+93.7496 39.1763             % vertex  87 
+118.7499 39.17529999999999             % vertex  88 
+118.7509 -39.1746             % vertex  89 
+131.2504 -39.1748             % vertex  90 
+131.2499 39.1751             % vertex  91 
+143.75 39.175             % vertex  92 
+168.75 39.175             % vertex  93 
+168.75 -39.175             % vertex  94 
+181.25 -39.175             % vertex  95 
+181.25 39.175             % vertex  96 
+193.75 39.175             % vertex  97 
+218.75 39.175             % vertex  98 
+218.75 -39.175             % vertex  99 
+231.25 -39.175             % vertex  100 
+231.25 39.175             % vertex  101 
+243.7499 39.175             % vertex  102 
+268.7496 39.1747             % vertex  103 
+268.75 -39.175             % vertex  104 
+281.25 -39.1751             % vertex  105 
+281.249 39.1743             % vertex  106 
+293.7477 39.1733             % vertex  107 
+318.7382 39.167199999999994             % vertex  108 
+318.7552 -39.178             % vertex  109 
+331.3224 -39.1993             % vertex  110 
+331.2298 39.1639             % vertex  111 
+343.742 39.1806             % vertex  112 
+369.1121 38.889399999999995             % vertex  113 
+389.0289 19.018699999999995             % vertex  114 
+389.2322 6.203000000000003             % vertex  115 
+389.2514 -6.3536             % vertex  116 
+356.3962 -39.1194             % vertex  117 
+369.1934 -38.963             % vertex  118 
+381.7195 -39.8624             % vertex  119 
+389.9164 -31.6719             % vertex  120 
+389.0716 -19.1293             % vertex  121 
+381.6789 39.8125             % vertex  122 
+389.8813 31.616699999999994             % vertex  123 
+356.28 39.0805             % vertex  124 
+343.8535 -39.2066             % vertex  125 
+306.2502 -39.175399999999996             % vertex  126 
+306.2446 39.1712             % vertex  127 
+293.75 -39.175200000000004             % vertex  128 
+256.25 -39.175             % vertex  129 
+256.2498 39.174899999999994             % vertex  130 
+243.75 -39.175             % vertex  131 
+206.25 -39.175             % vertex  132 
+206.25 39.175             % vertex  133 
+193.75 -39.175             % vertex  134 
+156.2501 -39.175             % vertex  135 
+156.25 39.175             % vertex  136 
+143.7502 -39.1749             % vertex  137 
+106.2522 -39.174             % vertex  138 
+106.2497 39.1756             % vertex  139 
+93.7551 -39.1726             % vertex  140 
+56.2586 -39.1839             % vertex  141 
+10.7792 -6.2194999999999965             % vertex  142 
+43.7066 -39.0721             % vertex  143 
+30.8768 -38.903             % vertex  144 
+10.1142 -31.6235             % vertex  145 
+18.315 -39.8192             % vertex  146 
+10.9712 -19.0335             % vertex  147 
+10.7716 6.339199999999998             % vertex  148 
+56.1822 39.2024             % vertex  149 
+43.6513 39.113200000000006             % vertex  150 
+10.1027 31.6674             % vertex  151 
+337.4302 28.307900000000004             % vertex  152 
+350.1703 -28.4805             % vertex  153 
+391.8053 41.8036             % vertex  154 
+378.2853 12.2273             % vertex  155 
+287.4978 28.348399999999998             % vertex  156 
+237.4999 28.349999999999994             % vertex  157 
+187.5 28.349999999999994             % vertex  158 
+137.5 28.350099999999998             % vertex  159 
+87.497 28.3545             % vertex  160 
+62.5665 -28.3266             % vertex  161 
+21.6843 12.494300000000003             % vertex  162 
+21.2113 0.1407999999999987             % vertex  163 
+62.319 28.433800000000005             % vertex  164 
+8.1884 41.8103             % vertex  165 
+23.1716 26.715999999999994             % vertex  166 
+75.0301 -28.3361             % vertex  167 
+74.8951 28.374300000000005             % vertex  168 
+112.502 -28.349             % vertex  169 
+112.4997 28.3506             % vertex  170 
+125.0008 -28.3496             % vertex  171 
+124.9999 28.350300000000004             % vertex  172 
+162.5001 -28.35             % vertex  173 
+162.5 28.349999999999994             % vertex  174 
+175.0 -28.35             % vertex  175 
+175.0 28.349999999999994             % vertex  176 
+212.5 -28.35             % vertex  177 
+212.5 28.349999999999994             % vertex  178 
+225.0 -28.35             % vertex  179 
+225.0 28.349999999999994             % vertex  180 
+262.5 -28.35             % vertex  181 
+262.4996 28.3497             % vertex  182 
+275.0 -28.3501             % vertex  183 
+274.9991 28.349400000000003             % vertex  184 
+312.4999 -28.351             % vertex  185 
+312.4868 28.340500000000006             % vertex  186 
+325.0934 -28.3708             % vertex  187 
+324.9682 28.327799999999996             % vertex  188 
+376.7748 26.5655             % vertex  189 
+376.8849 -26.7299             % vertex  190 
+362.66 -28.0665             % vertex  191 
+391.8223 -41.8097             % vertex  192 
+378.3769 -12.520499999999998             % vertex  193 
+362.4387 27.877899999999997             % vertex  194 
+378.8275 -0.1747000000000014             % vertex  195 
+337.7323 -28.4402             % vertex  196 
+349.9237 28.387699999999995             % vertex  197 
+299.9946 28.346100000000007             % vertex  198 
+287.5 -28.3502             % vertex  199 
+300.0 -28.3505             % vertex  200 
+249.9999 28.349900000000005             % vertex  201 
+237.5 -28.35             % vertex  202 
+250.0 -28.35             % vertex  203 
+200.0 28.349999999999994             % vertex  204 
+187.5 -28.35             % vertex  205 
+200.0 -28.35             % vertex  206 
+150.0 28.349999999999994             % vertex  207 
+137.5003 -28.3498             % vertex  208 
+150.0001 -28.3499             % vertex  209 
+99.9992 28.351600000000005             % vertex  210 
+87.5124 -28.344             % vertex  211 
+100.0051 -28.3475             % vertex  212 
+37.4449 28.052000000000007             % vertex  213 
+50.0781 -28.4135             % vertex  214 
+37.5263 -27.9324             % vertex  215 
+8.1858 -41.7943             % vertex  216 
+23.2131 -26.5943             % vertex  217 
+21.721 -12.2637             % vertex  218 
+49.936 28.4683             % vertex  219 
+106.2524 -17.5238             % vertex  220 
+156.2501 -17.525             % vertex  221 
+206.25 -17.525             % vertex  222 
+256.25 -17.525             % vertex  223 
+306.25 -17.525799999999997             % vertex  224 
+44.3158 -18.0269             % vertex  225 
+44.1972 18.194000000000003             % vertex  226 
+93.7562 -17.5218             % vertex  227 
+56.4592 -17.3662             % vertex  228 
+68.3923 17.544300000000007             % vertex  229 
+81.2499 17.529799999999994             % vertex  230 
+68.8038 -17.490699999999997             % vertex  231 
+143.7502 -17.524900000000002             % vertex  232 
+106.2497 17.525800000000004             % vertex  233 
+118.7499 17.5253             % vertex  234 
+131.2499 17.525099999999995             % vertex  235 
+118.7509 -17.524500000000003             % vertex  236 
+193.75 -17.525             % vertex  237 
+156.25 17.525000000000006             % vertex  238 
+168.75 17.525000000000006             % vertex  239 
+181.25 17.525000000000006             % vertex  240 
+168.75 -17.525             % vertex  241 
+243.75 -17.525             % vertex  242 
+206.25 17.525000000000006             % vertex  243 
+218.75 17.525000000000006             % vertex  244 
+231.25 17.525000000000006             % vertex  245 
+218.75 -17.525             % vertex  246 
+293.75 -17.5253             % vertex  247 
+256.2498 17.524900000000002             % vertex  248 
+268.7496 17.524699999999996             % vertex  249 
+281.249 17.524299999999997             % vertex  250 
+268.75 -17.525             % vertex  251 
+306.2435 17.5201             % vertex  252 
+318.7318 17.510800000000003             % vertex  253 
+331.1925 17.476200000000006             % vertex  254 
+318.7499 -17.5283             % vertex  255 
+355.5431 17.828500000000005             % vertex  256 
+356.0584 -18.2105             % vertex  257 
+366.9986 16.515699999999995             % vertex  258 
+368.8495 5.2353999999999985             % vertex  259 
+368.9695 -5.839700000000001             % vertex  260 
+344.3216 -17.8399             % vertex  261 
+331.6322 -17.5439             % vertex  262 
+343.5249 17.311000000000007             % vertex  263 
+281.25 -17.525100000000002             % vertex  264 
+293.7475 17.523200000000003             % vertex  265 
+231.25 -17.525             % vertex  266 
+243.7499 17.525000000000006             % vertex  267 
+181.25 -17.525             % vertex  268 
+193.75 17.525000000000006             % vertex  269 
+131.2504 -17.5248             % vertex  270 
+143.75 17.525000000000006             % vertex  271 
+81.2671 -17.5154             % vertex  272 
+93.7493 17.527             % vertex  273 
+32.8684 16.8639             % vertex  274 
+32.9672 -16.5845             % vertex  275 
+31.184 -5.291499999999999             % vertex  276 
+55.8215 17.814400000000006             % vertex  277 
+31.1277 5.786299999999997             % vertex  278 
+75.0 6.700000000000003             % vertex  279 
+112.5 -6.700000000000003             % vertex  280 
+162.5 6.700000000000003             % vertex  281 
+212.5 6.700000000000003             % vertex  282 
+262.5 6.700000000000003             % vertex  283 
+312.5 6.700000000000003             % vertex  284 
+367.2567 -16.8956             % vertex  285 
+351.4402 -7.979799999999997             % vertex  286 
+349.5601 5.1655000000000015             % vertex  287 
+262.5 -6.700000000000003             % vertex  288 
+212.5 -6.700000000000003             % vertex  289 
+162.5 -6.700000000000003             % vertex  290 
+112.5 6.700000000000003             % vertex  291 
+62.5 -6.700000000000003             % vertex  292 
+49.0159 7.832500000000003             % vertex  293 
+40.2337 0.5698000000000008             % vertex  294 
+87.5 -6.700000000000003             % vertex  295 
+75.0 -6.700000000000003             % vertex  296 
+100.0 -6.700000000000003             % vertex  297 
+125.0 6.700000000000003             % vertex  298 
+150.0 -6.700000000000003             % vertex  299 
+175.0 6.700000000000003             % vertex  300 
+187.5 -6.700000000000003             % vertex  301 
+175.0 -6.700000000000003             % vertex  302 
+200.0 -6.700000000000003             % vertex  303 
+225.0 6.700000000000003             % vertex  304 
+250.0 -6.700000000000003             % vertex  305 
+275.0 6.700000000000003             % vertex  306 
+300.0 -6.700000000000003             % vertex  307 
+325.0 6.700000000000003             % vertex  308 
+312.5 -6.700000000000003             % vertex  309 
+359.916 -0.6762999999999977             % vertex  310 
+337.5 6.700000000000003             % vertex  311 
+325.0 -6.700000000000003             % vertex  312 
+338.8961 -6.384500000000003             % vertex  313 
+275.0 -6.700000000000003             % vertex  314 
+287.5 -6.700000000000003             % vertex  315 
+300.0 6.700000000000003             % vertex  316 
+287.5 6.700000000000003             % vertex  317 
+225.0 -6.700000000000003             % vertex  318 
+237.5 -6.700000000000003             % vertex  319 
+250.0 6.700000000000003             % vertex  320 
+237.5 6.700000000000003             % vertex  321 
+200.0 6.700000000000003             % vertex  322 
+187.5 6.700000000000003             % vertex  323 
+125.0 -6.700000000000003             % vertex  324 
+137.5 -6.700000000000003             % vertex  325 
+150.0 6.700000000000003             % vertex  326 
+137.5 6.700000000000003             % vertex  327 
+100.0 6.700000000000003             % vertex  328 
+87.5 6.700000000000003             % vertex  329 
+61.0683 6.413699999999999             % vertex  330 
+50.4908 -5.2393             % vertex  331 
+39.843 -9.398000000000003             % vertex  332 
+39.5844 9.940800000000003             % vertex  333 
+360.5904 -10.006500000000003             % vertex  334 
+360.1003 9.359900000000003             % vertex  335 
+#
+SIMPLEX             % a simplex grid
+79 80 47             % triangle  0 , vertices  79 ,  80 ,  47 
+79 3 165             % triangle  1 , vertices  79 ,  3 ,  165 
+165 28 151             % triangle  2 , vertices  165 ,  28 ,  151 
+151 14 81             % triangle  3 , vertices  151 ,  14 ,  81 
+86 76 46             % triangle  4 , vertices  86 ,  76 ,  46 
+84 50 33             % triangle  5 , vertices  84 ,  50 ,  33 
+85 84 33             % triangle  6 , vertices  85 ,  84 ,  33 
+76 87 13             % triangle  7 , vertices  76 ,  87 ,  13 
+87 76 86             % triangle  8 , vertices  87 ,  76 ,  86 
+91 74 45             % triangle  9 , vertices  91 ,  74 ,  45 
+138 52 89             % triangle  10 , vertices  138 ,  52 ,  89 
+90 89 34             % triangle  11 , vertices  90 ,  89 ,  34 
+74 92 26             % triangle  12 , vertices  74 ,  92 ,  26 
+92 74 91             % triangle  13 , vertices  92 ,  74 ,  91 
+96 72 44             % triangle  14 , vertices  96 ,  72 ,  44 
+135 54 94             % triangle  15 , vertices  135 ,  54 ,  94 
+95 94 35             % triangle  16 , vertices  95 ,  94 ,  35 
+72 97 6             % triangle  17 , vertices  72 ,  97 ,  6 
+97 72 96             % triangle  18 , vertices  97 ,  72 ,  96 
+101 70 43             % triangle  19 , vertices  101 ,  70 ,  43 
+132 56 99             % triangle  20 , vertices  132 ,  56 ,  99 
+100 99 36             % triangle  21 , vertices  100 ,  99 ,  36 
+70 102 25             % triangle  22 , vertices  70 ,  102 ,  25 
+102 70 101             % triangle  23 , vertices  102 ,  70 ,  101 
+106 68 42             % triangle  24 , vertices  106 ,  68 ,  42 
+129 58 104             % triangle  25 , vertices  129 ,  58 ,  104 
+105 104 37             % triangle  26 , vertices  105 ,  104 ,  37 
+68 107 12             % triangle  27 , vertices  68 ,  107 ,  12 
+107 68 106             % triangle  28 , vertices  107 ,  68 ,  106 
+111 66 41             % triangle  29 , vertices  111 ,  66 ,  41 
+126 60 109             % triangle  30 , vertices  126 ,  60 ,  109 
+110 109 38             % triangle  31 , vertices  110 ,  109 ,  38 
+66 112 24             % triangle  32 , vertices  66 ,  112 ,  24 
+152 112 111             % triangle  33 , vertices  152 ,  112 ,  111 
+122 64 40             % triangle  34 , vertices  122 ,  64 ,  40 
+22 11 114             % triangle  35 , vertices  22 ,  11 ,  114 
+124 24 112             % triangle  36 , vertices  124 ,  24 ,  112 
+115 22 114             % triangle  37 , vertices  115 ,  22 ,  114 
+262 187 196             % triangle  38 , vertices  262 ,  187 ,  196 
+125 61 19             % triangle  39 , vertices  125 ,  61 ,  19 
+62 118 117             % triangle  40 , vertices  62 ,  118 ,  117 
+119 118 39             % triangle  41 , vertices  119 ,  118 ,  39 
+63 1 192             % triangle  42 , vertices  63 ,  1 ,  192 
+119 39 63             % triangle  43 , vertices  119 ,  39 ,  63 
+192 20 120             % triangle  44 , vertices  192 ,  20 ,  120 
+154 23 2             % triangle  45 , vertices  154 ,  23 ,  2 
+123 11 23             % triangle  46 , vertices  123 ,  11 ,  23 
+154 64 122             % triangle  47 , vertices  154 ,  64 ,  122 
+115 114 155             % triangle  48 , vertices  115 ,  114 ,  155 
+61 110 38             % triangle  49 , vertices  61 ,  110 ,  38 
+128 59 9             % triangle  50 , vertices  128 ,  59 ,  9 
+198 127 107             % triangle  51 , vertices  198 ,  127 ,  107 
+59 105 37             % triangle  52 , vertices  59 ,  105 ,  37 
+131 57 18             % triangle  53 , vertices  131 ,  57 ,  18 
+201 130 102             % triangle  54 , vertices  201 ,  130 ,  102 
+57 100 36             % triangle  55 , vertices  57 ,  100 ,  36 
+134 55 4             % triangle  56 , vertices  134 ,  55 ,  4 
+204 133 97             % triangle  57 , vertices  204 ,  133 ,  97 
+55 95 35             % triangle  58 , vertices  55 ,  95 ,  35 
+137 53 17             % triangle  59 , vertices  137 ,  53 ,  17 
+207 136 92             % triangle  60 , vertices  207 ,  136 ,  92 
+53 90 34             % triangle  61 , vertices  53 ,  90 ,  34 
+140 51 8             % triangle  62 , vertices  140 ,  51 ,  8 
+210 139 87             % triangle  63 , vertices  210 ,  139 ,  87 
+51 85 33             % triangle  64 , vertices  51 ,  85 ,  33 
+164 83 149             % triangle  65 , vertices  164 ,  83 ,  149 
+144 49 143             % triangle  66 , vertices  144 ,  49 ,  143 
+166 151 81             % triangle  67 , vertices  166 ,  151 ,  81 
+142 7 30             % triangle  68 , vertices  142 ,  7 ,  30 
+147 15 145             % triangle  69 , vertices  147 ,  15 ,  145 
+216 31 0             % triangle  70 , vertices  216 ,  31 ,  0 
+145 15 31             % triangle  71 , vertices  145 ,  15 ,  31 
+216 145 31             % triangle  72 , vertices  216 ,  145 ,  31 
+142 30 147             % triangle  73 , vertices  142 ,  30 ,  147 
+29 81 14             % triangle  74 , vertices  29 ,  81 ,  14 
+162 148 163             % triangle  75 , vertices  162 ,  148 ,  163 
+168 86 83             % triangle  76 , vertices  168 ,  86 ,  83 
+151 80 165             % triangle  77 , vertices  151 ,  80 ,  165 
+150 27 78             % triangle  78 , vertices  150 ,  27 ,  78 
+82 78 47             % triangle  79 , vertices  82 ,  78 ,  47 
+82 47 80             % triangle  80 , vertices  82 ,  47 ,  80 
+81 29 148             % triangle  81 , vertices  81 ,  29 ,  148 
+166 81 162             % triangle  82 , vertices  166 ,  81 ,  162 
+83 77 149             % triangle  83 , vertices  83 ,  77 ,  149 
+83 46 77             % triangle  84 , vertices  83 ,  46 ,  77 
+49 16 143             % triangle  85 , vertices  49 ,  16 ,  143 
+86 46 83             % triangle  86 , vertices  86 ,  46 ,  83 
+141 16 50             % triangle  87 , vertices  141 ,  16 ,  50 
+161 141 84             % triangle  88 , vertices  161 ,  141 ,  84 
+85 51 140             % triangle  89 , vertices  85 ,  51 ,  140 
+86 168 160             % triangle  90 , vertices  86 ,  168 ,  160 
+139 75 13             % triangle  91 , vertices  139 ,  75 ,  13 
+233 170 210             % triangle  92 , vertices  233 ,  170 ,  210 
+88 45 75             % triangle  93 , vertices  88 ,  45 ,  75 
+172 91 88             % triangle  94 , vertices  172 ,  91 ,  88 
+89 52 34             % triangle  95 , vertices  89 ,  52 ,  34 
+91 45 88             % triangle  96 , vertices  91 ,  45 ,  88 
+138 8 52             % triangle  97 , vertices  138 ,  8 ,  52 
+169 138 89             % triangle  98 , vertices  169 ,  138 ,  89 
+90 53 137             % triangle  99 , vertices  90 ,  53 ,  137 
+91 172 159             % triangle  100 , vertices  91 ,  172 ,  159 
+136 73 26             % triangle  101 , vertices  136 ,  73 ,  26 
+238 174 207             % triangle  102 , vertices  238 ,  174 ,  207 
+93 44 73             % triangle  103 , vertices  93 ,  44 ,  73 
+176 96 93             % triangle  104 , vertices  176 ,  96 ,  93 
+94 54 35             % triangle  105 , vertices  94 ,  54 ,  35 
+96 44 93             % triangle  106 , vertices  96 ,  44 ,  93 
+135 17 54             % triangle  107 , vertices  135 ,  17 ,  54 
+173 135 94             % triangle  108 , vertices  173 ,  135 ,  94 
+95 55 134             % triangle  109 , vertices  95 ,  55 ,  134 
+96 176 158             % triangle  110 , vertices  96 ,  176 ,  158 
+133 71 6             % triangle  111 , vertices  133 ,  71 ,  6 
+243 178 204             % triangle  112 , vertices  243 ,  178 ,  204 
+98 43 71             % triangle  113 , vertices  98 ,  43 ,  71 
+180 101 98             % triangle  114 , vertices  180 ,  101 ,  98 
+99 56 36             % triangle  115 , vertices  99 ,  56 ,  36 
+101 43 98             % triangle  116 , vertices  101 ,  43 ,  98 
+132 4 56             % triangle  117 , vertices  132 ,  4 ,  56 
+177 132 99             % triangle  118 , vertices  177 ,  132 ,  99 
+100 57 131             % triangle  119 , vertices  100 ,  57 ,  131 
+101 180 157             % triangle  120 , vertices  101 ,  180 ,  157 
+130 69 25             % triangle  121 , vertices  130 ,  69 ,  25 
+248 182 201             % triangle  122 , vertices  248 ,  182 ,  201 
+103 42 69             % triangle  123 , vertices  103 ,  42 ,  69 
+184 106 103             % triangle  124 , vertices  184 ,  106 ,  103 
+104 58 37             % triangle  125 , vertices  104 ,  58 ,  37 
+106 42 103             % triangle  126 , vertices  106 ,  42 ,  103 
+129 18 58             % triangle  127 , vertices  129 ,  18 ,  58 
+181 129 104             % triangle  128 , vertices  181 ,  129 ,  104 
+105 59 128             % triangle  129 , vertices  105 ,  59 ,  128 
+106 184 156             % triangle  130 , vertices  106 ,  184 ,  156 
+127 67 12             % triangle  131 , vertices  127 ,  67 ,  12 
+252 186 198             % triangle  132 , vertices  252 ,  186 ,  198 
+108 41 67             % triangle  133 , vertices  108 ,  41 ,  67 
+188 111 108             % triangle  134 , vertices  188 ,  111 ,  108 
+109 60 38             % triangle  135 , vertices  109 ,  60 ,  38 
+111 41 108             % triangle  136 , vertices  111 ,  41 ,  108 
+126 9 60             % triangle  137 , vertices  126 ,  9 ,  60 
+185 126 109             % triangle  138 , vertices  185 ,  126 ,  109 
+110 61 125             % triangle  139 , vertices  110 ,  61 ,  125 
+111 188 152             % triangle  140 , vertices  111 ,  188 ,  152 
+124 65 24             % triangle  141 , vertices  124 ,  65 ,  24 
+113 40 65             % triangle  142 , vertices  113 ,  40 ,  65 
+112 66 111             % triangle  143 , vertices  112 ,  66 ,  111 
+124 113 65             % triangle  144 , vertices  124 ,  113 ,  65 
+115 5 22             % triangle  145 , vertices  115 ,  5 ,  22 
+123 189 114             % triangle  146 , vertices  123 ,  189 ,  114 
+116 21 5             % triangle  147 , vertices  116 ,  21 ,  5 
+190 121 193             % triangle  148 , vertices  190 ,  121 ,  193 
+121 10 21             % triangle  149 , vertices  121 ,  10 ,  21 
+116 5 115             % triangle  150 , vertices  116 ,  5 ,  115 
+117 19 62             % triangle  151 , vertices  117 ,  19 ,  62 
+190 119 120             % triangle  152 , vertices  190 ,  119 ,  120 
+125 19 117             % triangle  153 , vertices  125 ,  19 ,  117 
+191 153 117             % triangle  154 , vertices  191 ,  153 ,  117 
+118 62 39             % triangle  155 , vertices  118 ,  62 ,  39 
+119 192 120             % triangle  156 , vertices  119 ,  192 ,  120 
+191 117 118             % triangle  157 , vertices  191 ,  117 ,  118 
+190 118 119             % triangle  158 , vertices  190 ,  118 ,  119 
+120 20 10             % triangle  159 , vertices  120 ,  20 ,  10 
+121 21 116             % triangle  160 , vertices  121 ,  21 ,  116 
+121 120 10             % triangle  161 , vertices  121 ,  120 ,  10 
+154 2 64             % triangle  162 , vertices  154 ,  2 ,  64 
+122 40 113             % triangle  163 , vertices  122 ,  40 ,  113 
+189 155 114             % triangle  164 , vertices  189 ,  155 ,  114 
+123 114 11             % triangle  165 , vertices  123 ,  114 ,  11 
+189 122 113             % triangle  166 , vertices  189 ,  122 ,  113 
+190 285 191             % triangle  167 , vertices  190 ,  285 ,  191 
+185 109 187             % triangle  168 , vertices  185 ,  109 ,  187 
+194 113 124             % triangle  169 , vertices  194 ,  113 ,  124 
+128 9 126             % triangle  170 , vertices  128 ,  9 ,  126 
+188 108 186             % triangle  171 , vertices  188 ,  108 ,  186 
+127 12 107             % triangle  172 , vertices  127 ,  12 ,  107 
+127 108 67             % triangle  173 , vertices  127 ,  108 ,  67 
+183 104 105             % triangle  174 , vertices  183 ,  104 ,  105 
+199 105 128             % triangle  175 , vertices  199 ,  105 ,  128 
+131 18 129             % triangle  176 , vertices  131 ,  18 ,  129 
+184 103 182             % triangle  177 , vertices  184 ,  103 ,  182 
+130 25 102             % triangle  178 , vertices  130 ,  25 ,  102 
+130 103 69             % triangle  179 , vertices  130 ,  103 ,  69 
+179 99 100             % triangle  180 , vertices  179 ,  99 ,  100 
+202 100 131             % triangle  181 , vertices  202 ,  100 ,  131 
+134 4 132             % triangle  182 , vertices  134 ,  4 ,  132 
+180 98 178             % triangle  183 , vertices  180 ,  98 ,  178 
+133 6 97             % triangle  184 , vertices  133 ,  6 ,  97 
+133 98 71             % triangle  185 , vertices  133 ,  98 ,  71 
+175 94 95             % triangle  186 , vertices  175 ,  94 ,  95 
+205 95 134             % triangle  187 , vertices  205 ,  95 ,  134 
+137 17 135             % triangle  188 , vertices  137 ,  17 ,  135 
+176 93 174             % triangle  189 , vertices  176 ,  93 ,  174 
+136 26 92             % triangle  190 , vertices  136 ,  26 ,  92 
+136 93 73             % triangle  191 , vertices  136 ,  93 ,  73 
+171 89 90             % triangle  192 , vertices  171 ,  89 ,  90 
+208 90 137             % triangle  193 , vertices  208 ,  90 ,  137 
+140 8 138             % triangle  194 , vertices  140 ,  8 ,  138 
+172 88 170             % triangle  195 , vertices  172 ,  88 ,  170 
+139 13 87             % triangle  196 , vertices  139 ,  13 ,  87 
+139 88 75             % triangle  197 , vertices  139 ,  88 ,  75 
+167 84 85             % triangle  198 , vertices  167 ,  84 ,  85 
+211 85 140             % triangle  199 , vertices  211 ,  85 ,  140 
+141 50 84             % triangle  200 , vertices  141 ,  50 ,  84 
+214 141 161             % triangle  201 , vertices  214 ,  141 ,  161 
+143 16 141             % triangle  202 , vertices  143 ,  16 ,  141 
+219 149 150             % triangle  203 , vertices  219 ,  149 ,  150 
+217 146 144             % triangle  204 , vertices  217 ,  146 ,  144 
+144 32 49             % triangle  205 , vertices  144 ,  32 ,  49 
+275 217 215             % triangle  206 , vertices  275 ,  217 ,  215 
+216 48 146             % triangle  207 , vertices  216 ,  48 ,  146 
+146 32 144             % triangle  208 , vertices  146 ,  32 ,  144 
+147 30 15             % triangle  209 , vertices  147 ,  30 ,  15 
+217 147 145             % triangle  210 , vertices  217 ,  147 ,  145 
+146 48 32             % triangle  211 , vertices  146 ,  48 ,  32 
+218 163 142             % triangle  212 , vertices  218 ,  163 ,  142 
+145 146 217             % triangle  213 , vertices  145 ,  146 ,  217 
+148 7 142             % triangle  214 , vertices  148 ,  7 ,  142 
+148 29 7             % triangle  215 , vertices  148 ,  29 ,  7 
+219 213 226             % triangle  216 , vertices  219 ,  213 ,  226 
+149 77 27             % triangle  217 , vertices  149 ,  77 ,  27 
+150 78 82             % triangle  218 , vertices  150 ,  78 ,  82 
+150 149 27             % triangle  219 , vertices  150 ,  149 ,  27 
+151 166 80             % triangle  220 , vertices  151 ,  166 ,  80 
+151 28 14             % triangle  221 , vertices  151 ,  28 ,  14 
+187 109 110             % triangle  222 , vertices  187 ,  109 ,  110 
+197 124 112             % triangle  223 , vertices  197 ,  124 ,  112 
+196 110 125             % triangle  224 , vertices  196 ,  110 ,  125 
+153 125 117             % triangle  225 , vertices  153 ,  125 ,  117 
+154 122 123             % triangle  226 , vertices  154 ,  122 ,  123 
+154 123 23             % triangle  227 , vertices  154 ,  123 ,  23 
+195 116 115             % triangle  228 , vertices  195 ,  116 ,  115 
+189 113 194             % triangle  229 , vertices  189 ,  113 ,  194 
+156 107 106             % triangle  230 , vertices  156 ,  107 ,  106 
+181 104 183             % triangle  231 , vertices  181 ,  104 ,  183 
+157 102 101             % triangle  232 , vertices  157 ,  102 ,  101 
+177 99 179             % triangle  233 , vertices  177 ,  99 ,  179 
+158 97 96             % triangle  234 , vertices  158 ,  97 ,  96 
+173 94 175             % triangle  235 , vertices  173 ,  94 ,  175 
+159 92 91             % triangle  236 , vertices  159 ,  92 ,  91 
+169 89 171             % triangle  237 , vertices  169 ,  89 ,  171 
+160 87 86             % triangle  238 , vertices  160 ,  87 ,  86 
+161 84 167             % triangle  239 , vertices  161 ,  84 ,  167 
+231 167 272             % triangle  240 , vertices  231 ,  167 ,  272 
+214 143 141             % triangle  241 , vertices  214 ,  143 ,  141 
+164 149 219             % triangle  242 , vertices  164 ,  149 ,  219 
+162 81 148             % triangle  243 , vertices  162 ,  81 ,  148 
+213 82 166             % triangle  244 , vertices  213 ,  82 ,  166 
+163 148 142             % triangle  245 , vertices  163 ,  148 ,  142 
+225 214 228             % triangle  246 , vertices  225 ,  214 ,  228 
+168 83 164             % triangle  247 , vertices  168 ,  83 ,  164 
+165 80 79             % triangle  248 , vertices  165 ,  80 ,  79 
+165 3 28             % triangle  249 , vertices  165 ,  3 ,  28 
+213 150 82             % triangle  250 , vertices  213 ,  150 ,  82 
+166 82 80             % triangle  251 , vertices  166 ,  82 ,  80 
+279 230 229             % triangle  252 , vertices  279 ,  230 ,  229 
+167 85 211             % triangle  253 , vertices  167 ,  85 ,  211 
+273 210 160             % triangle  254 , vertices  273 ,  210 ,  160 
+228 161 231             % triangle  255 , vertices  228 ,  161 ,  231 
+270 171 208             % triangle  256 , vertices  270 ,  171 ,  208 
+212 140 138             % triangle  257 , vertices  212 ,  140 ,  138 
+234 170 233             % triangle  258 , vertices  234 ,  170 ,  233 
+170 88 139             % triangle  259 , vertices  170 ,  88 ,  139 
+297 227 220             % triangle  260 , vertices  297 ,  227 ,  220 
+171 90 208             % triangle  261 , vertices  171 ,  90 ,  208 
+271 207 159             % triangle  262 , vertices  271 ,  207 ,  159 
+220 169 236             % triangle  263 , vertices  220 ,  169 ,  236 
+241 175 268             % triangle  264 , vertices  241 ,  175 ,  268 
+209 137 135             % triangle  265 , vertices  209 ,  137 ,  135 
+239 174 238             % triangle  266 , vertices  239 ,  174 ,  238 
+174 93 136             % triangle  267 , vertices  174 ,  93 ,  136 
+300 240 239             % triangle  268 , vertices  300 ,  240 ,  239 
+175 95 205             % triangle  269 , vertices  175 ,  95 ,  205 
+269 204 158             % triangle  270 , vertices  269 ,  204 ,  158 
+221 173 241             % triangle  271 , vertices  221 ,  173 ,  241 
+266 179 202             % triangle  272 , vertices  266 ,  179 ,  202 
+206 134 132             % triangle  273 , vertices  206 ,  134 ,  132 
+244 178 243             % triangle  274 , vertices  244 ,  178 ,  243 
+178 98 133             % triangle  275 , vertices  178 ,  98 ,  133 
+304 245 244             % triangle  276 , vertices  304 ,  245 ,  244 
+179 100 202             % triangle  277 , vertices  179 ,  100 ,  202 
+267 201 157             % triangle  278 , vertices  267 ,  201 ,  157 
+222 177 246             % triangle  279 , vertices  222 ,  177 ,  246 
+264 183 199             % triangle  280 , vertices  264 ,  183 ,  199 
+203 131 129             % triangle  281 , vertices  203 ,  131 ,  129 
+249 182 248             % triangle  282 , vertices  249 ,  182 ,  248 
+182 103 130             % triangle  283 , vertices  182 ,  103 ,  130 
+306 250 249             % triangle  284 , vertices  306 ,  250 ,  249 
+183 105 199             % triangle  285 , vertices  183 ,  105 ,  199 
+265 198 156             % triangle  286 , vertices  265 ,  198 ,  156 
+223 181 251             % triangle  287 , vertices  223 ,  181 ,  251 
+196 187 110             % triangle  288 , vertices  196 ,  187 ,  110 
+200 128 126             % triangle  289 , vertices  200 ,  128 ,  126 
+253 186 252             % triangle  290 , vertices  253 ,  186 ,  252 
+186 108 127             % triangle  291 , vertices  186 ,  108 ,  127 
+308 254 253             % triangle  292 , vertices  308 ,  254 ,  253 
+196 125 153             % triangle  293 , vertices  196 ,  125 ,  153 
+263 197 152             % triangle  294 , vertices  263 ,  197 ,  152 
+224 185 255             % triangle  295 , vertices  224 ,  185 ,  255 
+258 189 194             % triangle  296 , vertices  258 ,  189 ,  194 
+189 123 122             % triangle  297 , vertices  189 ,  123 ,  122 
+190 120 121             % triangle  298 , vertices  190 ,  120 ,  121 
+257 153 191             % triangle  299 , vertices  257 ,  153 ,  191 
+191 118 190             % triangle  300 , vertices  191 ,  118 ,  190 
+195 115 155             % triangle  301 , vertices  195 ,  115 ,  155 
+192 119 63             % triangle  302 , vertices  192 ,  119 ,  63 
+192 1 20             % triangle  303 , vertices  192 ,  1 ,  20 
+193 121 116             % triangle  304 , vertices  193 ,  121 ,  116 
+195 193 116             % triangle  305 , vertices  195 ,  193 ,  116 
+258 155 189             % triangle  306 , vertices  258 ,  155 ,  189 
+259 155 258             % triangle  307 , vertices  259 ,  155 ,  258 
+257 285 334             % triangle  308 , vertices  257 ,  285 ,  334 
+287 256 263             % triangle  309 , vertices  287 ,  256 ,  263 
+255 185 187             % triangle  310 , vertices  255 ,  185 ,  187 
+260 259 310             % triangle  311 , vertices  260 ,  259 ,  310 
+197 112 152             % triangle  312 , vertices  197 ,  112 ,  152 
+197 194 124             % triangle  313 , vertices  197 ,  194 ,  124 
+198 107 156             % triangle  314 , vertices  198 ,  107 ,  156 
+198 186 127             % triangle  315 , vertices  198 ,  186 ,  127 
+305 223 288             % triangle  316 , vertices  305 ,  223 ,  288 
+265 156 250             % triangle  317 , vertices  265 ,  156 ,  250 
+200 126 185             % triangle  318 , vertices  200 ,  126 ,  185 
+200 199 128             % triangle  319 , vertices  200 ,  199 ,  128 
+201 102 157             % triangle  320 , vertices  201 ,  102 ,  157 
+201 182 130             % triangle  321 , vertices  201 ,  182 ,  130 
+323 240 300             % triangle  322 , vertices  323 ,  240 ,  300 
+267 157 245             % triangle  323 , vertices  267 ,  157 ,  245 
+203 129 181             % triangle  324 , vertices  203 ,  129 ,  181 
+203 202 131             % triangle  325 , vertices  203 ,  202 ,  131 
+204 97 158             % triangle  326 , vertices  204 ,  97 ,  158 
+204 178 133             % triangle  327 , vertices  204 ,  178 ,  133 
+299 221 290             % triangle  328 , vertices  299 ,  221 ,  290 
+269 158 240             % triangle  329 , vertices  269 ,  158 ,  240 
+206 132 177             % triangle  330 , vertices  206 ,  132 ,  177 
+206 205 134             % triangle  331 , vertices  206 ,  205 ,  134 
+207 92 159             % triangle  332 , vertices  207 ,  92 ,  159 
+207 174 136             % triangle  333 , vertices  207 ,  174 ,  136 
+298 235 234             % triangle  334 , vertices  298 ,  235 ,  234 
+271 159 235             % triangle  335 , vertices  271 ,  159 ,  235 
+209 135 173             % triangle  336 , vertices  209 ,  135 ,  173 
+209 208 137             % triangle  337 , vertices  209 ,  208 ,  137 
+210 87 160             % triangle  338 , vertices  210 ,  87 ,  160 
+210 170 139             % triangle  339 , vertices  210 ,  170 ,  139 
+332 225 331             % triangle  340 , vertices  332 ,  225 ,  331 
+273 160 230             % triangle  341 , vertices  273 ,  160 ,  230 
+212 138 169             % triangle  342 , vertices  212 ,  138 ,  169 
+212 211 140             % triangle  343 , vertices  212 ,  211 ,  140 
+219 150 213             % triangle  344 , vertices  219 ,  150 ,  213 
+213 166 274             % triangle  345 , vertices  213 ,  166 ,  274 
+274 162 278             % triangle  346 , vertices  274 ,  162 ,  278 
+215 144 143             % triangle  347 , vertices  215 ,  144 ,  143 
+215 143 214             % triangle  348 , vertices  215 ,  143 ,  214 
+218 217 275             % triangle  349 , vertices  218 ,  217 ,  275 
+216 0 48             % triangle  350 , vertices  216 ,  0 ,  48 
+216 146 145             % triangle  351 , vertices  216 ,  146 ,  145 
+217 144 215             % triangle  352 , vertices  217 ,  144 ,  215 
+275 276 218             % triangle  353 , vertices  275 ,  276 ,  218 
+218 147 217             % triangle  354 , vertices  218 ,  147 ,  217 
+218 142 147             % triangle  355 , vertices  218 ,  142 ,  147 
+229 168 164             % triangle  356 , vertices  229 ,  168 ,  164 
+229 277 330             % triangle  357 , vertices  229 ,  277 ,  330 
+227 211 212             % triangle  358 , vertices  227 ,  211 ,  212 
+220 212 169             % triangle  359 , vertices  220 ,  212 ,  169 
+232 208 209             % triangle  360 , vertices  232 ,  208 ,  209 
+221 209 173             % triangle  361 , vertices  221 ,  209 ,  173 
+237 205 206             % triangle  362 , vertices  237 ,  205 ,  206 
+222 206 177             % triangle  363 , vertices  222 ,  206 ,  177 
+242 202 203             % triangle  364 , vertices  242 ,  202 ,  203 
+223 203 181             % triangle  365 , vertices  223 ,  203 ,  181 
+247 199 200             % triangle  366 , vertices  247 ,  199 ,  200 
+224 200 185             % triangle  367 , vertices  224 ,  200 ,  185 
+225 215 214             % triangle  368 , vertices  225 ,  215 ,  214 
+277 164 219             % triangle  369 , vertices  277 ,  164 ,  219 
+276 275 332             % triangle  370 , vertices  276 ,  275 ,  332 
+229 164 277             % triangle  371 , vertices  229 ,  164 ,  277 
+227 212 220             % triangle  372 , vertices  227 ,  212 ,  220 
+273 233 210             % triangle  373 , vertices  273 ,  233 ,  210 
+278 294 333             % triangle  374 , vertices  278 ,  294 ,  333 
+228 214 161             % triangle  375 , vertices  228 ,  214 ,  161 
+277 219 226             % triangle  376 , vertices  277 ,  219 ,  226 
+230 160 168             % triangle  377 , vertices  230 ,  160 ,  168 
+230 168 229             % triangle  378 , vertices  230 ,  168 ,  229 
+272 296 231             % triangle  379 , vertices  272 ,  296 ,  231 
+296 279 292             % triangle  380 , vertices  296 ,  279 ,  292 
+231 161 167             % triangle  381 , vertices  231 ,  161 ,  167 
+232 209 221             % triangle  382 , vertices  232 ,  209 ,  221 
+271 238 207             % triangle  383 , vertices  271 ,  238 ,  207 
+297 280 291             % triangle  384 , vertices  297 ,  280 ,  291 
+234 172 170             % triangle  385 , vertices  234 ,  172 ,  170 
+327 271 235             % triangle  386 , vertices  327 ,  271 ,  235 
+235 159 172             % triangle  387 , vertices  235 ,  159 ,  172 
+235 172 234             % triangle  388 , vertices  235 ,  172 ,  234 
+270 208 232             % triangle  389 , vertices  270 ,  208 ,  232 
+270 236 171             % triangle  390 , vertices  270 ,  236 ,  171 
+236 169 171             % triangle  391 , vertices  236 ,  169 ,  171 
+237 206 222             % triangle  392 , vertices  237 ,  206 ,  222 
+269 243 204             % triangle  393 , vertices  269 ,  243 ,  204 
+299 290 281             % triangle  394 , vertices  299 ,  290 ,  281 
+239 176 174             % triangle  395 , vertices  239 ,  176 ,  174 
+300 239 281             % triangle  396 , vertices  300 ,  239 ,  281 
+240 158 176             % triangle  397 , vertices  240 ,  158 ,  176 
+240 176 239             % triangle  398 , vertices  240 ,  176 ,  239 
+268 302 241             % triangle  399 , vertices  268 ,  302 ,  241 
+302 281 290             % triangle  400 , vertices  302 ,  281 ,  290 
+241 173 175             % triangle  401 , vertices  241 ,  173 ,  175 
+242 203 223             % triangle  402 , vertices  242 ,  203 ,  223 
+267 248 201             % triangle  403 , vertices  267 ,  248 ,  201 
+303 289 282             % triangle  404 , vertices  303 ,  289 ,  282 
+244 180 178             % triangle  405 , vertices  244 ,  180 ,  178 
+304 282 289             % triangle  406 , vertices  304 ,  282 ,  289 
+245 157 180             % triangle  407 , vertices  245 ,  157 ,  180 
+245 180 244             % triangle  408 , vertices  245 ,  180 ,  244 
+266 202 242             % triangle  409 , vertices  266 ,  202 ,  242 
+266 246 179             % triangle  410 , vertices  266 ,  246 ,  179 
+246 177 179             % triangle  411 , vertices  246 ,  177 ,  179 
+247 200 224             % triangle  412 , vertices  247 ,  200 ,  224 
+265 252 198             % triangle  413 , vertices  265 ,  252 ,  198 
+305 288 283             % triangle  414 , vertices  305 ,  288 ,  283 
+249 184 182             % triangle  415 , vertices  249 ,  184 ,  182 
+316 265 317             % triangle  416 , vertices  316 ,  265 ,  317 
+250 156 184             % triangle  417 , vertices  250 ,  156 ,  184 
+250 184 249             % triangle  418 , vertices  250 ,  184 ,  249 
+264 199 247             % triangle  419 , vertices  264 ,  199 ,  247 
+264 251 183             % triangle  420 , vertices  264 ,  251 ,  183 
+251 181 183             % triangle  421 , vertices  251 ,  181 ,  183 
+312 308 284             % triangle  422 , vertices  312 ,  308 ,  284 
+253 188 186             % triangle  423 , vertices  253 ,  188 ,  186 
+311 263 254             % triangle  424 , vertices  311 ,  263 ,  254 
+254 152 188             % triangle  425 , vertices  254 ,  152 ,  188 
+254 188 253             % triangle  426 , vertices  254 ,  188 ,  253 
+255 187 262             % triangle  427 , vertices  255 ,  187 ,  262 
+261 153 257             % triangle  428 , vertices  261 ,  153 ,  257 
+307 247 224             % triangle  429 , vertices  307 ,  247 ,  224 
+260 195 259             % triangle  430 , vertices  260 ,  195 ,  259 
+256 194 197             % triangle  431 , vertices  256 ,  194 ,  197 
+259 258 335             % triangle  432 , vertices  259 ,  258 ,  335 
+261 196 153             % triangle  433 , vertices  261 ,  196 ,  153 
+258 194 256             % triangle  434 , vertices  258 ,  194 ,  256 
+259 195 155             % triangle  435 , vertices  259 ,  195 ,  155 
+334 285 260             % triangle  436 , vertices  334 ,  285 ,  260 
+260 193 195             % triangle  437 , vertices  260 ,  193 ,  195 
+310 286 334             % triangle  438 , vertices  310 ,  286 ,  334 
+285 190 193             % triangle  439 , vertices  285 ,  190 ,  193 
+262 196 261             % triangle  440 , vertices  262 ,  196 ,  261 
+263 311 287             % triangle  441 , vertices  263 ,  311 ,  287 
+312 255 262             % triangle  442 , vertices  312 ,  255 ,  262 
+313 287 311             % triangle  443 , vertices  313 ,  287 ,  311 
+263 152 254             % triangle  444 , vertices  263 ,  152 ,  254 
+263 256 197             % triangle  445 , vertices  263 ,  256 ,  197 
+314 288 251             % triangle  446 , vertices  314 ,  288 ,  251 
+315 306 314             % triangle  447 , vertices  315 ,  306 ,  314 
+316 284 252             % triangle  448 , vertices  316 ,  284 ,  252 
+317 306 315             % triangle  449 , vertices  317 ,  306 ,  315 
+318 289 246             % triangle  450 , vertices  318 ,  289 ,  246 
+319 304 318             % triangle  451 , vertices  319 ,  304 ,  318 
+320 283 248             % triangle  452 , vertices  320 ,  283 ,  248 
+321 304 319             % triangle  453 , vertices  321 ,  304 ,  319 
+268 205 237             % triangle  454 , vertices  268 ,  205 ,  237 
+268 175 205             % triangle  455 , vertices  268 ,  175 ,  205 
+322 282 243             % triangle  456 , vertices  322 ,  282 ,  243 
+301 268 237             % triangle  457 , vertices  301 ,  268 ,  237 
+324 280 236             % triangle  458 , vertices  324 ,  280 ,  236 
+325 298 324             % triangle  459 , vertices  325 ,  298 ,  324 
+326 281 238             % triangle  460 , vertices  326 ,  281 ,  238 
+327 298 325             % triangle  461 , vertices  327 ,  298 ,  325 
+272 211 227             % triangle  462 , vertices  272 ,  211 ,  227 
+272 167 211             % triangle  463 , vertices  272 ,  167 ,  211 
+328 291 233             % triangle  464 , vertices  328 ,  291 ,  233 
+295 272 227             % triangle  465 , vertices  295 ,  272 ,  227 
+274 226 213             % triangle  466 , vertices  274 ,  226 ,  213 
+274 166 162             % triangle  467 , vertices  274 ,  166 ,  162 
+275 215 225             % triangle  468 , vertices  275 ,  215 ,  225 
+276 163 218             % triangle  469 , vertices  276 ,  163 ,  218 
+333 274 278             % triangle  470 , vertices  333 ,  274 ,  278 
+278 162 163             % triangle  471 , vertices  278 ,  162 ,  163 
+330 279 229             % triangle  472 , vertices  330 ,  279 ,  229 
+331 330 293             % triangle  473 , vertices  331 ,  330 ,  293 
+333 226 274             % triangle  474 , vertices  333 ,  226 ,  274 
+278 163 276             % triangle  475 , vertices  278 ,  163 ,  276 
+292 228 231             % triangle  476 , vertices  292 ,  228 ,  231 
+329 273 230             % triangle  477 , vertices  329 ,  273 ,  230 
+280 220 236             % triangle  478 , vertices  280 ,  220 ,  236 
+324 298 291             % triangle  479 , vertices  324 ,  298 ,  291 
+281 239 238             % triangle  480 , vertices  281 ,  239 ,  238 
+290 221 241             % triangle  481 , vertices  290 ,  221 ,  241 
+282 244 243             % triangle  482 , vertices  282 ,  244 ,  243 
+289 222 246             % triangle  483 , vertices  289 ,  222 ,  246 
+283 249 248             % triangle  484 , vertices  283 ,  249 ,  248 
+288 223 251             % triangle  485 , vertices  288 ,  223 ,  251 
+284 253 252             % triangle  486 , vertices  284 ,  253 ,  252 
+307 224 309             % triangle  487 , vertices  307 ,  224 ,  309 
+285 193 260             % triangle  488 , vertices  285 ,  193 ,  260 
+285 257 191             % triangle  489 , vertices  285 ,  257 ,  191 
+312 262 313             % triangle  490 , vertices  312 ,  262 ,  313 
+286 261 257             % triangle  491 , vertices  286 ,  261 ,  257 
+311 254 308             % triangle  492 , vertices  311 ,  254 ,  308 
+335 258 256             % triangle  493 , vertices  335 ,  258 ,  256 
+306 249 283             % triangle  494 , vertices  306 ,  249 ,  283 
+305 242 223             % triangle  495 , vertices  305 ,  242 ,  223 
+318 246 266             % triangle  496 , vertices  318 ,  246 ,  266 
+303 237 222             % triangle  497 , vertices  303 ,  237 ,  222 
+302 300 281             % triangle  498 , vertices  302 ,  300 ,  281 
+299 232 221             % triangle  499 , vertices  299 ,  232 ,  221 
+291 234 233             % triangle  500 , vertices  291 ,  234 ,  233 
+329 279 295             % triangle  501 , vertices  329 ,  279 ,  295 
+296 295 279             % triangle  502 , vertices  296 ,  295 ,  279 
+330 277 293             % triangle  503 , vertices  330 ,  277 ,  293 
+331 228 292             % triangle  504 , vertices  331 ,  228 ,  292 
+293 277 226             % triangle  505 , vertices  293 ,  277 ,  226 
+294 278 276             % triangle  506 , vertices  294 ,  278 ,  276 
+332 275 225             % triangle  507 , vertices  332 ,  275 ,  225 
+328 233 273             % triangle  508 , vertices  328 ,  233 ,  273 
+329 297 328             % triangle  509 , vertices  329 ,  297 ,  328 
+296 272 295             % triangle  510 , vertices  296 ,  272 ,  295 
+296 292 231             % triangle  511 , vertices  296 ,  292 ,  231 
+297 220 280             % triangle  512 , vertices  297 ,  220 ,  280 
+297 295 227             % triangle  513 , vertices  297 ,  295 ,  227 
+298 234 291             % triangle  514 , vertices  298 ,  234 ,  291 
+324 236 270             % triangle  515 , vertices  324 ,  236 ,  270 
+326 238 271             % triangle  516 , vertices  326 ,  238 ,  271 
+324 270 325             % triangle  517 , vertices  324 ,  270 ,  325 
+302 301 300             % triangle  518 , vertices  302 ,  301 ,  300 
+322 269 323             % triangle  519 , vertices  322 ,  269 ,  323 
+322 243 269             % triangle  520 , vertices  322 ,  243 ,  269 
+323 269 240             % triangle  521 , vertices  323 ,  269 ,  240 
+302 268 301             % triangle  522 , vertices  302 ,  268 ,  301 
+302 290 241             % triangle  523 , vertices  302 ,  290 ,  241 
+303 222 289             % triangle  524 , vertices  303 ,  222 ,  289 
+303 301 237             % triangle  525 , vertices  303 ,  301 ,  237 
+320 267 321             % triangle  526 , vertices  320 ,  267 ,  321 
+304 244 282             % triangle  527 , vertices  304 ,  244 ,  282 
+320 248 267             % triangle  528 , vertices  320 ,  248 ,  267 
+318 266 319             % triangle  529 , vertices  318 ,  266 ,  319 
+306 283 288             % triangle  530 , vertices  306 ,  283 ,  288 
+314 251 264             % triangle  531 , vertices  314 ,  251 ,  264 
+316 252 265             % triangle  532 , vertices  316 ,  252 ,  265 
+314 264 315             % triangle  533 , vertices  314 ,  264 ,  315 
+308 253 284             % triangle  534 , vertices  308 ,  253 ,  284 
+309 255 312             % triangle  535 , vertices  309 ,  255 ,  312 
+309 284 307             % triangle  536 , vertices  309 ,  284 ,  307 
+309 224 255             % triangle  537 , vertices  309 ,  224 ,  255 
+335 256 287             % triangle  538 , vertices  335 ,  256 ,  287 
+310 287 286             % triangle  539 , vertices  310 ,  287 ,  286 
+313 286 287             % triangle  540 , vertices  313 ,  286 ,  287 
+313 311 312             % triangle  541 , vertices  313 ,  311 ,  312 
+312 311 308             % triangle  542 , vertices  312 ,  311 ,  308 
+312 284 309             % triangle  543 , vertices  312 ,  284 ,  309 
+313 261 286             % triangle  544 , vertices  313 ,  261 ,  286 
+313 262 261             % triangle  545 , vertices  313 ,  262 ,  261 
+317 307 316             % triangle  546 , vertices  317 ,  307 ,  316 
+314 306 288             % triangle  547 , vertices  314 ,  306 ,  288 
+315 247 307             % triangle  548 , vertices  315 ,  247 ,  307 
+315 264 247             % triangle  549 , vertices  315 ,  264 ,  247 
+317 315 307             % triangle  550 , vertices  317 ,  315 ,  307 
+316 307 284             % triangle  551 , vertices  316 ,  307 ,  284 
+317 250 306             % triangle  552 , vertices  317 ,  250 ,  306 
+317 265 250             % triangle  553 , vertices  317 ,  265 ,  250 
+321 305 320             % triangle  554 , vertices  321 ,  305 ,  320 
+318 304 289             % triangle  555 , vertices  318 ,  304 ,  289 
+319 242 305             % triangle  556 , vertices  319 ,  242 ,  305 
+319 266 242             % triangle  557 , vertices  319 ,  266 ,  242 
+321 319 305             % triangle  558 , vertices  321 ,  319 ,  305 
+320 305 283             % triangle  559 , vertices  320 ,  305 ,  283 
+321 245 304             % triangle  560 , vertices  321 ,  245 ,  304 
+321 267 245             % triangle  561 , vertices  321 ,  267 ,  245 
+323 301 303             % triangle  562 , vertices  323 ,  301 ,  303 
+322 303 282             % triangle  563 , vertices  322 ,  303 ,  282 
+323 303 322             % triangle  564 , vertices  323 ,  303 ,  322 
+323 300 301             % triangle  565 , vertices  323 ,  300 ,  301 
+327 299 326             % triangle  566 , vertices  327 ,  299 ,  326 
+324 291 280             % triangle  567 , vertices  324 ,  291 ,  280 
+325 232 299             % triangle  568 , vertices  325 ,  232 ,  299 
+325 270 232             % triangle  569 , vertices  325 ,  270 ,  232 
+327 325 299             % triangle  570 , vertices  327 ,  325 ,  299 
+326 299 281             % triangle  571 , vertices  326 ,  299 ,  281 
+327 235 298             % triangle  572 , vertices  327 ,  235 ,  298 
+327 326 271             % triangle  573 , vertices  327 ,  326 ,  271 
+329 295 297             % triangle  574 , vertices  329 ,  295 ,  297 
+328 297 291             % triangle  575 , vertices  328 ,  297 ,  291 
+329 230 279             % triangle  576 , vertices  329 ,  230 ,  279 
+329 328 273             % triangle  577 , vertices  329 ,  328 ,  273 
+330 331 292             % triangle  578 , vertices  330 ,  331 ,  292 
+330 292 279             % triangle  579 , vertices  330 ,  292 ,  279 
+331 293 294             % triangle  580 , vertices  331 ,  293 ,  294 
+331 225 228             % triangle  581 , vertices  331 ,  225 ,  228 
+332 331 294             % triangle  582 , vertices  332 ,  331 ,  294 
+332 294 276             % triangle  583 , vertices  332 ,  294 ,  276 
+333 294 293             % triangle  584 , vertices  333 ,  294 ,  293 
+333 293 226             % triangle  585 , vertices  333 ,  293 ,  226 
+334 260 310             % triangle  586 , vertices  334 ,  260 ,  310 
+334 286 257             % triangle  587 , vertices  334 ,  286 ,  257 
+335 287 310             % triangle  588 , vertices  335 ,  287 ,  310 
+335 310 259             % triangle  589 , vertices  335 ,  310 ,  259 
+#
+#  dgf/irregular_grid_10m.dgf 

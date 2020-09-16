@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
+ *   the Free Software Foundation, either version 3 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -32,14 +32,14 @@
 
 #include <array>
 #include <cmath>
+#include <algorithm>
 
-namespace Dumux {
-namespace ShallowWater {
+namespace Dumux::ShallowWater {
 
 /*!
  * \brief Compute the outer cell state for fixed water depth boundary.
  *
- * \param waterDepthBoundary Discharge per meter at the boundary face [m^2/s]
+ * \param waterDepthBoundary Water depth at the boundary face [m^2/s]
  * \param waterDepthInside Water depth in the inner cell [m]
  * \param velocityXInside Velocity in x-direction in the inner cell [m/s]
  * \param velocityYInside Velocity in y-direction in the inner cell [m/s]
@@ -127,7 +127,98 @@ std::array<Scalar, 3> fixedDischargeBoundary(const Scalar dischargeBoundary,
     return cellStateOutside;
 }
 
-} // end namespace ShallowWater
-} // end namespace Dumux
+/*!
+ * \brief Compute the viscosity/diffusive flux at a rough wall boundary using no-slip formulation.
+ *
+ * \param alphaWall Roughness parameter: alphaWall=0.0 means full slip, alphaWall=1.0 means no slip, 0.0<alphaWall<1.0 means partial slip [-]
+ * \param turbulentViscosity Turbulent viscosity [m^2/s]
+ * \param state Primary variables (water depth, velocities)
+ * \param cellCenterToBoundaryFaceCenter Cell-center to boundary distance
+ * \param unitNormal Normal vector of the boundary face
+ */
+template<class PrimaryVariables, class Scalar, class GlobalPosition>
+std::array<Scalar, 3> noslipWallBoundary(const Scalar alphaWall,
+                                         const Scalar turbulentViscosity,
+                                         const PrimaryVariables& state,
+                                         const GlobalPosition& cellCenterToBoundaryFaceCenter,
+                                         const GlobalPosition& unitNormal)
+{
+    // only impose if abs(alphaWall) > 0
+    using std::abs;
+    if (abs(alphaWall) <= 1.0e-9)
+        return {};
+
+    const auto waterDepth = state[0];
+    // regularization: Set gradients to zero for drying cell
+    // Use LET-limiter instead for differentiability?
+    if (waterDepth <= 0.001)
+        return {};
+
+    const auto xVelocity  = state[1];
+    const auto yVelocity  = state[2];
+    const auto distance = cellCenterToBoundaryFaceCenter.two_norm();
+
+    // Compute the velocity gradients
+    // Outside - inside cell: therefore the minus-sign
+    // Only when cell contains sufficient water.
+    const auto gradU = -alphaWall * xVelocity/distance;
+    const auto gradV = -alphaWall * yVelocity/distance;
+
+    // Factor that takes the direction of the unit vector into account
+    const auto direction = (unitNormal*cellCenterToBoundaryFaceCenter)/distance;
+
+    // Compute the viscosity/diffusive fluxes at the rough wall
+    return {
+        0.0,
+        -turbulentViscosity*waterDepth*gradU*direction,
+        -turbulentViscosity*waterDepth*gradV*direction
+    };
+}
+
+/*!
+ * \brief Compute the viscosity/diffusive flux at a rough wall boundary using Nikuradse formulation.
+ *
+ * \param ksWall Nikuradse roughness height for the wall [m]
+ * \param state the primary variable state (water depth, velocities)
+ * \param cellCenterToBoundaryFaceCenter Cell-center to boundary distance
+ * \param unitNormal Normal vector of the boundary face
+ */
+template<class PrimaryVariables, class Scalar, class GlobalPosition>
+std::array<Scalar, 3> nikuradseWallBoundary(const Scalar ksWall,
+                                            const PrimaryVariables& state,
+                                            const GlobalPosition& cellCenterToBoundaryFaceCenter,
+                                            const GlobalPosition& unitNormal)
+{
+    // only impose if abs(ksWall) > 0
+    using std::abs;
+    if (abs(ksWall) <= 1.0e-9)
+        return {};
+
+    using std::hypot;
+    const Scalar xVelocity = state[1];
+    const Scalar yVelocity = state[2];
+    const Scalar velocityMagnitude = hypot(xVelocity, yVelocity);
+    const Scalar distance = cellCenterToBoundaryFaceCenter.two_norm();
+    const Scalar y0w = ksWall/30.0;
+    constexpr Scalar kappa2 = 0.41*0.41;
+
+    // should distance/y0w be limited to not become too small?
+    using std::log; using std::max;
+    const auto logYPlus = log(distance/y0w+1.0);
+    const auto fac = kappa2*velocityMagnitude / max(1.0e-3,logYPlus*logYPlus);
+
+    // Factor that takes the direction of the unit vector into account
+    const auto direction = (unitNormal*cellCenterToBoundaryFaceCenter)/distance;
+
+    // wall shear stress vector
+    const auto tauWx = direction*fac*xVelocity;
+    const auto tauWy = direction*fac*yVelocity;
+
+    // Compute the viscosity/diffusive fluxes at the rough wall
+    const auto waterDepth = state[0];
+    return {0.0, waterDepth*tauWx, waterDepth*tauWy};
+}
+
+} // end namespace Dumux::ShallowWater
 
 #endif

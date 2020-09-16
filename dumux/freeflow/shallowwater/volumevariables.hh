@@ -57,6 +57,10 @@ public:
     Scalar extrusionFactor() const
     { return 1.0; }
 
+    //! Return the vector of primary variables
+    const PrimaryVariables& priVars() const
+    { return priVars_; }
+
      /*!
      * \brief Return water detph h inside the sub-control volume.
      *
