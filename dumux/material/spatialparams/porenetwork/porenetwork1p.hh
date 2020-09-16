@@ -20,7 +20,7 @@
  * \file
  *
  * \ingroup SpatialParameters
- * \brief The base class for spatial parameters for pore network models.
+ * \brief The default class for spatial parameters for single-phase pore-network models.
  */
 #ifndef DUMUX_PNM_SPATIAL_PARAMS_1P_HH
 #define DUMUX_PNM_SPATIAL_PARAMS_1P_HH
@@ -31,62 +31,19 @@ namespace Dumux
 {
 
 /*!
- * \ingroup SpatialParameters
- */
-
-  template<class GridGeometry, class Scalar, class SinglePhaseTransmissibilityLaw, class Implementation>
-  class PNMOnePBaseSpatialParams;
-
-  /**
-   * \brief The base class for spatial parameters for pore network models.
-   */
-  template<class GridGeometry, class Scalar, class SinglePhaseTransmissibilityLaw>
-  class PNMOnePSpatialParams : public PNMOnePBaseSpatialParams<GridGeometry, Scalar, SinglePhaseTransmissibilityLaw,
-                                                               PNMOnePSpatialParams<GridGeometry, Scalar, SinglePhaseTransmissibilityLaw>>
-  {
-      using ParentType = PNMOnePBaseSpatialParams<GridGeometry, Scalar, SinglePhaseTransmissibilityLaw,
-                                                  PNMOnePSpatialParams<GridGeometry, Scalar, SinglePhaseTransmissibilityLaw>>;
-  public:
-      using ParentType::ParentType;
-  };
-
-/**
- * \brief The base class for spatial parameters for pore network models.
- */
-template<class GridGeometry, class Scalar, class SinglePhaseTransmissibilityLaw, class Implementation>
-class PNMOnePBaseSpatialParams : public PNMBaseSpatialParams<GridGeometry, Scalar, Implementation>
+* \ingroup SpatialParameters
+* \brief The default class for spatial parameters for single-phase pore-network models.
+*/
+template<class GridGeometry, class Scalar>
+class PNMOnePDefaultSpatialParams : public PNMBaseSpatialParams<GridGeometry, Scalar,
+                                                                PNMOnePDefaultSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = PNMBaseSpatialParams<GridGeometry, Scalar, Implementation>;
-
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
+    using ParentType = PNMBaseSpatialParams<GridGeometry, Scalar,
+                                            PNMOnePDefaultSpatialParams<GridGeometry, Scalar>>;
 public:
-    using PermeabilityType = Scalar;
     using ParentType::ParentType;
-
-    /*!
-    * \brief Returns the transmissibility of a throat
-    */
-   template<class ElementVolumeVariables, class FluxVariablesCache>
-   Scalar transmissibility(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf,
-                           const ElementVolumeVariables& elemVolVars,
-                           const FluxVariablesCache& fluxVarsCache,
-                           const int phaseIdx = 0) const
-   {
-       // forward to specialized function
-       return SinglePhaseTransmissibilityLaw::singlePhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-   }
-
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 1.0; }
-
 };
+
 
 } // namespace Dumux
 
