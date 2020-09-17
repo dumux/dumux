@@ -16,64 +16,44 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  *
- * \brief Specification of the material parameters
- *       for the PNM constitutive relations.
+ * \brief Implementation of the capillary pressure and
+ * relative permeability <-> saturation relations according to Joekar-Niasar et al., 2010.
+ *
  */
-#ifndef DUMUX_PNM_LOCAL_RULES_PARAMS_HH
-#define DUMUX_PNM_LOCAL_RULES_PARAMS_HH
+#ifndef DUMUX_PNM_2P_BASE_LOCAL_RULES_HH
+#define DUMUX_PNM_2P_BASE_LOCAL_RULES_HH
+
+#include <dumux/porenetworkflow/common/poreproperties.hh>
 
 namespace Dumux
 {
 
-/*!
- * \brief Specification of the material parameters
- *       for the PNM constitutive relations.
- *
- *        \ingroup fluidmatrixinteractionsparams
- *
- */
-template <class Scalar>
-class PNMLocalRulesParams
+struct TwoPLocalRulesBase
 {
-public:
-
-    PNMLocalRulesParams(const Scalar surfaceTension,
-                        const Scalar contactAngle,
-                        const Scalar inscribedRadius)
-    : surfaceTension_(surfaceTension)
-    , contactAngle_(contactAngle)
-    , inscribedRadius_(inscribedRadius)
-    {}
-
     /*!
-    * \brief Returns the inscribed pore radius \f$\mathrm{[m]}\f$
-    */
-    Scalar poreRadius() const noexcept
-    { return inscribedRadius_;}
-
-    /*!
-    * \brief Returns the contact angle \f$\mathrm{[rad]}\f$
-    */
-    Scalar contactAngle() const noexcept
-    { return contactAngle_;}
-
-     /*!
-     * \brief Returns the interfacial tension \f$\mathrm{[kg/s^2]}\f$
+     * \brief The parameter type
+     * \tparam Scalar The scalar type
      */
-    Scalar surfaceTension() const noexcept
-    { return surfaceTension_; }
+    template<class Scalar>
+    struct Params
+    {
+        Scalar poreRadius, contactAngle, surfaceTension;
+        Pore::Shape shape;
+    };
 
-private:
+    template<class... Args>
+    static double krw(Args&&...)
+    { return 1.0; }
 
-    Scalar surfaceTension_ ;
-    Scalar contactAngle_ ;
-    Scalar inscribedRadius_;
+    template<class... Args>
+    static double krn(Args&&...)
+    { return 1.0; }
 
 };
-} // namespace Dumux
 
-#endif
+}
+
+#endif // DUMUX_PNM_LOCAL_RULES_HH

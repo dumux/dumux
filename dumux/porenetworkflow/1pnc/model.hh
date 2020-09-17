@@ -42,7 +42,7 @@
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 #include <dumux/material/spatialparams/porenetwork/porenetwork1p.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/transmissibility1p.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 
 #include <dumux/material/fluidstates/immiscible.hh>
 
