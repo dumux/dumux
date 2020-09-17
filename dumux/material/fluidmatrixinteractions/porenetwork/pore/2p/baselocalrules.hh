@@ -52,6 +52,14 @@ struct TwoPLocalRulesBase
     static double krn(Args&&...)
     { return 1.0; }
 
+    template<class... Args>
+    static double dkrw_dsw(Args&&...)
+    { return 0.0; }
+
+    template<class... Args>
+    static double dkrn_dsw(Args&&...)
+    { return 0.0; }
+
 };
 
 }
