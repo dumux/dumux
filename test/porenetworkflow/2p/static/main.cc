@@ -39,8 +39,8 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/common/properties/grid.hh>
 #include <dumux/discretization/porenetwork/gridgeometry.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/thresholdcapillarypressures.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/regularizedporenetworklocalrules.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrules.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
@@ -241,8 +241,8 @@ int main(int argc, char** argv)
 
                 if (pc[dofIdx] > 0.0)
                 {
-                    using ParamsT = RegularizedPNMLocalRulesParams<Scalar>;
-                    using MaterialLaw = RegularizedPNMLocalRules<Scalar, /*useZeroPc*/true, ParamsT>;
+                    using ParamsT = RegularizedTwoPLocalRules<Scalar>;
+                    using MaterialLaw = RegularizedTwoPLocalRules<Scalar, /*useZeroPc*/true, ParamsT>;
                     using MaterialLawParams = typename MaterialLaw::Params;
                     const Scalar poreRadius = gridGeometry->poreRadius(dofIdx);
 
