@@ -39,8 +39,8 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/common/properties/grid.hh>
 #include <dumux/discretization/porenetwork/gridgeometry.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/thresholdcapillarypressures.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/regularizedporenetworklocalrules.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrulesforcube.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
@@ -182,8 +182,8 @@ int main(int argc, char** argv)
 
     // get the drainage model
     PNMTwoPStaticDrainage<GridGeometry, Scalar> drainageModel(*gridGeometry, pcEntry, throatLabel,
-                                                                inletThroatLabel, outletThroatLabel,
-                                                                allowDraingeOfOutlet);
+                                                              inletThroatLabel, outletThroatLabel,
+                                                              allowDraingeOfOutlet);
 
     // prepare logfile
     std::ofstream logfile;
@@ -241,12 +241,10 @@ int main(int argc, char** argv)
 
                 if (pc[dofIdx] > 0.0)
                 {
-                    using ParamsT = RegularizedPNMLocalRulesParams<Scalar>;
-                    using MaterialLaw = RegularizedPNMLocalRules<Scalar, /*useZeroPc*/true, ParamsT>;
-                    using MaterialLawParams = typename MaterialLaw::Params;
+                    using MaterialLaw = RegularizedTwoPLocalRulesCubeJoekarNiasar<Scalar>;
                     const Scalar poreRadius = gridGeometry->poreRadius(dofIdx);
 
-                    MaterialLawParams params(surfaceTension, contactAngle, poreRadius);
+                    const auto params = MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, Pore::Shape::cube);
                     sw[dofIdx] = MaterialLaw::sw(params, pc[dofIdx]);
                 }
                 else
@@ -281,7 +279,6 @@ int main(int argc, char** argv)
         gnuplot.plot("plot");
     }
 #endif
-
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
