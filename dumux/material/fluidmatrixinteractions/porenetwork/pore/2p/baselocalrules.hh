@@ -100,6 +100,14 @@ struct TwoPLocalRulesBase
 struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
 {
     /*!
+     * \brief The available options for regularizing the pc-SW curve at high wetting-phase saturations.
+     */
+    enum class HighSwRegularizationMethod
+    {
+        linear, spline, powerLaw
+    };
+
+    /*!
      * \brief The parameter type used for all regularized standard pore-local pc-Sw curves.
      *
      * \note For sake of compatibility, we need to have one unique set of parameters for different types of curves,
@@ -111,6 +119,7 @@ struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
     struct Params : public TwoPLocalRulesBase::Params<Scalar>
     {
         Scalar lowSw, highSw;
+        HighSwRegularizationMethod highSwRegularizationMethod;
     };
 
     /*!
@@ -124,7 +133,20 @@ struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
     {
         static const Scalar lowSw = getParam<Scalar>("Regularization.LowSw", 1e-2);
         static const Scalar highSw = getParam<Scalar>("Regularization.HighSw", 0.95);
-        return Params<Scalar>{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw};
+        static const auto highSwRegularizationMethod = []()
+        {
+            const auto input = getParam<std::string>("Regularization.HighSwRegularizationMethod", "Linear");
+            if (input == "Linear")
+                return HighSwRegularizationMethod::linear;
+            else if (input == "Spline")
+                return HighSwRegularizationMethod::spline;
+            else if (input == "PowerLaw")
+                return HighSwRegularizationMethod::powerLaw;
+            else
+                DUNE_THROW(Dune::InvalidStateException, input << " is not a valid regularization method");
+        }();
+
+        return Params<Scalar>{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw, highSwRegularizationMethod};
     }
 };
 
