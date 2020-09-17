@@ -125,7 +125,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     // using LocalRules = RegularizedTwoPLocalRules<Scalar, getPropValue<TypeTag, Properties::ZeroPc>()>;
-    using LocalRules = RegularizedTwoPLocalRulesCubeJoekarNiasar<Scalar, getPropValue<TypeTag, Properties::ZeroPc>()>;
+    using LocalRules = RegularizedTwoPLocalRulesCubeJoekarNiasar<Scalar>;
 public:
     using type = PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>;
 };

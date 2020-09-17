@@ -110,7 +110,7 @@ struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
     template<class Scalar>
     struct Params : public TwoPLocalRulesBase::Params<Scalar>
     {
-        Scalar lowSw, highSw, slopeHighSw;
+        Scalar lowSw, highSw;
     };
 
     /*!
@@ -124,8 +124,7 @@ struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
     {
         static const Scalar lowSw = getParam<Scalar>("Regularization.LowSw", 1e-2);
         static const Scalar highSw = getParam<Scalar>("Regularization.HighSw", 0.95);
-        static const Scalar slopeHighSw = getParam<Scalar>("Regularization.SlopeHighSw", -1e9);
-        return Params<Scalar>{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw, slopeHighSw};
+        return Params<Scalar>{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw};
     }
 };
 

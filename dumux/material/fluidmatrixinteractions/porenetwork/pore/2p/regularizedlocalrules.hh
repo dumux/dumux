@@ -60,7 +60,7 @@ namespace Dumux
  *
  * \see PNMLocalRules
  */
-template<class ScalarT, bool useZeroPc = true, class RegularizedLocalRulesForCube = RegularizedTwoPLocalRulesCubeJoekarNiasar<ScalarT>>
+template<class ScalarT, class RegularizedLocalRulesForCube = RegularizedTwoPLocalRulesCubeJoekarNiasar<ScalarT>>
 class RegularizedTwoPLocalRules : public RegularizedTwoPLocalRulesBase
 {
 
