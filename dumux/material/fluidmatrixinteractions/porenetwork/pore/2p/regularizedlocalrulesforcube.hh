@@ -63,6 +63,7 @@ template<class ScalarT>
 class RegularizedTwoPLocalRulesCubeJoekarNiasar : public RegularizedTwoPLocalRulesBase
 {
     using LocalRules = TwoPLocalRulesCubeJoekarNiasar<ScalarT>;
+    using HighSwRegularizationMethod = RegularizedTwoPLocalRulesBase::HighSwRegularizationMethod;
 
 public:
 
@@ -109,29 +110,30 @@ public:
             return LocalRules::pc(params, sw); // standard
         else if (sw <= 1.0) // regularized part below sw = 1.0
         {
-            static const bool usePowerLaw = getParam<bool>("Regularization.UsePowerLawForHighSw", false);
-            if (usePowerLaw)
-                return LocalRules::pc(params, highSw) * std::pow(((1.0-sw)/(1.0-highSw)), 1.0/3.0);
+            using std::pow;
+            if (params.highSwRegularizationMethod == HighSwRegularizationMethod::powerLaw)
+                return LocalRules::pc(params, highSw) * pow(((1.0-sw)/(1.0-highSw)), 1.0/3.0);
 
-            static const bool useSpline = getParam<bool>("Regularization.UseSplineForHighSw", false);
-            if (!useSpline)
+            else if (params.highSwRegularizationMethod == HighSwRegularizationMethod::linear)
                 return linearCurveForHighSw();
 
-            // use spline between threshold swe and 1.0
-            const Scalar yTh = LocalRules::pc(params, highSw);
-            // using zero derivatives at the beginning and end of the spline seems to work best
-            // for some reason ...
-            Spline<Scalar> sp(highSw, 1.0, // x0, x1
-                                yTh, 0, // y0, y1
-                                0.0, 0.0); // m0, m1
+            else if (params.highSwRegularizationMethod == HighSwRegularizationMethod::spline)
+            {
+                // use spline between threshold swe and 1.0
+                const Scalar yTh = LocalRules::pc(params, highSw);
+                // using zero derivatives at the beginning and end of the spline seems to work best
+                // for some reason ...
+                Spline<Scalar> sp(highSw, 1.0, // x0, x1
+                                    yTh, 0, // y0, y1
+                                    0.0, 0.0); // m0, m1
 
-            return sp.eval(sw);
+                return sp.eval(sw);
+            }
+            else
+                DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
         }
         else // regularized part above sw = 1.0
             return linearCurveForHighSw();
-
-
-
     }
 
      /*! \brief The wetting-phase saturation of a pore body
@@ -154,14 +156,17 @@ public:
         // high saturation, low pc:
         if (pc < pcHighSw)
         {
-            static const bool usePowerLaw = getParam<bool>("Regularization.UsePowerLawForHighSw", false);
-            static const bool useSpline = getParam<bool>("Regularization.UseSplineForHighSw", false);
-            if (usePowerLaw)
+            if (params.highSwRegularizationMethod == HighSwRegularizationMethod::powerLaw)
             {
                 auto result = pc/pcHighSw * pc/pcHighSw * pc/pcHighSw * (1.0-highSw);
                 return 1.0 - result;
             }
-            else if (useSpline)
+            else if (params.highSwRegularizationMethod == HighSwRegularizationMethod::linear)
+            {
+                const Scalar slopeHighSw = -pcHighSw / (1.0-highSw);
+                return pc/slopeHighSw + 1.0;
+            }
+            else if (params.highSwRegularizationMethod == HighSwRegularizationMethod::spline)
             {
                 const Scalar yTh = LocalRules::pc(params, highSw);
                 // invert spline between threshold swe and 1.0
@@ -173,10 +178,7 @@ public:
                                             0, 0, 0, pc);
             }
             else
-            {
-                const Scalar slopeHighSw = -pcHighSw / (1.0-highSw);
-                return pc/slopeHighSw + 1.0;
-            }
+                DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
         }
 
         return LocalRules::sw(params, pc);
