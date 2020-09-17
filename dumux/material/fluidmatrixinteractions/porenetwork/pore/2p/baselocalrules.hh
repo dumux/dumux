@@ -131,4 +131,4 @@ struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
 
 }
 
-#endif // DUMUX_PNM_LOCAL_RULES_HH
+#endif

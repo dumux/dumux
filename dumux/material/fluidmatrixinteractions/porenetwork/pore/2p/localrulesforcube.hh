@@ -18,10 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Implementation of the capillary pressure and
- * relative permeability <-> saturation relations according to Joekar-Niasar et al., 2010.
- *
+ * \ingroup Fluidmatrixinteractions
+ * \brief Pore-local pc-Sw curves for cubic pore bodies.
  */
 #ifndef DUMUX_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
 #define DUMUX_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
@@ -33,6 +31,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Implementation of the simplified pore-local capillary pressure-saturation curve
+ *        according to Joekar-Niasar et al., 2010.
+ */
 template<class ScalarT>
 struct TwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
 {
@@ -45,19 +48,12 @@ struct TwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
     /*!
      * \brief The capillary pressure-saturation curve according to Joekar-Niasar et al., 2010.
      *
-     * Empirical  capillary pressure <-> saturation
-     * function is given by
-     *
      *  \f$\mathrm{
      *  p_C = \frac{2*\sigma}{R(1-e^{-6.83S})}
      *  }\f$
      *
-     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
-     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \param poreRadius The pore body radius
-     * \return Capillary pressure calculated by Joekar-Niasar et al., 2010 constitutive relation.
+     * \param sw Saturation of the wetting phase \f$\mathrm{S_{w,i}}\f$ at pore \f$i\f$
+     * \param params The parameters container
      */
     static Scalar pc(const Params& params, const Scalar sw)
     {
@@ -65,17 +61,15 @@ struct TwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
         assert(params.shape == Pore::Shape::cube);
         const Scalar poreRadius = params.poreRadius;
         const Scalar sigma = params.surfaceTension ;
+        // TODO incorporate contact angle!!!
         return 2*sigma / (poreRadius*(1 - std::exp(-6.83*sw))) ;
     }
 
     /*!
      * \brief The wetting-phase saturation of a pore body
      *
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
-     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \param poreRadius The pore body radius
-     * \param pcMin The capillary pressure
+     * \param pc The capillary pressure \f$\mathrm{p_{c,i}}\f$ at pore \f$i\f$
+     * \param params The parameters container
      */
     static Scalar sw(const Params& params, const Scalar pc)
     {
@@ -91,7 +85,7 @@ struct TwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
      *        pressure w.r.t. the wetting phase saturation.
      *
      *
-     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
+     * \param sw Saturation of the wetting phase \f$\mathrm{S_{w,i}}\f$ at pore \f$i\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      */
     static Scalar dpc_dsw(const Params& params, const Scalar sw)
@@ -109,10 +103,10 @@ struct TwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
      * \brief DOCU
      *
      *
-     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
+     * \param pc The capillary pressure \f$\mathrm{p_{c,i}}\f$ at pore \f$i\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      */
-    static Scalar dsw_dpc(const Params& params, const Scalar sw)
+    static Scalar dsw_dpc(const Params& params, const Scalar pc)
     {
         return 0; // TODO
     }
@@ -120,4 +114,4 @@ struct TwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
 
 }
 
-#endif // DUMUX_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
+#endif
