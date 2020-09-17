@@ -39,7 +39,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 
 #include <dumux/material/spatialparams/porenetwork/porenetwork1p.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/transmissibility1p.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 
 #include "iofields.hh"
 #include "volumevariables.hh"

@@ -37,9 +37,10 @@
 
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/material/spatialparams/porenetwork/porenetwork2p.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/transmissibility1p.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/transmissibility2p.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/regularizedporenetworklocalrules.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrules.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrulesforcube.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include "fluxvariablescache.hh"
@@ -123,10 +124,10 @@ struct SpatialParams<TypeTag, TTag::PNMTwoP>
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ParamsT = RegularizedPNMLocalRulesParams<Scalar>;
-    using LocalRules = RegularizedPNMLocalRules<Scalar, getPropValue<TypeTag, Properties::ZeroPc>(), ParamsT>;
+    // using LocalRules = RegularizedTwoPLocalRules<Scalar, getPropValue<TypeTag, Properties::ZeroPc>()>;
+    using LocalRules = RegularizedTwoPLocalRulesCubeJoekarNiasar<Scalar, getPropValue<TypeTag, Properties::ZeroPc>()>;
 public:
-    using type = PNMTwoPSpatialParams<GridGeometry, Scalar, LocalRules>;
+    using type = PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
 
 template<class TypeTag>
