@@ -60,29 +60,17 @@ namespace Dumux
  * \see PNMLocalRules
  */
 template<class ScalarT, bool useZeroPc = true>
-class RegularizedTwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
+class RegularizedTwoPLocalRulesCubeJoekarNiasar : public RegularizedTwoPLocalRulesBase
 {
     using LocalRules = TwoPLocalRulesCubeJoekarNiasar<ScalarT>;
 
 public:
 
     using Scalar = ScalarT;
+    using Params = typename RegularizedTwoPLocalRulesBase::Params<Scalar>;
 
     static constexpr bool supportsMultipleGeometries()
     { return false; }
-
-    struct Params : public TwoPLocalRulesBase::Params<Scalar>
-    {
-        Scalar lowSw, highSw, slopeHighSw;
-    };
-
-    static Params makeParams(const Scalar poreRadius, const Scalar contactAngle, const Scalar surfaceTension, const Pore::Shape shape)
-    {
-        static const Scalar lowSw = getParam<Scalar>("Regularization.LowSw", 1e-2);
-        static const Scalar highSw = getParam<Scalar>("Regularization.HighSw", 0.95);
-        static const Scalar slopeHighSw = getParam<Scalar>("Regularization.SlopeHighSw", -1e9);
-        return Params{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw, slopeHighSw};
-    }
 
     /*!
      * \brief A regularized pore network capillary pressure-saturation

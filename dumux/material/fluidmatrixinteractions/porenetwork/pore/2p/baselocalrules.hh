@@ -18,23 +18,30 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Implementation of the capillary pressure and
- * relative permeability <-> saturation relations according to Joekar-Niasar et al., 2010.
- *
+ * \ingroup Fluidmatrixinteractions
+ * \brief Base classes for standard pore-local pc-Sw curves.
  */
 #ifndef DUMUX_PNM_2P_BASE_LOCAL_RULES_HH
 #define DUMUX_PNM_2P_BASE_LOCAL_RULES_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/porenetworkflow/common/poreproperties.hh>
 
 namespace Dumux
 {
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Base class for all standard pore-local pc-Sw curves.
+ */
 struct TwoPLocalRulesBase
 {
     /*!
-     * \brief The parameter type
+     * \brief The parameter type used for all standard pore-local pc-Sw curves.
+     *
+     * \note For sake of compatibility, we need to have one unique set of parameters for different types of curves,
+     *       even if this means that some parameters might be unused for certain laws, pore geometries, etc.
+     *
      * \tparam Scalar The scalar type
      */
     template<class Scalar>
@@ -44,22 +51,82 @@ struct TwoPLocalRulesBase
         Pore::Shape shape;
     };
 
+    /*!
+     * \brief Convenience function to create parameters for standard pore-local pc-Sw curves.
+     *
+     * \tparam Scalar The scalar type
+     */
+    template<class Scalar>
+    static Params<Scalar> makeParams(const Scalar poreRadius, const Scalar contactAngle,
+                                     const Scalar surfaceTension, const Pore::Shape shape)
+    {
+        return Params<Scalar>{poreRadius, contactAngle, surfaceTension, shape};
+    }
+
+    //! This is just for compatibility with the REV-scale models.
+    //! Could be removed if the pore-network models' volume variables
+    //! do not inherit from the REV-scale volume variables.
     template<class... Args>
     static double krw(Args&&...)
     { return 1.0; }
 
+    //! This is just for compatibility with the REV-scale models.
+    //! Could be removed if the pore-network models' volume variables
+    //! do not inherit from the REV-scale volume variables.
     template<class... Args>
     static double krn(Args&&...)
     { return 1.0; }
 
+    //! This is just for compatibility with the REV-scale models.
+    //! Could be removed if the pore-network models' volume variables
+    //! do not inherit from the REV-scale volume variables.
     template<class... Args>
     static double dkrw_dsw(Args&&...)
     { return 0.0; }
 
+    //! This is just for compatibility with the REV-scale models.
+    //! Could be removed if the pore-network models' volume variables
+    //! do not inherit from the REV-scale volume variables.
     template<class... Args>
     static double dkrn_dsw(Args&&...)
     { return 0.0; }
 
+};
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Base class for all regularized standard pore-local pc-Sw curves.
+ */
+struct RegularizedTwoPLocalRulesBase : public TwoPLocalRulesBase
+{
+    /*!
+     * \brief The parameter type used for all regularized standard pore-local pc-Sw curves.
+     *
+     * \note For sake of compatibility, we need to have one unique set of parameters for different types of curves,
+     *       even if this means that some parameters might be unused for certain laws, pore geometries, etc.
+     *
+     * \tparam Scalar The scalar type
+     */
+    template<class Scalar>
+    struct Params : public TwoPLocalRulesBase::Params<Scalar>
+    {
+        Scalar lowSw, highSw, slopeHighSw;
+    };
+
+    /*!
+     * \brief Convenience function to create parameters for regularized standard pore-local pc-Sw curves.
+     *
+     * \tparam Scalar The scalar type
+     */
+    template<class Scalar>
+    static Params<Scalar> makeParams(const Scalar poreRadius, const Scalar contactAngle,
+                                     const Scalar surfaceTension, const Pore::Shape shape)
+    {
+        static const Scalar lowSw = getParam<Scalar>("Regularization.LowSw", 1e-2);
+        static const Scalar highSw = getParam<Scalar>("Regularization.HighSw", 0.95);
+        static const Scalar slopeHighSw = getParam<Scalar>("Regularization.SlopeHighSw", -1e9);
+        return Params<Scalar>{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw, slopeHighSw};
+    }
 };
 
 }
