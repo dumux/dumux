@@ -59,7 +59,7 @@ namespace Dumux
  *
  * \see PNMLocalRules
  */
-template<class ScalarT, bool useZeroPc = true>
+template<class ScalarT>
 class RegularizedTwoPLocalRulesCubeJoekarNiasar : public RegularizedTwoPLocalRulesBase
 {
     using LocalRules = TwoPLocalRulesCubeJoekarNiasar<ScalarT>;
@@ -88,7 +88,7 @@ public:
     static Scalar pc(const Params& params, const Scalar sw)
     {
         const Scalar lowSw = params.lowSw;
-        const Scalar mZero = params.slopeHighSw;
+        const Scalar highSw = params.highSw;
 
         // make sure that the capilary pressure observes a
         // derivative != 0 for 'illegal' saturations. This is
@@ -99,45 +99,38 @@ public:
         if (sw < lowSw)
             return LocalRules::pc(params, lowSw) + mLow_(params) * (sw - lowSw);
 
-        // Use a regularization for sw > 1 where either:
-        // pc is zero for sw = 1 ...
-        if constexpr (useZeroPc)
+        auto linearCurveForHighSw = [&]()
         {
-            // the upper treshold for sw
-            const Scalar highSw = params.highSw;
+            const Scalar slopeHighSw = -LocalRules::pc(params, highSw) / (1.0-highSw);
+            return slopeHighSw*(sw - 1.0);
+        };
 
-            if (sw <= highSw)
-                return LocalRules::pc(params, sw); // standard
-            else if (sw <= 1.0) // regularized part below sw = 1.0
-            {
-                static const bool usePowerLaw = getParam<bool>("Regularization.UsePowerLawForHighSw", false);
-                if (usePowerLaw)
-                    return LocalRules::pc(params, highSw) * std::pow(((1.0-sw)/(1.0-highSw)), 1.0/3.0);
-
-                static const bool useSpline = getParam<bool>("Regularization.UseSplineForHighSw", false);
-                if (!useSpline)
-                    return std::min(LocalRules::pc(params, sw), mZero*sw-mZero);
-
-                // use spline between threshold swe and 1.0
-                const Scalar yTh = LocalRules::pc(params, highSw);
-                // using zero derivatives at the beginning and end of the spline seems to work best
-                // for some reason ...
-                Spline<Scalar> sp(highSw, 1.0, // x0, x1
-                                  yTh, 0, // y0, y1
-                                  0.0, 0.0); // m0, m1
-                return sp.eval(sw);
-            }
-            else // regularized part above sw = 1.0
-                return mZero*(sw - 1.0);
-        }
-        // ... or use the value given by the "raw" curve
-        else
+        if (sw <= highSw)
+            return LocalRules::pc(params, sw); // standard
+        else if (sw <= 1.0) // regularized part below sw = 1.0
         {
-            if (sw < 1.0)
-                return LocalRules::pc(params, sw);
-            else
-                return LocalRules::pc(params, 1.0) + mZero*(sw - 1.0);
+            static const bool usePowerLaw = getParam<bool>("Regularization.UsePowerLawForHighSw", false);
+            if (usePowerLaw)
+                return LocalRules::pc(params, highSw) * std::pow(((1.0-sw)/(1.0-highSw)), 1.0/3.0);
+
+            static const bool useSpline = getParam<bool>("Regularization.UseSplineForHighSw", false);
+            if (!useSpline)
+                return linearCurveForHighSw();
+
+            // use spline between threshold swe and 1.0
+            const Scalar yTh = LocalRules::pc(params, highSw);
+            // using zero derivatives at the beginning and end of the spline seems to work best
+            // for some reason ...
+            Spline<Scalar> sp(highSw, 1.0, // x0, x1
+                                yTh, 0, // y0, y1
+                                0.0, 0.0); // m0, m1
+
+            return sp.eval(sw);
         }
+        else // regularized part above sw = 1.0
+            return linearCurveForHighSw();
+
+
 
     }
 
@@ -162,19 +155,28 @@ public:
         if (pc < pcHighSw)
         {
             static const bool usePowerLaw = getParam<bool>("Regularization.UsePowerLawForHighSw", false);
+            static const bool useSpline = getParam<bool>("Regularization.UseSplineForHighSw", false);
             if (usePowerLaw)
             {
                 auto result = pc/pcHighSw * pc/pcHighSw * pc/pcHighSw * (1.0-highSw);
-
-                // TODO remove output, add unit test
-                // std::cout  <<" sw of pc " << pc << " is " << 1.0 - result << std::endl;
-                // std::cout << "corr. pc is " << RegularizedPNMLocalRules<Scalar, true, Params>::pc(params, 1.0 - result) << std::endl;
                 return 1.0 - result;
             }
-        // TODO fix this!!
-//             const Scalar m = 1.0 / PNMLocalRules::dpc_dsw(params, poreRadius, 1.0);
-//             return 1.0 + m*(pc - pcHighSw);
-            return 1.0;
+            else if (useSpline)
+            {
+                const Scalar yTh = LocalRules::pc(params, highSw);
+                // invert spline between threshold swe and 1.0
+                Spline<Scalar> sp(highSw, 1.0, // x0, x1
+                                  yTh, 0, // y0, y1
+                                  0.0, 0.0); // m0, m1
+
+                return sp.intersectInterval(highSw, 1.0,
+                                            0, 0, 0, pc);
+            }
+            else
+            {
+                const Scalar slopeHighSw = -pcHighSw / (1.0-highSw);
+                return pc/slopeHighSw + 1.0;
+            }
         }
 
         return LocalRules::sw(params, pc);
