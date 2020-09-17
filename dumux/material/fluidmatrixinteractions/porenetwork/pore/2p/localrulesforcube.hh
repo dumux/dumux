@@ -33,9 +33,10 @@
 namespace Dumux
 {
 
-template<class Scalar>
+template<class ScalarT>
 struct TwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
 {
+    using Scalar = ScalarT;
     using Params = TwoPLocalRulesBase::Params<Scalar>;
 
     static constexpr bool supportsMultipleGeometries()
@@ -102,6 +103,18 @@ struct TwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
         const Scalar poreRadius = params.poreRadius;
         const Scalar e = exp(6.83*sw);
         return -(13.66*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
+    }
+
+    /*!
+     * \brief DOCU
+     *
+     *
+     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     */
+    static Scalar dsw_dpc(const Params& params, const Scalar sw)
+    {
+        return 0; // TODO
     }
 };
 

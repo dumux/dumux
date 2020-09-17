@@ -33,9 +33,10 @@
 namespace Dumux
 {
 
-template<class Scalar, class LocalRulesForCube = TwoPLocalRulesCubeJoekarNiasar<Scalar>>
+template<class ScalarT, class LocalRulesForCube = TwoPLocalRulesCubeJoekarNiasar<ScalarT>>
 struct TwoPLocalRules : public TwoPLocalRulesBase
 {
+    using Scalar = ScalarT;
     using Params = TwoPLocalRulesBase::Params<Scalar>;
 
     static constexpr bool supportsMultipleGeometries()
@@ -72,7 +73,7 @@ struct TwoPLocalRules : public TwoPLocalRulesBase
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return LocalRulesForCube::sw(params, sw);
+                return LocalRulesForCube::sw(params, pc);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -91,6 +92,24 @@ struct TwoPLocalRules : public TwoPLocalRulesBase
         {
             case Pore::Shape::cube:
                 return LocalRulesForCube::dpc_dsw(params, sw);
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
+        }
+    }
+
+    /*!
+     * \brief DOCU
+     *
+     *
+     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     */
+    static Scalar dsw_dpc(const Params& params, const Scalar pc)
+    {
+        switch (params.shape)
+        {
+            case Pore::Shape::cube:
+                return LocalRulesForCube::dsw_dpc(params, pc);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
