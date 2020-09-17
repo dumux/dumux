@@ -25,7 +25,7 @@
 #ifndef DUMUX_PNM2P_SPATIAL_PARAMS_HH
 #define DUMUX_PNM2P_SPATIAL_PARAMS_HH
 
-#include <dumux/material/fluidmatrixinteractions/porenetwork/thresholdcapillarypressures.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
 #include "porenetworkbase.hh"
 #include <dumux/porenetworkflow/common/poreproperties.hh>
 #include <dumux/porenetworkflow/common/throatproperties.hh>
@@ -41,27 +41,26 @@ namespace Dumux
 /**
  * \brief The base class for spatial parameters for pore network models.
  */
-template<class GridGeometry, class Scalar, class MaterialLawT>
-class PNMTwoPSpatialParams
-: public PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPSpatialParams<GridGeometry, Scalar, MaterialLawT>>
+template<class GridGeometry, class Scalar, class MaterialLawT, class Implementation>
+class PNMTwoPBaseSpatialParams
+: public PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT, Implementation>>
 {
-    using ParentType = PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPSpatialParams<GridGeometry, Scalar, MaterialLawT>>;
+    using ParentType = PNMBaseSpatialParams<GridGeometry, Scalar, PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT, Implementation>>;
     using GridView = typename GridGeometry::GridView;
-    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 
     using MaterialLaw = MaterialLawT;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    PNMTwoPSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    PNMTwoPBaseSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
+        if (!gridGeometry->useSameGeometryForAllPores() && MaterialLawT::supportsMultipleGeometries())
+            DUNE_THROW(Dune::InvalidStateException, "Your MaterialLaw does not support multiple pore body shapes.");
+
         setParams();
     }
 
@@ -155,7 +154,8 @@ public:
         static const Scalar surfaceTension = getParam<Scalar>("SpatialParameters.SurfaceTension", 0.0725); // TODO
         const Scalar contactAngle = this->asImp_().contactAngle(element, scv, elemSol);
         const Scalar poreRadius = this->asImp_().poreRadius(element, scv, elemSol);
-        return MaterialLawParams(surfaceTension, contactAngle, poreRadius);
+        const auto poreShape = this->gridGeometry().poreGeometry(scv.dofIndex());
+        return MaterialLaw::makeParams(poreRadius, contactAngle, surfaceTension, poreShape);
     }
 
     const Dune::ReservedVector<Scalar, 4>& cornerHalfAngles(const Element& element) const
@@ -172,6 +172,17 @@ public:
 private:
 
     std::vector<Dune::ReservedVector<Scalar, 4>> cornerHalfAngles_;
+};
+
+// TODO docme
+template<class GridGeometry, class Scalar, class MaterialLawT>
+class PNMTwoPDefaultSpatialParams : public PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
+                                                                     PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>
+{
+    using ParentType = PNMTwoPBaseSpatialParams<GridGeometry, Scalar, MaterialLawT,
+                                                PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, MaterialLawT>>;
+public:
+    using ParentType::ParentType;
 };
 
 } // namespace Dumux
