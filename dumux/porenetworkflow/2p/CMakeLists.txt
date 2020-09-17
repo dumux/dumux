@@ -7,7 +7,6 @@ gridfluxvariablescache.hh
 invasionstate.hh
 iofields.hh
 model.hh
-multidomainnewtonsolver.hh
 newtonconsistencychecks.hh
 newtonsolver.hh
 volumevariables.hh
