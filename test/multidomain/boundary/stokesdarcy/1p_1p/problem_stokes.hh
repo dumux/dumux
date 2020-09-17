@@ -54,9 +54,6 @@ struct FluidSystem<TypeTag, TTag::StokesOneP>
     using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
 };
 
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::StokesOneP> { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2> >; };
 
 // Set the problem property
 template<class TypeTag>

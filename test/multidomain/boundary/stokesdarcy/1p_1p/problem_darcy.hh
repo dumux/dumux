@@ -61,10 +61,6 @@ struct FluidSystem<TypeTag, TTag::DarcyOneP>
     using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
 };
 
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyOneP> { using type = Dune::YaspGrid<2>; };
-
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyOneP>
 {

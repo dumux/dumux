@@ -48,9 +48,11 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
 
 #include "problem_darcy.hh"
 #include "problem_stokes.hh"
+#include "elementselector.hh"
 
 namespace Dumux {
 namespace Properties {
@@ -67,6 +69,32 @@ struct CouplingManager<TypeTag, TTag::DarcyOneP>
 {
     using Traits = StaggeredMultiDomainTraits<Properties::TTag::StokesOneP, Properties::TTag::StokesOneP, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
+};
+
+template<class TypeTag>
+struct Grid<TypeTag, TTag::StokesOneP>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    static constexpr auto dim = 2;
+
+public:
+    // using HostGrid = Dune::YaspGrid<dim>;
+    using HostGrid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<Scalar, dim> >;
+    using type = Dune::SubGrid<dim, HostGrid>;
+};
+
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyOneP>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    static constexpr auto dim = 2;
+
+public:
+    // using HostGrid = Dune::YaspGrid<dim>;
+    using HostGrid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<Scalar, dim> >;
+    using type = Dune::SubGrid<dim, HostGrid>;
 };
 
 } // end namespace Properties
@@ -90,19 +118,36 @@ int main(int argc, char** argv) try
     using StokesTypeTag = Properties::TTag::StokesOneP;
     using DarcyTypeTag = Properties::TTag::DarcyOneP;
 
+    using Grid = GetPropType<StokesTypeTag, Properties::Grid>;
+    using HostGrid = typename GetProp<StokesTypeTag, Properties::Grid>::HostGrid;
+
     // try to create a grid (from the given grid file or the input file)
-    // for both sub-domains
-    using DarcyGridManager = Dumux::GridManager<GetPropType<DarcyTypeTag, Properties::Grid>>;
-    DarcyGridManager darcyGridManager;
-    darcyGridManager.init("Darcy"); // pass parameter group
+    GridManager<HostGrid> hostGridManager;
+    hostGridManager.init();
 
-    using StokesGridManager = Dumux::GridManager<GetPropType<StokesTypeTag, Properties::Grid>>;
-    StokesGridManager stokesGridManager;
-    stokesGridManager.init("Stokes"); // pass parameter group
+    ElementSelector<typename HostGrid::LeafGridView> elementSelectorStokes;
+    ElementSelector<typename HostGrid::LeafGridView, true> elementSelectorDarcy;
 
-    // we compute on the leaf grid view
-    const auto& darcyGridView = darcyGridManager.grid().leafGridView();
-    const auto& stokesGridView = stokesGridManager.grid().leafGridView();
+    Dumux::GridManager<Grid> subgridManagerDarcy;
+    Dumux::GridManager<Grid> subgridManagerStokes;
+    subgridManagerStokes.init(elementSelectorStokes);
+    subgridManagerDarcy.init(elementSelectorDarcy);
+
+
+
+    // // try to create a grid (from the given grid file or the input file)
+    // // for both sub-domains
+    // using DarcyGridManager = Dumux::GridManager<GetPropType<DarcyTypeTag, Properties::Grid>>;
+    // DarcyGridManager darcyGridManager;
+    // darcyGridManager.init("Darcy"); // pass parameter group
+
+    // using StokesGridManager = Dumux::GridManager<GetPropType<StokesTypeTag, Properties::Grid>>;
+    // StokesGridManager stokesGridManager;
+    // stokesGridManager.init("Stokes"); // pass parameter group
+
+    // // we compute on the leaf grid view
+    const auto& darcyGridView = subgridManagerDarcy.grid().leafGridView();
+    const auto& stokesGridView = subgridManagerStokes.grid().leafGridView();
 
     // create the finite volume grid geometry
     using StokesFVGridGeometry = GetPropType<StokesTypeTag, Properties::GridGeometry>;

@@ -1,0 +1,35 @@
+[Grid]
+Positions0 = 0.0 0.003864 0.042504 0.046368
+Positions1 = -0.003442 0.0 0.0096 0.0116
+
+Cells0 = 20 200 20
+Cells1 = 20 50 20
+
+InletLength = 0.003864
+CavityLength = 0.03864
+CavityHeight = 0.0096
+
+TriangularReservoir = true
+TriangleHeight = 0.002942
+TriangleTipWidth = 0.583e-3
+
+[Stokes.Problem]
+Name = stokes
+PressureDifference = 1e-9
+
+[Darcy.Problem]
+Name = darcy
+
+[Darcy.SpatialParams]
+Permeability = 1e-6 # m^2
+AlphaBeaversJoseph = 1.0
+
+[Vtk]
+OutputName = test_md_boundary_stokes1p_darcy1p_horizontal
+
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false
+
+[Vtk]
+AddVelocity = 1
