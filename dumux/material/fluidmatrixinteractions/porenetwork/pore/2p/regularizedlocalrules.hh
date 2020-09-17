@@ -26,8 +26,11 @@
 #define REGULARIZED_PNM_2P_LOCAL_RULES_HH
 
 #include "localrules.hh"
+#include "regularizedlocalrulesforcube.hh"
 
+#include <dumux/common/parameters.hh>
 #include <dumux/common/spline.hh>
+
 
 namespace Dumux
 {
@@ -57,26 +60,27 @@ namespace Dumux
  *
  * \see PNMLocalRules
  */
-template<class Scalar, bool useZeroPc = true, class RegularizedLocalRulesForCube = TwoPLocalRulesCubeJoekarNiasar<Scalar>>
+template<class ScalarT, bool useZeroPc = true, class RegularizedLocalRulesForCube = RegularizedTwoPLocalRulesCubeJoekarNiasar<ScalarT>>
 class RegularizedTwoPLocalRules : public TwoPLocalRulesBase
 {
 
 public:
 
+    using Scalar = ScalarT;
+
     static constexpr bool supportsMultipleGeometries()
     { return true; }
 
-    struct Params : public TwoPLocalRulesBase::Params<Scalar>
-    {
-        Scalar lowSw, highSw, slopeHighSw;
-    };
+    using Params = typename RegularizedLocalRulesForCube::Params; // TODO
+
+
 
     static Params makeParams(const Scalar poreRadius, const Scalar contactAngle, const Scalar surfaceTension, const Pore::Shape shape)
     {
         static const Scalar lowSw = getParam<Scalar>("Regularization.LowSw", 1e-2);
         static const Scalar highSw = getParam<Scalar>("Regularization.HighSw", 0.95);
         static const Scalar slopeHighSw = getParam<Scalar>("Regularization.SlopeHighSw", -1e9);
-        return Params{poreRadius, contactAngle, surfaceTension, shape, lowSw, highSw, slopeHighSw};
+        return Params{{poreRadius, contactAngle, surfaceTension, shape}, lowSw, highSw, slopeHighSw};
     }
 
     /*!
@@ -129,6 +133,24 @@ public:
         {
             case Pore::Shape::cube:
                 return RegularizedLocalRulesForCube::dpc_dsw(params, sw);
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
+        }
+    }
+
+    /*!
+     * \brief DOCU
+     *
+     *
+     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     */
+    static Scalar dsw_dpc(const Params& params, const Scalar pc)
+    {
+        switch (params.shape)
+        {
+            case Pore::Shape::cube:
+                return RegularizedLocalRulesForCube::dsw_dpc(params, pc);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }

@@ -28,6 +28,7 @@
 #include "baselocalrules.hh"
 #include "localrulesforcube.hh"
 
+#include <dumux/common/parameters.hh>
 #include <dumux/common/spline.hh>
 
 namespace Dumux
@@ -58,17 +59,19 @@ namespace Dumux
  *
  * \see PNMLocalRules
  */
-template<class Scalar, bool useZeroPc = true>
+template<class ScalarT, bool useZeroPc = true>
 class RegularizedTwoPLocalRulesCubeJoekarNiasar : public TwoPLocalRulesBase
 {
-    using LocalRules = TwoPLocalRulesCubeJoekarNiasar<Scalar>;
+    using LocalRules = TwoPLocalRulesCubeJoekarNiasar<ScalarT>;
 
 public:
+
+    using Scalar = ScalarT;
 
     static constexpr bool supportsMultipleGeometries()
     { return false; }
 
-    struct Params : public LocalRules::Params
+    struct Params : public TwoPLocalRulesBase::Params<Scalar>
     {
         Scalar lowSw, highSw, slopeHighSw;
     };
@@ -150,15 +153,6 @@ public:
 
     }
 
-     /*! \brief The minimum wetting-phase saturation of a pore body
-     *
-     * \copydetails PNMLocalRules::swMin()
-     */
-    static Scalar swMin(const Params &params, Scalar poreRadius, Scalar pcMin)
-    {
-         return LocalRules::swMin(params, poreRadius, pcMin);
-    }
-
      /*! \brief The wetting-phase saturation of a pore body
      *
      * \copydetails PNMLocalRules::sw()
@@ -196,6 +190,37 @@ public:
         }
 
         return LocalRules::sw(params, pc);
+    }
+
+    /*!
+     * \brief The partial derivative of the capillary
+     *        pressure w.r.t. the wetting phase saturation.
+     *
+     *
+     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     */
+    static Scalar dpc_dsw(const Params& params, const Scalar sw)
+    {   // TODO!!!!
+        assert(0 <= sw && sw <= 1);
+        assert(params.shape == Pore::Shape::cube);
+        using std::exp;
+        const Scalar sigma = params.surfaceTension;
+        const Scalar poreRadius = params.poreRadius;
+        const Scalar e = exp(6.83*sw);
+        return -(13.66*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
+    }
+
+    /*!
+     * \brief DOCU
+     *
+     *
+     * \param sw Saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     */
+    static Scalar dsw_dpc(const Params& params, const Scalar sw)
+    {
+        return 0; // TODO
     }
 
 
