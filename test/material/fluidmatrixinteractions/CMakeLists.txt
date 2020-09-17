@@ -1,4 +1,5 @@
 add_subdirectory(2p)
+add_subdirectory(porenetwork)
 
 dumux_add_test(SOURCES test_effectivediffusivity.cc
               LABELS unit material
@@ -9,7 +10,3 @@ dumux_add_test(SOURCES test_effectivediffusivity.cc
                                ${CMAKE_SOURCE_DIR}/test/references/effectivediffusivitymillingtonquirk-reference.dat
                                ${CMAKE_CURRENT_BINARY_DIR}/millingtonquirk_d_eff.dat
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_effectivediffusivity -SpatialParams.Tortuosity 0.3")
-
-dune_add_test(NAME test_throattransmissibility
-              SOURCES test_throattransmissibility.cc
-              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_throattransmissibility)
