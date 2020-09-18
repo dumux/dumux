@@ -31,19 +31,11 @@
 
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/math.hh>
 
 #include <dumux/material/fluidmatrixinteractions/2pnew/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2pnew/materiallaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2pnew/spline.hh>
-
-std::vector<double> linspace(const double begin, const double end, const double samples)
-{
-    const double delta = (end-begin)/static_cast<double>(samples-1);
-    std::vector<double> vec(samples);
-    for (int i = 0; i < samples; ++i)
-        vec[i] = begin + i*delta;
-    return vec;
-}
 
 template<class Function>
 std::vector<double> eval(const Function& f, const std::vector<double>& x)
