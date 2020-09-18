@@ -34,7 +34,7 @@
 
 #include <dumux/material/fluidmatrixinteractions/2pnew/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2pnew/materiallaw.hh>
-#include <dumux/material/fluidmatrixinteractions/2pnew/splineinterpolation.hh>
+#include <dumux/material/fluidmatrixinteractions/2pnew/spline.hh>
 
 std::vector<double> linspace(const double begin, const double end, const double samples)
 {
@@ -62,7 +62,7 @@ int main(int argc, char** argv) try
     using MaterialLaw = FluidMatrix::TwoPMaterialLaw<double, FluidMatrix::VanGenuchten, FluidMatrix::NoTwoPRegularization<double>>;
     auto vg = std::make_shared<MaterialLaw>("MaterialLaw"); // read parameters from input file (group MaterialLaw)
 
-    using MaterialLawSpline = FluidMatrix::TwoPMaterialLaw<double, FluidMatrix::VanGenuchten, FluidMatrix::TwoPSplineInterpolation<double>>;
+    using MaterialLawSpline = FluidMatrix::TwoPMaterialLaw<double, FluidMatrix::VanGenuchten, FluidMatrix::TwoPSplineRegularization<double>>;
     auto vgSpline = std::make_shared<MaterialLawSpline>("MaterialLaw"); // read parameters from input file (group MaterialLaw)
 
     const auto swMinPlot = getParam<double>("Plot.SwMin", 0.1);

@@ -38,10 +38,10 @@ namespace FluidMatrix {
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief The default regularization policy
+ * \brief Replace the laws in some bounds by a cubic spline approximation
  */
 template<class Scalar>
-class TwoPSplineInterpolation : public TwoPRegularization<Scalar>
+class TwoPSplineRegularization : public TwoPRegularization<Scalar>
 {
     using ParentType = TwoPRegularization<Scalar>;
 public:
