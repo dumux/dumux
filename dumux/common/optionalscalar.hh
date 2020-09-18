@@ -19,12 +19,11 @@
 /*!
  * \file
  * \ingroup Common
- * \brief A wrapper that can either contain an object of T or be empty.
+ * \brief A wrapper that can either contain a valid Scalar or NaN
  */
-#ifndef DUMUX_COMMON_OPTIONAL_HH
-#define DUMUX_COMMON_OPTIONAL_HH
+#ifndef DUMUX_COMMON_OPTIONAL_SCALAR_HH
+#define DUMUX_COMMON_OPTIONAL_SCALAR_HH
 
-#include <utility>
 #include <limits>
 #include <cmath>
 
@@ -32,17 +31,19 @@ namespace Dumux {
 
 /*!
  * \ingroup Common
- * \brief A type for an optional floating point number (if NaN can be spared as a valid result)
- * \tparam T Type of wrapped floating point number
+ * \brief A type for an optional scalar (contains either a valid number or NaN)
+ * \tparam T Type of the underlying floating point number type
  */
 template<class T>
-struct OptionalFloatingPointNumber
+struct OptionalScalar
 {
     static_assert(std::numeric_limits<T>::has_quiet_NaN, "T has to be able to represent a quiet NaN!");
 
-    OptionalFloatingPointNumber() = default;
+    OptionalScalar() = default;
 
-    OptionalFloatingPointNumber(T value) : value_(value) {}
+    OptionalScalar(T value)
+    : value_(value)
+    {}
 
     T value() const
     { return value_; }
@@ -58,4 +59,4 @@ private:
 
 } // namespace Dumux
 
-#endif // DUMUX_COMMON_OPTIONAL_HH
+#endif

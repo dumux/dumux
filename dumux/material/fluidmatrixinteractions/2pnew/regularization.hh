@@ -26,7 +26,7 @@
 #define DUMUX_MATERIAL_FLUIDMATRIX_TWOP_DEFAULT_REGULARIZATION_HH
 
 #include <dune/common/exceptions.hh>
-#include <dumux/common/optional.hh>
+#include <dumux/common/optionalscalar.hh>
 
 namespace Dumux {
 namespace FluidMatrix {
@@ -41,8 +41,6 @@ template<class Scalar>
 class TwoPRegularization
 {
 public:
-    using Return = OptionalFloatingPointNumber<Scalar>;
-
     //! Init does nothing per default
     template<typename... Args> void init(Args&&...) {}
 
@@ -52,7 +50,7 @@ public:
     /*!
      * \brief The regularized capillary pressure-saturation curve
      */
-    Return pc(const Scalar sw) const
+    OptionalScalar<Scalar> pc(const Scalar sw) const
     {
         DUNE_THROW(Dune::NotImplemented, "The regularization does not implement this function!");
     }
@@ -60,7 +58,7 @@ public:
     /*!
      * \brief The regularized partial derivative of the capillary pressure w.r.t. the saturation
      */
-    Return dpc_dsw(const Scalar sw) const
+    OptionalScalar<Scalar> dpc_dsw(const Scalar sw) const
     {
         DUNE_THROW(Dune::NotImplemented, "The regularization does not implement this function!");
     }
@@ -68,7 +66,7 @@ public:
     /*!
      * \brief The regularized saturation-capillary pressure curve
      */
-    Return sw(const Scalar pc) const
+    OptionalScalar<Scalar> sw(const Scalar pc) const
     {
         DUNE_THROW(Dune::NotImplemented, "The regularization does not implement this function!");
     }
@@ -76,7 +74,7 @@ public:
     /*!
      * \brief The regularized partial derivative of the saturation to the capillary pressure
      */
-    Return dsw_dpc(const Scalar pc) const
+    OptionalScalar<Scalar> dsw_dpc(const Scalar pc) const
     {
         DUNE_THROW(Dune::NotImplemented, "The regularization does not implement this function!");
     }
@@ -84,7 +82,7 @@ public:
     /*!
      * \brief The regularized relative permeability for the wetting phase
      */
-    Return krw(const Scalar sw) const
+    OptionalScalar<Scalar> krw(const Scalar sw) const
     {
         DUNE_THROW(Dune::NotImplemented, "The regularization does not implement this function!");
     }
@@ -92,7 +90,7 @@ public:
     /*!
      * \brief The regularized derivative of the relative permeability for the wetting phase w.r.t. saturation
      */
-    Return dkrw_dsw(const Scalar sw) const
+    OptionalScalar<Scalar> dkrw_dsw(const Scalar sw) const
     {
         DUNE_THROW(Dune::NotImplemented, "The regularization does not implement this function!");
     }
@@ -100,7 +98,7 @@ public:
     /*!
      * \brief The regularized relative permeability for the non-wetting phase
      */
-    Return krn(const Scalar sw) const
+    OptionalScalar<Scalar> krn(const Scalar sw) const
     {
         DUNE_THROW(Dune::NotImplemented, "The regularization does not implement this function!");
     }
@@ -108,7 +106,7 @@ public:
     /*!
      * \brief The regularized derivative of the relative permeability for the non-wetting phase w.r.t. saturation
      */
-    Return dkrn_dsw(const Scalar sw) const
+    OptionalScalar<Scalar> dkrn_dsw(const Scalar sw) const
     {
         DUNE_THROW(Dune::NotImplemented, "The regularization does not implement this function!");
     }
