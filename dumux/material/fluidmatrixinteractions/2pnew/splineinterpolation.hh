@@ -28,6 +28,7 @@
 #include <algorithm>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/optionalscalar.hh>
 #include <dumux/common/cubicspline.hh>
 
 #include <dumux/material/fluidmatrixinteractions/2pnew/regularization.hh>
@@ -44,7 +45,6 @@ class TwoPSplineInterpolation : public TwoPRegularization<Scalar>
 {
     using ParentType = TwoPRegularization<Scalar>;
 public:
-    using Return = typename ParentType::Return;
 
     //! The parameters
     template<class S>
@@ -78,7 +78,7 @@ public:
     /*!
      * \brief The regularized capillary pressure-saturation curve
      */
-    Return pc(const Scalar sw) const
+    OptionalScalar<Scalar> pc(const Scalar sw) const
     {
         if (sw < minSwThreshold_) return {};
         if (sw > maxSwThreshold_) return {};
