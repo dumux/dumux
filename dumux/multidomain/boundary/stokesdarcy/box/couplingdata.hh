@@ -140,12 +140,25 @@ public:
         if (newIc_)
         {
             //######## New stokes contribution #################
-            static const bool unsymmetrizedGradientForBeaversJoseph = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
-                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
-            // TODO: how to deprecate unsymmBeaverJoseph?
-            // Replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
+            static const bool unsymmetrizedGradientForBeaversJoseph = [&]()
+            {
+                const bool tmp = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+                if (tmp)
+                {
+                    std::cerr << "Warning: You are using the deprecated parameter 'EnableUnsymmetrizedVelocityGradientForBeaversJoseph'. Use 'EnableUnsymmetrizedVelocityGradientForIC' instead."  << std::endl;
+                }
+                return tmp;
+            }();
+
+            // TODO: Replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
             static const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(this->couplingManager().problem(stokesIdx).paramGroup(),
                                                            "FreeFlow.EnableUnsymmetrizedVelocityGradientForIC", unsymmetrizedGradientForBeaversJoseph);
+            // NewIc not verified for symmetrized gradient
+            static bool once = [](){
+                if(!unsymmetrizedGradientForIC) std::cerr << "Warning: The interface conditions for arbitrary flows to the interface are not verified for symmetrized stress tensors" <<std::endl;
+                return true;
+            } ();
+
             const std::size_t numSubFaces = scvf.pairData().size();
 
             // Account for all sub faces

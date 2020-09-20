@@ -191,7 +191,7 @@ public:
      */
     Scalar permeability(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the permeability must be returned in the acutal problem");
+        DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the permeability must be returned in the actual problem");
     }
 
     /*!
@@ -201,7 +201,7 @@ public:
      */
     Scalar alphaBJ(const SubControlVolumeFace& scvf) const
     {
-        DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the alpha value must be returned in the acutal problem");
+        DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the alpha value must be returned in the actual problem");
     }
 
     /*!
@@ -229,7 +229,7 @@ public:
      */
     Scalar epsInterface(const SubControlVolumeFace& scvf) const
     {
-        DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the epsInterface value must be returned in the acutal problem");
+        DUNE_THROW(Dune::NotImplemented, "When using the interface conditions for arbitrary flows to the interface, the epsInterface value must be returned in the actual problem");
     }
 
     /*!
@@ -237,7 +237,7 @@ public:
      */
     Scalar factorNTangential(const SubControlVolumeFace& scvf) const
     {
-        DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNTangential value must be returned in the acutal problem");
+        DUNE_THROW(Dune::NotImplemented, "When using the interface conditions for arbitrary flows to the interface, the factorNTangential value must be returned in the actual problem");
     }
 
 

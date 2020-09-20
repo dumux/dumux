@@ -276,9 +276,16 @@ public:
             // If the current scvf is on a boundary and if a Dirichlet BC for the pressure or a slip condition
             // is set there, assume a tangential velocity gradient of zero along the lateral face
             // (towards the current scvf).
-            static const bool unsymmetrizedGradientForBeaversJoseph = getParamFromGroup<bool>(problem.paramGroup(),
-                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
-            //TODO: Deprecate and replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
+            static const bool unsymmetrizedGradientForBeaversJoseph = [&]()
+            {
+                const bool tmp = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+                if (tmp)
+                {
+                    std::cerr << std::endl << "Warning: You are using the deprecated parameter 'EnableUnsymmetrizedVelocityGradientForBeaversJoseph'. Use 'EnableUnsymmetrizedVelocityGradientForIC' instead." <<std::endl;
+                }
+                return tmp;
+            }();
+            // TODO: Replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
             static const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(problem.paramGroup(),
                                                            "FreeFlow.EnableUnsymmetrizedVelocityGradientForIC", unsymmetrizedGradientForBeaversJoseph);
 
@@ -339,9 +346,16 @@ public:
             // If the current scvf is on a boundary and if a Dirichlet BC for the pressure or a slip condition
             // is set there, assume a tangential velocity gradient of zero along the lateral face
             // (towards the current scvf).
-            static const bool unsymmetrizedGradientForBeaversJoseph = getParamFromGroup<bool>(problem.paramGroup(),
-                                                           "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
-            // TODO: Deprecate and replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
+            static const bool unsymmetrizedGradientForBeaversJoseph = [&]()
+            {
+                const bool tmp = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+                if (tmp)
+                {
+                    std::cout << std::endl << "Warning: You are using the deprecated parameter 'EnableUnsymmetrizedVelocityGradientForBeaversJoseph'. Use 'EnableUnsymmetrizedVelocityGradientForIC' instead." <<std::endl;
+                }
+                return tmp;
+            }();
+            // TODO: Replace unsymmetrizedGradientForBeaversJoseph below by false, when deprecation period expired
             static const bool unsymmetrizedGradientForIC = getParamFromGroup<bool>(problem.paramGroup(),
                                                            "FreeFlow.EnableUnsymmetrizedVelocityGradientForIC", unsymmetrizedGradientForBeaversJoseph);
             if (unsymmetrizedGradientForIC)
