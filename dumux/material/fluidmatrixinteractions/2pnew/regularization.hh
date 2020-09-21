@@ -33,7 +33,7 @@ namespace FluidMatrix {
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief The regularization base class that conatins all the interfaces
+ * \brief The regularization base class that contains all the interfaces
  * \note Depending on the application not all interfaces have to be implemented
  *       by a custom regularization. The user will be notified with a runtime warning.
  */
@@ -117,8 +117,11 @@ public:
  * \brief A tag to turn off regularization and it's overhead
  */
 template<class Scalar>
-struct NoTwoPRegularization : public TwoPRegularization<Scalar>
-{};
+struct NoTwoPRegularization
+{
+    //! No parameters per default
+    template<class S> struct Params {};
+};
 
 /*!
  * \ingroup Fluidmatrixinteractions
