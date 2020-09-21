@@ -38,6 +38,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
