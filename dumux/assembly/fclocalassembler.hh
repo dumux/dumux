@@ -559,7 +559,7 @@ public:
                                     else
                                     {
                                         // normal scvs
-                                        const auto& orthogonalScvf = fvGeometry.scvfWithCommonEntity(scvf);
+                                        const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
                                         if (orthogonalScvf.boundary())
                                             continue;
 
