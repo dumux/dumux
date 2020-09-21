@@ -25,8 +25,6 @@
 #ifndef DUMUX_STOKES_DARCY_BOX_COUPLINGDATA_HH
 #define DUMUX_STOKES_DARCY_BOX_COUPLINGDATA_HH
 
-#include <type_traits>
-#include <dune/common/std/type_traits.hh>
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
@@ -631,7 +629,7 @@ public:
                 const auto& stokesVolVars = data.volVars;
 
                 //Calculate the projected massOrMoleFraction value for the stokes face
-                const auto& stokesContext = data.stokesContext;
+                const auto& stokesContext = *data.stokesContext;
                 auto interfaceMassOrMoleFraction = [this, &stokesScvf, &stokesContext, &element, &darcyElemVolVars](int compIdx)
                 {
                     auto value = [&compIdx](const auto& elemVolVars, const auto& scv)
