@@ -175,8 +175,20 @@ public:
     {
         BoundaryTypes values;
 
-        values.setDirichlet(Indices::velocityXIdx);
-        values.setDirichlet(Indices::velocityYIdx);
+        const auto& globalPos = scvf.dofPosition();
+
+        if(onUpperBoundary_(globalPos))
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+        }
+
+        // left/right wall
+        if (onRightBoundary_(globalPos) || (onLeftBoundary_(globalPos)))
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+        }
 
         if (couplingManager().isCoupledEntity(CouplingManager::freeFlowIdx, scvf))
         {
@@ -302,9 +314,9 @@ public:
         switch (testCase_)
         {
             case TestCase::BJSymmetrized:
-                return rhsBJSymmetrized_(globalPos);
+                return analyticalSolutionBJSymmetrized_(globalPos);
             case TestCase::NewICNonSymmetrized:
-                return rhsNewICNonSymmetrized_(globalPos);
+                return analyticalSolutionNewICNonSymmetrized_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -366,6 +378,17 @@ private:
         return source;
     }
 
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
+
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
+
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_; }
+
+    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
 
     static constexpr Scalar eps_ = 1e-7;
     std::string problemName_;

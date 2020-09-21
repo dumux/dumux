@@ -35,7 +35,7 @@
 
 #include "1pspatialparams.hh"
 
-#include <dumux/material/components/constant.hh>
+#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 namespace Dumux {
@@ -96,9 +96,9 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
-    // static constexpr auto velocityXIdx = 0;
-    // static constexpr auto velocityYIdx = 1;
-    // static constexpr auto pressureIdx = 2;
+    static constexpr auto velocityXIdx = 0;
+    static constexpr auto velocityYIdx = 1;
+    static constexpr auto pressureIdx = 2;
 
     enum class TestCase
     {
@@ -191,7 +191,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        const auto p = analyticalSolution(globalPos)[Indices::pressureIdx];
+        const auto p = analyticalSolution(globalPos)[pressureIdx];
         return PrimaryVariables(p);
     }
 
@@ -300,16 +300,16 @@ public:
 private:
 
     // see exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
-    PrimaryVariables analyticalSolutionBJSymmetrized_(const GlobalPosition& globalPos) const
+    Dune::FieldVector<Scalar, 3> analyticalSolutionBJSymmetrized_(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables sol(0.0);
+        Dune::FieldVector<Scalar, 3> sol(0.0);
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
 
         using std::exp; using std::sin; using std::cos;
-        //sol[Indices::velocityXIdx] = 2.0*x*x + 2.0*x*y - 6.0*x - 2.0*y*y + 3.0*y - 5.0;
-        //sol[Indices::velocityYIdx] = 1.0*x*x + 4.0*x*y - 9.0*x - 1.0*y*y - 1.0;
-        sol[Indices::pressureIdx] = -x*(x-1.0)*(y-1.0) + 1.0/3.0*(y-1.0)*(y-1.0)*(y-1.0) + 4.0 + 2.0*y + x*x;
+        sol[velocityXIdx] = 2.0*x*x + 2.0*x*y - 6.0*x - 2.0*y*y + 3.0*y - 5.0;
+        sol[velocityYIdx] = 1.0*x*x + 4.0*x*y - 9.0*x - 1.0*y*y - 1.0;
+        sol[pressureIdx] = -x*(x-1.0)*(y-1.0) + 1.0/3.0*(y-1.0)*(y-1.0)*(y-1.0) + 4.0 + 2.0*y + x*x;
         return sol;
     }
 
@@ -324,16 +324,16 @@ private:
 
 
     // see exact solution for new IC with non-symmetrized stress tensor (by Elissa Eggenweiler)
-    PrimaryVariables analyticalSolutionNewICNonSymmetrized_(const GlobalPosition& globalPos) const
+    Dune::FieldVector<Scalar, 3> analyticalSolutionNewICNonSymmetrized_(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables sol(0.0);
+        Dune::FieldVector<Scalar, 3> sol(0.0);
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
 
         using std::exp; using std::sin; using std::cos;
-        //sol[Indices::velocityXIdx] = x*(y-1.0) + (x-1.0)*(y-1.0) - 3.0;
-        //sol[Indices::velocityYIdx] = x*(x-1.0) - (y-1.0)*(y-1.0) - 2.0;
-        sol[Indices::pressureIdx] = x*(1.0-x)*(y-1.0) + 1.0/3.0*(y-1.0)*(y-1.0)*(y-1.0) + 3.0*x + 2.0*y + 1.0;
+        sol[velocityXIdx] = x*(y-1.0) + (x-1.0)*(y-1.0) - 3.0;
+        sol[velocityYIdx] = x*(x-1.0) - (y-1.0)*(y-1.0) - 2.0;
+        sol[pressureIdx] = x*(1.0-x)*(y-1.0) + 1.0/3.0*(y-1.0)*(y-1.0)*(y-1.0) + 3.0*x + 2.0*y + 1.0;
         return sol;
     }
 

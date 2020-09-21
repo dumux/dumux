@@ -46,6 +46,7 @@
 #include <dumux/multidomain/staggeredtraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
+#include <test/freeflow/navierstokes/l2error.hh>
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
 
@@ -71,6 +72,169 @@ struct CouplingManager<TypeTag, TTag::DarcyOneP>
 
 } // end namespace Properties
 } // end namespace Dumux
+
+/*!
+* \brief Creates analytical solution.
+* Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
+* \param problem the problem for which to evaluate the analytical solution
+*/
+template<class Scalar, class Problem>
+auto createStokesAnalyticalSolution(const Problem& problem)
+{
+    const auto& gridGeometry = problem.gridGeometry();
+    using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
+
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
+
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+    std::vector<Scalar> analyticalPressure;
+    std::vector<VelocityVector> analyticalVelocity;
+    std::vector<Scalar> analyticalVelocityOnFace;
+
+    analyticalPressure.resize(gridGeometry.numCellCenterDofs());
+    analyticalVelocity.resize(gridGeometry.numCellCenterDofs());
+    analyticalVelocityOnFace.resize(gridGeometry.numFaceDofs());
+
+    using Indices = typename Problem::Indices;
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(gridGeometry);
+        fvGeometry.bindElement(element);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            auto ccDofIdx = scv.dofIndex();
+            auto ccDofPosition = scv.dofPosition();
+            auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition);
+
+            // velocities on faces
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const auto faceDofIdx = scvf.dofIndex();
+                const auto faceDofPosition = scvf.center();
+                const auto dirIdx = scvf.directionIndex();
+                const auto analyticalSolutionAtFace = problem.analyticalSolution(faceDofPosition);
+                analyticalVelocityOnFace[faceDofIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
+            }
+
+            analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
+
+            for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                analyticalVelocity[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
+        }
+    }
+
+    return std::make_tuple(analyticalPressure, analyticalVelocity, analyticalVelocityOnFace);
+}
+
+/*!
+* \brief Creates analytical solution.
+* Returns a tuple of the analytical solution for the pressure, the velocity and the velocity at the faces
+* \param problem the problem for which to evaluate the analytical solution
+*/
+template<class Scalar, class Problem>
+auto createDarcyAnalyticalSolution(const Problem& problem)
+{
+    const auto& gridGeometry = problem.gridGeometry();
+    using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
+
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
+
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+    std::vector<Scalar> analyticalPressure;
+    std::vector<VelocityVector> analyticalVelocity;
+
+    analyticalPressure.resize(gridGeometry.numDofs());
+    analyticalVelocity.resize(gridGeometry.numDofs());
+
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(gridGeometry);
+        fvGeometry.bindElement(element);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto ccDofIdx = scv.dofIndex();
+            const auto ccDofPosition = scv.dofPosition();
+            const auto analyticalSolutionAtCc = problem.analyticalSolution(ccDofPosition);
+            analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[dim];
+            for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                analyticalVelocity[ccDofIdx][dirIdx] = analyticalSolutionAtCc[dirIdx];
+        }
+    }
+
+    return std::make_tuple(analyticalPressure, analyticalVelocity);
+}
+
+template<class Problem, class SolutionVector>
+void printStokesL2Error(const Problem& problem, const SolutionVector& x)
+{
+    using namespace Dumux;
+    using Scalar = double;
+    using TypeTag = Properties::TTag::StokesOneP;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+
+    using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
+    const auto l2error = L2Error::calculateL2Error(problem, x);
+    const int numCellCenterDofs = problem.gridGeometry().numCellCenterDofs();
+    const int numFaceDofs = problem.gridGeometry().numFaceDofs();
+    std::ostream tmpOutputObject(std::cout.rdbuf()); // create temporary output with fixed formatting without affecting std::cout
+    tmpOutputObject << std::setprecision(8) << "** L2 error (abs/rel) for "
+                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
+                    << std::scientific
+                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
+                    << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
+                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
+                    << std::endl;
+
+    // write the norm into a log file
+    std::ofstream logFile;
+    logFile.open(problem.name() + ".log", std::ios::app);
+    logFile << "[ConvergenceTest] L2(p) = " << l2error.first[Indices::pressureIdx] << " L2(vx) = " << l2error.first[Indices::velocityXIdx] << " L2(vy) = " << l2error.first[Indices::velocityYIdx] << std::endl;
+    logFile.close();
+}
+
+template<class Problem, class SolutionVector>
+void printDarcyL2Error(const Problem& problem, const SolutionVector& x)
+{
+    using namespace Dumux;
+    using Scalar = double;
+
+    Scalar l2error = 0.0;
+
+    for (const auto& element : elements(problem.gridGeometry().gridView()))
+    {
+        auto fvGeometry = localView(problem.gridGeometry());
+        fvGeometry.bindElement(element);
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto dofIdx = scv.dofIndex();
+            const Scalar delta = x[dofIdx] - problem.analyticalSolution(scv.dofPosition())[2/*pressureIdx*/];
+            l2error += scv.volume()*(delta*delta);
+        }
+    }
+    using std::sqrt;
+    l2error = sqrt(l2error);
+
+    const auto numDofs = problem.gridGeometry().numDofs();
+    std::ostream tmp(std::cout.rdbuf());
+    tmp << std::setprecision(8) << "** L2 error (abs) for "
+            << std::setw(6) << numDofs << " cc dofs "
+            << std::scientific
+            << "L2 error = " << l2error
+            << std::endl;
+
+    // write the norm into a log file
+    std::ofstream logFile;
+    logFile.open(problem.name() + ".log", std::ios::app);
+    logFile << "[ConvergenceTest] L2(p) = " << l2error << std::endl;
+    logFile.close();
+}
 
 int main(int argc, char** argv) try
 {
@@ -149,15 +313,23 @@ int main(int argc, char** argv) try
     darcyGridVariables->init(sol[porousMediumIdx]);
 
     // intialize the vtk output module
+    using Scalar = typename Traits::Scalar;
     StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
-    //stokesVtkWriter.write(0.0);
+    const auto stokesAnalyticalSolution = createStokesAnalyticalSolution<Scalar>(*stokesProblem);
+    stokesVtkWriter.addField(std::get<0>(stokesAnalyticalSolution), "pressureExact");
+    stokesVtkWriter.addField(std::get<1>(stokesAnalyticalSolution), "velocityExact");
+    stokesVtkWriter.addFaceField(std::get<2>(stokesAnalyticalSolution), "faceVelocityExact");
+    stokesVtkWriter.write(0.0);
 
     VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[porousMediumIdx],  darcyProblem->name());
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
-    //darcyVtkWriter.write(0.0);
+    const auto darcyAnalyticalSolution = createDarcyAnalyticalSolution<Scalar>(*darcyProblem);
+    darcyVtkWriter.addField(std::get<0>(darcyAnalyticalSolution), "pressureExact");
+    darcyVtkWriter.addField(std::get<1>(darcyAnalyticalSolution), "velocityExact");
+    darcyVtkWriter.write(0.0);
 
     // the assembler for a stationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
@@ -184,6 +356,9 @@ int main(int argc, char** argv) try
     // write vtk output
     stokesVtkWriter.write(1.0);
     darcyVtkWriter.write(1.0);
+
+    printStokesL2Error(*stokesProblem, stokesSol);
+    printDarcyL2Error(*darcyProblem, sol[porousMediumIdx]);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
