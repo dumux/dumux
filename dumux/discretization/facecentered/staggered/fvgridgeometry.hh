@@ -33,6 +33,7 @@
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/discretization/facecentered/staggered/subcontrolvolume.hh>
 #include <dumux/discretization/facecentered/staggered/subcontrolvolumeface.hh>
