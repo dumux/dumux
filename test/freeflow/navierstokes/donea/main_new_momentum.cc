@@ -131,6 +131,17 @@ int main(int argc, char** argv) try
                         "velocity",
                         /*numComp*/2, /*codim*/0).get());
 
+    std::vector<int> rank;
+    rank.resize(gridGeometry->gridView().size(0));
+
+    for (const auto& element : elements(gridGeometry->gridView(), Dune::Partitions::interior))
+    {
+        const auto eIdxGlobal = gridGeometry->elementMapper().index(element);
+        rank[eIdxGlobal] = gridGeometry->gridView().comm().rank();
+    }
+
+    writer.addCellData(rank, "rank");
+
     writer.write("donea_new_momentum");
 
     using GridView = std::decay_t<decltype(gridGeometry->gridView())>;
