@@ -29,8 +29,7 @@
 #include <dumux/material/fluidmatrixinteractions/2pnew/efftoabsdefaultpolicy.hh>
 #include <dumux/material/fluidmatrixinteractions/2pnew/regularization.hh>
 
-namespace Dumux {
-namespace FluidMatrix {
+namespace Dumux::FluidMatrix {
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -242,7 +241,6 @@ private:
     Regularization regularization_;
 };
 
-} // end namespace FluidMatrix
-} // end namespace Dumux
+} // end namespace Dumux::FluidMatrix
 
 #endif
