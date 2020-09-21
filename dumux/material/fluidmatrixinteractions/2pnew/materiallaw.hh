@@ -75,7 +75,9 @@ public:
     {
         baseParams_ = BaseLaw::template makeParams<Scalar>(paramGroup);
         effToAbsParams_ = EffToAbsPolicy::template makeParams<Scalar>(paramGroup);
-        regularization_.init(this, paramGroup);
+
+        if constexpr (isRegularized())
+            regularization_.init(this, paramGroup);
     }
 
     /*!
@@ -88,7 +90,8 @@ public:
     : baseParams_(baseParams)
     , effToAbsParams_(effToAbsParams)
     {
-        regularization_.init(this, baseParams, effToAbsParams, regParams);
+        if constexpr (isRegularized())
+            regularization_.init(this, baseParams, effToAbsParams, regParams);
     }
 
     /*!
@@ -98,7 +101,7 @@ public:
     Scalar pc(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        if (enableRegularization)
+        if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.pc(swe);
             if (regularized)
@@ -115,7 +118,7 @@ public:
     Scalar dpc_dsw(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        if (enableRegularization)
+        if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.dpc_dsw(swe);
             if (regularized)
@@ -139,7 +142,7 @@ public:
     template<bool enableRegularization = isRegularized()>
     Scalar sw(const Scalar pc) const
     {
-        if (enableRegularization)
+        if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.sw(pc);
             if (regularized)
@@ -155,7 +158,7 @@ public:
     template<bool enableRegularization = isRegularized()>
     Scalar dsw_dpc(const Scalar pc) const
     {
-        if (enableRegularization)
+        if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.dsw_dpc(pc);
             if (regularized)
@@ -172,7 +175,7 @@ public:
     Scalar krw(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        if (enableRegularization)
+        if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.krw(swe);
             if (regularized)
@@ -189,7 +192,7 @@ public:
     Scalar dkrw_dsw(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        if (enableRegularization)
+        if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.dkrw_dswe(swe);
             if (regularized)
@@ -206,7 +209,7 @@ public:
     Scalar krn(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        if (enableRegularization)
+        if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.krn(swe);
             if (regularized)
@@ -223,7 +226,7 @@ public:
     Scalar dkrn_dsw(const Scalar sw) const
     {
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
-        if (enableRegularization)
+        if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.dkrn_dswe(swe);
             if (regularized)
