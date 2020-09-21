@@ -217,7 +217,7 @@ public:
      */
     Scalar epsInterface(const SubControlVolumeFace& scvf) const
     {
-        DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the epsInterface value must be returned in the actual problem");
+        DUNE_THROW(Dune::NotImplemented, "When using the interface conditions for arbitrary flows to the interface, the epsInterface value must be returned in the actual problem");
     }
 
     /*!
@@ -225,7 +225,7 @@ public:
      */
     Scalar factorNTangential(const SubControlVolumeFace& scvf) const
     {
-        DUNE_THROW(Dune::NotImplemented, "When using the new interface conditions, the factorNTangential value must be returned in the actual problem");
+        DUNE_THROW(Dune::NotImplemented, "When using the interface conditions for arbitrary flows to the interface, the factorNTangential value must be returned in the actual problem");
     }
 
 

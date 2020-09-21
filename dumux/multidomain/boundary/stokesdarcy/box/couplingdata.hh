@@ -155,7 +155,7 @@ public:
                                                            "FreeFlow.EnableUnsymmetrizedVelocityGradientForIC", unsymmetrizedGradientForBeaversJoseph);
             // NewIc not verified for symmetrized gradient
             static bool once = [](){
-                if(!unsymmetrizedGradientForIC) std::cerr << "Warning: The new interface conditions are not verified for symmetrized stress tensors" <<std::endl;
+                if(!unsymmetrizedGradientForIC) std::cerr << "Warning: The interface conditions for arbitrary flows to the interface are not verified for symmetrized stress tensors" <<std::endl;
                 return true;
             } ();
 
