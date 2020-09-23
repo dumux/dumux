@@ -51,7 +51,7 @@ public:
     struct Params
     {
         std::size_t numPoints;
-        Scalar minSwThreshold, maxSwThreshold;
+        S minSwThreshold, maxSwThreshold;
     };
 
     //! Initialize the spline
