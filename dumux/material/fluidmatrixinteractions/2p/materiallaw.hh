@@ -19,38 +19,56 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
- * \brief   Implementation of the capillary pressure and
+ * \brief   Implementation helper for capillary pressure and
  *          relative permeability <-> saturation relations for two-phase models
  */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_TWOP_MATERIAL_LAW_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_TWOP_MATERIAL_LAW_HH
 
 #include <dumux/common/parameters.hh>
-#include <dumux/material/fluidmatrixinteractions/2pnew/efftoabsdefaultpolicy.hh>
-#include <dumux/material/fluidmatrixinteractions/2pnew/regularization.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/efftoabsdefaultpolicy.hh>
 
 namespace Dumux::FluidMatrix {
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief   Implementation of the capillary pressure and
- *          relative permeability <-> saturation relations according to van Genuchten.
+ * \brief A tag to turn off regularization and it's overhead
+ */
+template<class Scalar>
+struct NoRegularization
+{
+    //! Empty parameter structure
+    template<class S> struct Params {};
+};
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Wrapper class to implement regularized material laws (pc-sw, kr-sw)
+ *        with a conversion policy between absolution and effective saturations
+ * \note See vangenuchten.hh / brookscorey.hh for default configurations using this class
  * \tparam ScalarType the scalar type
  * \tparam BaseLaw the base law (e.g. VanGenuchten, BrooksCorey, Linear, ...)
  * \tparam Regularization the regularization type (set to NoRegularization to turn it off)
  * \tparam EffToAbsPolicy the policy how to convert effective <-> absolute saturations
+ *
+ * \note The regularization interface is expected to return Dumux::OptionalScalars which
+ *       are wrappers around a Scalar type that provide a boolean operator to
+ *       check whether the result is valid. If the regularization returns
+ *       a non-valid value, it means that the given parameter
+ *       range is outside the regularized region.
+ *       For that case we forward to the call to the standard law.
  */
 template<class ScalarType,
          class BaseLaw,
-         class Regularization = TwoPDefaultRegularization<ScalarType>,
+         class Regularization = NoRegularization<ScalarType>,
          class EffToAbsPolicy = TwoPEffToAbsDefaultPolicy>
 class TwoPMaterialLaw
 {
-    using NoRegularization = NoTwoPRegularization<ScalarType>;
 public:
 
     using Scalar = ScalarType;
-    using BaseLawParams = typename BaseLaw::template Params<Scalar>;
+
+    using BasicParams = typename BaseLaw::template Params<Scalar>;
     using EffToAbsParams = typename EffToAbsPolicy::template Params<Scalar>;
     using RegularizationParams = typename Regularization::template Params<Scalar>;
 
@@ -58,11 +76,11 @@ public:
      * \brief Return whether this law is regularized
      */
     static constexpr bool isRegularized()
-    { return !std::is_same<Regularization, NoRegularization>::value; }
+    { return !std::is_same<Regularization, NoRegularization<ScalarType>>::value; }
 
     /*!
      * \brief Deleted default constructor (so we are never in an undefined state)
-     * \note store pointers to laws instead
+     * \note store owning pointers to laws instead if you need default-constructible objects
      */
     TwoPMaterialLaw() = delete;
 
@@ -83,7 +101,7 @@ public:
      * \brief Construct from parameter structs
      * \note More efficient constructor but you need to ensure all parameters are initialized
      */
-    TwoPMaterialLaw(const BaseLawParams& baseParams,
+    TwoPMaterialLaw(const BasicParams& baseParams,
                     const EffToAbsParams& effToAbsParams = {},
                     const RegularizationParams& regParams = {})
     : baseParams_(baseParams)
@@ -119,7 +137,7 @@ public:
         const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
         if constexpr (enableRegularization)
         {
-            const auto regularized = regularization_.dpc_dsw(swe);
+            const auto regularized = regularization_.dpc_dswe(swe);
             if (regularized)
                 return regularized.value()*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
         }
@@ -143,12 +161,12 @@ public:
     {
         if constexpr (enableRegularization)
         {
-            const auto regularized = regularization_.sw(pc);
+            const auto regularized = regularization_.swe(pc);
             if (regularized)
                 return EffToAbsPolicy::sweToSw(regularized.value(), effToAbsParams_);
         }
 
-        return EffToAbsPolicy::sweToSw(BaseLaw::sw(pc, baseParams_), effToAbsParams_);
+        return EffToAbsPolicy::sweToSw(BaseLaw::swe(pc, baseParams_), effToAbsParams_);
     }
 
     /*!
@@ -159,7 +177,7 @@ public:
     {
         if constexpr (enableRegularization)
         {
-            const auto regularized = regularization_.dsw_dpc(pc);
+            const auto regularized = regularization_.dswe_dpc(pc);
             if (regularized)
                 return regularized.value()*EffToAbsPolicy::dsw_dswe(effToAbsParams_);
         }
@@ -229,14 +247,14 @@ public:
         {
             const auto regularized = regularization_.dkrn_dswe(swe);
             if (regularized)
-                return regularized.value();
+                return regularized.value()*EffToAbs::dswe_dsw(effToAbsParams_);
         }
 
         return BaseLaw::dkrn_dswe(swe, baseParams_)*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
     }
 
 private:
-    BaseLawParams baseParams_;
+    BasicParams baseParams_;
     EffToAbsParams effToAbsParams_;
     Regularization regularization_;
 };
