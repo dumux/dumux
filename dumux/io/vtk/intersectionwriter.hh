@@ -27,137 +27,107 @@
 #include <dune/grid/io/file/vtk/basicwriter.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 #include <dune/grid/io/file/vtk/skeletonfunction.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
 
-  //! iterate over the GridViews boundary intersections
-/**
+/*!
+ * \brief Iterate over the GridViews boundary intersections
  * This will visit all intersections for which boundary() is true and
  * neighbor() is false.
  */
 template<typename GV>
 class GlobalIntersectionIterator
-  : public Dune::ForwardIteratorFacade
-    < GlobalIntersectionIterator<GV>,
-        const typename GV::Intersection,
-        const typename GV::Intersection&,
-        typename std::iterator_traits<typename GV::template Codim<0>::
-            Iterator>::difference_type>
+: public Dune::ForwardIteratorFacade<GlobalIntersectionIterator<GV>,
+                                     const typename GV::Intersection,
+                                     const typename GV::Intersection&,
+                                     typename std::iterator_traits<typename GV::template Codim<0>::Iterator>::difference_type>
 {
 public:
-  // reiterator the facades typedefs here
-  typedef GlobalIntersectionIterator<GV> DerivedType;
-  typedef const typename GV::Intersection Value;
-  typedef Value& Reference;
-  typedef typename GV::template Codim<0>::Iterator ElementIterator;
-  typedef typename GV::IntersectionIterator IntersectionIterator;
-  typedef typename std::iterator_traits<ElementIterator>::difference_type
-  DifferenceType;
+    using DerivedType = GlobalIntersectionIterator<GV>;
+    using Value = const typename GV::Intersection;
+    using Reference = Value&;
+    using ElementIterator = typename GV::template Codim<0>::Iterator;
+    using IntersectionIterator = typename GV::IntersectionIterator;
+    using DifferenceType = typename std::iterator_traits<ElementIterator>::difference_type;
 
-private:
-  typedef Dune::ForwardIteratorFacade<DerivedType, Value, Reference, DifferenceType> Facade;
-
-  const GV* gv;
-  ElementIterator eit;
-  std::shared_ptr<IntersectionIterator> iit;
-
-  bool valid() const {
-    return true;
-    // TODO maybe visit intersection only once
-    // // we're valid if we're passed-the-end
-    // if(eit == gv->template end<0>()) return true;
-    // // or if we're on a boundary
-    // if((*iit)->boundary() && !(*iit)->neighbor()) return true;
-    // // otherwise we're invalid
-    // return false;
-  }
-
-  void basic_increment() {
-    ++*iit;
-    if(*iit == gv->iend(*eit)) {
-      iit.reset();
-      ++eit;
-      if(eit != gv->template end<0>())
-        iit.reset(new IntersectionIterator(gv->ibegin(*eit)));
-    }
-  }
-
-public:
-  Reference dereference() const {
-    return **iit;
-  }
-  bool equals(const DerivedType& other) const {
-    if(eit != other.eit) return false;
-
-    // this is a bit tricky, since we may not compare iit if we are
-    // passed-the-end
-    bool mePassedTheEnd = eit == gv->template end<0>();
-    bool otherPassedTheEnd = other.eit == other.gv->template end<0>();
-
-    // both passed-the-end => consider them equal
-    if(mePassedTheEnd && otherPassedTheEnd) return true;
-
-    // one passed the end => not equal
-    if(mePassedTheEnd || otherPassedTheEnd) return false;
-
-    // none passed-the-end => do their iit iterators match?
-    return *iit == *other.iit;
-  }
-
-  void increment() {
-    basic_increment();
-    while(!valid()) basic_increment();
-  }
-
-  //! construct a GlobalIntersectionIterator
-  /**
+  /*!
+   * \brief Construct a GlobalIntersectionIterator
    * If end == true, construct an end iterator for the given gridview.
    * Otherwise, construct a begin iterator.
    */
-  GlobalIntersectionIterator(const GV& gv_, bool end = false)
-    : gv(&gv_), eit(end ? gv->template end<0>() : gv->template begin<0>())
-  {
-    intersectionVisited_.resize(gv_.size(1), false);
+    GlobalIntersectionIterator(const GV& gv, bool end = false)
+    : gridView_(gv), eIt_(end ? gridView_.template end<0>() : gridView_.template begin<0>())
+    {
+      if (eIt_ != gridView_.template end<0>())
+          iIt_.reset(new IntersectionIterator(gridView_.ibegin(*eIt_)));
+    }
 
-    if(eit != gv->template end<0>())
-      iit.reset(new IntersectionIterator(gv->ibegin(*eit)));
+    Reference dereference() const
+    { return **iIt_; }
 
-    while(!valid()) basic_increment();
-  }
+    bool equals(const DerivedType& other) const
+    {
+        if (eIt_ != other.eIt_)
+            return false;
+
+        // this is a bit tricky, since we may not compare iIt_ if we are
+        // passed-the-end
+        bool mePassedTheEnd = eIt_ == gridView_.template end<0>();
+        bool otherPassedTheEnd = other.eIt_ == other.gridView_.template end<0>();
+
+        // both passed-the-end => consider them equal
+        if(mePassedTheEnd && otherPassedTheEnd)
+            return true;
+
+        // one passed the end => not equal
+        if(mePassedTheEnd || otherPassedTheEnd)
+            return false;
+
+        // none passed-the-end => do their iIt_ iterators match?
+        return *iIt_ == *other.iIt_;
+    }
+
+    void increment()
+    {
+        ++*iIt_;
+        if (*iIt_ == gridView_.iend(*eIt_))
+        {
+            iIt_.reset();
+            ++eIt_;
+            if (eIt_ != gridView_.template end<0>())
+              iIt_.reset(new IntersectionIterator(gridView_.ibegin(*eIt_)));
+        }
+    }
 
 private:
-    std::vector<bool> intersectionVisited_;
+    const GV gridView_;
+    ElementIterator eIt_;
+    std::shared_ptr<IntersectionIterator> iIt_;
 };
 
-template<class GV>
+template<class GridView>
 class NonConformingIntersectionIteratorFactory
 {
-  const GV& gv;
-
 public:
-  static const unsigned dimCell = GV::dimension-1;
+    static constexpr auto dimCell = GridView::dimension-1;
+    using Cell = typename GridView::Intersection;
+    using CellIterator = GlobalIntersectionIterator<GridView>;
+    using Corner = Dune::VTK::Corner<Cell>;
+    using CornerIterator = Dune::VTK::CornerIterator<CellIterator>;
+    using Point = Corner;
+    using PointIterator = CornerIterator;
+    using ConnectivityWriter = Dune::VTK::NonConformingConnectivityWriter<Cell>;
+    using CollectiveCommunication = typename GridView::CollectiveCommunication;
 
-  typedef typename GV::Intersection Cell;
-  typedef GlobalIntersectionIterator<GV> CellIterator;
-
-  typedef Dune::VTK::Corner<Cell> Corner;
-  typedef Dune::VTK::CornerIterator<CellIterator> CornerIterator;
-
-  typedef Corner Point;
-  typedef CornerIterator PointIterator;
-
-  typedef Dune::VTK::NonConformingConnectivityWriter<Cell> ConnectivityWriter;
-  typedef typename GV::CollectiveCommunication CollectiveCommunication;
-
-  explicit NonConformingIntersectionIteratorFactory(const GV& gv_)
-    : gv(gv_)
-  { }
+    explicit NonConformingIntersectionIteratorFactory(const GridView& gv)
+    : gridView_(gv) {}
 
     CellIterator beginCells() const
-    { return CellIterator(gv); }
+    { return CellIterator(gridView_); }
 
     CellIterator endCells() const
-    { return CellIterator(gv, true); }
+    { return CellIterator(gridView_, true); }
 
     CornerIterator beginCorners() const
     { return CornerIterator(beginCells(), endCells()); }
@@ -175,8 +145,95 @@ public:
     { return ConnectivityWriter(); }
 
     const CollectiveCommunication& comm() const
-    { return gv.comm(); }
+    { return gridView_.comm(); }
 
+private:
+    const GridView gridView_;
+};
+
+
+template<class GridView, class Mapper, class F>
+class SkeletonFunction
+{
+    using Intersection = typename GridView::Intersection;
+public:
+    using Traits = Dune::VTK::SkeletonFunctionTraits<GridView, typename GridView::ctype>;
+
+    SkeletonFunction(const GridView& gv, const Mapper& mapper, const F& field)
+    : gv_(gv)
+    , mapper_(mapper)
+    , field_(field)
+    , components_(1)
+    {
+        if constexpr (std::is_invocable_v<F, Intersection, int>)
+        {
+            for (const auto& element : elements(gv))
+            {
+                for (const auto& is : intersections(gv, element))
+                {
+                    if constexpr (IsIndexable<std::decay_t<decltype(field(std::declval<Intersection>(), 0))>>{})
+                    {
+                        if constexpr (IsIndexable<std::decay_t<decltype(field(std::declval<Intersection>(), 0)[0])>>{})
+                            DUNE_THROW(Dune::InvalidStateException, "Invalid field type");
+                        else
+                            components_ = field(is, mapper_(is, gv_)).size();
+                    }
+
+                    return;
+                }
+            }
+        }
+        else if constexpr (IsIndexable<std::decay_t<decltype(field[0])>>{})
+        {
+            if constexpr (IsIndexable<std::decay_t<decltype(field[0][0])>>{})
+              DUNE_THROW(Dune::InvalidStateException, "Invalid field type");
+            else
+              components_ = field[0].size();
+        }
+    }
+
+    //! return number of components
+    unsigned dimRange() const { return components_; }
+
+    void evaluate(const typename Traits::Cell& intersection,
+                  const typename Traits::Domain& xl,
+                  typename Traits::Range& result) const
+    {
+        assert(intersection.conforming());
+        result.resize(components_);
+        const auto idx = mapper_(intersection, gv_);
+
+        auto accessEntry = [&](auto i)
+        {
+            if constexpr (std::is_invocable_v<F, Intersection, int>)
+            {
+                if constexpr (IsIndexable<std::decay_t<decltype(field_(intersection, idx))>>{})
+                    return field_(intersection, idx)[i];
+                else
+                    return field_(intersection, idx);
+            }
+            else
+            {
+                if constexpr (IsIndexable<std::decay_t<decltype(std::declval<F>()[0])>>{})
+                    return field_[idx][i];
+                else
+                    return field_[idx];
+            }
+        };
+
+        for (int i = 0; i < components_; ++i)
+            result[i] = accessEntry(i);
+    }
+
+private:
+    const GridView gv_;
+    const Mapper& mapper_;
+
+    // If F is callable we store a copy of it, otherwise we assume that F is a container
+    // stored somewhere else, thus we only keep a reference here
+    std::conditional_t<std::is_invocable_v<F,Intersection, int>, const F, const F&> field_;
+
+    std::size_t components_;
 };
 
 template<class GridView>
@@ -188,72 +245,71 @@ class ConformingIntersectionWriter
     using Base = Dune::VTK::BasicWriter<Factory>;
 
 public:
-  ConformingIntersectionWriter(const GridView& gridView)
+    ConformingIntersectionWriter(const GridView& gridView, const std::string& paramGroup = "")
     : Factory(gridView), Base(static_cast<const Factory&>(*this)), gridView_(gridView)
-  { }
+    {
+        static bool addProcessRank = getParamFromGroup<bool>(paramGroup, "Vtk.AddProcessRank");
+        if (addProcessRank)
+        {
+            auto getRank = [rank = gridView_.comm().rank()](const auto& is, const auto idx)
+            { return rank; };
+
+            auto mapper = getStandardMapper();
+            auto fun = std::make_shared<SkeletonFunction<GridView, decltype(mapper), decltype(getRank)>>(gridView_, mapper, getRank);
+            addCellData(fun, "processRank");
+        }
+    }
 
     using Base::addCellData;
 
-  //  /**
-  //    * @brief Add a grid function (represented by container) that lives on the cells of
-  //    * the grid to the visualization.
-  //    *
-  //    * The container has to have random access via operator[] (e.g. std::vector). The
-  //    * value of the grid function for an arbitrary element
-  //    * will be accessed by calling operator[] with the index (corresponding
-  //    * to the index from the MGMC mapper on the grid view) of the element.
-  //    * For vector valued data all components for an element are assumed to
-  //    * be consecutive.
-  //    *
-  //    * @param v The container with the values of the grid function for each cell.
-  //    * @param name A name to identify the grid function.
-  //    * @param ncomps Number of components (default is 1).
-  //    */
-    // template<class Container>
-    // void addCellData (const Container& v, const std::string &name, int ncomps = 1,
-    //                   Dune::VTK::Precision prec = Dune::VTK::Precision::float32)
-    // {
-    //   typedef Dune::P0VTKFunction<GridView, Container> Function;
-    //   for (int c=0; c<ncomps; ++c) {
-    //     std::stringstream compName;
-    //     compName << name;
-    //     if (ncomps>1)
-    //       compName << "[" << c << "]";
-    //     Dune::VTKFunction* p = new Function(gridView_, v, compName.str(), ncomps, c, prec);
-    //     addCellData(std::shared_ptr< const VTKFunction >(p));
-    //   }
-    // }
-
-
-    template<class Func>
-    void addCellData(const std::shared_ptr<Func>& p, const std::string& name) {
-      std::cout << "adding celldata 1" << std::endl;
-      addCellData(std::shared_ptr<typename Base::FunctionWriter>
-                    (new Dune::VTK::SkeletonFunctionWriter<Func>(p, name)));
+    static auto getStandardMapper()
+    {
+        return [](const auto& is, const GridView& gridView){ return gridView.indexSet().subIndex(is.inside(), is.indexInInside(), 1); };
     }
 
-  template<class Func>
-  void addCellData(Func* p, const std::string& name) {
-    std::cout << "adding celldata 2" << std::endl;
-    addCellData(std::shared_ptr<Func>(p), name);
-  }
+    template<class F, class Mapper = decltype(getStandardMapper())>
+    auto makeSkeletonFunction(const F& f, const Mapper& mapper = getStandardMapper()) const
+    {
+        return std::make_shared<SkeletonFunction<GridView, decltype(mapper), decltype(f)>>(gridView_, mapper, f);
+    }
 
-  using Base::addPointData;
+    template<class Func>
+    void addCellData(const std::shared_ptr<Func>& p, const std::string& name)
+    {
+      addCellData(std::shared_ptr<typename Base::FunctionWriter>
+                  (new Dune::VTK::SkeletonFunctionWriter<Func>(p, name)));
+    }
 
-  template<class Func>
-  void addPointData(const std::shared_ptr<Func>& p, const std::string& name) {
-    addPointData(std::shared_ptr<typename Base::FunctionWriter>
-                    (new Dune::VTK::SkeletonFunctionWriter<Func>(p, name)));
-  }
+    template<class Func>
+    void addCellData(Func* p, const std::string& name)
+    {
+        addCellData(std::shared_ptr<Func>(p), name);
+    }
 
-  template<class Func>
-  void addPointData(Func* p, const std::string& name) {
-    addPointData(std::shared_ptr<Func>(p), name);
-  }
+    template<class F>
+    void addField(const F& field, const std::string& name)
+    {
+        auto mapper = getStandardMapper();
+        addCellData(makeSkeletonFunction(field, mapper), name);
+    }
+
+    using Base::addPointData;
+
+    template<class Func>
+    void addPointData(const std::shared_ptr<Func>& p, const std::string& name)
+    {
+        addPointData(std::shared_ptr<typename Base::FunctionWriter>
+                     (new Dune::VTK::SkeletonFunctionWriter<Func>(p, name)));
+    }
+
+    template<class Func>
+    void addPointData(Func* p, const std::string& name)
+    {
+        addPointData(std::shared_ptr<Func>(p), name);
+    }
 
 private:
     const GridView gridView_;
-
 };
 
 } // namespace Dumux
