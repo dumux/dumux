@@ -22,9 +22,10 @@
  * \brief   Linear capillary pressure and
  *          relative permeability <-> saturation relations
  */
-#ifndef LINEAR_MATERIAL_HH
-#define LINEAR_MATERIAL_HH
+#ifndef DUMUX_MATERIAL_FLUIDMATRIX_LINEAR_MATERIAL_HH
+#define DUMUX_MATERIAL_FLUIDMATRIX_LINEAR_MATERIAL_HH
 
+// remove from here after release 3.3 /////////////
 #include "linearmaterialparams.hh"
 
 #include <algorithm>
@@ -44,7 +45,7 @@ namespace Dumux {
  * \see LinearMaterialParams
  */
 template <class ScalarT, class ParamsT = LinearMaterialParams<ScalarT> >
-class LinearMaterial
+class [[deprecated("Use new material laws and FluidMatrix::LinearMaterial instead!")]] LinearMaterial
 {
 public:
     using Params = ParamsT;
@@ -164,5 +165,134 @@ public:
     }
 };
 } // end namespace Dumux
+// remove until here after release 3.3 /////////////
+
+#include <algorithm>
+#include <dumux/common/parameters.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/materiallaw.hh>
+
+namespace Dumux::FluidMatrix {
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ *
+ * \brief Linear capillary pressure and
+ * relative permeability <-> saturation relations
+ *
+ * The entry pressure is reached at \f$\mathrm{ \overline{S}_w = 1}\f$, the maximum
+ * capillary pressure is observed at \f$\mathrm{ \overline{S}_w = 0}\f$.
+ *
+ */
+class LinearMaterial
+{
+public:
+    /*!
+     * \brief The parameter type
+     * \tparam Scalar The scalar type
+     */
+    template<class Scalar>
+    struct Params
+    {
+        Scalar pe, pcMax;
+    };
+
+    /*!
+     * \brief Construct from a subgroup from the global parameter tree
+     * \note This will give you nice error messages if a mandatory parameter is missing
+     */
+    template<class Scalar = double>
+    static Params<Scalar> makeParams(const std::string& paramGroup)
+    {
+        const auto pe = getParamFromGroup<Scalar>(paramGroup, "LinearEntryPc");
+        const auto pcMax = getParamFromGroup<Scalar>(paramGroup, "LinearMaxPc");
+        return {pe, pcMax};
+    }
+
+    /*!
+     * \brief The capillary pressure-saturation curve
+     */
+    template<class Scalar>
+    static Scalar pc(Scalar swe, const Params<Scalar>& params)
+    {
+        return (1.0 - swe)*(params.pcMax - params.pe) + params.pe;
+    }
+
+    /*!
+     * \brief The inverse saturation-capillary pressure curve
+     */
+    template<class Scalar>
+    static Scalar swe(Scalar pc, const Params<Scalar>& params)
+    {
+        return 1.0 - (pc - params.pe)/(params.pcMax - params.pe);
+    }
+
+    /*!
+     * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
+     */
+    template<class Scalar>
+    static Scalar endPointPc(const Params<Scalar>& params)
+    { return params.pe; }
+
+    /*!
+     * \brief The partial derivative of the capillary pressure w.r.t. the effective saturation
+     */
+    template<class Scalar>
+    static Scalar dpc_dswe(Scalar swe, const Params<Scalar>& params)
+    {
+        return params.pe - params.pcMax;
+    }
+
+    /*!
+     * \brief The partial derivative of the effective saturation w.r.t. the capillary pressure
+     */
+    template<class Scalar>
+    static Scalar dswe_dpc(Scalar pc, const Params<Scalar>& params)
+    {
+        return 1.0/(params.pe - params.pcMax);
+    }
+
+    /*!
+     * \brief The relative permeability for the wetting phase
+     */
+    template<class Scalar>
+    static Scalar krw(Scalar swe, const Params<Scalar>& params)
+    {
+        using std::clamp;
+        return clamp(swe, 0.0, 1.0);
+    }
+
+    /*!
+     * \brief The derivative of the relative permeability
+     */
+    template<class Scalar>
+    static Scalar dkrw_dswe(Scalar swe, const Params<Scalar>& params)
+    {
+        return 1.0;
+    }
+
+    /*!
+     * \brief The relative permeability for the non-wetting phase
+     */
+    template<class Scalar>
+    static Scalar krn(Scalar swe, const Params<Scalar>& params)
+    {
+        using std::clamp;
+        return clamp(1.0-swe, 0.0, 1.0);
+    }
+
+    /*!
+     * \brief The derivative of the relative permeability
+     */
+    template<class Scalar>
+    static Scalar dkrn_dswe(Scalar swe, const Params<Scalar>& params)
+    {
+        return -1.0;
+    }
+};
+
+template<typename Scalar = double>
+using LinearMaterialDefault = TwoPMaterialLaw<Scalar, LinearMaterial, NoRegularization<Scalar>, TwoPEffToAbsDefaultPolicy>;
+
+} // end namespace Dumux::FluidMatrix
 
 #endif
