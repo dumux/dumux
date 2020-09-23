@@ -27,10 +27,6 @@
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/material/fluidmatrixinteractions/2pnew/linear.hh>
-#include <dumux/material/fluidmatrixinteractions/2pnew/materiallaw.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
@@ -54,7 +50,7 @@ class RichardsAnalyticalSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    using FluidMatrixInteraction = FluidMatrix::TwoPMaterialLaw<Scalar, FluidMatrix::Linear, FluidMatrix::NoTwoPRegularization<Scalar>>;
+    using FluidMatrixInteraction = FluidMatrix::LinearMaterialDefault<Scalar>;
 
     // export permeability type
     using PermeabilityType = Scalar;
@@ -64,9 +60,9 @@ public:
     {
         permeability_ = 5e-12;
 
-        typename FluidMatrixInteraction::BaseLawParams params;
-        params.entryPc = 0;
-        params.maxPc = 1e10;
+        typename FluidMatrixInteraction::BasicParams params;
+        params.pe = 0;
+        params.pcMax = 1e10;
 
         fluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>(params);
     }
