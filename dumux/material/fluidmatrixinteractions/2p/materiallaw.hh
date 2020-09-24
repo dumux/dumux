@@ -39,6 +39,10 @@ struct NoRegularization
 {
     //! Empty parameter structure
     template<class S> struct Params {};
+
+    //! We are always equal to other instances of our kind
+    bool operator== (const NoRegularization& o) const
+    { return true; }
 };
 
 /*!
@@ -251,6 +255,16 @@ public:
         }
 
         return BaseLaw::dkrn_dswe(swe, baseParams_)*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+    }
+
+    /*!
+     * \brief Equality comparison with another instance
+     */
+    bool operator== (const TwoPMaterialLaw& o) const
+    {
+        return baseParams_ == o.baseParams_
+               && effToAbsParams_ == o.effToAbsParams_
+               && regularization_ == o.regularization_;
     }
 
 private:

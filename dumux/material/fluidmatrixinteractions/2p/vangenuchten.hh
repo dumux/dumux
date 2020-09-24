@@ -322,6 +322,14 @@ public:
     struct Params
     {
         Scalar n, m, alpha, l;
+
+        bool operator== (const Params& p) const
+        {
+            return Dune::FloatCmp::eq(n, p.n, 1e-6)
+                   && Dune::FloatCmp::eq(m, p.m, 1e-6)
+                   && Dune::FloatCmp::eq(alpha, p.alpha, 1e-6)
+                   && Dune::FloatCmp::eq(l, p.l, 1e-6);
+        }
     };
 
     /*!
@@ -580,6 +588,17 @@ public:
 
         initPcParameters_(m, pcLowSw_, pcHighSw_);
         initKrParameters_(m, krnLowSw_, krwHighSw_);
+    }
+
+    /*!
+     * \brief Equality comparison with another instance
+     */
+    bool operator== (const VanGenuchtenRegularization& o) const
+    {
+        return Dune::FloatCmp::eq(pcLowSw_, o.pcLowSw_, 1e-6)
+               && Dune::FloatCmp::eq(pcHighSw_, o.pcHighSw_, 1e-6)
+               && Dune::FloatCmp::eq(krwHighSw_, o.krwHighSw_, 1e-6)
+               && Dune::FloatCmp::eq(krnLowSw_, o.krnLowSw_, 1e-6);
     }
 
     /*!

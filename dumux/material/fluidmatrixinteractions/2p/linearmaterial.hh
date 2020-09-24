@@ -194,6 +194,12 @@ public:
     struct Params
     {
         Scalar pe, pcMax;
+
+        bool operator== (const Params& p) const
+        {
+            return Dune::FloatCmp::eq(pe, p.pe, 1e-6)
+                   && Dune::FloatCmp::eq(pcMax, p.pcMax, 1e-6);
+        }
     };
 
     /*!
