@@ -62,7 +62,7 @@ public:
      * \param x a vector of x-coordinates
      * \param y a vector of y-coordinates
      */
-    MonotoneCubicSpline(const std::vector<Scalar>& x, const std::vector<Scalar> y)
+    MonotoneCubicSpline(const std::vector<Scalar>& x, const std::vector<Scalar>& y)
     {
         // check some requirements
         assert (x.size() == y.size());
