@@ -111,9 +111,8 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        using SpatialParams = typename Problem::SpatialParams;
-        Deprecated::TwoPMaterialLawWrapper<Scalar, SpatialParams, Element, Scv, ElemSol>
-            fluidMatrixInteraction(problem.spatialParams(), element, scv, elemSol);
+        Deprecated::TwoPMaterialLawWrapper
+            fluidMatrixInteraction(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
@@ -257,9 +256,8 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        using SpatialParams = typename Problem::SpatialParams;
-        Deprecated::TwoPMaterialLawWrapper<Scalar, SpatialParams, Element, Scv, ElemSol>
-            fluidMatrixInteraction(problem.spatialParams(), element, scv, elemSol);
+        Deprecated::TwoPMaterialLawWrapper
+            fluidMatrixInteraction(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const auto& priVars = elemSol[scv.localDofIndex()];
 

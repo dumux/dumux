@@ -81,7 +81,9 @@ class TwoPMaterialLawWrapper
     { return decltype(isValid(HasNewFIAIFAtPos<GlobalPosition>()).template check<S>())::value; }
 
 public:
-    TwoPMaterialLawWrapper(const SpatialParams& sp,
+    // pass scalar so template arguments can all be deduced
+    TwoPMaterialLawWrapper(const Scalar& scalar,
+                           const SpatialParams& sp,
                            const Element& element,
                            const Scv& scv,
                            const ElemSol& elemSol)
@@ -92,7 +94,7 @@ public:
     }
 
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
-    [[deprecated("The material laws have been overhauled! Your spatial params implement the old interface. Use the new style material laws. Old material laws will no longer be supported after release 3.2")]]
+    [[deprecated("The material laws have been overhauled! Your spatial params implement the old interface. Use the new style material laws. Old material laws will no longer be supported after release 3.3")]]
     void checkUsingOldMaterialLaw() {}
 
     template<class S = SpatialParams, typename std::enable_if_t<hasNew<S>() || hasNewAtPos<S>(), int> = 0>
