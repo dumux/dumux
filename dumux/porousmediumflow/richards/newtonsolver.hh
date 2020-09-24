@@ -46,12 +46,6 @@ class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
     using Scalar = typename Assembler::Scalar;
     using ParentType = NewtonSolver<Assembler, LinearSolver>;
     using SolutionVector = typename Assembler::ResidualType;
-
-    using SpatialParams = typename Assembler::Problem::SpatialParams;
-    using GridGeometry = typename Assembler::GridGeometry;
-    using GridView = typename GridGeometry::GridView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
     using Indices = typename Assembler::GridVariables::VolumeVariables::Indices;
     enum { pressureIdx = Indices::pressureIdx };
 
@@ -96,8 +90,9 @@ private:
                     // old material law interface is deprecated: Replace this by
                     // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
                     // after the release of 3.1, when the deprecated interface is no longer supported
-                    Deprecated::TwoPMaterialLawWrapper<Scalar, SpatialParams, Element, SubControlVolume, decltype(elemSol)>
-                        fluidMatrixInteraction(spatialParams, element, scv, elemSol);
+                    //Deprecated::TwoPMaterialLawWrapper<Scalar, SpatialParams, Element, SubControlVolume, decltype(elemSol)>
+                    Deprecated::TwoPMaterialLawWrapper
+                        fluidMatrixInteraction(Scalar{}, spatialParams, element, scv, elemSol);
 
                     const Scalar pcMin = fluidMatrixInteraction.pc(1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
