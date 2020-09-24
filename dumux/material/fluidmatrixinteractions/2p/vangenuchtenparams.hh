@@ -38,7 +38,7 @@ namespace Dumux {
  *       automatically calculates the other. I.e. they cannot be set independently.
  */
 template<class ScalarT>
-class VanGenuchtenParams
+class [[deprecated("Use new material laws! Removal after 3.3")]] VanGenuchtenParams
 {
 public:
     using Scalar = ScalarT;
@@ -109,7 +109,7 @@ public:
      */
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }
-    
+
     /*!
      * \brief Return the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
      *        curve.

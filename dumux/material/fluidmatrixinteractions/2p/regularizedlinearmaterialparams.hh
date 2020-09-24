@@ -25,6 +25,8 @@
 #ifndef REGULARIZED_LINEAR_PARAMS_HH
 #define REGULARIZED_LINEAR_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3"
+
 #include "linearmaterialparams.hh"
 
 namespace Dumux {
@@ -35,7 +37,7 @@ namespace Dumux {
  *          the linear constitutive relations.
  */
 template<class ScalarT>
-class RegularizedLinearMaterialParams : public LinearMaterialParams<ScalarT>
+class [[deprecated("Use new material laws! Removal after 3.3")]] RegularizedLinearMaterialParams : public LinearMaterialParams<ScalarT>
 {
 public:
     using Scalar = ScalarT;

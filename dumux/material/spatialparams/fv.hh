@@ -68,6 +68,16 @@ public:
     : ParentType(gridGeometry)
     {}
 
+    // make sure we get a deprecation warning (remove this after release 3.3)
+    template<class ElementSolution>
+    [[deprecated("Use the new style material laws. Old material laws and this interface will no longer be supported after release 3.3")]]
+    decltype(auto) materialLawParamsDeprecated(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolution& elemSol) const
+    {
+        return this->asImp_().materialLawParams(element, scv, elemSol);
+    }
+
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
@@ -77,7 +87,7 @@ public:
      * \return the material parameters object
      */
     template<class ElementSolution>
-    [[deprecated("Use the new style material laws. Old material laws will no longer be supported after release 3.1")]]
+    [[deprecated("Use the new style material laws. Old material laws and this interface will no longer be supported after release 3.3")]]
     decltype(auto) materialLawParams(const Element& element,
                                      const SubControlVolume& scv,
                                      const ElementSolution& elemSol) const
