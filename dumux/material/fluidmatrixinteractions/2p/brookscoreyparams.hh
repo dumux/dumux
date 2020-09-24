@@ -37,7 +37,7 @@ namespace Dumux {
  * \see BrooksCorey
  */
 template <class ScalarT>
-class BrooksCoreyParams
+class [[deprecated("Use new material laws! Removal after 3.3")]] BrooksCoreyParams
 {
 public:
     using Scalar = ScalarT;

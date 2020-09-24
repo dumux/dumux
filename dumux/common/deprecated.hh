@@ -106,7 +106,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar pc(const Scalar sw) const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::pc(params, sw);
     }
 
@@ -125,7 +125,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar dpc_dsw(const Scalar sw) const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::dpc_dsw(params, sw);
     }
 
@@ -144,7 +144,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar endPointPc() const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::endPointPc(params);
     }
 
@@ -163,7 +163,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar sw(const Scalar pc) const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::sw(params, pc);
     }
 
@@ -182,7 +182,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar dsw_dpc(const Scalar pc) const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::dsw_dpc(params, pc);
     }
 
@@ -206,7 +206,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar krw(const Scalar sw) const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::krw(params, sw);
     }
 
@@ -228,7 +228,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar dkrw_dsw(const Scalar sw) const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::dkrw_dsw(params, sw);
     }
 
@@ -250,7 +250,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar krn(const Scalar sw) const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::krn(params, sw);
     }
 
@@ -272,7 +272,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<!hasNew<S>() && !hasNewAtPos<S>(), int> = 0>
     Scalar dkrn_dsw(const Scalar sw) const
     {
-        const auto& params = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return S::MaterialLaw::dkrn_dsw(params, sw);
     }
 

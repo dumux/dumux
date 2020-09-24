@@ -25,6 +25,8 @@
 #ifndef DUMUX_VAN_GENUCHTEN_PARAMS_HH
 #define DUMUX_VAN_GENUCHTEN_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <dune/common/float_cmp.hh>
 
 namespace Dumux {
@@ -38,7 +40,7 @@ namespace Dumux {
  *       automatically calculates the other. I.e. they cannot be set independently.
  */
 template<class ScalarT>
-class VanGenuchtenParams
+class [[deprecated("Use new material laws! Removal after 3.3")]] VanGenuchtenParams
 {
 public:
     using Scalar = ScalarT;
@@ -109,7 +111,7 @@ public:
      */
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }
-    
+
     /*!
      * \brief Return the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
      *        curve.

@@ -26,6 +26,8 @@
 #ifndef REGULARIZED_VAN_GENUCHTEN_OF_TEMPERATURE_HH
 #define REGULARIZED_VAN_GENUCHTEN_OF_TEMPERATURE_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchtenparams.hh>
 
@@ -40,7 +42,7 @@ namespace Dumux {
  *        Everything except the capillary pressure is taken from the parent, i.e. Regularized VanGenuchten.
  */
 template <class ScalarT, class ParamsT = RegularizedVanGenuchtenParams<ScalarT> >
-class RegularizedVanGenuchtenOfTemperature : public RegularizedVanGenuchten<ScalarT, ParamsT>
+class [[deprecated("Use new material laws! Removal after 3.3")]] RegularizedVanGenuchtenOfTemperature : public RegularizedVanGenuchten<ScalarT, ParamsT>
 {
     using RegularizedVanGenuchten = Dumux::RegularizedVanGenuchten<ScalarT, ParamsT>;
     // Data is in /home/pnuske/paper/pcOfT/
