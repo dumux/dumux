@@ -43,7 +43,7 @@ namespace Dumux {
 /*!
  * \ingroup Common
  * \brief A monotone cubic spline
- * \note Contruction after Fritsch & Butland (1984) (see https://doi.org/10.1137/0905021)
+ * \note Construction after Fritsch & Butland (1984) (see https://doi.org/10.1137/0905021)
  * \note The resulting interpolation is globally monotone but only C^1
  */
 template<class Scalar = double>
@@ -57,7 +57,7 @@ public:
     MonotoneCubicSpline() = default;
 
     /*!
-     * \brief Contruct a monotone cubic spline from the control points (x[i], y[i])
+     * \brief Construct a monotone cubic spline from the control points (x[i], y[i])
      * \note if the data set is monotone, monotonicity is preserved
      * \param x a vector of x-coordinates
      * \param y a vector of y-coordinates
