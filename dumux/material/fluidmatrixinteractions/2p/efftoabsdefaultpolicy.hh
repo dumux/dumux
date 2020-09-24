@@ -26,8 +26,7 @@
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_TWOP_EFF_TO_ABS_DEFAULT_POLICY_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_TWOP_EFF_TO_ABS_DEFAULT_POLICY_HH
 
-namespace Dumux {
-namespace FluidMatrix {
+namespace Dumux::FluidMatrix {
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -64,8 +63,8 @@ public:
     static Params<Scalar> makeParams(const std::string& paramGroup)
     {
         return {
-            getParam<Scalar>(paramGroup + ".Swr", 0.0),
-            getParam<Scalar>(paramGroup + ".Snr", 0.0)
+            getParamFromGroup<Scalar>(paramGroup, "Swr", 0.0),
+            getParamFromGroup<Scalar>(paramGroup, "Snr", 0.0)
         };
     }
 
@@ -82,21 +81,6 @@ public:
     static Scalar swToSwe(const Scalar sw, const Params<Scalar>& params)
     {
         return (sw - params.swr)/(1.0 - params.swr - params.snr);
-    }
-
-    /*!
-     * \brief Convert an absolute non-wetting saturation to an effective one.
-     *
-     * \param sn Absolute saturation of the non-wetting phase \f$\mathrm{[{S}_n]}\f$.
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
-     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     * \return Effective saturation of the non-wetting phase.
-     */
-    template<class Scalar>
-    static Scalar snToSne(const Scalar sn, const Params<Scalar>& params)
-    {
-        return (sn - params.snr)/(1.0 - params.swr - params.snr);
     }
 
     /*!
@@ -143,7 +127,6 @@ public:
     }
 };
 
-} // end namespace FluidMatrix
-} // end namespace Dumux
+} // end namespace Dumux::FluidMatrix
 
 #endif
