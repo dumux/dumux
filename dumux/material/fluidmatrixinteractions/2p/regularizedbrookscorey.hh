@@ -25,6 +25,8 @@
 #ifndef REGULARIZED_BROOKS_COREY_HH
 #define REGULARIZED_BROOKS_COREY_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include "brookscorey.hh"
 #include "regularizedbrookscoreyparams.hh"
 

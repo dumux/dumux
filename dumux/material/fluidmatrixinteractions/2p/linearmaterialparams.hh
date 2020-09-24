@@ -33,7 +33,7 @@ namespace Dumux {
  *        law.
  */
 template<class ScalarT>
-class LinearMaterialParams
+class [[deprecated("Use new material laws! Removal after 3.3")]] LinearMaterialParams
 {
 public:
     using Scalar = ScalarT;

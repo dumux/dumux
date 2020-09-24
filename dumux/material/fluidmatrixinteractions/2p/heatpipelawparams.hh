@@ -33,7 +33,7 @@ namespace Dumux {
  *        material law
  */
 template<class ScalarT>
-class HeatPipeLawParams
+class [[deprecated("Use new material laws! Removal after 3.3")]] HeatPipeLawParams
 {
 public:
     using Scalar = ScalarT;

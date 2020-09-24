@@ -25,6 +25,8 @@
 #ifndef REGULARIZED_VAN_GENUCHTEN_PARAMS_HH
 #define REGULARIZED_VAN_GENUCHTEN_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <dune/common/float_cmp.hh>
 
 #include "vangenuchtenparams.hh"
@@ -37,7 +39,7 @@ namespace Dumux {
  *          VanGenuchten "material law".
  */
 template<class ScalarT>
-class RegularizedVanGenuchtenParams : public VanGenuchtenParams<ScalarT>
+class [[deprecated("Use new material laws! Removal after 3.3")]] RegularizedVanGenuchtenParams : public VanGenuchtenParams<ScalarT>
 {
 public:
     using Scalar = ScalarT;
