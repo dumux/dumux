@@ -309,6 +309,14 @@ public:
      * \brief The parameter type
      * \tparam Scalar The scalar type
      * \note The van Genuchten laws are parameterized with four parameters: \f$\mathrm{n, m, \alpha, l}\f$.
+     *
+     * - \f$\mathrm{\alpha}\f$ shape parameter \f$\mathrm{[1/Pa]}\f$
+     * - \f$\mathrm{m}\f$ shape parameter \f$\mathrm{[-]}\f$
+     * - \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$
+     * - \f$\mathrm{l}\f$ pore-connectivity parameter \f$\mathrm{[-]}\f$ of Mualem's relative permeability curve
+     *
+     * \note In the orignal Mualem (1976) paper the pore-connectivity parameter is called "n". It's referred to as "l" in
+     *       several later publication of van Genuchten, e.g. van Genuchten (1991), Shaap & van Genuchten (2006).
      */
     template<class Scalar>
     struct Params
@@ -326,6 +334,7 @@ public:
         const auto vgn = getParamFromGroup<Scalar>(paramGroup, "Vgn");
         const auto vgm = 1.0 - 1.0/vgn;
         const auto vgAlpha = getParamFromGroup<Scalar>(paramGroup, "VgAlpha");
+        // l is usually chosen to be 0.5 (according to Mualem (1976), WRR)
         const auto vgl = getParamFromGroup<Scalar>(paramGroup, "Vgl", 0.5);
         return {vgn, vgm, vgAlpha, vgl};
     }
