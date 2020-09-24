@@ -27,8 +27,8 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotthermalconductivitymodel.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivityjohansen.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/johansen.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 

@@ -38,7 +38,7 @@
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/richards/model.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include "../spatialparams.hh"
 
