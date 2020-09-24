@@ -25,6 +25,8 @@
 #ifndef DUMUX_VAN_GENUCHTEN_PARAMS_HH
 #define DUMUX_VAN_GENUCHTEN_PARAMS_HH
 
+// TODO Deprecated. Remove after 3.3
+
 #include <dune/common/float_cmp.hh>
 
 namespace Dumux {
@@ -109,7 +111,7 @@ public:
      */
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }
-    
+
     /*!
      * \brief Return the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
      *        curve.

@@ -36,6 +36,7 @@ namespace Dumux {
  *        for the Brooks Corey constitutive relations.
  * \see BrooksCorey
  */
+// "Use new material laws! Removal after 3.3")
 template <class ScalarT>
 class BrooksCoreyParams
 {
