@@ -25,6 +25,8 @@
 #ifndef DUMUX_REGULARIZED_LINEAR_MATERIAL_HH
 #define DUMUX_REGULARIZED_LINEAR_MATERIAL_HH
 
+#warning "This header is deprecated. Removal after 3.3"
+
 #include "linearmaterial.hh"
 #include "regularizedlinearmaterialparams.hh"
 
