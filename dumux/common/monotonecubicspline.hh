@@ -64,11 +64,6 @@ public:
      */
     MonotoneCubicSpline(const std::vector<Scalar>& x, const std::vector<Scalar>& y)
     {
-        // check some requirements
-        assert (x.size() == y.size());
-        assert (x.size() >=2);
-        assert (std::is_sorted(x.begin(), x.end()));
-
         updatePoints(x, y);
     }
 
@@ -79,6 +74,11 @@ public:
      */
     void updatePoints(const std::vector<Scalar>& x, const std::vector<Scalar>& y)
     {
+        // check some requirements
+        assert (x.size() == y.size());
+        assert (x.size() >=2);
+        assert (std::is_sorted(x.begin(), x.end()));
+
         // save a copy of the control points
         x_ = x;
         y_ = y;
