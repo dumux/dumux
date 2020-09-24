@@ -53,6 +53,12 @@ public:
     {
         Scalar swr = 0.0;
         Scalar snr = 0.0;
+
+        bool operator== (const Params& p) const
+        {
+            return Dune::FloatCmp::eq(swr, p.swr, 1e-6)
+                   && Dune::FloatCmp::eq(snr, p.snr, 1e-6);
+        }
     };
 
     /*!

@@ -310,6 +310,12 @@ public:
     struct Params
     {
         Scalar pe, lambda;
+
+        bool operator== (const Params& p) const
+        {
+            return Dune::FloatCmp::eq(pe, p.pe, 1e-6)
+                   && Dune::FloatCmp::eq(lambda, p.lambda, 1e-6);
+        }
     };
 
     /*!
@@ -586,6 +592,15 @@ public:
         entryPressure_ = bp.pe;
 
         initPcParameters_(m, pcLowSw_);
+    }
+
+    /*!
+     * \brief Equality comparison with another instance
+     */
+    bool operator== (const BrooksCoreyRegularization& o) const
+    {
+        return Dune::FloatCmp::eq(pcLowSw_, o.pcLowSw_, 1e-6)
+               && Dune::FloatCmp::eq(entryPressure_, o.entryPressure_, 1e-6);
     }
 
     /*!
