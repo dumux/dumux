@@ -1,0 +1,27 @@
+[Grid]
+File = periodic.dgf
+
+[Problem]
+Name = test_kovasznay # name passed to the output routines
+EnableGravity = true
+PrintL2Error = false
+EnableInertiaTerms = true
+PrintMatrix = true
+UsePressureDifference = false
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 0.025
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+
+[Flux]
+UpwindWeight = 0.5
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
