@@ -1,0 +1,11 @@
+[MaterialLaw]
+LinearEntryPc = 0.0
+LinearMaxPc = 1.0
+SwData = 0.0 0.2 0.5 0.7 1.0
+PcData = 1.0 0.8 0.5 0.3 0.0
+KrwData= 0.0 0.2 0.5 0.7 1.0
+KrnData = 1.0 0.8 0.6 0.5 0.3 0.0
+Krn.SwData = 0.0 0.2 0.4 0.5 0.7 1.0
+
+[Plot]
+Range = 0.0 1.0
