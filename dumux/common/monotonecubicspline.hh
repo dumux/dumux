@@ -35,12 +35,15 @@
 // Hermite basis functions
 #include <dumux/common/cubicsplinehermitebasis.hh>
 
+// for inversion
+#include <dumux/nonlinear/findscalarroot.hh>
+
 namespace Dumux {
 
 /*!
  * \ingroup Common
  * \brief A monotone cubic spline
- * \note Contruction after Fritsch & Butland (1984) (see https://doi.org/10.1137/0905021)
+ * \note Construction after Fritsch & Butland (1984) (see https://doi.org/10.1137/0905021)
  * \note The resulting interpolation is globally monotone but only C^1
  */
 template<class Scalar = double>
@@ -54,18 +57,13 @@ public:
     MonotoneCubicSpline() = default;
 
     /*!
-     * \brief Contruct a monotone cubic spline from the control points (x[i], y[i])
+     * \brief Construct a monotone cubic spline from the control points (x[i], y[i])
      * \note if the data set is monotone, monotonicity is preserved
      * \param x a vector of x-coordinates
      * \param y a vector of y-coordinates
      */
-    MonotoneCubicSpline(const std::vector<Scalar>& x, const std::vector<Scalar> y)
+    MonotoneCubicSpline(const std::vector<Scalar>& x, const std::vector<Scalar>& y)
     {
-        // check some requirements
-        assert (x.size() == y.size());
-        assert (x.size() >=2);
-        assert (std::is_sorted(x.begin(), x.end()));
-
         updatePoints(x, y);
     }
 
@@ -76,12 +74,20 @@ public:
      */
     void updatePoints(const std::vector<Scalar>& x, const std::vector<Scalar>& y)
     {
+        // check some requirements
+        assert (x.size() == y.size());
+        assert (x.size() >=2);
+        assert (std::is_sorted(x.begin(), x.end()));
+
         // save a copy of the control points
         x_ = x;
         y_ = y;
 
         // the number of control points
         numPoints_ = x.size();
+
+        // whether we are increasing
+        increasing_ = y_.back() > y_.front();
 
         // the slope at every control point
         m_.resize(numPoints_);
@@ -150,11 +156,66 @@ public:
         }
     }
 
+    /*!
+     * \brief Evaluate the inverse function
+     * \param x the x-coordinate
+     * \note We extrapolate linearly if out of bounds
+     * \note Throws exception if inverse could not be found (e.g. not unique)
+     */
+    Scalar evalInverse(const Scalar y) const
+    {
+        if (increasing_)
+        {
+            if (y <= y_.front())
+                return x_.front() + (y - y_.front())/m_.front();
+            else if (y > y_.back())
+                return x_.back() + (y - y_.back())/m_.back();
+            else
+            {
+                const auto lookUpIndex = std::distance(y_.begin(), std::lower_bound(y_.begin(), y_.end(), y));
+                assert(lookUpIndex != 0);
+
+                return evalInverse_(y, lookUpIndex);
+            }
+        }
+
+        else
+        {
+            if (y >= y_.front())
+                return x_.front() + (y - y_.front())/m_.front();
+            else if (y < y_.back())
+                return x_.back() + (y - y_.back())/m_.back();
+            else
+            {
+                const auto lookUpIndex = y_.size() - std::distance(y_.rbegin(), std::lower_bound(y_.rbegin(), y_.rend(), y));
+                assert(lookUpIndex != 0);
+
+                return evalInverse_(y, lookUpIndex);
+            }
+        }
+    }
+
 private:
+    Scalar evalInverse_(const Scalar y, const std::size_t lookUpIndex) const
+    {
+        auto localPolynomial = [&](const auto x) {
+            // interpolate parametrization parameter t in [0,1]
+            const auto h = (x_[lookUpIndex] - x_[lookUpIndex-1]);
+            const auto t = (x - x_[lookUpIndex-1])/h;
+            return y - (y_[lookUpIndex-1]*Basis::h00(t) + h*m_[lookUpIndex-1]*Basis::h10(t)
+                   + y_[lookUpIndex]*Basis::h01(t) + h*m_[lookUpIndex]*Basis::h11(t));
+        };
+
+        // use an epsilon for the bracket
+        const auto eps = (x_[lookUpIndex]-x_[lookUpIndex-1])*1e-5;
+        return findScalarRootBrent(x_[lookUpIndex-1]-eps, x_[lookUpIndex]+eps, localPolynomial);
+    }
+
     std::vector<Scalar> x_; //!< the x-coordinates
     std::vector<Scalar> y_; //!< the y-coordinates
     std::vector<Scalar> m_; //!< the slope for each control point
     std::size_t numPoints_; //!< the number of control points
+    bool increasing_; //!< if we are increasing monotone or not
 };
 
 } // end namespace Dumux

@@ -79,6 +79,34 @@ int main(int argc, char** argv)
     if (maxNorm > 0.0008 || maxNormDeriv > 0.013)
         DUNE_THROW(Dune::Exception, "Maximum error in spline interpolation too large!");
 
+    // test inverse by evaluating (x = f^-1(f(x))) for monotonically increasing function
+    {
+        const auto resultX = eval([&](double x){ return spline.evalInverse(spline.eval(x)); }, testPoints);
+        auto diffInverse = resultX;
+        std::transform(resultX.begin(), resultX.end(), testPoints.begin(), diffInverse.begin(), [](auto a, auto b){ return std::abs(a-b); });
+        const auto maxNormInverse = std::accumulate(diffInverse.begin(), diffInverse.end(), diffInverse[0], [](auto a, auto b){ return std::max(a, b); })
+                             /(*std::max_element(testPoints.begin(), testPoints.end()));
+
+
+        std::cout << "Maximum error in identity using the inverse (mon. incr.): " << std::scientific << maxNormInverse << "\n";
+        if (maxNormInverse > 1e-13)
+            DUNE_THROW(Dune::Exception, "Maximum error in spline interpolation too large!");
+    }
+    // test inverse by evaluating (x = f^-1(f(x))) for monotonically decreasing function
+    {
+        auto reverseTest = testPoints;
+        std::reverse(reverseTest.begin(), reverseTest.end());
+        const auto resultX = eval([&](double x){ return spline.evalInverse(spline.eval(x)); }, reverseTest);
+        auto diffInverse = resultX;
+        std::transform(resultX.begin(), resultX.end(), reverseTest.begin(), diffInverse.begin(), [](auto a, auto b){ return std::abs(a-b); });
+        const auto maxNormInverse = std::accumulate(diffInverse.begin(), diffInverse.end(), diffInverse[0], [](auto a, auto b){ return std::max(a, b); })
+                             /(*std::max_element(reverseTest.begin(), reverseTest.end()));
+
+        std::cout << "Maximum error in identity using the inverse (mon. decr.): " << std::scientific << maxNormInverse << "\n";
+        if (maxNormInverse > 1e-13)
+            DUNE_THROW(Dune::Exception, "Maximum error in spline interpolation too large!");
+    }
+
     // plot with Gnuplot (plot a bit more so we can see the linear extension)
     const auto plotPoints = Dumux::linspace(-1.0, 5.0, 1000);
     const auto refPlot = eval(f, plotPoints);
