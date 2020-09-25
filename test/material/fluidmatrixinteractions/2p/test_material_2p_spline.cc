@@ -33,9 +33,10 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2pnew/vangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2pnew/materiallaw.hh>
-#include <dumux/material/fluidmatrixinteractions/2pnew/spline.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/splinemateriallaw.hh>
+
+namespace Dumux {
 
 template<class Function>
 std::vector<double> eval(const Function& f, const std::vector<double>& x)
@@ -45,34 +46,37 @@ std::vector<double> eval(const Function& f, const std::vector<double>& x)
     return y;
 }
 
-int main(int argc, char** argv) try
+template<class Function, class Orig, class Spline>
+void runTest(const std::string& name, const Function& f,
+             const Orig& orig, const Spline& spline,
+             bool plot = true)
 {
-    using namespace Dumux;
+    std::cout << "-----------------------\n"
+              << name << "\n"
+              << "-----------------------\n";
 
-    Parameters::init(argc, argv);
 
-    using MaterialLaw = FluidMatrix::TwoPMaterialLaw<double, FluidMatrix::VanGenuchten, FluidMatrix::NoTwoPRegularization<double>>;
-    auto vg = std::make_shared<MaterialLaw>("MaterialLaw"); // read parameters from input file (group MaterialLaw)
+    if (plot)
+    {
+        const auto [swMinPlot, swMaxPlot]
+            = getParam<std::array<double, 2>>("Plot.Range", std::array<double, 2>{{0.1, 1.0}});
 
-    using MaterialLawSpline = FluidMatrix::TwoPMaterialLaw<double, FluidMatrix::VanGenuchten, FluidMatrix::TwoPSplineRegularization<double>>;
-    auto vgSpline = std::make_shared<MaterialLawSpline>("MaterialLaw"); // read parameters from input file (group MaterialLaw)
+        const auto sw = linspace(swMinPlot, swMaxPlot, 1000);
+        const auto value = eval([&](auto sw){ return f(sw, orig); }, sw);
+        const auto valueSpline = eval([&](auto sw){ return f(sw, spline); }, sw);
 
-    const auto swMinPlot = getParam<double>("Plot.SwMin", 0.1);
-    const auto swMaxPlot = getParam<double>("Plot.SwMax", 1.0);
-    const auto sw = linspace(swMinPlot, swMaxPlot, 1000);
-    const auto pc = eval([&](auto sw){ return vg->pc(sw); }, sw);
-    const auto pcSpline = eval([&](auto sw){ return vgSpline->pc(sw); }, sw);
-
-    GnuplotInterface<double> gnuplot(false);
-    gnuplot.addDataSetToPlot(sw, pc, "pcsw.dat", "title 'van Genuchten pc-sw curve'");
-    gnuplot.addDataSetToPlot(sw, pcSpline, "pcswspline.dat", "title 'van Genuchten pc-sw curve (spline interpolation)'");
-    gnuplot.setOption("set xrange [0.0 : 1.0]");
-    gnuplot.plot("vangenuchten");
+        GnuplotInterface<double> gnuplot(false);
+        gnuplot.addDataSetToPlot(sw, value, name + "-orig.dat", "title 'orig. curve'");
+        gnuplot.addDataSetToPlot(sw, valueSpline, name + "-spline.dat", "title 'spline'");
+        gnuplot.setOption("set xrange [0.0 : 1.0]");
+        gnuplot.plot(name);
+    }
 
     // speed test
     {
-        const auto swMinSpline = getParam<double>("MaterialLaw.Spline.MinSw", 0.1);
-        const auto swMaxSpline = getParam<double>("MaterialLaw.Spline.MaxSw", 1.0);
+        const auto [swMinSpline, swMaxSpline]
+            = getParam<std::array<double, 2>>("MaterialLaw.SplineSweInterval", std::array<double, 2>{{0.1, 1.0}});
+
         constexpr std::size_t testSamples = 1000000;
         const auto swTest = linspace(swMinSpline, swMaxSpline, testSamples);
         auto pcTest = swTest;
@@ -80,20 +84,52 @@ int main(int argc, char** argv) try
         Dune::Timer timer;
         double res = 0.0;
         for (int i = 0; i < testSamples; ++i)
-            res += vg->pc(swTest[i]);
+            res += f(swTest[i], orig);
         timer.stop();
+
         const auto vgTime = timer.elapsed();
         std::cout << "Unregularized law computed " << testSamples << " samples in " << vgTime << " seconds." << std::endl;
+
         timer.reset();
         timer.start();
         res = 0.0;
         for (int i = 0; i < testSamples; ++i)
-            res += vgSpline->pc(swTest[i]);
+            res += f(swTest[i], spline);
         timer.stop();
+
         const auto vgSplineTime = timer.elapsed();
         std::cout << "Spline law computed " << testSamples << " samples in " << vgSplineTime << " seconds." << std::endl;
-        std::cout << "Speed-up factor ca. " << std::ceil(vgTime/vgSplineTime) << "x (only in spline region)" << std::endl;
+
+        std::cout << "Speed-up factor ca. " << (vgTime/vgSplineTime) << "x (only in spline region)" << std::endl;
     }
+}
+
+} // end namespace Dumux
+
+int main(int argc, char** argv) try
+{
+    using namespace Dumux;
+
+    Parameters::init(argc, argv);
+
+    using MaterialLaw = FluidMatrix::VanGenuchtenNoReg<double>;
+    MaterialLaw vg("MaterialLaw"); // read parameters from input file (group MaterialLaw)
+
+    using MaterialLawSpline = FluidMatrix::SplineTwoPMaterialLaw<MaterialLaw>;
+    MaterialLawSpline vgSpline("MaterialLaw"); // read parameters from input file (group MaterialLaw)
+
+    const bool plot = getParam<bool>("Plot.EnablePlot");
+
+    runTest("vg-pc", [](auto sw, const auto& law){ return law.pc(sw); }, vg, vgSpline, plot);
+    runTest("vg-dpc", [](auto sw, const auto& law){ return law.dpc_dsw(sw); }, vg, vgSpline, plot);
+    runTest("vg-krw", [](auto sw, const auto& law){ return law.krw(sw); }, vg, vgSpline, plot);
+    runTest("vg-dkrw", [](auto sw, const auto& law){ return law.dkrw_dsw(sw); }, vg, vgSpline, plot);
+    runTest("vg-krn", [](auto sw, const auto& law){ return law.krn(sw); }, vg, vgSpline, plot);
+    runTest("vg-dkrn", [](auto sw, const auto& law){ return law.dkrn_dsw(sw); }, vg, vgSpline, plot);
+
+    // inversions
+    runTest("vg-sw-i", [](auto sw, const auto& law){ return law.sw(law.pc(sw)); }, vg, vgSpline, plot);
+    runTest("vg-dsw-i", [](auto sw, const auto& law){ return law.dsw_dpc(law.pc(sw)); }, vg, vgSpline, plot);
 
     return 0;
 }
