@@ -76,6 +76,8 @@ public:
     using EffToAbsParams = typename EffToAbsPolicy::template Params<Scalar>;
     using RegularizationParams = typename Regularization::template Params<Scalar>;
 
+    using EffToAbs = EffToAbsPolicy;
+
     /*!
      * \brief Return whether this law is regularized
      */
@@ -94,8 +96,8 @@ public:
      */
     explicit TwoPMaterialLaw(const std::string& paramGroup)
     {
-        baseParams_ = BaseLaw::template makeParams<Scalar>(paramGroup);
-        effToAbsParams_ = EffToAbsPolicy::template makeParams<Scalar>(paramGroup);
+        basicParams_ = BaseLaw::template makeParams<Scalar>(paramGroup);
+        effToAbsParams_ = EffToAbs::template makeParams<Scalar>(paramGroup);
 
         if constexpr (isRegularized())
             regularization_.init(this, paramGroup);
@@ -108,7 +110,7 @@ public:
     TwoPMaterialLaw(const BasicParams& baseParams,
                     const EffToAbsParams& effToAbsParams = {},
                     const RegularizationParams& regParams = {})
-    : baseParams_(baseParams)
+    : basicParams_(baseParams)
     , effToAbsParams_(effToAbsParams)
     {
         if constexpr (isRegularized())
@@ -121,7 +123,7 @@ public:
     template<bool enableRegularization = isRegularized()>
     Scalar pc(const Scalar sw) const
     {
-        const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
+        const auto swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.pc(swe);
@@ -129,7 +131,7 @@ public:
                 return regularized.value();
         }
 
-        return BaseLaw::pc(swe, baseParams_);
+        return BaseLaw::pc(swe, basicParams_);
     }
 
     /*!
@@ -138,15 +140,15 @@ public:
     template<bool enableRegularization = isRegularized()>
     Scalar dpc_dsw(const Scalar sw) const
     {
-        const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
+        const auto swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.dpc_dswe(swe);
             if (regularized)
-                return regularized.value()*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+                return regularized.value()*EffToAbs::dswe_dsw(effToAbsParams_);
         }
 
-        return BaseLaw::dpc_dswe(swe, baseParams_)*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+        return BaseLaw::dpc_dswe(swe, basicParams_)*EffToAbs::dswe_dsw(effToAbsParams_);
     }
 
     /*!
@@ -154,7 +156,7 @@ public:
      */
     Scalar endPointPc() const
     {
-        return BaseLaw::endPointPc(baseParams_);
+        return BaseLaw::endPointPc(basicParams_);
     }
 
     /*!
@@ -167,10 +169,10 @@ public:
         {
             const auto regularized = regularization_.swe(pc);
             if (regularized)
-                return EffToAbsPolicy::sweToSw(regularized.value(), effToAbsParams_);
+                return EffToAbs::sweToSw(regularized.value(), effToAbsParams_);
         }
 
-        return EffToAbsPolicy::sweToSw(BaseLaw::swe(pc, baseParams_), effToAbsParams_);
+        return EffToAbs::sweToSw(BaseLaw::swe(pc, basicParams_), effToAbsParams_);
     }
 
     /*!
@@ -183,10 +185,10 @@ public:
         {
             const auto regularized = regularization_.dswe_dpc(pc);
             if (regularized)
-                return regularized.value()*EffToAbsPolicy::dsw_dswe(effToAbsParams_);
+                return regularized.value()*EffToAbs::dsw_dswe(effToAbsParams_);
         }
 
-        return BaseLaw::dswe_dpc(pc, baseParams_)*EffToAbsPolicy::dsw_dswe(effToAbsParams_);
+        return BaseLaw::dswe_dpc(pc, basicParams_)*EffToAbs::dsw_dswe(effToAbsParams_);
     }
 
     /*!
@@ -195,7 +197,7 @@ public:
     template<bool enableRegularization = isRegularized()>
     Scalar krw(const Scalar sw) const
     {
-        const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
+        const auto swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.krw(swe);
@@ -203,7 +205,7 @@ public:
                 return regularized.value();
         }
 
-        return BaseLaw::krw(swe, baseParams_);
+        return BaseLaw::krw(swe, basicParams_);
     }
 
     /*!
@@ -212,15 +214,15 @@ public:
     template<bool enableRegularization = isRegularized()>
     Scalar dkrw_dsw(const Scalar sw) const
     {
-        const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
+        const auto swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.dkrw_dswe(swe);
             if (regularized)
-                return regularized.value()*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+                return regularized.value()*EffToAbs::dswe_dsw(effToAbsParams_);
         }
 
-        return BaseLaw::dkrw_dswe(swe, baseParams_)*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+        return BaseLaw::dkrw_dswe(swe, basicParams_)*EffToAbs::dswe_dsw(effToAbsParams_);
     }
 
     /*!
@@ -229,7 +231,7 @@ public:
     template<bool enableRegularization = isRegularized()>
     Scalar krn(const Scalar sw) const
     {
-        const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
+        const auto swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.krn(swe);
@@ -237,7 +239,7 @@ public:
                 return regularized.value();
         }
 
-        return BaseLaw::krw(swe, baseParams_);
+        return BaseLaw::krn(swe, basicParams_);
     }
 
     /*!
@@ -246,7 +248,7 @@ public:
     template<bool enableRegularization = isRegularized()>
     Scalar dkrn_dsw(const Scalar sw) const
     {
-        const auto swe = EffToAbsPolicy::swToSwe(sw, effToAbsParams_);
+        const auto swe = EffToAbs::swToSwe(sw, effToAbsParams_);
         if constexpr (enableRegularization)
         {
             const auto regularized = regularization_.dkrn_dswe(swe);
@@ -254,7 +256,7 @@ public:
                 return regularized.value()*EffToAbs::dswe_dsw(effToAbsParams_);
         }
 
-        return BaseLaw::dkrn_dswe(swe, baseParams_)*EffToAbsPolicy::dswe_dsw(effToAbsParams_);
+        return BaseLaw::dkrn_dswe(swe, basicParams_)*EffToAbs::dswe_dsw(effToAbsParams_);
     }
 
     /*!
@@ -262,13 +264,19 @@ public:
      */
     bool operator== (const TwoPMaterialLaw& o) const
     {
-        return baseParams_ == o.baseParams_
+        return basicParams_ == o.basicParams_
                && effToAbsParams_ == o.effToAbsParams_
                && regularization_ == o.regularization_;
     }
 
+    const BasicParams& basicParams() const
+    { return basicParams_; }
+
+    const EffToAbsParams& effToAbsParams() const
+    { return effToAbsParams_; }
+
 private:
-    BasicParams baseParams_;
+    BasicParams basicParams_;
     EffToAbsParams effToAbsParams_;
     Regularization regularization_;
 };
