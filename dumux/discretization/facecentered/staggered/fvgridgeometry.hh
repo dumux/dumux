@@ -301,6 +301,32 @@ public:
                 // store the local index of the first scvf corresponding to the scv on the current intersection
                 scvfOfScvInfo_[eIdx].push_back(localScvfIdx);
 
+                // handle periodic boundaries
+                if (onPeriodicBoundary_(intersection))
+                {
+                    this->setPeriodic();
+
+                    const auto& otherElement = intersection.outside();
+
+                    SmallLocalIndexType otherIntersectionLocalIdx = 0;
+                    bool periodicFaceFound = false;
+
+                    for (const auto& otherIntersection : intersections(this->gridView(), otherElement))
+                    {
+                        if (periodicFaceFound)
+                            continue;
+
+                        if (Dune::FloatCmp::eq(intersection.centerUnitOuterNormal()*otherIntersection.centerUnitOuterNormal(), -1.0, 1e-7))
+                        {
+                            const auto periodicDofIdx = intersectionMapper().globalIntersectionIndex(otherElement, otherIntersectionLocalIdx);
+                            periodicFaceMap_[dofIndex] = periodicDofIdx;
+                            periodicFaceFound = true;
+                        }
+
+                        ++otherIntersectionLocalIdx;
+                    }
+                }
+
                 // the sub control volume
                 const auto scvCenter = 0.5*(intersectionGeometry.center() + elementCenter);
                 scvs_.emplace_back(scvCenter,
@@ -458,6 +484,18 @@ public:
     SmallLocalIndexType firstLocalScvfIdxOfScv(const GridIndexType eIdx, const SmallLocalIndexType localScvIdx) const
     { return scvfOfScvInfo_[eIdx][localScvIdx]; }
 
+    //! If a d.o.f. is on a periodic boundary
+    bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
+    { return periodicFaceMap_.count(dofIdx); }
+
+    //! The index of the d.o.f. on the other side of the periodic boundary
+    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    { return periodicFaceMap_.at(dofIdx); }
+
+    //! Returns the map between dofs across periodic boundaries // TODO rename to periodic dof map in fvassembler
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
+    { return periodicFaceMap_; }
+
 private:
 
     bool onDomainBoundary_(const typename GridView::Intersection& intersection) const
@@ -468,6 +506,11 @@ private:
     bool onProcessorBoundary_(const typename GridView::Intersection& intersection) const
     {
         return !intersection.neighbor() && !intersection.boundary();
+    }
+
+    bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
+    {
+        return intersection.boundary() && intersection.neighbor();
     }
 
     // mappers
@@ -484,6 +527,9 @@ private:
 
     std::vector<std::array<GridIndexType, numScvsPerElement>> scvIndicesOfElement_;
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
+
+        // a map for periodic boundary vertices
+    std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
 };
 
 /*!
