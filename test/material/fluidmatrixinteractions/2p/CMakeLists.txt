@@ -28,4 +28,7 @@ dumux_add_test(SOURCES test_material_2p_brookscorey.cc
 dune_add_test(SOURCES test_material_2p_spline.cc
               LABELS unit material)
 
-dune_symlink_to_source_files(FILES test_material_2p_spline.input)
+dune_add_test(SOURCES test_material_2p_dataspline.cc
+              LABELS unit material)
+
+dune_symlink_to_source_files(FILES test_material_2p_spline.input test_material_2p_dataspline.input)
