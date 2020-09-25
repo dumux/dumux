@@ -3,5 +3,6 @@ add_subdirectory(angeli)
 add_subdirectory(kovasznay)
 add_subdirectory(channel)
 add_subdirectory(sincos)
+add_subdirectory(periodic)
 
 dune_symlink_to_source_files(FILES convergence.sh)

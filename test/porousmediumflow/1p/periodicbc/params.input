@@ -5,7 +5,7 @@ Name = incompressible
 File = periodic.dgf
 
 [Source]
-Position = 0.1 0.5
+Position = 1.0 0.5
 Values = 500
 Radius = 0.05
 
