@@ -1,0 +1,8 @@
+[MaterialLaw]
+VgAlpha = 2.956e-4
+Vgn = 1.5
+SplineSweInterval = 0.1 0.9
+SplineNumSwSamples = 100
+
+[Plot]
+Range = 0.05 1.0
