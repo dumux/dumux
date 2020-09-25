@@ -45,8 +45,8 @@ class GlobalIntersectionIterator
 {
 public:
     using DerivedType = GlobalIntersectionIterator<GV>;
-    using Value = const typename GV::Intersection;
-    using Reference = Value&;
+    using Intersection = typename GV::Intersection;
+    using Value = const Intersection;
     using ElementIterator = typename GV::template Codim<0>::Iterator;
     using IntersectionIterator = typename GV::IntersectionIterator;
     using DifferenceType = typename std::iterator_traits<ElementIterator>::difference_type;
@@ -63,8 +63,19 @@ public:
           iIt_.reset(new IntersectionIterator(gridView_.ibegin(*eIt_)));
     }
 
-    Reference dereference() const
-    { return **iIt_; }
+    const Intersection& dereference() const
+    {
+        if constexpr (std::is_lvalue_reference_v<decltype(*std::declval<IntersectionIterator>())>)
+            return **iIt_;
+        else
+        {
+            // Some grids only return temporary intersection objects.
+            // If this is the case, story a copy of the intersection here so that
+            // its address can be safely taken later on.
+            intersection_ = **iIt_;
+            return intersection_;
+        }
+    }
 
     bool equals(const DerivedType& other) const
     {
@@ -104,6 +115,7 @@ private:
     const GV gridView_;
     ElementIterator eIt_;
     std::shared_ptr<IntersectionIterator> iIt_;
+    mutable Intersection intersection_;
 };
 
 template<class GridView>
@@ -185,6 +197,7 @@ public:
         }
         else if constexpr (IsIndexable<std::decay_t<decltype(field[0])>>{})
         {
+            assert(field.size() == gv.size(1));
             if constexpr (IsIndexable<std::decay_t<decltype(field[0][0])>>{})
               DUNE_THROW(Dune::InvalidStateException, "Invalid field type");
             else
