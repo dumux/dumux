@@ -201,6 +201,11 @@ public:
             auto& jacRow = (*jacobian_)[domainId];
             auto& subRes = (*residual_)[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
+
+            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
+
+
+            enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry);
         });
     }
 
@@ -540,6 +545,39 @@ private:
                                                         domainI, gridGeometry(domainI),
                                                         domainJ, gridGeometry(domainJ));
     }
+
+    template<std::size_t i, class JacRow, class Sol, class GG>
+    std::enable_if_t<GG::discMethod == DiscretizationMethod::box || GG::discMethod == DiscretizationMethod::fcstaggered, void>
+    enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry)
+    {
+        for (const auto& m : gridGeometry.periodicVertexMap())
+        {
+            if (m.first < m.second)
+            {
+                auto& jac = jacRow[domainI];
+
+                // add the second row to the first
+                res[m.first] += res[m.second];
+                const auto end = jac[m.second].end();
+                for (auto it = jac[m.second].begin(); it != end; ++it)
+                    jac[m.first][it.index()] += (*it);
+
+                // enforce constraint in second row
+                for (auto it = jac[m.second].begin(); it != end; ++it)
+                    (*it) = it.index() == m.second ? 1.0 : it.index() == m.first ? -1.0 : 0.0;
+            }
+        }
+
+        using namespace Dune::Hybrid;
+        forEach(makeIncompleteIntegerSequence<JacRow::size(), domainI>(), [&](const auto couplingDomainId)
+        {
+            std::cout << "enforcing stuff : " << " i : " << domainI << ", j " << couplingDomainId << std::endl;
+        });
+    }
+
+    template<std::size_t i, class JacRow, class Sol, class GG>
+    std::enable_if_t<GG::discMethod != DiscretizationMethod::box && GG::discMethod != DiscretizationMethod::fcstaggered, void>
+    enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry) {}
 
     //! pointer to the problem to be solved
     ProblemTuple problemTuple_;
