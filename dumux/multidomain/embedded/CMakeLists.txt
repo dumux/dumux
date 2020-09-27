@@ -3,6 +3,7 @@ circlepoints.hh
 couplingmanager1d3d.hh
 couplingmanager2d3d.hh
 couplingmanagerbase.hh
+cylinderintegration.hh
 extendedsourcestencil.hh
 integrationpointsource.hh
 pointsourcedata.hh
