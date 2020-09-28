@@ -145,11 +145,45 @@ public:
         const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
         const auto outerVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
 
-        const auto distance = orthogonalScvf.boundary() ? (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition() - orthogonalScvf.ipGlobal()).two_norm()
-                                                        : (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition() - fvGeometry.scv(orthogonalScvf.outsideScvIdx()).dofPosition()).two_norm();
+        const auto distance = [&]
+        {
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& orthogonalInsideScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
+            const auto& gridGeometry = fvGeometry.gridGeometry();
+
+            if (orthogonalScvf.boundary())
+                return (orthogonalInsideScv.dofPosition() - orthogonalScvf.ipGlobal()).two_norm();
+            else if (!gridGeometry.isPeriodic() || !gridGeometry.dofOnPeriodicBoundary(insideScv.dofIndex()))
+                return (orthogonalInsideScv.dofPosition() - fvGeometry.scv(orthogonalScvf.outsideScvIdx()).dofPosition()).two_norm();
+            {
+                const auto orthogonalInsideScv = (insideScv.dofPosition() - orthogonalScvf.ipGlobal()).two_norm();
+
+                const auto& outsideScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
+
+
+                for (const auto& otherScvf : scvfs(fvGeometry, outsideScv))
+                {
+                    if (otherScvf.directionIndex() == orthogonalScvf.directionIndex() && Dune::FloatCmp::ne(otherScvf.directionSign(), orthogonalScvf.directionSign(), 1e-6))
+                    {
+                        // TODO add correct distance
+                    }
+                }
+
+                // assert(outsideScv.dofIndex() == gridGeometry.periodicallyMappedDof(insideScv.dofIndex()));
+                return 0.333333;
+
+
+
+            }
+        }();
+
+
 
         return (outerVelocity - innerVelocity) / distance * orthogonalScvf.directionSign();
     }
+
+
+
 };
 
 } // end namespace Dumux
