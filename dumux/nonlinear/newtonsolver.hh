@@ -1232,6 +1232,26 @@ private:
         const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
         assert(bTmp.size() == numRows);
 
+        static const bool printmatrix = getParam<bool>("Problem.PrintMatrix", false);
+
+        if (printmatrix)
+        {
+            static int counter = 0;
+
+            std::ofstream logFile;
+            const auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
+            logFile.open("solver_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+
+            Dune::printmatrix(logFile, M, "", "");
+            logFile.close();
+
+            logFile.open("solver_residual_log_" + std::to_string(rank) +  "_iter_" + std::to_string(counter) + ".log");
+            Dune::printvector(logFile, bTmp, "", "");
+
+            ++counter;
+
+        }
+
         // create a blockvector to which the linear solver writes the solution
         using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
         using BlockVector = typename Dune::BlockVector<VectorBlock>;
