@@ -5,7 +5,8 @@ File = periodic.dgf
 Name = test_kovasznay # name passed to the output routines
 EnableGravity = true
 PrintL2Error = false
-EnableInertiaTerms = true
+EnableInertiaTerms = false
+PrintMatrix = true
 
 [Component]
 LiquidDensity = 1

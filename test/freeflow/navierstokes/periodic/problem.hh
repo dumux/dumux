@@ -208,54 +208,54 @@ public:
         return PrimaryVariables(0.0);
     }
 
-    // //! Enable internal Dirichlet constraints
-    // static constexpr bool enableInternalDirichletConstraints()
-    // { return !ParentType::isMomentumProblem(); }
+    //! Enable internal Dirichlet constraints
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !ParentType::isMomentumProblem(); }
 
-    // /*!
-    //  * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
-    //  *        If true is returned for a dof, the equation for this dof is replaced
-    //  *        by the constraint that its primary variable values must match the
-    //  *        user-defined values obtained from the function internalDirichlet(),
-    //  *        which must be defined in the problem.
-    //  *
-    //  * \param element The finite element
-    //  * \param scv The sub-control volume
-    //  */
-    // std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
-    // {
-    //     std::bitset<PrimaryVariables::dimension> values;
+    /*!
+     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
+     *        If true is returned for a dof, the equation for this dof is replaced
+     *        by the constraint that its primary variable values must match the
+     *        user-defined values obtained from the function internalDirichlet(),
+     *        which must be defined in the problem.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    std::bitset<PrimaryVariables::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        std::bitset<PrimaryVariables::dimension> values;
 
-    //     auto fvGeometry = localView(this->gridGeometry());
-    //     fvGeometry.bindElement(element);
+        // auto fvGeometry = localView(this->gridGeometry());
+        // fvGeometry.bindElement(element);
 
-    //     auto isAtLeftBoundary = [&](const FVElementGeometry& fvGeometry)
-    //     {
-    //         if (fvGeometry.hasBoundaryScvf())
-    //         {
-    //             for (const auto& scvf : scvfs(fvGeometry))
-    //                 if (scvf.boundary() && scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
-    //                     return true;
-    //         }
-    //         return false;
-    //     };
+        // auto isAtLeftBoundary = [&](const FVElementGeometry& fvGeometry)
+        // {
+        //     if (fvGeometry.hasBoundaryScvf())
+        //     {
+        //         for (const auto& scvf : scvfs(fvGeometry))
+        //             if (scvf.boundary() && scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
+        //                 return true;
+        //     }
+        //     return false;
+        // };
 
-    //     if (isAtLeftBoundary(fvGeometry))
-    //         values.set(0);
+        if (scv.dofIndex() == 0)
+            values.set(0);
 
-    //     // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
-    //     // the pure Neumann problem is only defined up to a constant
-    //     // we create a well-posed problem by fixing the pressure at one dof
-    //     return values;
-    // }
+        // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
+        // the pure Neumann problem is only defined up to a constant
+        // we create a well-posed problem by fixing the pressure at one dof
+        return values;
+    }
 
-    // /*!
-    //  * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
-    //  * \param element The finite element
-    //  * \param scv The sub-control volume
-    //  */
-    // PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    // { return PrimaryVariables(analyticalSolution(scv.center())[Indices::pressureIdx]); }
+    /*!
+     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return PrimaryVariables(1.0); }
 
 private:
     static constexpr Scalar eps_ = 1e-6;
