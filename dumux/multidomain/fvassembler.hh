@@ -565,14 +565,17 @@ private:
                 // enforce constraint in second row
                 for (auto it = jac[m.second].begin(); it != end; ++it)
                     (*it) = it.index() == m.second ? 1.0 : it.index() == m.first ? -1.0 : 0.0;
+
+                using namespace Dune::Hybrid;
+                forEach(makeIncompleteIntegerSequence<JacRow::size(), domainI>(), [&](const auto couplingDomainId)
+                {
+                    auto& jacCoupling = jacRow[couplingDomainId];
+                    for (auto it = jacCoupling[m.second].begin(); it != jacCoupling[m.second].end(); ++it)
+                        (*it) = 0.0;
+                });
             }
         }
 
-        using namespace Dune::Hybrid;
-        forEach(makeIncompleteIntegerSequence<JacRow::size(), domainI>(), [&](const auto couplingDomainId)
-        {
-            std::cout << "enforcing stuff : " << " i : " << domainI << ", j " << couplingDomainId << std::endl;
-        });
     }
 
     template<std::size_t i, class JacRow, class Sol, class GG>
