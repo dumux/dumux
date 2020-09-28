@@ -52,7 +52,7 @@
  * \f]
  * \f[
  *  \mathbf{\Omega} = \frac{1}{2} \left( \nabla \textbf{v}_\text{g}
- *                                  - \nabla \textbf{v}_\text{g}^\intercal \right)
+ *                                  - \nabla \textbf{v}_\text{g}^{T} \right)
  * \f]
  *
  * This balance equation is linked to the flow geometry by the distance to the closest wall ($y$).
@@ -64,7 +64,7 @@
  *                             \right)^\frac{1}{6} \f]
  * \f[ g_\text{w} = r_\text{w} + c_\text{w2} (r_\text{w}^6 - r_\text{w}) \f]
  * \f[ r_\text{w} = \min \left[ \frac{\tilde{\nu}}{\tilde{S}\kappa^2 y^2},10\right] \f]
- * \f[ \sigma_{\tilde{\nu}} = \nicefrac{2}{3} \f]
+ * \f[ \sigma_{\tilde{\nu}} = \frac{2}{3} \f]
  * \f[ c_\text{b1} = 0.1355 \f]
  * \f[ c_\text{b2} = 0.622 \f]
  * \f[ c_\text{v1} = 7.1 \f]
@@ -72,6 +72,8 @@
  *                   + \frac{1+c_\text{b2}}{\sigma_{\tilde{\nu}}} \f]
  * \f[ c_\text{w2} = 0.3 \f]
  * \f[ c_\text{w3} = 2 \f]
+ * \f[ \kappa = 0.41 \f]
+ * \f[ \sigma_{\tilde{\nu}}} = 2/3 \f]
  */
 
 #ifndef DUMUX_ONEEQ_MODEL_HH
