@@ -205,7 +205,7 @@ public:
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
 
 
-            enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry);
+            enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry, curSol[domainId]);
         });
     }
 
@@ -548,7 +548,7 @@ private:
 
     template<std::size_t i, class JacRow, class Sol, class GG>
     std::enable_if_t<GG::discMethod == DiscretizationMethod::box || GG::discMethod == DiscretizationMethod::fcstaggered, void>
-    enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry)
+    enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry, const Sol& curSol)
     {
         for (const auto& m : gridGeometry.periodicVertexMap())
         {
@@ -558,9 +558,22 @@ private:
 
                 // add the second row to the first
                 res[m.first] += res[m.second];
+
+                //  res[m.second] = curSol[m.second] - curSol[m.first];
+
                 const auto end = jac[m.second].end();
                 for (auto it = jac[m.second].begin(); it != end; ++it)
-                    jac[m.first][it.index()] += (*it);
+                {
+                    std::cout << "at first dof " << m.first << ", j " << it.index() << " old " << jac[m.first][it.index()] << std::endl;
+                    // if (it.index() == m.second)
+                    //     jac[m.first][m.first] += (*it);
+                    // else if ()
+
+                    // else
+                        jac[m.first][it.index()] += (*it);
+                    std::cout << "at first dof " << m.first << ", j " << it.index() << " new " << jac[m.first][it.index()] << std::endl;
+
+                }
 
                 // enforce constraint in second row
                 for (auto it = jac[m.second].begin(); it != end; ++it)
@@ -569,9 +582,16 @@ private:
                 using namespace Dune::Hybrid;
                 forEach(makeIncompleteIntegerSequence<JacRow::size(), domainI>(), [&](const auto couplingDomainId)
                 {
+                    std::cout << "enforcing stuff : " << " i : " << domainI << ", j " << couplingDomainId << std::endl;
                     auto& jacCoupling = jacRow[couplingDomainId];
+
+                    for (auto it = jacCoupling[m.second].begin(); it != jacCoupling[m.second].end(); ++it)
+                        jacCoupling[m.first][it.index()] += (*it);
+
                     for (auto it = jacCoupling[m.second].begin(); it != jacCoupling[m.second].end(); ++it)
                         (*it) = 0.0;
+
+
                 });
             }
         }
@@ -580,7 +600,7 @@ private:
 
     template<std::size_t i, class JacRow, class Sol, class GG>
     std::enable_if_t<GG::discMethod != DiscretizationMethod::box && GG::discMethod != DiscretizationMethod::fcstaggered, void>
-    enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry) {}
+    enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry, const Sol& curSol) {}
 
     //! pointer to the problem to be solved
     ProblemTuple problemTuple_;
