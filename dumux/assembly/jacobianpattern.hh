@@ -43,7 +43,7 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
     pattern.resize(numDofs, numDofs);
 
     // matrix pattern for implicit Jacobians
-    if (isImplicit)
+    if constexpr (isImplicit)
     {
         static constexpr int dim = std::decay_t<decltype(gridGeometry.gridView())>::dimension;
         for (const auto& element : elements(gridGeometry.gridView()))
@@ -227,10 +227,24 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
         {
             const auto globalI = scv.dofIndex();
             pattern.add(globalI, globalI);
+
             for (const auto& scvIdxJ : connectivityMap[scv.index()])
             {
                 const auto globalJ = fvGeometry.scv(scvIdxJ).dofIndex();
                 pattern.add(globalI, globalJ);
+
+                if (gridGeometry.isPeriodic())
+                {
+                    if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
+                    {
+                        const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
+                        pattern.add(globalIP, globalI);
+                        pattern.add(globalI, globalIP);
+
+                        if (globalI > globalIP)
+                            pattern.add(globalIP, globalJ);
+                    }
+                }
             }
         }
     }
