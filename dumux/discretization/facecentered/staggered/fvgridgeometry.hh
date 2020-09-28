@@ -306,7 +306,6 @@ public:
                 {
                     std::cout << "periodic boundary found at " << intersection.geometry().center() << std::endl;
                     this->setPeriodic();
-                    const auto ownDofIdx = globalScvIndices[localScvIdx];
 
                     const auto& otherElement = intersection.outside();
 
@@ -320,9 +319,11 @@ public:
 
                         if (Dune::FloatCmp::eq(intersection.centerUnitOuterNormal()*otherIntersection.centerUnitOuterNormal(), -1.0, 1e-7))
                         {
-                            periodicFaceMap_[ownDofIdx] = scvIndicesOfElement_[this->elementMapper().index(otherElement)][otherIntersectionLocalIdx];
+                            const auto periodicDofIdx = intersectionMapper().globalIntersectionIndex(otherElement, otherIntersectionLocalIdx);
+                            periodicFaceMap_[dofIndex] = periodicDofIdx;
                             periodicFaceFound = true;
                             std::cout << "found other face at " << otherIntersection.geometry().center() << std::endl;
+                            std::cout << "own dof idx " << dofIndex << " oter dof idx " << periodicFaceMap_[dofIndex] << std::endl;
                         }
 
                         ++otherIntersectionLocalIdx;
