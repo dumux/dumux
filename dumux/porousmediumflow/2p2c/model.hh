@@ -89,8 +89,8 @@
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/porousmediumflow/nonequilibrium/model.hh>
 #include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/simplefluidlumping.hh>
 
 #include "volumevariables.hh"
 

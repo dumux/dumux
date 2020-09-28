@@ -1,3 +1,5 @@
+add_subdirectory(thermalconductivity)
+
 install(FILES
 brookscorey.hh
 brookscoreyparams.hh

@@ -44,7 +44,7 @@
 #include <dumux/material/solidsystems/compositionalsolidphase.hh>
 #include <dumux/material/components/constant.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/simplefluidlumping.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
 #include "spatialparams.hh"
