@@ -559,21 +559,12 @@ private:
                 // add the second row to the first
                 res[m.first] += res[m.second];
 
-                //  res[m.second] = curSol[m.second] - curSol[m.first];
+                // enforce the solution of the first periodic DOF to the second one
+                res[m.second] = curSol[m.second] - curSol[m.first];
 
                 const auto end = jac[m.second].end();
                 for (auto it = jac[m.second].begin(); it != end; ++it)
-                {
-                    std::cout << "at first dof " << m.first << ", j " << it.index() << " old " << jac[m.first][it.index()] << std::endl;
-                    // if (it.index() == m.second)
-                    //     jac[m.first][m.first] += (*it);
-                    // else if ()
-
-                    // else
-                        jac[m.first][it.index()] += (*it);
-                    std::cout << "at first dof " << m.first << ", j " << it.index() << " new " << jac[m.first][it.index()] << std::endl;
-
-                }
+                    jac[m.first][it.index()] += (*it);
 
                 // enforce constraint in second row
                 for (auto it = jac[m.second].begin(); it != end; ++it)
@@ -582,7 +573,6 @@ private:
                 using namespace Dune::Hybrid;
                 forEach(makeIncompleteIntegerSequence<JacRow::size(), domainI>(), [&](const auto couplingDomainId)
                 {
-                    std::cout << "enforcing stuff : " << " i : " << domainI << ", j " << couplingDomainId << std::endl;
                     auto& jacCoupling = jacRow[couplingDomainId];
 
                     for (auto it = jacCoupling[m.second].begin(); it != jacCoupling[m.second].end(); ++it)
@@ -590,12 +580,9 @@ private:
 
                     for (auto it = jacCoupling[m.second].begin(); it != jacCoupling[m.second].end(); ++it)
                         (*it) = 0.0;
-
-
                 });
             }
         }
-
     }
 
     template<std::size_t i, class JacRow, class Sol, class GG>
