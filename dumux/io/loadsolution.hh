@@ -71,7 +71,7 @@ public:
     { return true; }
 
     template<class EntityType>
-    size_t size (const EntityType &e) const
+    std::size_t size (const EntityType &e) const
     { return 1; }
 
     template<class MessageBufferImp, class EntityType>
@@ -82,7 +82,7 @@ public:
     }
 
     template<class MessageBufferImp, class EntityType>
-    void scatter(MessageBufferImp& buff, const EntityType& e, size_t n)
+    void scatter(MessageBufferImp& buff, const EntityType& e, std::size_t n)
     {
         const auto vIdx = mapper_.index(e);
         FieldType tmp;
@@ -112,10 +112,10 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
     using PrimaryVariables = typename SolutionVector::block_type;
     using Scalar = typename PrimaryVariables::field_type;
     constexpr auto dim = GridGeometry::GridView::dimension;
-    const size_t targetSolutionSize = PrimaryVariables::dimension;
+    const std::size_t targetSolutionSize = PrimaryVariables::dimension;
 
-    size_t matchingLoadedArrays = 0;
-    for (size_t i = 0; i < targetSolutionSize; i++)
+    std::size_t matchingLoadedArrays = 0;
+    for (std::size_t i = 0; i < targetSolutionSize; i++)
         if (vtu.hasData(targetPvNameFunc(i,0), dataType))
             matchingLoadedArrays++;
 
@@ -126,7 +126,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
                   << "Make sure that the model concepts are compatible, "
                   << "and be sure to provide initial conditions for the missing primary variables. \n";
 
-    for (size_t targetPvIdx = 0; targetPvIdx < targetSolutionSize; ++targetPvIdx)
+    for (std::size_t targetPvIdx = 0; targetPvIdx < targetSolutionSize; ++targetPvIdx)
     {
         std::vector<Scalar> vec;
         const auto targetPvName = targetPvNameFunc(targetPvIdx, 0);
@@ -196,20 +196,20 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
 
     // determine all states that are present
     std::unordered_set<int> states;
-    for (size_t i = 0; i < stateAtDof.size(); ++i)
+    for (std::size_t i = 0; i < stateAtDof.size(); ++i)
         states.insert(stateAtDof[i]);
 
     using PrimaryVariables = typename SolutionVector::block_type;
     using Scalar = typename PrimaryVariables::field_type;
-    const size_t targetSolutionSize = PrimaryVariables::dimension;
+    const std::size_t targetSolutionSize = PrimaryVariables::dimension;
 
     std::unordered_set<std::string> matchingNames;
-    for (size_t i = 0; i < targetSolutionSize; i++)
+    for (std::size_t i = 0; i < targetSolutionSize; i++)
         for (const auto& state : states)
             if ( vtu.hasData(targetPvNameFunc(i,state), dataType))
                 matchingNames.insert(targetPvNameFunc(i,state));
 
-    const size_t matchingLoadedArrays = matchingNames.size() - (states.size()-1);
+    const std::size_t matchingLoadedArrays = matchingNames.size() - (states.size()-1);
 
     if (matchingLoadedArrays < targetSolutionSize)
         std::cout << "The loaded solution does not provide a data array for each of the primary variables. \n"
@@ -218,7 +218,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
                   << "Make sure that the model concepts are compatible, "
                   << "and be sure to provide initial conditions for the missing primary variables. \n";
 
-    for (size_t targetPvIdx = 0; targetPvIdx < targetSolutionSize; ++targetPvIdx)
+    for (std::size_t targetPvIdx = 0; targetPvIdx < targetSolutionSize; ++targetPvIdx)
     {
         std::unordered_map<int, std::vector<Scalar>> data;
         for (const auto& state : states)
