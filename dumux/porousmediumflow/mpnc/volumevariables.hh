@@ -26,6 +26,8 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_HH
 
+#include <dumux/common/deprecated.hh>
+
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 
@@ -108,13 +110,16 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        Deprecated::TwoPMaterialLawWrapper fluidMatrixInteraction(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
         //calculate the remaining quantities
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         // relative permeabilities
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
-        MPAdapter::relativePermeabilities(relativePermeability_, materialParams, fluidState_, wPhaseIdx);
+        using MPAdapter = FluidMatrix::MPAdapter;
+        MPAdapter::relativePermeabilities(relativePermeability_, fluidMatrixInteraction, fluidState_, wPhaseIdx);
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
@@ -178,13 +183,16 @@ public:
         // capillary pressure parameters
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         fluidState.setWettingPhase(wPhaseIdx);
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, scv, elemSol);
         // capillary pressures
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        Deprecated::TwoPMaterialLawWrapper fluidMatrixInteraction(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
         std::vector<Scalar> capPress(numFluidPhases());
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numFluidPhases()>;
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wPhaseIdx);
+        using MPAdapter = FluidMatrix::MPAdapter;
+        MPAdapter::capillaryPressures(capPress, fluidMatrixInteraction, fluidState, wPhaseIdx);
         // add to the pressure of the first fluid phase
 
         // depending on which pressure is stored in the primary variables
