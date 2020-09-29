@@ -76,6 +76,10 @@ int main(int argc, char** argv) try
     Dumux::VTKReader::Data reorderedCellData = cellData, reorderedPointData = pointData;
     for (const auto& [name, data] : cellData)
     {
+        // sanity check
+        if (!vtkReader->hasData(name, Dumux::VTKReader::DataType::cellData))
+            DUNE_THROW(Dune::Exception, "Array " << name << " exists but hasData returns false!");
+
         auto& reorderedData = reorderedCellData[name];
         for (unsigned int i = 0; i < data.size(); ++i)
             reorderedData[elementIndex[i]] = data[i];
@@ -83,6 +87,10 @@ int main(int argc, char** argv) try
 
     for (const auto& [name, data] : pointData)
     {
+        // sanity check
+        if (!vtkReader->hasData(name, Dumux::VTKReader::DataType::pointData))
+            DUNE_THROW(Dune::Exception, "Array " << name << " exists but hasData returns false!");
+
         auto& reorderedData = reorderedPointData[name];
         for (unsigned int i = 0; i < data.size(); ++i)
             reorderedData[vertexIndex[i]] = data[i];
