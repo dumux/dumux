@@ -30,9 +30,7 @@
 #include <dune/common/parametertreeparser.hh>
 
 #include <dumux/material/spatialparams/fvnonequilibrium.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/1pia/fluidsolidinterfacialareashiwang.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
@@ -57,15 +55,13 @@ class CombustionSpatialParams
     enum {dimWorld = GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
-    using EffectiveLaw = HeatPipeLaw<Scalar>;
+    using PcKrSwCurve = FluidMatrix::HeatPipeLaw<Scalar>;
 
 public:
     //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! Export the material law type used
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSolidInterfacialAreaFormulation = FluidSolidInterfacialAreaShiWang<Scalar>;
+
 
     CombustionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
@@ -75,9 +71,6 @@ public:
         porosityOutFlow_                = getParam<Scalar>("SpatialParams.Outflow.porosityOutFlow");
         interfacialTension_  = getParam<Scalar>("Constants.interfacialTension");
 
-        Swr_ = getParam<Scalar>("SpatialParams.soil.Swr");
-        Snr_ = getParam<Scalar>("SpatialParams.soil.Snr");
-
         characteristicLength_ =getParam<Scalar>("SpatialParams.PorousMedium.meanPoreSize");
 
         using std::pow;
@@ -86,13 +79,16 @@ public:
         factorEnergyTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorEnergyTransfer");
         lengthPM_ = getParam<Scalar>("Grid.lengthPM");
 
-        // residual saturations
-        materialParams_.setSwr(Swr_) ;
-        materialParams_.setSnr(Snr_) ;
-
         using std::sqrt;
-        materialParams_.setP0(sqrt(porosity_/intrinsicPermeability_));
-        materialParams_.setGamma(interfacialTension_); // interfacial tension of water-air at 100°C
+        const Scalar p0 = sqrt(porosity_/intrinsicPermeability_);
+        const Scalar gamma = interfacialTension_; // interfacial tension of water-air at 100°C
+        typename PcKrSwCurve::Params params(p0, gamma);
+
+        typename PcKrSwCurve::EffToAbsParams effToAbsParams;
+        effToAbsParams.setSwr(getParam<Scalar>("SpatialParams.soil.Swr"));
+        effToAbsParams.setSnr(getParam<Scalar>("SpatialParams.soil.Snr"));
+
+        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>(params, effToAbsParams);
     }
 
     template<class ElementSolution>
@@ -170,13 +166,6 @@ public:
     }
 
     /*!
-     * \brief Returns a reference to the material parameters of the material law.
-     * \param globalPos The position in global coordinates.
-     */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition & globalPos) const
-    { return materialParams_ ; }
-
-    /*!
      * \brief Returns the characteristic length for the mass transfer.
      * \param globalPos The position in global coordinates.
      */
@@ -197,6 +186,15 @@ public:
     //! Returns the interfacial tension
     Scalar interfacialTension() const { return interfacialTension_ ; }
 
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     * \param globalPos A global coordinate vector
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
+    {
+        return makeFluidMatrixInteraction(*pcKrSwCurve_);
+    }
+
 private:
     static constexpr Scalar eps_ = 1e-6;
 
@@ -205,7 +203,6 @@ private:
     Scalar porosity_ ;
     Scalar factorEnergyTransfer_ ;
     Scalar characteristicLength_ ;
-    MaterialLawParams materialParams_ ;
 
     // Outflow Domain
     Scalar intrinsicPermeabilityOutFlow_ ;
@@ -214,13 +211,10 @@ private:
     // solid parameters
     Scalar interfacialTension_ ;
 
-
-    // capillary pressures parameters
-    Scalar Swr_ ;
-    Scalar Snr_ ;
-
     // grid
     Scalar lengthPM_ ;
+
+    std::unique_ptr<PcKrSwCurve> pcKrSwCurve_;
 };
 
 }
