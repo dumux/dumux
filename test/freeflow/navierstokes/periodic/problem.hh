@@ -40,20 +40,20 @@
 namespace Dumux {
 
 template <class TypeTag>
-class KovasznayTestProblem;
+class PeriodicTestProblem;
 
 namespace Properties {
 // Create new type tags
 namespace TTag {
-struct KovasznayTest {};
-struct KovasznayTestMomentum { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct KovasznayTestMass { using InheritsFrom = std::tuple<KovasznayTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct PeriodicTest {};
+struct PeriodicTestMomentum { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct PeriodicTestMass { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::KovasznayTest>
+struct FluidSystem<TypeTag, TTag::PeriodicTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
@@ -61,35 +61,32 @@ struct FluidSystem<TypeTag, TTag::KovasznayTest>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::KovasznayTest> { using type = Dune::SPGrid<double, 2>; };
+struct Grid<TypeTag, TTag::PeriodicTest> { using type = Dune::SPGrid<double, 2>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::KovasznayTest> { using type = Dumux::KovasznayTestProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::PeriodicTest> { using type = Dumux::PeriodicTestProblem<TypeTag> ; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = true; };
 
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::KovasznayTest> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = true; };
 
-template<class TypeTag>
-struct UpwindSchemeOrder<TypeTag, TTag::KovasznayTest> { static constexpr int value = UPWINDSCHEMEORDER; };
 } // end namespace Properties
 
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the staggered grid (Kovasznay 1948, \cite Kovasznay1948)
+ * \brief  Periodic test problem for the staggered grid
  *
  * A two-dimensional Navier-Stokes flow with a periodicity in one direction
- * is considered. The set-up represents a wake behind a two-dimensional grid
- * and is chosen in a way such that an exact solution is available.
+ * is considered.
  */
 template <class TypeTag>
-class KovasznayTestProblem :  public NavierStokesProblem<TypeTag>
+class PeriodicTestProblem :  public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
@@ -100,25 +97,20 @@ class KovasznayTestProblem :  public NavierStokesProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using NumEqVector = typename ParentType::NumEqVector;
-    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using PrimaryVariables = typename ParentType::PrimaryVariables;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
-    static constexpr auto upwindSchemeOrder = getPropValue<TypeTag, Properties::UpwindSchemeOrder>();
-
 public:
-    KovasznayTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    PeriodicTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager)
     {
-
+        usePressureDifference_ = getParam<bool>("Problem.UsePressureDifference", false);
     }
 
    /*!
@@ -151,11 +143,6 @@ public:
         BoundaryTypes values;
 
         values.setAllDirichlet(); // does not really make sense for the mass balance
-
-        // set Dirichlet values for the velocity everywhere
-        // values.setDirichlet(Indices::velocityXIdx);
-        // values.setDirichlet(Indices::velocityYIdx);
-
         return values;
     }
 
@@ -169,26 +156,25 @@ public:
         return PrimaryVariables(0.0);
     }
 
-   /*!
-     * \brief Returns the analytical solution of the problem at a given position.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
+    template<class ElementVolumeVariables>
+    NumEqVector source(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume& scv) const
     {
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
-        PrimaryVariables values;
+        NumEqVector source;
 
-        // if constexpr (ParentType::isMomentumProblem())
-        // {
-        //     values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
-        //     values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
-        // }
-        // else
-        //     values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
+        if constexpr (ParentType::isMomentumProblem())
+        {
 
-        return values;
+            if (usePressureDifference_ && scv.dofPosition()[1] < this->gridGeometry().bBoxMin()[1] + eps_)
+            {
+                const auto& frontalScvf = (*scvfs(fvGeometry, scv).begin());
+                source[Indices::momentumYBalanceIdx] = 100 * frontalScvf.area() / scv.volume();
+            }
+        }
+
+        return source;
     }
 
     // \}
@@ -226,26 +212,13 @@ public:
     {
         std::bitset<PrimaryVariables::dimension> values;
 
-        // auto fvGeometry = localView(this->gridGeometry());
-        // fvGeometry.bindElement(element);
+        for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
+        {
+            if (intersection.boundary() && intersection.neighbor() && intersection.geometry().center()[1] > this->gridGeometry().bBoxMax()[1] - 1e-6)
+                values.set(0);
+        }
 
-        // auto isAtLeftBoundary = [&](const FVElementGeometry& fvGeometry)
-        // {
-        //     if (fvGeometry.hasBoundaryScvf())
-        //     {
-        //         for (const auto& scvf : scvfs(fvGeometry))
-        //             if (scvf.boundary() && scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
-        //                 return true;
-        //     }
-        //     return false;
-        // };
 
-        if (scv.dofIndex() == 0)
-            values.set(0);
-
-        // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
-        // the pure Neumann problem is only defined up to a constant
-        // we create a well-posed problem by fixing the pressure at one dof
         return values;
     }
 
@@ -255,10 +228,13 @@ public:
      * \param scv The sub-control volume
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(0.0); }
+    {
+        return PrimaryVariables(0.0);
+    }
 
 private:
     static constexpr Scalar eps_ = 1e-6;
+    bool usePressureDifference_;
 };
 } // end namespace Dumux
 
