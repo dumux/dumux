@@ -27,11 +27,14 @@
 #ifndef DUMUX_MP_ADAPTER_HH
 #define DUMUX_MP_ADAPTER_HH
 
+// remove from here after release 3.3 /////////////
+
 #include <algorithm>
 #include <cassert>
 #include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
+
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -44,7 +47,7 @@ class MPAdapter
 };
 
 template <class MaterialLaw>
-class MPAdapter<MaterialLaw, 2 /*numPhases*/>
+class [[deprecated("Use new material laws and FluidMatrix::MPAdapter instead!")]] MPAdapter<MaterialLaw, 2 /*numPhases*/>
 {
 public:
     using Params = typename MaterialLaw::Params;
@@ -88,6 +91,58 @@ public:
         values[nPhaseIdx] = MaterialLaw::krn(params, state.saturation(wPhaseIdx));
     }
 };
+
+
 } // end namespace Dumux
+
+// remove until here after release 3.3 /////////////
+
+namespace Dumux::FluidMatrix {
+
+struct MPAdapter
+{
+    /*!
+     * \brief The capillary pressure-saturation curve.
+     * \param values Container for the return values
+     * \param params Array of parameters
+     * \param state Fluidstate
+     * \param wPhaseIdx the phase index of the wetting phase
+     */
+    template <class ContainerT, class FluidMatrixInteraction, class FluidState>
+    static void capillaryPressures(ContainerT& values,
+                                   const FluidMatrixInteraction& fluidMatrixInteraction,
+                                   const FluidState& state,
+                                   int wPhaseIdx)
+    {
+        assert(values.size() == 2);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+        // non-wetting phase gets the capillary pressure added
+        values[nPhaseIdx] = 0;
+        // wetting phase does not get anything added
+        values[wPhaseIdx] = - fluidMatrixInteraction.pc(state.saturation(wPhaseIdx));
+    }
+
+    /*!
+     * \brief The relative permeability of all phases.
+     * \param values Container for the return values
+     * \param params Array of parameters
+     * \param state Fluidstate
+     * \param wPhaseIdx The phase index of the wetting phase
+     */
+    template <class ContainerT, class FluidMatrixInteraction, class FluidState>
+    static void relativePermeabilities(ContainerT &values,
+                                       const FluidMatrixInteraction& fluidMatrixInteraction,
+                                       const FluidState &state,
+                                       int wPhaseIdx)
+    {
+        assert(values.size() == 2);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+        values[wPhaseIdx] = fluidMatrixInteraction.krw(state.saturation(wPhaseIdx));
+        values[nPhaseIdx] = fluidMatrixInteraction.krn(state.saturation(wPhaseIdx));
+    }
+};
+
+} // end namespace Dumux::FluidMatrix
+
 
 #endif
