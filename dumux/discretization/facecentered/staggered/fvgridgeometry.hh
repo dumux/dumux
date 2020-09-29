@@ -304,7 +304,6 @@ public:
                 // handle periodic boundaries
                 if (onPeriodicBoundary_(intersection))
                 {
-                    std::cout << "periodic boundary found at " << intersection.geometry().center() << std::endl;
                     this->setPeriodic();
 
                     const auto& otherElement = intersection.outside();
@@ -322,8 +321,6 @@ public:
                             const auto periodicDofIdx = intersectionMapper().globalIntersectionIndex(otherElement, otherIntersectionLocalIdx);
                             periodicFaceMap_[dofIndex] = periodicDofIdx;
                             periodicFaceFound = true;
-                            std::cout << "found other face at " << otherIntersection.geometry().center() << std::endl;
-                            std::cout << "own dof idx " << dofIndex << " oter dof idx " << periodicFaceMap_[dofIndex] << std::endl;
                         }
 
                         ++otherIntersectionLocalIdx;
