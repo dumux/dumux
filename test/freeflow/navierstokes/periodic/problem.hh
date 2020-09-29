@@ -255,7 +255,7 @@ public:
      * \param scv The sub-control volume
      */
     PrimaryVariables internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return PrimaryVariables(1.0); }
+    { return PrimaryVariables(0.0); }
 
 private:
     static constexpr Scalar eps_ = 1e-6;

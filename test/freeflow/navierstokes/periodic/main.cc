@@ -174,7 +174,8 @@ int main(int argc, char** argv) try
     }
     faceVtk.addField(dofIdx, "dofIdx");
 
-    faceVtk.write("facedata", Dune::VTK::ascii);
+
+
     // faceVtk.write("facedata_" + std::to_string(gridGeometry->gridView().comm().rank()), Dune::VTK::ascii);
 
     // the linear solver
@@ -189,6 +190,23 @@ int main(int argc, char** argv) try
     // linearize & solve
     Dune::Timer timer;
     nonLinearSolver.solve(x);
+
+    std::vector<Dune::FieldVector<double,2>> faceVelocityVector(x[momentumIdx].size());
+    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    {
+        auto fvGeometry = localView(*momentumGridGeometry);
+        fvGeometry.bind(element);
+
+        auto elemVolVars = localView(momentumGridVariables->curGridVolVars());
+        elemVolVars.bind(element, fvGeometry, x);
+
+        for (const auto& scv : scvs(fvGeometry))
+            faceVelocityVector[scv.dofIndex()][scv.directionIndex()] = elemVolVars[scv].velocity();
+    }
+
+    faceVtk.addField(faceVelocityVector, "velocityVector");
+
+    faceVtk.write("facedata", Dune::VTK::ascii);
 
     // write vtk output
     vtkWriter.write(1.0);
