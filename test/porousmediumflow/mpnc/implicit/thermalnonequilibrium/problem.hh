@@ -34,6 +34,8 @@
 
 #include <dumux/common/boundarytypes.hh>
 
+#include <dumux/common/deprecated.hh>
+
 #include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
@@ -451,13 +453,9 @@ private:
         std::vector<Scalar> capPress(numPhases);
 
         //obtain pc according to saturation
-        const auto &materialParams =
-        this->spatialParams().materialLawParamsAtPos(globalPos);
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
-
         const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        MPAdapter::capillaryPressures(capPress, materialParams, fluidState, wettingPhaseIdx);
+        using MPAdapter = FluidMatrix::MPAdapter;
+        MPAdapter::capillaryPressures(capPress, this->spatialParams().fluidMatrixInteractionAtPos(globalPos), fluidState, wettingPhaseIdx);
 
         Scalar p[numPhases];
 
