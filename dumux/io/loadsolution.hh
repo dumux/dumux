@@ -71,7 +71,7 @@ public:
     { return true; }
 
     template<class EntityType>
-    size_t size (const EntityType &e) const
+    std::size_t size (const EntityType &e) const
     { return 1; }
 
     template<class MessageBufferImp, class EntityType>
@@ -82,7 +82,7 @@ public:
     }
 
     template<class MessageBufferImp, class EntityType>
-    void scatter(MessageBufferImp& buff, const EntityType& e, size_t n)
+    void scatter(MessageBufferImp& buff, const EntityType& e, std::size_t n)
     {
         const auto vIdx = mapper_.index(e);
         FieldType tmp;
@@ -102,20 +102,43 @@ private:
 template <class SolutionVector, class PvNameFunc, class GridGeometry>
 auto loadSolutionFromVtkFile(SolutionVector& sol,
                              const std::string fileName,
-                             PvNameFunc&& pvNameFunc,
+                             PvNameFunc&& targetPvNameFunc,
                              const GridGeometry& gridGeometry,
                              const VTKReader::DataType& dataType)
 -> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
     VTKReader vtu(fileName);
+
     using PrimaryVariables = typename SolutionVector::block_type;
     using Scalar = typename PrimaryVariables::field_type;
     constexpr auto dim = GridGeometry::GridView::dimension;
+    const std::size_t targetSolutionSize = PrimaryVariables::dimension;
 
-    for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+    std::size_t matchingLoadedArrays = 0;
+    for (std::size_t i = 0; i < targetSolutionSize; i++)
+        if (vtu.hasData(targetPvNameFunc(i,0), dataType))
+            matchingLoadedArrays++;
+
+    if (matchingLoadedArrays < targetSolutionSize)
+        std::cout << "The loaded solution does not provide a data array for each of the primary variables. \n"
+                  << "The target solution has "<< targetSolutionSize << " entries, "
+                  << "whereas the loaded solution provides only " << matchingLoadedArrays << " data array(s). \n"
+                  << "Make sure that the model concepts are compatible, "
+                  << "and be sure to provide initial conditions for the missing primary variables. \n";
+
+    for (std::size_t targetPvIdx = 0; targetPvIdx < targetSolutionSize; ++targetPvIdx)
     {
-        const auto pvName = pvNameFunc(pvIdx, 0);
-        auto vec = vtu.readData<std::vector<Scalar>>(pvName, dataType);
+        std::vector<Scalar> vec;
+        const auto targetPvName = targetPvNameFunc(targetPvIdx, 0);
+
+        if (vtu.hasData(targetPvName, dataType))
+            vec = vtu.readData<std::vector<Scalar>>(targetPvName, dataType);
+        else
+        {
+            std::cout << "The loaded solution does not have a field named \"" << targetPvName << "\". "
+                      << "Make sure this field is filled using the initial method in the problem definition. \n";
+            continue;
+        }
 
         if (dataType == VTKReader::DataType::cellData)
         {
@@ -123,7 +146,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
             for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
             {
                 const auto eIdx = gridGeometry.elementMapper().index(element);
-                sol[eIdx][pvIdx] = vec[i++];
+                sol[eIdx][targetPvIdx] = vec[i++];
             }
         }
         // for staggered face data (which is written out as VTK point data) we just read in the vector
@@ -133,7 +156,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
                 DUNE_THROW(Dune::InvalidStateException, "Solution size (" << sol.size() << ") does not match input size (" << vec.size() << ")!");
 
             for (std::size_t i = 0; i < sol.size(); ++i)
-                sol[i][pvIdx] = vec[i];
+                sol[i][targetPvIdx] = vec[i];
         }
         else
         {
@@ -146,7 +169,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
                     const auto vIdxGlobal = gridGeometry.vertexMapper().subIndex(element, vIdxLocal, dim);
                     if (!visited[vIdxGlobal])
                     {
-                        sol[vIdxGlobal][pvIdx] = vec[i++];
+                        sol[vIdxGlobal][targetPvIdx] = vec[i++];
                         visited[vIdxGlobal] = true;
                     }
                 }
@@ -162,28 +185,55 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
 template <class SolutionVector, class PvNameFunc, class GridGeometry>
 auto loadSolutionFromVtkFile(SolutionVector& sol,
                              const std::string fileName,
-                             PvNameFunc&& pvNameFunc,
+                             PvNameFunc&& targetPvNameFunc,
                              const GridGeometry& gridGeometry,
                              const VTKReader::DataType& dataType)
 -> typename std::enable_if_t<decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
     VTKReader vtu(fileName);
-
     // get states at each dof location
     const auto stateAtDof = vtu.readData<std::vector<int>>("phase presence", dataType);
 
     // determine all states that are present
     std::unordered_set<int> states;
-    for (size_t i = 0; i < stateAtDof.size(); ++i)
+    for (std::size_t i = 0; i < stateAtDof.size(); ++i)
         states.insert(stateAtDof[i]);
 
     using PrimaryVariables = typename SolutionVector::block_type;
     using Scalar = typename PrimaryVariables::field_type;
-    for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+    const std::size_t targetSolutionSize = PrimaryVariables::dimension;
+
+    std::unordered_set<std::string> matchingNames;
+    for (std::size_t i = 0; i < targetSolutionSize; i++)
+        for (const auto& state : states)
+            if ( vtu.hasData(targetPvNameFunc(i,state), dataType))
+                matchingNames.insert(targetPvNameFunc(i,state));
+
+    const std::size_t matchingLoadedArrays = matchingNames.size() - (states.size()-1);
+
+    if (matchingLoadedArrays < targetSolutionSize)
+        std::cout << "The loaded solution does not provide a data array for each of the primary variables. \n"
+                  << "The target solution has "<< targetSolutionSize << " entries, "
+                  << "whereas the loaded solution provides only " << matchingLoadedArrays << " data array(s). \n"
+                  << "Make sure that the model concepts are compatible, "
+                  << "and be sure to provide initial conditions for the missing primary variables. \n";
+
+    for (std::size_t targetPvIdx = 0; targetPvIdx < targetSolutionSize; ++targetPvIdx)
     {
         std::unordered_map<int, std::vector<Scalar>> data;
         for (const auto& state : states)
-            data[state] = vtu.readData<std::vector<Scalar>>(pvNameFunc(pvIdx, state), dataType);
+        {
+            const auto targetPvName = targetPvNameFunc(targetPvIdx, state);
+
+            if (vtu.hasData(targetPvName, dataType))
+                data[state] = vtu.readData<std::vector<Scalar>>(targetPvName, dataType);
+            else
+            {
+                std::cout << "Loaded Solution does not have a field named \"" << targetPvName << "\". "
+                          << "Make sure this field is filled using the initial method in the problem definition. \n";
+                continue;
+            }
+        }
 
         if (dataType == VTKReader::DataType::cellData)
         {
@@ -192,7 +242,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
             {
                 const auto eIdx = gridGeometry.elementMapper().index(element);
                 const auto state = stateAtDof[i];
-                sol[eIdx][pvIdx] = data[state][i++];
+                sol[eIdx][targetPvIdx] = data[state][i++];
                 sol[eIdx].setState(state);
             }
         }
@@ -209,7 +259,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
                     if (!visited[vIdxGlobal])
                     {
                         const auto state = stateAtDof[i];
-                        sol[vIdxGlobal][pvIdx] = data[state][i++];
+                        sol[vIdxGlobal][targetPvIdx] = data[state][i++];
                         sol[vIdxGlobal].setState(state);
                         visited[vIdxGlobal] = true;
                     }
@@ -270,6 +320,7 @@ auto createPVNameFunction(const std::string& paramGroup = "")
  * \brief load a solution vector from file
  * \note Supports the following file extensions: *.vtu *.vtp *.pvtu, *.pvtp
  * \param sol the solution vector to read from file
+ * \param loadedSolutionSize the dimension of the loaded solution's primary variables
  * \param fileName the file name of the file to read from
  * \param pvNameFunc a function with the signature std::string(int pvIdx)
  *        in case the primary variables have a state the signature is std::string(int pvIdx, int state)
@@ -278,7 +329,7 @@ auto createPVNameFunction(const std::string& paramGroup = "")
 template <class SolutionVector, class PvNameFunc, class GridGeometry>
 void loadSolution(SolutionVector& sol,
                   const std::string& fileName,
-                  PvNameFunc&& pvNameFunc,
+                  PvNameFunc&& targetPvNameFunc,
                   const GridGeometry& gridGeometry)
 {
     const auto extension = fileName.substr(fileName.find_last_of(".") + 1);
@@ -290,14 +341,14 @@ void loadSolution(SolutionVector& sol,
         if (GridGeometry::discMethod == DiscretizationMethod::staggered && extension == "vtp")
             dataType = VTKReader::DataType::pointData;
 
-        loadSolutionFromVtkFile(sol, fileName, pvNameFunc, gridGeometry, dataType);
+        loadSolutionFromVtkFile(sol, fileName, targetPvNameFunc, gridGeometry, dataType);
     }
     else if (extension == "pvtu" || extension == "pvtp")
     {
         if (GridGeometry::discMethod == DiscretizationMethod::staggered)
             DUNE_THROW(Dune::NotImplemented, "reading staggered solution from a parallel vtk file");
 
-        loadSolutionFromVtkFile(sol, fileName, pvNameFunc, gridGeometry, dataType);
+        loadSolutionFromVtkFile(sol, fileName, targetPvNameFunc, gridGeometry, dataType);
     }
     else
         DUNE_THROW(Dune::NotImplemented, "loadSolution for file with extension " << extension);
@@ -324,7 +375,6 @@ void loadSolution(SolutionVector& sol,
         }
     }
 }
-
 } // end namespace Dumux
 
 #endif

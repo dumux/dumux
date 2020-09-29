@@ -63,12 +63,38 @@ public:
      */
     explicit VTKReader(const std::string& fileName)
     {
+        using namespace tinyxml2;
         fileName_ = Dune::MPIHelper::getCollectiveCommunication().size() > 1 ?
                         getProcessFileName_(fileName) : fileName;
 
         const auto eResult = doc_.LoadFile(fileName_.c_str());
         if (eResult != tinyxml2::XML_SUCCESS)
             DUNE_THROW(Dune::IOError, "Couldn't open XML file " << fileName_ << ".");
+
+        const XMLElement* pieceNode = getPieceNode_();
+        if (pieceNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node in " << fileName_ << ".");
+    }
+
+    /*!
+     * \brief Reviews data from the vtk file to check if there is a data array with a specified name
+     * \param name the name attribute of the data array to read
+     * \param type the data array type
+     */
+    bool hasData(const std::string& name, const DataType& type) const
+    {
+        using namespace tinyxml2;
+
+        const XMLElement* pieceNode = getPieceNode_();
+        const XMLElement* dataNode = getDataNode_(pieceNode, type);
+        if (dataNode == nullptr)
+            return false;
+
+        const XMLElement* dataArray = findDataArray_(dataNode, name);
+        if (dataArray == nullptr)
+            return false;
+
+        return true;
     }
 
     /*!
@@ -83,9 +109,6 @@ public:
         using namespace tinyxml2;
 
         const XMLElement* pieceNode = getPieceNode_();
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node in " << fileName_ << ".");
-
         const XMLElement* dataNode = getDataNode_(pieceNode, type);
         if (dataNode == nullptr)
             DUNE_THROW(Dune::IOError, "Couldn't get 'PointData' or 'CellData' node in " << fileName_ << ".");
@@ -170,9 +193,6 @@ private:
 
         // get the first piece node
         const XMLElement* pieceNode = getPieceNode_(pDoc, pvtkFileName);
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node in " << pvtkFileName << ".");
-
         const auto myrank = Dune::MPIHelper::getCollectiveCommunication().rank();
         for (int rank = 0; rank < myrank; ++rank)
         {
@@ -200,9 +220,6 @@ private:
         using namespace tinyxml2;
 
         const XMLElement* pieceNode = getPieceNode_();
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node in " << fileName_ << ".");
-
         const XMLElement* pointsNode = pieceNode->FirstChildElement("Points")->FirstChildElement("DataArray");
         if (pointsNode == nullptr)
             DUNE_THROW(Dune::IOError, "Couldn't get data array of points in " << fileName_ << ".");
@@ -291,9 +308,6 @@ private:
         using namespace tinyxml2;
 
         const XMLElement* pieceNode = getPieceNode_();
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node in " << fileName_ << ".");
-
         const XMLElement* cellDataNode = getDataNode_(pieceNode, DataType::cellData);
         if (cellDataNode != nullptr)
         {

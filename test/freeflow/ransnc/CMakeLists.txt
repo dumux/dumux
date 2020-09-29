@@ -1,4 +1,5 @@
 add_input_file_links()
+dune_symlink_to_source_files(FILES solutions)
 
 # isothermal tests
 add_executable(test_ff_rans2c_kepsilon EXCLUDE_FROM_ALL main.cc)
@@ -107,6 +108,7 @@ dumux_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
 dumux_add_test(NAME test_ff_rans2cni_komega
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCNIKOmega
+              COMPILE_DEFINITIONS NONISOTHERMAL
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -116,7 +118,21 @@ dumux_add_test(NAME test_ff_rans2cni_komega
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega params_nonisothermal.input
                                        -Problem.Name test_ff_rans2cni_komega
                                        -Newton.TargetSteps 12")
-target_compile_definitions(test_ff_rans2cni_komega PUBLIC "NONISOTHERMAL")
+
+dumux_add_test(NAME test_ff_rans2cni_komega_loadsolution
+              TARGET test_ff_rans2cni_komega
+              LABELS freeflow rans loadsolution
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_komega_loadsolution-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega_loadsolution-00008.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega params_nonisothermal.input
+                                       -LoadSolution.RansCCFile ./solutions/komeganc_ccsolution.vtu
+                                       -LoadSolution.RansFaceFile ./solutions/komeganc_facesolution.vtp
+                                       -Problem.Name test_ff_rans2cni_komega_loadsolution
+                                       -TimeLoop.DtInitial 5.0
+                                       -TimeLoop.TEnd 200.0")
 
 dumux_add_test(NAME test_ff_rans2cni_lowrekepsilon
               SOURCES main.cc

@@ -74,25 +74,33 @@ int main(int argc, char** argv) try
     }
 
     Dumux::VTKReader::Data reorderedCellData = cellData, reorderedPointData = pointData;
-    for (const auto& data : cellData)
+    for (const auto& [name, data] : cellData)
     {
-        auto& reorderedData = reorderedCellData[data.first];
-        for (unsigned int i = 0; i < data.second.size(); ++i)
-            reorderedData[elementIndex[i]] = data.second[i];
+        // sanity check
+        if (!vtkReader->hasData(name, Dumux::VTKReader::DataType::cellData))
+            DUNE_THROW(Dune::Exception, "Array " << name << " exists but hasData returns false!");
+
+        auto& reorderedData = reorderedCellData[name];
+        for (unsigned int i = 0; i < data.size(); ++i)
+            reorderedData[elementIndex[i]] = data[i];
     }
 
-    for (const auto& data : pointData)
+    for (const auto& [name, data] : pointData)
     {
-        auto& reorderedData = reorderedPointData[data.first];
-        for (unsigned int i = 0; i < data.second.size(); ++i)
-            reorderedData[vertexIndex[i]] = data.second[i];
+        // sanity check
+        if (!vtkReader->hasData(name, Dumux::VTKReader::DataType::pointData))
+            DUNE_THROW(Dune::Exception, "Array " << name << " exists but hasData returns false!");
+
+        auto& reorderedData = reorderedPointData[name];
+        for (unsigned int i = 0; i < data.size(); ++i)
+            reorderedData[vertexIndex[i]] = data[i];
     }
 
     Dune::VTKWriter<Grid::LeafGridView> vtkWriter(gridView);
-    for (const auto& data : reorderedCellData)
-        vtkWriter.addCellData(data.second, data.first);
-    for (const auto& data : reorderedPointData)
-        vtkWriter.addVertexData(data.second, data.first);
+    for (const auto& [name, data] : reorderedCellData)
+        vtkWriter.addCellData(data, name);
+    for (const auto& [name, data] : reorderedPointData)
+        vtkWriter.addVertexData(data, name);
     vtkWriter.write(std::string(argv[2]));
 
     return 0;

@@ -38,6 +38,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/io/loadsolution.hh>
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/linear/seqsolverbackend.hh>
@@ -119,7 +120,41 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
     x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
+
+    // read in the restart files
     problem->applyInitialSolution(x);
+    if (hasParam("LoadSolution.RansCCFile") && hasParam("LoadSolution.RansFaceFile"))
+    {
+        using TargetIOFields = GetPropType<TypeTag, Properties::IOFields>;
+        using TargetCellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
+        using TargetModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+        using TargetFluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+        const auto restartFileNameCC = getParam<std::string>("LoadSolution.RansCCFile");
+        const auto targetCCPVNameFunc = createCellCenterPVNameFunction<TargetIOFields,
+                                                                       TargetCellCenterPrimaryVariables,
+                                                                       TargetModelTraits,
+                                                                       TargetFluidSystem>();
+        loadSolution(x[GridGeometry::cellCenterIdx()],
+                     restartFileNameCC,
+                     targetCCPVNameFunc,
+                     *gridGeometry);
+
+        // read in the face rans solution
+        const auto restartFileNameFace = getParam<std::string>("LoadSolution.RansFaceFile");
+        using TargetFacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
+        const auto facePVNameFunc = createFacePVNameFunction<TargetIOFields,
+                                                             TargetFacePrimaryVariables,
+                                                             TargetModelTraits,
+                                                             TargetFluidSystem>();
+        loadSolution(x[GridGeometry::faceIdx()],
+                     restartFileNameFace,
+                     facePVNameFunc,
+                     *gridGeometry);
+    }
+    else
+        std::cout << "No restart files provided in LoadSolution parameter group. "
+                  << "Starting with problem specified initial conditions \n";
+
     problem->updateStaticWallProperties();
     problem->updateDynamicWallProperties(x);
     auto xOld = x;
