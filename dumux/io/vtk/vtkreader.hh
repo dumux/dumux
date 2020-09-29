@@ -77,6 +77,27 @@ public:
     }
 
     /*!
+     * \brief Reviews data from the vtk file to check if there is a data array with a specified name
+     * \param name the name attribute of the data array to read
+     * \param type the data array type
+     */
+    bool hasData(const std::string& name, const DataType& type) const
+    {
+        using namespace tinyxml2;
+
+        const XMLElement* pieceNode = getPieceNode_();
+        const XMLElement* dataNode = getDataNode_(pieceNode, type);
+        if (dataNode == nullptr)
+            return false;
+
+        const XMLElement* dataArray = findDataArray_(dataNode, name);
+        if (dataArray == nullptr)
+            return false;
+
+        return true;
+    }
+
+    /*!
      * \brief read data from the vtk file to a container, e.g. std::vector<double>
      * \tparam Container a container type that has begin(), end(), push_back(), e.g. std::vector<>
      * \param name the name attribute of the data array to read
