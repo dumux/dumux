@@ -28,7 +28,24 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
+// forward declare
+namespace Dune {
+
+template<class ct, int dim, template< int > class Ref, class Comm>
+class SPGrid;
+}
+
 namespace Dumux {
+
+namespace Detail
+{
+
+template<class Grid>
+struct SupportsPeriodicity : public std::false_type {};
+
+template<class ct, int dim, template< int > class Ref, class Comm>
+struct SupportsPeriodicity<Dune::SPGrid<ct, dim, Ref, Comm>> : public std::true_type {};
+}
 
 /*!
  * \ingroup NavierStokesModel
@@ -95,13 +112,9 @@ public:
                                const ElemVolVars& elemVolVars)
     {
         assert(scvf.isLateral());
-
         const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
         const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
-
-        const auto distance = scvf.boundary() ? (fvGeometry.scv(scvf.insideScvIdx()).dofPosition() - scvf.ipGlobal()).two_norm()
-                                              : (fvGeometry.scv(scvf.insideScvIdx()).dofPosition() - fvGeometry.scv(scvf.outsideScvIdx()).dofPosition()).two_norm();
-
+        const auto distance = getDistanceIJ_(fvGeometry, scvf);
         return (outerVelocity - innerVelocity) / distance * scvf.directionSign();
     }
 
@@ -124,8 +137,8 @@ public:
      *              |       | lat. |        |
      *              |       | scvf |        |      O position at which gradient is evaluated (integration point)
      *              ---------######O:::::::::
-     *              |      ||      |       ::
-     *              |      ||      |       ::
+     *              |      ||      ~       ::      ~ ~ orthogonal scvf
+     *              |      ||      ~       ::
      *              |      || scv  x       ::
      *              |      ||      |       ::
      *              |      ||      |       ::
@@ -141,49 +154,125 @@ public:
     {
         assert(scvf.isLateral());
         const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-
         const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
         const auto outerVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
-
-        const auto distance = [&]
-        {
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& orthogonalInsideScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
-            const auto& gridGeometry = fvGeometry.gridGeometry();
-
-            if (orthogonalScvf.boundary())
-                return (orthogonalInsideScv.dofPosition() - orthogonalScvf.ipGlobal()).two_norm();
-            else if (!gridGeometry.isPeriodic() || !gridGeometry.dofOnPeriodicBoundary(insideScv.dofIndex()))
-                return (orthogonalInsideScv.dofPosition() - fvGeometry.scv(orthogonalScvf.outsideScvIdx()).dofPosition()).two_norm();
-            {
-                const auto orthogonalInsideScv = (insideScv.dofPosition() - orthogonalScvf.ipGlobal()).two_norm();
-
-                const auto& outsideScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
-
-
-                for (const auto& otherScvf : scvfs(fvGeometry, outsideScv))
-                {
-                    if (otherScvf.directionIndex() == orthogonalScvf.directionIndex() && Dune::FloatCmp::ne(otherScvf.directionSign(), orthogonalScvf.directionSign(), 1e-6))
-                    {
-                        // TODO add correct distance
-                    }
-                }
-
-                // assert(outsideScv.dofIndex() == gridGeometry.periodicallyMappedDof(insideScv.dofIndex()));
-                return 0.333333;
-
-
-
-            }
-        }();
-
-
-
+        const auto distance = getDistanceJI_(fvGeometry, scvf, orthogonalScvf);
         return (outerVelocity - innerVelocity) / distance * orthogonalScvf.directionSign();
     }
 
+private:
 
+    template<class FVElementGeometry>
+    static auto getDistanceIJ_(const FVElementGeometry fvGeometry,
+                               const typename FVElementGeometry::SubControlVolumeFace& scvf)
+    {
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        // The scvf is on a boundary, hence there is no outer DOF.
+        // We take the distance to the boundary instead.
+        if (scvf.boundary())
+            return getDistanceToBoundary_(insideScv, scvf);
 
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+
+        // The standard case: Our grid does not support periodic boundaries.
+        if constexpr (!Detail::SupportsPeriodicity<typename FVElementGeometry::GridGeometry::Grid>())
+            return getStandardDistance_(insideScv, outsideScv);
+        else
+        {
+            const auto& gridGeometry = fvGeometry.gridGeometry();
+            const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+            const auto& orthogonalInsideScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
+
+            // The standard case: Our grid is not periodic or the lateral scvf does not lie on a periodic boundary.
+            if (!gridGeometry.isPeriodic() || !gridGeometry.dofOnPeriodicBoundary(orthogonalInsideScv.dofIndex()))
+                return getStandardDistance_(insideScv, outsideScv);
+
+            // Treating periodic boundaries is more involved:
+            // 1. Consider the outside scv within the element adjacent to the other periodic boundary.
+            // 2. Iterate over this scv's faces until you find the face parallel to our own scvf.
+            //    This face would lie directly next to our own scvf if the grid was not periodic.
+            // 3. Calculate the total distance by summing up the distances between the DOFs and the respective integration points
+            //    corresponding to the inside and outside scvfs.
+            auto periodicFvGeometry = localView(gridGeometry);
+            const auto& periodicElement = gridGeometry.element(outsideScv.elementIndex());
+            periodicFvGeometry.bindElement(periodicElement);
+
+            for (const auto& outsideScvf : scvfs(periodicFvGeometry, outsideScv))
+            {
+                if (outsideScvf.directionIndex() == scvf.directionIndex() && outsideScvf.directionSign() != scvf.directionSign())
+                {
+                    const auto insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+                    const auto outsideDistance = (outsideScv.dofPosition() - outsideScvf.ipGlobal()).two_norm();
+                    return insideDistance + outsideDistance;
+                }
+            }
+            DUNE_THROW(Dune::InvalidStateException, "Could not find scvf in periodic element");
+        }
+    }
+
+    //! Get the distance between the DOFs at which the inner and outer velocities are defined.
+    template<class FVElementGeometry>
+    static auto getDistanceJI_(const FVElementGeometry fvGeometry,
+                               const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                               const typename FVElementGeometry::SubControlVolumeFace& orthogonalScvf)
+    {
+        const auto& orthogonalInsideScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
+
+        // The orthogonal scvf is on a boundary, hence there is no outer DOF.
+        // We take the distance to the boundary instead.
+        if (orthogonalScvf.boundary())
+            return getDistanceToBoundary_(orthogonalInsideScv, orthogonalScvf);
+
+        const auto& orthogonalOutsideScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
+
+        // The standard case: Our grid does not support periodic boundaries.
+        if constexpr (!Detail::SupportsPeriodicity<typename FVElementGeometry::GridGeometry::Grid>())
+            return getStandardDistance_(orthogonalInsideScv, orthogonalOutsideScv);
+        else
+        {
+            const auto& gridGeometry = fvGeometry.gridGeometry();
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+
+            // The standard case: Our grid is not periodic or our own DOF does not lie on a periodic boundary.
+            if (!gridGeometry.isPeriodic() || !gridGeometry.dofOnPeriodicBoundary(insideScv.dofIndex()))
+                return getStandardDistance_(orthogonalInsideScv, orthogonalOutsideScv);
+
+            // Treating periodic boundaries is more involved:
+            // 1. Consider the orthogonal outside scv within the element adjacent to the other periodic boundary.
+            // 2. Iterate over this scv's faces until you find the orthogonal face parallel to our own orthogonal scvf.
+            //    This face would lie directly next to our own orthogonal scvf if the grid was not periodic.
+            // 3. Calculate the total distance by summing up the distances between the DOFs and the respective integration points
+            //    corresponding to the orthogonal scvfs.
+            auto periodicFvGeometry = localView(gridGeometry);
+            const auto& periodicElement = gridGeometry.element(orthogonalOutsideScv.elementIndex());
+            periodicFvGeometry.bindElement(periodicElement);
+
+            for (const auto& outsideOrthogonalScvf : scvfs(periodicFvGeometry, orthogonalOutsideScv))
+            {
+                if (outsideOrthogonalScvf.directionIndex() == orthogonalScvf.directionIndex() && outsideOrthogonalScvf.directionSign() != orthogonalScvf.directionSign())
+                {
+                    const auto insideDistance = (orthogonalInsideScv.dofPosition() - orthogonalScvf.ipGlobal()).two_norm();
+                    const auto outsideDistance = (orthogonalOutsideScv.dofPosition() - outsideOrthogonalScvf.ipGlobal()).two_norm();
+                    return insideDistance + outsideDistance;
+                }
+            }
+            DUNE_THROW(Dune::InvalidStateException, "Could not find scvf in periodic element");
+        }
+    }
+
+    template<class SubControlVolume>
+    static auto getStandardDistance_(const SubControlVolume& insideScv,
+                                     const SubControlVolume& outsideScv)
+    {
+        return (insideScv.dofPosition() - outsideScv.dofPosition()).two_norm();
+    }
+
+    template<class SubControlVolume, class SubControlVolumeFace>
+    static auto getDistanceToBoundary_(const SubControlVolume& scv,
+                                       const SubControlVolumeFace& scvf)
+    {
+        return (scv.dofPosition() - scvf.ipGlobal()).two_norm();
+    }
 };
 
 } // end namespace Dumux
