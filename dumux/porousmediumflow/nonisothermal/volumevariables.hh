@@ -158,9 +158,13 @@ class EnergyVolumeVariablesImplementation<Traits, Impl, true>
 public:
     // export the fluidstate
     using FluidState = typename Traits::FluidState;
-    using SolidState = typename Traits::SolidState;
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
+    //! Export the indices
+    using Indices = Idx;
+    // export the solidstate
+    using SolidState = typename Traits::SolidState;
+    //! export the underlying solid system
     using SolidSystem = typename Traits::SolidSystem;
 
     //! The temperature is obtained from the problem as a constant for isothermal models

@@ -47,14 +47,14 @@ class TwoPVolumeVariables
     using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPVolumeVariables<Traits> >;
     using PermeabilityType = typename Traits::PermeabilityType;
     using ModelTraits = typename Traits::ModelTraits;
-    using Indices = typename ModelTraits::Indices;
+    using Idx = typename ModelTraits::Indices;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using FS = typename Traits::FluidSystem;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
     enum
     {
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
+        pressureIdx = Idx::pressureIdx,
+        saturationIdx = Idx::saturationIdx,
 
         phase0Idx = FS::phase0Idx,
         phase1Idx = FS::phase1Idx
@@ -67,6 +67,8 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! Export type of fluid state
     using FluidState = typename Traits::FluidState;
+    //! Export the indices
+    using Indices = typename ModelTraits::Indices;
     //! Export type of solid state
     using SolidState = typename Traits::SolidState;
     //! Export type of solid system
