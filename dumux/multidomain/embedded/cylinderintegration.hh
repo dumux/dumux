@@ -75,7 +75,7 @@ public:
     /*!
      * \brief Constructor
      * \param rStep characteristic relative integration length in r-direction (real number between 0 and 1)
-     * \param zSamples characteristic relative integration length in z-direction (real number between 0 and 1)
+     * \param zStep characteristic relative integration length in z-direction (real number between 0 and 1)
      * \note Use this constructor to achieve a non-balanced (away from 1) aspect ratio between r and z-direction
      */
     CylinderIntegration(const Scalar rStep, const Scalar zStep)

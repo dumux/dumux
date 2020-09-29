@@ -158,7 +158,7 @@ public:
 
     /*!
      * \brief Evaluate the inverse function
-     * \param x the x-coordinate
+     * \param y the y-coordinate
      * \note We extrapolate linearly if out of bounds
      * \note Throws exception if inverse could not be found (e.g. not unique)
      */
