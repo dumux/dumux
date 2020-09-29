@@ -33,7 +33,7 @@ namespace Dumux {
  *        material material.
  */
 template<int numPhasesV, class ScalarT>
-class MpLinearMaterialParams
+class [[deprecated("Use FluidMatrix::MpLinearMaterial")]] MpLinearMaterialParams
 {
 public:
     using Scalar = ScalarT;
