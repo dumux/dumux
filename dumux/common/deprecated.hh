@@ -44,7 +44,7 @@ namespace Deprecated {
 ////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////
-// Deprecation warnings for effective diffusion coefficients //
+// Deprecation warnings for the new material law //
 ///////////////////////////////////////////////////////////////
 
 // support old interface of the effective thermal conductivity laws
@@ -295,6 +295,456 @@ private:
     const ElemSol& elemSol_;
 };
 
+///////////////////////////////////////////////////////////////
+// Deprecation warnings for the kinetic surface areas //
+///////////////////////////////////////////////////////////////
+
+// support old interface of surface area
+template<class E, class SCV, class Sol>
+struct HasNewAns
+{
+    template<class S>
+    auto operator()(S&& sp)
+    -> decltype(sp.nonwettingSolidInterfacialArea(std::declval<const E&>(),
+                                                  std::declval<const SCV&>(),
+                                                  std::declval<const Sol&>())) {}
+};
+
+template<class Pos>
+struct HasNewAnsAtPos
+{
+    template<class S>
+    auto operator()(S&& sp)
+    -> decltype(sp.nonwettingSolidInterfacialAreaAtPos(std::declval<const Pos&>())) {}
+};
+
+// support old interface of surface area
+template<class E, class SCV, class Sol>
+struct HasNewAnw
+{
+    template<class S>
+    auto operator()(S&& sp)
+    -> decltype(sp.wettingNonwettingInterfacialArea(std::declval<const E&>(),
+                                                    std::declval<const SCV&>(),
+                                                    std::declval<const Sol&>())) {}
+};
+
+template<class Pos>
+struct HasNewAnwAtPos
+{
+    template<class S>
+    auto operator()(S&& sp)
+    -> decltype(sp.wettingNonwettingInterfacialAreaAtPos(std::declval<const Pos&>())) {}
+};
+
+// support old interface of surface area
+template<class E, class SCV, class Sol>
+struct HasNewAws
+{
+    template<class S>
+    auto operator()(S&& sp)
+    -> decltype(sp.wettingSolidInterfacialArea(std::declval<const E&>(),
+                                               std::declval<const SCV&>(),
+                                               std::declval<const Sol&>())) {}
+};
+
+template<class Pos>
+struct HasNewAwsAtPos
+{
+    template<class S>
+    auto operator()(S&& sp)
+    -> decltype(sp.wettingSolidInterfacialAreaAtPos(std::declval<const Pos&>())) {}
+};
+
+// support new and old twop material law interface
+template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
+class WettingNonwettingInterfacialAreaWrapper
+{
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    template<class S>
+    static constexpr bool hasNewAnw()
+    { return decltype(isValid(HasNewAnw<Element, Scv, ElemSol>()).template check<S>())::value; }
+
+    template<class S>
+    static constexpr bool hasNewAnwAtPos()
+    { return decltype(isValid(HasNewAnwAtPos<GlobalPosition>()).template check<S>())::value; }
+
+
+public:
+    // pass scalar so template arguments can all be deduced
+    WettingNonwettingInterfacialAreaWrapper(const Scalar& scalar,
+                                            const SpatialParams& sp,
+                                            const Element& element,
+                                            const Scv& scv,
+                                            const ElemSol& elemSol)
+    : spatialParams_(sp), element_(element), scv_(scv), elemSol_(elemSol)
+    {
+        maybePrintWarning();
+    }
+
+    template<class S = SpatialParams>
+    void maybePrintWarning() const
+    {
+      if constexpr (!hasNewAnw<S>() && !hasNewAnwAtPos<S>())
+        printWarning();
+    }
+
+    [[deprecated("The material laws have been overhauled! Your spatial params implement the old interface. Use the new style material laws. Old material laws will no longer be supported after release 3.3")]]
+    void printWarning() const {}
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAnw<S>() && !hasNewAnwAtPos<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      printWarning();
+      return spatialParams_.aWettingNonWettingSurfaceParams(element_, scv_, elemSol_);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnw<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      return spatialParams_.wettingNonwettingInterfacialArea(element_, scv_, elemSol_).basicParams();
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnwAtPos<S>() && !hasNewAnw<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      return spatialParams_.wettingNonwettingInterfacialAreaAtPos(scv_.center()).basicParams();
+    }
+
+    /*!
+     * \brief The capillary pressure-saturation curve
+     */
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAnw<S>() && !hasNewAnwAtPos<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        printWarning();
+        const auto& surfaceParams = spatialParams_.aWettingNonWettingSurfaceParams(element_, scv_, elemSol_);
+        const auto& materialParams = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        using AwnSurface = typename SpatialParams::AwnSurface;
+        return AwnSurface::interfacialArea(surfaceParams, materialParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnw<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        return spatialParams_.wettingNonwettingInterfacialArea(element_, scv_, elemSol_).area(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnwAtPos<S>() && !hasNewAnw<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        return spatialParams_.wettingNonwettingInterfacialAreaAtPos(scv_.center()).area(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAnw<S>() && !hasNewAnwAtPos<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      printWarning();
+      const auto& surfaceParams = spatialParams_.aWettingNonWettingSurfaceParams(element_, scv_, elemSol_);
+      using AwnSurface = typename SpatialParams::AwnSurface;
+      return AwnSurface::dawn_dpc(surfaceParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnw<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.wettingNonwettingInterfacialArea(element_, scv_, elemSol_).darea_dpc(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnwAtPos<S>() && !hasNewAnw<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.wettingNonwettingInterfacialAreaAtPos(scv_.center()).darea_dpc(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAnw<S>() && !hasNewAnwAtPos<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      printWarning();
+      const auto& surfaceParams = spatialParams_.aWettingNonWettingSurfaceParams(element_, scv_, elemSol_);
+      using AwnSurface = typename SpatialParams::AwnSurface;
+      return AwnSurface::dawn_dsw(surfaceParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnw<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.wettingNonwettingInterfacialArea(element_, scv_, elemSol_).darea_dsw(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnwAtPos<S>() && !hasNewAnw<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.wettingNonwettingInterfacialAreaAtPos(scv_.center()).darea_dsw(sw, pc);
+    }
+
+private:
+    const SpatialParams& spatialParams_;
+    const Element& element_;
+    const Scv& scv_;
+    const ElemSol& elemSol_;
+};
+
+// support new and old twop material law interface
+template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
+class NonwettingSolidInterfacialAreaWrapper
+{
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    template<class S>
+    static constexpr bool hasNewAns()
+    { return decltype(isValid(HasNewAns<Element, Scv, ElemSol>()).template check<S>())::value; }
+
+    template<class S>
+    static constexpr bool hasNewAnsAtPos()
+    { return decltype(isValid(HasNewAnsAtPos<GlobalPosition>()).template check<S>())::value; }
+
+
+public:
+    // pass scalar so template arguments can all be deduced
+    NonwettingSolidInterfacialAreaWrapper(const Scalar& scalar,
+                                          const SpatialParams& sp,
+                                          const Element& element,
+                                          const Scv& scv,
+                                          const ElemSol& elemSol)
+    : spatialParams_(sp), element_(element), scv_(scv), elemSol_(elemSol)
+    {
+        maybePrintWarning();
+    }
+
+    template<class S = SpatialParams>
+    void maybePrintWarning() const
+    {
+      if constexpr (!hasNewAns<S>() && !hasNewAnsAtPos<S>())
+        printWarning();
+    }
+
+    [[deprecated("The material laws have been overhauled! Your spatial params implement the old interface. Use the new style material laws. Old material laws will no longer be supported after release 3.3")]]
+    void printWarning() const {}
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAns<S>() && !hasNewAnsAtPos<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      printWarning();
+      return spatialParams_.aNonWettingSolidSurfaceParams(element_, scv_, elemSol_);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAns<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      return spatialParams_.nonwettingSolidInterfacialArea(element_, scv_, elemSol_).basicParams();
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnsAtPos<S>() && !hasNewAns<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      return spatialParams_.nonwettingSolidInterfacialAreaAtPos(scv_.center()).basicParams();
+    }
+
+    /*!
+     * \brief The capillary pressure-saturation curve
+     */
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAns<S>() && !hasNewAnsAtPos<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        printWarning();
+        const auto& surfaceParams = spatialParams_.aNonWettingSolidSurfaceParams(element_, scv_, elemSol_);
+        const auto& materialParams = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        using AnsSurface = typename SpatialParams::AnsSurface;
+        return AnsSurface::interfacialArea(surfaceParams, materialParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAns<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        return spatialParams_.nonwettingSolidInterfacialArea(element_, scv_, elemSol_).area(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnsAtPos<S>() && !hasNewAns<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        return spatialParams_.nonwettingSolidInterfacialAreaAtPos(scv_.center()).area(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAns<S>() && !hasNewAnsAtPos<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      printWarning();
+      const auto& surfaceParams = spatialParams_.aNonWettingSolidSurfaceParams(element_, scv_, elemSol_);
+      using AnsSurface = typename SpatialParams::AnsSurface;
+      return AnsSurface::dawn_dpc(surfaceParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAns<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.nonwettingSolidInterfacialArea(element_, scv_, elemSol_).darea_dpc(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnsAtPos<S>() && !hasNewAns<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.nonwettingSolidInterfacialAreaAtPos(scv_.center()).darea_dpc(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAns<S>() && !hasNewAnsAtPos<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      printWarning();
+      const auto& surfaceParams = spatialParams_.aNonWettingSolidSurfaceParams(element_, scv_, elemSol_);
+      using AnsSurface = typename SpatialParams::AnsSurface;
+      return AnsSurface::dawn_dsw(surfaceParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAns<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.nonwettingSolidInterfacialArea(element_, scv_, elemSol_).darea_dsw(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAnsAtPos<S>() && !hasNewAns<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.nonwettingSolidInterfacialAreaAtPos(scv_.center()).darea_dsw(sw, pc);
+    }
+
+private:
+    const SpatialParams& spatialParams_;
+    const Element& element_;
+    const Scv& scv_;
+    const ElemSol& elemSol_;
+};
+
+// support new and old twop material law interface
+template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
+class WettingSolidInterfacialAreaWrapper
+{
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    template<class S>
+    static constexpr bool hasNewAws()
+    { return decltype(isValid(HasNewAws<Element, Scv, ElemSol>()).template check<S>())::value; }
+
+    template<class S>
+    static constexpr bool hasNewAwsAtPos()
+    { return decltype(isValid(HasNewAwsAtPos<GlobalPosition>()).template check<S>())::value; }
+
+
+public:
+    // pass scalar so template arguments can all be deduced
+    WettingSolidInterfacialAreaWrapper(const Scalar& scalar,
+                                       const SpatialParams& sp,
+                                       const Element& element,
+                                       const Scv& scv,
+                                       const ElemSol& elemSol)
+    : spatialParams_(sp), element_(element), scv_(scv), elemSol_(elemSol)
+    {
+        maybePrintWarning();
+    }
+
+    template<class S = SpatialParams>
+    void maybePrintWarning() const
+    {
+      if constexpr (!hasNewAws<S>() && !hasNewAwsAtPos<S>())
+        printWarning();
+    }
+
+    [[deprecated("The material laws have been overhauled! Your spatial params implement the old interface. Use the new style material laws. Old material laws will no longer be supported after release 3.3")]]
+    void printWarning() const {}
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAws<S>() && !hasNewAwsAtPos<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      printWarning();
+      return spatialParams_.aWettingSolidSurfaceParams(element_, scv_, elemSol_);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAws<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      return spatialParams_.wettingSolidInterfacialArea(element_, scv_, elemSol_).basicParams();
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAwsAtPos<S>() && !hasNewAws<S>(), int> = 0>
+    const auto& basicParams() const
+    {
+      return spatialParams_.wettingSolidInterfacialAreaAtPos(scv_.center()).basicParams();
+    }
+
+    /*!
+     * \brief The capillary pressure-saturation curve
+     */
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAws<S>() && !hasNewAwsAtPos<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        printWarning();
+        const auto& surfaceParams = spatialParams_.aWettingSolidSurfaceParams(element_, scv_, elemSol_);
+        const auto& materialParams = spatialParams_.materialLawParams(element_, scv_, elemSol_);
+        using AwsSurface = typename SpatialParams::AwsSurface;
+        return AwsSurface::interfacialArea(surfaceParams, materialParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAws<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        return spatialParams_.wettingSolidInterfacialArea(element_, scv_, elemSol_).area(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAwsAtPos<S>() && !hasNewAws<S>(), int> = 0>
+    Scalar area(const Scalar sw, const Scalar pc) const
+    {
+        return spatialParams_.wettingSolidInterfacialAreaAtPos(scv_.center()).area(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAws<S>() && !hasNewAwsAtPos<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      printWarning();
+      const auto& surfaceParams = spatialParams_.aWettingSolidSurfaceParams(element_, scv_, elemSol_);
+      using AwsSurface = typename SpatialParams::AwsSurface;
+      return AwsSurface::dawn_dpc(surfaceParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAws<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.wettingSolidInterfacialArea(element_, scv_, elemSol_).darea_dpc(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAwsAtPos<S>() && !hasNewAws<S>(), int> = 0>
+    Scalar darea_dpc(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.wettingSolidInterfacialAreaAtPos(scv_.center()).darea_dpc(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<!hasNewAws<S>() && !hasNewAwsAtPos<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      printWarning();
+      const auto& surfaceParams = spatialParams_.aWettingSolidSurfaceParams(element_, scv_, elemSol_);
+      using AwsSurface = typename SpatialParams::AwsSurface;
+      return AwsSurface::dawn_dsw(surfaceParams, sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAws<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.wettingSolidInterfacialArea(element_, scv_, elemSol_).darea_dsw(sw, pc);
+    }
+
+    template<class S = SpatialParams, typename std::enable_if_t<hasNewAwsAtPos<S>() && !hasNewAws<S>(), int> = 0>
+    Scalar darea_dsw(const Scalar sw, const Scalar pc)
+    {
+      return spatialParams_.wettingSolidInterfacialAreaAtPos(scv_.center()).darea_dsw(sw, pc);
+    }
+
+private:
+    const SpatialParams& spatialParams_;
+    const Element& element_;
+    const Scv& scv_;
+    const ElemSol& elemSol_;
+};
 } // end namespace Deprecated
 #endif
 
