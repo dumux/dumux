@@ -561,33 +561,33 @@ public:
     template<class S>
     struct Params
     {
-        S pcLowSw, pcHighSw;
-        S krwHighSw, krnLowSw;
+        S pcLowSwe, pcHighSwe;
+        S krwHighSwe, krnLowSwe;
     };
 
     //! Initialize the spline
     template<class MaterialLaw>
     void init(const MaterialLaw* m, const std::string& paramGroup)
     {
-        pcLowSw_ = getParamFromGroup<Scalar>(paramGroup, "VgPcLowSwThreshold", 0.01);
-        pcHighSw_ = getParamFromGroup<Scalar>(paramGroup, "VgPcHighSwThreshold", 0.99);
-        krwHighSw_ = getParamFromGroup<Scalar>(paramGroup, "VgKrwHighSwThreshold", 0.1);
-        krnLowSw_ = getParamFromGroup<Scalar>(paramGroup, "VgKrnLowSwThreshold", 0.9);
+        pcLowSwe_ = getParamFromGroup<Scalar>(paramGroup, "VgPcLowSweThreshold", 0.01);
+        pcHighSwe_ = getParamFromGroup<Scalar>(paramGroup, "VgPcHighSweThreshold", 0.99);
+        krwHighSwe_ = getParamFromGroup<Scalar>(paramGroup, "VgKrwHighSweThreshold", 0.9);
+        krnLowSwe_ = getParamFromGroup<Scalar>(paramGroup, "VgKrnLowSweThreshold", 0.1);
 
-        initPcParameters_(m, pcLowSw_, pcHighSw_);
-        initKrParameters_(m, krnLowSw_, krwHighSw_);
+        initPcParameters_(m, pcLowSwe_, pcHighSwe_);
+        initKrParameters_(m, krnLowSwe_, krwHighSwe_);
     }
 
     template<class MaterialLaw, class BaseParams, class EffToAbsParams>
     void init(const MaterialLaw* m, const BaseParams& bp, const EffToAbsParams& etap, const Params<Scalar>& p)
     {
-        pcLowSw_ = p.pcLowSw;
-        pcHighSw_ = p.pcHighSw;
-        krwHighSw_ = p.krwHighSw;
-        krnLowSw_ = p.krnLowSw;
+        pcLowSwe_ = p.pcLowSwe;
+        pcHighSwe_ = p.pcHighSwe;
+        krwHighSwe_ = p.krwHighSwe;
+        krnLowSwe_ = p.krnLowSwe;
 
-        initPcParameters_(m, pcLowSw_, pcHighSw_);
-        initKrParameters_(m, krnLowSw_, krwHighSw_);
+        initPcParameters_(m, pcLowSwe_, pcHighSwe_);
+        initKrParameters_(m, krnLowSwe_, krwHighSwe_);
     }
 
     /*!
@@ -595,10 +595,10 @@ public:
      */
     bool operator== (const VanGenuchtenRegularization& o) const
     {
-        return Dune::FloatCmp::eq(pcLowSw_, o.pcLowSw_, 1e-6)
-               && Dune::FloatCmp::eq(pcHighSw_, o.pcHighSw_, 1e-6)
-               && Dune::FloatCmp::eq(krwHighSw_, o.krwHighSw_, 1e-6)
-               && Dune::FloatCmp::eq(krnLowSw_, o.krnLowSw_, 1e-6);
+        return Dune::FloatCmp::eq(pcLowSwe_, o.pcLowSwe_, 1e-6)
+               && Dune::FloatCmp::eq(pcHighSwe_, o.pcHighSwe_, 1e-6)
+               && Dune::FloatCmp::eq(krwHighSwe_, o.krwHighSwe_, 1e-6)
+               && Dune::FloatCmp::eq(krnLowSwe_, o.krnLowSwe_, 1e-6);
     }
 
     /*!
@@ -615,13 +615,13 @@ public:
         // newton solver (if the derivative is calculated numerically)
         // in order to get the saturation moving to the right
         // direction if it temporarily is in an 'illegal' range.
-        if (swe < pcLowSw_)
-            return pcLowSwPcValue_ + pcDerivativeLowSw_*(swe - pcLowSw_);
+        if (swe < pcLowSwe_)
+            return pcLowSwePcValue_ + pcDerivativeLowSw_*(swe - pcLowSwe_);
 
         else if (swe > 1.0)
-            return pcDerivativeHighSwEnd_*(swe - 1.0);
+            return pcDerivativeHighSweEnd_*(swe - 1.0);
 
-        else if (swe > pcHighSw_)
+        else if (swe > pcHighSwe_)
             return pcSpline_.eval(swe);
 
         else
@@ -633,13 +633,13 @@ public:
      */
     OptionalScalar<Scalar> dpc_dswe(const Scalar swe) const
     {
-        if (swe < pcLowSw_)
+        if (swe < pcLowSwe_)
             return pcDerivativeLowSw_;
 
         else if (swe > 1.0)
-            return pcDerivativeHighSwEnd_;
+            return pcDerivativeHighSweEnd_;
 
-        else if (swe > pcHighSw_)
+        else if (swe > pcHighSwe_)
             return pcSpline_.evalDerivative(swe);
 
         else
@@ -653,18 +653,18 @@ public:
     {
         if (pc <= 0.0)
         {
-            if (pcHighSw_ > 1.0 - std::numeric_limits<Scalar>::epsilon())
+            if (pcHighSwe_ > 1.0 - std::numeric_limits<Scalar>::epsilon())
                 return 1.0;
             else
-                return pc/pcDerivativeHighSwEnd_ + 1.0;
+                return pc/pcDerivativeHighSweEnd_ + 1.0;
         }
 
         // invert spline
-        else if (pc <  pcHighSwPcValue_)
-            return pcSpline_.intersectInterval(pcHighSw_, 1.0, 0.0, 0.0, 0.0, pc);
+        else if (pc <  pcHighSwePcValue_)
+            return pcSpline_.intersectInterval(pcHighSwe_, 1.0, 0.0, 0.0, 0.0, pc);
 
-        else if (pc >= pcLowSwPcValue_)
-            return (pc - pcLowSwPcValue_)/pcDerivativeLowSw_ + pcLowSw_;
+        else if (pc >= pcLowSwePcValue_)
+            return (pc - pcLowSwePcValue_)/pcDerivativeLowSw_ + pcLowSwe_;
 
         else
             return {}; // no regularization
@@ -677,17 +677,17 @@ public:
     {
         if (pc <= 0.0)
         {
-            if (pcHighSw_ > 1.0 - std::numeric_limits<Scalar>::epsilon())
+            if (pcHighSwe_ > 1.0 - std::numeric_limits<Scalar>::epsilon())
                 return 0.0;
             else
-                return 1.0/pcDerivativeHighSwEnd_;
+                return 1.0/pcDerivativeHighSweEnd_;
         }
 
         // derivative of the inverse of the function is one over derivative of the function
-        else if (pc <  pcHighSwPcValue_)
-            return 1.0/pcSpline_.evalDerivative(pcSpline_.intersectInterval(pcHighSw_, 1.0, 0.0, 0.0, 0.0, pc));
+        else if (pc <  pcHighSwePcValue_)
+            return 1.0/pcSpline_.evalDerivative(pcSpline_.intersectInterval(pcHighSwe_, 1.0, 0.0, 0.0, 0.0, pc));
 
-        else if (pc >= pcLowSwPcValue_)
+        else if (pc >= pcLowSwePcValue_)
             return 1.0/pcDerivativeLowSw_;
 
         else
@@ -703,7 +703,7 @@ public:
             return 0.0;
         else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
             return 1.0;
-        else if (swe > krwHighSw_)
+        else if (swe > krwHighSwe_)
             return krwSpline_.eval(swe);
         else
             return {}; // no regularization
@@ -718,7 +718,7 @@ public:
             return 0.0;
         else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
             return 0.0;
-        else if (swe > krwHighSw_)
+        else if (swe > krwHighSwe_)
             return krwSpline_.evalDerivative(swe);
         else
             return {}; // no regularization
@@ -733,7 +733,7 @@ public:
             return 1.0;
         else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
             return 0.0;
-        else if (swe < krnLowSw_)
+        else if (swe < krnLowSwe_)
             return krnSpline_.eval(swe);
         else
             return {}; // no regularization
@@ -748,7 +748,7 @@ public:
             return 0.0;
         else if (swe > 1.0 - std::numeric_limits<Scalar>::epsilon())
             return 0.0;
-        else if (swe < krnLowSw_)
+        else if (swe < krnLowSwe_)
             return krnSpline_.evalDerivative(swe);
         else
             return {}; // no regularization
@@ -756,41 +756,55 @@ public:
 
 private:
     template<class MaterialLaw>
-    void initPcParameters_(const MaterialLaw* m, const Scalar lowSw, const Scalar highSw)
+    void initPcParameters_(const MaterialLaw* m, const Scalar lowSwe, const Scalar highSwe)
     {
-        pcDerivativeLowSw_ = m->template dpc_dswe<false>(lowSw);
+        const auto lowSw = MaterialLaw::EffToAbs::sweToSw(lowSwe, m->effToAbsParams());
+        const auto highSw = MaterialLaw::EffToAbs::sweToSw(highSwe, m->effToAbsParams());
+        const auto dsw_dswe = MaterialLaw::EffToAbs::dsw_dswe(m->effToAbsParams());
 
-        pcDerivativeHighSwThreshold_ = m->template dpc_dswe<false>(highSw);
-        pcDerivativeHighSwEnd_ = 2.0*(0.0 - m->template pc<false>(highSw))/(1.0 - highSw);
+        pcDerivativeLowSw_ = m->template dpc_dsw<false>(lowSw)*dsw_dswe;
 
-        pcLowSwPcValue_ = m->template pc<false>(lowSw);
-        pcHighSwPcValue_ = m->template pc<false>(highSw);
+        pcDerivativeHighSweThreshold_ = m->template dpc_dsw<false>(highSw)*dsw_dswe;
+        pcDerivativeHighSweEnd_ = 2.0*(0.0 - m->template pc<false>(highSw))/(1.0 - highSwe);
 
-        pcSpline_ = Spline<Scalar>(highSw, 1.0, // x0, x1
-                                   pcHighSwPcValue_, 0, // y0, y1
-                                   pcDerivativeHighSwThreshold_, pcDerivativeHighSwEnd_); // m0, m1
+        pcLowSwePcValue_ = m->template pc<false>(lowSw);
+        pcHighSwePcValue_ = m->template pc<false>(highSw);
+
+        pcSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
+                                   pcHighSwePcValue_, 0, // y0, y1
+                                   pcDerivativeHighSweThreshold_, pcDerivativeHighSweEnd_); // m0, m1
 
 
     }
 
     template<class MaterialLaw>
-    void initKrParameters_(const MaterialLaw* m, const Scalar lowSw, const Scalar highSw)
+    void initKrParameters_(const MaterialLaw* m, const Scalar lowSwe, const Scalar highSwe)
     {
-        krwSpline_ = Spline<Scalar>(highSw, 1.0, // x0, x1
-                                    m->template krw<false>(highSw), 1.0, // y0, y1
-                                    m->template dkrw_dswe<false>(highSw), 0.0); // m0, m1
+        const auto lowSw = MaterialLaw::EffToAbs::sweToSw(lowSwe, m->effToAbsParams());
+        const auto highSw = MaterialLaw::EffToAbs::sweToSw(highSwe, m->effToAbsParams());
+        const auto dsw_dswe = MaterialLaw::EffToAbs::dsw_dswe(m->effToAbsParams());
 
-        krnSpline_ = Spline<Scalar>(0.0, lowSw, // x0, x1
-                                    1.0, m->template krn<false>(lowSw), // y0, y1
-                                    0.0, m->template dkrn_dswe<false>(lowSw)); // m0, m1
+        const auto krwHighSw = m->template krw<false>(highSw);
+        const auto dkrwHighSw = m->template dkrw_dsw<false>(highSw)*dsw_dswe;
+
+        const auto krnLowSw = m->template krn<false>(lowSw);
+        const auto dkrnLowSw = m->template dkrn_dsw<false>(lowSw)*dsw_dswe;
+
+        krwSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
+                                    krwHighSw, 1.0, // y0, y1
+                                    dkrwHighSw, 0.0); // m0, m1
+
+        krnSpline_ = Spline<Scalar>(0.0, lowSwe, // x0, x1
+                                    1.0, krnLowSw, // y0, y1
+                                    0.0, dkrnLowSw); // m0, m1
 
     }
 
-    Scalar pcLowSw_, pcHighSw_;
-    Scalar pcLowSwPcValue_, pcHighSwPcValue_;
-    Scalar krwHighSw_, krnLowSw_;
+    Scalar pcLowSwe_, pcHighSwe_;
+    Scalar pcLowSwePcValue_, pcHighSwePcValue_;
+    Scalar krwHighSwe_, krnLowSwe_;
     Scalar pcDerivativeLowSw_;
-    Scalar pcDerivativeHighSwThreshold_, pcDerivativeHighSwEnd_;
+    Scalar pcDerivativeHighSweThreshold_, pcDerivativeHighSweEnd_;
 
     Spline<Scalar> pcSpline_;
     Spline<Scalar> krwSpline_;
