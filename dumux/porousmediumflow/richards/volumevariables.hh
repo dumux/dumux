@@ -110,7 +110,7 @@ public:
 
         // old material law interface is deprecated: Replace this by
         // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.1, when the deprecated interface is no longer supported
+        // after the release of 3.3, when the deprecated interface is no longer supported
         Deprecated::TwoPMaterialLawWrapper
             fluidMatrixInteraction(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
@@ -255,7 +255,7 @@ public:
 
         // old material law interface is deprecated: Replace this by
         // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
-        // after the release of 3.1, when the deprecated interface is no longer supported
+        // after the release of 3.3, when the deprecated interface is no longer supported
         Deprecated::TwoPMaterialLawWrapper
             fluidMatrixInteraction(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
