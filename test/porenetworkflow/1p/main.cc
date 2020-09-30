@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the pore network model
+ * \brief test for the one-phase pore network model
  */
 #include <config.h>
 

@@ -29,7 +29,7 @@
 // base problem
 #include <dumux/porousmediumflow/problem.hh>
 // Pore network model
-#include <dumux/porenetworkflow/1p/model.hh
+#include <dumux/porenetworkflow/1p/model.hh>
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -40,48 +40,6 @@ namespace Dumux
 {
 template <class TypeTag>
 class PNMOnePProblem;
-
-// namespace Properties
-// {
-//
-// namespace TTag {
-// #if ISOTHERMAL
-// struct PNMOnePProblem { using InheritsFrom = std::tuple<PNMOneP>; };
-// #else
-// struct PNMOnePProblem { using InheritsFrom = std::tuple<PNMOnePNI>; };
-// #endif
-// }
-//
-// // Set the problem property
-// template<class TypeTag>
-// struct Problem<TypeTag, TTag::PNMOnePProblem>
-// { using type = Dumux::PNMOnePProblem<TypeTag>; };
-//
-// // the fluid system
-// template<class TypeTag>
-// struct FluidSystem<TypeTag, TTag::PNMOnePProblem>
-// {
-//     using Scalar = GetPropType<TypeTag, Scalar>;
-//     using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
-// };
-//
-// // the grid
-// template<class TypeTag>
-// struct Grid<TypeTag, TTag::PNMOnePProblem>
-// { using type = Dune::FoamGrid<1, 3>; };
-//
-// template<class TypeTag>
-// struct SinglePhaseTransmissibilityLaw<TypeTag, TTag::PNMOnePProblem>
-// {
-//     using Scalar = GetPropType<TypeTag, Scalar>;
-//     using type = TransmissibilityAzzamDullien<Scalar>;
-// };
-//
-// // use the incompressible local residual (provides analytic jacobian)
-// template<class TypeTag>
-// struct LocalResidual<TypeTag, TTag::PNMOnePProblem> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-//
-// }
 
 template <class TypeTag>
 class PNMOnePProblem : public PorousMediumFlowProblem<TypeTag>

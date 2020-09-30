@@ -19,22 +19,22 @@
 /*!
  * \file
  *
- * \brief The properties for the one-phase pore network model.
+ * \brief The properties for the two-phase pore network model.
  */
-#ifndef DUMUX_PNM1P_PROPERTIES_HH
-#define DUMUX_PNM1P_PROPERTIES_HH
+#ifndef DUMUX_PNM2P_PROPERTIES_HH
+#define DUMUX_PNM2P_PROPERTIES_HH
 
 #include <dune/foamgrid/foamgrid.hh>
 
-#include <dumux/common/properties.hh>
+#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porenetworkflow/2p/model.hh>
 
-// Pore network model
-#include <dumux/porenetworkflow/1p/model.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/porenetworkflow/common/utilities.hh>
 
 // the problem
 #include "problem.hh"
@@ -44,42 +44,29 @@
 //////////
 namespace Dumux::Properties {
 
+// Create new type tags
 namespace TTag {
 #if ISOTHERMAL
-struct PNMOnePProblem { using InheritsFrom = std::tuple<PNMOneP>; };
+struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoP>; };
 #else
-struct PNMOnePProblem { using InheritsFrom = std::tuple<PNMOnePNI>; };
+struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoPNI>; };
 #endif
-}
+} // end namespace TTag
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PNMOnePProblem>
-{ using type = PNMOnePProblem<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PNMOnePProblem>
-{
-    using Scalar = GetPropType<TypeTag, Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::SimpleH2O<Scalar> > ;
-};
-
-// the grid
-template<class TypeTag>
-struct Grid<TypeTag, TTag::PNMOnePProblem>
-{ using type = Dune::FoamGrid<1, 3>; };
+struct Problem<TypeTag, TTag::DrainageProblem> { using type = Dumux::DrainageProblem<TypeTag>; };
 
 template<class TypeTag>
-struct SinglePhaseTransmissibilityLaw<TypeTag, TTag::PNMOnePProblem>
-{
-    using Scalar = GetPropType<TypeTag, Scalar>;
-    using type = TransmissibilityAzzamDullien<Scalar>;
-};
+struct FluidSystem<TypeTag, TTag::DrainageProblem>
+  {
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = Dumux::FluidSystems::H2OAir<Scalar, Dumux::Components::SimpleH2O<Scalar>>;
+  };
 
-// use the incompressible local residual (provides analytic jacobian)
+// Set the grid type
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::PNMOnePProblem> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
+struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
 
 } //end namespace Dumux::Properties
 

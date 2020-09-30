@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the pore network model
+ * \brief test for the one-phase two-component pore network model
  */
  #include <config.h>
 
@@ -40,7 +40,7 @@
 #include <dumux/porenetworkflow/common/pnmvtkoutputmodule.hh>
 #include <dumux/porenetworkflow/common/boundaryflux.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
-#include "problem.hh"
+#include "properties.hh"
 
 int main(int argc, char** argv) try
 {
