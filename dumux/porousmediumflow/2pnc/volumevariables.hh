@@ -44,6 +44,8 @@
 
 #include "primaryvariableswitch.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -140,14 +142,18 @@ public:
         // calculate the remaining quantities
         /////////////
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
         const int wPhaseIdx = fluidState_.wettingPhase();
         const int nPhaseIdx = 1 - wPhaseIdx;
 
         // mobilities -> require wetting phase saturation as parameter!
-        mobility_[wPhaseIdx] = MaterialLaw::krw(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(wPhaseIdx);
-        mobility_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx))/fluidState_.viscosity(nPhaseIdx);
+        mobility_[wPhaseIdx] = fluidMatrixInteraction.krw(saturation(wPhaseIdx))/fluidState_.viscosity(wPhaseIdx);
+        mobility_[nPhaseIdx] = fluidMatrixInteraction.krn(saturation(wPhaseIdx))/fluidState_.viscosity(nPhaseIdx);
 
         //update porosity before calculating the effective properties depending on it
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
@@ -190,8 +196,11 @@ public:
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
         const auto wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         fluidState.setWettingPhase(wPhaseIdx);
 
@@ -223,7 +232,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
 
         // set pressures of the fluid phases
-        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        pc_ = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
         if (formulation == TwoPFormulation::p0s1)
         {
             fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
@@ -260,13 +269,12 @@ public:
         }
         else if (phasePresence == secondPhaseOnly)
         {
-
-            Dune::FieldVector<Scalar,  ModelTraits::numFluidComponents()> moleFrac;
+            Dune::FieldVector<Scalar, ModelTraits::numFluidComponents()> moleFrac;
 
             moleFrac[comp0Idx] = priVars[switchIdx];
             Scalar sumMoleFracOtherComponents = moleFrac[comp0Idx];
 
-            for (int compIdx = numMajorComponents; compIdx <  ModelTraits::numFluidComponents(); ++compIdx)
+            for (int compIdx = numMajorComponents; compIdx < ModelTraits::numFluidComponents(); ++compIdx)
             {
                 moleFrac[compIdx] = priVars[compIdx];
                 sumMoleFracOtherComponents += moleFrac[compIdx];
