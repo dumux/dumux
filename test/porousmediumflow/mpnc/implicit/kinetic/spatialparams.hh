@@ -36,10 +36,10 @@
 #include <dumux/common/parameters.hh>
 
 // material laws for interfacial area
-#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
 #include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
 #include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
 #include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacebase.hh>
 
 namespace Dumux {
 
@@ -69,17 +69,9 @@ public:
     //! Convenience aliases of the law parameters
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    //! Export the types used for interfacial area calculations
-    using EffectiveIALawAws = AwnSurfacePolynomial2ndOrder<Scalar>;
-    using EffectiveIALawAwn = AwnSurfacePcMaxFct<Scalar>;
-    using EffectiveIALawAns = AwnSurfaceExpSwPcTo3<Scalar>;
-    using AwnSurface = EffToAbsLawIA<EffectiveIALawAwn, MaterialLawParams>;
-    using AwsSurface = EffToAbsLawIA<EffectiveIALawAws, MaterialLawParams>;
-    using AnsSurface = EffToAbsLawIA<EffectiveIALawAns, MaterialLawParams>;
-
-    using AwnSurfaceParams = typename AwnSurface::Params;
-    using AwsSurfaceParams = typename AwsSurface::Params;
-    using AnsSurfaceParams = typename AnsSurface::Params;
+    using Ans = FluidMatrix::AwnSurfaceBase<Scalar, FluidMatrix::AwnSurfaceExpSwPcTo3>;
+    using Aws = FluidMatrix::AwnSurfaceBase<Scalar, FluidMatrix::AwnSurfacePolynomial2ndOrder>;
+    using Anw = FluidMatrix::AwnSurfaceBase<Scalar, FluidMatrix::AwnSurfacePcMaxFct>;
 
     EvaporationAtmosphereSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
@@ -138,28 +130,28 @@ public:
          */
         using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
         const auto pcMax = TwoPLaw::pc(materialParamsPM_, /*sw = */0.0);
-        aWettingNonWettingSurfaceParams_.setPcMax(pcMax);
 
-        // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
-        aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);
-        aWettingNonWettingSurfaceParams_.setA2(aWettingNonWettingA2_);
-        aWettingNonWettingSurfaceParams_.setA3(aWettingNonWettingA3_);
 
         // non-wetting-solid
-        aNonWettingSolidSurfaceParams_.setA1(aNonWettingSolidA1_);
-        aNonWettingSolidSurfaceParams_.setA2(aNonWettingSolidA2_);
-        aNonWettingSolidSurfaceParams_.setA3(aNonWettingSolidA3_);
+        using AnsParams = typename Ans::BasicParams;
+        AnsParams ansParams;
+        ansParams.a1 = aNonWettingSolidA1_;
+        ansParams.a2 = aNonWettingSolidA2_;
+        ansParams.a3 = aNonWettingSolidA3_;
+        aNs_ = std::make_unique<Ans>(ansParams);
+
+        // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
+        using AnwParams = typename Anw::BasicParams;
+        AnwParams anwParams;
+        anwParams.pcMax = pcMax;
+        anwParams.a1 = aWettingNonWettingA1_;
+        anwParams.a2 = aWettingNonWettingA2_;
+        anwParams.a3 = aWettingNonWettingA3_;
+        aNw_ = std::make_unique<Anw>(anwParams);
 
         // dummys for free flow: no interface where there is only one phase
-        aWettingNonWettingSurfaceParamsFreeFlow_.setA1(0.);
-        aWettingNonWettingSurfaceParamsFreeFlow_.setA2(0.);
-        aWettingNonWettingSurfaceParamsFreeFlow_.setA3(0.);
-        aWettingNonWettingSurfaceParamsFreeFlow_.setPcMax(42.); // not needed because it is anyways zero;
-
-        // dummys for free flow: no interface where there is only one phase
-        aNonWettingSolidSurfaceParamsFreeFlow_.setA1(0.);
-        aNonWettingSolidSurfaceParamsFreeFlow_.setA2(0.);
-        aNonWettingSolidSurfaceParamsFreeFlow_.setA3(0.);
+        aNwFreeFlow_ = std::make_unique<Anw>(AnwParams()); // zero-intialized dummy params for free flwo
+        aNsFreeFlow_ = std::make_unique<Ans>(AnsParams()); // zero-intialized dummy params for free flwo
     }
 
     template<class ElementSolution>
@@ -200,6 +192,42 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     * \param globalPos A global coordinate vector
+     */
+    const Ans& nonWettingSolidSurfaceAtPos(const GlobalPosition &globalPos) const
+    {
+        if (inFF_(globalPos) )
+            return *aNsFreeFlow_  ;
+        else if (inPM_(globalPos))
+            return *aNs_ ;
+        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+    }
+
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     * \param globalPos A global coordinate vector
+     */
+    const Aws& wettingSolidSurfaceAtPos(const GlobalPosition &globalPos) const
+    {
+        return *aWs_;
+    }
+
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     * \param globalPos A global coordinate vector
+     */
+    const Anw& wettingNonWettingSurfaceAtPos(const GlobalPosition &globalPos) const
+    {
+        if (inFF_(globalPos) )
+            return *aNwFreeFlow_  ;
+        else if (inPM_(globalPos))
+            return *aNw_ ;
+        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+
+    }
+
     template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
@@ -213,68 +241,6 @@ public:
         else if (inPM_(globalPos))
             return materialParamsPM_;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
-    }
-
-    /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between wetting and non-Wetting phase.
-     *
-     * The position is determined based on the coordinate of
-     * the vertex belonging to the considered sub-control volume.
-     *
-     * \param element The finite element
-     * \param scv The sub-control volume
-     * \param elemSol The element solution
-     */
-    template<class ElementSolution>
-    const AwnSurfaceParams& aWettingNonWettingSurfaceParams(const Element &element,
-                                                            const SubControlVolume &scv,
-                                                            const ElementSolution &elemSol) const
-    {
-        const auto& globalPos =  scv.dofPosition();
-        if (inFF_(globalPos) )
-            return aWettingNonWettingSurfaceParamsFreeFlow_  ;
-        else if (inPM_(globalPos))
-            return aWettingNonWettingSurfaceParams_ ;
-        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
-    }
-
-    /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between non-Wetting and solid phase.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub-control volume.
-     * \param element The finite element
-     * \param scv The sub-control volume
-     * \param elemSol The element solution
-     */
-    template<class ElementSolution>
-    const AnsSurfaceParams& aNonWettingSolidSurfaceParams(const Element &element,
-                                                          const SubControlVolume &scv,
-                                                          const ElementSolution &elemSol) const
-    {
-        const auto& globalPos =  scv.dofPosition();
-        if (inFF_(globalPos) )
-            return aNonWettingSolidSurfaceParamsFreeFlow_  ;
-        else if (inPM_(globalPos))
-            return aNonWettingSolidSurfaceParams_ ;
-        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
-    }
-
-    /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between wetting and solid phase.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub-control volume.
-     * \param element The finite element
-     * \param scv The sub-control volume
-     * \param elemSol The element solution
-     */
-    template<class ElementSolution>
-    const AwsSurfaceParams& aWettingSolidSurfaceParams(const Element &element,
-                                                       const SubControlVolume &scv,
-                                                       const ElementSolution &elemSol) const
-    {
-        DUNE_THROW(Dune::NotImplemented, "wetting-solid-interface surface params");
     }
 
     /*!
@@ -368,11 +334,6 @@ private:
     static constexpr Scalar eps_  = 1e-6;
     Scalar heightDomain_ ;
 
-    AwnSurfaceParams aWettingNonWettingSurfaceParams_;
-    AnsSurfaceParams aNonWettingSolidSurfaceParams_ ;
-    AwnSurfaceParams aWettingNonWettingSurfaceParamsFreeFlow_;
-    AnsSurfaceParams aNonWettingSolidSurfaceParamsFreeFlow_ ;
-
     // Porous Medium Domain
     Scalar intrinsicPermeabilityPM_ ;
     Scalar porosityPM_ ;
@@ -403,6 +364,13 @@ private:
     Scalar Swr_ ;
     Scalar Snr_ ;
     std::vector<Scalar> gridVector_;
+
+    std::unique_ptr<Ans> aNs_;
+    std::unique_ptr<Aws> aWs_;
+    std::unique_ptr<Anw> aNw_;
+
+    std::unique_ptr<Anw> aNwFreeFlow_;
+    std::unique_ptr<Ans> aNsFreeFlow_;
 };
 
 } // end namespace Dumux
