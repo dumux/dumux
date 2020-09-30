@@ -52,7 +52,7 @@ def checkRates():
     logfile.close()
     print("\nComputed the following convergence rates for {}:\n".format(testname))
 
-    subprocess.call(['cat', testname + '_darcy.log'])
+    subprocess.call(['cat', testname + '.log'])
 
     return {"p" : resultsP}
 
