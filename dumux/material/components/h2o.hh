@@ -708,12 +708,14 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * This method is only valid if pressure is below or at the vapor
-     * pressure of water.
+     * We assume pure water vapor here. For water in a mixture of other gaseous
+     * components, consider the free function h2oGasViscosityInMixture.
      *
-     * See:
+     * We use the IAPWS Formulation, see:
      * IAPWS: "Release on the IAPWS Formulation 2008 for the Viscosity
      * of Ordinary Water Substance", http://www.iapws.org/relguide/visc.pdf \cite cooper2008
+     * This method is only valid if pressure is below or at the vapor
+     * pressure of water.
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
@@ -722,6 +724,7 @@ public:
         Scalar rho = gasDensity(temperature, pressure);
         return Common::viscosity(temperature, rho);
     }
+
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure water.
@@ -905,13 +908,88 @@ private:
             Region2::dGamma_dPi(temperature, pressure) *
             Rs * temperature / pressure;
     }
-}; // end class
+};
 
 template <class Scalar>
 struct IsAqueous<H2O<Scalar>> : public std::true_type {};
 
 } // end namespace Components
 
+namespace FluidSystems::Detail {
+// viscosity according to Reid, R.C.
+template <class Scalar>
+Scalar viscosityReid_(Scalar temperature)
+{
+    constexpr Scalar tc = 647.3;
+    using std::max;
+    const Scalar tr = max(temperature/tc, 1e-8);
+
+    const Scalar fp0 = 1.0 + 0.221*(0.96 + 0.1*(tr - 0.7));
+    constexpr Scalar xi = 3.334e-3;
+    using std::pow;
+    using std::exp;
+    const Scalar eta_xi = (0.807*pow(tr, 0.618) - 0.357*exp((-0.449)*tr)
+                           + 0.34*exp((-4.058)*tr) + 0.018)*fp0;
+
+    return 1.0e-7*eta_xi/xi;
+}
+
+// viscosity according to Nagel, T. et al.
+template <class Scalar>
+Scalar viscosityNagel_(Scalar temperature)
+{
+    constexpr Scalar a1 = -4.4189440e-6;
+    constexpr Scalar a2 = 4.6876380e-8;
+    constexpr Scalar a3 = -5.3894310e-12;
+    constexpr Scalar a4 = 3.2028560e-16;
+    constexpr Scalar a5 = 4.9191790e-22;
+
+    return a1 + a2*temperature + a3*temperature*temperature
+              + a4*temperature*temperature*temperature
+              + a5*temperature*temperature*temperature*temperature;
+}
+} // end FluidSystems::Detail
+namespace FluidSystems {
+/*!
+ * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of steam in a gas mixture.
+ *
+ * \param temperature temperature in \f$\mathrm{[K]}\f$
+ *
+ * We assume here that water is in mixture with other gaseous components.
+ * For pure water, use the gasViscosity function of Components::H2O.
+ *
+ * We apply two different laws depending on the gas temperature.
+ *
+ * For temperatures below 480 K see:
+ * "Reid, R.C., Prausnitz, J.M., Poling, B.E.: The Properties of
+ * Gases and Liquids (1987)"
+ * Lucas corresponding states method
+ * https://www.osti.gov/scitech/biblio/6504847} \cite{reid1987}
+ *
+ * For temperatures above 500 K see:
+ * Nagel, T. et al.: THC-Processes (2018)
+ * https://doi.org/10.1007/978-3-319-68225-9_12
+ *
+ * In the range 480 - 500 K, we interpolate between the two laws.
+ */
+template <class Scalar>
+Scalar h2oGasViscosityInMixture(Scalar temperature, Scalar pressure)
+{
+    if (temperature < 480.0)
+        return Detail::viscosityReid_(temperature);
+
+    else if (temperature > 500.0)
+        return Detail::viscosityNagel_(temperature);
+
+    else // interpolate
+    {
+        const Scalar op = (500.0 - temperature)/20.0;
+
+        return op*Detail::viscosityReid_(temperature)
+               + (1.0 - op)*Detail::viscosityNagel_(temperature);
+    }
+}
+} // end namespace FluidSystems
 } // end namespace Dumux
 
 #endif
