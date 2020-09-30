@@ -1,9 +1,25 @@
 #!/usr/bin/env python3
 
-import time
+#  Compile some C++ code for reference
+from dumux.common import *
+from dune.generator.generator import SimpleGenerator
+from dune.common.hashit import hashIt
+
+# debugging/testing code
+def PrintProblemTest(problem):
+    includes = problem._includes + ["test/python/test_boundaryloop.hh"]
+    typeName = "Dumux::Python::PrintProblemTest<{}>".format(problem._typeName)
+    moduleName = moduleName = "printbs_" + hashIt(problem._typeName)
+    generator = SimpleGenerator("PrintProblemTest", "Dumux::Python")
+    module = generator.load(includes, typeName, moduleName)
+    return module.PrintProblemTest(problem)
+
+############################################################
+# The actual Python test
+############################################################
 from dune.grid import structuredGrid
 from dumux.discretization import GridGeometry
-from dumux.common import BoundaryTypes, FVProblem, PrintBoundaryStuff
+from dumux.common import BoundaryTypes, FVProblem
 
 gridView = structuredGrid([0,0,0],[1,1,1],[3,3,3])
 
@@ -26,6 +42,9 @@ class Problem:
         else:
             return [1.0, 0.0]
 
+    def sourceAtPos(self, globalPos):
+        return [globalPos[0]]
+
 problem = Problem()
 print("Name of the problem: {}".format(problem.name))
 print("-- Number of equations: {}".format(problem.numEq))
@@ -34,16 +53,23 @@ print()
 # test C++/Python compatibility of the hybrid class
 
 # print some info from C++
-printer = PrintBoundaryStuff(problem)
+printer = PrintProblemTest(problem)
 printer.print()
 
 # print the same info from Python
-start = time.time()
+numNeumann = 0
+numDirichlet = 0
+totalSource = 0
 for e in gridView.elements:
     fvGeometry = problem.gridGeometry().localView()
     fvGeometry.bind(e)
     for scv in fvGeometry.scvs():
         bTypes = problem.boundaryTypes(element=e, scv=scv)
-        print("-- scv at {}: isNeumann: {}, isDirichlet: {}".format(scv.dofPosition(), bTypes.isNeumann(), bTypes.isDirichlet()))
         if bTypes.isDirichlet():
-            print("  -- Dirichlet values: {}".format(problem.dirichlet(element=e, scv=scv)))
+            numDirichlet += 1
+        elif bTypes.isNeumann():
+            numNeumann += 1
+        totalSource += problem.sourceAtPos(scv.center())[0]*scv.volume()
+
+print("[python] Found {} Neumann faces and {} Dirichlet faces".format(numNeumann, numDirichlet))
+print("[python] Total source {:.2f} kg/s".format(totalSource))

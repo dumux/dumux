@@ -46,13 +46,3 @@ def BoundaryTypes(numEq=1):
         module = generator.load(includes, typeName, moduleName)
         globals().update({cacheKey : module.BoundaryTypes})
     return globals()[cacheKey]()
-
-
-# debugging/testing code
-def PrintBoundaryStuff(problem):
-    includes = problem._includes + ["dumux/python/common/fvproblem.hh"]
-    typeName = "Dumux::Python::PrintBoundaryStuff<{}>".format(problem._typeName)
-    moduleName = moduleName = "printbs_" + hashIt(problem._typeName)
-    generator = SimpleGenerator("PrintBoundaryStuff", "Dumux::Python")
-    module = generator.load(includes, typeName, moduleName)
-    return module.PrintBoundaryStuff(problem)

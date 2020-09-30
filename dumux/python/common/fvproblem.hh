@@ -28,9 +28,6 @@
 #include <memory>
 #include <tuple>
 
-#include <iostream> // for debug stuff below
-#include <dune/python/pybind11/iostream.h> // for debug stuff below
-
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/python/pybind11/pybind11.h>
@@ -191,64 +188,6 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
     cls.def("initial", &Problem::template initial<Vertex>);
     cls.def("extrusionFactor", &Problem::template extrusionFactor<decltype(std::ignore)>);
     cls.def("gridGeometry", &Problem::gridGeometry);
-}
-
-
-/////////////////////////////////////////////////////////
-/// Some debugging/testing  stuff
-///////////////////////////////////////////////////////////
-template<class Problem>
-void printBoundaryStuff(const Problem& problem)
-{
-    const auto& gg = problem.gridGeometry();
-    for (const auto& element : elements(gg.gridView()))
-    {
-        auto fvGeometry = localView(gg);
-        fvGeometry.bindElement(element);
-
-        for (const auto& scv : scvs(fvGeometry))
-        {
-            const auto boundaryTypes = problem.boundaryTypes(element, scv);
-            std::cout << "-- scv at " << scv.dofPosition() << ": "
-                      << " isNeumann: " << std::boolalpha << boundaryTypes.hasNeumann()
-                      << " isDirichlet: " << boundaryTypes.hasDirichlet() << std::endl;
-
-            if (boundaryTypes.hasDirichlet())
-                std::cout << "  -- Dirichlet values: " << problem.dirichlet(element, scv) << std::endl;
-        }
-    }
-}
-
-template<class P>
-class PrintBoundaryStuff
-{
-public:
-    using Problem = P;
-
-    PrintBoundaryStuff(std::shared_ptr<const Problem> problem)
-    : problem_(problem)
-    {}
-
-    void print()
-    {
-        printBoundaryStuff(*problem_);
-    }
-
-private:
-    std::shared_ptr<const Problem> problem_;
-};
-
-template<class T, class... options>
-void registerPrintBoundaryStuff(pybind11::handle scope, pybind11::class_<T, options...> cls)
-{
-    using Problem = typename T::Problem;
-    cls.def(pybind11::init([](std::shared_ptr<const Problem> problem){
-        return std::make_unique<T>(problem);
-    }));
-    cls.def("print", [](T& self){
-        pybind11::scoped_ostream_redirect stream(std::cout, pybind11::module::import("sys").attr("stdout"));
-        self.print();
-    });
 }
 
 } // end namespace Dumux::Python
