@@ -19,84 +19,91 @@
 /*!
  * \file
  * \ingroup Fluidmatrixinteractions
- * \brief Pore-local pc-Sw curves for cubic pore bodies.
+ * \brief Pore-local pc-Sw curves for for platonic bodies
+ *        (tetrahedron, cube, octahedron, dodecahedron, icosahedron).
  */
-#ifndef DUMUX_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
-#define DUMUX_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
+#ifndef DUMUX_PNM_2P_LOCAL_RULES_FOR_PLATONIC_BODY_HH
+#define DUMUX_PNM_2P_LOCAL_RULES_FOR_PLATONIC_BODY_HH
 
 #include <cmath>
-#include <dumux/porenetworkflow/common/poreproperties.hh>
 #include <dumux/common/optionalscalar.hh>
 #include <dumux/common/spline.hh>
-#include "baselocalrules.hh"
+#include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/porenetworkflow/common/poreproperties.hh>
+#include "singleshapelocalrules.hh"
 
-namespace Dumux::FluidMatrix {
+namespace Dumux::PoreNetwork::FluidMatrix {
+
+/*!
+ * \brief The parameter type
+ * \tparam Scalar The scalar type
+ */
+template<class Scalar>
+struct PlatonicBodyParams
+{
+    PlatonicBodyParams() = default;
+
+    PlatonicBodyParams& setPoreInscribedRadius(Scalar r) { radius_ = r; return *this;}
+    PlatonicBodyParams& setPoreShape(Pore::Shape s) { shape_ = s; return *this;}
+    PlatonicBodyParams& setSurfaceTension(Scalar st) { surfaceTension_ = st; return *this;}
+
+    template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    PlatonicBodyParams(const SpatialParams& spatialParams,
+                       const Element& element,
+                       const SubControlVolume& scv,
+                       const ElemSol& elemSol)
+    : shape_(spatialParams.gridGeometry().poreGeometry()[scv.dofIndex()])
+    , radius_(spatialParams.poreInscribedRadius(element, scv, elemSol))
+    {
+        static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
+        surfaceTension_ = surfaceTension;
+    }
+
+    template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
+    void update(const SpatialParams& spatialParams,
+                const Element& element,
+                const SubControlVolume& scv,
+                const ElemSol& elemSol)
+    {
+        const auto& gridGeometry = spatialParams.gridGeometry();
+        shape_ = gridGeometry.poreGeometry()[scv.dofIndex()];
+        radius_ = spatialParams.poreInscribedRadius(element, scv, elemSol);
+
+        static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
+        surfaceTension_ = surfaceTension;
+    }
+
+    Pore::Shape poreShape() const { return shape_; }
+
+    Scalar poreInscribedRadius() const { return radius_; }
+
+    Scalar surfaceTension() const { return surfaceTension_; }
+
+    bool operator== (const PlatonicBodyParams& p) const
+    {
+        return Dune::FloatCmp::eq(radius_, p.radius_, 1e-6)
+               && Dune::FloatCmp::eq(surfaceTension_, p.surfaceTension_, 1e-6)
+               && shape_ == p.shape_;
+    }
+
+private:
+    Pore::Shape shape_;
+    Scalar radius_;
+    Scalar surfaceTension_;
+};
 
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the simplified pore-local capillary pressure-saturation curve
- *        according to Joekar-Niasar et al., 2010.
+ *        for platonic bodies (tetrahedron, cube, octahedron, dodecahedron, icosahedron).
+ *
+ *        See Joekar-Niasar et al., 2010 and Sweijen et al., 2018.
  */
-struct TwoPLocalRulesCubeJoekarNiasar
+template<Pore::Shape shape>
+struct TwoPLocalRulesPlatonicBody
 {
-
-    /*!
-     * \brief The parameter type
-     * \tparam Scalar The scalar type
-     */
     template<class Scalar>
-    struct Params
-    {
-        Params() = default;
-
-        Params& setPoreInscribedRadius(Scalar r) { radius_ = r; return *this;}
-        Params& setPoreShape(Pore::Shape s) { shape_ = s; return *this;}
-        Params& setSurfaceTension(Scalar st) { surfaceTension_ = st; return *this;}
-
-        template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
-        Params(const SpatialParams& spatialParams,
-               const Element& element,
-               const SubControlVolume& scv,
-               const ElemSol& elemSol)
-        : shape_(spatialParams.gridGeometry().poreGeometry()[scv.dofIndex()])
-        , radius_(spatialParams.poreInscribedRadius(element, scv, elemSol))
-        {
-            static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
-            surfaceTension_ = surfaceTension;
-        }
-
-        template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
-        void update(const SpatialParams& spatialParams,
-                    const Element& element,
-                    const SubControlVolume& scv,
-                    const ElemSol& elemSol)
-        {
-            const auto& gridGeometry = spatialParams.gridGeometry();
-            shape_ = gridGeometry.poreGeometry()[scv.dofIndex()];
-            radius_ = spatialParams.poreRadius(element, scv, elemSol);
-
-            static const Scalar surfaceTension = getParam<Scalar>("SpatialParams.SurfaceTension", 0.0725); // TODO
-            surfaceTension_ = surfaceTension;
-        }
-
-        Pore::Shape poreShape() const { return shape_; }
-
-        Scalar poreRadius() const { return radius_; }
-
-        Scalar surfaceTension() const { return surfaceTension_; }
-
-        bool operator== (const Params& p) const
-        {
-            return Dune::FloatCmp::eq(radius_, p.radius_, 1e-6)
-                   && Dune::FloatCmp::eq(surfaceTension_, p.surfaceTension_, 1e-6)
-                   && shape_ == p.shape_;
-        }
-
-    private:
-        Pore::Shape shape_;
-        Scalar radius_;
-        Scalar surfaceTension_;
-    };
+    using Params = PlatonicBodyParams<Scalar>;
 
     template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
     static auto makeParams(const SpatialParams& spatialParams,
@@ -104,19 +111,12 @@ struct TwoPLocalRulesCubeJoekarNiasar
                            const SubControlVolume& scv,
                            const ElemSol& elemSol)
     {
-        using Scalar = std::decay_t<decltype(spatialParams.poreRadius(element, scv, elemSol))>;
+        using Scalar = std::decay_t<decltype(spatialParams.poreInscribedRadius(element, scv, elemSol))>;
         return Params<Scalar>(spatialParams, element, scv, elemSol);
     }
 
-    static constexpr bool supportsMultipleGeometries()
-    { return false; }
-
     /*!
-     * \brief The capillary pressure-saturation curve according to Joekar-Niasar et al., 2010.
-     *
-     *  \f$\mathrm{
-     *  p_C = \frac{2*\sigma}{R(1-e^{-6.83S})}
-     *  }\f$
+     * \brief The capillary pressure-saturation curve
      *
      * \param sw Saturation of the wetting phase \f$\mathrm{S_{w,i}}\f$ at pore \f$i\f$
      * \param params The parameters container
@@ -125,12 +125,12 @@ struct TwoPLocalRulesCubeJoekarNiasar
     static Scalar pc(const Scalar sw, const Params<Scalar>& params)
     {
         assert(0 <= sw && sw <= 1);
-        assert(params.poreShape() == Pore::Shape::cube);
-        const Scalar poreRadius = params.poreRadius();
-        const Scalar sigma = params.surfaceTension() ;
+        assert(isPlatonicBody_(params.poreShape()));
+        const Scalar poreRadius = params.poreInscribedRadius();
+        const Scalar sigma = params.surfaceTension();
         // TODO incorporate contact angle!!!
-        using std::exp;
-        return 2.0*sigma / (poreRadius*(1.0 - exp(-6.83*sw))) ;
+
+        return 2.0*sigma / (poreRadius*(1.0 - std::exp(-expFactor_()*sw)));
     }
 
     /*!
@@ -142,17 +142,17 @@ struct TwoPLocalRulesCubeJoekarNiasar
     template<class Scalar>
     static Scalar sw(const Scalar pc, const Params<Scalar>& params)
     {
-        assert(params.poreShape() == Pore::Shape::cube);
-        const Scalar poreRadius = params.poreRadius();
+        assert(isPlatonicBody_(params.poreShape()));
+        const Scalar poreRadius = params.poreInscribedRadius();
         const Scalar sigma = params.surfaceTension();
+
         using std::log;
-        return  - 1.0/6.83* log(1.0 - 1.0/poreRadius * 2.0*sigma / pc);
+        return - 1.0/expFactor_()* log(1.0 - 1.0/poreRadius * 2.0*sigma / pc);
     }
 
     /*!
      * \brief The partial derivative of the capillary
      *        pressure w.r.t. the wetting phase saturation.
-     *
      *
      * \param sw Saturation of the wetting phase \f$\mathrm{S_{w,i}}\f$ at pore \f$i\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
@@ -161,17 +161,16 @@ struct TwoPLocalRulesCubeJoekarNiasar
     static Scalar dpc_dsw(const Scalar sw, const Params<Scalar>& params)
     {
         assert(0 <= sw && sw <= 1);
-        assert(params.poreShape() == Pore::Shape::cube);
-        using std::exp;
+        assert(isPlatonicBody_(params.poreShape()));
         const Scalar sigma = params.surfaceTension();
-        const Scalar poreRadius = params.poreRadius();
-        const Scalar e = exp(6.83*sw);
-        return -(13.66*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
+        const Scalar poreRadius = params.poreInscribedRadius();
+        using std::exp;
+        const Scalar e = exp(expFactor_()*sw);
+        return -(2.0*expFactor_()*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
     }
 
     /*!
      * \brief DOCU
-     *
      *
      * \param pc The capillary pressure \f$\mathrm{p_{c,i}}\f$ at pore \f$i\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
@@ -179,14 +178,46 @@ struct TwoPLocalRulesCubeJoekarNiasar
     template<class Scalar>
     static Scalar dsw_dpc(const Scalar pc, const Params<Scalar>& params)
     {
+        assert(isPlatonicBody_(params.poreShape()));
         return 0; // TODO
+    }
+
+private:
+
+    template<class T = void>
+    static constexpr auto expFactor_()
+    {
+        if constexpr (shape == Pore::Shape::tetrahedron)
+            return 3.87;
+        else if constexpr (shape == Pore::Shape::cube)
+            return 6.83;
+        else if constexpr (shape == Pore::Shape::octahedron)
+            return 8.71;
+        else if constexpr (shape == Pore::Shape::dodecahedron)
+            return 22.87;
+        else if constexpr (shape == Pore::Shape::icosahedron)
+            return 24.11;
+        else
+        {
+            static_assert(AlwaysFalse<T>::value, "Shape not supported");
+            return 0;
+        }
+    }
+
+    bool static isPlatonicBody_(Pore::Shape s)
+    {
+        return s == Pore::Shape::tetrahedron ||
+               s == Pore::Shape::cube ||
+               s == Pore::Shape::octahedron ||
+               s == Pore::Shape::dodecahedron ||
+               s == Pore::Shape::icosahedron;
     }
 };
 
-template<class Scalar>
-class TwoPLocalRulesCubeJoekarNiasarRegularization
+template<class Scalar, class BaseLaw>
+class TwoPLocalRulesPlatonicBodyRegularization
 {
-    using BaseLawParams = typename TwoPLocalRulesCubeJoekarNiasar::Params<Scalar>;
+    using BaseLawParams = typename BaseLaw::template Params<Scalar>;
 public:
 
     template<class S>
@@ -257,21 +288,21 @@ private:
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
         if (sw < lowSw)
-            return TwoPLocalRulesCubeJoekarNiasar::pc(lowSw, *baseLawParamsPtr_) + TwoPLocalRulesCubeJoekarNiasar::dpc_dsw(lowSw, *baseLawParamsPtr_) * (sw - lowSw);
+            return BaseLaw::pc(lowSw, *baseLawParamsPtr_) + BaseLaw::dpc_dsw(lowSw, *baseLawParamsPtr_) * (sw - lowSw);
 
         auto linearCurveForHighSw = [&]()
         {
-            const Scalar slopeHighSw = -TwoPLocalRulesCubeJoekarNiasar::pc(highSw, *baseLawParamsPtr_) / (1.0-highSw);
+            const Scalar slopeHighSw = -BaseLaw::pc(highSw, *baseLawParamsPtr_) / (1.0-highSw);
             return slopeHighSw*(sw - 1.0);
         };
 
         if (sw <= highSw)
-            return TwoPLocalRulesCubeJoekarNiasar::pc(sw, *baseLawParamsPtr_); // standard
+            return BaseLaw::pc(sw, *baseLawParamsPtr_); // standard
         else if (sw <= 1.0) // regularized part below sw = 1.0
         {
             using std::pow;
             if (highSwRegularizationMethod_ == HighSwRegularizationMethod::powerLaw)
-                return TwoPLocalRulesCubeJoekarNiasar::pc(highSw, *baseLawParamsPtr_) * pow(((1.0-sw)/(1.0-highSw)), 1.0/3.0);
+                return BaseLaw::pc(highSw, *baseLawParamsPtr_) * pow(((1.0-sw)/(1.0-highSw)), 1.0/3.0);
 
             else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::linear)
                 return linearCurveForHighSw();
@@ -279,7 +310,7 @@ private:
             else if (highSwRegularizationMethod_ == HighSwRegularizationMethod::spline)
             {
                 // use spline between threshold swe and 1.0
-                const Scalar yTh = TwoPLocalRulesCubeJoekarNiasar::pc(highSw, *baseLawParamsPtr_);
+                const Scalar yTh = BaseLaw::pc(highSw, *baseLawParamsPtr_);
                 // using zero derivatives at the beginning and end of the spline seems to work best
                 // for some reason ...
                 Spline<Scalar> sp(highSw, 1.0, // x0, x1
@@ -328,6 +359,15 @@ private:
             DUNE_THROW(Dune::InvalidStateException, input << " is not a valid regularization method");
         }();
 
+        using std::isnan;
+        static const auto pcLowSwInput = getParamFromGroup<Scalar>(paramGroup, "RegularizationLowSw", std::numeric_limits<Scalar>::quiet_NaN());
+        if (!isnan(pcLowSwInput))
+            pcLowSw_ = pcLowSwInput;
+
+        static const auto pcHighSwInput = getParamFromGroup<Scalar>(paramGroup, "RegularizationHighSw", std::numeric_limits<Scalar>::quiet_NaN());
+        if (!isnan(pcHighSwInput))
+            pcHighSw_ = pcHighSwInput;
+
         baseLawParamsPtr_ = &m->basicParams();
     }
 
@@ -340,15 +380,18 @@ private:
  * \ingroup Fluidmatrixinteractions
  * \brief A default configuration for using the VanGenuchten material law
  */
-template<typename Scalar = double>
-using TwoPLocalRulesCubeJoekarNiasarDefault = TwoPLocalRulesBase<Scalar, TwoPLocalRulesCubeJoekarNiasar, TwoPLocalRulesCubeJoekarNiasarRegularization<Scalar>>;
+template<Pore::Shape shape, typename Scalar = double>
+using TwoPLocalRulesPlatonicBodyDefault = SingleShapeTwoPLocalRules<Scalar,
+                                                                    TwoPLocalRulesPlatonicBody<shape>,
+                                                                    TwoPLocalRulesPlatonicBodyRegularization<Scalar,
+                                                                                                             TwoPLocalRulesPlatonicBody<shape>>>;
 
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief A default configuration without regularization for using the VanGenuchten material law
  */
-template<typename Scalar = double>
-using TwoPLocalRulesCubeJoekarNiasarNoReg = TwoPLocalRulesBase<Scalar, TwoPLocalRulesCubeJoekarNiasar, NoRegularization>;
+template<Pore::Shape shape, typename Scalar = double>
+using TwoPLocalRulesPlatonicBodyNoReg = SingleShapeTwoPLocalRules<Scalar, TwoPLocalRulesPlatonicBody<shape>, Dumux::FluidMatrix::NoRegularization>;
 
 } // end namespace Dumux::FluidMatrix
 

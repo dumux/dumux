@@ -26,16 +26,27 @@
 #define DUMUX_PNM_2P_LOCAL_RULES_HH
 
 #include <dumux/porenetworkflow/common/poreproperties.hh>
-#include "baselocalrules.hh"
-#include "localrulesforcube.hh"
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
+#include "localrulesforplatonicbody.hh"
 
-namespace Dumux::FluidMatrix {
+namespace Dumux::PoreNetwork::FluidMatrix {
 
-template<class ScalarT, class LocalRulesForCube = TwoPLocalRulesCubeJoekarNiasarDefault<ScalarT>>
-class MultiShapeTwoPLocalRules : public Adapter<MultiShapeTwoPLocalRules<ScalarT, LocalRulesForCube>, PcKrSw>
+template<class ScalarT>
+struct LocalRulesTraits
+{
+    using Tetrahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::tetrahedron>;
+    using Cube = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::cube>;
+    using Octahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::octahedron>;
+    using Icosahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::icosahedron>;
+    using Dodecahedron = TwoPLocalRulesPlatonicBodyDefault<Pore::Shape::dodecahedron>;
+};
+
+template<class ScalarT>
+class MultiShapeTwoPLocalRules : public Dumux::FluidMatrix::Adapter<MultiShapeTwoPLocalRules<ScalarT>, Dumux::FluidMatrix::PcKrSw>
 {
 public:
     using Scalar = ScalarT;
+    using LocalRules = LocalRulesTraits<Scalar>;
 
     struct BasicParams
     {
@@ -49,22 +60,27 @@ public:
 
             switch (shape_)
             {
+                case Pore::Shape::tetrahedron:
                 case Pore::Shape::cube:
-                    cubeParams_ = std::make_unique<typename LocalRulesForCube::BasicParams>(spatialParams, element, scv, elemSol);
+                case Pore::Shape::octahedron:
+                case Pore::Shape::icosahedron:
+                case Pore::Shape::dodecahedron:
+                    platonicBodyParams_ = std::make_unique<PlatonicBodyParams<Scalar>>(spatialParams, element, scv, elemSol);
                     break;
                 default:
                     DUNE_THROW(Dune::NotImplemented, "Invalid shape");
             }
         }
 
-        typename LocalRulesForCube::BasicParams cubeParams() const
-        { return *cubeParams_; }
+         // we use cube specialization here, but all platonic bodies have the same params
+        PlatonicBodyParams<Scalar> platonicBodyParams() const
+        { return *platonicBodyParams_; }
 
         Pore::Shape poreShape() const
         { return shape_; }
 
     private:
-        std::unique_ptr<typename LocalRulesForCube::BasicParams> cubeParams_;
+        std::unique_ptr<PlatonicBodyParams<Scalar>> platonicBodyParams_;
         Pore::Shape shape_;
     };
 
@@ -93,9 +109,16 @@ public:
         shape_ = baseParams.poreShape();
         switch (shape_)
         {
+            case Pore::Shape::tetrahedron:
+                localRulesForTetrahedron_ = std::make_shared<typename LocalRules::Tetrahedron>(baseParams.platonicBodyParams()); break;
             case Pore::Shape::cube:
-                localRulesForCube_ = std::make_shared<LocalRulesForCube>(baseParams.cubeParams());
-                break;
+                localRulesForCube_ = std::make_shared<typename LocalRules::Cube>(baseParams.platonicBodyParams()); break;
+            case Pore::Shape::octahedron:
+                localRulesForOctahedron_ = std::make_shared<typename LocalRules::Octahedron>(baseParams.platonicBodyParams()); break;
+            case Pore::Shape::icosahedron:
+                localRulesForIcosahedron_ = std::make_shared<typename LocalRules::Icosahedron>(baseParams.platonicBodyParams()); break;
+            case Pore::Shape::dodecahedron:
+                localRulesForDodecahedron_ = std::make_shared<typename LocalRules::Dodecahedron>(baseParams.platonicBodyParams()); break;
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -111,8 +134,16 @@ public:
         shape_ = spatialParams.gridGeometry().poreGeometry(scv.dofIndex());
         switch (shape_)
         {
+            case Pore::Shape::tetrahedron:
+                return localRulesForTetrahedron_->updateParams(spatialParams, element, scv, elemSol);
             case Pore::Shape::cube:
                 return localRulesForCube_->updateParams(spatialParams, element, scv, elemSol);
+            case Pore::Shape::octahedron:
+                return localRulesForOctahedron_->updateParams(spatialParams, element, scv, elemSol);
+            case Pore::Shape::icosahedron:
+                return localRulesForIcosahedron_->updateParams(spatialParams, element, scv, elemSol);
+            case Pore::Shape::dodecahedron:
+                return localRulesForDodecahedron_->updateParams(spatialParams, element, scv, elemSol);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -125,8 +156,16 @@ public:
     {
         switch (shape_)
         {
+            case Pore::Shape::tetrahedron:
+                return localRulesForTetrahedron_->pc(sw);
             case Pore::Shape::cube:
                 return localRulesForCube_->pc(sw);
+            case Pore::Shape::octahedron:
+                return localRulesForOctahedron_->pc(sw);
+            case Pore::Shape::icosahedron:
+                return localRulesForIcosahedron_->pc(sw);
+            case Pore::Shape::dodecahedron:
+                return localRulesForDodecahedron_->pc(sw);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -139,8 +178,60 @@ public:
     {
         switch (shape_)
         {
+            case Pore::Shape::tetrahedron:
+                return localRulesForTetrahedron_->sw(pc);
             case Pore::Shape::cube:
                 return localRulesForCube_->sw(pc);
+            case Pore::Shape::octahedron:
+                return localRulesForOctahedron_->sw(pc);
+            case Pore::Shape::icosahedron:
+                return localRulesForIcosahedron_->sw(pc);
+            case Pore::Shape::dodecahedron:
+                return localRulesForDodecahedron_->sw(pc);
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
+        }
+    }
+
+    /*!
+     * \brief The partial derivative of the capillary pressure w.r.t. the saturation
+     */
+    Scalar dpc_dsw(const Scalar sw) const
+    {
+        switch (shape_)
+        {
+            case Pore::Shape::tetrahedron:
+                return localRulesForTetrahedron_->dpc_dsw(sw);
+            case Pore::Shape::cube:
+                return localRulesForCube_->dpc_dsw(sw);
+            case Pore::Shape::octahedron:
+                return localRulesForOctahedron_->dpc_dsw(sw);
+            case Pore::Shape::icosahedron:
+                return localRulesForIcosahedron_->dpc_dsw(sw);
+            case Pore::Shape::dodecahedron:
+                return localRulesForDodecahedron_->dpc_dsw(sw);
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Invalid shape");
+        }
+    }
+
+    /*!
+     * \brief The partial derivative of the saturation to the capillary pressure
+     */
+    Scalar dsw_dpc(const Scalar pc) const
+    {
+        switch (shape_)
+        {
+            case Pore::Shape::tetrahedron:
+                return localRulesForTetrahedron_->dsw_dpc(pc);
+            case Pore::Shape::cube:
+                return localRulesForCube_->dsw_dpc(pc);
+            case Pore::Shape::octahedron:
+                return localRulesForOctahedron_->dsw_dpc(pc);
+            case Pore::Shape::icosahedron:
+                return localRulesForIcosahedron_->dsw_dpc(pc);
+            case Pore::Shape::dodecahedron:
+                return localRulesForDodecahedron_->dsw_dpc(pc);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -175,7 +266,12 @@ public:
     { return 0.0; }
 
 private:
-    std::shared_ptr<LocalRulesForCube> localRulesForCube_;
+    std::shared_ptr<typename LocalRules::Tetrahedron> localRulesForTetrahedron_;
+    std::shared_ptr<typename LocalRules::Cube> localRulesForCube_;
+    std::shared_ptr<typename LocalRules::Octahedron> localRulesForOctahedron_;
+    std::shared_ptr<typename LocalRules::Icosahedron> localRulesForIcosahedron_;
+    std::shared_ptr<typename LocalRules::Dodecahedron> localRulesForDodecahedron_;
+
     // TODO add more shapes here
 
     Pore::Shape shape_;

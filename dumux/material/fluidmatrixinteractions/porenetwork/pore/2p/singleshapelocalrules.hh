@@ -21,15 +21,15 @@
  * \ingroup Fluidmatrixinteractions
  * \brief Base classes for standard pore-local pc-Sw curves.
  */
-#ifndef DUMUX_PNM_2P_BASE_LOCAL_RULES_HH
-#define DUMUX_PNM_2P_BASE_LOCAL_RULES_HH
+#ifndef DUMUX_PNM_2P_SINGLE_SHAPE_LOCAL_RULES_HH
+#define DUMUX_PNM_2P_SINGLE_SHAPE_LOCAL_RULES_HH
 
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetworkflow/common/poreproperties.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/noregularization.hh>
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 
-namespace Dumux::FluidMatrix {
+namespace Dumux::PoreNetwork::FluidMatrix {
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -37,8 +37,8 @@ namespace Dumux::FluidMatrix {
  */
 template<class ScalarType,
          class BaseLaw,
-         class Regularization = NoRegularization>
-class TwoPLocalRulesBase : public Adapter<TwoPLocalRulesBase<ScalarType, BaseLaw, Regularization>, PcKrSw>
+         class Regularization = Dumux::FluidMatrix::NoRegularization>
+class SingleShapeTwoPLocalRules : public Dumux::FluidMatrix::Adapter<SingleShapeTwoPLocalRules<ScalarType, BaseLaw, Regularization>, Dumux::FluidMatrix::PcKrSw>
 {
 public:
 
@@ -48,7 +48,7 @@ public:
     using RegularizationParams = typename Regularization::template Params<Scalar>;
 
     static constexpr bool supportsMultipleGeometries()
-    { return BaseLaw::supportsMultipleGeometries(); }
+    { return false; }
 
     template<class SpatialParams, class Element, class SubControlVolume, class ElemSol>
     void updateParams(const SpatialParams& spatialParams,
@@ -70,15 +70,15 @@ public:
      * \brief Return whether this law is regularized
      */
     static constexpr bool isRegularized()
-    { return !std::is_same<Regularization, NoRegularization>::value; }
+    { return !std::is_same<Regularization, Dumux::FluidMatrix::NoRegularization>::value; }
 
     /*!
      * \brief Construct from parameter structs
      * \note More efficient constructor but you need to ensure all parameters are initialized
      */
-    TwoPLocalRulesBase(const BasicParams& baseParams = {},
-                       const RegularizationParams& regParams = {},
-                       const std::string& paramGroup = "")
+    SingleShapeTwoPLocalRules(const BasicParams& baseParams = {},
+                              const RegularizationParams& regParams = {},
+                              const std::string& paramGroup = "")
     : basicParams_(baseParams)
 
     {
@@ -185,7 +185,7 @@ public:
     /*!
      * \brief Equality comparison with another instance
      */
-    bool operator== (const TwoPLocalRulesBase& o) const
+    bool operator== (const SingleShapeTwoPLocalRules& o) const
     {
         return basicParams_ == o.basicParams_
                && regularization_ == o.regularization_;

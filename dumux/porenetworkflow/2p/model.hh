@@ -37,8 +37,7 @@
 #include <dumux/material/spatialparams/porenetwork/porenetwork2p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrules.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrulesforcube.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/multishapelocalrules.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include "fluxvariablescache.hh"
@@ -122,7 +121,7 @@ struct SpatialParams<TypeTag, TTag::PNMTwoP>
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using LocalRules = FluidMatrix::MultiShapeTwoPLocalRules<Scalar>;
+    using LocalRules = Dumux::PoreNetwork::FluidMatrix::MultiShapeTwoPLocalRules<Scalar>;
 public:
     using type = Dumux::PoreNetwork::TwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
