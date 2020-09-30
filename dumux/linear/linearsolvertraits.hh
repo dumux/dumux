@@ -172,9 +172,14 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa>
     { return false; }
 };
 
-//! Cell-centered mpfa: use overlapping model
+//! Cell-centered mpfa: use overlapping model (like tpfa)
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::ccmpfa>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
+
+//! Weighted mpfa: use overlapping model (like tpfa)
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::ccwmpfa>
 : public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::cctpfa> {};
 
 //! staggered: use overlapping model TODO provide staggered-specific traits, combining overlapping/non-overlapping
