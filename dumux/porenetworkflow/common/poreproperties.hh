@@ -33,7 +33,7 @@ namespace Dumux {
 namespace Pore {
 
 enum class Shape
-{ circle, square, cube, sphere, cylinder };
+{ circle, square, cube, sphere, cylinder, tetrahedron, octahedron, icosahedron, dodecahedron };
 
 
 //! Get the shape from a string description of the shape
@@ -46,6 +46,10 @@ inline std::string shapeToString(Shape s)
         case Shape::cube: return "Cube";
         case Shape::sphere: return "Sphere";
         case Shape::cylinder: return "Cylinder";
+        case Shape::tetrahedron: return "Tetrahedron";
+        case Shape::octahedron: return "Octahedron";
+        case Shape::icosahedron: return "Icosahedron";
+        case Shape::dodecahedron: return "Dodecahedron";
         default: DUNE_THROW(Dune::InvalidStateException, "Unknown shape!");
     }
 }
@@ -58,6 +62,10 @@ inline Shape shapeFromString(const std::string& s)
     else if (s == shapeToString(Shape::cube)) return Shape::cube;
     else if (s == shapeToString(Shape::sphere)) return Shape::sphere;
     else if (s == shapeToString(Shape::cylinder)) return Shape::cylinder;
+    else if (s == shapeToString(Shape::tetrahedron)) return Shape::tetrahedron;
+    else if (s == shapeToString(Shape::octahedron)) return Shape::octahedron;
+    else if (s == shapeToString(Shape::icosahedron)) return Shape::icosahedron;
+    else if (s == shapeToString(Shape::dodecahedron)) return Shape::dodecahedron;
     else DUNE_THROW(Dune::InvalidStateException, s << " is not a valid shape");
 }
 
