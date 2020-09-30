@@ -37,6 +37,8 @@
 
 #include "primaryvariableswitch.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -135,15 +137,17 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const int wPhaseIdx = fluidState_.wettingPhase();
         const int nPhaseIdx = 1 - wPhaseIdx;
 
         // relative permeabilities -> require wetting phase saturation as parameter!
-        relativePermeability_[wPhaseIdx] = MaterialLaw::krw(matParams, saturation(wPhaseIdx));
-        relativePermeability_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx));
+        relativePermeability_[wPhaseIdx] = fluidMatrixInteraction.krw(saturation(wPhaseIdx));
+        relativePermeability_[nPhaseIdx] = fluidMatrixInteraction.krn(saturation(wPhaseIdx));
 
         // porosity & permeabilty
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
@@ -187,10 +191,13 @@ public:
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         fluidState.setWettingPhase(wPhaseIdx);
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         // set the saturations
         if (phasePresence == secondPhaseOnly)
@@ -220,7 +227,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase presence.");
 
         // set pressures of the fluid phases
-        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        pc_ = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
         if (formulation == TwoPFormulation::p0s1)
         {
             fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
