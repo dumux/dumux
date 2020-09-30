@@ -112,17 +112,6 @@ namespace CCWMpfa {
                     volVars.emplace_back(std::move(dirichletVolVars));
                     volVarIndices.push_back(scvf.outsideScvIdx());
                 }
-                else
-                {
-                    VolumeVariables dirichletVolVars;
-                    dirichletVolVars.update(elementSolution<FVElemGeom>(problem.dirichlet(element, scvf)),
-                                            problem,
-                                            element,
-                                            scvI);
-
-                    volVars.emplace_back(std::move(dirichletVolVars));
-                    volVarIndices.push_back(scvf.outsideScvIdx());
-                }
             }
         }
         return std::make_pair(volVars, volVarIndices);
