@@ -2,11 +2,7 @@
 
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/brookscoreyparams.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscoreyparams.hh>
 
 #include <dumux/io/container.hh>
 #include "testmateriallawfunctions.hh"
@@ -15,11 +11,10 @@ namespace Dumux::Test {
 
 // test if endPointPc() is the same as evaluation at sw=1
 template<class Law>
-void checkEndPointPc(const typename Law::Params& params)
+void checkEndPointPc(const Law& law, const double entryPressure)
 {
-    const auto pcSat = Law::pc(params, Law::sweToSw(params, 1.0));
-    const auto endPointPc = Law::endPointPc(params);
-    const auto entryPressure = params.pe();
+    const auto pcSat = law.pc(Law::EffToAbs::sweToSw(1.0, law.effToAbsParams()));
+    const auto endPointPc = law.endPointPc();
     static constexpr double eps = 1e-10;
 
     if (Dune::FloatCmp::ne(pcSat, endPointPc, eps))
@@ -30,37 +25,39 @@ void checkEndPointPc(const typename Law::Params& params)
 
 } // end namespace Dumux
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    using BCRegEff = RegularizedBrooksCorey<double>;
-    using BCEff = BrooksCorey<double>;
-    using BCReg = EffToAbsLaw<BCRegEff>;
-    using BC = EffToAbsLaw<BCEff, BCReg::Params>;
+    using BCReg = FluidMatrix::BrooksCoreyDefault<double>;
+    using BC = FluidMatrix::BrooksCoreyNoReg<double>;
 
     // set some parameters
-    BCReg::Params params;
-    params.setPe(1e4);
-    params.setLambda(2.0);
-    params.setSwr(0.1);
-    params.setSnr(0.1);
-    params.setThresholdSw(0.01);
+    BCReg::BasicParams params;
+    const double entryPressure = 1e4;
+    params.pe = entryPressure;
+    params.lambda = 2.0;
 
-    Test::checkEndPointPc<BC>(params);
-    Test::checkEndPointPc<BCReg>(params);
+    BCReg::EffToAbsParams eaParams;
+    eaParams.swr = 0.1;
+    eaParams.snr = 0.1;
 
-    const auto sw = Dumux::linspace(0.0, 1.0, 100);
-    const auto swNonReg = Dumux::linspace(BCReg::sweToSw(params, params.thresholdSw()), BCReg::sweToSw(params, 1.0), 100);
+    BCReg::RegularizationParams regParams;
+    const double thresholdSw = 0.01;
+    regParams.pcLowSwe = thresholdSw;
 
-    Test::runMaterialLawTest<BC, BCReg>("brookscorey", params, sw, swNonReg);
-    Test::runEffToAbsTest<BCRegEff, BCReg>("brookscorey-efftoabs", params, sw);
+    BCReg bcRegLaw(params, eaParams, regParams);
+    BC bcLaw(params, eaParams);
+
+    Test::checkEndPointPc(bcRegLaw, entryPressure);
+    Test::checkEndPointPc(bcLaw, entryPressure);
+
+    const auto sw = linspace(0.0, 1.0, 100);
+    const auto swNonReg = linspace(BCReg::EffToAbs::sweToSw(thresholdSw, eaParams), BCReg::EffToAbs::sweToSw(1.0, eaParams), 100);
+
+    Test::runMaterialLawTest("brookscorey", bcLaw, bcRegLaw, sw, swNonReg);
+    Test::runEffToAbsTest("brookscorey-efftoabs", bcLaw, sw);
+    Test::runEffToAbsTest("brookscorey-reg-efftoabs", bcRegLaw, sw);
 
     return 0;
-}
-// error handler
-catch (const Dune::Exception& e)
-{
-    std::cerr << "Test failed with exception: " << e << std::endl;
-    return 1;
 }

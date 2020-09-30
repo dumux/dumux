@@ -76,46 +76,44 @@ void testValueEqualRange(std::string_view testName,
 
 
 template<class Law, class RegLaw>
-void runMaterialLawTest(const std::string& name, const typename RegLaw::Params& params,
+void runMaterialLawTest(const std::string& name,
+                        const Law& law,
+                        const RegLaw& regLaw,
                         const std::vector<typename Law::Scalar>& sw,
                         const std::vector<typename Law::Scalar>& swNonReg)
 {
     const auto pc = [&](){ auto pc = sw;
         for (int i = 0; i < sw.size(); ++i)
-            pc[i] = RegLaw::pc(params, sw[i]);
+            pc[i] = regLaw.pc(sw[i]);
         return pc;
     }();
 
-    testDerivatives("dpc_dsw", sw, [&](auto sw){ return RegLaw::pc(params, sw); }, [&](auto sw){ return RegLaw::dpc_dsw(params, sw); });
-    testDerivatives("dkrw_dsw", sw, [&](auto sw){ return RegLaw::krw(params, sw); }, [&](auto sw){ return RegLaw::dkrw_dsw(params, sw); });
-    testDerivatives("dkrn_dsw", sw, [&](auto sw){ return RegLaw::krn(params, sw); }, [&](auto sw){ return RegLaw::dkrn_dsw(params, sw); });
-    testDerivatives("dsw_dpc", pc, [&](auto pc){ return RegLaw::sw(params, pc); }, [&](auto pc){ return RegLaw::dsw_dpc(params, pc); });
-    testValueEqualRange("Checking sw == sw(pc(sw))", sw, [](auto sw){ return sw; }, [&](auto sw) { return RegLaw::sw(params, RegLaw::pc(params, sw)); });
-    testValueEqualRange("Checking 1.0 == dsw_dpc*dpc_dsw^-1", sw, [](auto sw){ return 1.0; }, [&](auto sw) { return RegLaw::dpc_dsw(params, sw)*RegLaw::dsw_dpc(params, RegLaw::pc(params, sw)); });
+    testDerivatives("dpc_dsw", sw, [&](auto sw){ return regLaw.pc(sw); }, [&](auto sw){ return regLaw.dpc_dsw(sw); });
+    testDerivatives("dkrw_dsw", sw, [&](auto sw){ return regLaw.krw(sw); }, [&](auto sw){ return regLaw.dkrw_dsw(sw); });
+    testDerivatives("dkrn_dsw", sw, [&](auto sw){ return regLaw.krn(sw); }, [&](auto sw){ return regLaw.dkrn_dsw(sw); });
+    testDerivatives("dsw_dpc", pc, [&](auto pc){ return regLaw.sw(pc); }, [&](auto pc){ return regLaw.dsw_dpc(pc); });
+    testValueEqualRange("Checking sw == sw(pc(sw))", sw, [](auto sw){ return sw; }, [&](auto sw) { return regLaw.sw(regLaw.pc(sw)); });
+    testValueEqualRange("Checking 1.0 == dsw_dpc*dpc_dsw^-1", sw, [](auto sw){ return 1.0; }, [&](auto sw) { return regLaw.dpc_dsw(sw)*regLaw.dsw_dpc(regLaw.pc(sw)); });
 
     // check that regularized and unregularized are the same in the region without regularization
-    testValueEqualRange("Checking NoReg::pc == Reg::pc", swNonReg, [&](auto sw){ return RegLaw::pc(params, sw); }, [&](auto sw) { return Law::pc(params, sw); });
+    testValueEqualRange("Checking NoReg::pc == Reg::pc", swNonReg, [&](auto sw){ return law.pc(sw); }, [&](auto sw) { return regLaw.pc(sw); });
 
     // test pc-sw curve against some precomputed values
     writeContainerToFile(pc, "test_pcsw_" + name + ".dat", 100);
 }
 
 
-template<class EffLaw, class AbsLaw>
-void runEffToAbsTest(const std::string& name, const typename AbsLaw::Params& params,
-                     const std::vector<typename AbsLaw::Scalar>& sw)
+template<class FluidMatrix>
+void runEffToAbsTest(const std::string& name, const FluidMatrix& fmLaw,
+                     const std::vector<typename FluidMatrix::Scalar>& sw)
 
 {
-    testValueEqualRange("Checking 1.0 == Abs::swToSwe(1-snr)", sw, [](auto sw){ return 1.0; }, [&](auto sw) { return AbsLaw::swToSwe(params, 1-params.snr()); });
-    testValueEqualRange("Checking 0.0 == Abs::swToSwe(snr)", sw, [](auto sw){ return 0.0; }, [&](auto sw) { return AbsLaw::swToSwe(params, params.snr()); });
-    testValueEqualRange("Checking 1.0 == Abs::snToSne(1-swr)", sw, [](auto sw){ return 1.0; }, [&](auto sw) { return AbsLaw::snToSne(params, 1-params.swr()); });
-    testValueEqualRange("Checking 0.0 == Abs::snToSne(swr)", sw, [](auto sw){ return 0.0; }, [&](auto sw) { return AbsLaw::snToSne(params, params.swr()); });
+    using EffToAbs = typename FluidMatrix::EffToAbs;
+    const auto params = fmLaw.effToAbsParams();
 
-    testValueEqualRange("Checking sn == sneToSn(snToSne(sn))", sw, [](auto sn){ return sn; }, [&](auto sn) { return AbsLaw::sneToSn(params, AbsLaw::snToSne(params, sn)); });
-    testValueEqualRange("Checking sw == sweToSw(swToSwe(sw))", sw, [](auto sw){ return sw; }, [&](auto sw) { return AbsLaw::sweToSw(params, AbsLaw::swToSwe(params, sw)); });
-
-    testValueEqualRange("Checking Abs::pc(1-snr) == Eff::pc(1.0)", sw, [&](auto pc){ return AbsLaw::pc(params, 1-params.snr()); }, [&](auto pc) { return EffLaw::pc(params, 1.0); });
-    testValueEqualRange("Checking Abs::endPointPc == Eff::pc(1.0)", sw, [&](auto pc){ return AbsLaw::endPointPc(params); }, [&](auto pc) { return EffLaw::pc(params, 1.0); });
+    testValueEqualRange("Checking 1.0 == Abs::swToSwe(1-snr)", sw, [](auto sw){ return 1.0; }, [&](auto sw) { return EffToAbs::swToSwe(1-params.snr, params); });
+    testValueEqualRange("Checking 0.0 == Abs::swToSwe(snr)", sw, [](auto sw){ return 0.0; }, [&](auto sw) { return EffToAbs::swToSwe(params.snr, params); });
+    testValueEqualRange("Checking sw == sweToSw(swToSwe(sw))", sw, [](auto sw){ return sw; }, [&](auto sw) { return EffToAbs::sweToSw(EffToAbs::swToSwe(sw, params), params); });
 }
 
 } // end namespace Dumux
