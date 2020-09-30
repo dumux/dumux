@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the pore network model
+ * \brief test for the two-phase pore network model
  */
  #include <config.h>
 
@@ -43,7 +43,7 @@
 #include <dumux/porenetworkflow/2p/newtonsolver.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/plotpnmmateriallaw.hh>
-#include "problem.hh"
+#include "properties.hh"
 
 
 int main(int argc, char** argv)
