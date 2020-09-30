@@ -124,7 +124,7 @@ public:
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, *residual_, *gridGeometry_);
+        enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
     }
 
     /*!
@@ -397,7 +397,7 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethod::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& gridGeometry)
+    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry)
     {
         for (const auto& m : gridGeometry.periodicVertexMap())
         {
@@ -410,6 +410,7 @@ private:
                     jac[m.first][it.index()] += (*it);
 
                 // enforce constraint in second row
+                res[m.second] = curSol[m.second] - curSol[m.first];
                 for (auto it = jac[m.second].begin(); it != end; ++it)
                     (*it) = it.index() == m.second ? 1.0 : it.index() == m.first ? -1.0 : 0.0;
             }
@@ -417,7 +418,7 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& gridGeometry) {}
+    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry) {}
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
