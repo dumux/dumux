@@ -31,6 +31,8 @@
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
+#include <dumux/discretization/ccwmpfa.hh>
+#include <dumux/discretization/cellcentered/wmpfa/methods.hh>
 #include <dumux/discretization/box.hh>
 
 #include <dumux/material/components/constant.hh>
@@ -47,6 +49,7 @@ namespace TTag {
 struct OnePConvergence { using InheritsFrom = std::tuple<OneP>; };
 struct OnePConvergenceTpfa { using InheritsFrom = std::tuple<OnePConvergence, CCTpfaModel>; };
 struct OnePConvergenceMpfa { using InheritsFrom = std::tuple<OnePConvergence, CCMpfaModel>; };
+struct OnePConvergenceWMpfa { using InheritsFrom = std::tuple<OnePConvergence, CCWMpfaModel>; };
 struct OnePConvergenceBox { using InheritsFrom = std::tuple<OnePConvergence, BoxModel>; };
 } // end namespace TTag
 
@@ -81,6 +84,9 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::OnePConvergence> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct DiscretizationSubmethod<TypeTag, TTag::OnePConvergenceWMpfa> { static constexpr WMpfaMethod value = WMpfaMethod::nltpfa; };
 
 } // end namespace Dumux::Properties
 

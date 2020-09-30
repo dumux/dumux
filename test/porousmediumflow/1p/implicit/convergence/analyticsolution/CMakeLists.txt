@@ -6,15 +6,18 @@ dune_symlink_to_source_files(FILES "convergencetest.py")
 # the tests on unstructured grids to be skipped
 add_executable(test_1p_convergence_analytic_tpfa EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_mpfa EXCLUDE_FROM_ALL main.cc)
+add_executable(test_1p_convergence_analytic_wmpfa EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_box EXCLUDE_FROM_ALL main.cc)
 
 if (dune-uggrid_FOUND)
     target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
+    target_compile_definitions(test_1p_convergence_analytic_wmpfa PUBLIC "TYPETAG=OnePConvergenceWMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
 else()
     target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
+    target_compile_definitions(test_1p_convergence_analytic_wmpfa PUBLIC "TYPETAG=OnePConvergenceWMpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
 endif()
 
@@ -33,6 +36,13 @@ dumux_add_test(NAME test_1p_convergence_analytic_mpfa_structured
                COMMAND ./convergencetest.py
                CMD_ARGS test_1p_convergence_analytic_mpfa mpfa_structured)
 
+# using wmpfa and structured grid
+dumux_add_test(NAME test_1p_convergence_analytic_wmpfa_structured
+               TARGET test_1p_convergence_analytic_wmpfa
+               LABELS porousmediumflow 1p
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_1p_convergence_analytic_wmpfa wmpfa_structured)
+
 # using box and structured grid
 dumux_add_test(NAME test_1p_convergence_analytic_box_structured
                TARGET test_1p_convergence_analytic_box
@@ -50,6 +60,14 @@ if (dune-uggrid_FOUND)
                    CMD_ARGS test_1p_convergence_analytic_mpfa mpfa_unstructured
                             params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
 
+    # using wmpfa and unstructured grid
+    dumux_add_test(NAME test_1p_convergence_analytic_wmpfa_unstructured
+                   TARGET test_1p_convergence_analytic_wmpfa
+                   LABELS porousmediumflow 1p
+                   COMMAND ./convergencetest.py
+                   CMD_ARGS test_1p_convergence_analytic_wmpfa wmpfa_unstructured
+                            params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
+
     # using box and unstructured grid
     dumux_add_test(NAME test_1p_convergence_analytic_box_unstructured
                    TARGET test_1p_convergence_analytic_box
@@ -61,6 +79,11 @@ if (dune-uggrid_FOUND)
 # otherwise define test with the same name but enforce skip
 else()
     dumux_add_test(NAME test_1p_convergence_analytic_mpfa_unstructured
+                   SOURCES main.cc
+                   CMAKE_GUARD dune-uggrid_FOUND
+                   LABELS porousmediumflow 1p)
+
+    dumux_add_test(NAME test_1p_convergence_analytic_wmpfa_unstructured
                    SOURCES main.cc
                    CMAKE_GUARD dune-uggrid_FOUND
                    LABELS porousmediumflow 1p)
