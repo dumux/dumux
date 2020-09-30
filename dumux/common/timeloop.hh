@@ -389,6 +389,10 @@ public:
     bool verbose() const
     { return verbose_; }
 
+    //! Sets time loop verbosity
+    void setVerbose(bool verbose = true)
+    { verbose_ = verbose; }
+
     /*
      * @}
      */
