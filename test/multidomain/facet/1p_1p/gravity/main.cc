@@ -45,8 +45,8 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-#include "problem_bulk.hh"
-#include "problem_lowdim.hh"
+#include "properties_bulk.hh"
+#include "properties_lowdim.hh"
 
 namespace Dumux {
 
