@@ -572,26 +572,26 @@ public:
     template<class S>
     struct Params
     {
-        S pcLowSw;
+        S pcLowSwe;
     };
 
     //! Initialize the spline
     template<class MaterialLaw>
     void init(const MaterialLaw* m, const std::string& paramGroup)
     {
-        pcLowSw_ = getParamFromGroup<Scalar>(paramGroup, "BcPcLowSwThreshold", 0.01);
+        pcLowSwe_ = getParamFromGroup<Scalar>(paramGroup, "BcPcLowSweThreshold", 0.01);
         entryPressure_ = getParamFromGroup<Scalar>(paramGroup, "BcEntryPressure");
 
-        initPcParameters_(m, pcLowSw_);
+        initPcParameters_(m, pcLowSwe_);
     }
 
     template<class MaterialLaw, class BaseParams, class EffToAbsParams>
     void init(const MaterialLaw* m, const BaseParams& bp, const EffToAbsParams& etap, const Params<Scalar>& p)
     {
-        pcLowSw_ = p.pcLowSw;
+        pcLowSwe_ = p.pcLowSwe;
         entryPressure_ = bp.pe;
 
-        initPcParameters_(m, pcLowSw_);
+        initPcParameters_(m, pcLowSwe_);
     }
 
     /*!
@@ -599,7 +599,7 @@ public:
      */
     bool operator== (const BrooksCoreyRegularization& o) const
     {
-        return Dune::FloatCmp::eq(pcLowSw_, o.pcLowSw_, 1e-6)
+        return Dune::FloatCmp::eq(pcLowSwe_, o.pcLowSwe_, 1e-6)
                && Dune::FloatCmp::eq(entryPressure_, o.entryPressure_, 1e-6);
     }
 
@@ -617,8 +617,8 @@ public:
         // newton solver (if the derivative is calculated numerically)
         // in order to get the saturation moving to the right
         // direction if it temporarily is in an 'illegal' range.
-        if (swe <= pcLowSw_)
-            return pcLowSwPcValue_ + pcDerivativeLowSw_*(swe - pcLowSw_);
+        if (swe <= pcLowSwe_)
+            return pcLowSwePcValue_ + pcDerivativeLowSw_*(swe - pcLowSwe_);
 
         else if (swe > 1.0)
             return pcDerivativeHighSwEnd_*(swe - 1.0) + entryPressure_;
@@ -632,7 +632,7 @@ public:
      */
     OptionalScalar<Scalar> dpc_dswe(const Scalar swe) const
     {
-        if (swe < pcLowSw_)
+        if (swe < pcLowSwe_)
             return pcDerivativeLowSw_;
 
         else if (swe > 1.0)
@@ -650,8 +650,8 @@ public:
         if (pc <= entryPressure_)
             return 1.0 + (pc - entryPressure_)/pcDerivativeHighSwEnd_;
 
-        else if (pc >= pcLowSwPcValue_)
-            return (pc - pcLowSwPcValue_)/pcDerivativeLowSw_ + pcLowSw_;
+        else if (pc >= pcLowSwePcValue_)
+            return (pc - pcLowSwePcValue_)/pcDerivativeLowSw_ + pcLowSwe_;
 
         else
             return {}; // no regularization
@@ -665,7 +665,7 @@ public:
         if (pc <= entryPressure_)
             return 1.0/pcDerivativeHighSwEnd_;
 
-        else if (pc >= pcLowSwPcValue_)
+        else if (pc >= pcLowSwePcValue_)
             return 1.0/pcDerivativeLowSw_;
 
         else
@@ -726,15 +726,18 @@ public:
 
 private:
     template<class MaterialLaw>
-    void initPcParameters_(const MaterialLaw* m, const Scalar lowSw)
+    void initPcParameters_(const MaterialLaw* m, const Scalar lowSwe)
     {
-        pcDerivativeLowSw_ = m->template dpc_dswe<false>(lowSw);
-        pcDerivativeHighSwEnd_ = m->template dpc_dswe<false>(1.0);
-        pcLowSwPcValue_ = m->template pc<false>(lowSw);
+        const auto lowSw = MaterialLaw::EffToAbs::sweToSw(lowSwe, m->effToAbsParams());
+        const auto highSw = MaterialLaw::EffToAbs::sweToSw(1.0, m->effToAbsParams());
+        const auto dsw_dswe = MaterialLaw::EffToAbs::dsw_dswe(m->effToAbsParams());
+        pcDerivativeLowSw_ = m->template dpc_dsw<false>(lowSw)*dsw_dswe;
+        pcDerivativeHighSwEnd_ = m->template dpc_dsw<false>(highSw)*dsw_dswe;
+        pcLowSwePcValue_ = m->template pc<false>(lowSw);
     }
 
-    Scalar pcLowSw_;
-    Scalar pcLowSwPcValue_;
+    Scalar pcLowSwe_;
+    Scalar pcLowSwePcValue_;
     Scalar entryPressure_;
     Scalar pcDerivativeLowSw_;
     Scalar pcDerivativeHighSwEnd_;
