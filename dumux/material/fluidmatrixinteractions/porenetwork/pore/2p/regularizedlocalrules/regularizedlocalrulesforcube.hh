@@ -25,8 +25,8 @@
 #ifndef REGULARIZED_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
 #define REGULARIZED_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
 
-#include "baselocalrules.hh"
-#include "localrules/localrulesforcube.hh"
+#include "../baselocalrules.hh"
+#include "../localrules/localrulesforcube.hh"
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/spline.hh>

@@ -1,0 +1,7 @@
+install(FILES
+regularizedlocalrulesforcube.hh
+regularizedlocalrulesfortetrahedron.hh
+regularizedlocalrulesforoctahedron.hh
+regularizedlocalrulesforicosahedron.hh
+regularizedlocalrulesfordodecahedron.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrules)

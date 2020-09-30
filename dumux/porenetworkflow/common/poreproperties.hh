@@ -81,6 +81,12 @@ inline Scalar volume(Shape shape, Scalar inscribedRadius)
         case Shape::sphere: return 4.0/3.0*M_PI*inscribedRadius*inscribedRadius*inscribedRadius; break;
         case Shape::circle: return M_PI*inscribedRadius*inscribedRadius; break;
         case Shape::square: return 4.0*inscribedRadius*inscribedRadius; break;
+        /////////////////////////////////////////////////////////////////////
+        case Shape::tetrahedron: return 4.0*inscribedRadius*inscribedRadius; break;
+        case Shape::octahedron: return 4.0*inscribedRadius*inscribedRadius; break;
+        case Shape::icosahedron: return 4.0*inscribedRadius*inscribedRadius; break;
+        case Shape::dodecahedron: return 4.0*inscribedRadius*inscribedRadius; break;
+        ////////////////////////////////////////////////////////////////////
         default : DUNE_THROW(Dune::InvalidStateException, "Unsupported geometry");
     }
 }

@@ -22,11 +22,11 @@
  * \brief Implementation of a regularized version of the pore network
  *        capillary pressure / relative permeability  <-> saturation relation.
  */
-#ifndef REGULARIZED_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
-#define REGULARIZED_PNM_2P_LOCAL_RULES_FOR_CUBE_HH
+#ifndef REGULARIZED_PNM_2P_LOCAL_RULES_FOR_ICOSAHEDRON_HH
+#define REGULARIZED_PNM_2P_LOCAL_RULES_FOR_ICOSAHEDRON_HH
 
-#include "baselocalrules.hh"
-#include "localrules/localrulesforcube.hh"
+#include "../baselocalrules.hh"
+#include "../localrules/localrulesforicosahedron.hh"
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/spline.hh>
@@ -60,9 +60,9 @@ namespace Dumux
  * \see PNMLocalRules
  */
 template<class ScalarT>
-class RegularizedTwoPLocalRulesCubeJoekarNiasar : public RegularizedTwoPLocalRulesBase
+class RegularizedTwoPLocalRulesIcosahedron : public RegularizedTwoPLocalRulesBase
 {
-    using LocalRules = TwoPLocalRulesCubeJoekarNiasar<ScalarT>;
+    using LocalRules = TwoPLocalRulesIcosahedron<ScalarT>;
     using HighSwRegularizationMethod = RegularizedTwoPLocalRulesBase::HighSwRegularizationMethod;
 
 public:
@@ -195,12 +195,12 @@ public:
     static Scalar dpc_dsw(const Params& params, const Scalar sw)
     {   // TODO!!!!
         assert(0 <= sw && sw <= 1);
-        assert(params.shape == Pore::Shape::cube);
+        assert(params.shape == Pore::Shape::icosahedron);
         using std::exp;
         const Scalar sigma = params.surfaceTension;
         const Scalar poreRadius = params.poreRadius;
-        const Scalar e = exp(6.83*sw);
-        return -(13.66*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
+        const Scalar e = exp(24.11*sw);
+        return -(48.22*sigma*e) / (poreRadius*(e-1.0)*(e-1.0));
     }
 
     /*!

@@ -26,7 +26,11 @@
 #define REGULARIZED_PNM_2P_LOCAL_RULES_HH
 
 #include "localrules.hh"
-#include "regularizedlocalrulesforcube.hh"
+#include "regularizedlocalrules/regularizedlocalrulesforcube.hh"
+#include "regularizedlocalrules/regularizedlocalrulesfortetrahedron.hh"
+#include "regularizedlocalrules/regularizedlocalrulesforoctahedron.hh"
+#include "regularizedlocalrules/regularizedlocalrulesforicosahedron.hh"
+#include "regularizedlocalrules/regularizedlocalrulesfordodecahedron.hh"
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/spline.hh>
@@ -60,13 +64,25 @@ namespace Dumux
  *
  * \see PNMLocalRules
  */
-template<class ScalarT, class RegularizedLocalRulesForCube = RegularizedTwoPLocalRulesCubeJoekarNiasar<ScalarT>>
+
+ template<class ScalarT>
+struct RegularizedLocalRulesTraits
+{
+    using Cube = RegularizedTwoPLocalRulesCubeJoekarNiasar<ScalarT>;
+    using Tetrahedron = RegularizedTwoPLocalRulesTetrahedron<ScalarT>;
+    using Octahedron = RegularizedTwoPLocalRulesOctahedron<ScalarT>;
+    using Icosahedron = RegularizedTwoPLocalRulesIcosahedron<ScalarT>;
+    using Dodecahedron = RegularizedTwoPLocalRulesDodecahedron<ScalarT>;
+};
+
+template<class ScalarT, class RegularizedLocalRulesT = RegularizedLocalRulesTraits<ScalarT>>
 class RegularizedTwoPLocalRules : public RegularizedTwoPLocalRulesBase
 {
 
 public:
 
     using Scalar = ScalarT;
+    using RegularizedLocalRules = RegularizedLocalRulesT;
     using Params = typename RegularizedTwoPLocalRulesBase::Params<Scalar>;
 
     static constexpr bool supportsMultipleGeometries()
@@ -87,7 +103,15 @@ public:
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return RegularizedLocalRulesForCube::pc(params, sw);
+                return RegularizedLocalRules::Cube::pc(params, sw);
+            case Pore::Shape::tetrahedron:
+                return RegularizedLocalRules::Tetrahedron::pc(params, sw);
+            case Pore::Shape::octahedron:
+                return RegularizedLocalRules::Octahedron::pc(params, sw);
+            case Pore::Shape::icosahedron:
+                return RegularizedLocalRules::Icosahedron::pc(params, sw);
+            case Pore::Shape::dodecahedron:
+                return RegularizedLocalRules::Dodecahedron::pc(params, sw);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -102,7 +126,15 @@ public:
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return RegularizedLocalRulesForCube::sw(params, pc);
+                return RegularizedLocalRules::Cube::sw(params, pc);
+            case Pore::Shape::tetrahedron:
+                return RegularizedLocalRules::Tetrahedron::sw(params, pc);
+            case Pore::Shape::octahedron:
+                return RegularizedLocalRules::Octahedron::sw(params, pc);
+            case Pore::Shape::icosahedron:
+                return RegularizedLocalRules::Icosahedron::sw(params, pc);
+            case Pore::Shape::dodecahedron:
+                return RegularizedLocalRules::Dodecahedron::sw(params, pc);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -121,7 +153,15 @@ public:
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return RegularizedLocalRulesForCube::dpc_dsw(params, sw);
+                return RegularizedLocalRules::Cube::dpc_dsw(params, sw);
+            case Pore::Shape::tetrahedron:
+                return RegularizedLocalRules::Tetrahedron::dpc_dsw(params, sw);
+            case Pore::Shape::octahedron:
+                return RegularizedLocalRules::Octahedron::dpc_dsw(params, sw);
+            case Pore::Shape::icosahedron:
+                return RegularizedLocalRules::Icosahedron::dpc_dsw(params, sw);
+            case Pore::Shape::dodecahedron:
+                return RegularizedLocalRules::Dodecahedron::dpc_dsw(params, sw);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -139,7 +179,15 @@ public:
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return RegularizedLocalRulesForCube::dsw_dpc(params, pc);
+                return RegularizedLocalRules::Cube::dsw_dpc(params, pc);
+            case Pore::Shape::tetrahedron:
+                return RegularizedLocalRules::Tetrahedron::dsw_dpc(params, pc);
+            case Pore::Shape::octahedron:
+                return RegularizedLocalRules::Octahedron::dsw_dpc(params, pc);
+            case Pore::Shape::icosahedron:
+                return RegularizedLocalRules::Icosahedron::dsw_dpc(params, pc);
+            case Pore::Shape::dodecahedron:
+                return RegularizedLocalRules::Dodecahedron::dsw_dpc(params, pc);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
