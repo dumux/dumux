@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A test problem for the one-phase pore network model.
+ * \brief A test problem for the two-phase pore network model.
  */
 #ifndef DUMUX_PNM2P_PROBLEM_HH
 #define DUMUX_PNM2P_PROBLEM_HH
@@ -33,8 +33,6 @@
 #include <dumux/material/spatialparams/porenetwork/porenetwork2p.hh>
 
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/porenetworkflow/common/utilities.hh>
 
 
@@ -42,34 +40,6 @@ namespace Dumux
 {
 template <class TypeTag>
 class DrainageProblem;
-
-namespace Properties
-{
-// Create new type tags
-namespace TTag {
-#if ISOTHERMAL
-struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoP>; };
-#else
-struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoPNI>; };
-#endif
-} // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::DrainageProblem> { using type = Dumux::DrainageProblem<TypeTag>; };
-
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DrainageProblem>
-  {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = Dumux::FluidSystems::H2OAir<Scalar, Dumux::Components::SimpleH2O<Scalar>>;
-  };
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
-
-} // end namespace Properties
 
 template <class TypeTag>
 class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
