@@ -28,15 +28,31 @@
 
 #include <dumux/porenetworkflow/common/poreproperties.hh>
 #include "baselocalrules.hh"
-#include "localrulesforcube.hh"
+#include "localrules/localrulesforcube.hh"
+#include "localrules/localrulesfortetrahedron.hh"
+#include "localrules/localrulesforoctahedron.hh"
+#include "localrules/localrulesforicosahedron.hh"
+#include "localrules/localrulesfordodecahedron.hh"
+
 
 namespace Dumux
 {
 
-template<class ScalarT, class LocalRulesForCube = TwoPLocalRulesCubeJoekarNiasar<ScalarT>>
+template<class ScalarT>
+struct LocalRulesTraits
+{
+    using Cube = TwoPLocalRulesCubeJoekarNiasar<ScalarT>;
+    using Tetrahedron = TwoPLocalRulesTetrahedron<ScalarT>;
+    using Octahedron = TwoPLocalRulesOctahedron<ScalarT>;
+    using Icosahedron = TwoPLocalRulesIcosahedron<ScalarT>;
+    using Dodecahedron = TwoPLocalRulesDodecahedron<ScalarT>;
+};
+
+template<class ScalarT, class LocalRulesT = LocalRulesTraits<ScalarT>>
 struct TwoPLocalRules : public TwoPLocalRulesBase
 {
     using Scalar = ScalarT;
+    using LocalRules = LocalRulesT;
     using Params = TwoPLocalRulesBase::Params<Scalar>;
 
     static constexpr bool supportsMultipleGeometries()
@@ -55,7 +71,15 @@ struct TwoPLocalRules : public TwoPLocalRulesBase
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return LocalRulesForCube::pc(params, sw);
+                return LocalRules::Cube::pc(params, sw);
+            case Pore::Shape::tetrahedron:
+                return LocalRules::Tetrahedron::pc(params, sw);
+            case Pore::Shape::octahedron:
+                return LocalRules::Octahedron::pc(params, sw);
+            case Pore::Shape::icosahedron:
+                return LocalRules::Icosahedron::pc(params, sw);
+            case Pore::Shape::dodecahedron:
+                return LocalRules::Dodecahedron::pc(params, sw);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -73,7 +97,15 @@ struct TwoPLocalRules : public TwoPLocalRulesBase
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return LocalRulesForCube::sw(params, pc);
+                return LocalRules::Cube::sw(params, pc);
+            case Pore::Shape::tetrahedron:
+                return LocalRules::Tetrahedron::sw(params, pc);
+            case Pore::Shape::octahedron:
+                return LocalRules::Octahedron::sw(params, pc);
+            case Pore::Shape::icosahedron:
+                return LocalRules::Icosahedron::sw(params, pc);
+            case Pore::Shape::dodecahedron:
+                return LocalRules::Dodecahedron::sw(params, pc);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -91,7 +123,15 @@ struct TwoPLocalRules : public TwoPLocalRulesBase
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return LocalRulesForCube::dpc_dsw(params, sw);
+                return LocalRules::Cube::dpc_dsw(params, sw);
+            case Pore::Shape::tetrahedron:
+                return LocalRules::Tetrahedron::dpc_dsw(params, sw);
+            case Pore::Shape::octahedron:
+                return LocalRules::Octahedron::dpc_dsw(params, sw);
+            case Pore::Shape::icosahedron:
+                return LocalRules::Icosahedron::dpc_dsw(params, sw);
+            case Pore::Shape::dodecahedron:
+                return LocalRules::Dodecahedron::dpc_dsw(params, sw);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
@@ -109,7 +149,15 @@ struct TwoPLocalRules : public TwoPLocalRulesBase
         switch (params.shape)
         {
             case Pore::Shape::cube:
-                return LocalRulesForCube::dsw_dpc(params, pc);
+                return LocalRules::Cube::dsw_dpc(params, pc);
+            case Pore::Shape::tetrahedron:
+                return LocalRules::Tetrahedron::dsw_dpc(params, pc);
+            case Pore::Shape::octahedron:
+                return LocalRules::Octahedron::dsw_dpc(params, pc);
+            case Pore::Shape::icosahedron:
+                return LocalRules::Icosahedron::dsw_dpc(params, pc);
+            case Pore::Shape::dodecahedron:
+                return LocalRules::Dodecahedron::dsw_dpc(params, pc);
             default:
                 DUNE_THROW(Dune::NotImplemented, "Invalid shape");
         }
