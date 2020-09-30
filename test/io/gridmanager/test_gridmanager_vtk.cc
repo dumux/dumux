@@ -86,7 +86,7 @@ void testVTKReader(const std::string& gridName)
 
 } // end namespace Dumux
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 
@@ -107,12 +107,4 @@ int main(int argc, char** argv) try
 #warning "Unknown grid type. Skipping test."
     return 77;
 #endif
-}
-catch (const Dumux::ParameterException &e) {
-    std::cerr << e << ". Abort!\n";
-    return 1;
-}
-catch (const Dune::Exception &e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
-    return 3;
 }

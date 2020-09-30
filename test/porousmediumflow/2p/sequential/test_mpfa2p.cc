@@ -58,73 +58,59 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    try {
-        Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv, usage);
 
-        const auto modelType = getParam<std::string>("ModelType", "MPFAL");
+    const auto modelType = getParam<std::string>("ModelType", "MPFAL");
 
-        if (modelType == "FV")
-        {
-            using ProblemTypeTag = Properties::TTag::FVTwoPTest;
-            std::cout<<"##########################################" << std::endl;
-            std::cout<<"Standard finite volume TPFA model" << std::endl;
-            std::cout<<"##########################################" << std::endl;
-            return start<ProblemTypeTag>(argc, argv, usage);
-        }
-        else if (modelType == "FVAdaptive")
-        {
-            using ProblemTypeTag = Properties::TTag::FVAdaptiveTwoPTest;
-            std::cout<<"##########################################" << std::endl;
-            std::cout<<"Adaptive finite volume TPFA model" << std::endl;
-            std::cout<<"##########################################" << std::endl;
-            return start<ProblemTypeTag>(argc, argv, usage);
-        }
-        else if (modelType == "MPFAO")
-        {
-            using ProblemTypeTag = Properties::TTag::MPFAOTwoPTest;
-            std::cout<<"##########################################" << std::endl;
-            std::cout<<"Standard finite volume MPFA-O model" << std::endl;
-            std::cout<<"##########################################" << std::endl;
-            return start<ProblemTypeTag>(argc, argv, usage);
-        }
-        else if (modelType == "MPFAL")
-        {
-            using ProblemTypeTag = Properties::TTag::MPFALTwoPTest;
-            std::cout<<"##########################################" << std::endl;
-            std::cout<<"Unknown model type " << modelType << ", default to" << std::endl;
-            std::cout<<"Standard finite volume MPFA-L model" << std::endl;
-            std::cout<<"##########################################" << std::endl;
-            return start<ProblemTypeTag>(argc, argv, usage);
-        }
-        else if (modelType == "MPFALAdaptive")
-        {
-            using ProblemTypeTag = Properties::TTag::MPFALAdaptiveTwoPTest;
-            std::cout<<"##########################################" << std::endl;
-            std::cout<<"Adaptive finite volume MPFA-L model" << std::endl;
-            std::cout<<"##########################################" << std::endl;
-            return start<ProblemTypeTag>(argc, argv, usage);
-        }
-        else
-        {
-            using ProblemTypeTag = Properties::TTag::MPFAOTwoPTest;
-            std::cout<<"##########################################" << std::endl;
-            std::cout<<"Unknown model type " << modelType << ", default to" << std::endl;
-            std::cout<<"Standard finite volume MPFA-O model" << std::endl;
-            std::cout<<"##########################################" << std::endl;
-            return start<ProblemTypeTag>(argc, argv, usage);
-        }
+    if (modelType == "FV")
+    {
+        using ProblemTypeTag = Properties::TTag::FVTwoPTest;
+        std::cout<<"##########################################" << std::endl;
+        std::cout<<"Standard finite volume TPFA model" << std::endl;
+        std::cout<<"##########################################" << std::endl;
+        return start<ProblemTypeTag>(argc, argv, usage);
     }
-    catch (ParameterException &e) {
-        std::cerr << std::endl << e << ". Abort!" << std::endl;
-        return 1;
+    else if (modelType == "FVAdaptive")
+    {
+        using ProblemTypeTag = Properties::TTag::FVAdaptiveTwoPTest;
+        std::cout<<"##########################################" << std::endl;
+        std::cout<<"Adaptive finite volume TPFA model" << std::endl;
+        std::cout<<"##########################################" << std::endl;
+        return start<ProblemTypeTag>(argc, argv, usage);
     }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-        return 3;
+    else if (modelType == "MPFAO")
+    {
+        using ProblemTypeTag = Properties::TTag::MPFAOTwoPTest;
+        std::cout<<"##########################################" << std::endl;
+        std::cout<<"Standard finite volume MPFA-O model" << std::endl;
+        std::cout<<"##########################################" << std::endl;
+        return start<ProblemTypeTag>(argc, argv, usage);
     }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        return 4;
+    else if (modelType == "MPFAL")
+    {
+        using ProblemTypeTag = Properties::TTag::MPFALTwoPTest;
+        std::cout<<"##########################################" << std::endl;
+        std::cout<<"Unknown model type " << modelType << ", default to" << std::endl;
+        std::cout<<"Standard finite volume MPFA-L model" << std::endl;
+        std::cout<<"##########################################" << std::endl;
+        return start<ProblemTypeTag>(argc, argv, usage);
+    }
+    else if (modelType == "MPFALAdaptive")
+    {
+        using ProblemTypeTag = Properties::TTag::MPFALAdaptiveTwoPTest;
+        std::cout<<"##########################################" << std::endl;
+        std::cout<<"Adaptive finite volume MPFA-L model" << std::endl;
+        std::cout<<"##########################################" << std::endl;
+        return start<ProblemTypeTag>(argc, argv, usage);
+    }
+    else
+    {
+        using ProblemTypeTag = Properties::TTag::MPFAOTwoPTest;
+        std::cout<<"##########################################" << std::endl;
+        std::cout<<"Unknown model type " << modelType << ", default to" << std::endl;
+        std::cout<<"Standard finite volume MPFA-O model" << std::endl;
+        std::cout<<"##########################################" << std::endl;
+        return start<ProblemTypeTag>(argc, argv, usage);
     }
 
     return 0;

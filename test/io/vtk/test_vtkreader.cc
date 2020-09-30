@@ -40,7 +40,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/io/vtk/vtkreader.hh>
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 
@@ -104,12 +104,4 @@ int main(int argc, char** argv) try
     vtkWriter.write(std::string(argv[2]));
 
     return 0;
-}
-catch (Dune::Exception& e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
-    return 1;
-}
-catch (std::exception& e) {
-    std::cerr << "stdlib reported error: " << e.what() << std::endl;
-    return 2;
 }

@@ -114,7 +114,7 @@ void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const Grid
 }
 
 // main program
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -348,15 +348,4 @@ int main (int argc, char *argv[]) try
 
     // everything is ok
     std::cout << "\n... test passed!" << std::endl;
-}
-////////////////////////////////////
-//  Error handler
-////////////////////////////////////
-catch (Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
-}
-catch (...) {
-    std::cout << "Unknown exception thrown" << std::endl;
-    return 1;
 }

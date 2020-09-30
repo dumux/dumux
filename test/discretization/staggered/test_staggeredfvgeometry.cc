@@ -92,7 +92,7 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
 } // end namespace Dumux
 #endif
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -165,12 +165,4 @@ int main (int argc, char *argv[]) try
             DUNE_THROW(Dune::InvalidStateException, "fvGeometry.hasBoundaryScvf() reports " << fvGeometry.hasBoundaryScvf()
                             << " but the number of boundary scvfs is " << boundaryCount);
     }
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception& e) {
-
-    std::cout << e << std::endl;
-    return 1;
 }

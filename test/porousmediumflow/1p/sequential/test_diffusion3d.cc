@@ -243,29 +243,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    try {
-        return Dumux::start(argc, argv, usage);
-    }
-    catch (Dumux::ParameterException &e) {
-        std::cerr << std::endl << e << ". Abort!" << std::endl;
-        return 1;
-    }
-    catch (Dune::DGFException & e) {
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << std::endl;
-    return 2;
-    }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-        return 3;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        return 4;
-    }
+    return Dumux::start(argc, argv, usage);
 }
 #else
 int main()

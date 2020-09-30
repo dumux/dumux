@@ -55,7 +55,7 @@ void checkTableInterpolation(Scalar ip, Scalar expected, const Table& table, Sca
 
 } // end namespace Test
 
-int main() try
+int main()
 {
     //! Declare Vectors (FieldVector and DynamicVector)
     Dune::FieldVector<double, 3> v1({1.0, 2.0, 3.0});
@@ -214,8 +214,4 @@ int main() try
             DUNE_THROW(Dune::Exception, "[linspace] Not sorted in ascending order!");
     }
 
-}
-catch (Dune::Exception& e) {
-    std::cerr << e << std::endl;
-    return 1;
 }

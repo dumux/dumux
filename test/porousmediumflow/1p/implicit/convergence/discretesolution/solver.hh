@@ -28,7 +28,6 @@
 #include <string>
 
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>

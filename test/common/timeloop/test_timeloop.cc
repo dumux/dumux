@@ -12,7 +12,7 @@
 
 #include <dumux/common/timeloop.hh>
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
 {
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
@@ -198,11 +198,4 @@ int main(int argc, char* argv[]) try
     }
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

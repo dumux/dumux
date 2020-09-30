@@ -96,7 +96,7 @@ void writeVTKPolyData(const std::vector<Dune::FieldVector<double, 3>>& p,
          << "</VTKFile>\n";
 }
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
 {
     using namespace Dumux;
 
@@ -139,11 +139,4 @@ int main(int argc, char* argv[]) try
     if (hull.empty()) DUNE_THROW(Dune::InvalidStateException, "Didn't find convex hull!");
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

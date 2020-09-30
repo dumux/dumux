@@ -28,7 +28,6 @@
 #include <limits>
 
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -44,7 +43,7 @@
 
 #include "problem.hh"
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -190,24 +189,4 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-}
-
-catch (const Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (const Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-              "). Most likely, the DGF file name is wrong "
-              "or the DGF file is corrupted, "
-              "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-              << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (const Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
 }

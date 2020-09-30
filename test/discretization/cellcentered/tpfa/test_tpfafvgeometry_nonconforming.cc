@@ -106,7 +106,7 @@ std::string elementTypeName(const Dune::FieldVector<double, 2>& center)
 } // end namespace Dumux
 #endif
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
     using namespace Dumux::Test;
@@ -378,12 +378,4 @@ int main (int argc, char *argv[]) try
         else
             DUNE_THROW(Dune::InvalidStateException, "Element center position could not be interpreted.");
     }
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception& e) {
-
-    std::cout << e << std::endl;
-    return 1;
 }
