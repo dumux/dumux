@@ -617,7 +617,7 @@ public:
         // newton solver (if the derivative is calculated numerically)
         // in order to get the saturation moving to the right
         // direction if it temporarily is in an 'illegal' range.
-        if (swe <= pcLowSw)
+        if (swe <= pcLowSw_)
             return pcLowSwPcValue_ + pcDerivativeLowSw_*(swe - pcLowSw_);
 
         else if (swe > 1.0)
@@ -632,7 +632,7 @@ public:
      */
     OptionalScalar<Scalar> dpc_dswe(const Scalar swe) const
     {
-        if (swe < pcLowSw)
+        if (swe < pcLowSw_)
             return pcDerivativeLowSw_;
 
         else if (swe > 1.0)
