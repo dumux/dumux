@@ -55,6 +55,7 @@ public:
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr std::size_t numEq = static_cast<std::size_t>(PrimaryVariables::dimension);
@@ -124,6 +125,11 @@ public:
         return pyProblem_.attr("source")(element, fvGeometry, scv).template cast<NumEqVector>();
     }
 
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    {
+        return pyProblem_.attr("sourceAtPos")(globalPos).template cast<NumEqVector>();
+    }
+
     template<class Entity>
     PrimaryVariables initial(const Entity& entity) const
     {
@@ -180,6 +186,7 @@ void registerFVProblem(pybind11::handle scope, pybind11::class_<Problem, options
 
     cls.def("neumann", &Problem::template neumann<decltype(std::ignore), decltype(std::ignore)>);
     cls.def("source", &Problem::template source<decltype(std::ignore)>);
+    cls.def("sourceAtPos", &Problem::sourceAtPos);
     cls.def("initial", &Problem::template initial<Element>);
     cls.def("initial", &Problem::template initial<Vertex>);
     cls.def("extrusionFactor", &Problem::template extrusionFactor<decltype(std::ignore)>);
