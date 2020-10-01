@@ -68,10 +68,7 @@ public:
     //! The constructor sets the gravity, if desired by the user.
     RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    {
-        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(),
-                                                          "RANS.UseStoredEddyViscosity", false);
-    }
+    { }
 
     /*!
      * \brief Correct size of the static (solution independent) wall variables
@@ -116,27 +113,28 @@ public:
             }
         }
 
-        // calculate cell-center-averaged velocity gradients, maximum, and minimum values
+        // calculate cell-center-averaged gradient
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             for (unsigned int dimIdx = 0; dimIdx < Grid::dimension; ++dimIdx)
             {
                 const unsigned int neighborIndex0 = ParentType::neighborIndex(elementIdx, dimIdx, 0);
                 const unsigned int neighborIndex1 = ParentType::neighborIndex(elementIdx, dimIdx, 1);
 
-                // calculate cell-centered turbulentEddyViscosity gradient
+                // calculate cell-centered turbulentEddyViscosity (viscosityTilde) gradient
                 storedViscosityTildeGradient_[elementIdx][dimIdx]
-                    = (storedViscosityTilde_[neighborIndex1] - storedViscosityTilde_[neighborIndex0])
+                    = (storedViscosityTilde(neighborIndex1) - storedViscosityTilde(neighborIndex0))
                     / (ParentType::cellCenter(neighborIndex1)[dimIdx] - ParentType::cellCenter(neighborIndex0)[dimIdx]);
             }
 
+            // Adjust for dirichlet boundary conditions
             auto fvGeometry = localView(this->gridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                unsigned int normDim = scvf.directionIndex();
+                const unsigned int normDim = scvf.directionIndex();
                 if (scvf.boundary() && asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::viscosityTildeIdx))
                 {
                     // face Value
@@ -147,20 +145,33 @@ public:
                         neighborIndex = ParentType::neighborIndex(elementIdx, normDim, 1);
 
                     storedViscosityTildeGradient_[elementIdx][normDim]
-                        = (storedViscosityTilde_[neighborIndex] - dirichletViscosityTilde)
+                        = (storedViscosityTilde(neighborIndex) - dirichletViscosityTilde)
                         / (ParentType::cellCenter(neighborIndex)[normDim] - scvf.center()[normDim]);
                 }
             }
         }
     }
 
-public:
+    bool useStoredEddyViscosity() const
+    {
+        static const bool useStoredEddyViscosity = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
+        return useStoredEddyViscosity;
+    }
+
+    Scalar storedDynamicEddyViscosity(const int elementIdx) const
+    { return storedDynamicEddyViscosity_[elementIdx]; }
+
+    Scalar storedViscosityTilde(const int elementIdx) const
+    { return storedViscosityTilde_[elementIdx]; }
+
+    DimVector storedViscosityTildeGradient(const int elementIdx) const
+    { return storedViscosityTildeGradient_[elementIdx]; }
+
+private:
     std::vector<Scalar> storedDynamicEddyViscosity_;
     std::vector<Scalar> storedViscosityTilde_;
     std::vector<DimVector> storedViscosityTildeGradient_;
-    bool useStoredEddyViscosity_;
 
-private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
