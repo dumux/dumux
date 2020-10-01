@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A test problem for the one-phase pore network model.
+ * \brief A test problem for the  one-phase two-component pore network model.
  */
 #ifndef DUMUX_PNM1P2C_PROBLEM_HH
 #define DUMUX_PNM1P2C_PROBLEM_HH
@@ -31,46 +31,11 @@
 #include <dumux/porenetworkflow/1pnc/model.hh>
 
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/fluidsystems/1padapter.hh>
 
 namespace Dumux
 {
 template <class TypeTag>
 class PNMOnePTwoCProblem;
-
-namespace Properties
-{
-// Create new type tags
-namespace TTag {
-#if ISOTHERMAL
-struct PNMOnePTwoCProblem { using InheritsFrom = std::tuple<PNMOnePNC>; };
-#else
-struct PNMOnePTwoCProblem { using InheritsFrom = std::tuple<PNMOnePNCNI>; };
-#endif
-} // end namespace TTag
-
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::PNMOnePTwoCProblem> { using type = Dumux::PNMOnePTwoCProblem<TypeTag>; };
-
-// Set fluid configuration
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PNMOnePTwoCProblem>
-{
-    using Policy = FluidSystems::H2ON2DefaultPolicy</*simple*/true>;
-    using H2ON2 = FluidSystems::H2ON2<GetPropType<TypeTag, Properties::Scalar>, Policy>;
-    using type = FluidSystems::OnePAdapter<H2ON2>;
-};
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::PNMOnePTwoCProblem> { using type = Dune::FoamGrid<1, 3>; };
-
-template<class TypeTag>
-struct SinglePhaseTransmissibilityLaw<TypeTag, TTag::PNMOnePTwoCProblem> { using type = TransmissibilityAzzamDullien<GetPropType<TypeTag, Properties::Scalar>>; };
-
-}
 
 template <class TypeTag>
 class PNMOnePTwoCProblem : public PorousMediumFlowProblem<TypeTag>
