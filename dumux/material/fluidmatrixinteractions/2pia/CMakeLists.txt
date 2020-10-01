@@ -11,4 +11,10 @@ awnsurfacepolynomialedgezero2ndorder.hh
 awnsurfacepolynomialedgezero2ndorderparams.hh
 efftoabslawia.hh
 efftoabslawiaparams.hh
+interfacialarea.hh
+interfacialareaexponential.hh
+interfacialareaexponentialcubic.hh
+interfacialareapcmax.hh
+interfacialareapolynomial2ndorder.hh
+interfacialareapolynomialedgezero2ndorder.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/2pia)
