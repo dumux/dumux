@@ -26,6 +26,8 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_IA_HH
 #define DUMUX_EFF_TO_ABS_LAW_IA_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include "efftoabslawiaparams.hh"
 

@@ -31,6 +31,8 @@
 #include <cmath>
 #include <assert.h>
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!
@@ -39,7 +41,7 @@ namespace Dumux {
  *        specific interfacial  area to wetting phase saturation and capillary pressure as suggested by Joekar-Niasar(2008) \cite joekar2008 .
  */
 template <class ScalarT, class ParamsT = AwnSurfacePolynomial2ndOrderParams<ScalarT> >
-class AwnSurfacePolynomial2ndOrder
+class [[deprecated("Use new material laws and FluidMatrix::InterfacialAreaPolynomialSecondOrder instead!")]] AwnSurfacePolynomial2ndOrder
 {
 public:
     using Params = ParamsT;
