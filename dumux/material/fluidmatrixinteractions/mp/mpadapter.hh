@@ -97,9 +97,23 @@ public:
 
 // remove until here after release 3.3 /////////////
 
+#include <dumux/common/typetraits/typetraits.hh>
+
 namespace Dumux::FluidMatrix {
 
-struct MPAdapter
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief An adapter for mpnc to use the capillary pressure-saturation relationships
+ */
+template <int numPhases, class Dummy = void>
+class MPAdapter
+{
+    static_assert(AlwaysFalse<Dummy>::value, "Adapter not implemented for the specified number of phases");
+};
+
+
+template<>
+struct MPAdapter<2>
 {
     /*!
      * \brief The capillary pressure-saturation curve.
