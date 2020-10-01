@@ -572,7 +572,7 @@ public:
     template<class S>
     struct Params
     {
-        S pcLowSwe;
+        S pcLowSwe = 0.01;
     };
 
     //! Initialize the spline
