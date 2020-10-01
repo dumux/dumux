@@ -23,6 +23,8 @@
 #ifndef AWN_SURFACE_EXP_FCT_PARAMS_HH
 #define AWN_SURFACE_EXP_FCT_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!

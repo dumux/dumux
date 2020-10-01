@@ -31,6 +31,8 @@
 #include <math.h>
 #include <assert.h>
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!
@@ -39,7 +41,7 @@ namespace Dumux {
  *        specific interfacial  area to wetting phase saturation and capillary pressure.
  */
 template <class ParamsT>
-class AwnSurfacePolynomialEdgeZero2ndOrder
+class [[deprecated("Use new material laws and FluidMatrix::InterfacialAreaolynomialEdgeZero2ndOrder instead!")]] AwnSurfacePolynomialEdgeZero2ndOrder
 {
 public:
     using Params = ParamsT;
