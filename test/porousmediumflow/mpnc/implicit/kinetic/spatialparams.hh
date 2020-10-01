@@ -28,18 +28,16 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fvnonequilibrium.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/vangenuchtenoftemperature.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
+
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
+
 #include <dumux/common/parameters.hh>
 
 // material laws for interfacial area
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacebase.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/interfacialareapolynomial2ndorder.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/interfacialareapcmax.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/interfacialareaexponentialcubic.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/interfacialarea.hh>
 
 namespace Dumux {
 
@@ -65,13 +63,11 @@ public:
     //! Export the type used for the permeability
     using PermeabilityType = Scalar;
     //! Export the material law type used
-    using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-    //! Convenience aliases of the law parameters
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using FluidMatrixInteraction = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
-    using Ans = FluidMatrix::AwnSurfaceBase<Scalar, FluidMatrix::AwnSurfaceExpSwPcTo3>;
-    using Aws = FluidMatrix::AwnSurfaceBase<Scalar, FluidMatrix::AwnSurfacePolynomial2ndOrder>;
-    using Anw = FluidMatrix::AwnSurfaceBase<Scalar, FluidMatrix::AwnSurfacePcMaxFct>;
+    using NonwettingSolidInterfacialArea = FluidMatrix::InterfacialArea<Scalar, FluidMatrix::InterfacialAreaExponentialCubic>;
+    using WettingSolidInterfacialArea = FluidMatrix::InterfacialArea<Scalar, FluidMatrix::InterfacialAreaPolynomialSecondOrder>;
+    using WettingNonwettingInterfacialArea = FluidMatrix::InterfacialArea<Scalar, FluidMatrix::InterfacialAreaPcMax>;
 
     EvaporationAtmosphereSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
@@ -104,20 +100,23 @@ public:
         factorEnergyTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorEnergyTransfer");
         factorMassTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorMassTransfer");
 
-        // residual saturations
-        materialParamsFF_.setSwr(0.0);
-        materialParamsFF_.setSnr(0.00);
+        // PM parameters for Brooks-Corey
+        typename FluidMatrixInteraction::BasicParams paramsPM;
+        typename FluidMatrixInteraction::EffToAbsParams effToAbsParamsPM;
+        paramsPM.pe = BCPd_;
+        paramsPM.lambda = BClambda_;
+        effToAbsParamsPM.swr = Swr_;
+        effToAbsParamsPM.snr = Snr_;
+        fluidMatrixInteractionPM_ = std::make_unique<FluidMatrixInteraction>(paramsPM, effToAbsParamsPM);
 
-        materialParamsPM_.setSwr(Swr_);
-        materialParamsPM_.setSnr(Snr_);
-
-        // pc / kr parameters
-        materialParamsPM_.setLambda(BClambda_);
-        materialParamsPM_.setPe(BCPd_);
-
-        // for making pc == 0 in the FF
-        materialParamsFF_.setLambda(42.);
-        materialParamsFF_.setPe(0.);
+        // FF parameters for Brooks-Corey
+        typename FluidMatrixInteraction::BasicParams paramsFF;
+        typename FluidMatrixInteraction::EffToAbsParams effToAbsParamsFF;
+        paramsFF.pe = 0;
+        paramsFF.lambda = 42;
+        effToAbsParamsFF.swr = 0;
+        effToAbsParamsFF.snr = 0;
+        fluidMatrixInteractionFF_ = std::make_unique<FluidMatrixInteraction>(paramsFF, effToAbsParamsFF);
 
         // determine maximum capillary pressure for wetting-nonwetting surface
         /* Of course physically there is no such thing as a maximum capillary pressure.
@@ -128,30 +127,28 @@ public:
          * Technically this value is obtained as the capillary pressure of saturation zero.
          * This value of course only exists for the case of a regularized pc-Sw relation.
          */
-        using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-        const auto pcMax = TwoPLaw::pc(materialParamsPM_, /*sw = */0.0);
-
+        const auto pcMax = fluidMatrixInteractionPM_->pc(/*sw = */0.0);
 
         // non-wetting-solid
-        using AnsParams = typename Ans::BasicParams;
-        AnsParams ansParams;
+        using NonwettingSolidInterfacialAreaParams = typename NonwettingSolidInterfacialArea::BasicParams;
+        NonwettingSolidInterfacialAreaParams ansParams;
         ansParams.a1 = aNonWettingSolidA1_;
         ansParams.a2 = aNonWettingSolidA2_;
         ansParams.a3 = aNonWettingSolidA3_;
-        aNs_ = std::make_unique<Ans>(ansParams);
+        aNs_ = std::make_unique<NonwettingSolidInterfacialArea>(ansParams);
 
         // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
-        using AnwParams = typename Anw::BasicParams;
-        AnwParams anwParams;
+        using WettingNonwettingInterfacialAreaParams = typename WettingNonwettingInterfacialArea::BasicParams;
+        WettingNonwettingInterfacialAreaParams anwParams;
         anwParams.pcMax = pcMax;
         anwParams.a1 = aWettingNonWettingA1_;
         anwParams.a2 = aWettingNonWettingA2_;
         anwParams.a3 = aWettingNonWettingA3_;
-        aNw_ = std::make_unique<Anw>(anwParams);
+        aNw_ = std::make_unique<WettingNonwettingInterfacialArea>(anwParams);
 
-        // dummys for free flow: no interface where there is only one phase
-        aNwFreeFlow_ = std::make_unique<Anw>(AnwParams()); // zero-intialized dummy params for free flwo
-        aNsFreeFlow_ = std::make_unique<Ans>(AnsParams()); // zero-intialized dummy params for free flwo
+        // zero-initialized dummys for free flow: no interface where there is only one phase
+        aNwFreeFlow_ = std::make_unique<WettingNonwettingInterfacialArea>(WettingNonwettingInterfacialAreaParams());
+        aNsFreeFlow_ = std::make_unique<NonwettingSolidInterfacialArea>(NonwettingSolidInterfacialAreaParams());
     }
 
     template<class ElementSolution>
@@ -196,7 +193,7 @@ public:
      * \brief Returns the parameters for the material law at a given location
      * \param globalPos A global coordinate vector
      */
-    const Ans& nonWettingSolidSurfaceAtPos(const GlobalPosition &globalPos) const
+    const NonwettingSolidInterfacialArea& nonwettingSolidInterfacialAreaAtPos(const GlobalPosition &globalPos) const
     {
         if (inFF_(globalPos) )
             return *aNsFreeFlow_  ;
@@ -209,16 +206,16 @@ public:
      * \brief Returns the parameters for the material law at a given location
      * \param globalPos A global coordinate vector
      */
-    const Aws& wettingSolidSurfaceAtPos(const GlobalPosition &globalPos) const
+    const WettingSolidInterfacialArea& wettingSolidInterfacialAreaAtPos(const GlobalPosition &globalPos) const
     {
-        return *aWs_;
+        DUNE_THROW(Dune::InvalidStateException, "Should not be called in this test.");
     }
 
     /*!
      * \brief Returns the parameters for the material law at a given location
      * \param globalPos A global coordinate vector
      */
-    const Anw& wettingNonWettingSurfaceAtPos(const GlobalPosition &globalPos) const
+    const WettingNonwettingInterfacialArea& wettingNonwettingInterfacialAreaAtPos(const GlobalPosition &globalPos) const
     {
         if (inFF_(globalPos) )
             return *aNwFreeFlow_  ;
@@ -228,18 +225,26 @@ public:
 
     }
 
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     */
     template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
-    { return materialLawParamsAtPos(scv.dofPosition()); }
+    const FluidMatrixInteraction& fluidMatrixInteraction(const Element& element,
+                                                         const SubControlVolume& scv,
+                                                         const ElementSolution& elemSol) const
+    {
+        return fluidMatrixInteractionAtPos(scv.dofPosition());
+    }
 
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     */
+    const FluidMatrixInteraction& fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
         if (inFF_(globalPos))
-            return materialParamsFF_;
+            return *fluidMatrixInteractionFF_;
         else if (inPM_(globalPos))
-            return materialParamsPM_;
+            return *fluidMatrixInteractionPM_;
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
@@ -341,13 +346,13 @@ private:
     Scalar factorEnergyTransfer_ ;
     Scalar factorMassTransfer_ ;
     Scalar characteristicLengthPM_ ;
-    MaterialLawParams materialParamsPM_ ;
+    std::unique_ptr<FluidMatrixInteraction> fluidMatrixInteractionPM_;
 
     // Free Flow Domain
     Scalar porosityFF_ ;
     Scalar intrinsicPermeabilityFF_ ;
     Scalar characteristicLengthFF_ ;
-    MaterialLawParams materialParamsFF_ ;
+    std::unique_ptr<FluidMatrixInteraction> fluidMatrixInteractionFF_;
 
     // interfacial area parameters
     Scalar aWettingNonWettingA1_ ;
@@ -365,12 +370,12 @@ private:
     Scalar Snr_ ;
     std::vector<Scalar> gridVector_;
 
-    std::unique_ptr<Ans> aNs_;
-    std::unique_ptr<Aws> aWs_;
-    std::unique_ptr<Anw> aNw_;
+    std::unique_ptr<NonwettingSolidInterfacialArea> aNs_;
+    std::unique_ptr<WettingNonwettingInterfacialArea> aNw_;
 
-    std::unique_ptr<Anw> aNwFreeFlow_;
-    std::unique_ptr<Ans> aNsFreeFlow_;
+    std::unique_ptr<WettingNonwettingInterfacialArea> aNwFreeFlow_;
+    std::unique_ptr<NonwettingSolidInterfacialArea> aNsFreeFlow_;
+
 };
 
 } // end namespace Dumux
