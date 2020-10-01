@@ -31,6 +31,8 @@
 #include <cmath>
 #include <assert.h>
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!
@@ -40,7 +42,7 @@ namespace Dumux {
  *        apillary pressure as suggested by Nuske(2009) (Diploma thesis) \cite nuske2009 .
  */
 template <class ParamsT>
-class AwnSurfaceExpFct
+class [[deprecated("Use new material laws and FluidMatrix::InterfacialAreaExponential instead!")]] AwnSurfaceExpFct
 {
 public:
     using Params = ParamsT;
