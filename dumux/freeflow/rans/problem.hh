@@ -228,9 +228,6 @@ public:
      */
     void updateDynamicWallProperties(const SolutionVector& curSol)
     {
-        using std::abs;
-        using std::max;
-        using std::min;
         std::cout << "Update dynamic wall properties." << std::endl;
         if (!calledUpdateStaticWallProperties)
             DUNE_THROW(Dune::InvalidStateException,
@@ -240,186 +237,12 @@ public:
         velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), DimVector(1e-16));
         velocityMinimum_.assign(this->gridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
 
-        // calculate cell-center-averaged velocities
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-
-            // calculate velocities
-            DimVector velocityTemp(0.0);
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                const int dofIdxFace = scvf.dofIndex();
-                const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][dofIdxFace][Indices::velocity(scvf.directionIndex())];
-                velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
-            }
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-                velocity_[elementIdx][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
-        }
-
-        // calculate cell-center-averaged velocity gradients, maximum, and minimum values
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            const unsigned int wallElementIdx = wallElementIdx_[elementIdx];
-
-            Scalar maxVelocity = 0.0;
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
-                {
-                    const unsigned int neighborIndex0 = neighborIndex(elementIdx, dimIdx, 0);
-                    const unsigned int neighborIndex1 = neighborIndex(elementIdx, dimIdx, 1);
-
-                    velocityGradients_[elementIdx][velIdx][dimIdx]
-                        = (ccVelocity(neighborIndex1, velIdx) - ccVelocity(neighborIndex0, velIdx))
-                        / (cellCenter(neighborIndex1)[dimIdx] - cellCenter(neighborIndex0)[dimIdx]);
-
-                    if (abs(cellCenter(neighborIndex1)[dimIdx] - cellCenter(neighborIndex0)[dimIdx]) < 1e-8)
-                        velocityGradients_[elementIdx][velIdx][dimIdx] = 0.0;
-                }
-
-                if (abs(ccVelocity(elementIdx, dimIdx)) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
-                    velocityMaximum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
-
-                if (abs(ccVelocity(elementIdx, dimIdx)) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
-                    velocityMinimum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
-
-                if ((hasParam("RANS.FlowNormalAxis") != 1) && (maxVelocity) < abs(ccVelocity(elementIdx, dimIdx)))
-                {
-                    maxVelocity = abs(ccVelocity(elementIdx, dimIdx));
-                    flowNormalAxis_[elementIdx] = dimIdx;
-                }
-            }
-
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                // adapt calculations for Dirichlet condition
-                unsigned int scvfNormDim = scvf.directionIndex();
-                if (scvf.boundary())
-                {
-                    for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
-                    {
-                        if (!asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::velocity(velIdx)))
-                            continue;
-
-                        Scalar dirichletVelocity = asImp_().dirichlet(element, scvf)[Indices::velocity(velIdx)];
-
-                        unsigned int neighborIdx = neighborIndex(elementIdx, scvfNormDim, 0);
-                        if (scvf.center()[scvfNormDim] < cellCenter(elementIdx)[scvfNormDim])
-                            neighborIdx = neighborIndex(elementIdx, scvfNormDim, 1);
-
-                        velocityGradients_[elementIdx][velIdx][scvfNormDim]
-                            = (ccVelocity(neighborIdx, velIdx) - dirichletVelocity)
-                              / (cellCenter(neighborIdx)[scvfNormDim] - scvf.center()[scvfNormDim]);
-                    }
-                }
-
-                // Calculate the BJS-velocity by accounting for all sub faces.
-                std::vector<int> bjsNumFaces(dim, 0);
-                std::vector<unsigned int> bjsNeighbor(dim, 0);
-                DimVector bjsVelocityAverage(0.0);
-                DimVector normalNormCoordinate(0.0);
-                unsigned int velIdx = Indices::velocity(scvfNormDim);
-                const int numSubFaces = scvf.pairData().size();
-                for(int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
-                {
-                    const auto& lateralFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData()[localSubFaceIdx].localLateralFaceIdx);
-
-                    // adapt calculations for Beavers-Joseph-Saffman condition
-                    unsigned int normalNormDim = lateralFace.directionIndex();
-                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBeaversJoseph(Indices::velocity(velIdx))))
-                    {
-                        unsigned int neighborIdx = neighborIndex(elementIdx, normalNormDim, 0);
-                        if (lateralFace.center()[normalNormDim] < cellCenter(elementIdx)[normalNormDim])
-                            neighborIdx = neighborIndex(elementIdx, normalNormDim, 1);
-
-                        const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, scvf, lateralFace, ccVelocity(elementIdx, velIdx), 0.0);
-                        if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
-                            DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
-                        bjsNeighbor[normalNormDim] = neighborIdx;
-                        normalNormCoordinate[normalNormDim] = lateralFace.center()[normalNormDim];
-                        bjsNumFaces[normalNormDim]++;
-                    }
-                }
-                for (unsigned dirIdx = 0; dirIdx < dim; ++dirIdx)
-                {
-                    if (bjsNumFaces[dirIdx] == 0)
-                        continue;
-
-                    unsigned int neighborIdx = bjsNeighbor[dirIdx];
-                    bjsVelocityAverage[dirIdx] /= bjsNumFaces[dirIdx];
-
-                    velocityGradients_[elementIdx][velIdx][dirIdx]
-                        = (ccVelocity(neighborIdx, velIdx) - bjsVelocityAverage[dirIdx])
-                        / (cellCenter(neighborIdx)[dirIdx] - normalNormCoordinate[dirIdx]);
-
-                }
-            }
-        }
-
-        // calculate or call all secondary variables
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-
-            Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> stressTensor(0.0);
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
-                {
-                    stressTensor[dimIdx][velIdx] = 0.5 * velocityGradient(elementIdx, dimIdx, velIdx)
-                                                 + 0.5 * velocityGradient(elementIdx, velIdx, dimIdx);
-              }
-            }
-            stressTensorScalarProduct_[elementIdx] = 0.0;
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
-                {
-                    stressTensorScalarProduct_[elementIdx] += stressTensor[dimIdx][velIdx] * stressTensor[dimIdx][velIdx];
-                }
-            }
-
-            Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> vorticityTensor(0.0);
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
-                {
-                    vorticityTensor[dimIdx][velIdx] = 0.5 * velocityGradient(elementIdx, dimIdx, velIdx)
-                                                    - 0.5 * velocityGradient(elementIdx, velIdx, dimIdx);
-              }
-            }
-            vorticityTensorScalarProduct_[elementIdx] = 0.0;
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            {
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
-                {
-                    vorticityTensorScalarProduct_[elementIdx] += vorticityTensor[dimIdx][velIdx] * vorticityTensor[dimIdx][velIdx];
-                }
-            }
-
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const int dofIdx = scv.dofIndex();
-
-                // construct a privars object from the cell center solution vector
-                const auto& cellCenterPriVars = curSol[GridGeometry::cellCenterIdx()][dofIdx];
-                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
-                auto elemSol = elementSolution<typename GridGeometry::LocalView>(std::move(priVars));
-
-                VolumeVariables volVars;
-                volVars.update(elemSol, asImp_(), element, scv);
-                kinematicViscosity_[elementIdx] = volVars.viscosity() / volVars.density();
-            }
-        }
+        calculateCCVelocities_(curSol);
+        calculateCCVelocityGradients_();
+        calculateMaxMinVelocities_();
+        calculateStressTensor_();
+        calculateVorticityTensor_();
+        storeKinematicViscosity_(curSol);
     }
 
     /*!
@@ -567,6 +390,249 @@ public:
     bool calledUpdateStaticWallProperties = false;
 
 private:
+    void calculateCCVelocities_(const SolutionVector& curSol)
+    {
+        // calculate cell-center-averaged velocities
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+
+            // calculate velocities
+            DimVector velocityTemp(0.0);
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const int dofIdxFace = scvf.dofIndex();
+                const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][dofIdxFace][Indices::velocity(scvf.directionIndex())];
+                velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
+            }
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                velocity_[elementIdx][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
+        }
+    }
+
+
+    void calculateCCVelocityGradients_()
+    {
+        using std::abs;
+        // calculate cell-center-averaged velocity gradients, maximum, and minimum values
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    const unsigned int neighborIndex0 = neighborIndex(elementIdx, dimIdx, 0);
+                    const unsigned int neighborIndex1 = neighborIndex(elementIdx, dimIdx, 1);
+
+                    velocityGradients_[elementIdx][velIdx][dimIdx]
+                        = (ccVelocity(neighborIndex1, velIdx) - ccVelocity(neighborIndex0, velIdx))
+                        / (cellCenter(neighborIndex1)[dimIdx] - cellCenter(neighborIndex0)[dimIdx]);
+
+                    if (abs(cellCenter(neighborIndex1)[dimIdx] - cellCenter(neighborIndex0)[dimIdx]) < 1e-8)
+                        velocityGradients_[elementIdx][velIdx][dimIdx] = 0.0;
+                }
+            }
+
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                // adapt calculations for Dirichlet condition
+                unsigned int scvfNormDim = scvf.directionIndex();
+                if (scvf.boundary())
+                {
+                    for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                    {
+                        if (!asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::velocity(velIdx)))
+                            continue;
+
+                        Scalar dirichletVelocity = asImp_().dirichlet(element, scvf)[Indices::velocity(velIdx)];
+
+                        unsigned int neighborIdx = neighborIndex(elementIdx, scvfNormDim, 0);
+                        if (scvf.center()[scvfNormDim] < cellCenter(elementIdx)[scvfNormDim])
+                            neighborIdx = neighborIndex(elementIdx, scvfNormDim, 1);
+
+                        velocityGradients_[elementIdx][velIdx][scvfNormDim]
+                            = (ccVelocity(neighborIdx, velIdx) - dirichletVelocity)
+                              / (cellCenter(neighborIdx)[scvfNormDim] - scvf.center()[scvfNormDim]);
+                    }
+                }
+
+                // Calculate the BJS-velocity by accounting for all sub faces.
+                std::vector<int> bjsNumFaces(dim, 0);
+                std::vector<unsigned int> bjsNeighbor(dim, 0);
+                DimVector bjsVelocityAverage(0.0);
+                DimVector normalNormCoordinate(0.0);
+                unsigned int velIdx = Indices::velocity(scvfNormDim);
+                const int numSubFaces = scvf.pairData().size();
+                for(int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+                {
+                    const auto& lateralFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData()[localSubFaceIdx].localLateralFaceIdx);
+
+                    // adapt calculations for Beavers-Joseph-Saffman condition
+                    unsigned int normalNormDim = lateralFace.directionIndex();
+                    if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBeaversJoseph(Indices::velocity(velIdx))))
+                    {
+                        unsigned int neighborIdx = neighborIndex(elementIdx, normalNormDim, 0);
+                        if (lateralFace.center()[normalNormDim] < cellCenter(elementIdx)[normalNormDim])
+                            neighborIdx = neighborIndex(elementIdx, normalNormDim, 1);
+
+                        const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
+                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, scvf, lateralFace, ccVelocity(elementIdx, velIdx), 0.0);
+                        if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
+                            DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
+                        bjsNeighbor[normalNormDim] = neighborIdx;
+                        normalNormCoordinate[normalNormDim] = lateralFace.center()[normalNormDim];
+                        bjsNumFaces[normalNormDim]++;
+                    }
+                }
+                for (unsigned dirIdx = 0; dirIdx < dim; ++dirIdx)
+                {
+                    if (bjsNumFaces[dirIdx] == 0)
+                        continue;
+
+                    unsigned int neighborIdx = bjsNeighbor[dirIdx];
+                    bjsVelocityAverage[dirIdx] /= bjsNumFaces[dirIdx];
+
+                    velocityGradients_[elementIdx][velIdx][dirIdx]
+                        = (ccVelocity(neighborIdx, velIdx) - bjsVelocityAverage[dirIdx])
+                        / (cellCenter(neighborIdx)[dirIdx] - normalNormCoordinate[dirIdx]);
+
+                }
+            }
+        }
+    }
+
+    void calculateMaxMinVelocities_()
+    {
+        using std::abs;
+        if (hasChannelGeometry())
+        {
+            // re-initialize min and max values
+            velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), DimVector(1e-16));
+            velocityMinimum_.assign(this->gridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
+            // For each profile perpendicular to the channel wall, find the max and minimum velocities
+            for (const auto& element : elements(this->gridGeometry().gridView()))
+            {
+                const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+                Scalar maxVelocity = 0.0;
+                const unsigned int wallElementIdx = wallElementIdx_[elementIdx];
+
+                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                {
+                    if (abs(ccVelocity(elementIdx, dimIdx)) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
+                        velocityMaximum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
+
+                    if (abs(ccVelocity(elementIdx, dimIdx)) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
+                        velocityMinimum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
+
+                    if ((hasParam("RANS.FlowNormalAxis") != 1) && (maxVelocity) < abs(ccVelocity(elementIdx, dimIdx)))
+                    {
+                        maxVelocity = abs(ccVelocity(elementIdx, dimIdx));
+                        flowNormalAxis_[elementIdx] = dimIdx;
+                    }
+                }
+            }
+        }
+        else
+        {
+            DimVector maxVelocity(0.0);
+            DimVector minVelocity(std::numeric_limits<Scalar>::max());
+            // Find the max and minimum velocities in the full domain
+            for (const auto& element : elements(this->gridGeometry().gridView()))
+            {
+                const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+
+                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                {
+                    if (abs(ccVelocity(elementIdx, dimIdx)) > abs(maxVelocity[dimIdx]))
+                        maxVelocity[dimIdx] = ccVelocity(elementIdx, dimIdx);
+
+                    if (abs(ccVelocity(elementIdx, dimIdx)) < abs(minVelocity[dimIdx]))
+                        minVelocity[dimIdx] = ccVelocity(elementIdx, dimIdx);
+                }
+            }
+            velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), maxVelocity);
+            velocityMinimum_.assign(this->gridGeometry().elementMapper().size(), minVelocity);
+        }
+    }
+
+    void calculateStressTensor_()
+    {
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> stressTensor(0.0);
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    stressTensor[dimIdx][velIdx] = 0.5 * velocityGradient(elementIdx, dimIdx, velIdx)
+                                                 + 0.5 * velocityGradient(elementIdx, velIdx, dimIdx);
+              }
+            }
+            stressTensorScalarProduct_[elementIdx] = 0.0;
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    stressTensorScalarProduct_[elementIdx] += stressTensor[dimIdx][velIdx] * stressTensor[dimIdx][velIdx];
+                }
+            }
+        }
+    }
+
+    void calculateVorticityTensor_()
+    {
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> vorticityTensor(0.0);
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    vorticityTensor[dimIdx][velIdx] = 0.5 * velocityGradient(elementIdx, dimIdx, velIdx)
+                                                    - 0.5 * velocityGradient(elementIdx, velIdx, dimIdx);
+              }
+            }
+            vorticityTensorScalarProduct_[elementIdx] = 0.0;
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    vorticityTensorScalarProduct_[elementIdx] += vorticityTensor[dimIdx][velIdx] * vorticityTensor[dimIdx][velIdx];
+                }
+            }
+        }
+    }
+
+    void storeKinematicViscosity_(const SolutionVector& curSol)
+    {
+        // calculate or call all secondary variables
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const int dofIdx = scv.dofIndex();
+                // construct a privars object from the cell center solution vector
+                const auto& cellCenterPriVars = curSol[GridGeometry::cellCenterIdx()][dofIdx];
+                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+                auto elemSol = elementSolution<typename GridGeometry::LocalView>(std::move(priVars));
+
+                VolumeVariables volVars;
+                volVars.update(elemSol, asImp_(), element, scv);
+                kinematicViscosity_[elementIdx] = volVars.viscosity() / volVars.density();
+            }
+        }
+    }
+
     const int fixedFlowNormalAxis_ = getParam<int>("RANS.FlowNormalAxis", 0);
     const int fixedWallNormalAxis_ = getParam<int>("RANS.WallNormalAxis", 1);
 
