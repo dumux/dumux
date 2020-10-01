@@ -23,6 +23,8 @@
 #ifndef AWN_SURFACE_EXP_SW_PC_TO_3_PARAMS
 #define AWN_SURFACE_EXP_SW_PC_TO_3_PARAMS
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!

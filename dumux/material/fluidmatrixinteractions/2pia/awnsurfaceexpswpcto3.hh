@@ -31,6 +31,8 @@
 #include <cmath>
 #include <assert.h>
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!
@@ -39,7 +41,7 @@ namespace Dumux {
  * specific interfacial  area to wetting phase saturation and capillary pressure.
  */
 template <class ScalarT, class ParamsT =AwnSurfaceExpSwPcTo3Params<ScalarT> >
-class AwnSurfaceExpSwPcTo3
+class [[deprecated("Use new material laws and FluidMatrix::InterfacialAreaExponentialCubic instead!")]] AwnSurfaceExpSwPcTo3
 {
 public:
     using Params = ParamsT;
