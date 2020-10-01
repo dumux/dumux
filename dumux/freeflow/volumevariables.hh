@@ -228,4 +228,4 @@ public:
 };
 } // end namespace Dumux
 
-#endif // DUMUX_FREEFLOW_VOLUME_VARIABLES_HH
+#endif

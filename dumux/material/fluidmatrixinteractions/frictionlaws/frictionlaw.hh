@@ -104,4 +104,4 @@ public:
 
 } // end namespace Dumux
 
-#endif // DUMUX_FRICTIONLAW_HH
+#endif

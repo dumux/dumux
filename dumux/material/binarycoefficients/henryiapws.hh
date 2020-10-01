@@ -94,4 +94,4 @@ inline Scalar henryIAPWS(Scalar E,
 }
 }
 
-#endif // DUMUX_HENRY_IAPWS_HH
+#endif

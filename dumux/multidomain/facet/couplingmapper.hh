@@ -140,4 +140,4 @@ public:
 #include <dumux/multidomain/facet/cellcentered/tpfa/couplingmapper.hh>
 #include <dumux/multidomain/facet/cellcentered/mpfa/couplingmapper.hh>
 
-#endif // DUMUX_FACETCOUPLING_COUPLING_MAPPER_HH
+#endif

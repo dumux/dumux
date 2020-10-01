@@ -45,4 +45,4 @@ public:
 
 } // end namespace Dumux
 
-#endif /* DUMUX_ADAPTIVE_GRIDDATATRANSFER_HH */
+#endif

@@ -192,4 +192,4 @@ using ReorderingDofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 } // end namespace Dumux
 
 #endif // HAVE_PTSCOTCH
-#endif // DUMUX_COMMON_REORDERING_DOF_MAPPER_HH
+#endif

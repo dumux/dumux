@@ -484,4 +484,4 @@ public:
 };
 
 }
-#endif /* DUMUX_GRIDADAPT_HH */
+#endif

@@ -43,4 +43,4 @@ public:
 
 } // end namespace Dumux
 
-#endif // DUMUX_NAVIERSTOKES_NI_INDICES_HH
+#endif

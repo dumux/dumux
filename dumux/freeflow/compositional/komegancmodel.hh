@@ -228,4 +228,4 @@ public:
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_KOMEGA_NC_MODEL_HH
+#endif

@@ -103,4 +103,4 @@ public:
 };
 } // end namespace Dumux
 
-#endif   // DUMUX_SHALLOW_WATER_LOCAL_RESIDUAL_HH
+#endif

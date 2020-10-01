@@ -146,4 +146,4 @@ public:
 
 } // end namespace Dumux::Properties
 
-#endif // DUMUX_ZEROEQ_MODEL_HH
+#endif

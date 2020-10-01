@@ -234,4 +234,4 @@ struct IOFields<TypeTag, TTag::LowReKEpsilonNI> { using type = FreeflowNonIsothe
 } // end properties
 } // end namespace
 
-#endif // DUMUX_LOWREKEPSILON_MODEL_HH
+#endif

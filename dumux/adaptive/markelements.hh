@@ -71,4 +71,4 @@ bool markElements(Grid& grid, const Indicator& indicator, bool verbose = true)
 
 } //end namespace Dumux
 
-#endif /* DUMUX_ADAPTIVE_MARKELEMENTS_HH */
+#endif

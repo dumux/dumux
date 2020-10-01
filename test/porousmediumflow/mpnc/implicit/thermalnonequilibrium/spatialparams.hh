@@ -225,4 +225,4 @@ private:
 
 }
 
-#endif // GUARDIAN
+#endif

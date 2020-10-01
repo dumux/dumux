@@ -236,4 +236,4 @@ struct IOFields<TypeTag, TTag::NavierStokesNI> { using type = FreeflowNonIsother
 
 } // end namespace
 
-#endif // DUMUX_NAVIERSTOKES_MODEL_HH
+#endif

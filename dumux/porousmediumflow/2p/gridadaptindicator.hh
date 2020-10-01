@@ -280,4 +280,4 @@ private:
 
 } // end namespace Dumux
 
-#endif /* DUMUX_TWOP_ADAPTION_INDICATOR_HH */
+#endif

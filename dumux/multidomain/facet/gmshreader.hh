@@ -425,4 +425,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_FACETCOUPLING_GMSH_READER_HH
+#endif

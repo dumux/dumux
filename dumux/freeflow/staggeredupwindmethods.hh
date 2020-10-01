@@ -454,4 +454,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_UPWINDING_METHODS_HH
+#endif

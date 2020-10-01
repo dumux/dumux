@@ -160,4 +160,4 @@ protected:
 
 } // end namespace Dumux
 
-#endif // DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
+#endif

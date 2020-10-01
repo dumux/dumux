@@ -306,4 +306,4 @@ private:
 };
 } // end namespace Dumux
 
-#endif //DUMUX_DARCY_SUBPROBLEM_HH
+#endif

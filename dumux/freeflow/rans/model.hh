@@ -125,4 +125,4 @@ struct HeatConductionType<TypeTag, TTag::RANSNI> { using type = FouriersLaw<Type
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_RANS_MODEL_HH
+#endif

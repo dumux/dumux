@@ -234,4 +234,4 @@ struct IOFields<TypeTag, TTag::OneEqNI> { using type = FreeflowNonIsothermalIOFi
 
 } // end namespace Dumux::Properties
 
-#endif // DUMUX_ONEEQ_MODEL_HH
+#endif

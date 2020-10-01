@@ -161,4 +161,4 @@ protected:
 
 } // end namespace Dumux
 
-#endif // DUMUX_NAVIERSTOKES_VOLUME_VARIABLES_HH
+#endif

@@ -184,4 +184,4 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethod::staggered>
 
 } // end namespace Dumux
 
-#endif // DUMUX_LINEAR_SOLVER_TRAITS_HH
+#endif

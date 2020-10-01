@@ -683,4 +683,4 @@ auto makeProjectionMatrices(const FEBasisDomain& feBasisDomain,
 
 } // end namespace Dumux
 
-#endif // DUMUX_PROJECTOR_HH
+#endif

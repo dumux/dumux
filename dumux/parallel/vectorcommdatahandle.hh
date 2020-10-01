@@ -136,4 +136,4 @@ using VectorCommDataHandleMax = VectorCommDataHandle<Mapper,Vector, codim, Detai
 
 } // end namespace Dumux
 
-#endif // DUMUX_VECTOR_COMM_DATA_HANDLE_HH
+#endif

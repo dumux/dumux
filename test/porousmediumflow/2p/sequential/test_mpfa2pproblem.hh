@@ -449,4 +449,4 @@ McWhorterAnalytic<TypeTag> analyticSolution_;
 };
 } //end namespace
 
-#endif // DUMUX_TEST_MPFA2P_PROBLEM_HH
+#endif

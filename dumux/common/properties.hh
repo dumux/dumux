@@ -292,4 +292,4 @@ struct TimeManager { using type = UndefinedProperty; };
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_PROPERTIES_HH
+#endif

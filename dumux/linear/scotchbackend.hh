@@ -173,4 +173,4 @@ public:
 
 } // end namespace Dumux
 
-#endif // DUMUX_SCOTCH_BACKEND_HH
+#endif

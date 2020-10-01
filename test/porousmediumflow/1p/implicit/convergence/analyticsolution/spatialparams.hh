@@ -100,4 +100,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_CONVERGENCE_TEST_ONEP_SPATIALPARAMS_HH
+#endif

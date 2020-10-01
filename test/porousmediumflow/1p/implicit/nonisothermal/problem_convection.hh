@@ -342,4 +342,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_1PNI_CONVECTION_PROBLEM_HH
+#endif

@@ -227,4 +227,4 @@ struct IOFields<TypeTag, TTag::KOmegaNI> { using type = FreeflowNonIsothermalIOF
 } // end properties
 } // end namespace
 
-#endif // DUMUX_KOMEGA_MODEL_HH
+#endif

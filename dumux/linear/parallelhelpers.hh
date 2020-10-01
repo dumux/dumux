@@ -820,4 +820,4 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
 } // end namespace Dumux
 
 #endif // HAVE_MPI
-#endif // DUMUX_PARALLELHELPERS_HH
+#endif
