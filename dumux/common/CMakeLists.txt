@@ -17,6 +17,7 @@ doubleexpintegrationconstants.hh
 doubleexpintegrator.hh
 dumuxmessage.hh
 entitymap.hh
+enumerate.hh
 exceptions.hh
 fixedlengthspline_.hh
 fvproblem.hh
