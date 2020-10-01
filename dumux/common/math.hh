@@ -573,13 +573,17 @@ struct LinearTable
  * \param begin The first value in the vector
  * \param end The last value in the vector
  * \param samples The size of the vector
+ * \param endPoint if the range is including the interval's end point or not
  */
 template <class Scalar>
-std::vector<Scalar> linspace(const Scalar begin, const Scalar end, std::size_t samples)
+std::vector<Scalar> linspace(const Scalar begin, const Scalar end,
+                             std::size_t samples,
+                             bool endPoint = true)
 {
     using std::max;
     samples = max(std::size_t{2}, samples); // only makes sense for 2 or more samples
-    const Scalar delta = (end-begin)/static_cast<Scalar>(samples-1);
+    const Scalar divisor = endPoint ? samples-1 : samples;
+    const Scalar delta = (end-begin)/divisor;
     std::vector<Scalar> vec(samples);
     for (std::size_t i = 0; i < samples; ++i)
         vec[i] = begin + i*delta;
