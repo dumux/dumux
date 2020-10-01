@@ -26,6 +26,8 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_IA_PARAMS_HH
 #define DUMUX_EFF_TO_ABS_LAW_IA_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!
@@ -35,7 +37,7 @@ namespace Dumux {
  *        from effective to absolute saturations.
  */
 template <class EffIALawParamsT>
-class EffToAbsLawIAParams : public EffIALawParamsT
+class [[deprecated("Use new material laws! Removal after 3.3")]] EffToAbsLawIAParams : public EffIALawParamsT
 {
     using EffIALawParams = EffIALawParamsT;
 public:
