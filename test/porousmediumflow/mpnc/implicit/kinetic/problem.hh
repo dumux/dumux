@@ -51,14 +51,6 @@
 
 #include "spatialparams.hh"
 
-// material laws for interfacial area
-#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomialedgezero2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
-
 namespace Dumux {
 /*!
  * \ingroup MPNCTests
@@ -389,15 +381,12 @@ private:
             equilibriumFluidState.setTemperature(phaseIdx, TInitial_ );
         }
 
-        const auto &materialParams =
-            this->spatialParams().materialLawParamsAtPos(globalPos);
         std::vector<Scalar> capPress(numPhases);
         // obtain pc according to saturation
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
+        using MPAdapter = FluidMatrix::MPAdapter<numPhases>;
 
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        MPAdapter::capillaryPressures(capPress, materialParams, equilibriumFluidState, wPhaseIdx);
+        MPAdapter::capillaryPressures(capPress, this->spatialParams().fluidMatrixInteractionAtPos(globalPos), equilibriumFluidState, wPhaseIdx);
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){
