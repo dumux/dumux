@@ -33,8 +33,6 @@
 #include <dumux/material/spatialparams/porenetwork/porenetwork2p.hh>
 
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/porenetworkflow/common/utilities.hh>
 
 

@@ -29,7 +29,6 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/common/boundarytypes.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
 

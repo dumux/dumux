@@ -31,8 +31,6 @@
 #include <dumux/porenetworkflow/1pnc/model.hh>
 
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/fluidsystems/1padapter.hh>
 
 namespace Dumux
 {
