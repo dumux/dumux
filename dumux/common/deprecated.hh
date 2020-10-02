@@ -113,7 +113,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<hasNew<S>(), int> = 0>
     Scalar pc(const Scalar sw) const
     {
-        return spatialParams_.fluidMatrixInteraction(element_, scv_, elemSol_).pc(sw);
+        return spatialParams_.fluidMatrixInteraction(element_, scv_, elemSol_).pcSw().pc(sw);
     }
 
     template<class S = SpatialParams, typename std::enable_if_t<hasNewAtPos<S>() && !hasNew<S>(), int> = 0>
@@ -151,7 +151,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<hasNew<S>(), int> = 0>
     Scalar endPointPc() const
     {
-        return spatialParams_.fluidMatrixInteraction(element_, scv_, elemSol_).endPointPc();
+        return spatialParams_.fluidMatrixInteraction(element_, scv_, elemSol_).pcSw().endPointPc();
     }
 
     template<class S = SpatialParams, typename std::enable_if_t<hasNewAtPos<S>() && !hasNew<S>(), int> = 0>
@@ -170,7 +170,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<hasNew<S>(), int> = 0>
     Scalar sw(const Scalar pc) const
     {
-        return spatialParams_.fluidMatrixInteraction(element_, scv_, elemSol_).sw(pc);
+        return spatialParams_.fluidMatrixInteraction(element_, scv_, elemSol_).pcSw().sw(pc);
     }
 
     template<class S = SpatialParams, typename std::enable_if_t<hasNewAtPos<S>() && !hasNew<S>(), int> = 0>
@@ -213,7 +213,7 @@ public:
     template<class S = SpatialParams, typename std::enable_if_t<hasNew<S>(), int> = 0>
     Scalar krw(const Scalar sw) const
     {
-        return spatialParams_.fluidMatrixInteraction(element_, scv_, elemSol_).krw(sw);
+        return spatialParams_.fluidMatrixInteraction(element_, scv_, elemSol_).krSw().krw(sw);
     }
 
     template<class S = SpatialParams, typename std::enable_if_t<hasNewAtPos<S>() && !hasNew<S>(), int> = 0>

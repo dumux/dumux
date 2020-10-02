@@ -27,6 +27,7 @@
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/fluidmatrix.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
@@ -51,7 +52,10 @@ class RichardsLensSpatialParams
     enum { dimWorld = GridView::dimensionworld };
 
 public:
-    using FluidMatrixInteraction = FluidMatrix::VanGenuchtenDefault<Scalar>;
+    using VanGenuchten = FluidMatrix::VanGenuchtenDefault<Scalar>;
+    using PcSw = FluidMatrix::PcSw<FluidMatrix::VanGenuchtenDefault<Scalar>>;
+    using KrSw = FluidMatrix::KrSw<FluidMatrix::VanGenuchtenDefault<Scalar>>;
+    using FluidMatrixInteraction = FluidMatrix::FluidMatrixInteraction<PcSw, KrSw>;
     // export permeability type
     using PermeabilityType = Scalar;
 
@@ -64,15 +68,18 @@ public:
 
         // parameters for the Van Genuchten law
         // alpha and n
-        typename FluidMatrixInteraction::BasicParams lensParams(0.00045/*alpha*/, 7.3/*n*/);
-        typename FluidMatrixInteraction::BasicParams outerParams(0.0037/*alpha*/, 4.7/*n*/);
+        typename FluidMatrixInteraction::PcSw::BasicParams lensParams(0.00045/*alpha*/, 7.3/*n*/);
+        typename FluidMatrixInteraction::PcSw::BasicParams outerParams(0.0037/*alpha*/, 4.7/*n*/);
 
         // residual saturations
-        typename FluidMatrixInteraction::EffToAbsParams lensEffToAbsParams(0.18/*swr*/, 0.0/*snr*/);
-        typename FluidMatrixInteraction::EffToAbsParams outerEffToAbsParams(0.05/*swr*/, 0.0/*snr*/);
+        typename FluidMatrixInteraction::PcSw::EffToAbsParams lensEffToAbsParams(0.18/*swr*/, 0.0/*snr*/);
+        typename FluidMatrixInteraction::PcSw::EffToAbsParams outerEffToAbsParams(0.05/*swr*/, 0.0/*snr*/);
 
-        lensFluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>(lensParams, lensEffToAbsParams);
-        outerFluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>(outerParams, outerEffToAbsParams);
+        auto vangGenuchtenLawLens = VanGenuchten(lensParams, lensEffToAbsParams);
+        auto vangGenuchtenLawOuter = VanGenuchten(outerParams, outerEffToAbsParams);
+
+        lensFluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>(PcSw(vangGenuchtenLawLens), KrSw(vangGenuchtenLawLens));
+        outerFluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>(PcSw(vangGenuchtenLawOuter), KrSw(vangGenuchtenLawOuter));
 
         lensK_ = 1e-12;
         outerK_ = 5e-12;
