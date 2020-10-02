@@ -10,6 +10,16 @@ Cells = 24 16
 Name = richardslens
 EnableGravity = true # enable gravity
 
+[SpatialParams]
+Lens.VanGenuchtenN = 7.3
+Lens.VanGenuchtenAlpha = 0.00045
+Lens.Swr = 0.18
+Lens.Snr = 0.0
+OuterDomain.VanGenuchtenN = 4.7
+OuterDomain.VanGenuchtenAlpha = 0.0037
+OuterDomain.Swr = 0.05
+OuterDomain.Snr = 0.0
+
 [Newton]
 TargetSteps = 18 # set the "desirable" number of Newton iterations of a time step
 EnableChop = true # chop for better convergence
