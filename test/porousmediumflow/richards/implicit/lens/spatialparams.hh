@@ -26,8 +26,7 @@
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
@@ -51,9 +50,9 @@ class RichardsLensSpatialParams
 
     enum { dimWorld = GridView::dimensionworld };
 
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
+
 public:
-    using MaterialLaw = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
@@ -64,18 +63,9 @@ public:
         lensLowerLeft_ = {1.0, 2.0};
         lensUpperRight_ = {4.0, 3.0};
 
-        // residual saturations
-        lensMaterialParams_.setSwr(0.18);
-        lensMaterialParams_.setSnr(0.0);
-        outerMaterialParams_.setSwr(0.05);
-        outerMaterialParams_.setSnr(0.0);
-
-        // parameters for the Van Genuchten law
-        // alpha and n
-        lensMaterialParams_.setVgAlpha(0.00045);
-        lensMaterialParams_.setVgn(7.3);
-        outerMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgn(4.7);
+        // initialize the Van Genuchten law
+        lensPcKrSwCurve_ = std::make_unique<PcKrSwCurve>("SpatialParams.Lens");
+        outerPcKrSwCurve_ = std::make_unique<PcKrSwCurve>("SpatialParams.OuterDomain");
 
         lensK_ = 1e-12;
         outerK_ = 5e-12;
@@ -112,13 +102,12 @@ public:
      * \param elemSol The current element solution
      */
     template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    auto fluidMatrixInteraction(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
-
-        return materialLawParamsAtPos(globalPos);
+        return fluidMatrixInteractionAtPos(globalPos);
     }
 
     /*!
@@ -129,11 +118,12 @@ public:
      *
      * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         if (isInLens_(globalPos))
-            return lensMaterialParams_;
-        return outerMaterialParams_;
+            return makeFluidMatrixInteraction(*lensPcKrSwCurve_);
+
+        return makeFluidMatrixInteraction(*outerPcKrSwCurve_);
     }
 
 private:
@@ -153,8 +143,8 @@ private:
 
     Scalar lensK_;
     Scalar outerK_;
-    MaterialLawParams lensMaterialParams_;
-    MaterialLawParams outerMaterialParams_;
+    std::unique_ptr<PcKrSwCurve> lensPcKrSwCurve_;
+    std::unique_ptr<PcKrSwCurve> outerPcKrSwCurve_;
 };
 
 } // end namespace Dumux
