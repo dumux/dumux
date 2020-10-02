@@ -977,8 +977,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             }
 
             // complete fluid state
-            flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
-                                               problem().spatialParams().porosity(element), temperature_);
+            flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure, temperature_);
 
             // calculate new pc
             Scalar oldPc = pc;
@@ -996,8 +995,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     else  // capillary pressure neglected
     {
         pressure[wPhaseIdx] = pressure[nPhaseIdx] = asImp_().pressure()[eIdxGlobal];
-        flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure,
-                                           problem().spatialParams().porosity(element), temperature_);
+        flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure, temperature_);
     }
 
     // initialize mobilities
