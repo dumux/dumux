@@ -415,7 +415,7 @@ public:
      * \brief Add source term derivative to the Jacobian
      * \note Only needed in case of analytic differentiation and solution dependent sources
      */
-    template<class MatrixBlock, class VolumeVariables>
+    template<class MatrixBlock, class ElementVolumeVariables>
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
