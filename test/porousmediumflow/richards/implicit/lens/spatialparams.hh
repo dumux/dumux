@@ -64,20 +64,12 @@ public:
 
         // parameters for the Van Genuchten law
         // alpha and n
-        typename FluidMatrixInteraction::BasicParams lensParams;
-        typename FluidMatrixInteraction::BasicParams outerParams;
-        lensParams.setVgAlpha(0.00045);
-        lensParams.setVgn(7.3);
-        outerParams.setVgAlpha(0.0037);
-        outerParams.setVgn(4.7);
+        typename FluidMatrixInteraction::BasicParams lensParams(0.00045/*alpha*/, 7.3/*n*/);
+        typename FluidMatrixInteraction::BasicParams outerParams(0.0037/*alpha*/, 4.7/*n*/);
 
         // residual saturations
-        typename FluidMatrixInteraction::EffToAbsParams lensEffToAbsParams;
-        typename FluidMatrixInteraction::EffToAbsParams outerEffToAbsParams;
-        lensEffToAbsParams.setSwr(0.18);
-        lensEffToAbsParams.setSnr(0.0);
-        outerEffToAbsParams.setSwr(0.05);
-        outerEffToAbsParams.setSnr(0.0);
+        typename FluidMatrixInteraction::EffToAbsParams lensEffToAbsParams(0.18/*swr*/, 0.0/*snr*/);
+        typename FluidMatrixInteraction::EffToAbsParams outerEffToAbsParams(0.05/*swr*/, 0.0/*snr*/);
 
         lensFluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>(lensParams, lensEffToAbsParams);
         outerFluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>(outerParams, outerEffToAbsParams);
