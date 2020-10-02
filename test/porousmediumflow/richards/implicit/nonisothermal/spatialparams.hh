@@ -96,11 +96,11 @@ public:
         return porosity_;
     }
 
-        /*!
+    /*!
      * \brief Returns the parameter object for the Brooks-Corey material law
      *  which depends on the position
      *
-     * \param globalPos The global position where we evaluate
+     * \param globalPos The global coordinates for the given location
      */
      const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
     {
