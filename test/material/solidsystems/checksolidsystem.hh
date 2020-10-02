@@ -138,4 +138,4 @@ int checkSolidSystem()
 
 } // end namespace Dumux
 
-#endif // DUMUX_CHECK_SOLIDSYSTEM_HH
+#endif

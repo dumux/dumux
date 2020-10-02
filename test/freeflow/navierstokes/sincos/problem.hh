@@ -307,4 +307,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_SINCOS_TEST_PROBLEM_HH
+#endif

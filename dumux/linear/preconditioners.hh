@@ -335,4 +335,4 @@ DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditioner
 
 } // end namespace Dumux
 
-#endif // DUMUX_LINEAR_PRECONDITIONERS_HH
+#endif

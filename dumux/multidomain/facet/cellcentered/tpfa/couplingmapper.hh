@@ -172,4 +172,4 @@ public:
 
 } // end namespace Dumux
 
-#endif // DUMUX_FACETCOUPLING_CCTPFA_COUPLING_MAPPER_HH
+#endif

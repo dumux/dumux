@@ -84,4 +84,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_FRICTIONLAW_NIKURADSE_HH
+#endif

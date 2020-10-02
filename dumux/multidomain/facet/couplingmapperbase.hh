@@ -251,4 +251,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_FACETCOUPLING_COUPLING_MAPPER_BASE_HH
+#endif

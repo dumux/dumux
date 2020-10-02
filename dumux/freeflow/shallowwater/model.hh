@@ -165,4 +165,4 @@ struct AdvectionType<TypeTag, TTag::ShallowWater>
 } // end properties
 } // end namespace Dumux
 
-#endif // DUMUX_FREEFLOW_SHALLOW_WATER_MODEL_HH
+#endif

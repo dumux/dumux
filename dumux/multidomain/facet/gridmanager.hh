@@ -464,4 +464,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_FACETCOUPLING_GRID_CREATOR_HH
+#endif

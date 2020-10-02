@@ -118,4 +118,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
+#endif

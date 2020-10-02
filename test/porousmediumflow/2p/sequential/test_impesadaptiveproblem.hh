@@ -255,4 +255,4 @@ private:
 };
 } //end namespace
 
-#endif // DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
+#endif

@@ -34,4 +34,4 @@ enum class TestCase
 
 } // end namespace Dumux
 
-#endif // DUMUX_CONVERGENCE_TEST_TESTCASE_HH
+#endif

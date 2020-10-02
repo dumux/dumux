@@ -221,4 +221,4 @@ struct IOFields<TypeTag, TTag::KEpsilonNI> { using type = FreeflowNonIsothermalI
 } // end properties
 } // end namespace
 
-#endif // DUMUX_KEPSILON_MODEL_HH
+#endif

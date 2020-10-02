@@ -416,4 +416,4 @@ private:
 };
 } // end namespace Dumux
 
-#endif // DUMUX_STOKES1P2C_SUBPROBLEM_HH
+#endif

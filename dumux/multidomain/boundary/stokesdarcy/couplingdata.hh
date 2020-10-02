@@ -1141,4 +1141,4 @@ protected:
 
 } // end namespace Dumux
 
-#endif // DUMUX_STOKES_DARCY_COUPLINGDATA_HH
+#endif

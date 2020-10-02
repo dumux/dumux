@@ -75,4 +75,4 @@ public:
 }   // namespace Dumux
 
 
-#endif // REGULARIZED_VAN_GENUCHTEN_OF_TEMPERATURE_HH
+#endif

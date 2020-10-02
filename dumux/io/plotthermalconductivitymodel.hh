@@ -166,4 +166,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
+#endif

@@ -335,4 +335,4 @@ private:
 
 } // end namespace Dumux
 
-#endif   // DUMUX_CC_LOCAL_RESIDUAL_HH
+#endif

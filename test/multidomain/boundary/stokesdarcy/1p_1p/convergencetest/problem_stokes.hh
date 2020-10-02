@@ -396,4 +396,4 @@ private:
 };
 } // end namespace Dumux
 
-#endif // DUMUX_FREEFLOW_SUBPROBLEM_HH
+#endif

@@ -318,4 +318,4 @@ private:
 };
 
 } // end namespace Dumux
-#endif // DUMUX_RICHARDSNINI_CONDUCTION_PROBLEM_HH
+#endif

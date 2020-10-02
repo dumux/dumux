@@ -222,4 +222,4 @@ struct IOFields<TypeTag, TTag::TwoPOneCNI> { using type = EnergyIOFields<TwoPOne
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_2P1C_MODEL_HH
+#endif

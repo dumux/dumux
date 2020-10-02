@@ -85,4 +85,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // DUMUX_FRICTIONLAW_MANNING_HH
+#endif

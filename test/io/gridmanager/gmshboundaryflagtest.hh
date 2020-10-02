@@ -108,4 +108,4 @@ private:
 } // end namespace Dumux
 
 
-#endif /* DUMUX_TEST_IO_GMSHBOUNDARYFLAG_TEST_HH */
+#endif

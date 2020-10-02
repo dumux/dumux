@@ -340,4 +340,4 @@ private:
 };
 
 } // end namespace
-#endif // DUMUX_RICHARDSNI_CONVECTION_PROBLEM_HH
+#endif

@@ -207,4 +207,4 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<CoordScalar, 3>>
 
 } // end namespace Dumux
 
-#endif // DUMUX_MAKE_GEOMETRY_HH
+#endif

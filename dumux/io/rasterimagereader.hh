@@ -493,4 +493,4 @@ private:
 
 } // namespace Dumux
 
-#endif // DUMUX_RASTER_IMAGE_READER_HH
+#endif

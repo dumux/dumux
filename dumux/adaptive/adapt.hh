@@ -60,4 +60,4 @@ bool adapt(Grid& grid, GridDataTransfer& dataTransfer)
 
 } // end namespace Dumux
 
-#endif /* DUMUX_ADAPTIVE_ADAPT_HH */
+#endif

@@ -53,4 +53,4 @@ struct MultiTypeBlockMatrixDirectSolverTag {};
 } // end namespace
 } // end namespace Dumux
 
-#endif // DUMUX_LINEAR_ISTL_SOLVER_REGISTRY_HH
+#endif

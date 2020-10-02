@@ -167,4 +167,4 @@ inline void SetNoAccess(const T *value, int n)
 
 #endif // HAVE_VALGRIND
 
-#endif // DUMUX_VALGRIND_HH
+#endif

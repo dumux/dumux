@@ -46,4 +46,4 @@ using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, GetPropType<TypeT
 
 } // end namespace Dumux
 
-#endif   // DUMUX_NAVIERSTOKES_LOCAL_RESIDUAL_HH
+#endif

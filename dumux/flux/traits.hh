@@ -50,4 +50,4 @@ struct FluxTraits
 
 } // namespace Dumux
 
-#endif // DUMUX_FLUX_TRAITS_HH
+#endif

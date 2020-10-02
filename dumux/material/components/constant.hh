@@ -218,4 +218,4 @@ public:
 
 } // end namespace Dumux
 
-#endif // DUMUX_COMPONENTS_CONSTANT_HH
+#endif

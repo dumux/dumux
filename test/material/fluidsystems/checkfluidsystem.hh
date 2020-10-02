@@ -667,4 +667,4 @@ int checkFluidSystem(bool enablePhaseRestriction = true)
 
 } // end namespace Dumux
 
-#endif // DUMUX_CHECK_FLUIDSYSTEM_HH
+#endif
