@@ -89,7 +89,10 @@ public:
         eps2 *= 1.5e-7*1.5e-7;
 
         for (int i = 0; i < corners_.size(); ++i)
-            if ((corners_[i] - otherCorners[i]).two_norm2() > eps2)
+            // early return if none of the other corners are equal to this corner
+            if (std::none_of(otherCorners.begin(),
+                             otherCorners.end(),
+                             [&] (const auto& other) { return (corners_[i] - other).two_norm2() < eps2; }))
                 return false;
 
         return true;
