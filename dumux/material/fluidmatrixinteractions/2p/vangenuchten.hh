@@ -321,15 +321,77 @@ public:
     template<class Scalar>
     struct Params
     {
-        Scalar n, m, alpha, l;
+        /*!
+         * \brief Return the \f$\mathrm{\alpha}\f$ shape parameter \f$\mathrm{[1/Pa]}\f$ of van Genuchten's
+         *        curve.
+         */
+        Scalar vgAlpha() const
+        { return vgAlpha_; }
+
+        /*!
+         * \brief Set the \f$\mathrm{\alpha}\f$ shape parameter \f$\mathrm{[1/Pa]}\f$ of van Genuchten's
+         *        curve.
+         */
+        void setVgAlpha(Scalar v)
+        { vgAlpha_ = v; }
+
+        /*!
+         * \brief Return the \f$\mathrm{m}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+         *        curve.
+         */
+        Scalar vgm() const
+        { return vgm_; }
+
+        /*!
+         * \brief Set the \f$\mathrm{m}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+         *        curve.
+         *
+         * The \f$\mathrm{n}\f$ shape parameter is set to \f$\mathrm{n = \frac{1}{1 - m}}\f$
+         */
+        void setVgm(Scalar m)
+        { vgm_ = m; vgn_ = 1/(1 - vgm_); }
+
+        /*!
+         * \brief Return the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+         *        curve.
+         */
+        Scalar vgn() const
+        { return vgn_; }
+
+        /*!
+         * \brief Set the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+         *        curve.
+         *
+         * The \f$\mathrm{n}\f$ shape parameter is set to \f$\mathrm{m = 1 - \frac{1}{n}}\f$
+         */
+        void setVgn(Scalar n)
+        { vgn_ = n; vgm_ = 1 - 1/vgn_; }
+
+        /*!
+         * \brief Return the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+         *        curve.
+         */
+        Scalar vgl() const
+        { return vgl_; }
+
+        /*!
+         * \brief Set the pore-connectivity parameter \f$\mathrm{l}\f$ (\f$\mathrm{[-]}\f$) of Mualem's relative permeability curve
+         * \note In the orignal Mualem (1976) paper the pore-connectivity parameter is called "n". It's referred to as "l" in
+         *       several later publication of van Genuchten, e.g. van Genuchten (1991), Shaap & van Genuchten (2006).
+         */
+        void setVgl(Scalar l)
+        { vgl_ = l; }
 
         bool operator== (const Params& p) const
         {
-            return Dune::FloatCmp::eq(n, p.n, 1e-6)
-                   && Dune::FloatCmp::eq(m, p.m, 1e-6)
-                   && Dune::FloatCmp::eq(alpha, p.alpha, 1e-6)
-                   && Dune::FloatCmp::eq(l, p.l, 1e-6);
+            return Dune::FloatCmp::eq(vgAlpha_, p.vgAlpha_, 1e-6)
+                   && Dune::FloatCmp::eq(vgn_, p.vgn_, 1e-6)
+                   && Dune::FloatCmp::eq(vgm_, p.vgm_, 1e-6)
+                   && Dune::FloatCmp::eq(vgl_, p.vgl_, 1e-6);
         }
+    private:
+        Scalar vgAlpha_, vgn_, vgm_;
+        Scalar vgl_ = 0.5; //!< l is usually chosen as 0.5 (according to Mualem (1976), WRR)
     };
 
     /*!
@@ -344,7 +406,12 @@ public:
         const auto vgAlpha = getParamFromGroup<Scalar>(paramGroup, "VgAlpha");
         // l is usually chosen to be 0.5 (according to Mualem (1976), WRR)
         const auto vgl = getParamFromGroup<Scalar>(paramGroup, "Vgl", 0.5);
-        return {vgn, vgm, vgAlpha, vgl};
+        Params<Scalar> params;
+        params.setVgn(vgn);
+        params.setVgm(vgm);
+        params.setVgAlpha(vgAlpha);
+        params.setVgl(vgl);
+        return params;
     }
 
     /*!
@@ -368,7 +435,7 @@ public:
 
         swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        const Scalar pc = pow(pow(swe, -1.0/params.m) - 1, 1.0/params.n)/params.alpha;
+        const Scalar pc = pow(pow(swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
         return pc;
     }
 
@@ -394,7 +461,7 @@ public:
 
         pc = max(pc, 0.0); // the equation below is undefined for negative pcs
 
-        const Scalar sw = pow(pow(params.alpha*pc, params.n) + 1, -params.m);
+        const Scalar sw = pow(pow(params.vgAlpha()*pc, params.vgn()) + 1, -params.vgm());
         return sw;
     }
 
@@ -430,9 +497,9 @@ public:
 
         swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        const Scalar powSwe = pow(swe, -1/params.m);
-        return - 1.0/params.alpha * pow(powSwe - 1, 1.0/params.n - 1)/params.n
-                                  * powSwe/swe/params.m;
+        const Scalar powSwe = pow(swe, -1/params.vgm());
+        return - 1.0/params.vgAlpha() * pow(powSwe - 1, 1.0/params.vgn() - 1)/params.vgn()
+                                  * powSwe/swe/params.vgm();
     }
 
     /*!
@@ -452,8 +519,8 @@ public:
 
         pc = max(pc, 0.0); // the equation below is undefined for negative pcs
 
-        const Scalar powAlphaPc = pow(params.alpha*pc, params.n);
-        return -pow(powAlphaPc + 1, -params.m-1)*params.m*powAlphaPc/pc*params.n;
+        const Scalar powAlphaPc = pow(params.vgAlpha()*pc, params.vgn());
+        return -pow(powAlphaPc + 1, -params.vgm()-1)*params.vgm()*powAlphaPc/pc*params.vgn();
     }
 
     /*!
@@ -474,8 +541,8 @@ public:
 
         swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        const Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.m), params.m);
-        return pow(swe, params.l)*r*r;
+        const Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.vgm()), params.vgm());
+        return pow(swe, params.vgl())*r*r;
     }
 
     /*!
@@ -496,9 +563,9 @@ public:
 
         swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        const Scalar x = 1.0 - pow(swe, 1.0/params.m);
-        const Scalar xToM = pow(x, params.m);
-        return (1.0 - xToM)*pow(swe, params.l-1) * ( (1.0 - xToM)*params.l + 2*xToM*(1.0-x)/x );
+        const Scalar x = 1.0 - pow(swe, 1.0/params.vgm());
+        const Scalar xToM = pow(x, params.vgm());
+        return (1.0 - xToM)*pow(swe, params.vgl()-1) * ( (1.0 - xToM)*params.vgl() + 2*xToM*(1.0-x)/x );
     }
 
     /*!
@@ -518,7 +585,7 @@ public:
 
         swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        return pow(1 - swe, params.l) * pow(1 - pow(swe, 1.0/params.m), 2*params.m);
+        return pow(1 - swe, params.vgl()) * pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
     }
 
     /*!
@@ -541,8 +608,8 @@ public:
         swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
         const auto sne = 1.0 - swe;
-        const auto x = 1.0 - pow(swe, 1.0/params.m);
-        return -pow(sne, params.l-1.0) * pow(x, 2*params.m - 1.0) * ( params.l*x + 2.0*sne/swe*(1.0 - x) );
+        const auto x = 1.0 - pow(swe, 1.0/params.vgm());
+        return -pow(sne, params.vgl()-1.0) * pow(x, 2*params.vgm() - 1.0) * ( params.vgl()*x + 2.0*sne/swe*(1.0 - x) );
     }
 };
 
@@ -561,8 +628,70 @@ public:
     template<class S>
     struct Params
     {
-        S pcLowSwe, pcHighSwe;
-        S krwHighSwe, krnLowSwe;
+
+    /*!
+     * \brief Set the threshold saturation below which the capillary pressure is regularized.
+     *
+     * Most problems are very sensitive to this value (e.g. making it smaller might
+     * result in very high capillary pressures)
+     */
+    void setPcLowSw(Scalar pcLowSwe)
+    { pcLowSwe_ = pcLowSwe; }
+
+    /*!
+     * \brief Threshold saturation below which the capillary pressure is regularized.
+     */
+    Scalar pcLowSwe() const
+    { return pcLowSwe_; }
+
+    /*!
+     * \brief Set the threshold saturation above which the capillary pressure is regularized.
+     */
+    void setPcHighSwe(Scalar pcHighSwe)
+    { pcHighSwe_ = pcHighSwe; }
+
+    /*!
+     * \brief Threshold saturation above which the capillary pressure is regularized.
+     *
+     * Most problems are very sensitive to this value (e.g. making it smaller might
+     * result in negative capillary pressures).
+     */
+    Scalar pcHighSwe() const
+    { return pcHighSwe_; }
+
+    /*!
+     * \brief Set the threshold saturation below which the relative
+     *        permeability of the non-wetting phase gets regularized.
+     */
+    void setKrnLowSwe(Scalar krnLowSwe)
+    { krnLowSwe_ = krnLowSwe; }
+
+    /*!
+     * \brief Threshold saturation below which the relative
+     *        permeability of the non-wetting phase gets regularized.
+     */
+    Scalar krnLowSwe() const
+    { return krnLowSwe_; }
+
+    /*!
+     * \brief Set the threshold saturation above which the relative
+     *        permeability of the wetting phase gets regularized.
+     */
+    void setKrwHighSwe(Scalar krwHighSwe)
+    { krwHighSwe_ = krwHighSwe; }
+
+    /*!
+     * \brief Threshold saturation above which the relative
+     *        permeability of the wetting phase gets regularized.
+     */
+    Scalar krwHighSwe() const
+    { return krwHighSwe_; }
+
+    private:
+        S pcLowSwe_ = 0.01;
+        S pcHighSwe_ = 0.99;
+        S krnLowSwe_ = 0.1;
+        S krwHighSwe_ = 0.9;
     };
 
     //! Initialize the spline
@@ -581,10 +710,10 @@ public:
     template<class MaterialLaw, class BaseParams, class EffToAbsParams>
     void init(const MaterialLaw* m, const BaseParams& bp, const EffToAbsParams& etap, const Params<Scalar>& p)
     {
-        pcLowSwe_ = p.pcLowSwe;
-        pcHighSwe_ = p.pcHighSwe;
-        krwHighSwe_ = p.krwHighSwe;
-        krnLowSwe_ = p.krnLowSwe;
+        pcLowSwe_ = p.pcLowSwe();
+        pcHighSwe_ = p.pcHighSwe();
+        krwHighSwe_ = p.krwHighSwe();
+        krnLowSwe_ = p.krnLowSwe();
 
         initPcParameters_(m, pcLowSwe_, pcHighSwe_);
         initKrParameters_(m, krnLowSwe_, krwHighSwe_);
