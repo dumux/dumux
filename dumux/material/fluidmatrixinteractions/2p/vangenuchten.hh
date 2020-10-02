@@ -687,11 +687,11 @@ public:
     Scalar krwHighSwe() const
     { return krwHighSwe_; }
 
-    private:
-        S pcLowSwe_ = 0.01;
-        S pcHighSwe_ = 0.99;
-        S krnLowSwe_ = 0.1;
-        S krwHighSwe_ = 0.9;
+private:
+    S pcLowSwe_ = 0.01;
+    S pcHighSwe_ = 0.99;
+    S krnLowSwe_ = 0.1;
+    S krwHighSwe_ = 0.9;
     };
 
     //! Initialize the spline
