@@ -51,14 +51,38 @@ public:
     template<class Scalar>
     struct Params
     {
-        Scalar swr = 0.0;
-        Scalar snr = 0.0;
+        /*!
+         * \brief Return the residual wetting saturation.
+         */
+        Scalar swr() const
+        { return swr_; }
+
+        /*!
+         * \brief Set the residual wetting saturation.
+         */
+        void setSwr(Scalar v)
+        { swr_ = v; }
+
+        /*!
+         * \brief Return the residual non-wetting saturation.
+         */
+        Scalar snr() const
+        { return snr_; }
+
+        /*!
+         * \brief Set the residual non-wetting saturation.
+         */
+        void setSnr(Scalar v)
+        { snr_ = v; }
 
         bool operator== (const Params& p) const
         {
             return Dune::FloatCmp::eq(swr, p.swr, 1e-6)
                    && Dune::FloatCmp::eq(snr, p.snr, 1e-6);
         }
+    private:
+        Scalar swr_ = 0.0;
+        Scalar snr_ = 0.0;
     };
 
     /*!
@@ -68,10 +92,10 @@ public:
     template<class Scalar>
     static Params<Scalar> makeParams(const std::string& paramGroup)
     {
-        return {
-            getParamFromGroup<Scalar>(paramGroup, "Swr", 0.0),
-            getParamFromGroup<Scalar>(paramGroup, "Snr", 0.0)
-        };
+        Params<Scalar> params;
+        params.setSwr(getParamFromGroup<Scalar>(paramGroup, "Swr", 0.0));
+        params.setSnr(getParamFromGroup<Scalar>(paramGroup, "Snr", 0.0));
+        return params;
     }
 
     /*!
@@ -86,7 +110,7 @@ public:
     template<class Scalar>
     static Scalar swToSwe(const Scalar sw, const Params<Scalar>& params)
     {
-        return (sw - params.swr)/(1.0 - params.swr - params.snr);
+        return (sw - params.swr())/(1.0 - params.swr() - params.snr());
     }
 
     /*!
@@ -101,7 +125,7 @@ public:
     template<class Scalar>
     static Scalar sweToSw(const Scalar swe, const Params<Scalar>& params)
     {
-        return swe*(1.0 - params.swr - params.snr) + params.swr;
+        return swe*(1.0 - params.swr() - params.snr()) + params.swr();
     }
 
     /*!
@@ -115,7 +139,7 @@ public:
     template<class Scalar>
     static Scalar dswe_dsw(const Params<Scalar>& params)
     {
-        return 1.0/(1.0 - params.swr - params.snr);
+        return 1.0/(1.0 - params.swr() - params.snr());
     }
 
     /*!
@@ -129,7 +153,7 @@ public:
     template<class Scalar>
     static Scalar dsw_dswe(const Params<Scalar>& params)
     {
-        return 1.0 - params.swr - params.snr;
+        return 1.0 - params.swr() - params.snr();
     }
 };
 
