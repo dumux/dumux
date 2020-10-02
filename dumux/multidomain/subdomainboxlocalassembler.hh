@@ -713,7 +713,7 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     static constexpr bool enableGridVolVarsCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    enum { dim = GetPropType<TypeTag, Properties::GridView>::dimension };
+    enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
 
 public:
     using ParentType::ParentType;
