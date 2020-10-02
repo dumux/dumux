@@ -775,7 +775,6 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*
     static constexpr int dim = GridView::dimension;
 
     static constexpr auto domainI = Dune::index_constant<id>();
-    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr bool enableGridFluxVarsCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     static constexpr bool enableGridVolVarsCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
 
@@ -968,10 +967,11 @@ public:
 
         if constexpr (Problem::enableInternalDirichletConstraints())
         {
-
+            const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
+            const auto& stencil = this->couplingManager().couplingStencil(domainI, this->element(), domainJ);
             for (const auto globalJ : stencil)
             {
-                const auto& scv = fvGeometry.scv(globalI);
+                const auto& scv = this->fvGeometry().scv(globalI);
                 const auto internalDirichletConstraints = this->problem().hasInternalDirichletConstraint(this->element(), scv);
                 if (internalDirichletConstraints.any())
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
