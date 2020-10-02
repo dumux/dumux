@@ -25,6 +25,8 @@
 #ifndef DUMUX_VAN_GENUCHTEN_PARAMS_HH
 #define DUMUX_VAN_GENUCHTEN_PARAMS_HH
 
+// TODO Deprecated. Remove after 3.3
+
 #include <dune/common/float_cmp.hh>
 
 namespace Dumux {
@@ -38,7 +40,7 @@ namespace Dumux {
  *       automatically calculates the other. I.e. they cannot be set independently.
  */
 template<class ScalarT>
-class [[deprecated("Use new material laws! Removal after 3.3")]] VanGenuchtenParams
+class VanGenuchtenParams
 {
 public:
     using Scalar = ScalarT;
