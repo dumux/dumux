@@ -85,6 +85,7 @@ int main(int argc, char** argv)
     const auto resultDerivPlot = eval([&](const double x) { return spline.evalDerivative(x); }, plotPoints);
 
     Dumux::GnuplotInterface<double> gnuplot(false);
+    gnuplot.setOpenPlotWindow(false);
     gnuplot.addDataSetToPlot(plotPoints, refPlot, "reference");
     gnuplot.addDataSetToPlot(plotPoints, refDerivPlot, "reference_derivative");
     gnuplot.addDataSetToPlot(plotPoints, resultPlot, "spline");
