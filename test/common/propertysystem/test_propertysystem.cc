@@ -80,7 +80,6 @@ struct UseTpfaFlux<TypeTag, TTag::CCTpfaDisc> { static constexpr bool value = tr
 } // end namespace Properties
 } // end namespace Dumux
 
-//! the main function
 int main(int argc, char* argv[])
 {
     using namespace Dumux;
@@ -120,4 +119,3 @@ int main(int argc, char* argv[])
     std::cout << "All tests passed!" << std::endl;
     return 0;
 }
-// find . -type f -not -path '*common/properties*' -not -path '*/sequential/*' -not -name 'test_propertysystem*.cc' -name '*.[ch][ch]' -exec sed -i 's/SET_BOOL_PROP[ ]*(\([^,]*\),[ ]*\([^,]*\),[ ]*\([^)]*\))/template<class TypeTag>\nstruct \2<TypeTag, TTag::\1> { static constexpr bool value = \3; }/g' {} \;
