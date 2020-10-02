@@ -80,13 +80,16 @@ public:
             return false;
 
         using std::max;
-        ctype eps = std::numeric_limits<ctype>::min();
+        ctype eps2 = std::numeric_limits<ctype>::min();
         for (int i = 1; i < corners_.size(); ++i)
-            eps = max(eps, (corners_[i] - corners_[0]).two_norm());
-        eps *= 1.5e-7;
+            eps2 = max(eps2, (corners_[i] - corners_[0]).two_norm2());
+
+        // We use a base epsilon of 1.5e-7 for comparisons of lengths.
+        // Since here we compare squared lengths, we multiply by its square.
+        eps2 *= 1.5e-7*1.5e-7;
 
         for (int i = 0; i < corners_.size(); ++i)
-            if ((corners_[i] - otherCorners[i]).two_norm() > eps)
+            if ((corners_[i] - otherCorners[i]).two_norm2() > eps2)
                 return false;
 
         return true;
