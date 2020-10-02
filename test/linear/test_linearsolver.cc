@@ -50,7 +50,7 @@ void solveWithFactory(M& A, X& x, V& b, const std::string& paramGroup)
 
 } // end namespace Dumux::Test
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
 {
     using namespace Dumux;
 
@@ -87,9 +87,4 @@ int main(int argc, char* argv[]) try
     Test::solveWithFactory(A, x, b, "SSORCG");
 
     return 0;
-}
-catch (const Dune::Exception& e)
-{
-    std::cout << e << std::endl;
-    return 1;
 }

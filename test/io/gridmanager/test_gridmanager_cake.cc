@@ -70,7 +70,7 @@ void testCakeGridManager(const std::string& name)
     vtkWriter.write(name);
 }
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);
@@ -86,16 +86,4 @@ int main(int argc, char** argv) try
     testCakeGridManager<2>("cake-2d-" + name);
 
     return 0;
-}
-catch (Dumux::ParameterException &e) {
-    std::cerr << e << ". Abort!\n";
-    return 1;
-}
-catch (Dune::Exception &e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
-    return 3;
-}
-catch (...) {
-    std::cerr << "Unknown exception thrown!\n";
-    return 4;
 }

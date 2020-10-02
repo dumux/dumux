@@ -28,7 +28,6 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 #include <dune/istl/io.hh>
 
@@ -77,7 +76,7 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 // the main function
 ////////////////////////
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -193,29 +192,4 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-}
-
-catch (Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (Dune::DGFException & e)
-{
-    std::cerr << "DGF exception thrown (" << e <<
-                 "). Most likely, the DGF file name is wrong "
-                 "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
-                 << " ---> Abort!" << std::endl;
-    return 2;
-}
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
 }

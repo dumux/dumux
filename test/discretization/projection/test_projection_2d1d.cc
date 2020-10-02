@@ -49,7 +49,7 @@
 #include <dumux/discretization/projection/projector.hh>
 #include <dumux/multidomain/glue.hh>
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -165,12 +165,4 @@ int main (int argc, char *argv[]) try
         DUNE_THROW(Dune::MathError, "Error norm on 1d grid too high!");
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception &e) {
-
-    std::cout << e << std::endl;
-    return 1;
 }

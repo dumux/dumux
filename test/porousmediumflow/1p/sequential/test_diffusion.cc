@@ -55,83 +55,72 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    try {
-        using TypeTag = Properties::TTag::FVVelocity2PTestTypeTag;
+    using TypeTag = Properties::TTag::FVVelocity2PTestTypeTag;
 
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
+    // initialize MPI, finalize is done automatically on exit
+    Dune::MPIHelper::instance(argc, argv);
 
-        auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
-        Dumux::Parameters::init(argc, argv, defaultParams, usage);
+    auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
+    Dumux::Parameters::init(argc, argv, defaultParams, usage);
 
-        ////////////////////////////////////////////////////////////
-        // create the grid
-        ////////////////////////////////////////////////////////////
-        Dumux::GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
-        gridManager.init();
-        auto& grid = gridManager.grid();
+    ////////////////////////////////////////////////////////////
+    // create the grid
+    ////////////////////////////////////////////////////////////
+    Dumux::GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    gridManager.init();
+    auto& grid = gridManager.grid();
 
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        ////////////////////////////////////////////////////////////
-        Dune::Timer timer;
-        bool consecutiveNumbering = true;
+    ////////////////////////////////////////////////////////////
+    // instantiate and run the concrete problem
+    ////////////////////////////////////////////////////////////
+    Dune::Timer timer;
+    bool consecutiveNumbering = true;
 
-        using FVProblem = GetPropType<Properties::TTag::FVVelocity2PTestTypeTag, Properties::Problem>;
-        FVProblem fvProblem(grid);
-        fvProblem.setName("fvdiffusion");
-        timer.reset();
-        fvProblem.init();
-        fvProblem.calculateFVVelocity();
-        double fvTime = timer.elapsed();
-        fvProblem.writeOutput();
-        Dumux::ResultEvaluation fvResult;
-        fvResult.evaluate(grid.leafGridView(), fvProblem, consecutiveNumbering);
+    using FVProblem = GetPropType<Properties::TTag::FVVelocity2PTestTypeTag, Properties::Problem>;
+    FVProblem fvProblem(grid);
+    fvProblem.setName("fvdiffusion");
+    timer.reset();
+    fvProblem.init();
+    fvProblem.calculateFVVelocity();
+    double fvTime = timer.elapsed();
+    fvProblem.writeOutput();
+    Dumux::ResultEvaluation fvResult;
+    fvResult.evaluate(grid.leafGridView(), fvProblem, consecutiveNumbering);
 
-        using MPFAOProblem = GetPropType<Properties::TTag::FVMPFAOVelocity2PTestTypeTag, Properties::Problem>;
-        MPFAOProblem mpfaProblem(grid);
-        mpfaProblem.setName("fvmpfaodiffusion");
-        timer.reset();
-        mpfaProblem.init();
-        double mpfaTime = timer.elapsed();
-        mpfaProblem.writeOutput();
-        Dumux::ResultEvaluation mpfaResult;
-        mpfaResult.evaluate(grid.leafGridView(), mpfaProblem, consecutiveNumbering);
+    using MPFAOProblem = GetPropType<Properties::TTag::FVMPFAOVelocity2PTestTypeTag, Properties::Problem>;
+    MPFAOProblem mpfaProblem(grid);
+    mpfaProblem.setName("fvmpfaodiffusion");
+    timer.reset();
+    mpfaProblem.init();
+    double mpfaTime = timer.elapsed();
+    mpfaProblem.writeOutput();
+    Dumux::ResultEvaluation mpfaResult;
+    mpfaResult.evaluate(grid.leafGridView(), mpfaProblem, consecutiveNumbering);
 
-        using MimeticProblem = GetPropType<Properties::TTag::MimeticPressure2PTestTypeTag, Properties::Problem>;
-        MimeticProblem mimeticProblem(grid);
-        mimeticProblem.setName("mimeticdiffusion");
-        timer.reset();
-        mimeticProblem.init();
-        double mimeticTime = timer.elapsed();
-        mimeticProblem.writeOutput();
-        Dumux::ResultEvaluation mimeticResult;
-        mimeticResult.evaluate(grid.leafGridView(), mimeticProblem, consecutiveNumbering);
+    using MimeticProblem = GetPropType<Properties::TTag::MimeticPressure2PTestTypeTag, Properties::Problem>;
+    MimeticProblem mimeticProblem(grid);
+    mimeticProblem.setName("mimeticdiffusion");
+    timer.reset();
+    mimeticProblem.init();
+    double mimeticTime = timer.elapsed();
+    mimeticProblem.writeOutput();
+    Dumux::ResultEvaluation mimeticResult;
+    mimeticResult.evaluate(grid.leafGridView(), mimeticProblem, consecutiveNumbering);
 
-        std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
-        std::cout.precision(2);
-        std::cout << "\t error press \t error grad\t sumflux\t erflm\t\t uMin\t\t uMax\t\t time" << std::endl;
-        std::cout << "2pfa\t " << fvResult.relativeL2Error << "\t " << fvResult.ergrad << "\t " << fvResult.sumflux
-                        << "\t " << fvResult.erflm << "\t " << fvResult.uMin
-                        << "\t " << fvResult.uMax << "\t " << fvTime << std::endl;
-        std::cout << "mpfa-o\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.ergrad
-                        << "\t " << mpfaResult.sumflux << "\t " << mpfaResult.erflm
-                        << "\t " << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaTime << std::endl;
-        std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.ergrad
-                        << "\t " << mimeticResult.sumflux << "\t " << mimeticResult.erflm
-                        << "\t " << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticTime << std::endl;
-
+    std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+    std::cout.precision(2);
+    std::cout << "\t error press \t error grad\t sumflux\t erflm\t\t uMin\t\t uMax\t\t time" << std::endl;
+    std::cout << "2pfa\t " << fvResult.relativeL2Error << "\t " << fvResult.ergrad << "\t " << fvResult.sumflux
+                    << "\t " << fvResult.erflm << "\t " << fvResult.uMin
+                    << "\t " << fvResult.uMax << "\t " << fvTime << std::endl;
+    std::cout << "mpfa-o\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.ergrad
+                    << "\t " << mpfaResult.sumflux << "\t " << mpfaResult.erflm
+                    << "\t " << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaTime << std::endl;
+    std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.ergrad
+                    << "\t " << mimeticResult.sumflux << "\t " << mimeticResult.erflm
+                    << "\t " << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticTime << std::endl;
 
 
-        return 0;
-    }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        throw;
-    }
 
-    return 3;
+    return 0;
 }

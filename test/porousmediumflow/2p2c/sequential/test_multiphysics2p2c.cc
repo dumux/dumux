@@ -47,80 +47,69 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    try {
-        using TypeTag = Properties::TTag::TestMultTwoPTwoC;
-        using Grid = GetPropType<TypeTag, Properties::Grid>;
-        using Problem = GetPropType<TypeTag, Properties::Problem>;
-        using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
+    using TypeTag = Properties::TTag::TestMultTwoPTwoC;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using TimeManager = GetPropType<TypeTag, Properties::TimeManager>;
 
-        static const int dim = Grid::dimension;
+    static const int dim = Grid::dimension;
 
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
+    // initialize MPI, finalize is done automatically on exit
+    Dune::MPIHelper::instance(argc, argv);
 
-        auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
-        Dumux::Parameters::init(argc, argv, defaultParams, usage);
+    auto defaultParams = [] (Dune::ParameterTree& p) {GetProp<TypeTag, Properties::ModelDefaultParameters>::defaultParams(p);};
+    Dumux::Parameters::init(argc, argv, defaultParams, usage);
 
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    // parse the command line arguments
+    ////////////////////////////////////////////////////////////
+    // deal with the restart stuff
+    int argPos = 1;
+    bool restart = false;
+    double startTime = 0;
+    // deal with start parameters
+    double tEnd= 3e3;
+    double firstDt = 200;
+    if (argc != 1)
+    {
         // deal with the restart stuff
-        int argPos = 1;
-        bool restart = false;
-        double startTime = 0;
-        // deal with start parameters
-        double tEnd= 3e3;
-        double firstDt = 200;
-        if (argc != 1)
-        {
-            // deal with the restart stuff
-            if (std::string("--restart") == argv[argPos]) {
-                restart = true;
-                ++argPos;
+        if (std::string("--restart") == argv[argPos]) {
+            restart = true;
+            ++argPos;
 
-                std::istringstream(argv[argPos++]) >> startTime;
-            }
-            if (argc - argPos == 2)
-            {
-                // read the initial time step and the end time
-                std::istringstream(argv[argPos++]) >> tEnd;
-                std::istringstream(argv[argPos++]) >> firstDt;
-            }
-            else
-                usage(argv[0]);
+            std::istringstream(argv[argPos++]) >> startTime;
+        }
+        if (argc - argPos == 2)
+        {
+            // read the initial time step and the end time
+            std::istringstream(argv[argPos++]) >> tEnd;
+            std::istringstream(argv[argPos++]) >> firstDt;
         }
         else
-        {
-            Dune::dwarn << "simulation started with predefs" << std::endl;
-        }
-
-        ////////////////////////////////////////////////////////////
-        // create the grid
-        ////////////////////////////////////////////////////////////
-        std::array<int,dim> N;
-        std::fill(N.begin(), N.end(), 10);
-        Dune::FieldVector<double,dim> H(10.0);
-        Grid grid(H, N);
-
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        ////////////////////////////////////////////////////////////
-        TimeManager timeManager;
-        Problem problem(timeManager, grid, H);
-
-        // initialize the simulation
-        timeManager.init(problem, startTime, firstDt, tEnd, restart);
-        // run the simulation
-        timeManager.run();
-        return 0;
+            usage(argv[0]);
     }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        throw;
+    else
+    {
+        Dune::dwarn << "simulation started with predefs" << std::endl;
     }
 
-    return 3;
+    ////////////////////////////////////////////////////////////
+    // create the grid
+    ////////////////////////////////////////////////////////////
+    std::array<int,dim> N;
+    std::fill(N.begin(), N.end(), 10);
+    Dune::FieldVector<double,dim> H(10.0);
+    Grid grid(H, N);
+
+    ////////////////////////////////////////////////////////////
+    // instantiate and run the concrete problem
+    ////////////////////////////////////////////////////////////
+    TimeManager timeManager;
+    Problem problem(timeManager, grid, H);
+
+    // initialize the simulation
+    timeManager.init(problem, startTime, firstDt, tEnd, restart);
+    // run the simulation
+    timeManager.run();
+    return 0;
 }

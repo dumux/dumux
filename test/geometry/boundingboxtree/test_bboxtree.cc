@@ -179,7 +179,7 @@ private:
 
 } // end namespace Dumux
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -489,15 +489,4 @@ int main (int argc, char *argv[]) try
         return 1;
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dumux::ParameterException &e) {
-    std::cerr << e << ". Abort!\n";
-    return 1;
-}
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

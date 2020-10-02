@@ -60,7 +60,7 @@ struct MyCCTpfaGridGeometryTraits : public CCTpfaDefaultGridGeometryTraits<GridV
 } // end namespace Dumux
 
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -110,14 +110,6 @@ int main(int argc, char** argv) try
     GmshBoundaryFlagTest<Grid>::testGmshBoundaryFlag<CCTpfaFVGridGeometry>(leafGridView, ccTpfaFvGridGeometry, gridData);
 
     return 0;
-}
-catch (Dumux::ParameterException &e) {
-    std::cerr << e << ". Abort!\n";
-    return 1;
-}
-catch (Dune::Exception &e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
-    return 3;
 }
 
 #endif /* HAVE_DUNE_ALUGRID */

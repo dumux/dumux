@@ -130,7 +130,7 @@ void testPolygonIntersections(std::vector<bool>& returns)
 
 #endif
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
 {
     std::vector<bool> returns;
     testPolygonIntersections<2>(returns);
@@ -145,11 +145,4 @@ int main(int argc, char* argv[]) try
     std::cout << "All tests passed!" << std::endl;
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

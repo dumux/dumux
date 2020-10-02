@@ -92,7 +92,7 @@ GlobalPosition getDisplacement(const GlobalPosition& pos)
         DUNE_THROW(Dune::InvalidStateException, "Invalid position provided: " << pos);
 }
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -167,17 +167,4 @@ int main (int argc, char *argv[]) try
     bulkWriter.write("displacement_" + std::to_string(BulkGrid::dimension) + "d");
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception& e)
-{
-    std::cout << e << std::endl;
-    return 1;
-}
-catch (...)
-{
-    std::cout << "Unknown exception thrown" << std::endl;
-    return 1;
 }

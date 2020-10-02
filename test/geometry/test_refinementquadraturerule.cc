@@ -9,7 +9,7 @@
 #include <dune/geometry/affinegeometry.hh>
 #include <dumux/geometry/refinementquadraturerule.hh>
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -31,11 +31,4 @@ int main (int argc, char *argv[]) try
         DUNE_THROW(Dune::Exception, "Integration yields wrong simplex volume: " << volume << ", should be " << simplex.volume());
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }

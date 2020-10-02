@@ -30,7 +30,7 @@ void checkEndPointPc(const typename Law::Params& params)
 
 } // end namespace Dumux
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -57,10 +57,4 @@ int main(int argc, char** argv) try
     Test::runEffToAbsTest<BCRegEff, BCReg>("brookscorey-efftoabs", params, sw);
 
     return 0;
-}
-// error handler
-catch (const Dune::Exception& e)
-{
-    std::cerr << "Test failed with exception: " << e << std::endl;
-    return 1;
 }

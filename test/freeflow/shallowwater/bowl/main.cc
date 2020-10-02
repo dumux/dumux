@@ -28,7 +28,6 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
@@ -124,7 +123,7 @@ void computeAndPrintL2Error(const double t,
 ////////////////////////
 // the main function
 ////////////////////////
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -253,15 +252,4 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-}
-// Error handling
-catch (const Dumux::ParameterException &e)
-{
-    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
-    return 1;
-}
-catch (const Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 2;
 }

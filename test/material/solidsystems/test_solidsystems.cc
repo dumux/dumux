@@ -40,7 +40,7 @@
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/solid.hh>
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
     using Scalar = double;
@@ -119,14 +119,3 @@ int main(int argc, char** argv) try
     return success;
 
 } // end main
-
-catch (Dune::Exception &e)
-{
-    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
-    return 3;
-}
-catch (...)
-{
-    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
-    return 4;
-}

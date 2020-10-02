@@ -6,7 +6,7 @@
 
 #include <dumux/common/parameters.hh>
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     using namespace Dumux;
 
@@ -70,23 +70,4 @@ int main (int argc, char *argv[]) try
         DUNE_THROW(Dune::InvalidStateException, "Unused key \"Grid.Bells\" not found!");
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::RangeError &e) {
-    std::cout << e << std::endl;
-    return 1;
-}
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
-}
-catch (const std::exception& e) {
-    std::cout << e.what() << std::endl;
-    return 1;
-}
-catch (...) {
-    std::cout << "Unknown exception!" << std::endl;
-    return 1;
 }

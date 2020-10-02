@@ -24,7 +24,7 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dumux/io/grid/gridmanager_mmesh.hh>
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     using namespace Dumux;
 
@@ -56,19 +56,4 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-}
-///////////////////////////////////////
-//////// Error handler ////////////////
-///////////////////////////////////////
-catch (const Dumux::ParameterException& e) {
-    std::cerr << e << ". Abort!\n";
-    return 1;
-}
-catch (const Dune::Exception& e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
-    return 3;
-}
-catch (...) {
-    std::cerr << "Unknown exception thrown!\n";
-    return 4;
 }

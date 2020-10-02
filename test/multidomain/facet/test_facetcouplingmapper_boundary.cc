@@ -50,7 +50,7 @@ bool checkEquality(const Pos1& p1, const Pos2& p2, typename Pos1::value_type eps
     return std::all_of(d.begin(), d.end(), [eps] (auto coord) { return abs(coord) < eps; });
 }
 
-int main (int argc, char *argv[]) try
+int main (int argc, char *argv[])
 {
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
@@ -131,15 +131,4 @@ int main (int argc, char *argv[]) try
 
     // everything is ok
     std::cout << "\n... test passed!" << std::endl;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
-}
-catch (...) {
-    std::cout << "Unknown exception thrown" << std::endl;
-    return 1;
 }

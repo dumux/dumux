@@ -131,7 +131,7 @@ void runTests()
     }
 }
 
-int main(int argc, char** argv) try
+int main(int argc, char** argv)
 {
     // affine geometries (2d)
     runTests< Dune::AffineGeometry<double, 0, 2>, Dune::AffineGeometry<double, 1, 2> >();
@@ -154,11 +154,4 @@ int main(int argc, char** argv) try
     runTests< Dune::MultiLinearGeometry<double, 0, 3>, Dune::AffineGeometry<double, 1, 3> >();
 
     return 0;
-}
-// //////////////////////////////////
-//   Error handler
-// /////////////////////////////////
-catch (const Dune::Exception& e) {
-    std::cout << e << std::endl;
-    return 1;
 }
