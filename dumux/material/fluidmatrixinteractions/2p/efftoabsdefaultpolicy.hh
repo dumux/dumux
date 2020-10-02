@@ -51,6 +51,10 @@ public:
     template<class Scalar>
     struct Params
     {
+        Params(const Scalar swr, const Scalar snr)
+        : swr_(swr), snr_(snr)
+        {}
+
         /*!
          * \brief Return the residual wetting saturation.
          */
@@ -81,8 +85,8 @@ public:
                    && Dune::FloatCmp::eq(snr, p.snr, 1e-6);
         }
     private:
-        Scalar swr_ = 0.0;
-        Scalar snr_ = 0.0;
+        Scalar swr_;
+        Scalar snr_;
     };
 
     /*!
