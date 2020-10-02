@@ -25,6 +25,8 @@
 #ifndef LINEAR_MATERIAL_PARAMS_HH
 #define LINEAR_MATERIAL_PARAMS_HH
 
+// TODO Deprecated. Remove after 3.3
+
 namespace Dumux {
 
 /*!
@@ -33,7 +35,7 @@ namespace Dumux {
  *        law.
  */
 template<class ScalarT>
-class [[deprecated("Use new material laws! Removal after 3.3")]] LinearMaterialParams
+class LinearMaterialParams
 {
 public:
     using Scalar = ScalarT;
