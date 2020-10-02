@@ -7,6 +7,10 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 - The DuMu<sup>x</sup> install script has been translated to Python to improve portability. The old shell script will be removed after release 3.3.
 - The velocity reconstruction for immiscible porous-media models has been improved, leading to slightly
   different velocity fields in the vicinity of Neumann boundaries.
+- Basic support for Python bindings has been added. Python bindings are an experimental feature
+  and might undergo unannounced API changes until further notice. This concerns the files in the folders `python` and `dumux/python`. To activate
+    - add `-DDUNE_ENABLE_PYTHONBINDINGS=TRUE` and `-DCMAKE_POSITION_INDEPENDENT_CODE=TRUE` to your CMAKE_FLAGS and run dunecontrol
+    - run `python3 dune-common/bin/setup_dunepy.py`
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
@@ -20,8 +24,8 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 ### Deleted classes/files, property names, constants/enums:
 
 - Everything that has been deprecated before release 3.2 has been removed.
-- All of the geometry headers previously saved in `dumux/common/geometry` have been relocated to `dumux/geometry`. 
-  The headers in `dumux/common/geometry` are deprecated and will be removed in 3.3. The geometry tests have been moved from `test/common/geometry` 
+- All of the geometry headers previously saved in `dumux/common/geometry` have been relocated to `dumux/geometry`.
+  The headers in `dumux/common/geometry` are deprecated and will be removed in 3.3. The geometry tests have been moved from `test/common/geometry`
   and `test/common/boundingboxtree` to `test/geometry`.
 
 ### Other noteworthy changes:

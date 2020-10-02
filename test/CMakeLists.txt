@@ -10,3 +10,8 @@ add_subdirectory(multidomain)
 add_subdirectory(nonlinear)
 add_subdirectory(porousmediumflow)
 add_subdirectory(discretization)
+
+# if Python bindings are enabled, include Python binding tests
+if(DUNE_ENABLE_PYTHONBINDINGS)
+  add_subdirectory(python)
+endif()

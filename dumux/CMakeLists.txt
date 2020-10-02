@@ -13,3 +13,8 @@ add_subdirectory(multidomain)
 add_subdirectory(nonlinear)
 add_subdirectory(parallel)
 add_subdirectory(porousmediumflow)
+
+# if Python bindings are enabled, include necessary sub directories.
+if(DUNE_ENABLE_PYTHONBINDINGS)
+  add_subdirectory(python)
+endif()

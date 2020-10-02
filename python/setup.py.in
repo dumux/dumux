@@ -1,0 +1,11 @@
+from setuptools import setup, find_namespace_packages
+
+setup(name="dumux",
+      description="Python lib for dumux",
+      version="${DUMUX_VERSION}",
+      author="Timo Koch",
+      packages = find_namespace_packages(include=['dumux.*']),
+      zip_safe = 0,
+      package_data = {'': ['*.so']},
+      install_requires = ['portalocker'],
+)
