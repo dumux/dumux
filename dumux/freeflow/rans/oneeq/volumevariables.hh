@@ -101,41 +101,31 @@ public:
      * \brief Returns the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$.
      */
     Scalar calculateEddyViscosity()
-    {
-        return viscosityTilde() * fv1() *  RANSParentType::density();
-    }
+    { return viscosityTilde() * fv1() *  RANSParentType::density(); }
 
     /*!
      * \brief Returns the viscosity parameter \f$ m^2/s \f$
      */
     Scalar viscosityTilde() const
-    {
-        return viscosityTilde_;
-    }
+    { return viscosityTilde_; }
 
     /*!
      * \brief Returns the viscosity parameter from the last iteration \f$ m^2/s \f$
      */
     Scalar storedViscosityTilde() const
-    {
-        return storedViscosityTilde_;
-    }
+    { return storedViscosityTilde_; }
 
     /*!
      * \brief Returns the gradient of the viscosity parameter
      */
     DimVector storedViscosityTildeGradient() const
-    {
-        return storedViscosityTildeGradient_;
-    }
+    { return storedViscosityTildeGradient_; }
 
     /*!
      * \brief Returns the scalar product of the stress tensor
      */
     Scalar stressTensorScalarProduct() const
-    {
-        return stressTensorScalarProduct_;
-    }
+    { return stressTensorScalarProduct_; }
 
     /*!
      * \brief Returns damping function for the eddy viscosity

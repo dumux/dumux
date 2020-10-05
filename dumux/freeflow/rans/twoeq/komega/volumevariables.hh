@@ -120,61 +120,33 @@ public:
                * RANSParentType::density();
     }
 
-    /*!
-     * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
-     */
+    //! \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
     Scalar turbulentKineticEnergy() const
-    {
-        return turbulentKineticEnergy_;
-    }
+    { return turbulentKineticEnergy_; }
 
-    /*!
-     * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
-     */
+    //! \brief Returns an effective dissipation \f$ m^2/s^3 \f$
     Scalar dissipation() const
-    {
-        return dissipation_;
-    }
+    { return dissipation_; }
 
-    /*!
-     * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
-     */
+    //! \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
     Scalar storedTurbulentKineticEnergy() const
-    {
-        return storedTurbulentKineticEnergy_;
-    }
+    { return storedTurbulentKineticEnergy_; }
 
-    /*!
-     * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
-     */
+    //! \brief Returns an effective dissipation \f$ m^2/s^3 \f$
     Scalar storedDissipation() const
-    {
-        return storedDissipation_;
-    }
+    { return storedDissipation_; }
 
-    /*!
-     * \brief Returns the gradient of the turbulent kinetic energy \f$ m^2/s^2 \f$
-     */
+    //! \brief Returns the gradient of the turbulent kinetic energy \f$ m^2/s^2 \f$
     DimVector storedTurbulentKineticEnergyGradient() const
-    {
-        return storedTurbulentKineticEnergyGradient_;
-    }
+    { return storedTurbulentKineticEnergyGradient_; }
 
-    /*!
-     * \brief Returns the gradient of the effective dissipation \f$ m^2/s^3 \f$
-     */
+    //! \brief Returns the gradient of the effective dissipation \f$ m^2/s^3 \f$
     DimVector storedDissipationGradient() const
-    {
-        return storedDissipationGradient_;
-    }
+    { return storedDissipationGradient_; }
 
-    /*!
-     * \brief Returns the scalar product of the stress tensor
-     */
+    //! \brief Returns the scalar product of the stress tensor
     Scalar stressTensorScalarProduct() const
-    {
-        return stressTensorScalarProduct_;
-    }
+    { return stressTensorScalarProduct_; }
 
     //! \brief Returns the \f$ \alpha \f$ value
     const Scalar alpha() const

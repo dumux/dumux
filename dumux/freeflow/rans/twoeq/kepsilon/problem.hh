@@ -455,9 +455,7 @@ public:
 
     //! \brief Returns the \f$ C_{\mu} \f$ constant
     const Scalar cMu() const
-    {
-        return 0.09;
-    }
+    { return 0.09; }
 
     Scalar yPlusThreshold() const
     {

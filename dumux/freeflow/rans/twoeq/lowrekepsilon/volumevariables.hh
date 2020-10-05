@@ -108,41 +108,31 @@ public:
      * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
      */
     Scalar turbulentKineticEnergy() const
-    {
-        return turbulentKineticEnergy_;
-    }
+    { return turbulentKineticEnergy_; }
 
     /*!
      * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
     Scalar dissipationTilde() const
-    {
-        return dissipationTilde_;
-    }
+    { return dissipationTilde_; }
 
     /*!
      * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
      */
     Scalar storedTurbulentKineticEnergy() const
-    {
-        return storedTurbulentKineticEnergy_;
-    }
+    { return storedTurbulentKineticEnergy_; }
 
     /*!
      * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
     Scalar storedDissipationTilde() const
-    {
-        return storedDissipationTilde_;
-    }
+    { return storedDissipationTilde_; }
 
     /*!
      * \brief Returns the scalar product of the stress tensor
      */
     Scalar stressTensorScalarProduct() const
-    {
-        return stressTensorScalarProduct_;
-    }
+    { return stressTensorScalarProduct_; }
 
     //! \brief Returns the \f$ Re_\textrm{T} \f$ value
     const Scalar reT() const

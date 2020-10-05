@@ -188,9 +188,7 @@ public:
      * \param compIdx the index of the component
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
-    {
-        return fluidState_.massFraction(0, compIdx);
-    }
+    { return fluidState_.massFraction(0, compIdx); }
 
     /*!
      * \brief Returns the mass fraction of a component in the phase \f$\mathrm{[-]}\f$
@@ -198,9 +196,7 @@ public:
      * \param compIdx the index of the component
      */
     Scalar massFraction(int compIdx) const
-    {
-        return fluidState_.massFraction(0, compIdx);
-    }
+    { return fluidState_.massFraction(0, compIdx); }
 
     /*!
      * \brief Returns the mole fraction of a component in the phase \f$\mathrm{[-]}\f$
@@ -209,9 +205,7 @@ public:
      * \param compIdx the index of the component
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
-    {
-        return fluidState_.moleFraction(0, compIdx);
-    }
+    { return fluidState_.moleFraction(0, compIdx); }
 
     /*!
      * \brief Returns the mole fraction of a component in the phase \f$\mathrm{[-]}\f$
@@ -219,17 +213,13 @@ public:
      * \param compIdx the index of the component
      */
     Scalar moleFraction(int compIdx) const
-    {
-        return fluidState_.moleFraction(0, compIdx);
-    }
+    { return fluidState_.moleFraction(0, compIdx); }
 
     /*!
      * \brief Returns the mass density of a given phase \f$\mathrm{[kg/m^3]}\f$
      */
     Scalar molarDensity(int phaseIdx = 0) const
-    {
-        return fluidState_.molarDensity(0);
-    }
+    { return fluidState_.molarDensity(0); }
 
     /*!
      * \brief Returns the molar mass of a given component.
@@ -237,9 +227,7 @@ public:
      * \param compIdx the index of the component
      */
     Scalar molarMass(int compIdx) const
-    {
-        return FluidSystem::molarMass(compIdx);
-    }
+    { return FluidSystem::molarMass(compIdx); }
 
     /*!
      * \brief Returns the average molar mass \f$\mathrm{[kg/mol]}\f$ of the fluid phase.
