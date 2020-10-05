@@ -84,11 +84,11 @@ public:
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipationTilde_ = elemSol[0][Indices::dissipationIdx];
-        storedDissipationTilde_ = problem.storedDissipationTilde_[RANSParentType::elementIdx()];
-        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementIdx()];
+        storedDissipationTilde_ = problem.storedDissipationTilde(RANSParentType::elementIdx());
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy(RANSParentType::elementIdx());
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
-        if (problem.useStoredEddyViscosity_)
-            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
+        if (problem.useStoredEddyViscosity())
+            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity(RANSParentType::elementIdx()));
         else
             RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity());
         RANSParentType::calculateEddyDiffusivity(problem);
