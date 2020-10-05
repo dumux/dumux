@@ -40,7 +40,6 @@
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrules.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/regularizedlocalrulesforcube.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include "fluxvariablescache.hh"
