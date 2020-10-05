@@ -66,7 +66,8 @@ public:
         const Scalar a02 = params.a02();
 
         using std::pow;
-        const Scalar aAlphaBeta = a00 + a10 * Sw + a20 * pow(Sw,2) + a11*Sw*pc +  a01*pc + a02*pow(pc,2);
+        using Dune::power;
+        const Scalar aAlphaBeta = a00 + a10 * Sw + a20 * power(Sw,2) + a11*Sw*pc +  a01*pc + a02*power(pc,2);
         return aAlphaBeta;
     }
 
