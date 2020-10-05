@@ -457,10 +457,10 @@ protected:
         Scalar tau = 1 - Tr;
         Scalar omega = Component::acentricFactor();
         using std::sqrt;
-        using std::pow;
-        Scalar f0 = (tau*(-5.97616 + sqrt(tau)*(1.29874 - tau*0.60394)) - 1.06841*pow(tau, 5))/Tr;
-        Scalar f1 = (tau*(-5.03365 + sqrt(tau)*(1.11505 - tau*5.41217)) - 7.46628*pow(tau, 5))/Tr;
-        Scalar f2 = (tau*(-0.64771 + sqrt(tau)*(2.41539 - tau*4.26979)) + 3.25259*pow(tau, 5))/Tr;
+        using Dune::power;
+        Scalar f0 = (tau*(-5.97616 + sqrt(tau)*(1.29874 - tau*0.60394)) - 1.06841*power(tau, 5))/Tr;
+        Scalar f1 = (tau*(-5.03365 + sqrt(tau)*(1.11505 - tau*5.41217)) - 7.46628*power(tau, 5))/Tr;
+        Scalar f2 = (tau*(-0.64771 + sqrt(tau)*(2.41539 - tau*4.26979)) + 3.25259*power(tau, 5))/Tr;
         using std::exp;
         return Component::criticalPressure()*exp(f0 + omega * (f1 + omega*f2));
     }
