@@ -34,14 +34,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
-class KOmegaFluxVariablesImpl;
-
 /*!
   * \ingroup KOmegaModel
   * \brief The flux variables class for the k-omega model using the staggered grid discretization.
  */
+
+// forward declaration
+template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+class KOmegaFluxVariablesImpl;
+
 template<class TypeTag, class BaseFluxVariables>
 class KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
 : public BaseFluxVariables

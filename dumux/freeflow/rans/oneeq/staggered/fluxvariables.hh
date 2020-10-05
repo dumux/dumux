@@ -34,15 +34,16 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
-class OneEqFluxVariablesImpl;
-
 /*!
  * \ingroup OneEqModel
  * \brief The flux variables class for the one-equation model by Spalart-Allmaras
  *        using the staggered grid discretization.
  */
+
+// forward declaration
+template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+class OneEqFluxVariablesImpl;
+
 template<class TypeTag, class BaseFluxVariables>
 class OneEqFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
 : public BaseFluxVariables

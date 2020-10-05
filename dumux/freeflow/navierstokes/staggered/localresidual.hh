@@ -42,14 +42,15 @@ template<int radialAxis>
 static constexpr bool isRotationalExtrusion<RotationalExtrusion<radialAxis>> = true;
 } // end namespace Impl
 
-// forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
-class NavierStokesResidualImpl;
-
 /*!
  * \ingroup NavierStokesModel
  * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, DiscretizationMethod discMethod>
+class NavierStokesResidualImpl;
+
 template<class TypeTag>
 class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
 : public StaggeredLocalResidual<TypeTag>
