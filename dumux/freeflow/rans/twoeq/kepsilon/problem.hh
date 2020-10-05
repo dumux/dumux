@@ -85,10 +85,7 @@ public:
     //! The constructor sets the gravity, if desired by the user.
     RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    {
-        yPlusThreshold_ = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30);
-        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
-    }
+    { }
 
     /*!
      * \brief Correct size of the static (solution independent) wall variables
@@ -174,10 +171,10 @@ public:
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
                 unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-                unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIndex(elementIdx)];
+                unsigned int matchingPointIndex = matchingPointIdx(asImp_().wallElementIndex(elementIdx));
 
-                Scalar scalingFactor = storedDynamicEddyViscosity_[matchingPointIdx]
-                                       / zeroEqDynamicEddyViscosity_[matchingPointIdx];
+                Scalar scalingFactor = storedDynamicEddyViscosity(matchingPointIndex)
+                                       / zeroEqDynamicEddyViscosity_[matchingPointIndex];
                 if (!isMatchingPoint(elementIdx)
                     && !std::isnan(scalingFactor) && !std::isinf(scalingFactor))
                 {
@@ -187,10 +184,10 @@ public:
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
                 unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-                unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIndex(elementIdx)];
+                unsigned int matchingPointIndex = matchingPointIdx(asImp_().wallElementIndex(elementIdx));
                 if (isMatchingPoint(elementIdx))
                 {
-                    zeroEqDynamicEddyViscosity_[matchingPointIdx] = storedDynamicEddyViscosity_[matchingPointIdx];
+                    zeroEqDynamicEddyViscosity_[matchingPointIndex] = storedDynamicEddyViscosity(matchingPointIndex);
                 }
             }
         }
@@ -202,16 +199,16 @@ public:
     bool inNearWallRegion(unsigned int elementIdx) const
     {
         unsigned int wallElementIdx = asImp_().wallElementIndex(elementIdx);
-        unsigned int matchingPointIdx = matchingPointIdx_[wallElementIdx];
-        return wallElementIdx == matchingPointIdx ? yPlusNominal(elementIdx) < yPlusThreshold_
-                                                  : yPlus(elementIdx) < yPlusThreshold_;
+        unsigned int matchingPointIndex = matchingPointIdx(wallElementIdx);
+        return (wallElementIdx == matchingPointIndex) ? yPlusNominal(elementIdx) < yPlusThreshold()
+                                                      : yPlus(elementIdx) < yPlusThreshold();
     }
 
     /*!
      * \brief Returns if an element is the matching point
      */
     bool isMatchingPoint(unsigned int elementIdx) const
-    { return matchingPointIdx_[asImp_().wallElementIndex(elementIdx)] == elementIdx; }
+    { return matchingPointIdx(asImp_().wallElementIndex(elementIdx)) == elementIdx; }
 
     /*!
      * \brief Returns the \f$ y^+ \f$ value at an element center
@@ -252,7 +249,7 @@ public:
         unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
         unsigned int flowNormalAxis = asImp_().flowNormalAxis(elementIdx);
         Scalar velocityGradient = asImp_().velocityGradient(elementIdx, flowNormalAxis, wallNormalAxis);
-        return mixingLength * mixingLength * abs(velocityGradient) * storedDensity_[elementIdx];
+        return mixingLength * mixingLength * abs(velocityGradient) * storedDensity(elementIdx);
     }
 
     //! \brief Returns the wall shear stress velocity
@@ -272,8 +269,8 @@ public:
     {
         using std::pow;
         using std::sqrt;
-        unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIndex(elementIdx)];
-        return pow(cMu(), 0.25) * sqrt(storedTurbulentKineticEnergy_[matchingPointIdx]);
+        unsigned int matchingPointIndex = matchingPointIdx(asImp_().wallElementIndex(elementIdx));
+        return pow(cMu(), 0.25) * sqrt(storedTurbulentKineticEnergy(matchingPointIndex));
     }
 
     /*!
@@ -290,8 +287,8 @@ public:
      */
     const Scalar turbulentKineticEnergyWallFunction(unsigned int elementIdx) const
     {
-        unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIndex(elementIdx)];
-        return storedTurbulentKineticEnergy_[matchingPointIdx];
+        unsigned int matchingPointIndex = matchingPointIdx(asImp_().wallElementIndex(elementIdx));
+        return storedTurbulentKineticEnergy(matchingPointIndex);
     }
 
     //! \brief Returns the nominal wall shear stress (accounts for poor approximation of viscous sublayer)
@@ -456,17 +453,44 @@ public:
         return 0.09;
     }
 
-public:
+    Scalar yPlusThreshold() const
+    {
+        static const Scalar yPlusThreshold = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30);
+        return yPlusThreshold;
+    }
+
+    bool useStoredEddyViscosity() const
+    {
+        static const bool useStoredEddyViscosity = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
+        return useStoredEddyViscosity;
+    }
+
+    Scalar storedDensity(const int elementIdx) const
+    { return storedDensity_[elementIdx]; }
+
+    Scalar storedDissipation(const int elementIdx) const
+    { return storedDissipation_[elementIdx]; }
+
+    Scalar storedTurbulentKineticEnergy(const int elementIdx) const
+    { return storedTurbulentKineticEnergy_[elementIdx]; }
+
+    Scalar storedDynamicEddyViscosity(const int elementIdx) const
+    { return storedDynamicEddyViscosity_[elementIdx]; }
+
+    Scalar zeroEqDynamicEddyViscosity(const int elementIdx) const
+    { return zeroEqDynamicEddyViscosity_[elementIdx]; }
+
+    unsigned int matchingPointIdx(const int elementIdx) const
+    { return matchingPointIdx_[elementIdx]; }
+
+private:
     std::vector<unsigned int> matchingPointIdx_;
     std::vector<Scalar> storedDensity_;
     std::vector<Scalar> storedDissipation_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
     std::vector<Scalar> storedDynamicEddyViscosity_;
     std::vector<Scalar> zeroEqDynamicEddyViscosity_;
-    bool useStoredEddyViscosity_;
-    Scalar yPlusThreshold_;
 
-private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
