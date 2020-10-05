@@ -74,6 +74,7 @@ public:
 
         using std::sqrt;
         using std::pow;
+        using Dune::power;
         using std::exp;
         const Scalar M_m = 1e3*Mesitylene::molarMass(); // [g/mol] molecular weight of mesitylene
         const Scalar M_w = 1e3*H2O::molarMass(); // [g/mol] molecular weight of water
@@ -98,7 +99,7 @@ public:
         const Scalar B_ = 0.00217 - 0.0005*sqrt(1.0/M_w + 1.0/M_m);
         const Scalar Mr = (M_w + M_m)/(M_w*M_m);
         const Scalar D_wm = (B_*pow(temperature, 1.6)*sqrt(Mr))
-                            /(1e-5*pressure*pow(sigma_wm, 2)*Omega); // [cm^2/s]
+                            /(1e-5*pressure*power(sigma_wm, 2)*Omega); // [cm^2/s]
 
         return D_wm*1e-4;   //  [m^2/s]
     }
