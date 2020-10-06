@@ -95,17 +95,20 @@ public:
         elementIdx_ = problem.gridGeometry().elementMapper().index(element);
         wallDistance_ = problem.wallDistance(elementIdx_);
         ccVelocityVector_ = problem.ccVelocityVector(elementIdx_);
-        profileVelocityMaximum_ = problem.profileVelocityMaximum(problem.wallElementIndex(elementIdx_));
-        profileVelocityMinimum_ = problem.profileVelocityMinimum(problem.wallElementIndex(elementIdx_));
         velocityGradientTensor_ = problem.velocityGradientTensor(elementIdx_);
         const auto flowNormalAxis = problem.flowNormalAxis(elementIdx_);
         const auto wallNormalAxis = problem.wallNormalAxis(elementIdx_);
-        uStar_ = sqrt(problem.kinematicViscosity(problem.wallElementIndex(elementIdx_))
-                      * abs(problem.velocityGradient(problem.wallElementIndex(elementIdx_), flowNormalAxis, wallNormalAxis)));
-        uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
-        yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity(elementIdx_);
-        uPlus_ = problem.ccVelocity(elementIdx_, flowNormalAxis) / uStar_;
         karmanConstant_ = problem.karmanConstant();
+        profileVelocityMaximum_ = problem.profileVelocityMaximum(problem.wallElementIndex(elementIdx_));
+        profileVelocityMinimum_ = problem.profileVelocityMinimum(problem.wallElementIndex(elementIdx_));
+        if (problem.hasChannelGeometry())
+        {
+            uStar_ = sqrt(problem.kinematicViscosity(problem.wallElementIndex(elementIdx_))
+                        * abs(problem.velocityGradient(problem.wallElementIndex(elementIdx_), flowNormalAxis, wallNormalAxis)));
+            uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
+            yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity(elementIdx_);
+            uPlus_ = problem.ccVelocity(elementIdx_, flowNormalAxis) / uStar_;
+        }
     }
 
     /*!
@@ -267,9 +270,9 @@ protected:
     std::size_t elementIdx_;
     Scalar wallDistance_;
     Scalar karmanConstant_;
-    Scalar uStar_;
-    Scalar yPlus_;
-    Scalar uPlus_;
+    Scalar uStar_ = 0.0;
+    Scalar yPlus_ = 0.0;
+    Scalar uPlus_ = 0.0;
     Scalar dynamicEddyViscosity_ = 0.0;
     Scalar eddyDiffusivity_ = 0.0;
     Scalar eddyThermalConductivity_ = 0.0;

@@ -179,7 +179,8 @@ public:
                 if (distanceToWall < wallDistance_[elementIdx])
                 {
                     wallDistance_[elementIdx] = distanceToWall;
-                    wallElementIdx_[elementIdx] = wallElementIndicies[i];
+                    if (hasChannelGeometry())
+                        wallElementIdx_[elementIdx] = wallElementIndicies[i];
                     if ( !(hasParam("RANS.WallNormalAxis")) )
                         wallNormalAxis_[elementIdx] = wallFaceNormalAxis[i];
                 }
