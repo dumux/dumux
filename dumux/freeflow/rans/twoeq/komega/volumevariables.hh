@@ -86,13 +86,13 @@ public:
         betaOmega_ = problem.betaOmega();
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipation_ = elemSol[0][Indices::dissipationIdx];
-        storedDissipation_ = problem.storedDissipation_[RANSParentType::elementIdx()];
-        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementIdx()];
-        storedDissipationGradient_ = problem.storedDissipationGradient_[RANSParentType::elementIdx()];
-        storedTurbulentKineticEnergyGradient_ = problem.storedTurbulentKineticEnergyGradient_[RANSParentType::elementIdx()];
+        storedDissipation_ = problem.storedDissipation(RANSParentType::elementIdx());
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy(RANSParentType::elementIdx());
+        storedDissipationGradient_ = problem.storedDissipationGradient(RANSParentType::elementIdx());
+        storedTurbulentKineticEnergyGradient_ = problem.storedTurbulentKineticEnergyGradient(RANSParentType::elementIdx());
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
-        if (problem.useStoredEddyViscosity_)
-            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
+        if (problem.useStoredEddyViscosity())
+            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity(RANSParentType::elementIdx()));
         else
             RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity(problem));
         RANSParentType::calculateEddyDiffusivity(problem);
