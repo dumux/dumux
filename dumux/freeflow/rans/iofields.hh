@@ -40,6 +40,8 @@ struct RANSIOFields
     {
         NavierStokesIOFields::initOutputModule(out);
 
+        static const bool hasChannelGeometry = getParamFromGroup<bool>(out.paramGroup(), "RANS.HasChannelGeometry");
+
         static constexpr auto dim = decltype(std::declval<typename OutputModule::VolumeVariables>().ccVelocityVector())::dimension;
 
         out.addVolumeVariable([](const auto& v){ return v.ccVelocityVector()[0] / v.profileVelocityMaximum()[0]; }, "v_x/v_x,max");
@@ -52,8 +54,11 @@ struct RANSIOFields
         out.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
         out.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");
         out.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
-        out.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
-        out.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
+        if (hasChannelGeometry)
+        {
+            out.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
+            out.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
+        }
     }
 
     //! return the names of the primary variables
