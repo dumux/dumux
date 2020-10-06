@@ -92,8 +92,14 @@ public:
      */
     void updateStaticWallProperties()
     {
-        ParentType::updateStaticWallProperties();
+        if (ParentType::hasChannelGeometry() != 1)
+        {
+            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, k-epsilon models should only be used for "
+                                          << " wall bounded flows with flat channel geometries. "
+                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.HasChannelGeometry to true. \n");
+        }
 
+        ParentType::updateStaticWallProperties();
         // update size and initial values of the global vectors
         matchingPointIdx_.resize(this->gridGeometry().elementMapper().size(), 0);
         storedDensity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
