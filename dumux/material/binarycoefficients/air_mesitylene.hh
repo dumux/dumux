@@ -71,6 +71,7 @@ public:
         using std::pow;
         using std::sqrt;
         using std::exp;
+        using Dune::power;
         const Scalar M_m = 1e3*Mesitylene::molarMass(); // [g/mol] molecular weight of mesitylene
         const Scalar M_a = 1e3*Air::molarMass(); // [g/mol] molecular weight of air
         const Scalar Tb_m = 437.9;        // [K] boiling temperature of mesitylene
@@ -92,7 +93,7 @@ public:
         const Scalar B_ = 0.00217 - 0.0005*sqrt(1.0/M_a + 1.0/M_m);
         const Scalar Mr = (M_a + M_m)/(M_a*M_m);
         const Scalar D_am = (B_*sqrt(temperature*temperature*temperature*Mr))
-                           /(1e-5*pressure*pow(sigma_am, 2) * Omega); // [cm^2/s]
+                           /(1e-5*pressure*power(sigma_am, 2) * Omega); // [cm^2/s]
 
         return 1e-4*D_am; // [m^2/s]
     }
