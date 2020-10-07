@@ -41,6 +41,7 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include "properties.hh"
+#include "testcase.hh"
 
 template<class Problem, class SolutionVector>
 void printL2Error(const Problem& problem, const SolutionVector& x)
@@ -58,7 +59,7 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto dofIdx = scv.dofIndex();
-            const Scalar delta = x[dofIdx] - problem.analyticalSolution(scv.dofPosition())[2/*pressureIdx*/];
+            const Scalar delta = x[dofIdx] - problem.analyticalSolution(scv.dofPosition());
             l2error += scv.volume()*(delta*delta);
         }
     }
@@ -115,9 +116,24 @@ int main(int argc, char** argv) try
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
     gridGeometry->update();
 
+    const auto testCaseName = getParam<std::string>("Problem.TestCase", "Schneider");
+    const auto testCase = [&testCaseName]()
+    {
+        if (testCaseName == "Schneider")
+            return TestCase::Schneider;
+        else if (testCaseName == "Sinus")
+            return TestCase::Sinus;
+        else
+            DUNE_THROW(Dune::InvalidStateException, testCaseName + " is not a valid test case");
+    }();
+
+    // the spatial parameters
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
+    auto spatialParams = std::make_shared<SpatialParams>(gridGeometry, testCase);
+
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry, spatialParams, testCase);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
