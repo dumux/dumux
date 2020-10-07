@@ -380,9 +380,9 @@ public:
             if (xy.two_norm() >= rho)
                 return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(xy.two_norm());
             else
-                return -1.0*(1+globalPos[2])/(2*M_PI)*(11.0/15.0*std::pow(r/rho, 5)
-                                                       - 3.0/2.0*std::pow(r/rho, 4)
-                                                       + 5.0/3.0*std::pow(r/rho, 2)
+                return -1.0*(1+globalPos[2])/(2*M_PI)*(11.0/15.0*Dune::power(r/rho, 5)
+                                                       - 3.0/2.0*Dune::power(r/rho, 4)
+                                                       + 5.0/3.0*Dune::power(r/rho, 2)
                                                        - 9.0/10.0 + std::log(rho));
         }
         else
