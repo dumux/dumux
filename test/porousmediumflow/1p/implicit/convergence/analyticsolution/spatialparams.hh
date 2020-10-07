@@ -30,6 +30,7 @@
 #include <dumux/common/parameters.hh>
 #include <dune/common/fmatrix.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
+#include "testcase.hh"
 
 namespace Dumux {
 
@@ -57,10 +58,12 @@ public:
     // export permeability type
     using PermeabilityType = DimWorldMatrix;
 
-    ConvergenceTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    ConvergenceTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry, const TestCase testCase)
+    : ParentType(gridGeometry), testCase_(testCase), permeability_(0.0)
     {
         c_ = getParam<Scalar>("Problem.C");
+        permeability_[0][0] = permeability_[1][1] = 1.0;
+        permeability_[dimWorld-1][dimWorld-1] = getParam<Scalar>("Problem.K", 1.0);
     }
 
     /*!
@@ -70,19 +73,29 @@ public:
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        PermeabilityType K(0.0);
+        switch (testCase_)
+        {
+            case TestCase::Schneider:
+            {
+                PermeabilityType K(0.0);
 
-        using std::cos;
-        using std::sin;
-        using std::exp;
+                using std::cos;
+                using std::sin;
+                using std::exp;
 
-        const Scalar x = globalPos[0];
-        K[0][0] = 1.0;
-        K[0][1] = -c_/(2*omega_) * sin(omega_*x);
-        K[1][0] = K[0][1];
-        K[1][1] = exp(-2)*(1 + c_*cos(omega_*x));
+                const Scalar x = globalPos[0];
+                K[0][0] = 1.0;
+                K[0][1] = -c_/(2*omega_) * sin(omega_*x);
+                K[1][0] = K[0][1];
+                K[1][1] = exp(-2)*(1 + c_*cos(omega_*x));
 
-        return K;
+                return K;
+            }
+            case TestCase::Sinus:
+                return permeability_;
+            default:
+                DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
+        }
     }
 
     /*! \brief Defines the porosity in [-].
@@ -94,8 +107,9 @@ public:
 
 private:
     static constexpr Scalar omega_ = M_PI;
-    Scalar permeability_;
+    TestCase testCase_;
     Scalar c_;
+    PermeabilityType permeability_;
 };
 
 } // end namespace Dumux

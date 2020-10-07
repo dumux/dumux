@@ -1,5 +1,6 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES "convergencetest.py")
+dune_symlink_to_source_files(FILES grids)
 
 # if UG is found, we use UG for all tests. Otherwise, we use
 # YaspGrid for the tests on unstructured grids and enforce
@@ -9,11 +10,20 @@ add_executable(test_1p_convergence_analytic_mpfa EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_wmpfa EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_box EXCLUDE_FROM_ALL main.cc)
 
+add_executable(test_1p_convergence_analytic_3d_tpfa EXCLUDE_FROM_ALL main.cc)
+add_executable(test_1p_convergence_analytic_3d_mpfa EXCLUDE_FROM_ALL main.cc)
+add_executable(test_1p_convergence_analytic_3d_wmpfa EXCLUDE_FROM_ALL main.cc)
+add_executable(test_1p_convergence_analytic_3d_box EXCLUDE_FROM_ALL main.cc)
+
 if (dune-uggrid_FOUND)
     target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_wmpfa PUBLIC "TYPETAG=OnePConvergenceWMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
+    target_compile_definitions(test_1p_convergence_analytic_3d_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<3>")
+    target_compile_definitions(test_1p_convergence_analytic_3d_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<3>")
+    target_compile_definitions(test_1p_convergence_analytic_3d_wmpfa PUBLIC "TYPETAG=OnePConvergenceWMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<3>")
+    target_compile_definitions(test_1p_convergence_analytic_3d_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::UGGrid<3>")
 else()
     target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
@@ -75,6 +85,30 @@ if (dune-uggrid_FOUND)
                    COMMAND ./convergencetest.py
                    CMD_ARGS test_1p_convergence_analytic_box box_unstructured
                             params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
+
+    # using mpfa and unstructured grid
+    dumux_add_test(NAME test_1p_convergence_analytic_3d_mpfa_unstructured
+                   TARGET test_1p_convergence_analytic_3d_mpfa
+                   LABELS porousmediumflow 1p
+                   COMMAND ./convergencetest.py
+                   CMD_ARGS test_1p_convergence_analytic_3d_mpfa mpfa_unstructured_3d
+                            params.input -Problem.TestCase Sinus -Grid.File ./grids/randomlydistorted_3d.dgf)
+
+    # using wmpfa and 3d unstructured grid
+    dumux_add_test(NAME test_1p_convergence_analytic_3d_wmpfa_unstructured
+                   TARGET test_1p_convergence_analytic_3d_wmpfa
+                   LABELS porousmediumflow 1p
+                   COMMAND ./convergencetest.py
+                   CMD_ARGS test_1p_convergence_analytic_3d_wmpfa wmpfa_unstructured_3d
+                            params.input -Problem.TestCase Sinus -Grid.File ./grids/randomlydistorted_3d.dgf)
+
+    # using box and 3d unstructured grid
+    dumux_add_test(NAME test_1p_convergence_analytic_3d_box_unstructured
+                   TARGET test_1p_convergence_analytic_3d_box
+                   LABELS porousmediumflow 1p
+                   COMMAND ./convergencetest.py
+                   CMD_ARGS test_1p_convergence_analytic_3d_box box_unstructured_3d
+                            params.input -Problem.TestCase Sinus -Grid.File ./grids/randomlydistorted_3d.dgf)
 
 # otherwise define test with the same name but enforce skip
 else()

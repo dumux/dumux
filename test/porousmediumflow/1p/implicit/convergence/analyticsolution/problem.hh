@@ -30,6 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include "testcase.hh"
 
 namespace Dumux {
 
@@ -50,18 +51,18 @@ class ConvergenceProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr auto velocityXIdx = 0;
-    static constexpr auto velocityYIdx = 1;
-    static constexpr auto pressureIdx = 2;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     /*!
      * \brief The constructor.
      * \param gridGeometry The finite-volume grid geometry
      */
-    ConvergenceProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    ConvergenceProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<typename ParentType::SpatialParams> spatialParams, const TestCase testCase)
+    : ParentType(gridGeometry, spatialParams)
+    , testCase_(testCase)
     , c_(getParam<Scalar>("Problem.C"))
+    , freqFactor_(getParam<Scalar>("Problem.FreqFactor", 0.5))
     {}
 
     /*!
@@ -90,7 +91,17 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        values.setAllDirichlet();
+        switch (testCase_)
+        {
+            case TestCase::Schneider:
+                values.setAllDirichlet();
+                break;
+            case TestCase::Sinus:
+                values.setAllDirichlet();
+                break;
+            default:
+                DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
+        }
         return values;
     }
 
@@ -100,7 +111,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        const auto p = analyticalSolution(globalPos)[pressureIdx];
+        const auto p = analyticalSolution(globalPos);
         return PrimaryVariables(p);
     }
 
@@ -124,21 +135,15 @@ public:
      */
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     {
-        const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
-        using std::exp;
-        using std::sin;
-        using std::cos;
-        const Scalar cosOmegaX = cos(omega_*x);
-        static const Scalar expTwo = exp(2);
-        const Scalar expYPlusOne = exp(y+1);
-
-        const Scalar result = ( -(c_*cosOmegaX + 1)*exp(y - 1)
-                                + 1.5*c_*expYPlusOne*cosOmegaX
-                                + omega_*omega_*(expYPlusOne - expTwo + 2))
-                              * sin(omega_*x);
-
-        return NumEqVector(result);
+        switch (testCase_)
+        {
+            case TestCase::Schneider:
+                return sourceSchneiderEtAl_(globalPos);
+            case TestCase::Sinus:
+                return sourceSinus_(globalPos);
+            default:
+                DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
+        }
     }
 
     // \}
@@ -156,28 +161,80 @@ public:
      */
     auto analyticalSolution(const GlobalPosition& globalPos) const
     {
-        Dune::FieldVector<Scalar, 3> sol(0.0);
-        const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
-        using std::exp; using std::sin; using std::cos;
-        const Scalar sinOmegaX = sin(omega_*x);
-        const Scalar cosOmegaX = cos(omega_*x);
-        static const Scalar expTwo = exp(2);
-        const Scalar expYPlusOne = exp(y+1);
+        switch (testCase_)
+        {
+            case TestCase::Schneider:
+                return analyticalSolutionSchneiderEtAl_(globalPos);
+            case TestCase::Sinus:
+                return analyticalSolutionSinus_(globalPos);
+            default:
+                DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
+        }
+    }
 
-        sol[pressureIdx] = (expYPlusOne + 2 - expTwo)*sinOmegaX + 10.0;
-        sol[velocityXIdx] = c_/(2*omega_)*expYPlusOne*sinOmegaX*sinOmegaX
-                            -omega_*(expYPlusOne + 2 - expTwo)*cosOmegaX;
-        sol[velocityYIdx] = (0.5*c_*(expYPlusOne + 2 - expTwo)*cosOmegaX
-                            -(c_*cosOmegaX + 1)*exp(y-1))*sinOmegaX;
+
+private:
+
+    // see Schneider et al., 2019: "Coupling staggered-grid and MPFA finite volume methods for
+    // free flow/porous-medium flow problems"
+    auto analyticalSolutionSchneiderEtAl_(const GlobalPosition& x) const
+    {
+        using std::exp; using std::sin; using std::cos;
+
+        return (exp(x[1]+1) + 2 - exp(2))*sin(omega_*x[0]) + 10.0;
+    }
+
+    auto analyticalSolutionSinus_(const GlobalPosition& x) const
+    {
+        Scalar sol(0.0);
+
+        using std::sin; using std::cos;
+        if constexpr (dimWorld == 2)
+            sol = sin(freqFactor_*omega_*x[0]) * sin(freqFactor_*omega_*x[1]);
+        else if constexpr (dimWorld == 3)
+            sol = sin(freqFactor_*omega_*x[0]) * sin(freqFactor_*omega_*x[1]) * sin(freqFactor_*omega_*x[2]);
 
         return sol;
     }
 
-private:
+    auto sourceSchneiderEtAl_(const GlobalPosition& x) const
+    {
+        using std::exp; using std::sin; using std::cos;
+        const Scalar cosOmegaX = cos(omega_*x[0]);
+        static const Scalar expTwo = exp(2);
+        const Scalar expYPlusOne = exp(x[1]+1);
+
+        const Scalar source = ( -(c_*cosOmegaX + 1)*exp(x[1] - 1)
+                                + 1.5*c_*expYPlusOne*cosOmegaX
+                                + omega_*omega_*(expYPlusOne - expTwo + 2))
+                              * sin(omega_*x[0]);
+
+        return NumEqVector(source);
+    }
+
+    auto sourceSinus_(const GlobalPosition& x) const
+    {
+        using std::sin; using std::cos;
+        const auto K = this->spatialParams().permeabilityAtPos(x);
+
+        Scalar source(0.0);
+        if constexpr (dimWorld == 2)
+            source =  freqFactor_*omega_ * freqFactor_*omega_
+                    * sin(freqFactor_*omega_*x[0]) * sin(freqFactor_*omega_*x[1])
+                    * (K[0][0] + K[1][1]);
+        else if constexpr (dimWorld == 3)
+            source =  freqFactor_*omega_ * freqFactor_*omega_
+                    * sin(freqFactor_*omega_*x[0]) * sin(freqFactor_*omega_*x[1]) * sin(freqFactor_*omega_*x[2])
+                    * (K[0][0] + K[1][1] + K[2][2]);
+
+        return NumEqVector(source);
+    }
+
     static constexpr Scalar eps_ = 1e-7;
     static constexpr Scalar omega_ = M_PI;
+    TestCase testCase_;
     Scalar c_;
+    Scalar freqFactor_;
 };
 
 } // end namespace Dumux
