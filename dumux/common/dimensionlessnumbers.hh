@@ -177,6 +177,7 @@ static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
         */
         using std::sqrt;
         using std::pow;
+        using Dune::power;
         Scalar numerator    = 0.037 * pow(reynoldsNumber,0.8) * prandtlNumber ;
         Scalar reToMin01    = pow(reynoldsNumber,-0.1);
         Scalar prTo23       = pow(prandtlNumber, (2./3. ) ) ; // MIND THE pts! :-( otherwise the integer exponent version is chosen
@@ -184,7 +185,7 @@ static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
 
         Scalar nusseltTurbular       = numerator / denominator;
         Scalar nusseltLaminar        = 0.664 * sqrt(reynoldsNumber) * pow(prandtlNumber, (1./3.) );
-        Scalar nusseltSingleSphere   = 2 + sqrt( pow(nusseltLaminar,2.) + pow(nusseltTurbular,2.));
+        Scalar nusseltSingleSphere   = 2 + sqrt( power(nusseltLaminar,2) + power(nusseltTurbular,2));
 
         Scalar funckyFactor           = 1 + 1.5 * (1.-porosity); // for spheres of same size
         Scalar nusseltNumber          = funckyFactor * nusseltSingleSphere  ;
