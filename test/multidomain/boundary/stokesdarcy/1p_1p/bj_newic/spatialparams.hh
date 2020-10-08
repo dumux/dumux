@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
+ *   the Free Software Foundation, either version 3 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -18,21 +18,27 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePTests
- * \brief The spatial parameters class for the test problem using the 1p cc model
+ * \ingroup BoundaryTests
+ * \brief The spatial parameters class for the test problem using the 1p cc model.
  */
+
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux {
+// per default use BJ conditions
+#ifndef NEWIC
+#define NEWIC 0
+#endif
+
+namespace Dumux
+{
 
 /*!
- * \ingroup OnePModel
- *
+ * \ingroup BoundaryTests
  * \brief The spatial parameters class for the test problem using the
- *        1p cc model
+ *        1p cc model.
  */
 template<class GridGeometry, class Scalar>
 class OnePSpatialParams
@@ -53,22 +59,25 @@ public:
     : ParentType(gridGeometry)
     {
         K_ = PermeabilityType(0.0);
-        M_ = PermeabilityType(0.0);
 
         K_[0][0] =           getParam<Scalar>("Darcy.SpatialParams.Permeability_xx");
         K_[0][1] = K_[1][0] = getParam<Scalar>("Darcy.SpatialParams.Permeability_xy");
         K_[1][1] =           getParam<Scalar>("Darcy.SpatialParams.Permeability_yy");
 
         porosity_ = getParam<Scalar>("Darcy.SpatialParams.Porosity");
-        alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
 
-        //for new ic
+#if NEWIC
+        //for new interface conditions
+        M_ = PermeabilityType(0.0);
         epsInterface_ = getParam<Scalar>("Darcy.InterfaceParams.epsInterface");
         N_s_bl = getParam<Scalar>("Darcy.InterfaceParams.N_s_bl");
         N_1_bl = getParam<Scalar>("Darcy.InterfaceParams.N_1_bl");
 
         M_[0][0]= getParam<Scalar>("Darcy.InterfaceParams.M_1_bl");
         M_[1][1]= getParam<Scalar>("Darcy.InterfaceParams.M_2_bl");
+#else
+        alphaBJ_ = getParam<Scalar>("Darcy.SpatialParams.AlphaBeaversJoseph");
+#endif
     }
 
     /*!
@@ -80,20 +89,14 @@ public:
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return K_; }
 
-    /*! \brief Define the porosity in [-].
+    /*! \brief Defines the porosity in [-].
      *
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return porosity_; }
 
-    /*! \brief Define the Beavers-Joseph coefficient in [-].
-     *
-     * \param globalPos The global position
-     */
-    Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
-    { return alphaBJ_; }
-
+#if NEWIC
     Scalar epsInterfaceAtPos(const GlobalPosition& globalPos) const
     { return epsInterface_;}
 
@@ -105,23 +108,31 @@ public:
 
     Dune::FieldMatrix<Scalar, dim, dim> matrixNTangentialAtPos(const GlobalPosition& globalPos) const
     { return M_; }
-
-
+#else
+    /*! \brief Define the Beavers-Joseph coefficient in [-].
+     *
+     * \param globalPos The global position
+     */
+    Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
+    { return alphaBJ_; }
+#endif
 
 private:
     PermeabilityType K_;
 
     Scalar porosity_;
-    Scalar alphaBJ_;
-
+#if NEWIC
     //for new ic
     Scalar epsInterface_;
     Scalar N_s_bl;
     Scalar N_1_bl;
     Dune::FieldMatrix<Scalar, dim, dim> M_;
+#else
+    Scalar alphaBJ_;
+#endif
 
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -18,8 +18,6 @@ Porosity = 1.0
 Permeability_xx = 1.0 # m^2
 Permeability_xy = 0.0 # m^2
 Permeability_yy = 1.0 # m^2
-# remove later!
-AlphaBeaversJoseph = 1.0
 
 [Darcy.InterfaceParams]
 epsInterface = 1.0

@@ -93,6 +93,7 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 
     using VelocityVector = typename Element::Geometry::GlobalCoordinate;
 
+    static const int dimWorld = GridView::dimensionworld;
 
     enum class TestCase
     {
@@ -248,13 +249,6 @@ public:
         return couplingManager().couplingData().porousMediumVelocity(element, scvf);
     }
 
-
-
-   /*!
-     * \name Volume terms
-     */
-    // \{
-
    /*!
      * \brief Evaluates the initial value for a control volume.
      *
@@ -274,17 +268,7 @@ public:
         return couplingManager().couplingData().darcyPermeability(element, scvf);
     }
 
-    /*!
-     * \brief Returns the alpha value required as input parameter for the
-              Beavers-Joseph-Saffman boundary condition.
-     */
-    Scalar alphaBJ(const SubControlVolumeFace& scvf) const
-    {
-        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().beaversJosephCoeffAtPos(scvf.center());
-    }
-
-
-    //for new IC, input parameters that stay in the tangential coupling condition
+#if NEWIC
     /*!
      * \brief Returns the scale separation parameter epsilon required as input parameter for the
               new coupling conditions
@@ -303,6 +287,33 @@ public:
         return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().factorNTangentialAtPos(scvf.center());
     }
 
+    /*!
+     * \brief Returns the boundary layer constant N_s_bl required as input parameter for the
+              new coupling condition for the tangential component
+     */
+    Scalar factorNMomentum(const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().factorNMomentumAtPos(scvf.center());
+    }
+
+    /*!
+     * \brief Returns the boundary layer matrix M_bl required as input parameter for the
+              new coupling condition for the tangential component
+     */
+    Dune::FieldMatrix<Scalar, dimWorld, dimWorld> matrixNTangential(const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().matrixNTangentialAtPos(scvf.center());
+    }
+#else
+    /*!
+     * \brief Returns the alpha value required as input parameter for the
+              Beavers-Joseph-Saffman boundary condition.
+     */
+    Scalar alphaBJ(const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().beaversJosephCoeffAtPos(scvf.center());
+    }
+#endif
 
     /*!
      * \brief Returns the analytical solution of the problem at a given position.
@@ -321,8 +332,6 @@ public:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
     }
-
-    // \}
 
 private:
 
@@ -344,7 +353,6 @@ private:
     NumEqVector rhsBJSymmetrized_(const GlobalPosition& globalPos) const
     {
         const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
         NumEqVector source(0.0);
         using std::sin; using std::cos;
         source[Indices::momentumXBalanceIdx] = 2.0*x - 18.0;
@@ -369,8 +377,6 @@ private:
     // see exact solution for new IC with non-symmetrized stress tensor (by Elissa Eggenweiler)
     NumEqVector rhsNewICNonSymmetrized_(const GlobalPosition& globalPos) const
     {
-        const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
         using std::exp; using std::sin; using std::cos;
         NumEqVector source(0.0);
         source[Indices::momentumXBalanceIdx] = -2.0;
