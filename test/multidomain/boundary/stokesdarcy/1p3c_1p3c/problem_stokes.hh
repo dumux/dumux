@@ -179,7 +179,7 @@ public:
             values.setNeumann(Indices::conti0EqIdx+1);
             values.setNeumann(Indices::conti0EqIdx+2);
             values.setNeumann(Indices::momentumYBalanceIdx);
-            values.setBeaversJoseph(Indices::velocityXIdx);
+            values.setSlipCondition(Indices::velocityXIdx);
         }
 
         return values;
