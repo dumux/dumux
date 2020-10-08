@@ -257,10 +257,10 @@ public:
                                        const Scalar velocitySelf, //vel perpendicular to tangential vel
                                        const Scalar tangentialVelocityGradient) const //dv/dx (=0)
     {
-        static const bool newIc_ = getParamFromGroup<bool>("Problem", "NewIc", false);
+        static const bool newIc = getParamFromGroup<bool>("Problem", "NewIc", false);
         // du/dy + dv/dx = factor * (u_boundary-uPM)
         Scalar factor;
-        if (newIc_)
+        if (newIc)
         {
             factor = -1.0 / asImp_().epsInterface(faceOnPorousBoundary) / asImp_().factorNTangential(faceOnPorousBoundary);
         }

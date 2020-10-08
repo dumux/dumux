@@ -343,9 +343,9 @@ public:
                 // It is not clear how to evaluate the BJ condition here.
                 // For symmetry reasons, our own scvf should then have the same Neumann flux as the lateral face.
                 // TODO: We should clarify if this is the correct approach.
-                bool slipCondition = currentScvfBoundaryTypes->isSlipCondition(Indices::velocity(lateralScvf.directionIndex()));
-                bool neumann = lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex()));
-                if ( slipCondition && lateralFaceBoundaryTypes && neumann)
+                if (currentScvfBoundaryTypes->isSlipCondition(Indices::velocity(lateralScvf.directionIndex()))
+                    && lateralFaceBoundaryTypes
+                    && lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
                     FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);

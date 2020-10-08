@@ -160,7 +160,7 @@ public:
         {
             values.setCouplingNeumann(Indices::conti0EqIdx);
             values.setCouplingNeumann(Indices::momentumYBalanceIdx);
-            values.setBeaversJoseph(Indices::momentumXBalanceIdx);
+            values.setSlipCondition(Indices::momentumXBalanceIdx);
         }
 
         return values;
