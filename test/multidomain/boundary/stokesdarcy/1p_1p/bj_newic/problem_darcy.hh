@@ -33,7 +33,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include "1pspatialparams.hh"
+#include "spatialparams.hh"
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -169,15 +169,14 @@ public:
             return values;
         }
 
-
         auto fvGeometry = localView(this->gridGeometry());
         fvGeometry.bindElement(element);
         for (auto&& scvf : scvfs(fvGeometry))
         {
-          if (couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, element, scvf))
-          {
-            values.setAllCouplingNeumann();
-          }
+            if (couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, element, scvf))
+            {
+                values.setAllCouplingNeumann();
+            }
         }
         return values;
     }
@@ -317,7 +316,6 @@ private:
     NumEqVector rhsBJSymmetrized_(const GlobalPosition& globalPos) const
     {
         const Scalar x = globalPos[0];
-        const Scalar y = globalPos[1];
         using std::sin;
         return NumEqVector(8.0*x - 6.0);
     }
@@ -340,9 +338,6 @@ private:
     // see exact solution for new IC with non-symmetrized stress tensor (by Elissa Eggenweiler)
     NumEqVector rhsNewICNonSymmetrized_(const GlobalPosition& globalPos) const
     {
-        // const Scalar x = globalPos[0];
-        // const Scalar y = globalPos[1];
-        // using std::sin;
         return NumEqVector(0.0);
     }
 
