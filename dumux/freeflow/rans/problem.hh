@@ -114,7 +114,6 @@ public:
         flowNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedFlowNormalAxis_);
         wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedWallNormalAxis_);
         kinematicViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
-        sandGrainRoughness_.resize(this->gridGeometry().elementMapper().size(), 0.0);
 
         // store the element indicies for all elements with an intersection on the wall
         std::vector<unsigned int> wallElementIndicies;
@@ -183,7 +182,6 @@ public:
                     wallElementIdx_[elementIdx] = wallElementIndicies[i];
                     if ( !(hasParam("RANS.WallNormalAxis")) )
                         wallNormalAxis_[elementIdx] = wallFaceNormalAxis[i];
-                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i][0]);
                 }
             }
         }
@@ -488,16 +486,6 @@ public:
     }
 
     /*!
-     * \brief Returns the sand-grain roughness \f$\mathrm{[m]}\f$ at a given position
-     *
-     * \param globalPos The position in global coordinates.
-     */
-    Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
-    {
-        return 0.0;
-    }
-
-    /*!
      * \brief Returns the Karman constant
      */
     const Scalar karmanConstant() const
@@ -598,7 +586,6 @@ private:
     std::vector<Scalar> vorticityTensorScalarProduct_;
 
     std::vector<Scalar> kinematicViscosity_;
-    std::vector<Scalar> sandGrainRoughness_;
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()

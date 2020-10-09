@@ -81,7 +81,7 @@ public:
                               const SubControlVolume& scv)
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
-        additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementIdx()];
+        additionalRoughnessLength_ = problem.additionalRoughnessLength(RANSParentType::elementIdx());
         yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
         RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity(elemSol, problem, element, scv, problem.eddyViscosityModel_));
         RANSParentType::calculateEddyDiffusivity(problem);

@@ -105,52 +105,9 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
-        // calculate additional roughness
-        bool printedRangeWarning = false;
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                using std::sqrt;
-                using std::exp;
-
-                const int dofIdx = scv.dofIndex();
-
-                // construct a privars object from the cell center solution vector
-                const auto& cellCenterPriVars = curSol[GridGeometry::cellCenterIdx()][dofIdx];
-                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
-                auto elemSol = elementSolution<typename GridGeometry::LocalView>(std::move(priVars));
-
-                VolumeVariables volVars;
-                volVars.update(elemSol, asImp_(), element, scv);
-
-                Scalar ksPlus = this->sandGrainRoughness_[elementIdx] * volVars.uStar() / volVars.kinematicViscosity();
-                if (ksPlus > 0 && eddyViscosityModel_.compare("baldwinLomax") == 0)
-                {
-                    DUNE_THROW(Dune::NotImplemented, "Roughness is not implemented for the Baldwin-Lomax model.");
-                }
-                if (ksPlus > 2000.)
-                {
-                    std::cout << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << asImp_().cellCenter(asImp_().wallElementIndex(elementIdx))
-                              << " is not in the valid range (ksPlus < 2000),"
-                              << " for high ksPlus values the roughness function reaches a turning point."<< std::endl;
-                    DUNE_THROW(Dune::InvalidStateException, "Unphysical roughness behavior.");
-                }
-                else if (ksPlus > 0.0 && ksPlus < 4.535 && !printedRangeWarning)
-                {
-                    Dune::dinfo << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << asImp_().cellCenter(asImp_().wallElementIndex(elementIdx))
-                                << " is not in the valid range (ksPlus > 4.535) and now set to 0.0"<< std::endl;
-                    ksPlus = 0.0;
-                    printedRangeWarning = true;
-                }
-                additionalRoughnessLength_[elementIdx] = 0.9 / (volVars.uStar() / volVars.kinematicViscosity())
-                                                        * (sqrt(ksPlus) - ksPlus * exp(-ksPlus / 6.0));
-            }
-        }
+        // correct roughness lengths if a sand grain roughness is specified
+        if (hasParam("Problem.SandGrainRoughness"))
+            calculateRoughnessLength_(curSol);
 
         // update routine for specfic models
         if (eddyViscosityModel_.compare("baldwinLomax") == 0)
@@ -187,7 +144,7 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
+            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength(elementIdx);
             unsigned int flowNormalAxis = this->flowNormalAxis(elementIdx);
             unsigned int wallNormalAxis = this->wallNormalAxis(elementIdx);
 
@@ -211,7 +168,7 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
+            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength(elementIdx);
 
             Scalar maxVelocityNorm = 0.0;
             Scalar minVelocityNorm = 0.0;
@@ -238,7 +195,7 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
+            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength(elementIdx);
 
             // checks if sign switches, by multiplication
             Scalar check = kinematicEddyViscosityDifference[asImp_().wallElementIndex(elementIdx)] * kinematicEddyViscosityDifference[elementIdx];
@@ -253,7 +210,7 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
+            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength(elementIdx);
 
             kinematicEddyViscosity_[elementIdx] = kinematicEddyViscosityInner[elementIdx];
             if (effectiveWallDistance >= switchingPosition[asImp_().wallElementIndex(elementIdx)])
@@ -266,9 +223,64 @@ public:
 public:
     std::string eddyViscosityModel_;
     std::vector<Scalar> kinematicEddyViscosity_;
-    std::vector<Scalar> additionalRoughnessLength_;
+
+    int additionalRoughnessLength(const int elementIdx) const
+    { return additionalRoughnessLength_[elementIdx]; }
+
 
 private:
+
+    void calculateRoughnessLength_(const SolutionVector& curSol)
+    {
+        bool printedRangeWarning = false;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            static const Scalar sandGrainRoughness = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.SandGrainRoughness", 0.0);
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                using std::sqrt;
+                using std::exp;
+
+                const int dofIdx = scv.dofIndex();
+
+                // construct a privars object from the cell center solution vector
+                const auto& cellCenterPriVars = curSol[GridGeometry::cellCenterIdx()][dofIdx];
+                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+                auto elemSol = elementSolution<typename GridGeometry::LocalView>(std::move(priVars));
+
+                VolumeVariables volVars;
+                volVars.update(elemSol, asImp_(), element, scv);
+
+                Scalar ksPlus = sandGrainRoughness * volVars.uStar() / volVars.kinematicViscosity();
+                if (ksPlus > 0 && eddyViscosityModel().compare("baldwinLomax") == 0)
+                {
+                    DUNE_THROW(Dune::NotImplemented, "Roughness is not implemented for the Baldwin-Lomax model.");
+                }
+                if (ksPlus > 2000.)
+                {
+                    std::cout << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << asImp_().cellCenter(asImp_().wallElementIndex(elementIdx))
+                            << " is not in the valid range (ksPlus < 2000),"
+                            << " for high ksPlus values the roughness function reaches a turning point."<< std::endl;
+                    DUNE_THROW(Dune::InvalidStateException, "Unphysical roughness behavior.");
+                }
+                else if (ksPlus > 0.0 && ksPlus < 4.535 && !printedRangeWarning)
+                {
+                    Dune::dinfo << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << asImp_().cellCenter(asImp_().wallElementIndex(elementIdx))
+                                << " is not in the valid range (ksPlus > 4.535) and now set to 0.0"<< std::endl;
+                    ksPlus = 0.0;
+                    printedRangeWarning = true;
+                }
+                additionalRoughnessLength_[elementIdx] = 0.9 / (volVars.uStar() / volVars.kinematicViscosity())
+                                                        * (sqrt(ksPlus) - ksPlus * exp(-ksPlus / 6.0));
+            }
+        }
+    }
+
+    std::vector<Scalar> additionalRoughnessLength_;
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
