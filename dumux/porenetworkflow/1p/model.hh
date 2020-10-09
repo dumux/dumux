@@ -125,20 +125,13 @@ struct FluxVariablesCache<TypeTag, TTag::PoreNetworkModel>
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::PNMOneP> { using type = PNMOnePIOFields; };
 
-//! the default transmissibility law
-template<class TypeTag>
-struct SinglePhaseTransmissibilityLaw<TypeTag, TTag::PNMOneP>
-{
-    using type = TransmissibilityBruus<GetPropType<TypeTag, Scalar>>;
-};
-
 //! The advection type
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::PNMOneP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
+    using TransmissibilityLaw = TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
 public:
     using type = Dumux::PoreNetworkCreepingFlow<Scalar, TransmissibilityLaw>;
 };

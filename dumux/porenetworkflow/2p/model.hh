@@ -124,28 +124,9 @@ struct SpatialParams<TypeTag, TTag::PNMTwoP>
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    // using LocalRules = RegularizedTwoPLocalRules<Scalar, getPropValue<TypeTag, Properties::ZeroPc>()>;
     using LocalRules = RegularizedTwoPLocalRulesCubeJoekarNiasar<Scalar>;
 public:
     using type = PNMTwoPDefaultSpatialParams<GridGeometry, Scalar, LocalRules>;
-};
-
-template<class TypeTag>
-struct SinglePhaseTransmissibilityLaw<TypeTag, TTag::PNMTwoP>
-{
-    using type = TransmissibilityPatzekSilin<GetPropType<TypeTag, Properties::Scalar>>;
-};
-
-template<class TypeTag>
-struct WettingLayerTransmissibilityLaw<TypeTag, TTag::PNMTwoP>
-{
-    using type = WettingLayerTransmissibility::RansohoffRadke<GetPropType<TypeTag, Properties::Scalar>>;
-};
-
-template<class TypeTag>
-struct NonWettingPhaseTransmissibilityLaw<TypeTag, TTag::PNMTwoP>
-{
-    using type = NonWettingPhaseTransmissibility::BakkeOren<GetPropType<TypeTag, Properties::Scalar>>;
 };
 
 //! The advection type
@@ -154,9 +135,9 @@ struct AdvectionType<TypeTag, TTag::PNMTwoP>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using S = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
-    using W = GetPropType<TypeTag, Properties::WettingLayerTransmissibilityLaw>;
-    using N = GetPropType<TypeTag, Properties::NonWettingPhaseTransmissibilityLaw>;
+    using S = TransmissibilityPatzekSilin<Scalar>;
+    using W = WettingLayerTransmissibility::RansohoffRadke<Scalar>;
+    using N = NonWettingPhaseTransmissibility::BakkeOren<Scalar>;
 
 public:
     using type = Dumux::PoreNetworkCreepingFlow<Scalar, S, W, N>;

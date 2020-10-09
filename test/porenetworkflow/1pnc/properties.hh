@@ -66,8 +66,16 @@ struct FluidSystem<TypeTag, TTag::PNMOnePTwoCProblem>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::PNMOnePTwoCProblem> { using type = Dune::FoamGrid<1, 3>; };
 
+//! The advection type
 template<class TypeTag>
-struct SinglePhaseTransmissibilityLaw<TypeTag, TTag::PNMOnePTwoCProblem> { using type = TransmissibilityAzzamDullien<GetPropType<TypeTag, Properties::Scalar>>; };
+struct AdvectionType<TypeTag, TTag::PNMOnePTwoCProblem>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using TransmissibilityLaw = TransmissibilityAzzamDullien<Scalar>;
+public:
+    using type = Dumux::PoreNetworkCreepingFlow<Scalar, TransmissibilityLaw>;
+};
 
 } //end namespace Dumux::Properties
 

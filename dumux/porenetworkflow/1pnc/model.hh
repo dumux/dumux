@@ -83,23 +83,13 @@ public:
     using type = PNMOnePDefaultSpatialParams<GridGeometry, Scalar>;
 };
 
-//! the default transmissibility law
-template<class TypeTag>
-struct SinglePhaseTransmissibilityLaw<TypeTag, TTag::PNMOnePNC>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Scalar>;
-public:
-    using type = TransmissibilityBruus<Scalar>;
-};
-
 //! The advection type
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::PNMOnePNC>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = GetPropType<TypeTag, Properties::SinglePhaseTransmissibilityLaw>;
+    using TransmissibilityLaw = TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
 public:
     using type = Dumux::PoreNetworkCreepingFlow<Scalar, TransmissibilityLaw>;
 };
