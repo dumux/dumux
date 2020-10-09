@@ -139,15 +139,16 @@ public:
             return throatTransmissibility;
         else
         {
-            const Scalar throatLength = fluxVarsCache.throatLength();
+            static const bool considerPoreResistanceOnRuntime = getParamFromGroup<bool>(problem.paramGroup(), "Transmissibility.ConsiderPoreResistance", true);
+            if (!considerPoreResistanceOnRuntime)
+                return throatTransmissibility;
 
             const auto& scv0 = fvGeometry.scv(scvf.insideScvIdx());
             const auto& scv1 = fvGeometry.scv(scvf.outsideScvIdx());
 
             const auto& spatialParams = problem.spatialParams();
-            const auto elemSol = elementSolution(element, elemVolVars, fvGeometry.gridGeometry());
+            const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
 
-            // we assume the pore length to be equal to the pore radius
             // TODO maybe include this in fluxVarsCache if this is general enough
             const Scalar poreLength0 = spatialParams.poreLength(element, scv0, elemSol);
             const Scalar poreLength1 = spatialParams.poreLength(element, scv1, elemSol);
@@ -161,7 +162,7 @@ public:
             const Scalar poreTransmissibility0 = singlePhaseTransmissibility(poreShapeFactor0, poreLength0, poreCrossSectionalArea0);
             const Scalar poreTransmissibility1 = singlePhaseTransmissibility(poreShapeFactor1, poreLength1, poreCrossSectionalArea1);
 
-            return 1.0 / (throatLength/throatTransmissibility + poreLength0/poreTransmissibility0 + poreLength1/poreTransmissibility1);
+            return 1 / (1.0/throatTransmissibility + 1.0/poreTransmissibility0 + 1.0/poreTransmissibility1);
         }
     }
 
