@@ -89,28 +89,6 @@ public:
        return gridGeometry().throatCrossSectionalArea(eIdx);
    }
 
-   /*!
-   * \brief Returns the aspect ratio for a throat
-   *
-   */
-   template<class ElementVolumeVariables>
-   Scalar throatAspectRatio(const Element& element,
-                            const ElementVolumeVariables& elemVolVars) const
-   {
-       const auto eIdx = gridGeometry().elementMapper().index(element);
-       return gridGeometry().throatAspectRatio(eIdx);
-   }
-
-   /*!
-   * \brief Returns the aspect ratio for a pore
-   *
-   */
-   template<class ElementSolutionVector>
-   Scalar poreAspectRatio(const Element& element,
-                          const SubControlVolume& scv,
-                          const ElementSolutionVector& elemSol) const
-   { return 1.0; }
-
    template<class ElementSolutionVector>
    Scalar poreRadius(const Element& element,
                      const SubControlVolume& scv,
