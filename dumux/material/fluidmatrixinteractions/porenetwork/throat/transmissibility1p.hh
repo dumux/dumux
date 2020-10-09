@@ -86,7 +86,7 @@ protected:
             case Throat::Shape::equilateralTriangle:
             {
                 using std::sqrt;
-                static constexpr Scalar sqrt3 = sqrt(3.0);
+                static Scalar sqrt3 = sqrt(3.0);
                 const Scalar sideLength = 6.0/sqrt3 * radius;
                 return 320.0/sqrt3 * length * 1.0/(sideLength*sideLength*sideLength*sideLength);
             }
