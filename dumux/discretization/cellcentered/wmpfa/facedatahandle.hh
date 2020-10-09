@@ -38,14 +38,22 @@ template<class Coeff, class Stencil>
 void eraseZeros(Coeff& c, Stencil& s)
 {
     assert(c.size() == s.size());
+    std::vector<bool> del(c.size(), false);
     for(std::size_t i=0; i<c.size(); ++i)
     {
         if(std::abs(c[i]) < 1.0e-30)
-        {
-            c.erase(c.begin()+i);
-            s.erase(s.begin()+i);
-        }
+            del[i] = true;
     }
+
+    std::size_t idx = 0;
+    c.erase(std::remove_if(c.begin(), c.end(),
+                          [&](auto i){ return del[idx++] ? true : false; }),
+            c.end());
+
+    idx = 0;
+    s.erase(std::remove_if(s.begin(), s.end(),
+                          [&](auto i){ return del[idx++] ? true : false; }),
+            s.end());
 }
 
 }
