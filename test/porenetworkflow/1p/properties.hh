@@ -69,11 +69,15 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::PNMOnePProblem>
 { using type = Dune::FoamGrid<1, 3>; };
 
+//! The advection type
 template<class TypeTag>
-struct SinglePhaseTransmissibilityLaw<TypeTag, TTag::PNMOnePProblem>
+struct AdvectionType<TypeTag, TTag::PNMOnePProblem>
 {
-    using Scalar = GetPropType<TypeTag, Scalar>;
-    using type = TransmissibilityAzzamDullien<Scalar>;
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using TransmissibilityLaw = TransmissibilityPatzekSilin<Scalar, false/*considerPoreBodyResistance*/>;
+public:
+    using type = Dumux::PoreNetworkCreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
 // use the incompressible local residual (provides analytic jacobian)
