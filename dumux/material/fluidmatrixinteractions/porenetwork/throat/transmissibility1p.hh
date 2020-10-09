@@ -113,7 +113,7 @@ protected:
     }
 };
 
-template<class Scalar, bool interpolateK = false>
+template<class Scalar, bool considerPoreResistance = false, bool interpolateK = false>
 class TransmissibilityPatzekSilin
 {
     static_assert(!interpolateK,  "Interpolation of k not implemented");
@@ -133,16 +133,45 @@ public:
         const auto shapeFactor = fluxVarsCache.throatShapeFactor();
         const Scalar area = fluxVarsCache.throatCrossSectionalArea();
         const Scalar throatLength = fluxVarsCache.throatLength();
-        return singlePhaseTransmissibility(shapeFactor, throatLength, area);
+        const Scalar throatTransmissibility = singlePhaseTransmissibility(shapeFactor, throatLength, area);
+
+        if constexpr (!considerPoreResistance)
+            return throatTransmissibility;
+        else
+        {
+            const Scalar throatLength = fluxVarsCache.throatLength();
+
+            const auto& scv0 = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& scv1 = fvGeometry.scv(scvf.outsideScvIdx());
+
+            const auto& spatialParams = problem.spatialParams();
+            const auto elemSol = elementSolution(element, elemVolVars, fvGeometry.gridGeometry());
+
+            // we assume the pore length to be equal to the pore radius
+            // TODO maybe include this in fluxVarsCache if this is general enough
+            const Scalar poreLength0 = spatialParams.poreLength(element, scv0, elemSol);
+            const Scalar poreLength1 = spatialParams.poreLength(element, scv1, elemSol);
+
+            const auto poreShapeFactor0 = spatialParams.poreShapeFactor(element, scv0, elemSol);
+            const auto poreShapeFactor1 = spatialParams.poreShapeFactor(element, scv1, elemSol);
+
+            const auto poreCrossSectionalArea0 = spatialParams.poreCrossSectionalArea(element, scv0, elemSol);
+            const auto poreCrossSectionalArea1 = spatialParams.poreCrossSectionalArea(element, scv1, elemSol);
+
+            const Scalar poreTransmissibility0 = singlePhaseTransmissibility(poreShapeFactor0, poreLength0, poreCrossSectionalArea0);
+            const Scalar poreTransmissibility1 = singlePhaseTransmissibility(poreShapeFactor1, poreLength1, poreCrossSectionalArea1);
+
+            return 1.0 / (throatLength/throatTransmissibility + poreLength0/poreTransmissibility0 + poreLength1/poreTransmissibility1);
+        }
     }
 
     //! Returns the conductivity of a throat when only one phase is present. See Patzek & Silin (2001)
     static Scalar singlePhaseTransmissibility(const Scalar shapeFactor,
-                                              const Scalar throatLength,
+                                              const Scalar length,
                                               const Scalar area)
     {
         const Scalar k = k_(shapeFactor);
-        return k * area*area * shapeFactor / throatLength;
+        return k * area*area * shapeFactor / length;
     }
 
 private:
