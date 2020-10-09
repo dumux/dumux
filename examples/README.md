@@ -129,3 +129,21 @@ You learn how to
 <figure><img src="liddrivencavity/img/setup.png" alt="liddriven result"/></figure></td>
 </a></td>
 </tr></table>
+
+### [:open_file_folder: Example 7: Permeability estimation using a pore-network model](pnmpermeabilityupscaling/README.md)
+
+<table><tr><td>
+
+In this example, we use a single-phase flow pore-network model to estimate the upscaled Darcy permeability of a randomly
+generated grid.
+
+You learn how to
+
+* solve a single-phase-flow pore-network problem
+* use the total mass flow rate to estimate $`K_{xx}`$, $`K_{yy}`$, $`K_{zz}`$
+
+</td>
+<td width="20%"><a href="liddrivencavity/README.md">
+<figure><img src="pnmpermeabilityupscaling/img/result.png" alt="pnm result"/></figure></td>
+</a></td>
+</tr></table>
