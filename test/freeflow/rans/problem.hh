@@ -429,7 +429,7 @@ private:
         {
             static_assert(ModelTraits::turbulenceModel() == TurbulenceModel::komega, "Only valid for Komega");
             // For the komega model we set a fixed value for the dissipation
-            const auto wallDistance = ParentType::wallDistance_[elementIdx];
+            const auto wallDistance = ParentType::wallDistance(elementIdx);
             using std::pow;
             values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
                                                     / (ParentType::betaOmega() * wallDistance * wallDistance);

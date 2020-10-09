@@ -144,17 +144,17 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementIdx];
-            unsigned int neighborIdx0 = asImp_().neighborIdx_[elementIdx][wallNormalAxis][0];
-            unsigned int neighborIdx1 = asImp_().neighborIdx_[elementIdx][wallNormalAxis][1];
+            unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
+            unsigned int neighborIndex0 = asImp_().neighborIndex(elementIdx, wallNormalAxis, 0);
+            unsigned int neighborIndex1 = asImp_().neighborIndex(elementIdx, wallNormalAxis, 1);
             numElementsInNearWallRegion = inNearWallRegion(elementIdx)
                                           ? numElementsInNearWallRegion + 1
                                           : numElementsInNearWallRegion + 0;
-            if ((!inNearWallRegion(elementIdx) && (inNearWallRegion(neighborIdx0) || inNearWallRegion(neighborIdx1)))
-                || (!inNearWallRegion(elementIdx) && elementIdx == asImp_().wallElementIdx_[elementIdx])
-                || (inNearWallRegion(elementIdx) && (asImp_().wallElementIdx_[neighborIdx0] != asImp_().wallElementIdx_[neighborIdx1])))
+            if ((!inNearWallRegion(elementIdx) && (inNearWallRegion(neighborIndex0) || inNearWallRegion(neighborIndex1)))
+                || (!inNearWallRegion(elementIdx) && elementIdx == asImp_().wallElementIndex(elementIdx))
+                || (inNearWallRegion(elementIdx) && (asImp_().wallElementIndex(neighborIndex0) != asImp_().wallElementIndex(neighborIndex1))))
             {
-                matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]] = elementIdx;
+                matchingPointIdx_[asImp_().wallElementIndex(elementIdx)] = elementIdx;
             }
         }
         std::cout << "numElementsInNearWallRegion: " << numElementsInNearWallRegion << std::endl;
@@ -174,7 +174,7 @@ public:
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
                 unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-                unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]];
+                unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIndex(elementIdx)];
 
                 Scalar scalingFactor = storedDynamicEddyViscosity_[matchingPointIdx]
                                        / zeroEqDynamicEddyViscosity_[matchingPointIdx];
@@ -187,7 +187,7 @@ public:
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
                 unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-                unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]];
+                unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIndex(elementIdx)];
                 if (isMatchingPoint(elementIdx))
                 {
                     zeroEqDynamicEddyViscosity_[matchingPointIdx] = storedDynamicEddyViscosity_[matchingPointIdx];
@@ -201,7 +201,7 @@ public:
      */
     bool inNearWallRegion(unsigned int elementIdx) const
     {
-        unsigned int wallElementIdx = asImp_().wallElementIdx_[elementIdx];
+        unsigned int wallElementIdx = asImp_().wallElementIndex(elementIdx);
         unsigned int matchingPointIdx = matchingPointIdx_[wallElementIdx];
         return wallElementIdx == matchingPointIdx ? yPlusNominal(elementIdx) < yPlusThreshold_
                                                 : yPlus(elementIdx) < yPlusThreshold_;
@@ -211,23 +211,23 @@ public:
      * \brief Returns if an element is the matching point
      */
     bool isMatchingPoint(unsigned int elementIdx) const
-    { return matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]] == elementIdx; }
+    { return matchingPointIdx_[asImp_().wallElementIndex(elementIdx)] == elementIdx; }
 
     /*!
      * \brief Returns the \f$ y^+ \f$ value at an element center
      */
     const Scalar yPlus(unsigned int elementIdx) const
     {
-        return asImp_().wallDistance_[elementIdx] * uStar(elementIdx)
-               / asImp_().kinematicViscosity_[elementIdx];
+        return asImp_().wallDistance(elementIdx) * uStar(elementIdx)
+             / asImp_().kinematicViscosity(elementIdx);
     }
     /*!
      * \brief Returns the nominal \f$ y^+ \f$ value at an element center
      */
     const Scalar yPlusNominal(unsigned int elementIdx) const
     {
-        return asImp_().wallDistance_[elementIdx] * uStarNominal(elementIdx)
-               / asImp_().kinematicViscosity_[elementIdx];
+        return asImp_().wallDistance(elementIdx) * uStarNominal(elementIdx)
+             / asImp_().kinematicViscosity(elementIdx);
     }
 
     /*!
@@ -244,14 +244,14 @@ public:
         Scalar mixingLength = 0.0;
         if (yPlusValue > 0.0)
         {
-            mixingLength = asImp_().karmanConstant() * asImp_().wallDistance_[elementIdx]
+            mixingLength = asImp_().karmanConstant() * asImp_().wallDistance(elementIdx)
                            * (1.0 - exp(-yPlusValue / 26.0 ))
                            / sqrt(1.0 - exp(-0.26 * yPlusValue));
         }
 
-        unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementIdx];
-        unsigned int flowNormalAxis = asImp_().flowNormalAxis_[elementIdx];
-        Scalar velocityGradient = asImp_().velocityGradients_[elementIdx][flowNormalAxis][wallNormalAxis];
+        unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
+        unsigned int flowNormalAxis = asImp_().flowNormalAxis(elementIdx);
+        Scalar velocityGradient = asImp_().velocityGradient(elementIdx, flowNormalAxis, wallNormalAxis);
         return mixingLength * mixingLength * abs(velocityGradient) * storedDensity_[elementIdx];
     }
 
@@ -260,11 +260,11 @@ public:
     {
         using std::abs;
         using std::sqrt;
-        unsigned int wallElementIdx = asImp_().wallElementIdx_[elementIdx];
-        unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementIdx];
-        unsigned int flowNormalAxis = asImp_().flowNormalAxis_[elementIdx];
-        return sqrt(asImp_().kinematicViscosity_[wallElementIdx]
-                    * abs(asImp_().velocityGradients_[wallElementIdx][flowNormalAxis][wallNormalAxis]));
+        unsigned int wallElementIdx = asImp_().wallElementIndex(elementIdx);
+        unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
+        unsigned int flowNormalAxis = asImp_().flowNormalAxis(elementIdx);
+        return sqrt(asImp_().kinematicViscosity(wallElementIdx)
+                    * abs(asImp_().velocityGradient(wallElementIdx, flowNormalAxis, wallNormalAxis)));
     }
 
     //! \brief Returns the nominal wall shear stress velocity (accounts for poor approximation of viscous sublayer)
@@ -272,9 +272,8 @@ public:
     {
         using std::pow;
         using std::sqrt;
-        unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIdx_[elementIdx]];
-        return pow(cMu(), 0.25)
-               * sqrt(storedTurbulentKineticEnergy_[matchingPointIdx]);
+        unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIndex(elementIdx)];
+        return pow(cMu(), 0.25) * sqrt(storedTurbulentKineticEnergy_[matchingPointIdx]);
     }
 
     /*!
@@ -283,7 +282,7 @@ public:
     const Scalar dissipationWallFunction(unsigned int elementIdx) const
     {
         return uStarNominal(elementIdx) * uStarNominal(elementIdx) * uStarNominal(elementIdx)
-               / asImp_().karmanConstant() / asImp_().wallDistance_[elementIdx];
+               / asImp_().karmanConstant() / asImp_().wallDistance(elementIdx);
     }
 
     /*!
@@ -291,8 +290,7 @@ public:
      */
     const Scalar turbulentKineticEnergyWallFunction(unsigned int elementIdx) const
     {
-        unsigned int wallElementIdx = asImp_().wallElementIdx_[elementIdx];
-        unsigned int matchingPointIdx = matchingPointIdx_[wallElementIdx];
+        unsigned int matchingPointIdx = matchingPointIdx_[asImp_().wallElementIndex(elementIdx)];
         return storedTurbulentKineticEnergy_[matchingPointIdx];
     }
 

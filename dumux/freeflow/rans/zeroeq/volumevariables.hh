@@ -108,8 +108,8 @@ public:
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        unsigned int flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementIdx()];
-        unsigned int wallNormalAxis = problem.wallNormalAxis_[RANSParentType::elementIdx()];
+        unsigned int flowNormalAxis = problem.flowNormalAxis(RANSParentType::elementIdx());
+        unsigned int wallNormalAxis = problem.wallNormalAxis(RANSParentType::elementIdx());
         Scalar velGrad = abs(RANSParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
 
         if (modelName.compare("none") == 0)

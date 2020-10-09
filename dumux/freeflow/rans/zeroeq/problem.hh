@@ -134,14 +134,14 @@ public:
                 }
                 if (ksPlus > 2000.)
                 {
-                    std::cout << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << this->cellCenter_[this->wallElementIdx_[elementIdx]]
+                    std::cout << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << asImp_().cellCenter(asImp_().wallElementIndex(elementIdx))
                               << " is not in the valid range (ksPlus < 2000),"
                               << " for high ksPlus values the roughness function reaches a turning point."<< std::endl;
                     DUNE_THROW(Dune::InvalidStateException, "Unphysical roughness behavior.");
                 }
                 else if (ksPlus > 0.0 && ksPlus < 4.535 && !printedRangeWarning)
                 {
-                    Dune::dinfo << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << this->cellCenter_[this->wallElementIdx_[elementIdx]]
+                    Dune::dinfo << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << asImp_().cellCenter(asImp_().wallElementIndex(elementIdx))
                                 << " is not in the valid range (ksPlus > 4.535) and now set to 0.0"<< std::endl;
                     ksPlus = 0.0;
                     printedRangeWarning = true;
@@ -186,10 +186,10 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
-            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
-            unsigned int flowNormalAxis = this->flowNormalAxis_[elementIdx];
-            unsigned int wallNormalAxis = this->wallNormalAxis_[elementIdx];
+            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
+            unsigned int flowNormalAxis = this->flowNormalAxis(elementIdx);
+            unsigned int wallNormalAxis = this->wallNormalAxis(elementIdx);
+
 
             Scalar omegaAbs = abs(this->velocityGradients_[elementIdx][flowNormalAxis][wallNormalAxis]
                                   - this->velocityGradients_[elementIdx][wallNormalAxis][flowNormalAxis]);
@@ -211,8 +211,7 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
-            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
+            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
 
             Scalar maxVelocityNorm = 0.0;
             Scalar minVelocityNorm = 0.0;
@@ -238,8 +237,7 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
-            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
+            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
 
             // checks if sign switches, by multiplication
             Scalar check = kinematicEddyViscosityDifference[wallElementIdx] * kinematicEddyViscosityDifference[elementIdx];
@@ -254,11 +252,10 @@ public:
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
-            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
+            Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
 
             kinematicEddyViscosity_[elementIdx] = kinematicEddyViscosityInner[elementIdx];
-            if (wallDistance >= switchingPosition[wallElementIdx])
+            if (effectiveWallDistance >= switchingPosition[asImp_().wallElementIndex(elementIdx)])
             {
                 kinematicEddyViscosity_[elementIdx] = kinematicEddyViscosityOuter[elementIdx];
             }

@@ -93,15 +93,14 @@ public:
 
         // calculate characteristic properties of the turbulent flow
         elementIdx_ = problem.gridGeometry().elementMapper().index(element);
-        wallElementIdx_ = problem.wallElementIdx_[elementIdx_];
-        wallDistance_ = problem.wallDistance_[elementIdx_];
+        wallDistance_ = problem.wallDistance(elementIdx_);
         velocity_ = problem.velocity_[elementIdx_];
         velocityMaximum_ = problem.velocityMaximum_[wallElementIdx_];
         velocityGradients_ = problem.velocityGradients_[elementIdx_];
-        const auto flowNormalAxis = problem.flowNormalAxis_[elementIdx_];
-        const auto wallNormalAxis = problem.wallNormalAxis_[elementIdx_];
         uStar_ = sqrt(problem.kinematicViscosity_[wallElementIdx_]
                       * abs(problem.velocityGradients_[wallElementIdx_][flowNormalAxis][wallNormalAxis]));
+        const auto flowNormalAxis = problem.flowNormalAxis(elementIdx_);
+        const auto wallNormalAxis = problem.wallNormalAxis(elementIdx_);
         uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
         yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementIdx_];
         uPlus_ = velocity_[flowNormalAxis] / uStar_;
@@ -258,7 +257,6 @@ protected:
     DimVector velocityMaximum_;
     DimMatrix velocityGradients_;
     std::size_t elementIdx_;
-    std::size_t wallElementIdx_;
     Scalar wallDistance_;
     Scalar karmanConstant_;
     Scalar uStar_;

@@ -76,6 +76,7 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
     static constexpr auto dim = GridView::dimension;
+    static constexpr int numCorners = SubControlVolumeFace::numCornersPerFace;
     using DimVector = GlobalPosition;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
@@ -111,15 +112,19 @@ public:
         velocityGradients_.resize(this->gridGeometry().elementMapper().size(), DimMatrix(0.0));
         stressTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         vorticityTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
-        flowNormalAxis_.resize(this->gridGeometry().elementMapper().size(), 0);
-        wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), 1);
+        flowNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedFlowNormalAxis_);
+        wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedWallNormalAxis_);
         kinematicViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         sandGrainRoughness_.resize(this->gridGeometry().elementMapper().size(), 0.0);
 
-        // retrieve all wall intersections and corresponding elements
-        std::vector<unsigned int> wallElements;
-        std::vector<GlobalPosition> wallPositions;
-        std::vector<unsigned int> wallNormalAxisTemp;
+        // store the element indicies for all elements with an intersection on the wall
+        std::vector<unsigned int> wallElementIndicies;
+
+        // for each wall element, store the location of the face center and each corner.
+        std::vector<std::array<GlobalPosition, numCorners+1>> wallPositions;
+
+        // for each wall element, store the faces normal axis
+        std::vector<unsigned int> wallFaceNormalAxis;
 
         const auto gridView = this->gridGeometry().gridView();
         auto fvGeometry = localView(this->gridGeometry());
@@ -135,46 +140,51 @@ public:
 
                 if (asImp_().isOnWall(scvf))
                 {
-                    wallElements.push_back(this->gridGeometry().elementMapper().index(element));
-                    wallPositions.push_back(scvf.center());
-                    wallNormalAxisTemp.push_back(scvf.directionIndex());
+                    // element has an scvf on the wall, store element index
+                    wallElementIndicies.push_back(this->gridGeometry().elementMapper().index(element));
+
+                    // store the location of the wall adjacent face's center and all corners
+                    std::array<GlobalPosition, numCorners+1> wallElementPosition;
+                    wallElementPosition[0] = scvf.center();
+                    for (int i = 1; i <= numCorners; i++)
+                        wallElementPosition[i] = scvf.corner(i-1);
+                    wallPositions.push_back(wallElementPosition);
+
+                    // Store the wall adjacent face's normal direction
+                    wallFaceNormalAxis.push_back(scvf.directionIndex());
                 }
             }
         }
+        // output the number of wall adjacent faces. Check that this is non-zero.
         std::cout << "NumWallIntersections=" << wallPositions.size() << std::endl;
         if (wallPositions.size() == 0)
             DUNE_THROW(Dune::InvalidStateException,
                        "No wall intersections have been found. Make sure that the isOnWall(globalPos) is working properly.");
 
 
-        // search for shortest distance to wall for each element
+        // search for shortest distance to the wall for each element
         for (const auto& element : elements(gridView))
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+
+            // Store the cell center position for each element
             cellCenter_[elementIdx] = element.geometry().center();
+
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
-                static const int problemWallNormalAxis
-                    = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", -1);
-                int searchAxis = problemWallNormalAxis;
+                // Find the minimum distance from the cell center to the wall face (center and corners)
+                std::array<Scalar,numCorners+1> cellToWallDistances;
+                for (unsigned int j = 0; j < wallPositions[i].size(); j++)
+                    cellToWallDistances[j] = (cellCenter(elementIdx) - wallPositions[i][j]).two_norm();
+                Scalar distanceToWall = *std::min_element(cellToWallDistances.begin(), cellToWallDistances.end());
 
-                // search along wall normal axis of the intersection
-                if (problemWallNormalAxis < 0 || problemWallNormalAxis >= dim)
+                if (distanceToWall < wallDistance_[elementIdx])
                 {
-                    searchAxis = wallNormalAxisTemp[i];
-                }
-
-                GlobalPosition global = element.geometry().center();
-                global -= wallPositions[i];
-                // second and argument ensures to use only aligned elements
-                if (abs(global[searchAxis]) < wallDistance_[elementIdx]
-                    && abs(global[searchAxis]) < global.two_norm() + 1e-8
-                    && abs(global[searchAxis]) > global.two_norm() - 1e-8)
-                {
-                    wallDistance_[elementIdx] = abs(global[searchAxis]);
-                    wallElementIdx_[elementIdx] = wallElements[i];
-                    wallNormalAxis_[elementIdx] = searchAxis;
-                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
+                    wallDistance_[elementIdx] = distanceToWall;
+                    wallElementIdx_[elementIdx] = wallElementIndicies[i];
+                    if ( !(hasParam("RANS.WallNormalAxis")) )
+                        wallNormalAxis_[elementIdx] = wallFaceNormalAxis[i];
+                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i][0]);
                 }
             }
         }
@@ -231,9 +241,6 @@ public:
         if (!calledUpdateStaticWallProperties)
             DUNE_THROW(Dune::InvalidStateException,
                        "You have to call updateStaticWallProperties() once before you call updateDynamicWallProperties().");
-
-        static const int flowNormalAxis
-            = getParamFromGroup<int>(this->paramGroup(), "RANS.FlowNormalAxis", -1);
 
         // re-initialize min and max values
         velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), DimVector(1e-16));
@@ -529,19 +536,38 @@ public:
     }
 
 public:
+    int wallNormalAxis(const int elementIdx) const
+    { return wallNormalAxis_[elementIdx]; }
+
+    int flowNormalAxis(const int elementIdx) const
+    { return flowNormalAxis_[elementIdx]; }
+
+    unsigned int wallElementIndex(const int elementIdx) const
+    { return wallElementIdx_[elementIdx]; }
+
+    Scalar wallDistance(const int elementIdx) const
+    { return wallDistance_[elementIdx]; }
+
+
     bool calledUpdateStaticWallProperties = false;
-    std::vector<unsigned int> wallElementIdx_;
+
+    const int fixedFlowNormalAxis_ = getParam<int>("RANS.FlowNormalAxis", 0);
+    const int fixedWallNormalAxis_ = getParam<int>("RANS.WallNormalAxis", 1);
+
+    std::vector<unsigned int> wallNormalAxis_;
+    std::vector<unsigned int> flowNormalAxis_;
     std::vector<Scalar> wallDistance_;
+    std::vector<unsigned int> wallElementIdx_;
     std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
     std::vector<GlobalPosition> cellCenter_;
     std::vector<DimVector> velocity_;
     std::vector<DimVector> velocityMaximum_;
     std::vector<DimVector> velocityMinimum_;
     std::vector<DimMatrix> velocityGradients_;
+
     std::vector<Scalar> stressTensorScalarProduct_;
     std::vector<Scalar> vorticityTensorScalarProduct_;
-    std::vector<unsigned int> wallNormalAxis_;
-    std::vector<unsigned int> flowNormalAxis_;
+
     std::vector<Scalar> kinematicViscosity_;
     std::vector<Scalar> sandGrainRoughness_;
 
