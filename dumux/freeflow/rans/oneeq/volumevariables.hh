@@ -87,8 +87,8 @@ public:
         viscosityTilde_ = elemSol[0][Indices::viscosityTildeIdx];
         storedViscosityTilde_ = problem.storedViscosityTilde_[RANSParentType::elementIdx()];
         storedViscosityTildeGradient_ = problem.storedViscosityTildeGradient_[RANSParentType::elementIdx()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
-        vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct_[RANSParentType::elementIdx()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
+        vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct(RANSParentType::elementIdx());
         if (problem.useStoredEddyViscosity_)
             RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
         else
@@ -274,8 +274,8 @@ protected:
     Scalar viscosityTilde_ = 0.0;
     Scalar storedViscosityTilde_ = 0.0;
     DimVector storedViscosityTildeGradient_ = DimVector(0.0);
-    Scalar stressTensorScalarProduct_ = 0.0;
-    Scalar vorticityTensorScalarProduct_ = 0.0;
+    Scalar stressTensorScalarProduct_;
+    Scalar vorticityTensorScalarProduct_;
 };
 
 } // end namespace Dumux

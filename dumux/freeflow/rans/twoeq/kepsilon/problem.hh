@@ -204,7 +204,7 @@ public:
         unsigned int wallElementIdx = asImp_().wallElementIndex(elementIdx);
         unsigned int matchingPointIdx = matchingPointIdx_[wallElementIdx];
         return wallElementIdx == matchingPointIdx ? yPlusNominal(elementIdx) < yPlusThreshold_
-                                                : yPlus(elementIdx) < yPlusThreshold_;
+                                                  : yPlus(elementIdx) < yPlusThreshold_;
     }
 
     /*!

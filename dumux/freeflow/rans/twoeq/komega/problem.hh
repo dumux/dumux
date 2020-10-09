@@ -121,18 +121,17 @@ public:
 
             for (unsigned int dimIdx = 0; dimIdx < DimVector::dimension; ++dimIdx)
             {
-                unsigned backwardNeighbor = ParentType::neighborIdx_[elementIdx][dimIdx][0];
-                unsigned forwardNeighbor = ParentType::neighborIdx_[elementIdx][dimIdx][1];
+                const unsigned neighborIdx0 = ParentType::neighborIndex(elementIdx, dimIdx, 0);
+                const unsigned neighborIdx1 = ParentType::neighborIndex(elementIdx, dimIdx, 1);
+
+                // Cell centered TKE Gradient
                 storedTurbulentKineticEnergyGradient_[elementIdx][dimIdx]
-                    = (storedTurbulentKineticEnergy_[forwardNeighbor]
-                          - storedTurbulentKineticEnergy_[backwardNeighbor])
-                      / (ParentType::cellCenter_[forwardNeighbor][dimIdx]
-                          - ParentType::cellCenter_[backwardNeighbor][dimIdx]);
+                    = (storedTurbulentKineticEnergy_[neighborIdx1] - storedTurbulentKineticEnergy_[neighborIdx0])
+                    / (ParentType::cellCenter(neighborIdx1)[dimIdx] - ParentType::cellCenter(neighborIdx0)[dimIdx]);
+                // Cell centered Omega Gradient
                 storedDissipationGradient_[elementIdx][dimIdx]
-                    = (storedDissipation_[forwardNeighbor]
-                          - storedDissipation_[backwardNeighbor])
-                      / (ParentType::cellCenter_[forwardNeighbor][dimIdx]
-                          - ParentType::cellCenter_[backwardNeighbor][dimIdx]);
+                    = (storedDissipation_[neighborIdx1] - storedDissipation_[neighborIdx0])
+                    / (ParentType::cellCenter(neighborIdx1)[dimIdx] - ParentType::cellCenter(neighborIdx0)[dimIdx]);
             }
         }
     }

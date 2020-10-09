@@ -431,7 +431,7 @@ private:
             // For the komega model we set a fixed value for the dissipation
             const auto wallDistance = ParentType::wallDistance(elementIdx);
             using std::pow;
-            values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
+            values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity(elementIdx)
                                                     / (ParentType::betaOmega() * wallDistance * wallDistance);
             return values;
         }

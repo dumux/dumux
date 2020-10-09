@@ -123,11 +123,13 @@ public:
 
             for (unsigned int dimIdx = 0; dimIdx < Grid::dimension; ++dimIdx)
             {
+                const unsigned int neighborIndex0 = ParentType::neighborIndex(elementIdx, dimIdx, 0);
+                const unsigned int neighborIndex1 = ParentType::neighborIndex(elementIdx, dimIdx, 1);
+
+                // calculate cell-centered turbulentEddyViscosity gradient
                 storedViscosityTildeGradient_[elementIdx][dimIdx]
-                    = (storedViscosityTilde_[ParentType::neighborIdx_[elementIdx][dimIdx][1]]
-                          - storedViscosityTilde_[ParentType::neighborIdx_[elementIdx][dimIdx][0]])
-                      / (ParentType::cellCenter_[ParentType::neighborIdx_[elementIdx][dimIdx][1]][dimIdx]
-                          - ParentType::cellCenter_[ParentType::neighborIdx_[elementIdx][dimIdx][0]][dimIdx]);
+                    = (storedViscosityTilde_[neighborIndex1] - storedViscosityTilde_[neighborIndex0])
+                    / (ParentType::cellCenter(neighborIndex1)[dimIdx] - ParentType::cellCenter(neighborIndex0)[dimIdx]);
             }
 
             auto fvGeometry = localView(this->gridGeometry());
@@ -140,13 +142,13 @@ public:
                     // face Value
                     Scalar dirichletViscosityTilde = asImp_().dirichlet(element, scvf)[Indices::viscosityTildeIdx];
 
-                    unsigned int neighborIdx = ParentType::neighborIdx_[elementIdx][normDim][0];
-                    if (scvf.center()[normDim] < ParentType::cellCenter_[elementIdx][normDim])
-                        neighborIdx = ParentType::neighborIdx_[elementIdx][normDim][1];
+                    unsigned int neighborIndex = ParentType::neighborIndex(elementIdx, normDim, 0);
+                    if (scvf.center()[normDim] < ParentType::cellCenter(elementIdx)[normDim])
+                        neighborIndex = ParentType::neighborIndex(elementIdx, normDim, 1);
 
                     storedViscosityTildeGradient_[elementIdx][normDim]
-                        = (storedViscosityTilde_[neighborIdx] - dirichletViscosityTilde)
-                          / (ParentType::cellCenter_[neighborIdx][normDim] - scvf.center()[normDim]);
+                        = (storedViscosityTilde_[neighborIndex] - dirichletViscosityTilde)
+                        / (ParentType::cellCenter(neighborIndex)[normDim] - scvf.center()[normDim]);
                 }
             }
         }

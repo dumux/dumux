@@ -90,7 +90,7 @@ public:
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementIdx()];
         storedDissipationGradient_ = problem.storedDissipationGradient_[RANSParentType::elementIdx()];
         storedTurbulentKineticEnergyGradient_ = problem.storedTurbulentKineticEnergyGradient_[RANSParentType::elementIdx()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
         if (problem.useStoredEddyViscosity_)
             RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
         else

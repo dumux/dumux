@@ -40,9 +40,9 @@ struct RANSIOFields
     {
         NavierStokesIOFields::initOutputModule(out);
 
-        static constexpr auto dim = decltype(std::declval<typename OutputModule::VolumeVariables>().velocity())::dimension;
+        static constexpr auto dim = decltype(std::declval<typename OutputModule::VolumeVariables>().ccVelocityVector())::dimension;
 
-        out.addVolumeVariable([](const auto& v){ return v.velocity()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
+        out.addVolumeVariable([](const auto& v){ return v.ccVelocityVector()[0] / v.profileVelocityMaximum()[0]; }, "v_x/v_x,max");
         out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
         if (dim > 1)
             out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/dx_");

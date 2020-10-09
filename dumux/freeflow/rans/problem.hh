@@ -108,7 +108,6 @@ public:
         neighborIdx_.resize(this->gridGeometry().elementMapper().size());
         cellCenter_.resize(this->gridGeometry().elementMapper().size(), GlobalPosition(0.0));
         velocity_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
-        velocityMaximum_.resize(this->gridGeometry().elementMapper().size(), DimVector(0.0));
         velocityGradients_.resize(this->gridGeometry().elementMapper().size(), DimMatrix(0.0));
         stressTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         vorticityTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
@@ -207,16 +206,13 @@ public:
                 unsigned int neighborIdx = this->gridGeometry().elementMapper().index(intersection.outside());
                 for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                 {
-                    if (abs(cellCenter_[elementIdx][dimIdx] - cellCenter_[neighborIdx][dimIdx]) > 1e-8)
+                    if (abs(cellCenter(elementIdx)[dimIdx] - cellCenter(neighborIdx)[dimIdx]) > 1e-8)
                     {
-                        if (cellCenter_[elementIdx][dimIdx] > cellCenter_[neighborIdx][dimIdx])
-                        {
+                        if (cellCenter(elementIdx)[dimIdx] > cellCenter(neighborIdx)[dimIdx])
                             neighborIdx_[elementIdx][dimIdx][0] = neighborIdx;
-                        }
-                        if (cellCenter_[elementIdx][dimIdx] < cellCenter_[neighborIdx][dimIdx])
-                        {
+
+                        if (cellCenter(elementIdx)[dimIdx] < cellCenter(neighborIdx)[dimIdx])
                             neighborIdx_[elementIdx][dimIdx][1] = neighborIdx;
-                        }
                     }
                 }
             }
@@ -268,40 +264,34 @@ public:
         // calculate cell-center-averaged velocity gradients, maximum, and minimum values
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-            unsigned int wallElementIdx = wallElementIdx_[elementIdx];
+            const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
+            const unsigned int wallElementIdx = wallElementIdx_[elementIdx];
 
             Scalar maxVelocity = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
+                    const unsigned int neighborIndex0 = neighborIndex(elementIdx, dimIdx, 0);
+                    const unsigned int neighborIndex1 = neighborIndex(elementIdx, dimIdx, 1);
+
                     velocityGradients_[elementIdx][velIdx][dimIdx]
-                        = (velocity_[neighborIdx_[elementIdx][dimIdx][1]][velIdx]
-                              - velocity_[neighborIdx_[elementIdx][dimIdx][0]][velIdx])
-                          / (cellCenter_[neighborIdx_[elementIdx][dimIdx][1]][dimIdx]
-                              - cellCenter_[neighborIdx_[elementIdx][dimIdx][0]][dimIdx]);
-                    if (abs(cellCenter_[neighborIdx_[elementIdx][dimIdx][1]][dimIdx]
-                            - cellCenter_[neighborIdx_[elementIdx][dimIdx][0]][dimIdx]) < 1e-8)
+                        = (ccVelocity(neighborIndex1, velIdx) - ccVelocity(neighborIndex0, velIdx))
+                        / (cellCenter(neighborIndex1)[dimIdx] - cellCenter(neighborIndex0)[dimIdx]);
+
+                    if (abs(cellCenter(neighborIndex1)[dimIdx] - cellCenter(neighborIndex0)[dimIdx]) < 1e-8)
                         velocityGradients_[elementIdx][velIdx][dimIdx] = 0.0;
                 }
 
-                if (abs(velocity_[elementIdx][dimIdx]) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
-                {
-                    velocityMaximum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
-                }
-                if (abs(velocity_[elementIdx][dimIdx]) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
-                {
-                    velocityMinimum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
-                }
+                if (abs(ccVelocity(elementIdx, dimIdx)) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
+                    velocityMaximum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
 
-                if (0 <= flowNormalAxis && flowNormalAxis < dim)
+                if (abs(ccVelocity(elementIdx, dimIdx)) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
+                    velocityMinimum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
+
+                if ((hasParam("RANS.FlowNormalAxis") != 1) && (maxVelocity) < abs(ccVelocity(elementIdx, dimIdx)))
                 {
-                    flowNormalAxis_[elementIdx] = flowNormalAxis;
-                }
-                else if (abs(maxVelocity) < abs(velocity_[elementIdx][dimIdx]))
-                {
-                    maxVelocity = abs(velocity_[elementIdx][dimIdx]);
+                    maxVelocity = abs(ccVelocity(elementIdx, dimIdx));
                     flowNormalAxis_[elementIdx] = dimIdx;
                 }
             }
@@ -321,13 +311,13 @@ public:
 
                         Scalar dirichletVelocity = asImp_().dirichlet(element, scvf)[Indices::velocity(velIdx)];
 
-                        unsigned int neighborIdx = neighborIdx_[elementIdx][scvfNormDim][0];
-                        if (scvf.center()[scvfNormDim] < cellCenter_[elementIdx][scvfNormDim])
-                            neighborIdx = neighborIdx_[elementIdx][scvfNormDim][1];
+                        unsigned int neighborIdx = neighborIndex(elementIdx, scvfNormDim, 0);
+                        if (scvf.center()[scvfNormDim] < cellCenter(elementIdx)[scvfNormDim])
+                            neighborIdx = neighborIndex(elementIdx, scvfNormDim, 1);
 
                         velocityGradients_[elementIdx][velIdx][scvfNormDim]
-                            = (velocity_[neighborIdx][velIdx] - dirichletVelocity)
-                              / (cellCenter_[neighborIdx][scvfNormDim] - scvf.center()[scvfNormDim]);
+                            = (ccVelocity(neighborIdx, velIdx) - dirichletVelocity)
+                              / (cellCenter(neighborIdx)[scvfNormDim] - scvf.center()[scvfNormDim]);
                     }
                 }
 
@@ -346,12 +336,12 @@ public:
                     unsigned int normalNormDim = lateralFace.directionIndex();
                     if (lateralFace.boundary() && (asImp_().boundaryTypes(element, lateralFace).isBeaversJoseph(Indices::velocity(velIdx))))
                     {
-                        unsigned int neighborIdx = neighborIdx_[elementIdx][normalNormDim][0];
-                        if (lateralFace.center()[normalNormDim] < cellCenter_[elementIdx][normalNormDim])
-                            neighborIdx = neighborIdx_[elementIdx][normalNormDim][1];
+                        unsigned int neighborIdx = neighborIndex(elementIdx, normalNormDim, 0);
+                        if (lateralFace.center()[normalNormDim] < cellCenter(elementIdx)[normalNormDim])
+                            neighborIdx = neighborIndex(elementIdx, normalNormDim, 1);
 
                         const SubControlVolume& scv = fvGeometry.scv(scvf.insideScvIdx());
-                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, scvf, lateralFace, velocity_[elementIdx][velIdx], 0.0);
+                        bjsVelocityAverage[normalNormDim] += ParentType::beaversJosephVelocity(element, scv, scvf, lateralFace, ccVelocity(elementIdx, velIdx), 0.0);
                         if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
                             DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
                         bjsNeighbor[normalNormDim] = neighborIdx;
@@ -368,8 +358,8 @@ public:
                     bjsVelocityAverage[dirIdx] /= bjsNumFaces[dirIdx];
 
                     velocityGradients_[elementIdx][velIdx][dirIdx]
-                        = (velocity_[neighborIdx][velIdx] - bjsVelocityAverage[dirIdx])
-                          / (cellCenter_[neighborIdx][dirIdx] - normalNormCoordinate[dirIdx]);
+                        = (ccVelocity(neighborIdx, velIdx) - bjsVelocityAverage[dirIdx])
+                        / (cellCenter(neighborIdx)[dirIdx] - normalNormCoordinate[dirIdx]);
 
                 }
             }
@@ -385,8 +375,8 @@ public:
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
-                    stressTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementIdx][dimIdx][velIdx]
-                                                   + 0.5 * velocityGradients_[elementIdx][velIdx][dimIdx];
+                    stressTensor[dimIdx][velIdx] = 0.5 * velocityGradient(elementIdx, dimIdx, velIdx)
+                                                 + 0.5 * velocityGradient(elementIdx, velIdx, dimIdx);
               }
             }
             stressTensorScalarProduct_[elementIdx] = 0.0;
@@ -403,8 +393,8 @@ public:
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
-                    vorticityTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementIdx][dimIdx][velIdx]
-                                                      - 0.5 * velocityGradients_[elementIdx][velIdx][dimIdx];
+                    vorticityTensor[dimIdx][velIdx] = 0.5 * velocityGradient(elementIdx, dimIdx, velIdx)
+                                                    - 0.5 * velocityGradient(elementIdx, velIdx, dimIdx);
               }
             }
             vorticityTensorScalarProduct_[elementIdx] = 0.0;
@@ -541,7 +531,6 @@ public:
         return turbulentSchmidtNumber;
     }
 
-public:
     int wallNormalAxis(const int elementIdx) const
     { return wallNormalAxis_[elementIdx]; }
 
@@ -554,9 +543,42 @@ public:
     Scalar wallDistance(const int elementIdx) const
     { return wallDistance_[elementIdx]; }
 
+    GlobalPosition cellCenter(const int elementIdx) const
+    { return cellCenter_[elementIdx]; }
+
+    unsigned int neighborIndex(const int elementIdx, const int dimIdx, const int sideIdx) const
+    { return neighborIdx_[elementIdx][dimIdx][sideIdx];}
+
+    DimVector ccVelocityVector(const int elementIdx) const
+    { return velocity_[elementIdx]; }
+
+    Scalar ccVelocity(const int elementIdx, const int dimIdx) const
+    { return velocity_[elementIdx][dimIdx]; }
+
+    DimVector profileVelocityMaximum(const int elementIdx) const
+    { return velocityMaximum_[elementIdx]; }
+
+    DimVector profileVelocityMinimum(const int elementIdx) const
+    { return velocityMinimum_[elementIdx]; }
+
+    DimMatrix velocityGradientTensor(const int elementIdx) const
+    { return velocityGradients_[elementIdx]; }
+
+    Scalar velocityGradient(const int elementIdx, const int dimIdx, const int velIdx) const
+    { return velocityGradients_[elementIdx][dimIdx][velIdx]; }
+
+    Scalar stressTensorScalarProduct(const int elementIdx) const
+    { return stressTensorScalarProduct_[elementIdx]; }
+
+    Scalar vorticityTensorScalarProduct(const int elementIdx) const
+    { return vorticityTensorScalarProduct_[elementIdx]; }
+
+    Scalar kinematicViscosity(const int elementIdx) const
+    { return kinematicViscosity_[elementIdx]; }
 
     bool calledUpdateStaticWallProperties = false;
 
+private:
     const int fixedFlowNormalAxis_ = getParam<int>("RANS.FlowNormalAxis", 0);
     const int fixedWallNormalAxis_ = getParam<int>("RANS.WallNormalAxis", 1);
 
@@ -564,8 +586,9 @@ public:
     std::vector<unsigned int> flowNormalAxis_;
     std::vector<Scalar> wallDistance_;
     std::vector<unsigned int> wallElementIdx_;
-    std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
     std::vector<GlobalPosition> cellCenter_;
+    std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
+
     std::vector<DimVector> velocity_;
     std::vector<DimVector> velocityMaximum_;
     std::vector<DimVector> velocityMinimum_;
@@ -577,7 +600,6 @@ public:
     std::vector<Scalar> kinematicViscosity_;
     std::vector<Scalar> sandGrainRoughness_;
 
-private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }

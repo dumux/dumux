@@ -87,11 +87,11 @@ public:
         dissipation_ = elemSol[0][Indices::dissipationIdx];
         storedDissipation_ = problem.storedDissipation_[RANSParentType::elementIdx()];
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementIdx()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
         const Scalar uStarNominal = problem.uStarNominal(RANSParentType::elementIdx());
-        const auto flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementIdx()];
-        yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity_[RANSParentType::elementIdx()];
-        uPlusNominal_ = RANSParentType::velocity()[flowNormalAxis] / uStarNominal;
+        const auto flowNormalAxis = problem.flowNormalAxis(RANSParentType::elementIdx());
+        yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity(RANSParentType::elementIdx());
+        uPlusNominal_ = RANSParentType::ccVelocityVector()[flowNormalAxis] / uStarNominal;
         cMu_ = problem.cMu();
         if (problem.useStoredEddyViscosity_)
             RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);

@@ -86,7 +86,7 @@ public:
         dissipationTilde_ = elemSol[0][Indices::dissipationIdx];
         storedDissipationTilde_ = problem.storedDissipationTilde_[RANSParentType::elementIdx()];
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementIdx()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
         if (problem.useStoredEddyViscosity_)
             RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
         else

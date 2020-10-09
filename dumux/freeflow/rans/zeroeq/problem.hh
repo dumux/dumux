@@ -26,6 +26,7 @@
 
 #include <string>
 
+#include <dune/common/power.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
@@ -190,20 +191,19 @@ public:
             unsigned int flowNormalAxis = this->flowNormalAxis(elementIdx);
             unsigned int wallNormalAxis = this->wallNormalAxis(elementIdx);
 
-
-            Scalar omegaAbs = abs(this->velocityGradients_[elementIdx][flowNormalAxis][wallNormalAxis]
-                                  - this->velocityGradients_[elementIdx][wallNormalAxis][flowNormalAxis]);
-            Scalar uStar = sqrt(this->kinematicViscosity_[wallElementIdx]
-                                * abs(this->velocityGradients_[wallElementIdx][flowNormalAxis][wallNormalAxis]));
-            Scalar yPlus = wallDistance * uStar / this->kinematicViscosity_[elementIdx];
-            Scalar mixingLength = this->karmanConstant() * wallDistance * (1.0 - exp(-yPlus / aPlus));
+            Scalar omegaAbs = abs(this->velocityGradient(elementIdx, flowNormalAxis, wallNormalAxis)
+                                  - this->velocityGradient(elementIdx, wallNormalAxis, flowNormalAxis));
+            Scalar uStar = sqrt(this->kinematicViscosity(asImp_().wallElementIndex(elementIdx))
+                                * abs(this->velocityGradient(asImp_().wallElementIndex(elementIdx), flowNormalAxis, wallNormalAxis)));
+            Scalar yPlus = effectiveWallDistance * uStar / this->kinematicViscosity(elementIdx);
+            Scalar mixingLength = this->karmanConstant() * effectiveWallDistance * (1.0 - exp(-yPlus / aPlus));
             kinematicEddyViscosityInner[elementIdx] = mixingLength * mixingLength * omegaAbs;
 
-            Scalar f = wallDistance * omegaAbs * (1.0 - exp(-yPlus / aPlus));
-            if (f > storedFMax[wallElementIdx])
+            Scalar f = effectiveWallDistance * omegaAbs * (1.0 - exp(-yPlus / aPlus));
+            if (f > storedFMax[asImp_().wallElementIndex(elementIdx)])
             {
-                storedFMax[wallElementIdx] = f;
-                storedYFMax[wallElementIdx] = wallDistance;
+                storedFMax[asImp_().wallElementIndex(elementIdx)] = f;
+                storedYFMax[asImp_().wallElementIndex(elementIdx)] = effectiveWallDistance;
             }
         }
 
@@ -217,16 +217,17 @@ public:
             Scalar minVelocityNorm = 0.0;
             for (unsigned dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
-                maxVelocityNorm += this->velocityMaximum_[wallElementIdx][dimIdx]
-                                   * this->velocityMaximum_[wallElementIdx][dimIdx];
-                minVelocityNorm += this->velocityMinimum_[wallElementIdx][dimIdx]
-                                   * this->velocityMinimum_[wallElementIdx][dimIdx];
+                maxVelocityNorm += asImp_().profileVelocityMaximum(asImp_().wallElementIndex(elementIdx))[dimIdx]
+                                   * asImp_().profileVelocityMaximum(asImp_().wallElementIndex(elementIdx))[dimIdx];
+                minVelocityNorm += asImp_().profileVelocityMinimum(asImp_().wallElementIndex(elementIdx))[dimIdx]
+                                   * asImp_().profileVelocityMinimum(asImp_().wallElementIndex(elementIdx))[dimIdx];
             }
+
             Scalar deltaU = sqrt(maxVelocityNorm) - sqrt(minVelocityNorm);
-            Scalar yFMax = storedYFMax[wallElementIdx];
-            Scalar fMax = storedFMax[wallElementIdx];
+            Scalar yFMax = storedYFMax[asImp_().wallElementIndex(elementIdx)];
+            Scalar fMax = storedFMax[asImp_().wallElementIndex(elementIdx)];
             Scalar fWake = min(yFMax * fMax, cWake * yFMax * deltaU * deltaU / fMax);
-            Scalar fKleb = 1.0 / (1.0 + 5.5 * pow(cKleb * wallDistance / yFMax, 6.0));
+            Scalar fKleb = 1.0 / (1.0 + 5.5 * power(cKleb * effectiveWallDistance / yFMax, 6));
             kinematicEddyViscosityOuter[elementIdx] = k * cCP * fWake * fKleb;
 
             kinematicEddyViscosityDifference[elementIdx]
@@ -240,11 +241,11 @@ public:
             Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength_[elementIdx];
 
             // checks if sign switches, by multiplication
-            Scalar check = kinematicEddyViscosityDifference[wallElementIdx] * kinematicEddyViscosityDifference[elementIdx];
+            Scalar check = kinematicEddyViscosityDifference[asImp_().wallElementIndex(elementIdx)] * kinematicEddyViscosityDifference[elementIdx];
             if (check < 0 // means sign has switched
-                && switchingPosition[wallElementIdx] > wallDistance)
+                && switchingPosition[asImp_().wallElementIndex(elementIdx)] > effectiveWallDistance)
             {
-                switchingPosition[wallElementIdx] = wallDistance;
+                switchingPosition[asImp_().wallElementIndex(elementIdx)] = effectiveWallDistance;
             }
         }
 
