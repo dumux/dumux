@@ -78,9 +78,7 @@ public:
      */
     RANSProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
-    {
-        eddyViscosityModel_ = getParamFromGroup<std::string>(paramGroup, "RANS.EddyViscosityModel", "vanDriest");
-    }
+    {}
 
     /*!
      * \brief Correct size of the static (solution independent) wall variables
@@ -110,7 +108,7 @@ public:
             calculateRoughnessLength_(curSol);
 
         // update routine for specfic models
-        if (eddyViscosityModel_.compare("baldwinLomax") == 0)
+        if (eddyViscosityModel().compare("baldwinLomax") == 0)
             updateBaldwinLomaxProperties();
     }
 
@@ -184,7 +182,7 @@ public:
             Scalar yFMax = storedYFMax[asImp_().wallElementIndex(elementIdx)];
             Scalar fMax = storedFMax[asImp_().wallElementIndex(elementIdx)];
             Scalar fWake = min(yFMax * fMax, cWake * yFMax * deltaU * deltaU / fMax);
-            Scalar fKleb = 1.0 / (1.0 + 5.5 * power(cKleb * effectiveWallDistance / yFMax, 6));
+            Scalar fKleb = 1.0 / (1.0 + 5.5 * Dune::power(cKleb * effectiveWallDistance / yFMax, 6));
             kinematicEddyViscosityOuter[elementIdx] = k * cCP * fWake * fKleb;
 
             kinematicEddyViscosityDifference[elementIdx]
@@ -220,13 +218,17 @@ public:
         }
     }
 
-public:
-    std::string eddyViscosityModel_;
-    std::vector<Scalar> kinematicEddyViscosity_;
+    std::string eddyViscosityModel() const
+    {
+        static const std::string eddyViscosityModel = getParamFromGroup<std::string>(this->paramGroup(), "RANS.EddyViscosityModel", "vanDriest");
+        return eddyViscosityModel;
+    }
 
     int additionalRoughnessLength(const int elementIdx) const
     { return additionalRoughnessLength_[elementIdx]; }
 
+    Scalar kinematicEddyViscosity(const int elementIdx) const
+    { return kinematicEddyViscosity_[elementIdx]; }
 
 private:
 
@@ -281,6 +283,8 @@ private:
     }
 
     std::vector<Scalar> additionalRoughnessLength_;
+    std::vector<Scalar> kinematicEddyViscosity_;
+
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }

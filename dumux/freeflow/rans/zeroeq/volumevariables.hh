@@ -83,7 +83,7 @@ public:
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
         additionalRoughnessLength_ = problem.additionalRoughnessLength(RANSParentType::elementIdx());
         yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
-        RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity(elemSol, problem, element, scv, problem.eddyViscosityModel_));
+        RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity(elemSol, problem, element, scv, problem.eddyViscosityModel()));
         RANSParentType::calculateEddyDiffusivity(problem);
         RANSParentType::calculateEddyThermalConductivity(problem);
     }
@@ -130,7 +130,7 @@ public:
         }
         else if (modelName.compare("baldwinLomax") == 0)
         {
-            kinematicEddyViscosity = problem.kinematicEddyViscosity_[RANSParentType::elementIdx()];
+            kinematicEddyViscosity = problem.kinematicEddyViscosity(RANSParentType::elementIdx());
         }
         else
         {
