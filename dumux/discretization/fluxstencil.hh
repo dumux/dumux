@@ -177,7 +177,8 @@ public:
                 stencil.push_back(scvfJ.outsideScvIdx());
             }
         }
-
+        std::sort(stencil.begin(), stencil.end());
+        stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
         return stencil;
     }
 };
