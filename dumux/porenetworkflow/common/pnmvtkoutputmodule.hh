@@ -58,9 +58,12 @@ public:
                            bool verbose = true)
     : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
     {
-        // enable velocity output per default
-        using VelocityOutput = PNMVelocityOutput<GridVariables, FluxVariables>;
-        this->addVelocityOutput(std::make_shared<VelocityOutput>(gridVariables));
+        if constexpr (GridVariables::VolumeVariables::numFluidPhases() >= 1)
+        {
+            // enable velocity output per default
+            using VelocityOutput = PNMVelocityOutput<GridVariables, FluxVariables>;
+            this->addVelocityOutput(std::make_shared<VelocityOutput>(gridVariables));
+        }
 
         // TODO remove soon
         if constexpr(deprecated)
