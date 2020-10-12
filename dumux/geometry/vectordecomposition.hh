@@ -94,7 +94,7 @@ expressInBasis(V a, V b1, V b2, V b3)
 
 template<class V>
 std::tuple<std::array<int, V::dimension>, std::array<typename V::value_type, V::dimension>, std::size_t>
-decomposition(const V& vec, const std::vector<V>& b)
+decomposition(const V& vec, const std::vector<V>& b, int includeIndex = -1)
 {
     assert(b.size() > 0);
 
@@ -136,6 +136,10 @@ decomposition(const V& vec, const std::vector<V>& b)
             {
                 for (int k = j+1; k < numVectors; ++k)
                 {
+                    // exclude combinations that don't contain the includeIndex vector
+                    if (includeIndex >= 0 && !(i == includeIndex || j == includeIndex || k == includeIndex))
+                        continue;
+
                     const auto [valid, coeff] = expressInBasis(vec, b[i], b[j], b[k]);
                     if (valid)
                     {

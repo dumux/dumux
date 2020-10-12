@@ -105,7 +105,7 @@ public:
 
         boundaryFace_ = scvf.boundary();
         const auto coNormal = mv(tensor(scvf.insideScvIdx()), scvf.unitOuterNormal());
-        auto&& [indices, coeff, size] = decomposition(coNormal, intOp.getDistanceVectors(fvGeometry));
+        auto&& [indices, coeff, size] = decomposition(coNormal, intOp.getDistanceVectors(fvGeometry), scvf.localIndex());
 
         if (size == 0)
             DUNE_THROW(Dune::InvalidStateException, "CoNormal decomposition not found");
