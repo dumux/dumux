@@ -28,7 +28,7 @@
 #include <vector>
 
 #include <dumux/common/parameters.hh>
-#include "dumux/common/vectordecomposition.hh"
+#include <dumux/geometry/vectordecomposition.hh>
 
 namespace Dumux {
 
@@ -105,14 +105,15 @@ public:
 
         boundaryFace_ = scvf.boundary();
         const auto coNormal = mv(tensor(scvf.insideScvIdx()), scvf.unitOuterNormal());
-        auto&& [indices, coeff, found] = enforceNeighborInclusion ? VectorDecomposition::calculateVectorDecomposition(coNormal, intOp.getDistanceVectors(fvGeometry), scvf.localIndex())
-                                                                  : VectorDecomposition::calculateVectorDecomposition(coNormal, intOp.getDistanceVectors(fvGeometry));
+        auto&& [indices, coeff, size] = decomposition(coNormal, intOp.getDistanceVectors(fvGeometry));
 
-        if(!found)
+        if (size == 0)
             DUNE_THROW(Dune::InvalidStateException, "CoNormal decomposition not found");
         else
         {
-            WMpfaHelper::eraseZeros(coeff, indices);
+            //WMpfaHelper::eraseZeros(coeff, indices);
+            std::vector<Scalar> vCoeff(coeff.begin(), coeff.begin()+size);
+            std::vector<int> VIndices(indices.begin(), indices.begin()+size);
             updateEntries(problem, intOp, indices, coeff, fvGeometry, scvf);
         }
     }
