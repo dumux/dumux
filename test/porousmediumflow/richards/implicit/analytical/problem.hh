@@ -188,15 +188,15 @@ public:
 
         // linear model with complex solution
         // calculated with Matlab script "Richards.m"
-        using std::pow;
+        using Dune::power;
         using std::tanh;
 
-        values = (pow(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*(1.0/1.0E1)
-            -1.0/1.0E1)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))*4.0E-8-((pow(tanh(globalPos[1]
-            *5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))-1.0E3)
-            *(pow(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom
+        values = (power(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2)*(1.0/1.0E1)
+            -1.0/1.0E1)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))*4.0E-8-((power(tanh(globalPos[1]
+            *5.0+time*(1.0/1.0E1)-1.5E1),2)*5.0-5.0)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))-1.0E3)
+            *(power(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2)*5.0-5.0)*(pwBottom
             *(1.0/2.0)-pwTop*(1.0/2.0))*5.0E-16+tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1)
-            *(pow(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom
+            *(power(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2)*5.0-5.0)*(pwBottom
             *(1.0/2.0)-pwTop*(1.0/2.0))*(pwBottom*5.0E-16-(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)
             -1.5E1)+1.0)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))*5.0E-16+4.99995E-6)*1.0E1;
         return values;
