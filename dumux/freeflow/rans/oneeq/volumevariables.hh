@@ -164,14 +164,15 @@ public:
     Scalar fW() const
     {
         using std::pow;
-        return g() * pow(1.0 + pow(cw3(), 6.0) / (pow(g(), 6.0) + pow(cw3(), 6.0)), 1.0/6.0);
+        using Dune::power;
+        return g() * pow(1.0 + power(cw3(), 6) / (power(g(), 6) + power(cw3(), 6)), 1.0/6.0);
     }
 
     //! \brief Returns a model function
     Scalar g() const
     {
-        using std::pow;
-        return r() + cw2() * (pow(r(), 6.0) - r());
+        using Dune::power;
+        return r() + cw2() * (power(r(), 6) - r());
     }
 
     //! \brief Returns a model function

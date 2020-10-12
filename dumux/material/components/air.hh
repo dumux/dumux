@@ -244,14 +244,15 @@ public:
         const Scalar eta0 = 0.0266958*sqrt(1000.0*molarMass()*temperature)/(sigma*sigma*Omega);
 
         using std::pow;
+        using Dune::power;
         const Scalar tau = criticalTemperature()/temperature;
         const Scalar rhoc = 10.4477; // [mol/m^3]
         const Scalar delta = 0.001*pressure/(temperature*8.3144598)/rhoc;
         const Scalar etaR = 10.72 * pow(tau, 0.2) * delta
-                            + 1.122 * pow(tau, 0.05) * pow(delta, 4)
-                            + 0.002019 * pow(tau, 2.4) * pow(delta, 9)
+                            + 1.122 * pow(tau, 0.05) * power(delta, 4)
+                            + 0.002019 * pow(tau, 2.4) * power(delta, 9)
                             - 8.876 * pow(tau, 0.6) * delta * exp(-delta)
-                            - 0.02916 * pow(tau, 3.6) * pow(delta, 8) * exp(-delta);
+                            - 0.02916 * pow(tau, 3.6) * power(delta, 8) * exp(-delta);
 
         return (eta0 + etaR)*1e-6;
     }
@@ -309,19 +310,20 @@ public:
         Scalar phi = temperature/100;
 
         using std::pow;
+        using Dune::power;
         Scalar c_p = 0.661738E+01
                 -0.105885E+01 * phi
-                +0.201650E+00 * pow(phi,2)
-                -0.196930E-01 * pow(phi,3)
-                +0.106460E-02 * pow(phi,4)
-                -0.303284E-04 * pow(phi,5)
-                +0.355861E-06 * pow(phi,6);
-        c_p +=  -0.549169E+01 * pow(phi,-1)
-                +0.585171E+01 * pow(phi,-2)
-                -0.372865E+01 * pow(phi,-3)
-                +0.133981E+01 * pow(phi,-4)
-                -0.233758E+00 * pow(phi,-5)
-                +0.125718E-01 * pow(phi,-6);
+                +0.201650E+00 * power(phi,2)
+                -0.196930E-01 * power(phi,3)
+                +0.106460E-02 * power(phi,4)
+                -0.303284E-04 * power(phi,5)
+                +0.355861E-06 * power(phi,6);
+        c_p +=  -0.549169E+01 * power(phi,-1)
+                +0.585171E+01 * power(phi,-2)
+                -0.372865E+01 * power(phi,-3)
+                +0.133981E+01 * power(phi,-4)
+                -0.233758E+00 * power(phi,-5)
+                +0.125718E-01 * power(phi,-6);
         c_p *= IdealGas::R / molarMass(); // in J/(mol*K) / (kg/mol)
 
         return  c_p;
