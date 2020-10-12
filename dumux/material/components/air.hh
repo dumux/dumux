@@ -318,12 +318,12 @@ public:
                 +0.106460E-02 * power(phi,4)
                 -0.303284E-04 * power(phi,5)
                 +0.355861E-06 * power(phi,6);
-        c_p +=  -0.549169E+01 * pow(phi,-1)
-                +0.585171E+01 * pow(phi,-2)
-                -0.372865E+01 * pow(phi,-3)
-                +0.133981E+01 * pow(phi,-4)
-                -0.233758E+00 * pow(phi,-5)
-                +0.125718E-01 * pow(phi,-6);
+        c_p +=  -0.549169E+01 * power(phi,-1)
+                +0.585171E+01 * power(phi,-2)
+                -0.372865E+01 * power(phi,-3)
+                +0.133981E+01 * power(phi,-4)
+                -0.233758E+00 * power(phi,-5)
+                +0.125718E-01 * power(phi,-6);
         c_p *= IdealGas::R / molarMass(); // in J/(mol*K) / (kg/mol)
 
         return  c_p;
