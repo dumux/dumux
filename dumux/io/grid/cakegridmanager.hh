@@ -219,7 +219,7 @@ public:
                     if (verbose)
                     {
                         std::cout << " -> grading_eff "  << gradingFactor
-                                  << " h_min "  << height * pow(gradingFactor, 0) * length
+                                  << " h_min "  << height * power(gradingFactor, 0) * length
                                   << " h_max "  << height * power(gradingFactor, numCells-1) * length
                                   << std::endl;
                     }
