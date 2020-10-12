@@ -33,6 +33,63 @@ class VectorDecomposition
 
 public:
     template<class DV>
+    static std::tuple<std::vector<std::size_t>, std::vector<typename DV::value_type>, bool> calculateVectorDecomposition(const DV x, const std::vector<DV>& v, std::size_t localIdxInclusion)
+    {
+        std::size_t numVectors = v.size();
+        static constexpr auto dim = DV::dimension;
+        if(numVectors == 0)
+            DUNE_THROW(Dune::InvalidStateException, "Can't perform decomposition without any given vectors!");
+
+        if(isAligned(x, v[localIdxInclusion]))
+            return {std::vector<std::size_t>({localIdxInclusion}), calculateCoefficients(x, v[localIdxInclusion]), true};
+
+        using Scalar = typename DV::value_type;
+        std::vector<Scalar> coefficients(dim, std::numeric_limits<Scalar>::max());
+        std::vector<std::size_t> indices;
+        bool foundValidSolution = false;
+
+        if constexpr (dim == 3)
+        {
+            for (std::size_t j = 0; j < numVectors - 1; ++j)
+            {
+                if(j == localIdxInclusion)
+                    continue;
+
+                for (std::size_t k = j+1; k < numVectors; ++k)
+                {
+                    auto [coeff, valid] =  calculateCoefficients(x, v[localIdxInclusion], v[j], v[k]);
+                    using std::max_element; using std::move;
+                    if(valid && (*max_element(coeff.begin(), coeff.end()) <  *max_element(coefficients.begin(), coefficients.end())))
+                    {
+                        coefficients = move(coeff);
+                        indices = {localIdxInclusion, j, k};
+                        foundValidSolution = true;
+                    }
+                }
+            }
+        }
+        else if constexpr (dim == 2)
+        {
+            for (std::size_t j = 0; j < numVectors; ++j)
+            {
+                if(j == localIdxInclusion)
+                    continue;
+
+                auto [coeff, valid] =  calculateCoefficients(x, v[localIdxInclusion], v[j]);
+                using std::max_element; using std::move;
+                if(valid && (*max_element(coeff.begin(), coeff.end()) <  *max_element(coefficients.begin(), coefficients.end())))
+                    {
+                        coefficients = move(coeff);
+                        indices = {localIdxInclusion, j};
+                        foundValidSolution = true;
+                    }
+            }
+        }
+
+        return {indices, coefficients, foundValidSolution};
+    }
+
+    template<class DV>
     static std::tuple<std::vector<std::size_t>, std::vector<typename DV::value_type>, bool> calculateVectorDecomposition(const DV x, const std::vector<DV>& v)
     {
         std::size_t numVectors = v.size();
@@ -40,8 +97,9 @@ public:
         if(numVectors == 0)
             DUNE_THROW(Dune::InvalidStateException, "Can't perform decomposition without any given vectors!");
 
-        if(isAligned(x, v[0]))
-            return {std::vector<std::size_t>({0}), calculateCoefficients(x, v[0]), true};
+        for (std::size_t i = 0; i < numVectors; ++i)
+            if(isAligned(x, v[i]))
+                return {std::vector<std::size_t>({i}), calculateCoefficients(x, v[i]), true};
 
         using Scalar = typename DV::value_type;
         std::vector<Scalar> coefficients(dim, std::numeric_limits<Scalar>::max());

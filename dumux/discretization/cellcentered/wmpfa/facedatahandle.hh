@@ -101,9 +101,12 @@ public:
     template<class Problem, class TF, class EG, class SCVF>
     void decompose(const Problem& problem, const Interpolator& intOp, const TF& tensor, const EG& fvGeometry, const SCVF& scvf)
     {
+        static const bool enforceNeighborInclusion = getParamFromGroup<bool>(problem.paramGroup(), "WMPFA.EnforceNeighborInclusion", false);
+
         boundaryFace_ = scvf.boundary();
         const auto coNormal = mv(tensor(scvf.insideScvIdx()), scvf.unitOuterNormal());
-        auto&& [indices, coeff, found] = VectorDecomposition::calculateVectorDecomposition(coNormal, intOp.getDistanceVectors(fvGeometry));
+        auto&& [indices, coeff, found] = enforceNeighborInclusion ? VectorDecomposition::calculateVectorDecomposition(coNormal, intOp.getDistanceVectors(fvGeometry), scvf.localIndex())
+                                                                  : VectorDecomposition::calculateVectorDecomposition(coNormal, intOp.getDistanceVectors(fvGeometry));
 
         if(!found)
             DUNE_THROW(Dune::InvalidStateException, "CoNormal decomposition not found");
