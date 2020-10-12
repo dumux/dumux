@@ -31,6 +31,7 @@
 
 #include <dune/common/dynvector.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/math.hh>
 #include <dune/grid/common/gridfactory.hh>
 #include <dumux/common/parameters.hh>
 
@@ -159,6 +160,7 @@ public:
         // make the grid
         std::array<std::vector<Scalar>, dim> globalPositions;
         using std::pow;
+        using Dune::power;
         for (int dimIdx = 0; dimIdx < dim; dimIdx++)
         {
             // Each grid direction is subdivided into (numCells + 1) points
@@ -213,13 +215,13 @@ public:
                 // if grading factor is not 1.0, do power law spacing
                 else
                 {
-                    height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
+                    height = (1.0 - gradingFactor) / (1.0 - power(gradingFactor, numCells));
 
                     if (verbose)
                     {
                         std::cout << " -> grading_eff "  << gradingFactor
-                                  << " h_min "  << height * pow(gradingFactor, 0) * length
-                                  << " h_max "  << height * pow(gradingFactor, numCells-1) * length
+                                  << " h_min "  << height * power(gradingFactor, 0) * length
+                                  << " h_max "  << height * power(gradingFactor, numCells-1) * length
                                   << std::endl;
                     }
                 }
@@ -232,10 +234,10 @@ public:
                     if (useGrading)
                     {
                         if (increasingCellSize)
-                            hI *= pow(gradingFactor, i-1);
+                            hI *= power(gradingFactor, i-1);
 
                         else
-                            hI *= pow(gradingFactor, numCells-i);
+                            hI *= power(gradingFactor, numCells-i);
                     }
                     localPositions[i] = localPositions[i-1] + hI;
                 }

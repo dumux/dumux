@@ -30,13 +30,14 @@
 #ifndef DUMUX_IAPWS_COMMON_HH
 #define DUMUX_IAPWS_COMMON_HH
 
-#include <dumux/material/constants.hh>
-
 #include <cmath>
 #include <iostream>
 
-namespace Dumux {
-namespace IAPWS {
+#include <dune/common/math.hh>
+
+#include <dumux/material/constants.hh>
+
+namespace Dumux::IAPWS {
 
 /*!
  * \ingroup IAPWS
@@ -209,6 +210,7 @@ public:
 
         using std::abs;
         using std::pow;
+        using Dune::power;
         Scalar DTbar = abs(Tbar - 1) + thcond_c4;
         Scalar DTbarpow = pow(DTbar, 3./5);
         Scalar Q = 2. + thcond_c5 / DTbarpow;
@@ -224,17 +226,16 @@ public:
         Scalar rhobarQ = pow(rhobar, Q);
 
         lam +=
-            (thcond_d1 / pow(Tbar,10) + thcond_d2) * rhobar18 *
+            (thcond_d1 / power(Tbar,10) + thcond_d2) * rhobar18 *
                 exp(thcond_c1 * (1 - rhobar * rhobar18))
             + thcond_d3 * S * rhobarQ *
                 exp((Q/(1+Q))*(1 - rhobar*rhobarQ))
             + thcond_d4 *
-                exp(thcond_c2 * pow(Troot,3) + thcond_c3 / pow(rhobar,5));
+                exp(thcond_c2 * power(Troot,3) + thcond_c3 / power(rhobar,5));
         return /*thcond_kstar * */ lam;
     }
 };
 
-} // end namespace IAPWS
-} // end namespace Dumux
+} // end namespace Dumux::IAPWS
 
 #endif

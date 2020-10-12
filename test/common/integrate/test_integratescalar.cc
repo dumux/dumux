@@ -6,6 +6,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/math.hh>
 #include <dumux/common/integrate.hh>
 #include <dumux/nonlinear/findscalarroot.hh>
 
@@ -48,7 +49,7 @@ int main(int argc, char* argv[])
 
     {
         // test some integral where we know the analytical expression
-        const auto func = [](const double x){ return pow(1.0 - x, 5.0)*pow(x, -1.0/3.0); };
+        const auto func = [](const double x){ return Dune::power(1.0 - x, 5)*pow(x, -1.0/3.0); };
         const auto exactIntegral = 2187.0/5236.0;
         const auto numIntegral = integrateScalarFunction(func, 0.0, 1.0, 1e-8);
         if (Dune::FloatCmp::ne<double, Dune::FloatCmp::CmpStyle::absolute>(exactIntegral, numIntegral, 1e-8))

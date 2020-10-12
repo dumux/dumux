@@ -33,8 +33,9 @@
 #include <cmath>
 #include <iostream>
 
-namespace Dumux {
-namespace IAPWS {
+#include <dune/common/math.hh>
+
+namespace Dumux::IAPWS {
 
 /*!
  * \ingroup IAPWS
@@ -101,21 +102,21 @@ public:
         };
 
         using std::pow;
+        using Dune::power;
         Scalar beta = pow((pressure/1e6 /*from Pa to MPa*/), (1./4.));
-        Scalar beta2 = pow(beta, 2.);
+        Scalar beta2 = power(beta, 2);
         Scalar E = beta2 + n[2] * beta + n[5];
         Scalar F = n[0]*beta2 + n[3]*beta + n[6];
         Scalar G = n[1]*beta2 + n[4]*beta + n[7];
 
         using std::sqrt;
-        Scalar D = ( 2.*G)/(-F -sqrt(pow(F,2.) - 4.*E*G));
-        Scalar temperature = (n[9] + D - sqrt(pow(n[9]+D , 2.) - 4.* (n[8] + n[9]*D)) ) * 0.5;
+        Scalar D = ( 2.*G)/(-F -sqrt(power(F,2) - 4.*E*G));
+        Scalar temperature = (n[9] + D - sqrt(power(n[9]+D , 2) - 4.* (n[8] + n[9]*D)) ) * 0.5;
 
         return temperature;
     }
 };
 
-} // end namespace IAPWS
-} // end namespace Dumux
+} // end namespace Dumux::IAPWS
 
 #endif

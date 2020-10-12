@@ -28,6 +28,7 @@
 #define DUMUX_COMBUSTION_SPATIALPARAMS_HH
 
 #include <dune/common/parametertreeparser.hh>
+#include <dune/common/math.hh>
 
 #include <dumux/material/spatialparams/fvnonequilibrium.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
@@ -75,8 +76,8 @@ public:
 
         characteristicLength_ =getParam<Scalar>("SpatialParams.PorousMedium.meanPoreSize");
 
-        using std::pow;
-        intrinsicPermeability_  =  (pow(characteristicLength_,2.0)  * pow(porosity_, 3.0)) / (150.0 * pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
+        using Dune::power;
+        intrinsicPermeability_  =  (power(characteristicLength_,2)  * power(porosity_, 3)) / (150.0 * power((1.0-porosity_),2)); // 1.69e-10 ; //
 
         factorEnergyTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorEnergyTransfer");
         lengthPM_ = getParam<Scalar>("Grid.lengthPM");
