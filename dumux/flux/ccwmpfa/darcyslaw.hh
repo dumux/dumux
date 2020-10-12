@@ -250,7 +250,7 @@ public:
         fluxIJ += (betaIJ - beta)*(sI - sJ);
         fluxJI += (betaJI - beta)*(sJ - sI);
 
-        auto calcAbs = [](Scalar a){ return std::abs(a) + 1e-8; };
+        auto calcAbs = [](Scalar a){ return std::abs(a) + 1e-30; };
 
         Scalar wIJ = (calcAbs(fluxJI))/(calcAbs(fluxIJ) + calcAbs(fluxJI));
         Scalar wJI = (calcAbs(fluxIJ))/(calcAbs(fluxIJ) + calcAbs(fluxJI));
