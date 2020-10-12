@@ -136,8 +136,8 @@ public:
         Scalar fluxIJ = 0.0;
         fluxIJ += dIJ[0].coefficient * solValues(elemVolVars[dIJ[0].index], dIJ[0].position);
         std::for_each(dIJ.cbegin()+1, dIJ.cend(),
-                        [&fluxIJ, &elemVolVars, &solValues](const auto& e)
-                        { fluxIJ -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+                      [&fluxIJ, &elemVolVars, &solValues](const auto& e)
+                      { fluxIJ -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
 
         flux = scvf.area()*fluxIJ;
     }
@@ -200,8 +200,76 @@ public:
         Scalar fluxIJ = 0.0;
         fluxIJ += dIJ[0].coefficient * solValues(elemVolVars[dIJ[0].index], dIJ[0].position);
         std::for_each(dIJ.cbegin()+1, dIJ.cend(),
-                        [&fluxIJ, &elemVolVars, &solValues](const auto& e)
-                        { fluxIJ -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+                      [&fluxIJ, &elemVolVars, &solValues](const auto& e)
+                      { fluxIJ -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
+
+        flux = scvf.area()*fluxIJ;
+    }
+};
+
+template<>
+class WMpfaDarcysLawsFluxCalculator<WMpfaMethod::nlmpfa>
+{
+public:
+
+    template<class Scalar, class SubControlVolumeFace, class ElementVolumeVariables, class FluxData, class SolValues>
+    static void flux(Scalar& flux,
+                     const SubControlVolumeFace& scvf,
+                     const ElementVolumeVariables& elemVolVars,
+                     const FluxData& dIJ,
+                     const FluxData& dJI,
+                     const SolValues& solValues)
+    {
+        const auto sI = solValues(elemVolVars[dIJ[0].index], dIJ[0].position);
+        const auto sJ = solValues(elemVolVars[dJI[0].index], dJI[0].position);
+
+        Scalar betaIJ = 0.0;
+        Scalar betaJI = 0.0;
+        Scalar fluxIJ = 0.0;
+        Scalar fluxJI = 0.0;
+        std::for_each(dIJ.cbegin()+1, dIJ.cend(),
+                        [&fluxIJ, &betaIJ, &sI, &scvf, &elemVolVars, &solValues](const auto& e)
+                        {
+                            (e.index == scvf.outsideScvIdx())
+                            ? betaIJ +=  e.coefficient
+                            : fluxIJ += e.coefficient * (sI - solValues(elemVolVars[e.index], e.position));
+                        } );
+
+        std::for_each(dJI.cbegin()+1, dJI.cend(),
+                        [&fluxJI, &betaJI, &sJ, &scvf, &elemVolVars, &solValues](const auto& e)
+                        {
+                            (e.index == scvf.insideScvIdx())
+                            ? betaJI +=  e.coefficient
+                            : fluxJI += e.coefficient * (sJ - solValues(elemVolVars[e.index], e.position));
+                        } );
+
+        auto beta = std::max(0.0, std::min(betaIJ,betaJI));
+        if(beta < 1e-30)
+            DUNE_THROW(Dune::InvalidStateException, "Beta coefficient must be greater than zero for NLMPFA");
+
+        fluxIJ += (betaIJ - beta)*(sI - sJ);
+        fluxJI += (betaJI - beta)*(sJ - sI);
+
+        auto calcAbs = [](Scalar a){ return std::abs(a) + 1e-8; };
+
+        Scalar wIJ = (calcAbs(fluxJI))/(calcAbs(fluxIJ) + calcAbs(fluxJI));
+        Scalar wJI = (calcAbs(fluxIJ))/(calcAbs(fluxIJ) + calcAbs(fluxJI));
+
+        flux = scvf.area()*( beta*(sI - sJ) + wIJ * fluxIJ - wJI * fluxJI);
+    }
+
+    template<class Scalar, class SubControlVolumeFace, class ElementVolumeVariables, class FluxData, class SolValues>
+    static void boundaryFlux(Scalar& flux,
+                             const SubControlVolumeFace& scvf,
+                             const ElementVolumeVariables& elemVolVars,
+                             const FluxData& dIJ,
+                             const SolValues& solValues)
+    {
+        Scalar fluxIJ = 0.0;
+        fluxIJ += dIJ[0].coefficient * solValues(elemVolVars[dIJ[0].index], dIJ[0].position);
+        std::for_each(dIJ.cbegin()+1, dIJ.cend(),
+                      [&fluxIJ, &elemVolVars, &solValues](const auto& e)
+                      { fluxIJ -= e.coefficient * solValues(elemVolVars[e.index], e.position); } );
 
         flux = scvf.area()*fluxIJ;
     }
