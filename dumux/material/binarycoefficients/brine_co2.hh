@@ -433,8 +433,8 @@ public:
         const Scalar phiCO2 = fugacityCoeffCO2_(temperature, pgCO2, rhoCO2);
 
         using std::log;
-        using Dune::power;
-        const Scalar exponent = A - log(phiCO2) + 2*B*mol_NaCl + C*power(mol_NaCl,2);
+        using std::pow;
+        const Scalar exponent = A - log(phiCO2) + 2*B*mol_NaCl + C*pow(mol_NaCl,2);
 
         using std::exp;
         const Scalar mol_CO2w = pgCO2 / (1e5 * exp(exponent)); /* paper: equation (6) */
