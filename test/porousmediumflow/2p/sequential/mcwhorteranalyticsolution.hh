@@ -243,7 +243,6 @@ private:
         int k = 0;
 
         using std::pow;
-        using Dune::power;
         using std::abs;
 
         while (diff> tolAnalytic_)
@@ -260,7 +259,7 @@ private:
             I0=0;
             for (int i=0; i<intervalNum_; i++)
             {
-                a_[i] = 0.5 * h_ * sInit_ *(gk_[i] + gk_[i+1])+ power(h_, 2) / 6* ((3* i + 1) * gk_[i]
+                a_[i] = 0.5 * h_ * sInit_ *(gk_[i] + gk_[i+1])+ pow(h_, 2) / 6* ((3* i + 1) * gk_[i]
                         + (3 * i + 2) * gk_[i+1]);
                 b_[i] = 0.5 * h_ * (gk_[i] + gk_[i+1]);
                 I0 += (a_[i] - sInit_ * b_[i]);
@@ -278,7 +277,7 @@ private:
             }
 
             // with f(sInit) = 0: relationship between A and sInit
-            Ak = pow((0.5*porosity_/power((1 - fInit_), 2)*I0), 0.5);
+            Ak = pow((0.5*porosity_/pow((1 - fInit_), 2)*I0), 0.5);
             diff=abs(Ak - Akm1);
             // std::cout<<"diff = "<<diff<<std::endl;
         }

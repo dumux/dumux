@@ -50,8 +50,8 @@ public:
     template<class Scalar>
     PermeabilityType evaluatePermeability(PermeabilityType refPerm, Scalar refPoro, Scalar poro) const
     {
-        using Dune::power;
-        auto factor = power((1.0 - refPoro)/(1.0 - poro), 2) * power(poro/refPoro, 3);
+        using std::pow;
+        auto factor = pow((1.0 - refPoro)/(1.0 - poro), 2) * pow(poro/refPoro, 3);
         refPerm *= factor;
         return refPerm;
     }

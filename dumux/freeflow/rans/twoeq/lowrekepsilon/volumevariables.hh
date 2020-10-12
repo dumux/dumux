@@ -190,6 +190,7 @@ public:
     const Scalar fMu() const
     {
         using std::exp;
+        using std::pow;
         return 1.0 - exp(-0.0115 * RANSParentType::yPlus());
     }
 

@@ -159,7 +159,6 @@ public:
         // make the grid
         std::array<std::vector<Scalar>, dim> globalPositions;
         using std::pow;
-        using Dune::power;
         for (int dimIdx = 0; dimIdx < dim; dimIdx++)
         {
             // Each grid direction is subdivided into (numCells + 1) points
@@ -214,13 +213,13 @@ public:
                 // if grading factor is not 1.0, do power law spacing
                 else
                 {
-                    height = (1.0 - gradingFactor) / (1.0 - power(gradingFactor, numCells));
+                    height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
 
                     if (verbose)
                     {
                         std::cout << " -> grading_eff "  << gradingFactor
-                                  << " h_min "  << height * power(gradingFactor, 0) * length
-                                  << " h_max "  << height * power(gradingFactor, numCells-1) * length
+                                  << " h_min "  << height * pow(gradingFactor, 0) * length
+                                  << " h_max "  << height * pow(gradingFactor, numCells-1) * length
                                   << std::endl;
                     }
                 }
@@ -233,10 +232,10 @@ public:
                     if (useGrading)
                     {
                         if (increasingCellSize)
-                            hI *= power(gradingFactor, i-1);
+                            hI *= pow(gradingFactor, i-1);
 
                         else
-                            hI *= power(gradingFactor, numCells-i);
+                            hI *= pow(gradingFactor, numCells-i);
                     }
                     localPositions[i] = localPositions[i-1] + hI;
                 }

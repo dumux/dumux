@@ -322,7 +322,6 @@ private:
     {
         std::array<std::vector<ctype>, dim> globalPositions;
         using std::pow;
-        using Dune::power;
         for (int dimIdx = 0; dimIdx < dim; dimIdx++)
         {
             for (int zoneIdx = 0; zoneIdx < cells[dimIdx].size(); ++zoneIdx)
@@ -373,13 +372,13 @@ private:
                 // if grading factor is not 1.0, do power law spacing
                 else
                 {
-                    height = (1.0 - gradingFactor) / (1.0 - power(gradingFactor, numCells));
+                    height = (1.0 - gradingFactor) / (1.0 - pow(gradingFactor, numCells));
 
                     if (verbose)
                     {
                         std::cout << " -> grading_eff "  << gradingFactor
-                                  << " h_min "  << height * power(gradingFactor, 0) * length
-                                  << " h_max "  << height * power(gradingFactor, numCells-1) * length
+                                  << " h_min "  << height * pow(gradingFactor, 0) * length
+                                  << " h_max "  << height * pow(gradingFactor, numCells-1) * length
                                   << std::endl;
                     }
                 }
@@ -393,11 +392,11 @@ private:
                     {
                         if (increasingCellSize)
                         {
-                            hI *= power(gradingFactor, i);
+                            hI *= pow(gradingFactor, i);
                         }
                         else
                         {
-                            hI *= power(gradingFactor, numCells-i-1);
+                            hI *= pow(gradingFactor, numCells-i-1);
                         }
                     }
                     localPositions.push_back(localPositions[i] + hI);

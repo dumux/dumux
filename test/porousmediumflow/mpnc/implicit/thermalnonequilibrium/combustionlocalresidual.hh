@@ -186,7 +186,6 @@ public:
         const Scalar gamma(0.0589);
         const Scalar TSolid = volVars.temperatureSolid();
         using std::pow;
-        using Dune::power;
         const Scalar as = volVars.fluidSolidInterfacialArea();
         const Scalar mul = fs.viscosity(0);
         const Scalar deltahv = fs.enthalpy(1) - fs.enthalpy(0);
@@ -197,7 +196,7 @@ public:
         // If a different state is to be simulated, please use the actual fluid temperature instead.
         const Scalar Tsat = FluidSystem::vaporTemperature(fs, 1 ) ;
         const Scalar deltaT = TSolid - Tsat;
-        const Scalar secondBracket = power( (cp *deltaT / (0.006 * deltahv)  ) , 3);
+        const Scalar secondBracket = pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 );
         const Scalar Prl = volVars.prandtlNumber(0);
         const Scalar thirdBracket = pow( 1/Prl , (1.7/0.33));
         const Scalar QBoil = satW * as * mul * deltahv * firstBracket * secondBracket * thirdBracket;
