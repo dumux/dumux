@@ -329,14 +329,13 @@ private:
         // set the other saturation
         fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
-        // calulate the capillary pressure
-        const auto& matParams = this->spatialParams().materialLawParamsAtPos(globalPos);
+        // calculate the capillary pressure
+        const auto fluidMatrixInteraction = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
         PhaseVector pc;
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        using MPAdapter = MPAdapter<MaterialLaw, numPhases>;
+        using MPAdapter = FluidMatrix::MPAdapter<numPhases>;
 
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        MPAdapter::capillaryPressures(pc, matParams, fs, wPhaseIdx);
+        MPAdapter::capillaryPressures(pc, fluidMatrixInteraction, fs, wPhaseIdx);
         fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)
                        + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
