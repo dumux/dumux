@@ -188,7 +188,7 @@ public:
                     currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
                 // Calculate stokes contribution to momentum flux: N_s^{bl} \tau T n
-                const Scalar Nsbl = this->couplingManager().problem(porousMediumIdx).spatialParams().factorNMomentumAtPos(scvf.center());
+                const Scalar Nsbl = this->couplingManager().problem(freeFlowIdx).factorNMomentum(scvf);
                 const Scalar viscosity = stokesElemVolVars[scvf.insideScvIdx()].viscosity();
                 // Averaging the gradients over the subfaces to get evaluation at the center
                 momentumFlux -= 1.0/numSubFaces * viscosity * Nsbl * (velocityGrad_ji + velocityGrad_ij);
@@ -271,8 +271,8 @@ public:
                     if(newIc)
                     {
                         // darcy spatial dependent parameters
-                        const auto& epsInterface = this->couplingManager().problem(porousMediumIdx).spatialParams().epsInterfaceAtPos(ipGlobal);
-                        const auto& M = this->couplingManager().problem(porousMediumIdx).spatialParams().matrixNTangentialAtPos(ipGlobal);
+                        const auto& epsInterface = this->couplingManager().problem(freeFlowIdx).epsInterface(scvf);
+                        const auto& M = this->couplingManager().problem(freeFlowIdx).matrixNTangential(scvf);
                         //Add the integrated segment velocity to the sum: v+= -w_k * sqrt(det(A^T*A))*eps**2*M/mu*gradP
                         M.usmv(qp.weight()*data.segmentGeometry.integrationElement(ipLocal)/data.volVars.viscosity(darcyPhaseIdx)*epsInterface*epsInterface, gradP, velocity);
                     }
