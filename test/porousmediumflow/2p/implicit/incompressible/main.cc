@@ -46,6 +46,12 @@
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
+#include <dumux/assembly/instationaryassembler.hh>
+#include <dumux/assembly/fv/localoperator.hh>
+
+#include <dumux/timestepping/multistagemethods.hh>
+#include <dumux/timestepping/multistagetimestepper.hh>
+
 #include <dumux/discretization/method.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -148,7 +154,6 @@ int main(int argc, char** argv) try
     }
     else
         problem->applyInitialSolution(x);
-    auto xOld = x;
 
     // maybe update the interface parameters
     if (ENABLEINTERFACESOLVER)
@@ -156,15 +161,14 @@ int main(int argc, char** argv) try
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    auto gridVariables = std::make_shared<GridVariables>(problem);
 
     // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
 
     // use non-conforming output for the test with interface solver
     const auto ncOutput = getParam<bool>("Problem.UseNonConformingOutput", false);
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name(), "",
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, gridVariables->dofs(), problem->name(), "",
                                                              ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming);
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
@@ -175,9 +179,16 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DIFFMETHOD>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    // the local operator type
+    // TODO: we reuse the local residual here, think about proper naming and
+    //       which levels of classes we actually need/want in the assembly.
+    //       That is - is this a local operator or residual??
+    using Operators = ImmiscibleLocalResidual<TypeTag>;
+    using LocalOperator = FVLocalOperator<typename GridVariables::LocalView, Operators>;
+
+    // make the assembler
+    using Assembler = InstationaryAssembler<LocalOperator, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(gridGeometry);
 
     // the linear solver
     using LinearSolver = ILU0RestartedGMResBackend;
@@ -185,17 +196,19 @@ int main(int argc, char** argv) try
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
+
+    // time integrator
+   using TimeStepper = MultiStageTimeStepper<NewtonSolver>;
+   TimeStepper timeStepper(nonLinearSolver, std::make_shared< MultiStage::ImplicitEuler<Scalar> >());
+   // TimeStepper timeStepper(nonLinearSolver, std::make_shared< MultiStage::Theta<Scalar> >(0.5));
+   // TimeStepper timeStepper(nonLinearSolver, std::make_shared< MultiStage::RungeKuttaExplicitFourthOrder<Scalar> >());
 
     // time loop
     timeLoop->start(); do
     {
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop);
-
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
+        // do time integration
+        timeStepper.step(*gridVariables, timeLoop->time(), timeLoop->timeStepSize());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
@@ -207,12 +220,12 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the Newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(nonLinearSolver->suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
     // output some Newton statistics
-    nonLinearSolver.report();
+    nonLinearSolver->report();
 
     timeLoop->finalize(leafGridView.comm());
 

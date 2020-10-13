@@ -103,6 +103,21 @@ template<class TypeTag>
 struct EnableBoxInterfaceSolver<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = ENABLEINTERFACESOLVER; };
 } // end namespace Properties
 
+// TODO: How do we want to handle the issue with problem traits? Is there a generic impl?
+template<class TypeTag> struct ProblemTraits;
+
+template<class TypeTag>
+struct ProblemTraits< TwoPTestProblem<TypeTag> >
+{
+    static constexpr int numEq = 2;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = Dune::FieldVector<Scalar, numEq>;
+    using NumEqVector = PrimaryVariables;
+    using BoundaryTypes = Dumux::BoundaryTypes<numEq>;
+};
+
 /*!
  * \ingroup TwoPTests
  * \brief The incompressible 2p test problem.
