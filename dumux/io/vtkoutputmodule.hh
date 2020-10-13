@@ -86,7 +86,7 @@ public:
         writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridGeometry.gridView(), dm, coordPrecision);
         sequenceWriter_ = std::make_unique<Dune::VTKSequenceWriter<GridView>>(writer_, name);
     }
-    
+
     virtual ~VtkOutputModuleBase() = default;
 
     //! the parameter group for getting parameter from the parameter tree
@@ -381,7 +381,7 @@ public:
 
 protected:
     // some return functions for differing implementations to use
-    const auto& problem() const { return gridVariables_.curGridVolVars().problem(); }
+    const auto& problem() const { return gridVariables_.problem(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
     const GridGeometry& gridGeometry() const { return gridVariables_.gridGeometry(); }
     const SolutionVector& sol() const { return sol_; }
@@ -449,7 +449,7 @@ private:
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
 
                 auto fvGeometry = localView(gridGeometry());
-                auto elemVolVars = localView(gridVariables_.curGridVolVars());
+                auto elemVolVars = localView(gridVariables_.gridVolVars());
 
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
@@ -636,7 +636,7 @@ private:
                 const auto numCorners = element.subEntities(dim);
 
                 auto fvGeometry = localView(gridGeometry());
-                auto elemVolVars = localView(gridVariables_.curGridVolVars());
+                auto elemVolVars = localView(gridVariables_.gridVolVars());
 
                 // resize element-local data containers
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)

@@ -90,6 +90,21 @@ template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
 } // end namespace Properties
 
+// TODO: How do we want to handle the issue with problem traits? Is there a generic impl?
+template<class TypeTag> struct ProblemTraits;
+
+template<class TypeTag>
+struct ProblemTraits< OnePTestProblem<TypeTag> >
+{
+    static constexpr int numEq = 1;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = Dune::FieldVector<Scalar, numEq>;
+    using NumEqVector = PrimaryVariables;
+    using BoundaryTypes = Dumux::BoundaryTypes<numEq>;
+};
+
 /*!
  * \ingroup OnePTests
  * \brief  Test problem for the compressible one-phase model.

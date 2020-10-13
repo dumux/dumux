@@ -28,7 +28,79 @@
 #include <memory>
 #include <cassert>
 
+#include <dumux/timestepping/timelevel.hh>
+#include <dumux/discretization/localview.hh>
+#include <dumux/discretization/elementsolution.hh>
+
 namespace Dumux {
+
+/*!
+ * \ingroup Discretization
+ * \brief Local view on the grid variables for finite volume schemes.
+ * \note This default implementation only stores a pointer on the grid variables.
+ * \tparam GV The grid variables class
+ */
+template<class GV>
+class FVGridVariablesLocalView
+{
+    using GridGeometry = typename GV::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using ElementVolumeVariables = typename GV::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GV::GridFluxVariablesCache::LocalView;
+
+public:
+    using GridVariables = GV;
+
+    //! The constructor
+    FVGridVariablesLocalView(const GridVariables& gridVariables)
+    : gridVariables_(&gridVariables)
+    , elemVolVars_(gridVariables.gridVolVars())
+    , elemFluxVarsCache_(gridVariables.gridFluxVarsCache())
+    {}
+
+    /*!
+     * \brief Bind this local view to a grid element.
+     * \param element The grid element
+     * \param fvGeometry Local view on the grid geometry
+     * \todo TODO: We probably need selective binds also, as sometimes
+     *             one does not want to bind the flux cache, but only the
+     *             vol vars? For instance, when computing masses or storage
+     *             after a time step...
+     */
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry)
+    {
+        const auto& x = gridVariables().dofs();
+
+        elemVolVars_.bind(element, fvGeometry, x);
+        elemFluxVarsCache_.bind(element, fvGeometry, elemVolVars_);
+    }
+
+    // TODO: Doc me
+    const ElementVolumeVariables& elemVolVars() const { return elemVolVars_; }
+    const ElementFluxVariablesCache& elemFluxVarsCache() const { return elemFluxVarsCache_; }
+
+    // TODO: Doc me
+    // We need those non-const variants to be able to deflect things in numeric assembly
+    ElementVolumeVariables& elemVolVars() { return elemVolVars_; }
+    ElementFluxVariablesCache& elemFluxVarsCache() { return elemFluxVarsCache_; }
+
+
+    /*!
+     * \brief Return a reference to the grid variables.
+     */
+    const GridVariables& gridVariables() const
+    { return *gridVariables_; }
+
+private:
+    const GridVariables* gridVariables_;
+    ElementVolumeVariables elemVolVars_;
+    ElementFluxVariablesCache elemFluxVarsCache_;
+};
 
 /*!
  * \ingroup Discretization
@@ -36,10 +108,16 @@ namespace Dumux {
  * \tparam the type of the grid geometry
  * \tparam the type of the grid volume variables
  * \tparam the type of the grid flux variables cache
+ * \todo TODO: Should Problem be template arg instead of GG? We expect a problem
+ *             to be defined on a grid geometry anyway, so they always carry the
+ *             grid geometry with them...
+ * \todo TODO: We also need to know the SolutionVector type...
  */
 template<class GG, class GVV, class GFVC>
 class FVGridVariables
 {
+    using ThisType = FVGridVariables<GG, GVV, GFVC>;
+
 public:
     //! export type of the finite volume grid geometry
     using GridGeometry = GG;
@@ -51,6 +129,8 @@ public:
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
 
     //! export primary variable type
+    //! TODO: Must this always match the value_type of solution vector?
+    //!       In that case we should check maybe...
     using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
 
     //! export scalar type (TODO get it directly from the volvars)
@@ -59,112 +139,96 @@ public:
     //! export type of the finite volume grid geometry
     using GridFluxVariablesCache = GFVC;
 
+    //! The local view on these grid variables
+    using LocalView = FVGridVariablesLocalView<ThisType>;
+
+    //! export the underlying problem to be solved
+    using Problem = typename GVV::Problem;
+
+    //! TODO: SolutionVector as template arg?
+    using SolutionVector = Dune::BlockVector<PrimaryVariables>;
+
+    //! Type representing a time level
+    using TimeLevel = Dumux::TimeLevel<Scalar>;
+
+    //! constructor initializing the solution from the problem
+    // TODO: Constructor with lambda (see FEGridVariables)
     template<class Problem>
     FVGridVariables(std::shared_ptr<Problem> problem,
-                    std::shared_ptr<const GridGeometry> gridGeometry)
-    : gridGeometry_(gridGeometry)
-    , curGridVolVars_(*problem)
-    , prevGridVolVars_(*problem)
+                    const TimeLevel& timeLevel = TimeLevel{0.0})
+    : problem_(problem)
+    , gridVolVars_(*problem)
     , gridFluxVarsCache_(*problem)
-    {}
-
-    //! initialize all variables (stationary case)
-    template<class SolutionVector>
-    void init(const SolutionVector& curSol)
+    , timeLevel_(timeLevel)
     {
-        // resize and update the volVars with the initial solution
-        curGridVolVars_.update(*gridGeometry_, curSol);
-
-        // update the flux variables caches (always force flux cache update on initialization)
-        gridFluxVarsCache_.update(*gridGeometry_, curGridVolVars_, curSol, true);
-
-        // set the volvars of the previous time step in case we have an instationary problem
-        // note that this means some memory overhead in the case of enabled caching, however
-        // this it outweighted by the advantage of having a single grid variables object for
-        // stationary and instationary problems
-        prevGridVolVars_ = curGridVolVars_;
+        problem->applyInitialSolution(x_);
+        gridVolVars_.update(problem->gridGeometry(), x_);
+        gridFluxVarsCache_.update(problem->gridGeometry(), gridVolVars_, x_, /*forceUpdate???*/true);
     }
 
-    //! update all variables
-    template<class SolutionVector>
-    void update(const SolutionVector& curSol, bool forceFluxCacheUpdate = false)
-    {
-        // resize and update the volVars with the initial solution
-        curGridVolVars_.update(*gridGeometry_, curSol);
+    //! return the underlying problem
+    const Problem& problem() const
+    { return *problem_; }
 
-        // update the flux variables caches
-        gridFluxVarsCache_.update(*gridGeometry_, curGridVolVars_, curSol, forceFluxCacheUpdate);
-    }
+    //! return the finite volume grid geometry
+    const GridGeometry& gridGeometry() const
+    { return problem_->gridGeometry(); }
 
-    //! update all variables after grid adaption
-    template<class SolutionVector>
-    void updateAfterGridAdaption(const SolutionVector& curSol)
-    {
-        // update (always force flux cache update as the grid changed)
-        update(curSol, true);
+    //! return the solution for which the grid variables were updated
+    const SolutionVector& dofs() const
+    { return x_; }
 
-        // for instationary problems also update the variables
-        // for the previous time step to the new grid
-        prevGridVolVars_ = curGridVolVars_;
-    }
-
-    /*!
-     * \brief Sets the current state as the previous for next time step
-     * \note this has to be called at the end of each time step
-     */
-    void advanceTimeStep()
-    {
-        prevGridVolVars_ = curGridVolVars_;
-    }
-
-    //! resets state to the one before time integration
-    template<class SolutionVector>
-    void resetTimeStep(const SolutionVector& solution)
-    {
-        // set the new time step vol vars to old vol vars
-        curGridVolVars_ = prevGridVolVars_;
-
-        // update the flux variables caches
-        gridFluxVarsCache_.update(*gridGeometry_, curGridVolVars_, solution);
-    }
+    //! return the time level the grid variables represent
+    const TimeLevel& timeLevel() const
+    { return timeLevel_; }
 
     //! return the flux variables cache
     const GridFluxVariablesCache& gridFluxVarsCache() const
     { return gridFluxVarsCache_; }
 
     //! return the flux variables cache
+    //! TODO: This is needed for the case of caching! Can we circumvent this???
     GridFluxVariablesCache& gridFluxVarsCache()
     { return gridFluxVarsCache_; }
 
     //! return the current volume variables
-    const GridVolumeVariables& curGridVolVars() const
-    { return curGridVolVars_; }
+    const GridVolumeVariables& gridVolVars() const
+    { return gridVolVars_; }
 
     //! return the current volume variables
-    GridVolumeVariables& curGridVolVars()
-    { return curGridVolVars_; }
+    //! TODO: This is needed for the case of caching! Can we circumvent this???
+    GridVolumeVariables& gridVolVars()
+    { return gridVolVars_; }
 
-    //! return the volume variables of the previous time step (for instationary problems)
-    const GridVolumeVariables& prevGridVolVars() const
-    { return prevGridVolVars_; }
+    //! update all variables subject to a new solution
+    void updateDofs(const SolutionVector& x)
+    {
+        x_ = x;
+        gridVolVars_.update(problem().gridGeometry(), x_);
+        gridFluxVarsCache_.update(problem().gridGeometry(), gridVolVars_, x_);
+    }
 
-    //! return the volume variables of the previous time step (for instationary problems)
-    GridVolumeVariables& prevGridVolVars()
-    { return prevGridVolVars_; }
+    //! TODO Doc me
+    void updateTime(const TimeLevel& timeLevel)
+    {
+        timeLevel_ = timeLevel;
+    }
 
-    //! return the finite volume grid geometry
-    const GridGeometry& gridGeometry() const
-    { return *gridGeometry_; }
-
-protected:
-
-    std::shared_ptr<const GridGeometry> gridGeometry_; //!< pointer to the constant grid geometry
+    //! update all variables subject to a new solution
+    void update(const SolutionVector& x, const TimeLevel& timeLevel)
+    {
+        updateDofs(x);
+        updateTime(timeLevel);
+    }
 
 private:
-    GridVolumeVariables curGridVolVars_; //!< the current volume variables (primary and secondary variables)
-    GridVolumeVariables prevGridVolVars_; //!< the previous time step's volume variables (primary and secondary variables)
+    std::shared_ptr<const Problem> problem_; //!< pointer to the problem to be solved
 
+    GridVolumeVariables gridVolVars_;          //!< the volume variables (primary and secondary variables)
     GridFluxVariablesCache gridFluxVarsCache_; //!< the flux variables cache
+
+    SolutionVector x_;    //!< the solution corresponding to this class' current state
+    TimeLevel timeLevel_; //!< info during time integration for instationary problems
 };
 
 } // end namespace Dumux

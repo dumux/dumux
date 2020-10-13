@@ -135,6 +135,7 @@ public:
      *
      * \param element The finite element
      * \param scv The sub control volume
+     * \todo TODO: Add time level as argument??
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolume &scv) const
@@ -153,6 +154,7 @@ public:
      *
      * \param element The finite element
      * \param scvf The sub control volume face
+     * \todo TODO: Add time level as argument??
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const

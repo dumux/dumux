@@ -38,6 +38,7 @@
 #include <dumux/timestepping/timelevel.hh>
 
 // TODO: include box/cc local assemblers
+#include "fv/instationarylocalassembler.hh"
 #include "fem/instationarylocalassembler.hh"
 #include "jacobianpattern.hh"
 
@@ -49,8 +50,10 @@ namespace Impl {
     // TODO: Currently the fv local residuals require type tag etc...
     // template<class Assembler> struct LocalAssemblerChooser<Assembler, DiscretizationMethod::tpfa> { using type = CCLocalAssembler<... };
     // template<class Assembler> struct LocalAssemblerChooser<Assembler, DiscretizationMethod::mpfa> { using type = CCLocalAssembler<... };
-    // template<class Assembler> struct LocalAssemblerChooser<Assembler, DiscretizationMethod::box> { using type = BoxLocalAssembler<... };
     // template<class Assembler> struct LocalAssemblerChooser<Assembler, DiscretizationMethod::staggered> { using type = ... };
+    template<class Assembler, DiffMethod diffMethod>
+    struct LocalAssemblerChooser<Assembler, DiscretizationMethod::box, diffMethod>
+    { using type = FVInstationaryLocalAssembler<Assembler, diffMethod>; };
     template<class Assembler, DiffMethod diffMethod>
     struct LocalAssemblerChooser<Assembler, DiscretizationMethod::fem, diffMethod>
     { using type = FEInstationaryLocalAssembler<Assembler, diffMethod>; };
@@ -392,104 +395,107 @@ protected:
 
     void enforceDirichletConstraints_(const GridVariables& gridVars, JacobianMatrix& jac, SolutionVector& res)
     {
-        // TODO: This is the FEM implementation. We should outsource this into
-        // discretization-specific helper classes
-        const auto& basis = gridGeometry().feBasis();
-        const auto& curSol = gridVars.dofs();
-
-        // container to store which DOFs are Dirichlet and values
-        using PrimaryVariables = typename ProblemTraits<Problem>::PrimaryVariables;
-        static constexpr auto numEq = PrimaryVariables::size();
-
-        std::vector< std::bitset<numEq> > isDirichlet(gridGeometry().numDofs());
-        SolutionVector values; values.resize(gridGeometry().numDofs());
-
-        // container to store local coordinates of an element
-        using LocalCoordinate = typename Element::Geometry::LocalCoordinate;
-        std::vector<LocalCoordinate> localDofCoords;
-        std::size_t curElementIndex = 0;
-        bool firstCall = true;
-
-        auto getDirichletValues = [&] (auto localIndex,
-                                       const auto& localView,
-                                       const auto& intersection)
+        if constexpr (GridGeometry::discMethod == DiscretizationMethod::fem)
         {
-            const auto& element = localView.element();
-            const auto& problem = gridVars.problem();
-            const auto& timeLevel = gridVars.timeLevel();
+            // TODO: This is the FEM implementation. We should outsource this into
+            // discretization-specific helper classes
+            const auto& basis = gridGeometry().feBasis();
+            const auto& curSol = gridVars.dofs();
 
-            const auto bcTypes = problem.boundaryTypes(element, intersection, timeLevel);
-            if (bcTypes.hasDirichlet())
+            // container to store which DOFs are Dirichlet and values
+            using PrimaryVariables = typename ProblemTraits<Problem>::PrimaryVariables;
+            static constexpr auto numEq = PrimaryVariables::size();
+
+            std::vector< std::bitset<numEq> > isDirichlet(gridGeometry().numDofs());
+            SolutionVector values; values.resize(gridGeometry().numDofs());
+
+            // container to store local coordinates of an element
+            using LocalCoordinate = typename Element::Geometry::LocalCoordinate;
+            std::vector<LocalCoordinate> localDofCoords;
+            std::size_t curElementIndex = 0;
+            bool firstCall = true;
+
+            auto getDirichletValues = [&] (auto localIndex,
+                                           const auto& localView,
+                                           const auto& intersection)
             {
-                // get the local coordinates of the dofs of the element
-                const auto eIdx = gridGeometry().elementMapper().index(element);
-                if (eIdx != curElementIndex || firstCall)
+                const auto& element = localView.element();
+                const auto& problem = gridVars.problem();
+                const auto& timeLevel = gridVars.timeLevel();
+
+                const auto bcTypes = problem.boundaryTypes(element, intersection, timeLevel);
+                if (bcTypes.hasDirichlet())
                 {
-                    std::vector<double> coords;
-                    const auto& interp = localView.tree().finiteElement().localInterpolation();
-                    interp.interpolate([&] (const LocalCoordinate& x) { return x[0]; }, coords);
+                    // get the local coordinates of the dofs of the element
+                    const auto eIdx = gridGeometry().elementMapper().index(element);
+                    if (eIdx != curElementIndex || firstCall)
+                    {
+                        std::vector<double> coords;
+                        const auto& interp = localView.tree().finiteElement().localInterpolation();
+                        interp.interpolate([&] (const LocalCoordinate& x) { return x[0]; }, coords);
 
-                    localDofCoords.resize(coords.size());
-                    for (unsigned int i = 0; i < coords.size(); ++i)
-                        localDofCoords[i][0] = coords[i];
+                        localDofCoords.resize(coords.size());
+                        for (unsigned int i = 0; i < coords.size(); ++i)
+                            localDofCoords[i][0] = coords[i];
 
-                    interp.interpolate([&] (const LocalCoordinate& x) { return x[1]; }, coords);
-                    for (unsigned int i = 0; i < coords.size(); ++i)
-                        localDofCoords[i][1] = coords[i];
+                        interp.interpolate([&] (const LocalCoordinate& x) { return x[1]; }, coords);
+                        for (unsigned int i = 0; i < coords.size(); ++i)
+                            localDofCoords[i][1] = coords[i];
 
-                    firstCall = false;
+                        firstCall = false;
+                    }
+
+                    curElementIndex = eIdx;
+                    const auto index = localView.index(localIndex);
+                    for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                        if (bcTypes.isDirichlet(eqIdx))
+                            isDirichlet[index][eqIdx] = true;
+                    values[index] = problem.dirichlet(element, localDofCoords[localIndex], timeLevel);
                 }
+            };
 
-                curElementIndex = eIdx;
-                const auto index = localView.index(localIndex);
-                for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    if (bcTypes.isDirichlet(eqIdx))
-                        isDirichlet[index][eqIdx] = true;
-                values[index] = problem.dirichlet(element, localDofCoords[localIndex], timeLevel);
-            }
-        };
+            Dune::Functions::forEachBoundaryDOF(basis, getDirichletValues);
 
-        Dune::Functions::forEachBoundaryDOF(basis, getDirichletValues);
-
-        // modify matrix accordingly
-        for (auto rIt = jac.begin(); rIt != jac.end(); ++rIt)
-        {
-            const auto index = rIt.index();
-            if (isDirichlet[index].any())
+            // modify matrix accordingly
+            for (auto rIt = jac.begin(); rIt != jac.end(); ++rIt)
             {
-                for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    if (isDirichlet[index][eqIdx])
-                        res[index][eqIdx] = curSol[index][eqIdx] - values[index][eqIdx];
-
-                for (auto cIt = rIt->begin(); cIt != rIt->end(); ++cIt)
+                const auto index = rIt.index();
+                if (isDirichlet[index].any())
                 {
                     for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    {
                         if (isDirichlet[index][eqIdx])
+                            res[index][eqIdx] = curSol[index][eqIdx] - values[index][eqIdx];
+
+                    for (auto cIt = rIt->begin(); cIt != rIt->end(); ++cIt)
+                    {
+                        for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                         {
-                            (*cIt)[eqIdx] = 0.0;
-                            if (index == cIt.index())
-                                (*cIt)[eqIdx][eqIdx] = 1.0;
+                            if (isDirichlet[index][eqIdx])
+                            {
+                                (*cIt)[eqIdx] = 0.0;
+                                if (index == cIt.index())
+                                    (*cIt)[eqIdx][eqIdx] = 1.0;
+                            }
                         }
                     }
                 }
+                // SET 0 in off-diagonals?
+                // else
+                // {
+                //     for (auto cIt = rIt->begin(); cIt != rIt->end(); ++cIt)
+                //     {
+                //         for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                //         {
+                //             if (isDirichlet[cIt.index()][eqIdx])
+                //             {
+                //                 (*cIt)[eqIdx] = 0.0;
+                //                 // if (index == cIt.index())
+                //                 //     (*cIt)[eqIdx][eqIdx] = 1.0;
+                //             }
+                //         }
+                //     }
+                // }
             }
-            // SET 0 in off-diagonals?
-            // else
-            // {
-            //     for (auto cIt = rIt->begin(); cIt != rIt->end(); ++cIt)
-            //     {
-            //         for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            //         {
-            //             if (isDirichlet[cIt.index()][eqIdx])
-            //             {
-            //                 (*cIt)[eqIdx] = 0.0;
-            //                 // if (index == cIt.index())
-            //                 //     (*cIt)[eqIdx][eqIdx] = 1.0;
-            //             }
-            //         }
-            //     }
-            // }
         }
     }
 

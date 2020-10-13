@@ -81,7 +81,7 @@ public:
      * \param gridVariables The grid variables
      */
     PorousMediumFlowVelocity(const GridVariables& gridVariables)
-    : problem_(gridVariables.curGridVolVars().problem())
+    : problem_(gridVariables.gridVolVars().problem())
     , gridGeometry_(gridVariables.gridGeometry())
     , gridVariables_(gridVariables)
     {
