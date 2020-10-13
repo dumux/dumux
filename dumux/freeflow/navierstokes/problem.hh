@@ -240,6 +240,21 @@ public:
         DUNE_THROW(Dune::NotImplemented, "When using the interface conditions for arbitrary flows to the interface, the factorNTangential value must be returned in the actual problem");
     }
 
+    /*!
+     * \brief Returns the boundary layer constant N_s^bl computed based on the exact pore geometry.
+     */
+    Scalar factorNMomentum(const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the interface conditions for arbitrary flows to the interface, the factorNMomentum value must be returned in the actual problem");
+    }
+
+    /*!
+     * \brief Returns the boundary layer matrix M^bl computed based on the exact pore geometry.
+     */
+    Dune::FieldMatrix<Scalar, dimWorld, dimWorld> matrixNTangential(const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the interface conditions for arbitrary flows to the interface, the matrixNTangential matrix must be returned in the actual problem");
+    }
 
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
