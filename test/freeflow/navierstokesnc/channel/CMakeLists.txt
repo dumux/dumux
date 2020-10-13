@@ -77,3 +77,6 @@ dumux_add_test(NAME test_ff_stokes2cni_diffusion
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni params_diffusionni.input
                              -Problem.Name test_ff_stokes2cni_diffusion"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-13})
+
+add_executable(test_ff_stokes2c_mass_new EXCLUDE_FROM_ALL main_new.cc)
+target_compile_definitions(test_ff_stokes2c_mass_new PUBLIC "USE_MASS=1")
