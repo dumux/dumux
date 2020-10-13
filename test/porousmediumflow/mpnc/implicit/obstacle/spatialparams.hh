@@ -27,8 +27,8 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/smoothedlinearlaw.hh>
 
 namespace Dumux {
 
@@ -51,14 +51,12 @@ class ObstacleSpatialParams
 
     enum {dimWorld=GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
-    using EffectiveLaw = RegularizedLinearMaterial<Scalar>;
 
 public:
     //! Export the type used for the permeability
     using PermeabilityType = Scalar;
     //! Export the material law type used
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using FluidMatrixInteraction = FluidMatrix::SmoothedLinearLaw<Scalar>;
 
     ObstacleSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
@@ -69,18 +67,8 @@ public:
         // the porosity
         porosity_ = 0.3;
 
-        // residual saturations
-        fineMaterialParams_.setSwr(0.0);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.0);
-        coarseMaterialParams_.setSnr(0.0);
-
-        // parameters for the linear law, i.e. minimum and maximum
-        // pressures
-        fineMaterialParams_.setEntryPc(0.0);
-        coarseMaterialParams_.setEntryPc(0.0);
-        fineMaterialParams_.setMaxPc(0.0);
-        coarseMaterialParams_.setMaxPc(0.0);
+        // initialize the material law
+        fluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>("SpatialParams.SmoothedLinearLaw");
     }
 
     template<class ElementSolution>
@@ -103,17 +91,11 @@ public:
     { return porosity_; }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
-     *
-     * \param globalPos The global position of the sub-control volume.
-     * \return The material parameters object
+     * \brief Returns the parameters for the material law at a given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        else
-            return coarseMaterialParams_;
+        return makeFluidMatrixInteraction(*fluidMatrixInteraction_);
     }
 
     /*!
@@ -143,8 +125,7 @@ private:
     Scalar coarseK_;
     Scalar fineK_;
     Scalar porosity_;
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    std::unique_ptr<FluidMatrixInteraction> fluidMatrixInteraction_;
     static constexpr Scalar eps_ = 1e-6;
 };
 
