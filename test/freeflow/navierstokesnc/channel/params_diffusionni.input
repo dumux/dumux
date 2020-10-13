@@ -10,6 +10,7 @@ Cells = 50 10
 Name = test_stokes2cni_diffusion # name passed to the output routines
 InletVelocity = 0
 EnableGravity = false
+IsChannelTest = true
 
 [ Newton ]
 MaxSteps = 10

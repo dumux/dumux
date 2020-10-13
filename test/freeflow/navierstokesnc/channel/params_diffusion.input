@@ -11,6 +11,7 @@ Name = test_purediffusion # name passed to the output routines
 InletVelocity = 0
 EnableGravity = false
 EnableInertiaTerms = false
+IsChannelTest = true
 
 [ Newton ]
 MaxSteps = 10
