@@ -137,6 +137,12 @@ public:
         return SpatialParams::MaterialLaw::dkrn_dsw(params, sw);
     }
 
+    const auto& basicParams() const
+    { return spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_); }
+
+    const auto& effToAbsParams() const
+    { return spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_); }
+
 private:
     const SpatialParams& spatialParams_;
     const Element& element_;
@@ -144,12 +150,13 @@ private:
     const ElemSol& elemSol_;
 };
 
+// for implicit models
 template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
-auto makeDeprecationPcKrSwHelper(const Scalar& scalar,
-                                 const SpatialParams& sp,
-                                 const Element& element,
-                                 const Scv& scv,
-                                 const ElemSol& elemSol)
+auto makePcKrSw(const Scalar& scalar,
+                const SpatialParams& sp,
+                const Element& element,
+                const Scv& scv,
+                const ElemSol& elemSol)
 {
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     constexpr bool hasNew = decltype(isValid(HasNewFIAIF<Element, Scv, ElemSol>()).template check<SpatialParams>())::value;
@@ -160,6 +167,24 @@ auto makeDeprecationPcKrSwHelper(const Scalar& scalar,
         return sp.fluidMatrixInteractionAtPos(scv.center());
     else
         return makeFluidMatrixInteraction(PcKrSwHelper(scalar, sp, element, scv, elemSol));
+}
+
+// for sequential models
+template<class Scalar, class SpatialParams, class Element>
+auto makePcKrSw(const Scalar& scalar,
+                const SpatialParams& sp,
+                const Element& element)
+{
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    constexpr bool hasNewAtPos = decltype(isValid(HasNewFIAIFAtPos<GlobalPosition>()).template check<SpatialParams>())::value;
+    if constexpr (hasNewAtPos)
+        return sp.fluidMatrixInteractionAtPos(element.geometry().center());
+    else
+    {
+        using DummyScv = int;
+        using DummyElemSol = int;
+        return makeFluidMatrixInteraction(PcKrSwHelper(scalar, sp, element, DummyScv(), DummyElemSol()));
+    }
 }
 
 
@@ -370,7 +395,7 @@ private:
 };
 
 template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
-auto makeInterfacialAreaHelper(const Scalar& scalar,
+auto makeInterfacialArea(const Scalar& scalar,
                                const SpatialParams& sp,
                                const Element& element,
                                const Scv& scv,
