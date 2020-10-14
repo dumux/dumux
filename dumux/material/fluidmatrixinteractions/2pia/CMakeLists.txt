@@ -1,3 +1,4 @@
+# this folder is deprecated. Use headers in 2p/interfacialarea/
 install(FILES
 awnsurfaceexpfct.hh
 awnsurfaceexpfctparams.hh
