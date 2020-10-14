@@ -145,7 +145,7 @@ private:
 };
 
 template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
-auto makeDeprecationPcKrSwHelper(const Scalar& scalar,
+auto makePcKrSw(const Scalar& scalar,
                                  const SpatialParams& sp,
                                  const Element& element,
                                  const Scv& scv,
@@ -370,7 +370,7 @@ private:
 };
 
 template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
-auto makeInterfacialAreaHelper(const Scalar& scalar,
+auto makeInterfacialArea(const Scalar& scalar,
                                const SpatialParams& sp,
                                const Element& element,
                                const Scv& scv,

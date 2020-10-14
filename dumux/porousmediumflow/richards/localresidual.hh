@@ -203,7 +203,7 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, InvalidElemSol{});
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, InvalidElemSol{});
 
         // partial derivative of storage term w.r.t. p_w
         // d(Sw*rho*phi*V/dt)/dpw = rho*phi*V/dt*dsw/dpw = rho*phi*V/dt*dsw/dpc*dpc/dpw = -rho*phi*V/dt*dsw/dpc
@@ -288,8 +288,8 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto insideFluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
-        const auto outsideFluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), outsideElement, outsideScv, InvalidElemSol{});
+        const auto insideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
+        const auto outsideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), outsideElement, outsideScv, InvalidElemSol{});
 
         // material law derivatives
         const auto insideSw = insideVolVars.saturation(0);
@@ -366,8 +366,8 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto insideFluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
-        const auto outsideFluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, outsideScv, InvalidElemSol{});
+        const auto insideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
+        const auto outsideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, outsideScv, InvalidElemSol{});
 
         // material law derivatives
         const auto insideSw = insideVolVars.saturation(0);
@@ -452,7 +452,7 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto insideFluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
+        const auto insideFluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, insideScv, InvalidElemSol{});
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho = insideVolVars.density(0);
