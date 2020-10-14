@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
+ *   the Free Software Foundation, either version 3 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -53,10 +53,13 @@ struct NavierStokesUpwindTerms
     static auto totalMassFlux()
     { return [](const auto& volVars) { return volVars.density(); }; }
 
-    static auto comoponentMoleFlux(const int compIdx)
+    static auto totalMoleFlux()
+    { return [](const auto& volVars) { return volVars.molarDensity(); }; }
+
+    static auto componentMoleFlux(const int compIdx)
     { return [compIdx](const auto& volVars) { return volVars.molarDensity()*volVars.moleFraction(compIdx); }; }
 
-    static auto comoponentMassFlux(const int compIdx)
+    static auto componentMassFlux(const int compIdx)
     { return [compIdx](const auto& volVars) { return volVars.density()*volVars.massFraction(compIdx); }; }
 
     static auto energyFlux()
@@ -65,8 +68,72 @@ struct NavierStokesUpwindTerms
 
 struct NavierStokesMassOnePModelTraits;
 
+template<int nComp, bool useM, int repCompEqIdx>
+struct NavierStokesMassOnePNCModelTraits;
 
 
+template<class Traits, class T = Traits>
+struct ModelSpecificFlux;
+
+template<class Traits>
+struct ModelSpecificFlux<NavierStokesMassOnePModelTraits, Traits>
+{
+    template<class NumEqVector, class UpwindFunction>
+    static void addAdvectiveFlux(NumEqVector& flux,
+                                 const UpwindFunction& upwind)
+    {
+        auto upwindTerm = NavierStokesUpwindTerms::totalMassFlux();
+        flux[Traits::Indices::conti0EqIdx] = upwind(upwindTerm);
+    }
+};
+
+template<int nComp, bool useM, int repCompEqIdx, class Traits>
+struct ModelSpecificFlux<NavierStokesMassOnePNCModelTraits<nComp, useM, repCompEqIdx>, Traits>
+{
+    template<class NumEqVector, class UpwindFunction>
+    static void addAdvectiveFlux(NumEqVector& flux,
+                                 const UpwindFunction& upwind)
+    {
+        static constexpr bool useMoles = Traits::useMoles();
+        static constexpr auto numComponents = Traits::numFluidComponents();
+        static constexpr auto replaceCompEqIdx = Traits::replaceCompEqIdx();
+        static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            // get equation index
+            const auto eqIdx = Traits::Indices::conti0EqIdx + compIdx;
+
+            if (eqIdx == replaceCompEqIdx)
+                continue;
+
+            auto upwindTerm = [&]()
+            {
+                if constexpr (useMoles)
+                    return NavierStokesUpwindTerms::componentMoleFlux(compIdx);
+                else
+                    return NavierStokesUpwindTerms::componentMassFlux(compIdx);
+            }();
+
+            flux[eqIdx] = upwind(upwindTerm);
+        }
+
+        // in case one balance is substituted by the total mole balance
+        if constexpr(useTotalMoleOrMassBalance)
+        {
+
+            auto upwindTerm = [&]()
+            {
+                if constexpr (useMoles)
+                    return NavierStokesUpwindTerms::totalMoleFlux();
+                else
+                    return NavierStokesUpwindTerms::totalMassFlux();
+            }();
+
+            flux[replaceCompEqIdx] = upwind(upwindTerm);
+        }
+    }
+};
 
 template<class ModelTraits>
 class NavierStokesBoundaryFluxHelper
@@ -97,6 +164,7 @@ public:
                * volumeFlux;
     }
 
+
     template<class Traits, class NumEqVector, class UpwindFunction>
     static void addModelSpecificFlux(NumEqVector& flux,
                                      const UpwindFunction& upwind)
@@ -111,18 +179,8 @@ public:
             flux[Traits::Indices::energyEqIdx] = upwind(upwindTerm);
         }
 
-        // the 1p model: add the total mass flux
-        if constexpr (std::is_same_v<Traits, NavierStokesMassOnePModelTraits>)
-        {
-            auto upwindTerm = NavierStokesUpwindTerms::totalMassFlux();
-            flux[Traits::Indices::conti0EqIdx] = upwind(upwindTerm);
-        }
-
-        // TODO 1pnc
-
-        // TODO RANS
-
-        // TODO maybe use tag dispatch istead of constexpr if?
+        // add advective fluxes based on physical type of model
+        ModelSpecificFlux<Traits>::addAdvectiveFlux(flux, upwind);
     }
 
     /*!
@@ -357,7 +415,6 @@ public:
 
         return flux;
     }
-
 };
 
 } // end namespace Dumux
