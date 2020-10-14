@@ -296,7 +296,19 @@ int main (int argc, char *argv[])
                 using GeometryType = Dune::AxisAlignedCubeGeometry<Scalar, 2, dimWorld>;
                 GlobalPosition lowerLeftCube = upperRight; lowerLeftCube *= 0.4;
                 GlobalPosition upperRightCube = lowerLeftCube; upperRightCube[0] += 0.2*scaling; upperRightCube[1] += 0.2*scaling;
-                GeometryType cube(lowerLeftCube, upperRightCube);
+
+                GeometryType cube = [&]()
+                {
+                    if constexpr (dimWorld == 2)
+                        return GeometryType(lowerLeftCube, upperRightCube);
+                    else
+                    {
+                        std::bitset<dimWorld> axes;
+                        axes.set(0); axes.set(1);
+                        return GeometryType(lowerLeftCube, upperRightCube, axes);
+                    }
+                }();
+
                 using GeometriesEntitySet = Dumux::GeometriesEntitySet<GeometryType>;
                 GeometriesEntitySet entitySet(std::vector<GeometryType>{cube});
                 Dumux::BoundingBoxTree<GeometriesEntitySet> geometriesTree(std::make_shared<GeometriesEntitySet>(entitySet));
