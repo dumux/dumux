@@ -115,7 +115,7 @@ public:
         // after the release of 3.3, when the deprecated interface is no longer supported.
         // We can safely use the two-p wrapper here without breaking compatibility because the MPAdapter only supports
         // two phases anyway...
-        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         //calculate the remaining quantities
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
@@ -192,7 +192,7 @@ public:
         // after the release of 3.3, when the deprecated interface is no longer supported.
         // We can safely use the two-p wrapper here without breaking compatibility because the MPAdapter only supports
         // two phases anyway...
-        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         std::array<Scalar, numFluidPhases()> capPress;
         using MPAdapter = FluidMatrix::MPAdapter<numFluidPhases()>;
@@ -571,7 +571,7 @@ public:
         // after the release of 3.3, when the deprecated interface is no longer supported.
         // We can safely use the two-p wrapper here without breaking compatibility because the MPAdapter only supports
         // two phases anyway...
-        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         MPAdapter::relativePermeabilities(relativePermeability_, fluidMatrixInteraction, fluidState_, wPhaseIdx);
         typename FluidSystem::ParameterCache paramCache;
@@ -639,7 +639,7 @@ public:
         // after the release of 3.3, when the deprecated interface is no longer supported.
         // We can safely use the two-p wrapper here without breaking compatibility because the MPAdapter only supports
         // two phases anyway...
-        const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         std::vector<Scalar> capPress(numFluidPhases());
         using MPAdapter = FluidMatrix::MPAdapter<numFluidPhases()>;

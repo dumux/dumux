@@ -90,7 +90,7 @@ private:
                     // old material law interface is deprecated: Replace this by
                     // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
                     // after the release of 3.1, when the deprecated interface is no longer supported
-                    const auto fluidMatrixInteraction = Deprecated::makeDeprecationPcKrSwHelper(Scalar{}, spatialParams, element, scv, elemSol);
+                    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, spatialParams, element, scv, elemSol);
 
                     const Scalar pcMin = fluidMatrixInteraction.pc(1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];

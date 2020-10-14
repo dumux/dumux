@@ -184,7 +184,7 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto& wettingNonwettingInterfacialArea = spatialParams.wettingNonwettingInterfacialArea(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makeInterfacialAreaHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const auto awn = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
         interfacialArea_[phase0Idx][phase1Idx] = awn;
@@ -211,7 +211,7 @@ public:
             // old material law interface is deprecated: Replace this by
             // const auto& wettingSolidInterfacialArea = spatialParams.wettingSolidInterfacialArea(element, scv, elemSol);
             // after the release of 3.3, when the deprecated interface is no longer supported
-            const auto fluidMatrixInteraction = Deprecated::makeInterfacialAreaHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+            const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
             interfacialArea_[phase0Idx][sPhaseIdx] = fluidMatrixInteraction.wettingSolidInterface().area(Sw, pc);
         }
 
@@ -542,7 +542,7 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makeInterfacialAreaHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const auto Sw = fluidState.saturation(phase0Idx) ;
         const auto pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
@@ -730,7 +730,7 @@ public:
         // old material law interface is deprecated: Replace this by
         // const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
         // after the release of 3.3, when the deprecated interface is no longer supported
-        const auto fluidMatrixInteraction = Deprecated::makeInterfacialAreaHelper(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+        const auto fluidMatrixInteraction = Deprecated::makeInterfacialArea(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const auto awn = fluidMatrixInteraction.wettingNonwettingInterface().area(Sw, pc);
         interfacialArea_[phase0Idx][phase1Idx] = awn;
