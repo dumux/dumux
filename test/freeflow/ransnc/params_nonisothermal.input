@@ -20,7 +20,7 @@ EddyViscosityModel = "prandtl"
 TurbulentSchmidtNumber = 0.7
 TurbulentPrandtlNumber = 0.85
 WallNormalAxis = 1
-HasChannelGeometry = True
+IsFlatWallBounded = True
 
 [Assembly]
 NumericDifferenceMethod = 0

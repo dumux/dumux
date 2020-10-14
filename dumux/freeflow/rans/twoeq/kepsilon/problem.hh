@@ -92,11 +92,11 @@ public:
      */
     void updateStaticWallProperties()
     {
-        if (ParentType::hasChannelGeometry() != 1)
+        if (!ParentType::isFlatWallBounded())
         {
             DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, k-epsilon models should only be used for "
                                           << " wall bounded flows with flat channel geometries. "
-                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.HasChannelGeometry to true. \n");
+                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
         }
 
         ParentType::updateStaticWallProperties();
@@ -253,8 +253,8 @@ public:
         }
 
         unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
-        unsigned int flowNormalAxis = asImp_().flowNormalAxis(elementIdx);
-        Scalar velocityGradient = asImp_().velocityGradient(elementIdx, flowNormalAxis, wallNormalAxis);
+        unsigned int flowDirectionAxis = asImp_().flowDirectionAxis(elementIdx);
+        Scalar velocityGradient = asImp_().velocityGradient(elementIdx, flowDirectionAxis, wallNormalAxis);
         return mixingLength * mixingLength * abs(velocityGradient) * storedDensity(elementIdx);
     }
 
@@ -265,9 +265,9 @@ public:
         using std::sqrt;
         unsigned int wallElementIdx = asImp_().wallElementIndex(elementIdx);
         unsigned int wallNormalAxis = asImp_().wallNormalAxis(elementIdx);
-        unsigned int flowNormalAxis = asImp_().flowNormalAxis(elementIdx);
+        unsigned int flowDirectionAxis = asImp_().flowDirectionAxis(elementIdx);
         return sqrt(asImp_().kinematicViscosity(wallElementIdx)
-                    * abs(asImp_().velocityGradient(wallElementIdx, flowNormalAxis, wallNormalAxis)));
+                    * abs(asImp_().velocityGradient(wallElementIdx, flowDirectionAxis, wallNormalAxis)));
     }
 
     //! \brief Returns the nominal wall shear stress velocity (accounts for poor approximation of viscous sublayer)

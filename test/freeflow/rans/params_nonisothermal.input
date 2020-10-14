@@ -22,7 +22,7 @@ EnableGravity = false
 EddyViscosityModel = "baldwinLomax"
 TurbulentPrandtlNumber = 0.85
 WallNormalAxis = 1
-HasChannelGeometry = True
+IsFlatWallBounded = True
 
 [Assembly]
 NumericDifferenceMethod = 0

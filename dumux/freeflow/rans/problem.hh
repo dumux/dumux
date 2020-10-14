@@ -80,6 +80,17 @@ class RANSProblemBase : public NavierStokesProblem<TypeTag>
     using DimVector = GlobalPosition;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
+    struct WallElementInformation
+    {
+        // store the element indicies for all elements with an intersection on the wall
+        unsigned int wallElementIdx;
+        // for each wall element, store the faces normal axis
+        unsigned int wallFaceNormalAxis;
+        // for each wall element, store the location of the face center and each corner.
+        GlobalPosition wallFaceCenter;
+        std::array<GlobalPosition, numCorners> wallFaceCorners;
+    };
+
 public:
     /*!
      * \brief The constructor
@@ -111,18 +122,11 @@ public:
         velocityGradients_.resize(this->gridGeometry().elementMapper().size(), DimMatrix(0.0));
         stressTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         vorticityTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
-        flowNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedFlowNormalAxis_);
+        flowDirectionAxis_.resize(this->gridGeometry().elementMapper().size(), fixedFlowDirectionAxis_);
         wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedWallNormalAxis_);
         kinematicViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
 
-        // store the element indicies for all elements with an intersection on the wall
-        std::vector<unsigned int> wallElementIndicies;
-
-        // for each wall element, store the location of the face center and each corner.
-        std::vector<std::array<GlobalPosition, numCorners+1>> wallPositions;
-
-        // for each wall element, store the faces normal axis
-        std::vector<unsigned int> wallFaceNormalAxis;
+        std::vector<WallElementInformation> wallElements;
 
         const auto gridView = this->gridGeometry().gridView();
         auto fvGeometry = localView(this->gridGeometry());
@@ -138,51 +142,53 @@ public:
 
                 if (asImp_().isOnWall(scvf))
                 {
-                    // element has an scvf on the wall, store element index
-                    wallElementIndicies.push_back(this->gridGeometry().elementMapper().index(element));
+                    WallElementInformation wallElementInformation;
 
                     // store the location of the wall adjacent face's center and all corners
-                    std::array<GlobalPosition, numCorners+1> wallElementPosition;
-                    wallElementPosition[0] = scvf.center();
-                    for (int i = 1; i <= numCorners; i++)
-                        wallElementPosition[i] = scvf.corner(i-1);
-                    wallPositions.push_back(wallElementPosition);
+                    wallElementInformation.wallFaceCenter = scvf.center();
+                    for (int i = 0; i < numCorners; i++)
+                        wallElementInformation.wallFaceCorners[i] = scvf.corner(i);
 
-                    // Store the wall adjacent face's normal direction
-                    wallFaceNormalAxis.push_back(scvf.directionIndex());
+                    // Store the wall element index and face's normal direction (used only with isFlatWallBounded on)
+                    wallElementInformation.wallElementIdx = this->gridGeometry().elementMapper().index(element);
+                    wallElementInformation.wallFaceNormalAxis = scvf.directionIndex();
+
+                    wallElements.push_back(wallElementInformation);
                 }
             }
         }
         // output the number of wall adjacent faces. Check that this is non-zero.
-        std::cout << "NumWallIntersections=" << wallPositions.size() << std::endl;
-        if (wallPositions.size() == 0)
+        std::cout << "NumWallIntersections=" << wallElements.size() << std::endl;
+        if (wallElements.size() == 0)
             DUNE_THROW(Dune::InvalidStateException,
                        "No wall intersections have been found. Make sure that the isOnWall(globalPos) is working properly.");
-
 
         // search for shortest distance to the wall for each element
         for (const auto& element : elements(gridView))
         {
-            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
-
             // Store the cell center position for each element
+            unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             cellCenter_[elementIdx] = element.geometry().center();
 
-            for (unsigned int i = 0; i < wallPositions.size(); ++i)
+            for (unsigned int i = 0; i < wallElements.size(); ++i)
             {
                 // Find the minimum distance from the cell center to the wall face (center and corners)
                 std::array<Scalar,numCorners+1> cellToWallDistances;
-                for (unsigned int j = 0; j < wallPositions[i].size(); j++)
-                    cellToWallDistances[j] = (cellCenter(elementIdx) - wallPositions[i][j]).two_norm();
+                for (unsigned int j = 0; j < numCorners; j++)
+                    cellToWallDistances[j] = (cellCenter(elementIdx) - wallElements[i].wallFaceCorners[j]).two_norm();
+                cellToWallDistances[numCorners] = (cellCenter(elementIdx) - wallElements[i].wallFaceCenter).two_norm();
                 Scalar distanceToWall = *std::min_element(cellToWallDistances.begin(), cellToWallDistances.end());
 
                 if (distanceToWall < wallDistance_[elementIdx])
                 {
                     wallDistance_[elementIdx] = distanceToWall;
-                    if (hasChannelGeometry())
-                        wallElementIdx_[elementIdx] = wallElementIndicies[i];
-                    if ( !(hasParam("RANS.WallNormalAxis")) )
-                        wallNormalAxis_[elementIdx] = wallFaceNormalAxis[i];
+                    // If isFlatWallBounded, the corresonding wall element is stored for each element
+                    if (isFlatWallBounded())
+                    {
+                        wallElementIdx_[elementIdx] = wallElements[i].wallElementIdx;
+                        if ( !(hasParam("RANS.WallNormalAxis")) )
+                            wallNormalAxis_[elementIdx] = wallElements[i].wallFaceNormalAxis;
+                    }
                 }
             }
         }
@@ -233,10 +239,6 @@ public:
         if (!calledUpdateStaticWallProperties)
             DUNE_THROW(Dune::InvalidStateException,
                        "You have to call updateStaticWallProperties() once before you call updateDynamicWallProperties().");
-
-        // re-initialize min and max values
-        velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), DimVector(1e-16));
-        velocityMinimum_.assign(this->gridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
 
         calculateCCVelocities_(curSol);
         calculateCCVelocityGradients_();
@@ -303,10 +305,10 @@ public:
                    "The problem does not provide an isOnWall() method.");
     }
 
-    bool hasChannelGeometry() const
+    bool isFlatWallBounded() const
     {
-        static const bool hasChannelGeometry = getParamFromGroup<bool>(this->paramGroup(), "RANS.HasChannelGeometry");
-        return hasChannelGeometry;
+        static const bool isFlatWallBounded = getParamFromGroup<bool>(this->paramGroup(), "RANS.IsFlatWallBounded");
+        return isFlatWallBounded;
     }
 
     /*!
@@ -344,13 +346,29 @@ public:
     }
 
     int wallNormalAxis(const int elementIdx) const
-    { return wallNormalAxis_[elementIdx]; }
+    {
+        if (!isFlatWallBounded())
+            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a wallNormalAxis can only be used for flat wall bounded flows. "
+                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
+        return wallNormalAxis_[elementIdx];
+    }
 
-    int flowNormalAxis(const int elementIdx) const
-    { return flowNormalAxis_[elementIdx]; }
+    int flowDirectionAxis(const int elementIdx) const
+    {
+        if (!isFlatWallBounded())
+            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a flowDirectionAxis can only be used for flat wall bounded flows. "
+                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
+        return flowDirectionAxis_[elementIdx];
+    }
 
     unsigned int wallElementIndex(const int elementIdx) const
-    { return wallElementIdx_[elementIdx]; }
+    {
+        if (!isFlatWallBounded())
+            DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, models requiring a wallElementIndex can only be used for flat wall bounded flows. "
+                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
+        return wallElementIdx_[elementIdx];
+
+    }
 
     Scalar wallDistance(const int elementIdx) const
     { return wallDistance_[elementIdx]; }
@@ -367,10 +385,10 @@ public:
     Scalar ccVelocity(const int elementIdx, const int dimIdx) const
     { return velocity_[elementIdx][dimIdx]; }
 
-    DimVector profileVelocityMaximum(const int elementIdx) const
+    DimVector velocityMaximum(const int elementIdx) const
     { return velocityMaximum_[elementIdx]; }
 
-    DimVector profileVelocityMinimum(const int elementIdx) const
+    DimVector velocityMinimum(const int elementIdx) const
     { return velocityMinimum_[elementIdx]; }
 
     DimMatrix velocityGradientTensor(const int elementIdx) const
@@ -510,17 +528,21 @@ private:
     void calculateMaxMinVelocities_()
     {
         using std::abs;
-        if (hasChannelGeometry())
+        if (isFlatWallBounded())
         {
+            // If the parameter isFlatWallBounded is set to true,
+            // the maximum/minimum velocities are calculated along a profile perpendicular to the corresponding wall face.
+
             // re-initialize min and max values
             velocityMaximum_.assign(this->gridGeometry().elementMapper().size(), DimVector(1e-16));
             velocityMinimum_.assign(this->gridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
+
             // For each profile perpendicular to the channel wall, find the max and minimum velocities
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
                 const unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
                 Scalar maxVelocity = 0.0;
-                const unsigned int wallElementIdx = wallElementIdx_[elementIdx];
+                const unsigned int wallElementIdx = wallElementIndex(elementIdx);
 
                 for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                 {
@@ -530,16 +552,20 @@ private:
                     if (abs(ccVelocity(elementIdx, dimIdx)) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
                         velocityMinimum_[wallElementIdx][dimIdx] = ccVelocity(elementIdx, dimIdx);
 
-                    if ((hasParam("RANS.FlowNormalAxis") != 1) && (maxVelocity) < abs(ccVelocity(elementIdx, dimIdx)))
+                    // Set the flow direction axis as the direction of the max velocity
+                    if ((hasParam("RANS.FlowDirectionAxis") != 1) && (maxVelocity) < abs(ccVelocity(elementIdx, dimIdx)))
                     {
                         maxVelocity = abs(ccVelocity(elementIdx, dimIdx));
-                        flowNormalAxis_[elementIdx] = dimIdx;
+                        flowDirectionAxis_[elementIdx] = dimIdx;
                     }
                 }
             }
         }
         else
         {
+            // If the parameter isFlatWallBounded is set to false, or not set,
+            // the maximum/minimum velocities are calculated as a global max/min throughout the domain.
+
             DimVector maxVelocity(0.0);
             DimVector minVelocity(std::numeric_limits<Scalar>::max());
             // Find the max and minimum velocities in the full domain
@@ -634,11 +660,11 @@ private:
         }
     }
 
-    const int fixedFlowNormalAxis_ = getParam<int>("RANS.FlowNormalAxis", 0);
+    const int fixedFlowDirectionAxis_ = getParam<int>("RANS.FlowDirectionAxis", 0);
     const int fixedWallNormalAxis_ = getParam<int>("RANS.WallNormalAxis", 1);
 
     std::vector<unsigned int> wallNormalAxis_;
-    std::vector<unsigned int> flowNormalAxis_;
+    std::vector<unsigned int> flowDirectionAxis_;
     std::vector<Scalar> wallDistance_;
     std::vector<unsigned int> wallElementIdx_;
     std::vector<GlobalPosition> cellCenter_;

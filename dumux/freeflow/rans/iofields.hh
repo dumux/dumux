@@ -40,11 +40,11 @@ struct RANSIOFields
     {
         NavierStokesIOFields::initOutputModule(out);
 
-        static const bool hasChannelGeometry = getParamFromGroup<bool>(out.paramGroup(), "RANS.HasChannelGeometry");
+        static const bool isFlatWallBounded = getParamFromGroup<bool>(out.paramGroup(), "RANS.IsFlatWallBounded");
 
         static constexpr auto dim = decltype(std::declval<typename OutputModule::VolumeVariables>().ccVelocityVector())::dimension;
 
-        out.addVolumeVariable([](const auto& v){ return v.ccVelocityVector()[0] / v.profileVelocityMaximum()[0]; }, "v_x/v_x,max");
+        out.addVolumeVariable([](const auto& v){ return v.ccVelocityVector()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
         out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
         if (dim > 1)
             out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/dx_");
@@ -54,7 +54,7 @@ struct RANSIOFields
         out.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
         out.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");
         out.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
-        if (hasChannelGeometry)
+        if (isFlatWallBounded)
         {
             out.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
             out.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");

@@ -89,9 +89,9 @@ public:
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy(RANSParentType::elementIdx());
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
         const Scalar uStarNominal = problem.uStarNominal(RANSParentType::elementIdx());
-        const auto flowNormalAxis = problem.flowNormalAxis(RANSParentType::elementIdx());
+        const auto flowDirectionAxis = problem.flowDirectionAxis(RANSParentType::elementIdx());
         yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity(RANSParentType::elementIdx());
-        uPlusNominal_ = RANSParentType::ccVelocityVector()[flowNormalAxis] / uStarNominal;
+        uPlusNominal_ = RANSParentType::ccVelocityVector()[flowDirectionAxis] / uStarNominal;
         cMu_ = problem.cMu();
         if (problem.useStoredEddyViscosity())
             RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity(RANSParentType::elementIdx()));

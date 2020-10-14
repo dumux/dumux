@@ -18,7 +18,7 @@ EnableGravity = false
 TurbulentSchmidtNumber = 0.7
 TurbulentPrandtlNumber = 0.85
 WallNormalAxis = 1
-HasChannelGeometry = True
+IsFlatWallBounded = True
 
 [KEpsilon]
 YPlusThreshold = 10. # should be small (10-30) for coarse grids

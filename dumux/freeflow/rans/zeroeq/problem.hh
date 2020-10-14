@@ -85,10 +85,10 @@ public:
      */
     void updateStaticWallProperties()
     {
-        if (ParentType::hasChannelGeometry() != 1)
+        if (!ParentType::isFlatWallBounded())
         {
             DUNE_THROW(Dune::NotImplemented, "\n Due to grid/geometric concerns, zero-eq models should only be used for flat channel geometries. "
-                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.HasChannelGeometry to true. \n");
+                                          << "\n If your geometry is a flat channel, please set the runtime parameter RANS.IsFlatWallBounded to true. \n");
         }
 
         ParentType::updateStaticWallProperties();
@@ -149,13 +149,13 @@ public:
         {
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             Scalar effectiveWallDistance = asImp_().wallDistance(elementIdx) + additionalRoughnessLength(elementIdx);
-            unsigned int flowNormalAxis = this->flowNormalAxis(elementIdx);
+            unsigned int flowDirectionAxis = this->flowDirectionAxis(elementIdx);
             unsigned int wallNormalAxis = this->wallNormalAxis(elementIdx);
 
-            Scalar omegaAbs = abs(this->velocityGradient(elementIdx, flowNormalAxis, wallNormalAxis)
-                                  - this->velocityGradient(elementIdx, wallNormalAxis, flowNormalAxis));
+            Scalar omegaAbs = abs(this->velocityGradient(elementIdx, flowDirectionAxis, wallNormalAxis)
+                                  - this->velocityGradient(elementIdx, wallNormalAxis, flowDirectionAxis));
             Scalar uStar = sqrt(this->kinematicViscosity(asImp_().wallElementIndex(elementIdx))
-                                * abs(this->velocityGradient(asImp_().wallElementIndex(elementIdx), flowNormalAxis, wallNormalAxis)));
+                                * abs(this->velocityGradient(asImp_().wallElementIndex(elementIdx), flowDirectionAxis, wallNormalAxis)));
             Scalar yPlus = effectiveWallDistance * uStar / this->kinematicViscosity(elementIdx);
             Scalar mixingLength = this->karmanConstant() * effectiveWallDistance * (1.0 - exp(-yPlus / aPlus));
             kinematicEddyViscosityInner[elementIdx] = mixingLength * mixingLength * omegaAbs;
@@ -178,10 +178,10 @@ public:
             Scalar minVelocityNorm = 0.0;
             for (unsigned dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
-                maxVelocityNorm += asImp_().profileVelocityMaximum(asImp_().wallElementIndex(elementIdx))[dimIdx]
-                                   * asImp_().profileVelocityMaximum(asImp_().wallElementIndex(elementIdx))[dimIdx];
-                minVelocityNorm += asImp_().profileVelocityMinimum(asImp_().wallElementIndex(elementIdx))[dimIdx]
-                                   * asImp_().profileVelocityMinimum(asImp_().wallElementIndex(elementIdx))[dimIdx];
+                maxVelocityNorm += asImp_().velocityMaximum(asImp_().wallElementIndex(elementIdx))[dimIdx]
+                                   * asImp_().velocityMaximum(asImp_().wallElementIndex(elementIdx))[dimIdx];
+                minVelocityNorm += asImp_().velocityMinimum(asImp_().wallElementIndex(elementIdx))[dimIdx]
+                                   * asImp_().velocityMinimum(asImp_().wallElementIndex(elementIdx))[dimIdx];
             }
 
             Scalar deltaU = sqrt(maxVelocityNorm) - sqrt(minVelocityNorm);
@@ -243,7 +243,7 @@ private:
         bool printedRangeWarning = false;
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            static const Scalar sandGrainRoughness = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.SandGrainRoughness", 0.0);
+            static const Scalar sandGrainRoughness = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.SandGrainRoughness");
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
 
             auto fvGeometry = localView(this->gridGeometry());
