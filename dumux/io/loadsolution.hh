@@ -320,9 +320,8 @@ auto createPVNameFunction(const std::string& paramGroup = "")
  * \brief load a solution vector from file
  * \note Supports the following file extensions: *.vtu *.vtp *.pvtu, *.pvtp
  * \param sol the solution vector to read from file
- * \param loadedSolutionSize the dimension of the loaded solution's primary variables
  * \param fileName the file name of the file to read from
- * \param pvNameFunc a function with the signature std::string(int pvIdx)
+ * \param targetPvNameFunc a function with the signature std::string(int pvIdx)
  *        in case the primary variables have a state the signature is std::string(int pvIdx, int state)
  * \param gridGeometry the grid geometry of the discretization method used
  */
