@@ -57,11 +57,11 @@ public:
     using PermeabilityType = Scalar;
 
     RichardsAnalyticalSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-        : ParentType(gridGeometry)
+    : ParentType(gridGeometry)
     {
         permeability_ = 5e-12;
 
-        typename PcKrSwCurve::BasicParams params(0/*pe*/, 1e10/*pcMax*/);
+        typename PcKrSwCurve::BasicParams params(0/*pcEntry*/, 1e10/*pcMax*/);
         pcKrSwCurve_ = std::make_unique<PcKrSwCurve>(params);
     }
 
