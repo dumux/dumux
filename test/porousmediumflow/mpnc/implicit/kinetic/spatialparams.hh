@@ -61,7 +61,7 @@ class EvaporationAtmosphereSpatialParams
 
     static constexpr auto dimWorld = GridView::dimensionworld;
 
-    using FluidMatrixInteraction = FluidMatrix::BrooksCoreyDefault<Scalar>;
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
     using NonwettingSolidInterfacialArea = FluidMatrix::InterfacialArea<Scalar,
                                                                         FluidMatrix::InterfacialAreaExponentialCubic,
@@ -79,14 +79,14 @@ public:
     EvaporationAtmosphereSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        heightPM_               = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
-        heightDomain_           = getParam<std::vector<Scalar>>("Grid.Positions1")[2];
+        heightPM_ = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
+        heightDomain_ = getParam<std::vector<Scalar>>("Grid.Positions1")[2];
 
-        porosityPM_                 = getParam<Scalar>("SpatialParams.PorousMedium.porosity");
-        intrinsicPermeabilityPM_    = getParam<Scalar>("SpatialParams.PorousMedium.permeability");
+        porosityPM_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");
+        intrinsicPermeabilityPM_ = getParam<Scalar>("SpatialParams.PorousMedium.permeability");
 
-        porosityFF_                 = getParam<Scalar>("SpatialParams.FreeFlow.porosity");
-        intrinsicPermeabilityFF_    = getParam<Scalar>("SpatialParams.FreeFlow.permeability");
+        porosityFF_ = getParam<Scalar>("SpatialParams.FreeFlow.porosity");
+        intrinsicPermeabilityFF_ = getParam<Scalar>("SpatialParams.FreeFlow.permeability");
 
         aWettingNonWettingA1_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA1");
         aWettingNonWettingA2_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA2");
@@ -96,13 +96,13 @@ public:
         aNonWettingSolidA2_ = getParam<Scalar>("SpatialParams.soil.aNonWettingSolidA2");
         aNonWettingSolidA3_ = getParam<Scalar>("SpatialParams.soil.aNonWettingSolidA3");
 
-        BCPd_           = getParam<Scalar>("SpatialParams.soil.BCPd");
-        BClambda_       = getParam<Scalar>("SpatialParams.soil.BClambda");
-        Swr_            = getParam<Scalar>("SpatialParams.soil.Swr");
-        Snr_            = getParam<Scalar>("SpatialParams.soil.Snr");
+        BCPd_ = getParam<Scalar>("SpatialParams.soil.BCPd");
+        BClambda_ = getParam<Scalar>("SpatialParams.soil.BClambda");
+        Swr_ = getParam<Scalar>("SpatialParams.soil.Swr");
+        Snr_  = getParam<Scalar>("SpatialParams.soil.Snr");
 
-        characteristicLengthFF_   = getParam<Scalar>("SpatialParams.FreeFlow.meanPoreSize");
-        characteristicLengthPM_   = getParam<Scalar>("SpatialParams.PorousMedium.meanPoreSize");
+        characteristicLengthFF_ = getParam<Scalar>("SpatialParams.FreeFlow.meanPoreSize");
+        characteristicLengthPM_ = getParam<Scalar>("SpatialParams.PorousMedium.meanPoreSize");
 
         factorEnergyTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorEnergyTransfer");
         factorMassTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorMassTransfer");
@@ -110,12 +110,12 @@ public:
         // PM parameters for Brooks-Corey
         typename FluidMatrixInteraction::BasicParams paramsPM(BCPd_, BClambda_);
         typename FluidMatrixInteraction::EffToAbsParams effToAbsParamsPM(Swr_, Snr_);
-        fluidMatrixInteractionPM_ = std::make_unique<FluidMatrixInteraction>(paramsPM, effToAbsParamsPM);
+        pcKrSwCurvePM_ = std::make_unique<FluidMatrixInteraction>(paramsPM, effToAbsParamsPM);
 
         // FF parameters for Brooks-Corey
         typename FluidMatrixInteraction::BasicParams paramsFF(0/*dummy pe*/, 42/*dummy lambda*/);
         typename FluidMatrixInteraction::EffToAbsParams effToAbsParamsFF(0.0/*swr*/, 0.0/*snr*/);
-        fluidMatrixInteractionFF_ = std::make_unique<FluidMatrixInteraction>(paramsFF, effToAbsParamsFF);
+        pcKrSwCurveFF_ = std::make_unique<FluidMatrixInteraction>(paramsFF, effToAbsParamsFF);
 
         // determine maximum capillary pressure for wetting-nonwetting surface
         /* Of course physically there is no such thing as a maximum capillary pressure.
@@ -126,7 +126,7 @@ public:
          * Technically this value is obtained as the capillary pressure of saturation zero.
          * This value of course only exists for the case of a regularized pc-Sw relation.
          */
-        const auto pcMax = fluidMatrixInteractionPM_->pc(/*sw = */0.0);
+        const auto pcMax = pcKrSwCurvePM_->pc(/*sw = */0.0);
 
         // non-wetting-solid
         using NonwettingSolidInterfacialAreaParams = typename NonwettingSolidInterfacialArea::BasicParams;
@@ -246,9 +246,9 @@ public:
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
         if (inFF_(globalPos))
-            return makeFluidMatrixInteraction(*fluidMatrixInteractionFF_, *aNsFreeFlow_, *aNwFreeFlow_, *aWs_);
+            return makeFluidMatrixInteraction(*pcKrSwCurveFF_, *aNsFreeFlow_, *aNwFreeFlow_, *aWs_);
         else if (inPM_(globalPos))
-            return makeFluidMatrixInteraction(*fluidMatrixInteractionPM_, *aNs_, *aNw_, *aWs_);
+            return makeFluidMatrixInteraction(*pcKrSwCurvePM_, *aNs_, *aNw_, *aWs_);
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
@@ -350,13 +350,13 @@ private:
     Scalar factorEnergyTransfer_ ;
     Scalar factorMassTransfer_ ;
     Scalar characteristicLengthPM_ ;
-    std::unique_ptr<FluidMatrixInteraction> fluidMatrixInteractionPM_;
+    std::unique_ptr<PcKrSwCurve> pcKrSwCurvePM_;
 
     // Free Flow Domain
     Scalar porosityFF_ ;
     Scalar intrinsicPermeabilityFF_ ;
     Scalar characteristicLengthFF_ ;
-    std::unique_ptr<FluidMatrixInteraction> fluidMatrixInteractionFF_;
+    std::unique_ptr<PcKrSwCurve> pcKrSwCurveFF_;
 
     // interfacial area parameters
     Scalar aWettingNonWettingA1_ ;
