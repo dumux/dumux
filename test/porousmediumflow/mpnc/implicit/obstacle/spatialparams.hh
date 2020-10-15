@@ -59,18 +59,13 @@ public:
     using PermeabilityType = Scalar;
 
 
-    ObstacleSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
-    {
-        // intrinsic permeabilities
-        coarseK_ = 1e-12;
-        fineK_ = 1e-15;
-
-        // the porosity
-        porosity_ = 0.3;
-
-        // initialize the material law
-        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>("SpatialParams.SmoothedLinearLaw");
-    }
+    ObstacleSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams") // initialize the material law
+    , coarseK_(1e-12) // intrinsic permeability
+    , fineK_(1e-15) // intrinsic permeability
+    , porosity_(0.3)
+    {}
 
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -96,7 +91,7 @@ public:
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        return makeFluidMatrixInteraction(*pcKrSwCurve_);
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
 
     /*!
@@ -123,10 +118,10 @@ private:
             0 - eps_ <= pos[1] && pos[1] <= 35 + eps_;
     }
 
-    Scalar coarseK_;
-    Scalar fineK_;
-    Scalar porosity_;
-    std::unique_ptr<PcKrSwCurve> pcKrSwCurve_;
+    const PcKrSwCurve pcKrSwCurve_;
+    const Scalar coarseK_;
+    const Scalar fineK_;
+    const Scalar porosity_;
     static constexpr Scalar eps_ = 1e-6;
 };
 
