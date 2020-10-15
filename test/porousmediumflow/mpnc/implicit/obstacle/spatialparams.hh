@@ -52,11 +52,12 @@ class ObstacleSpatialParams
     enum {dimWorld=GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
+    using PcKrSwCurve = FluidMatrix::SmoothedLinearLaw<Scalar>;
+
 public:
     //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! Export the material law type used
-    using FluidMatrixInteraction = FluidMatrix::SmoothedLinearLaw<Scalar>;
+
 
     ObstacleSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
     {
@@ -68,7 +69,7 @@ public:
         porosity_ = 0.3;
 
         // initialize the material law
-        fluidMatrixInteraction_ = std::make_unique<FluidMatrixInteraction>("SpatialParams.SmoothedLinearLaw");
+        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>("SpatialParams.SmoothedLinearLaw");
     }
 
     template<class ElementSolution>
@@ -95,7 +96,7 @@ public:
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        return makeFluidMatrixInteraction(*fluidMatrixInteraction_);
+        return makeFluidMatrixInteraction(*pcKrSwCurve_);
     }
 
     /*!
@@ -125,7 +126,7 @@ private:
     Scalar coarseK_;
     Scalar fineK_;
     Scalar porosity_;
-    std::unique_ptr<FluidMatrixInteraction> fluidMatrixInteraction_;
+    std::unique_ptr<PcKrSwCurve> pcKrSwCurve_;
     static constexpr Scalar eps_ = 1e-6;
 };
 
