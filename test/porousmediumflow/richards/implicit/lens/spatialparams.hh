@@ -58,18 +58,13 @@ public:
 
     RichardsLensSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {
-
-        lensLowerLeft_ = {1.0, 2.0};
-        lensUpperRight_ = {4.0, 3.0};
-
-        // initialize the Van Genuchten law
-        lensPcKrSwCurve_ = std::make_unique<PcKrSwCurve>("SpatialParams.Lens");
-        outerPcKrSwCurve_ = std::make_unique<PcKrSwCurve>("SpatialParams.OuterDomain");
-
-        lensK_ = 1e-12;
-        outerK_ = 5e-12;
-    }
+    , lensPcKrSwCurve_("SpatialParams.Lens")
+    , outerPcKrSwCurve_("SpatialParams.OuterDomain")
+    , lensLowerLeft_({1.0, 2.0})
+    , lensUpperRight_({4.0, 3.0})
+    , lensK_(1e-12)
+    , outerK_(5e-12)
+    {}
 
     /*!
      * \brief Returns the intrinsic permeability tensor [m^2] at a given location
@@ -121,9 +116,9 @@ public:
     auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         if (isInLens_(globalPos))
-            return makeFluidMatrixInteraction(*lensPcKrSwCurve_);
+            return makeFluidMatrixInteraction(lensPcKrSwCurve_);
 
-        return makeFluidMatrixInteraction(*outerPcKrSwCurve_);
+        return makeFluidMatrixInteraction(outerPcKrSwCurve_);
     }
 
 private:
@@ -138,13 +133,12 @@ private:
 
     static constexpr Scalar eps_ = 1e-6;
 
-    GlobalPosition lensLowerLeft_;
-    GlobalPosition lensUpperRight_;
-
-    Scalar lensK_;
-    Scalar outerK_;
-    std::unique_ptr<PcKrSwCurve> lensPcKrSwCurve_;
-    std::unique_ptr<PcKrSwCurve> outerPcKrSwCurve_;
+    const PcKrSwCurve lensPcKrSwCurve_;
+    const PcKrSwCurve outerPcKrSwCurve_;
+    const GlobalPosition lensLowerLeft_;
+    const GlobalPosition lensUpperRight_;
+    const Scalar lensK_;
+    const Scalar outerK_;
 };
 
 } // end namespace Dumux
