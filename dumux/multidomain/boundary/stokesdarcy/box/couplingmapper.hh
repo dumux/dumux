@@ -101,11 +101,9 @@ public:
         const auto& stokesFvGridGeometry = stokesProblem.gridGeometry();
         const auto& darcyFvGridGeometry = darcyProblem.gridGeometry();
 
-        auto darcyFvGeometry = localView(darcyFvGridGeometry);
-
         for(const auto& dataHandle : stokesElementToDarcyElementMap_)
         {
-            const auto stokesElementIdx = dataHandle.first;
+            const auto stokesEIdx = dataHandle.first;
 
             for (const auto& darcyData : dataHandle.second)
             {
@@ -114,17 +112,36 @@ public:
                 const auto& stokesScvf = stokesFvGridGeometry.scvf(stokesScvfIdx);
 
                 const auto& darcyElement = darcyFvGridGeometry.element(darcyEIdx);
+                auto darcyFvGeometry = localView(darcyFvGridGeometry);
                 darcyFvGeometry.bind(darcyElement);
 
-                darcyToStokesCellCenterStencils[darcyEIdx].push_back(stokesElementIdx);
+                const auto stokesElement = stokesFvGridGeometry.element(stokesEIdx);
+                auto stokesFvGeometry = localView(stokesFvGridGeometry);
+                stokesFvGeometry.bind(stokesElement);
+
+                darcyToStokesCellCenterStencils[darcyEIdx].push_back(stokesEIdx);
                 darcyToStokesFaceStencils[darcyEIdx].first.push_back(stokesScvf.dofIndex());
                 darcyToStokesFaceStencils[darcyEIdx].second.push_back(stokesScvf.index());
 
                 for (auto&& scv : scvs(darcyFvGeometry))
                 {
-                    stokesCellCenterToDarcyStencils[stokesElementIdx].push_back(scv.dofIndex());
+                    stokesCellCenterToDarcyStencils[stokesEIdx].push_back(scv.dofIndex());
                     stokesFaceToDarcyStencils[stokesScvf.dofIndex()].push_back(scv.dofIndex());
                 }
+
+                const std::size_t numSubFaces = stokesScvf.pairData().size();
+
+                // Account for all sub faces. This is needed when a slip condition is set.
+                for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+                {
+                    const auto eIdx = stokesScvf.insideScvIdx();
+                    // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
+                    const auto& lateralStokesScvf = stokesFvGeometry.scvf(eIdx, stokesScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
+                    for (auto&& scv : scvs(darcyFvGeometry))
+                        if(lateralStokesScvf.dofIndex() != stokesScvf.dofIndex() && !lateralStokesScvf.boundary())
+                            stokesFaceToDarcyStencils[lateralStokesScvf.dofIndex()].push_back(scv.dofIndex());
+                }
+
             }
         }
     }
