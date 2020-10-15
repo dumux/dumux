@@ -34,6 +34,7 @@
 
 #include <dumux/discretization/fem/ipdata.hh>
 #include <dumux/discretization/fem/elementboundarytypes.hh>
+#include <dumux/discretization/box/elementboundarytypes.hh>
 
 namespace Dumux {
 

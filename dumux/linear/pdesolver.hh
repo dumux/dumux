@@ -65,6 +65,7 @@ class LinearPDESolver : public PDESolver<Assembler, LinearSolver>
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
     using TimeLoop = TimeLoopBase<Scalar>;
+    using GridVariables = typename Assembler::Variables;
 
 public:
     /*!
@@ -85,7 +86,7 @@ public:
     /*!
      * \brief Solve a linear PDE system
      */
-    void solve(SolutionVector& uCurrentIter) override
+    void solve(GridVariables& variables) override
     {
         Dune::Timer assembleTimer(false);
         Dune::Timer solveTimer(false);
@@ -102,7 +103,7 @@ public:
 
         // linearize the problem at the current solution
         assembleTimer.start();
-        this->assembler().assembleJacobianAndResidual(uCurrentIter);
+        this->assembler().assembleJacobianAndResidual(variables);
         assembleTimer.stop();
 
         ///////////////
@@ -124,7 +125,8 @@ public:
         solveTimer.start();
 
         // set the delta vector to zero before solving the linear system!
-        SolutionVector deltaU(uCurrentIter);
+        SolutionVector curSol = variables.dofs();
+        SolutionVector deltaU(curSol);
         deltaU = 0;
 
         // solve by calling the appropriate implementation depending on whether the linear solver
@@ -146,8 +148,8 @@ public:
 
         // update the current solution and secondary variables
         updateTimer.start();
-        uCurrentIter -= deltaU;
-        this->assembler().updateGridVariables(uCurrentIter);
+        curSol -= deltaU;
+        variables.updateDofs(curSol);
         updateTimer.stop();
 
         if (verbose_) {

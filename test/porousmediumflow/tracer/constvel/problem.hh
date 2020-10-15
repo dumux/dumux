@@ -61,11 +61,11 @@ struct TracerTestBox { using InheritsFrom = std::tuple<TracerTest, BoxModel>; };
 
 // enable caching
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TracerTest> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::TracerTest> { static constexpr bool value = false; };
 
 // Set the grid type
 template<class TypeTag>
@@ -153,6 +153,20 @@ struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<T
 
 } // end namespace Properties
 
+// TODO: How do we want to handle the issue with problem traits? Is there a generic impl?
+template<class TypeTag> struct ProblemTraits;
+
+template<class TypeTag>
+struct ProblemTraits< TracerTest<TypeTag> >
+{
+    static constexpr int numEq = 2;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariables = Dune::FieldVector<Scalar, numEq>;
+    using NumEqVector = PrimaryVariables;
+    using BoundaryTypes = Dumux::BoundaryTypes<numEq>;
+};
 
 /*!
  * \ingroup TracerTests

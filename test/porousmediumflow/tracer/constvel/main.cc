@@ -36,7 +36,15 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/pdesolver.hh>
 #include <dumux/assembly/fvassembler.hh>
+
+#include <dumux/assembly/instationaryassembler.hh>
+#include <dumux/assembly/fv/localoperator.hh>
+
+#include <dumux/timestepping/multistagemethods.hh>
+#include <dumux/timestepping/multistagetimestepper.hh>
+
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
@@ -86,14 +94,9 @@ int main(int argc, char** argv) try
 
     //! the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
-    problem->applyInitialSolution(x);
-    auto xOld = x;
-
-    //! the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    auto gridVariables = std::make_shared<GridVariables>(problem);
+    const auto& x = gridVariables->dofs();
 
     //! get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -105,9 +108,17 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    //! the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic, IMPLICIT>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    // the local operator type
+    // TODO: we reuse the local residual here, think about proper naming and
+    //       which levels of classes we actually need/want in the assembly.
+    //       That is - is this a local operator or residual??
+    using Operators = TracerLocalResidual<TypeTag>;
+    using LocalOperator = FVLocalOperator<typename GridVariables::LocalView, Operators>;
+
+    // make the assembler
+    using Assembler = InstationaryAssembler<LocalOperator, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(gridGeometry);
+
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
@@ -125,6 +136,12 @@ int main(int argc, char** argv) try
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
+    using PDESolver = LinearPDESolver<Assembler, LinearSolver>;
+    auto pdeSolver = std::make_shared<PDESolver>(assembler, linearSolver);
+
+    using TimeStepper = MultiStageTimeStepper<PDESolver>;
+    TimeStepper timeStepper(pdeSolver, std::make_shared< MultiStage::Theta<Scalar> >(0.0));
+
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // run instationary non-linear simulation
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -136,34 +153,17 @@ int main(int argc, char** argv) try
     timeLoop->start();
     while (!timeLoop->finished())
     {
-        Dune::Timer assembleTimer;
-        assembler->assembleJacobianAndResidual(x);
-        assembleTimer.stop();
+        // do time integration
+        timeStepper.step(*gridVariables, timeLoop->time(), timeLoop->timeStepSize());
 
-        // solve the linear system A(xOld-xNew) = r
-        Dune::Timer solveTimer;
-        SolutionVector xDelta(x);
-        linearSolver->solve(*A, xDelta, *r);
-        solveTimer.stop();
-
-        // update solution and grid variables
-        Dune::Timer updateTimer;
-        x -= xDelta;
-        gridVariables->update(x);
-        updateTimer.stop();
-
-        // statistics
-        const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-        if (mpiHelper.rank() == 0)
-            std::cout << "Assemble/solve/update time: "
-                      <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-                      <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-                      <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                      <<  std::endl;
-
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
+        // // statistics
+        // const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+        // if (mpiHelper.rank() == 0)
+        //     std::cout << "Assemble/solve/update time: "
+        //               <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
+        //               <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
+        //               <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
+        //               <<  std::endl;
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
