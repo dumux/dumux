@@ -64,11 +64,11 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // create a grid
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Grid = GetPropType<TypeTag, Properties::Grid>;
     Dumux::GridManager<Grid> gridManager;
 
 #if HAVE_DUNE_SUBGRID
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const bool isStaircaseGeometry = getParam<bool>("Problem.IsStaircaseGeometry", false);
 
     auto selector = [&](const auto& element)
