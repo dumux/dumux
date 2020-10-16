@@ -85,12 +85,12 @@ public:
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
         viscosityTilde_ = elemSol[0][Indices::viscosityTildeIdx];
-        storedViscosityTilde_ = problem.storedViscosityTilde_[RANSParentType::elementIdx()];
-        storedViscosityTildeGradient_ = problem.storedViscosityTildeGradient_[RANSParentType::elementIdx()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
-        vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct_[RANSParentType::elementIdx()];
-        if (problem.useStoredEddyViscosity_)
-            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
+        storedViscosityTilde_ = problem.storedViscosityTilde(RANSParentType::elementIdx());
+        storedViscosityTildeGradient_ = problem.storedViscosityTildeGradient(RANSParentType::elementIdx());
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct(RANSParentType::elementIdx());
+        vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct(RANSParentType::elementIdx());
+        if (problem.useStoredEddyViscosity())
+            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity(RANSParentType::elementIdx()));
         else
             RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity());
         RANSParentType::calculateEddyDiffusivity(problem);
@@ -101,41 +101,31 @@ public:
      * \brief Returns the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$.
      */
     Scalar calculateEddyViscosity()
-    {
-        return viscosityTilde() * fv1() *  RANSParentType::density();
-    }
+    { return viscosityTilde() * fv1() *  RANSParentType::density(); }
 
     /*!
      * \brief Returns the viscosity parameter \f$ m^2/s \f$
      */
     Scalar viscosityTilde() const
-    {
-        return viscosityTilde_;
-    }
+    { return viscosityTilde_; }
 
     /*!
      * \brief Returns the viscosity parameter from the last iteration \f$ m^2/s \f$
      */
     Scalar storedViscosityTilde() const
-    {
-        return storedViscosityTilde_;
-    }
+    { return storedViscosityTilde_; }
 
     /*!
      * \brief Returns the gradient of the viscosity parameter
      */
     DimVector storedViscosityTildeGradient() const
-    {
-        return storedViscosityTildeGradient_;
-    }
+    { return storedViscosityTildeGradient_; }
 
     /*!
      * \brief Returns the scalar product of the stress tensor
      */
     Scalar stressTensorScalarProduct() const
-    {
-        return stressTensorScalarProduct_;
-    }
+    { return stressTensorScalarProduct_; }
 
     /*!
      * \brief Returns damping function for the eddy viscosity
@@ -274,8 +264,8 @@ protected:
     Scalar viscosityTilde_ = 0.0;
     Scalar storedViscosityTilde_ = 0.0;
     DimVector storedViscosityTildeGradient_ = DimVector(0.0);
-    Scalar stressTensorScalarProduct_ = 0.0;
-    Scalar vorticityTensorScalarProduct_ = 0.0;
+    Scalar stressTensorScalarProduct_;
+    Scalar vorticityTensorScalarProduct_;
 };
 
 } // end namespace Dumux

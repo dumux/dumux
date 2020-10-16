@@ -145,7 +145,6 @@ public:
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
         wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 303.15);
-        sandGrainRoughness_ = getParam<Scalar>("Problem.SandGrainRoughness", 0.0);
 
         FluidSystem::init();
         Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
@@ -185,9 +184,6 @@ public:
         return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_
                || globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
-
-    Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
-    { return sandGrainRoughness_; }
 
    /*!
      * \brief Returns the temperature [K] within the domain for the isothermal model.
@@ -429,9 +425,9 @@ private:
         {
             static_assert(ModelTraits::turbulenceModel() == TurbulenceModel::komega, "Only valid for Komega");
             // For the komega model we set a fixed value for the dissipation
-            const auto wallDistance = ParentType::wallDistance_[elementIdx];
+            const auto wallDistance = ParentType::wallDistance(elementIdx);
             using std::pow;
-            values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
+            values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity(elementIdx)
                                                     / (ParentType::betaOmega() * wallDistance * wallDistance);
             return values;
         }
@@ -441,7 +437,6 @@ private:
     Scalar inletVelocity_;
     Scalar inletTemperature_;
     Scalar wallTemperature_;
-    Scalar sandGrainRoughness_;
     Scalar initializationTime_;
     Scalar viscosityTilde_;
     Scalar turbulentKineticEnergy_;

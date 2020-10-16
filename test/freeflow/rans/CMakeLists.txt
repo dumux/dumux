@@ -14,7 +14,8 @@ dumux_add_test(NAME test_ff_rans_lauferpipe_kepsilon_twolayers
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_kepsilon_twolayers-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_kepsilon_twolayers-00070.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_kepsilon params.input
-                        -Problem.Name test_ff_rans_lauferpipe_kepsilon_twolayers")
+                        -Problem.Name test_ff_rans_lauferpipe_kepsilon_twolayers
+                        -RANS.IsFlatWallBounded True")
 
 dumux_add_test(NAME test_ff_rans_lauferpipe_kepsilon_wallfunction
               TARGET test_ff_rans_lauferpipe_kepsilon
@@ -26,7 +27,8 @@ dumux_add_test(NAME test_ff_rans_lauferpipe_kepsilon_wallfunction
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_kepsilon_wallfunction-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_kepsilon_wallfunction-00034.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_kepsilon params_wallfunction.input
-                        -Problem.Name test_ff_rans_lauferpipe_kepsilon_wallfunction")
+                        -Problem.Name test_ff_rans_lauferpipe_kepsilon_wallfunction
+                        -RANS.IsFlatWallBounded True")
 
 dumux_add_test(NAME test_ff_rans_lauferpipe_lowrekepsilon
               SOURCES main.cc
@@ -38,11 +40,15 @@ dumux_add_test(NAME test_ff_rans_lauferpipe_lowrekepsilon
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_lowrekepsilon-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_lowrekepsilon-00053.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_lowrekepsilon params.input
-                        -Problem.Name test_ff_rans_lauferpipe_lowrekepsilon")
+                        -Problem.Name test_ff_rans_lauferpipe_lowrekepsilon
+                        -RANS.IsFlatWallBounded True")
 
-dumux_add_test(NAME test_ff_rans_lauferpipe_komega
-              SOURCES main.cc
-              COMPILE_DEFINITIONS TYPETAG=PipeLauferKOmega
+
+add_executable(test_ff_rans_lauferpipe_komega EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_ff_rans_lauferpipe_komega PUBLIC "TYPETAG=PipeLauferKOmega")
+
+dumux_add_test(NAME test_ff_rans_lauferpipe_komega_channel
+              TARGET test_ff_rans_lauferpipe_komega
               LABELS freeflow rans
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -50,7 +56,19 @@ dumux_add_test(NAME test_ff_rans_lauferpipe_komega
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_komega-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_komega-00047.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_komega params.input
-                        -Problem.Name test_ff_rans_lauferpipe_komega")
+                        -Problem.Name test_ff_rans_lauferpipe_komega
+                        -RANS.IsFlatWallBounded True")
+
+dumux_add_test(NAME test_ff_rans_lauferpipe_komega_nochannel
+              TARGET test_ff_rans_lauferpipe_komega
+              LABELS freeflow rans
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_komega_nochannel-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_komega_nochannel-00047.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_komega params.input
+                        -Problem.Name test_ff_rans_lauferpipe_komega_nochannel")
 
 dumux_add_test(NAME test_ff_rans_lauferpipe_oneeq
               SOURCES main.cc
@@ -62,7 +80,8 @@ dumux_add_test(NAME test_ff_rans_lauferpipe_oneeq
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_oneeq-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_oneeq-00044.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_oneeq params.input
-                        -Problem.Name test_ff_rans_lauferpipe_oneeq")
+                        -Problem.Name test_ff_rans_lauferpipe_oneeq
+                        -RANS.IsFlatWallBounded True")
 
 dumux_add_test(NAME test_ff_rans_lauferpipe_zeroeq
               SOURCES main.cc
@@ -74,7 +93,8 @@ dumux_add_test(NAME test_ff_rans_lauferpipe_zeroeq
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_zeroeq-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_zeroeq-00035.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_zeroeq params.input
-                        -Problem.Name test_ff_rans_lauferpipe_zeroeq")
+                        -Problem.Name test_ff_rans_lauferpipe_zeroeq
+                        -RANS.IsFlatWallBounded True")
 
 #///////////////////////////////
 #/// The nonisothermal tests ///

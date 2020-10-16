@@ -93,19 +93,25 @@ public:
 
         // calculate characteristic properties of the turbulent flow
         elementIdx_ = problem.gridGeometry().elementMapper().index(element);
-        wallElementIdx_ = problem.wallElementIdx_[elementIdx_];
-        wallDistance_ = problem.wallDistance_[elementIdx_];
-        velocity_ = problem.velocity_[elementIdx_];
-        velocityMaximum_ = problem.velocityMaximum_[wallElementIdx_];
-        velocityGradients_ = problem.velocityGradients_[elementIdx_];
-        const auto flowNormalAxis = problem.flowNormalAxis_[elementIdx_];
-        const auto wallNormalAxis = problem.wallNormalAxis_[elementIdx_];
-        uStar_ = sqrt(problem.kinematicViscosity_[wallElementIdx_]
-                      * abs(problem.velocityGradients_[wallElementIdx_][flowNormalAxis][wallNormalAxis]));
-        uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
-        yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementIdx_];
-        uPlus_ = velocity_[flowNormalAxis] / uStar_;
+        wallDistance_ = problem.wallDistance(elementIdx_);
+        ccVelocityVector_ = problem.ccVelocityVector(elementIdx_);
+        velocityGradientTensor_ = problem.velocityGradientTensor(elementIdx_);
+
         karmanConstant_ = problem.karmanConstant();
+        velocityMaximum_ = problem.velocityMaximum(elementIdx_);
+        velocityMinimum_ = problem.velocityMinimum(elementIdx_);
+        if (problem.isFlatWallBounded())
+        {
+            const auto flowDirectionAxis = problem.flowDirectionAxis(elementIdx_);
+            const auto wallNormalAxis = problem.wallNormalAxis(elementIdx_);
+            velocityMaximum_ = problem.velocityMaximum(problem.wallElementIndex(elementIdx_));
+            velocityMinimum_ = problem.velocityMinimum(problem.wallElementIndex(elementIdx_));
+            uStar_ = sqrt(problem.kinematicViscosity(problem.wallElementIndex(elementIdx_))
+                        * abs(problem.velocityGradient(problem.wallElementIndex(elementIdx_), flowDirectionAxis, wallNormalAxis)));
+            uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
+            yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity(elementIdx_);
+            uPlus_ = problem.ccVelocity(elementIdx_, flowDirectionAxis) / uStar_;
+        }
     }
 
     /*!
@@ -117,8 +123,8 @@ public:
     /*!
      * \brief Return the velocity vector \f$\mathrm{[m/s]}\f$ at the control volume center.
      */
-    DimVector velocity() const
-    { return velocity_; }
+    DimVector ccVelocityVector() const
+    { return ccVelocityVector_; }
 
     /*!
      * \brief Return the maximum velocity vector \f$\mathrm{[m/s]}\f$ of the wall segment.
@@ -127,10 +133,16 @@ public:
     { return velocityMaximum_; }
 
     /*!
+     * \brief Return the minimum velocity vector \f$\mathrm{[m/s]}\f$ of the wall segment.
+     */
+    DimVector velocityMinimum() const
+    { return velocityMinimum_; }
+
+    /*!
      * \brief Return the velocity gradients \f$\mathrm{[1/s]}\f$ at the control volume center.
      */
     DimMatrix velocityGradients() const
-    { return velocityGradients_; }
+    { return velocityGradientTensor_; }
 
     /*!
      * \brief Return the wall distance \f$\mathrm{[m]}\f$ of the control volume.
@@ -254,16 +266,16 @@ protected:
     Scalar setDynamicEddyViscosity_(Scalar value)
     { return dynamicEddyViscosity_  = value; }
 
-    DimVector velocity_;
+    DimVector ccVelocityVector_;
     DimVector velocityMaximum_;
-    DimMatrix velocityGradients_;
+    DimVector velocityMinimum_;
+    DimMatrix velocityGradientTensor_;
     std::size_t elementIdx_;
-    std::size_t wallElementIdx_;
     Scalar wallDistance_;
     Scalar karmanConstant_;
-    Scalar uStar_;
-    Scalar yPlus_;
-    Scalar uPlus_;
+    Scalar uStar_ = 0.0;
+    Scalar yPlus_ = 0.0;
+    Scalar uPlus_ = 0.0;
     Scalar dynamicEddyViscosity_ = 0.0;
     Scalar eddyDiffusivity_ = 0.0;
     Scalar eddyThermalConductivity_ = 0.0;
