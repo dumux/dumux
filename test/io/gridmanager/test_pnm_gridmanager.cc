@@ -23,74 +23,15 @@
  */
 #include "config.h"
 
-#include <dune/grid/io/file/vtk.hh>
-
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/grid/porenetwork/dgfwriter.hh>
 
+#include "pnmgridutilities.hh"
+
 namespace Dumux
 {
-
-template<class GridView, class GridData>
-std::vector<std::vector<double>> getVertexParams(const GridView& gridView, const GridData& gridData)
-{
-    const auto someVertex = *(vertices(gridView).begin());
-    const auto numVertexParams = gridData.parameters(someVertex).size();
-    std::vector<std::vector<double>> result(numVertexParams);
-
-    for(int i = 0; i < result.size(); ++i)
-        result[i].resize(gridView.size(1));
-
-    for(const auto& vertex : vertices(gridView))
-    {
-        const auto vIdx = gridView.indexSet().index(vertex);
-        for(int i = 0; i < result.size(); ++i)
-            result[i][vIdx] = gridData.parameters(vertex)[i];
-    }
-
-    return result;
-}
-
-template<class GridView, class GridData>
-std::vector<std::vector<double>> getElementParams(const GridView& gridView, const GridData& gridData)
-{
-    const auto someElement = *(elements(gridView).begin());
-    const auto numElementParams = gridData.parameters(someElement).size();
-    std::vector<std::vector<double>> result(numElementParams);
-
-    for(int i = 0; i < result.size(); ++i)
-        result[i].resize(gridView.size(0));
-
-    for(const auto& element : elements(gridView))
-    {
-        const auto eIdx = gridView.indexSet().index(element);
-        for(int i = 0; i < result.size(); ++i)
-            result[i][eIdx] = gridData.parameters(element)[i];
-    }
-
-    return result;
-}
-
-template<class GridView, class GridData>
-void writeToVtk(const std::string& fileName, const GridView& gridView, const GridData& gridData)
-{
-    using VTKWriter = Dune::VTKWriter<GridView>;
-    static const std::array<std::string, 3> poreParameterNames = {"poreRadius", "poreVolume", "poreLabel"};
-    static const std::array<std::string, 3> throatParameterNames = {"throatRadius", "throatlength", "throatLabel"};
-
-    const auto vertexData = getVertexParams(gridView, *gridData);
-    const auto elementData = getElementParams(gridView, *gridData);
-
-    VTKWriter vtkWriter(gridView);
-    for(int i = 0; i < poreParameterNames.size(); ++i)
-        vtkWriter.addVertexData(vertexData[i], poreParameterNames[i]);
-    for(int i = 0; i < throatParameterNames.size(); ++i)
-        vtkWriter.addCellData(elementData[i], throatParameterNames[i]);
-
-    vtkWriter.write(fileName);
-}
 
 template<int dimWorld>
 void testGeneric(const std::string& name)
