@@ -374,3 +374,5 @@ dune_add_test(NAME test_pnm_gridmanager_remove_throats_on_boundary_all
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_gridmanager
               CMD_ARGS test_remove-troats-on-boundary.input -Grid.RemoveThroatsOnBoundary "0 1 2 3")
+
+dune_add_test(SOURCES test_pnm_subgriddata.cc)
