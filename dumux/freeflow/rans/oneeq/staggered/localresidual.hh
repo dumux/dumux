@@ -31,15 +31,16 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
-class OneEqResidualImpl;
-
 /*!
  * \ingroup OneEqModel
  * \brief Element-wise calculation of the residual for one-equation turbulence models
  *        using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+class OneEqResidualImpl;
+
 template<class TypeTag, class BaseLocalResidual>
 class OneEqResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
 : public BaseLocalResidual

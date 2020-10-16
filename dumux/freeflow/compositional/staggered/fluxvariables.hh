@@ -33,14 +33,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
-class FreeflowNCFluxVariablesImpl;
-
 /*!
  * \ingroup FreeflowNCModel
  * \brief The flux variables class for the multi-component free-flow model using the staggered grid discretization.
  */
+
+// forward declaration
+template<class TypeTag, DiscretizationMethod discMethod>
+class FreeflowNCFluxVariablesImpl;
+
 template<class TypeTag>
 class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesFluxVariables<TypeTag>

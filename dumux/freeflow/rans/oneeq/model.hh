@@ -73,7 +73,7 @@
  * \f[ c_\text{w2} = 0.3 \f]
  * \f[ c_\text{w3} = 2 \f]
  * \f[ \kappa = 0.41 \f]
- * \f[ \sigma_{\tilde{\nu}}} = 2/3 \f]
+ * \f[ \sigma_{\tilde{\nu}} = 2/3 \f]
  */
 
 #ifndef DUMUX_ONEEQ_MODEL_HH

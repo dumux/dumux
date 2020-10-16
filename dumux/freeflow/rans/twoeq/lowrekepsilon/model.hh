@@ -61,7 +61,7 @@
  * \f].
  *
  * The auxiliary and dampening functions are defined as:
- * \f[ D_\varepsilon = 2 \nu \nicefrac{k}{y^2} \f]
+ * \f[ D_\varepsilon = 2 \nu \frac{k}{y^2} \f]
  * \f[ E_\text{k} = -2 \nu \frac{\tilde{\varepsilon}}{y^2} \exp \left( -0.5 y^+ \right) \f]
  * \f[ f_1 = 1 \f]
  * \f[ f_2 = 1 - 0.22 \exp \left( - \left( \frac{\mathit{Re}_\text{t}}{6} \right)^2 \right) \f]

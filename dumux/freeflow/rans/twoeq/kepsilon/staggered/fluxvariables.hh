@@ -34,14 +34,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
-class KEpsilonFluxVariablesImpl;
-
 /*!
  * \ingroup KEpsilonModel
  * \brief The flux variables class for the k-epsilon model using the staggered grid discretization.
  */
+
+// forward declaration
+template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+class KEpsilonFluxVariablesImpl;
+
 template<class TypeTag, class BaseFluxVariables>
 class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
 : public BaseFluxVariables

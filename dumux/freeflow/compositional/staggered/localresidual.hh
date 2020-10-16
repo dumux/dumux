@@ -30,14 +30,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
-class FreeflowNCResidualImpl;
-
 /*!
  * \ingroup FreeflowNCModel
  * \brief Element-wise calculation of the multi-component free-flow residual for models using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, DiscretizationMethod discMethod>
+class FreeflowNCResidualImpl;
+
 template<class TypeTag>
 class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesResidual<TypeTag>

@@ -265,6 +265,10 @@
      * \brief Models linear elastic deformation of a solid. Takes fluid pressure into account.
      * For a detailed model decription see geomechanics/poroelastic/model.hh
      */
+/*!
+ * \defgroup Geometry Geometry
+ * \brief Basic geometries in DuMu<sup>x</sup>
+ */
 
 /* ***************** Discretization ******************/
 /*!
@@ -524,11 +528,6 @@
  * \defgroup Common Common
  * \brief Common classes, functions, properties and concepts
  */
-    /*!
-     * \ingroup Common
-     * \defgroup Geometry Geometry
-     * \brief Basic geometries in DuMu<sup>x</sup>
-     */
     /*!
      * \ingroup Common
      * \defgroup Properties Properties

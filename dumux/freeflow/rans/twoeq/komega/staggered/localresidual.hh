@@ -31,14 +31,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
-class KOmegaResidualImpl;
-
 /*!
  * \ingroup KOmegaModel
  * \brief Element-wise calculation of the residual for k-omega models using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+class KOmegaResidualImpl;
+
 template<class TypeTag, class BaseLocalResidual>
 class KOmegaResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
 : public BaseLocalResidual

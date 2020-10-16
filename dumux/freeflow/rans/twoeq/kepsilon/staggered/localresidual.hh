@@ -31,14 +31,15 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
-class KEpsilonResidualImpl;
-
 /*!
  * \ingroup KEpsilonModel
  * \brief Element-wise calculation of the residual for k-epsilon models using the staggered discretization
  */
+
+// forward declaration
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+class KEpsilonResidualImpl;
+
 template<class TypeTag, class BaseLocalResidual>
 class KEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
 : public BaseLocalResidual

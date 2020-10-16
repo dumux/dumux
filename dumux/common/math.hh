@@ -537,7 +537,8 @@ struct LinearTable
     /*!
      * \brief interpolate linearly in a piecewise linear function (tabularized function)
      * \param ip the interpolation point
-     * \param table the table as a pair of sorted vectors (have to be same size)
+     * \param range positions of values
+     * \param values values to interpolate from
      * \note if the interpolation point is out of bounds this will return the bounds
      */
     template<class Scalar, class RandomAccessContainer0, class RandomAccessContainer1>
