@@ -101,20 +101,37 @@ public:
     template<class Problem, class TF, class EG, class SCVF>
     void decompose(const Problem& problem, const Interpolator& intOp, const TF& tensor, const EG& fvGeometry, const SCVF& scvf)
     {
-        static const bool enforceNeighborInclusion = getParamFromGroup<bool>(problem.paramGroup(), "WMPFA.EnforceNeighborInclusion", false);
-
         boundaryFace_ = scvf.boundary();
         const auto coNormal = mv(tensor(scvf.insideScvIdx()), scvf.unitOuterNormal());
-        auto&& [indices, coeff, size] = decomposition(coNormal, intOp.getDistanceVectors(fvGeometry), scvf.localIndex());
+        const auto& distVectors = intOp.getDistanceVectors(fvGeometry);
+        auto&& [indices, coeff, size] = decomposition(coNormal, distVectors, scvf.localIndex());
 
         if (size == 0)
             DUNE_THROW(Dune::InvalidStateException, "CoNormal decomposition not found");
         else
         {
-            //WMpfaHelper::eraseZeros(coeff, indices);
+
             std::vector<Scalar> vCoeff(coeff.begin(), coeff.begin()+size);
-            std::vector<int> VIndices(indices.begin(), indices.begin()+size);
-            updateEntries(problem, intOp, indices, coeff, fvGeometry, scvf);
+            std::vector<int> vIndices(indices.begin(), indices.begin()+size);
+            WMpfaHelper::eraseZeros(vCoeff, vIndices);
+
+            // std::cout << "neoghbor vector: " << distVectors[scvf.localIndex()] << "\n";
+            //
+            // std::cout << "coeffs: ";
+            // for (auto c : vCoeff)
+            //     std::cout << c << " ";
+            // std::cout << "\n";
+            // std::cout << "vectors: ";
+            // for (auto i : vIndices)
+            //     std::cout << distVectors[i] << " ";
+            // std::cout << "\n";
+            //
+            // auto v = coNormal; v = 0;
+            // for (int i = 0; i < vCoeff.size(); ++i)
+            //     v.axpy(vCoeff[i], distVectors[vIndices[i]]);
+            // std::cout << "cornormal: " << coNormal << ", decomp: " << v << ", norm: " << (coNormal-v).two_norm() << std::endl;
+
+            updateEntries(problem, intOp, vIndices, vCoeff, fvGeometry, scvf);
         }
     }
 
