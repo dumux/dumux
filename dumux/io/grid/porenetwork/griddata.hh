@@ -239,17 +239,22 @@ public:
     {
         // make sure the string is present in the map, throw a Dumux exception otherwise (and not a std one)
         // the [] operator can't be used here due to const correctness
-        if (parameterIndex_.count(paramName))
+        if (static_cast<bool>(parameterIndex_.count(paramName)))
             return parameterIndex_.at(paramName);
         else
         {
+            std::stringstream list;
+            list << "List of parameter indices:\n";
+            for (const auto& entry : parameterIndex_)
+                list << entry.first << " " << entry.second << "\n";
+
             std::string msg;
             if (paramName.find("Throat") != std::string::npos)
                 msg = "Make sure to include it in the vector of parameter names ElementParameters = " + paramName + " ... ...";
             else if (paramName.find("Pore") != std::string::npos)
                 msg = "Make sure to include it in the vector of parameter names VertexParameters = " + paramName + " ... ...";
 
-            DUNE_THROW(Dumux::ParameterException, paramName << " not set in the input file. \n" << msg);
+            DUNE_THROW(Dumux::ParameterException, paramName << " not set in the grid or input file. \n" << msg << "\n" << list.str());
         }
     }
 
