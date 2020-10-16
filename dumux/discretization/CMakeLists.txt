@@ -19,6 +19,7 @@ fluxstencil.hh
 functionspacebasis.hh
 fvgridvariables.hh
 fvproperties.hh
+gridvariables.hh
 localview.hh
 method.hh
 rotationpolicy.hh
