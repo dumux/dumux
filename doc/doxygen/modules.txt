@@ -267,7 +267,7 @@
      */
 /*!
  * \defgroup Geometry Geometry
- * \brief Basic geometries in DuMu<sup>x</sup>
+ * \brief Algorithms for geometry computations (intersections, distances, ...).
  */
 
 /* ***************** Discretization ******************/
