@@ -34,6 +34,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/indextraits.hh>
 
+#include <dumux/geometry/distance.hh>
+
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 #include <dumux/multidomain/embedded/extendedsourcestencil.hh>
@@ -314,6 +316,10 @@ public:
 
                     // publish point source data in the global vector
                     this->pointSourceData().emplace_back(std::move(psData));
+
+                    // mean distance to outside element for source correction schemes
+                    const auto outsideGeometry = bulkGridGeometry.element(bulkElementIdx).geometry();
+                    this->averageDistanceToBulkCell().push_back(averageDistancePointGeometry(globalPos, outsideGeometry));
 
                     // export the bulk coupling stencil
                     if (isBox<lowDimIdx>())
