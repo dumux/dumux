@@ -247,8 +247,8 @@ public:
                         circleStencil.push_back(bulkElementIdx);
                         circleIpWeight.push_back(localCircleAvgWeight);
 
-                        // precompute interpolation data for box scheme for each cut element
-                        if (isBox<bulkIdx>())
+                        // precompute interpolation data for box scheme for each cut bulk element
+                        if constexpr (isBox<bulkIdx>())
                         {
                             const auto bulkElement = bulkGridGeometry.element(bulkElementIdx);
                             circleCornerIndices.push_back(&(this->vertexIndices(bulkIdx, bulkElementIdx)));
@@ -263,7 +263,7 @@ public:
                 }
 
                 // export low dim circle stencil
-                if (isBox<bulkIdx>())
+                if constexpr (isBox<bulkIdx>())
                 {
                     // we insert all vertices and make it unique later
                     for (const auto& vertices : circleCornerIndices)
@@ -328,7 +328,7 @@ public:
                     this->averageDistanceToBulkCell().push_back(averageDistancePointGeometry(globalPos, outsideGeometry));
 
                     // export the bulk coupling stencil
-                    if (isBox<lowDimIdx>())
+                    if constexpr (isBox<lowDimIdx>())
                     {
                         this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
                                                                                this->vertexIndices(lowDimIdx, lowDimElementIdx).begin(),
@@ -341,7 +341,7 @@ public:
                     }
 
                     // export bulk circle stencil
-                    if (isBox<bulkIdx>())
+                    if constexpr (isBox<bulkIdx>())
                     {
                         // we insert all vertices and make it unique later
                         for (const auto& vertices : circleCornerIndices)
@@ -367,7 +367,7 @@ public:
             stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
 
             // remove the vertices element (box)
-            if (isBox<bulkIdx>())
+            if constexpr (isBox<bulkIdx>())
             {
                 const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
                 stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
