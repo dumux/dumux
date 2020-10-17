@@ -177,15 +177,21 @@ public:
         this->precomputeVertexIndices(bulkIdx);
         this->precomputeVertexIndices(lowDimIdx);
 
-        // iterate over all lowdim elements
-        const auto& lowDimProblem = this->problem(lowDimIdx);
-        for (const auto& lowDimElement : elements(this->gridView(lowDimIdx)))
-        {
-            // get the Gaussian quadrature rule for the low dim element
-            const auto lowDimGeometry = lowDimElement.geometry();
-            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(lowDimGeometry.type(), order);
+        // intersect the bounding box trees
+        this->glueGrids();
 
+        // iterate over all intersection and add point sources
+        const auto& lowDimProblem = this->problem(lowDimIdx);
+        for (const auto& is : intersections(this->glue()))
+        {
+            // all inside elements are identical...
+            const auto& lowDimElement = is.targetEntity(0);
             const auto lowDimElementIdx = lowDimGridGeometry.elementMapper().index(lowDimElement);
+
+            // get the intersection geometry
+            const auto intersectionGeometry = is.geometry();
+            // get the Gaussian quadrature rule for the local intersection
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(intersectionGeometry.type(), order);
 
             // apply the Gaussian quadrature rule and define point sources at each quadrature point
             // note that the approximation is not optimal if
@@ -197,7 +203,7 @@ public:
             for (auto&& qp : quad)
             {
                 // global position of the quadrature point
-                const auto globalPos = lowDimGeometry.global(qp.position());
+                const auto globalPos = intersectionGeometry.global(qp.position());
 
                 const auto bulkElementIndices = intersectingEntities(globalPos, bulkTree);
 
@@ -212,8 +218,10 @@ public:
 
                 static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = lowDimProblem.spatialParams().radius(lowDimElementIdx);
-                const auto normal = lowDimGeometry.corner(1)-lowDimGeometry.corner(0);
+                const auto normal = intersectionGeometry.corner(1)-intersectionGeometry.corner(0);
                 const auto circleAvgWeight = 2*M_PI*radius/numIp;
+                const auto integrationElement = intersectionGeometry.integrationElement(qp.position());
+                const auto qpweight = qp.weight();
 
                 const auto circlePoints = EmbeddedCoupling::circlePoints(globalPos, normal, radius, numIp);
                 std::vector<Scalar> circleIpWeight; circleIpWeight.reserve(circlePoints.size());
@@ -275,12 +283,10 @@ public:
                 for (auto bulkElementIdx : bulkElementIndices)
                 {
                     const auto id = this->idCounter_++;
-                    const auto ie = lowDimGeometry.integrationElement(qp.position());
-                    const auto qpweight = qp.weight();
 
-                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({bulkElementIdx}));
+                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, integrationElement, bulkElementIdx);
                     this->pointSources(bulkIdx).back().setEmbeddings(bulkElementIndices.size());
-                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({lowDimElementIdx}));
+                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, lowDimElementIdx);
                     this->pointSources(lowDimIdx).back().setEmbeddings(bulkElementIndices.size());
 
                     // pre compute additional data used for the evaluation of
@@ -290,7 +296,7 @@ public:
                     if constexpr (isBox<lowDimIdx>())
                     {
                         ShapeValues shapeValues;
-                        this->getShapeValues(lowDimIdx, lowDimGridGeometry, lowDimGeometry, globalPos, shapeValues);
+                        this->getShapeValues(lowDimIdx, lowDimGridGeometry, intersectionGeometry, globalPos, shapeValues);
                         psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                     }
                     else
