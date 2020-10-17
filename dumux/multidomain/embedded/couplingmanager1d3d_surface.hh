@@ -36,6 +36,7 @@
 
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
+#include <dumux/multidomain/embedded/circleaveragepointsourcetraits.hh>
 
 namespace Dumux {
 
@@ -69,10 +70,11 @@ class Embedded1d3dCouplingManager;
  */
 template<class MDTraits>
 class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Surface>
-: public EmbeddedCouplingManagerBase<MDTraits, Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Surface>>
+: public EmbeddedCouplingManagerBase<MDTraits, Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Surface>,
+                                     CircleAveragePointSourceTraits<MDTraits>>
 {
     using ThisType = Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Surface>;
-    using ParentType = EmbeddedCouplingManagerBase<MDTraits, ThisType>;
+    using ParentType = EmbeddedCouplingManagerBase<MDTraits, ThisType, CircleAveragePointSourceTraits<MDTraits>>;
     using Scalar = typename MDTraits::Scalar;
     using SolutionVector = typename MDTraits::SolutionVector;
     using PointSourceData = typename ParentType::PointSourceTraits::PointSourceData;
@@ -112,6 +114,35 @@ public:
         computeLowDimVolumeFractions();
     }
 
+    /*!
+     * \brief extend the jacobian pattern of the diagonal block of domain i
+     *        by those entries that are not already in the uncoupled pattern
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     */
+    template<std::size_t id, class JacobianPattern>
+    void extendJacobianPattern(Dune::index_constant<id> domainI, JacobianPattern& pattern) const
+    {
+        extendedSourceStencil_.extendJacobianPattern(*this, domainI, pattern);
+    }
+
+    /*!
+     * \brief evaluate additional derivatives of the element residual of a domain with respect
+     *        to dofs in the same domain that are not in the regular stencil (per default this is not the case)
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     * \note This is the same for box and cc
+     */
+    template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDomainDerivatives(Dune::index_constant<i> domainI,
+                                         const LocalAssemblerI& localAssemblerI,
+                                         const typename LocalAssemblerI::LocalResidual::ElementResidualVector&,
+                                         JacobianMatrixDiagBlock& A,
+                                         GridVariables& gridVariables)
+    {
+        extendedSourceStencil_.evalAdditionalDomainDerivatives(*this, domainI, localAssemblerI, this->curSol(), A, gridVariables);
+    }
+
     /* \brief Compute integration point point sources and associated data
      *
      * This method uses grid glue to intersect the given grids. Over each intersection
@@ -123,6 +154,9 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
+        // if we use the circle average as the 3D values or a point evaluation
+        static const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
+
         // Initialize the bulk bounding box tree
         const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
         const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
@@ -136,20 +170,27 @@ public:
         // clear all internal members like pointsource vectors and stencils
         // initializes the point source id counter
         this->clear();
+        extendedSourceStencil_.stencil().clear();
 
         // precompute the vertex indices for efficiency
         this->precomputeVertexIndices(bulkIdx);
         this->precomputeVertexIndices(lowDimIdx);
 
-        // iterate over all lowdim elements
-        const auto& lowDimProblem = this->problem(lowDimIdx);
-        for (const auto& lowDimElement : elements(this->gridView(lowDimIdx)))
-        {
-            // get the Gaussian quadrature rule for the low dim element
-            const auto lowDimGeometry = lowDimElement.geometry();
-            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(lowDimGeometry.type(), order);
+        // intersect the bounding box trees
+        this->glueGrids();
 
+        // iterate over all intersection and add point sources
+        const auto& lowDimProblem = this->problem(lowDimIdx);
+        for (const auto& is : intersections(this->glue()))
+        {
+            // all inside elements are identical...
+            const auto& lowDimElement = is.targetEntity(0);
             const auto lowDimElementIdx = lowDimGridGeometry.elementMapper().index(lowDimElement);
+
+            // get the intersection geometry
+            const auto intersectionGeometry = is.geometry();
+            // get the Gaussian quadrature rule for the local intersection
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(intersectionGeometry.type(), order);
 
             // apply the Gaussian quadrature rule and define point sources at each quadrature point
             // note that the approximation is not optimal if
@@ -161,7 +202,7 @@ public:
             for (auto&& qp : quad)
             {
                 // global position of the quadrature point
-                const auto globalPos = lowDimGeometry.global(qp.position());
+                const auto globalPos = intersectionGeometry.global(qp.position());
 
                 const auto bulkElementIndices = intersectingEntities(globalPos, bulkTree);
 
@@ -176,27 +217,83 @@ public:
 
                 static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = lowDimProblem.spatialParams().radius(lowDimElementIdx);
-                const auto normal = lowDimGeometry.corner(1)-lowDimGeometry.corner(0);
-                const auto integrationElement = lowDimGeometry.integrationElement(qp.position())*2*M_PI*radius/Scalar(numIp);
-                const auto weight = qp.weight()/(2*M_PI*radius);
+                const auto normal = intersectionGeometry.corner(1)-intersectionGeometry.corner(0);
+                const auto integrationElement = intersectionGeometry.integrationElement(qp.position())*2*M_PI*radius/Scalar(numIp);
+                const auto qpweight = qp.weight()/(2*M_PI*radius);
+                const auto circleAvgWeight = 2*M_PI*radius/numIp;
 
                 const auto circlePoints = EmbeddedCoupling::circlePoints(globalPos, normal, radius, numIp);
+                std::vector<std::vector<std::size_t>> circleBulkElementIndices(circlePoints.size());
+                std::vector<Scalar> circleIpWeight; circleIpWeight.reserve(circlePoints.size());
+                std::vector<GridIndex<bulkIdx>> circleStencil; circleStencil.reserve(circlePoints.size());
+                // for box
+                std::vector<const std::vector<GridIndex<bulkIdx>>*> circleCornerIndices;
+                using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                std::vector<ShapeValues> circleShapeValues;
+
+                // go over all points of the average operator
+                for (int k = 0; k < circlePoints.size(); ++k)
+                {
+                    circleBulkElementIndices[k] = intersectingEntities(circlePoints[k], bulkTree);
+                    if (circleBulkElementIndices[k].empty())
+                        continue;
+
+                    const auto localCircleAvgWeight = circleAvgWeight / circleBulkElementIndices[k].size();
+                    for (const auto bulkElementIdx : circleBulkElementIndices[k])
+                    {
+                        circleStencil.push_back(bulkElementIdx);
+                        circleIpWeight.push_back(localCircleAvgWeight);
+
+                        // precompute interpolation data for box scheme for each cut bulk element
+                        if constexpr (isBox<bulkIdx>())
+                        {
+                            const auto bulkElement = bulkGridGeometry.element(bulkElementIdx);
+                            circleCornerIndices.push_back(&(this->vertexIndices(bulkIdx, bulkElementIdx)));
+
+                            // evaluate shape functions at the integration point
+                            const auto bulkGeometry = bulkElement.geometry();
+                            ShapeValues shapeValues;
+                            this->getShapeValues(bulkIdx, bulkGridGeometry, bulkGeometry, circlePoints[k], shapeValues);
+                            circleShapeValues.emplace_back(std::move(shapeValues));
+                        }
+                    }
+                }
+
+                // export low dim circle stencil
+                if constexpr (isBox<bulkIdx>())
+                {
+                    // we insert all vertices and make it unique later
+                    for (const auto& vertices : circleCornerIndices)
+                    {
+                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
+                                                                                   vertices->begin(), vertices->end());
+
+                    }
+                }
+                else
+                {
+                    this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
+                                                                               circleStencil.begin(), circleStencil.end());
+                }
+
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
                     const auto& circlePos = circlePoints[k];
-                    const auto circleBulkElementIndices = intersectingEntities(circlePos, bulkTree);
-                    if (circleBulkElementIndices.empty())
+
+                    // find bulk elements intersection with the circle elements
+                    if (circleBulkElementIndices[k].empty())
                         continue;
 
                     // loop over the bulk elements at the integration points (usually one except when it is on a face or edge or vertex)
                     // and add a point source at every point on the circle
-                    for (const auto bulkElementIdx : circleBulkElementIndices)
+                    for (const auto bulkElementIdx : circleBulkElementIndices[k])
                     {
                         const auto id = this->idCounter_++;
-                        this->pointSources(bulkIdx).emplace_back(circlePos, id, weight, integrationElement, std::vector<std::size_t>({bulkElementIdx}));
-                        this->pointSources(bulkIdx).back().setEmbeddings(circleBulkElementIndices.size());
-                        this->pointSources(lowDimIdx).emplace_back(globalPos, id, weight, integrationElement, std::vector<std::size_t>({lowDimElementIdx}));
-                        this->pointSources(lowDimIdx).back().setEmbeddings(circleBulkElementIndices.size());
+
+                        this->pointSources(bulkIdx).emplace_back(circlePos, id, qpweight, integrationElement, bulkElementIdx);
+                        this->pointSources(bulkIdx).back().setEmbeddings(circleBulkElementIndices[k].size());
+                        this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, lowDimElementIdx);
+                        this->pointSources(lowDimIdx).back().setEmbeddings(circleBulkElementIndices[k].size());
 
                         // pre compute additional data used for the evaluation of
                         // the actual solution dependent source term
@@ -206,7 +303,7 @@ public:
                         {
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             ShapeValues shapeValues;
-                            this->getShapeValues(lowDimIdx, lowDimGridGeometry, lowDimGeometry, globalPos, shapeValues);
+                            this->getShapeValues(lowDimIdx, lowDimGridGeometry, intersectionGeometry, globalPos, shapeValues);
                             psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                         }
                         else
@@ -217,6 +314,9 @@ public:
                         // add data needed to compute integral over the circle
                         if constexpr (isBox<bulkIdx>())
                         {
+                            if (useCircleAverage)
+                                psData.addCircleInterpolation(circleCornerIndices, circleShapeValues, circleIpWeight, circleStencil);
+
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             const auto bulkGeometry = bulkGridGeometry.element(bulkElementIdx).geometry();
                             ShapeValues shapeValues;
@@ -225,28 +325,18 @@ public:
                         }
                         else
                         {
+                            if (useCircleAverage)
+                                psData.addCircleInterpolation(circleIpWeight, circleStencil);
+
                             psData.addBulkInterpolation(bulkElementIdx);
                         }
 
                         // publish point source data in the global vector
                         this->pointSourceData().emplace_back(std::move(psData));
 
-                        // export the lowdim coupling stencil
-                        // we insert all vertices / elements and make it unique later
-                        if (isBox<bulkIdx>())
-                        {
-                            const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
-                            this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                                       vertices.begin(), vertices.end());
-                        }
-                        else
-                        {
-                            this->couplingStencils(lowDimIdx)[lowDimElementIdx].push_back(bulkElementIdx);
-                        }
-
                         // export the bulk coupling stencil
                         // we insert all vertices / elements and make it unique later
-                        if (isBox<lowDimIdx>())
+                        if constexpr (isBox<lowDimIdx>())
                         {
                             const auto& vertices = this->vertexIndices(lowDimIdx, lowDimElementIdx);
                             this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
@@ -258,8 +348,50 @@ public:
                             this->couplingStencils(bulkIdx)[bulkElementIdx].push_back(lowDimElementIdx);
                         }
 
+                        // export bulk circle stencil (only needed for circle average)
+                        if (useCircleAverage)
+                        {
+                            if constexpr (isBox<bulkIdx>())
+                            {
+                                // we insert all vertices and make it unique later
+                                for (const auto& vertices : circleCornerIndices)
+                                {
+                                    extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
+                                                                               vertices->begin(), vertices->end());
+
+                                }
+                            }
+                            else
+                            {
+                                extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
+                                                                           circleStencil.begin(), circleStencil.end());
+                            }
+                        }
                     }
                 }
+            }
+        }
+
+        // make the circle stencil unique (for source derivatives)
+        for (auto&& stencil : extendedSourceStencil_.stencil())
+        {
+            std::sort(stencil.second.begin(), stencil.second.end());
+            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+
+            // remove the vertices element (box)
+            if constexpr (isBox<bulkIdx>())
+            {
+                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
+                                     stencil.second.end());
+            }
+            // remove the own element (cell-centered)
+            else
+            {
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return i == stencil.first; }),
+                                     stencil.second.end());
             }
         }
 
@@ -336,6 +468,8 @@ public:
     // \}
 
 private:
+    //! the extended source stencil object
+    EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
 
     //! vector for the volume fraction of the lowdim domain in the bulk domain cells
     std::vector<Scalar> lowDimVolumeInBulkElement_;
