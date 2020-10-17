@@ -279,14 +279,17 @@ public:
                                                                                circleStencil.begin(), circleStencil.end());
                 }
 
+                // surface fraction that is inside the domain (only different than 1.0 on the boundary)
+                const auto surfaceFraction = Scalar(insideCirclePoints)/Scalar(circlePoints.size());
+
                 // loop over the bulk elements at the integration points (usually one except when it is on a face or edge or vertex)
                 for (auto bulkElementIdx : bulkElementIndices)
                 {
                     const auto id = this->idCounter_++;
 
-                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, integrationElement, bulkElementIdx);
+                    this->pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, bulkElementIdx);
                     this->pointSources(bulkIdx).back().setEmbeddings(bulkElementIndices.size());
-                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement, lowDimElementIdx);
+                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, integrationElement*surfaceFraction, lowDimElementIdx);
                     this->pointSources(lowDimIdx).back().setEmbeddings(bulkElementIndices.size());
 
                     // pre compute additional data used for the evaluation of
