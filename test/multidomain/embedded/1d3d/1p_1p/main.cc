@@ -60,14 +60,14 @@
 #define LOWDIMTYPETAG=BloodFlowCC
 #endif
 #ifndef COUPLINGMODE
-#define COUPLINGMODE=EmbeddedCouplingMode::average
+#define COUPLINGMODE=Embedded1d3dCouplingMode::Average
 #endif
 
 namespace Dumux {
 namespace Properties {
 
 template<class Traits>
-using TheCouplingManager = EmbeddedCouplingManager1d3d<Traits, COUPLINGMODE>;
+using TheCouplingManager = Embedded1d3dCouplingManager<Traits, COUPLINGMODE>;
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::BULKTYPETAG> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, Properties::TTag::LOWDIMTYPETAG>>; };
