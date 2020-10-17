@@ -1,7 +1,7 @@
 [MixedDimension]
 NumCircleSegments = 100
 IntegrationOrder = 2
-KernelWidth = 0.3
+KernelWidthFactor = 1.0
 
 [Vessel.Grid]
 LowerLeft = 0 0 0

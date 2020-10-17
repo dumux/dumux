@@ -18,9 +18,10 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 - __Quadmath__: Dumux::Quad has been removed without deprecation. Use Dune::Float128 instead.
 - Within the RANS group, two additional runtime parameters have been included 'IsFlatWallBounded' and 'WriteFlatWallBoundedFields'.
 For both the K-Epsilon and Zero-eq RANS models the 'IsFlatWallBounded' runtime parameter should be set as True,
-as wall topology is not supported for these models with our geometric contraints. If not set as true, the geometry 
-will be checked before the model is run. If either the runtime parameter or the geometry check indicate non-flat walls, 
+as wall topology is not supported for these models with our geometric contraints. If not set as true, the geometry
+will be checked before the model is run. If either the runtime parameter or the geometry check indicate non-flat walls,
 the model will terminate. To add FlatWallBounded specific output to the vtk output, WriteFlatWallBoundedFields can be set as True.
+- __1d3d coupling__: The kernel coupling manager has been replaced with the one from Koch et al (2020) JCP https://doi.org/10.1016/j.jcp.2020.109370
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.3:
 

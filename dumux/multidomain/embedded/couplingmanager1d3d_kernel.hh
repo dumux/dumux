@@ -36,6 +36,7 @@
 #include <dumux/geometry/distance.hh>
 
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
+#include <dumux/multidomain/embedded/cylinderintegration.hh>
 #include <dumux/multidomain/embedded/extendedsourcestencil.hh>
 
 namespace Dumux {
@@ -66,7 +67,6 @@ class Embedded1d3dCouplingManager;
  * \brief Manages the coupling between bulk elements and lower dimensional elements
  *        Point sources on each integration point are computed by an AABB tree.
  * \note Specialization for coupling method using a distributed kernel source with 3d quantities evaluated on the line
- * \note the kernel per point source is isotropic and it's integral over the domain is one
  */
 template<class MDTraits>
 class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
@@ -95,11 +95,23 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
     static constexpr bool isBox()
     { return GridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
+    static_assert(!isBox<bulkIdx>() && !isBox<lowDimIdx>(), "The kernel coupling method is only implemented for the tpfa method");
+    static_assert(Dune::Capabilities::isCartesian<typename GridView<bulkIdx>::Grid>::v, "The kernel coupling method is only implemented for structured grids");
+
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
         lowDimDim = GridView<lowDimIdx>::dimension,
         dimWorld = GridView<bulkIdx>::dimensionworld
     };
+
+    // detect if a class (the spatial params) has a kernelWidthFactor() function
+    template <typename T, typename ...Ts>
+    using VariableKernelWidthDetector = decltype(std::declval<T>().kernelWidthFactor(std::declval<Ts>()...));
+
+    template<class T, typename ...Args>
+    static constexpr bool hasKernelWidthFactor()
+    { return Dune::Std::is_detected<VariableKernelWidthDetector, T, Args...>::value; }
+
 public:
     static constexpr Embedded1d3dCouplingMode::Kernel couplingMode{};
 
@@ -111,6 +123,10 @@ public:
     {
         ParentType::init(bulkProblem, lowDimProblem, curSol);
         computeLowDimVolumeFractions();
+
+        const auto refinement = getParamFromGroup<int>(bulkProblem->paramGroup(), "Grid.Refinement", 0);
+        if (refinement > 0)
+            DUNE_THROW(Dune::NotImplemented, "The current intersection detection may likely fail for refined grids.");
     }
 
     /*!
@@ -156,153 +172,128 @@ public:
         // initialize the maps
         // do some logging and profiling
         Dune::Timer watch;
-        std::cout << "Initializing the point sources..." << std::endl;
+        std::cout << "[coupling] Initializing the integration point source data structures..." << std::endl;
 
-        // clear all internal members like pointsource vectors and stencils
-        // initializes the point source id counter
-        this->clear();
-        bulkSourceIds_.clear();
-        bulkSourceWeights_.clear();
-        extendedSourceStencil_.clear();
-
-        // precompute the vertex indices for efficiency for the box method
-        this->precomputeVertexIndices(bulkIdx);
-        this->precomputeVertexIndices(lowDimIdx);
+        // prepare the internal data structures
+        prepareDataStructures_();
+        std::cout << "[coupling] Resized data structures." << std::endl;
 
         const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
         const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
 
-        bulkSourceIds_.resize(this->gridView(bulkIdx).size(0));
-        bulkSourceWeights_.resize(this->gridView(bulkIdx).size(0));
+        // generate a bunch of random vectors and values for
+        // Monte-carlo integration on the cylinder defined by line and radius
+        static const double characteristicRelativeLength = getParam<double>("MixedDimension.KernelIntegrationCRL", 0.1);
+        EmbeddedCoupling::CylinderIntegration<Scalar> cylIntegration(characteristicRelativeLength, 1);
 
-        // intersect the bounding box trees
-        this->glueGrids();
+        static const bool writeIntegrationPointsToFile = getParam<bool>("MixedDimension.WriteIntegrationPointsToFile", false);
+        if (writeIntegrationPointsToFile)
+        {
+            std::ofstream ipPointFile("kernel_points.log", std::ios::trunc);
+            ipPointFile << "x,y,z\n";
+            std::cout << "[coupling] Initialized kernel_points.log." << std::endl;
+        }
 
-        this->pointSourceData().reserve(this->glue().size());
-        this->averageDistanceToBulkCell().reserve(this->glue().size());
-        const Scalar kernelWidth = getParam<Scalar>("MixedDimension.KernelWidth");
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
             const auto& inside = is.targetEntity(0);
             // get the intersection geometry for integrating over it
             const auto intersectionGeometry = is.geometry();
-
-            // get the Gaussian quadrature rule for the local intersection
-            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(intersectionGeometry.type(), order);
             const auto lowDimElementIdx = lowDimGridGeometry.elementMapper().index(inside);
 
-            // iterate over all quadrature points and place a source
-            // for 1d: make a new point source
-            // for 3d: make a new kernel volume source
-            for (auto&& qp : quad)
+            // for each intersection integrate kernel and add:
+            //  * 1d: a new point source
+            //  * 3d: a new kernel volume source
+            const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
+            const auto kernelWidthFactor = kernelWidthFactor_(this->problem(lowDimIdx).spatialParams(), lowDimElementIdx);
+            const auto kernelWidth = kernelWidthFactor*radius;
+            const auto a = intersectionGeometry.corner(0);
+            const auto b = intersectionGeometry.corner(1);
+            cylIntegration.setGeometry(a, b, kernelWidth);
+
+            // we can have multiple 3d elements per 1d intersection
+            for (int outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
             {
-                // compute the coupling stencils
-                for (int outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
+                // compute source id
+                // for each id we have
+                // (1) a point source for the 1d domain
+                // (2) a bulk source weight for the each element in the 3d domain (the fraction of the total source/sink for the 1d element with the point source)
+                //     TODO: i.e. one integration of the kernel should be enough (for each of the weights it's weight/embeddings)
+                // (3) the flux scaling factor for each outside element, i.e. each id
+                const auto id = this->idCounter_++;
+
+                // compute the weights for the bulk volume sources
+                const auto& outside = is.domainEntity(outsideIdx);
+                const auto bulkElementIdx = bulkGridGeometry.elementMapper().index(outside);
+                const auto surfaceFactor = computeBulkSource(intersectionGeometry, radius, kernelWidth, id, lowDimElementIdx, bulkElementIdx, cylIntegration, is.numDomainNeighbors());
+
+                // place a point source at the intersection center
+                const auto center = intersectionGeometry.center();
+                this->pointSources(lowDimIdx).emplace_back(center, id, surfaceFactor, intersectionGeometry.volume(), lowDimElementIdx);
+                this->pointSources(lowDimIdx).back().setEmbeddings(is.numDomainNeighbors());
+
+                // pre compute additional data used for the evaluation of
+                // the actual solution dependent source term
+                PointSourceData psData;
+
+                // lowdim interpolation (evaluate at center)
+                if constexpr (isBox<lowDimIdx>())
                 {
-                    const auto& outside = is.domainEntity(outsideIdx);
-                    const auto bulkElementIdx = bulkGridGeometry.elementMapper().index(outside);
+                    using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                    const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
+                    ShapeValues shapeValues;
+                    this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).gridGeometry(), lowDimGeometry, center, shapeValues);
+                    psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                }
+                else
+                {
+                    psData.addLowDimInterpolation(lowDimElementIdx);
+                }
 
-                    // each quadrature point will be a point source for the sub problem
-                    const auto globalPos = intersectionGeometry.global(qp.position());
-                    const auto id = this->idCounter_++;
-                    const auto qpweight = qp.weight();
-                    const auto ie = intersectionGeometry.integrationElement(qp.position());
-                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({lowDimElementIdx}));
-                    this->pointSources(lowDimIdx).back().setEmbeddings(is.numDomainNeighbors());
-                    computeBulkSource(globalPos, kernelWidth, id, lowDimElementIdx, bulkElementIdx, qpweight*ie/is.numDomainNeighbors());
+                // bulk interpolation (evaluate at center)
+                if constexpr (isBox<bulkIdx>())
+                {
+                    using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                    const auto bulkGeometry = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx).geometry();
+                    ShapeValues shapeValues;
+                    this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, center, shapeValues);
+                    psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+                }
+                else
+                {
+                    psData.addBulkInterpolation(bulkElementIdx);
+                }
 
-                    // pre compute additional data used for the evaluation of
-                    // the actual solution dependent source term
-                    PointSourceData psData;
+                // publish point source data in the global vector
+                this->pointSourceData().emplace_back(std::move(psData));
 
-                    if constexpr (isBox<lowDimIdx>())
-                    {
-                        using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                        const auto lowDimGeometry = lowDimGridGeometry.element(lowDimElementIdx).geometry();
-                        ShapeValues shapeValues;
-                        this->getShapeValues(lowDimIdx, lowDimGridGeometry, lowDimGeometry, globalPos, shapeValues);
-                        psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
-                    }
-                    else
-                    {
-                        psData.addLowDimInterpolation(lowDimElementIdx);
-                    }
+                const auto avgMinDist = averageDistanceSegmentGeometry(a, b, outside.geometry());
+                this->averageDistanceToBulkCell().push_back(avgMinDist);
+                fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(avgMinDist, radius, kernelWidth));
 
-                    // add data needed to compute integral over the circle
-                    if constexpr (isBox<bulkIdx>())
-                    {
-                        using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                        const auto bulkGeometry = bulkGridGeometry.element(bulkElementIdx).geometry();
-                        ShapeValues shapeValues;
-                        this->getShapeValues(bulkIdx, bulkGridGeometry, bulkGeometry, globalPos, shapeValues);
-                        psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
-                    }
-                    else
-                    {
-                        psData.addBulkInterpolation(bulkElementIdx);
-                    }
-
-                    // publish point source data in the global vector
-                    this->pointSourceData().emplace_back(std::move(psData));
-
-                    // compute average distance to bulk cell
-                    this->averageDistanceToBulkCell().push_back(averageDistancePointGeometry(globalPos, outside.geometry()));
-
-                    // export the lowdim coupling stencil
-                    // we insert all vertices / elements and make it unique later
-                    if (isBox<bulkIdx>())
-                    {
-                        const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
-                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                                   vertices.begin(), vertices.end());
-                    }
-                    else
-                    {
-                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].push_back(bulkElementIdx);
-                    }
+                // export the lowdim coupling stencil
+                // we insert all vertices / elements and make it unique later
+                if constexpr (isBox<bulkIdx>())
+                {
+                    const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
+                    this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
+                                                                               vertices.begin(), vertices.end());
+                }
+                else
+                {
+                    this->couplingStencils(lowDimIdx)[lowDimElementIdx].push_back(bulkElementIdx);
                 }
             }
         }
 
-        // make extra stencils unique
-        for (auto&& stencil : extendedSourceStencil_.stencil())
-        {
-            std::sort(stencil.second.begin(), stencil.second.end());
-            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
-
-            // remove the vertices element (box)
-            if (isBox<bulkIdx>())
-            {
-                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
-                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
-                                                   [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
-                                     stencil.second.end());
-            }
-            // remove the own element (cell-centered)
-            else
-            {
-                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
-                                                   [&](auto i){ return i == stencil.first; }),
-                                     stencil.second.end());
-            }
-        }
-
-        // make stencils unique
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::index_constant<2>{}), [&](const auto domainIdx)
-        {
-            for (auto&& stencil : this->couplingStencils(domainIdx))
-            {
-                std::sort(stencil.second.begin(), stencil.second.end());
-                stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
-            }
-        });
+        // make the stencils unique
+        makeUniqueStencil_();
 
         if (!this->pointSources(bulkIdx).empty())
             DUNE_THROW(Dune::InvalidStateException, "Kernel method shouldn't have point sources in the bulk domain but only volume sources!");
 
-        std::cout << "took " << watch.elapsed() << " seconds." << std::endl;
+        std::cout << "[coupling] Finished preparing manager in " << watch.elapsed() << " seconds." << std::endl;
     }
 
     //! Compute the low dim volume fraction in the bulk domain cells
@@ -362,95 +353,226 @@ public:
     }
 
     //! return all source ids for a bulk elements
-    const std::vector<std::size_t> bulkSourceIds(GridIndex<bulkIdx> eIdx) const
-    { return bulkSourceIds_[eIdx]; }
+    const std::vector<std::size_t>& bulkSourceIds(GridIndex<bulkIdx> eIdx, int scvIdx = 0) const
+    { return bulkSourceIds_[eIdx][scvIdx]; }
 
     //! return all source ids for a bulk elements
-    const std::vector<Scalar> bulkSourceWeights(GridIndex<bulkIdx> eIdx) const
-    { return bulkSourceWeights_[eIdx]; }
+    const std::vector<Scalar>& bulkSourceWeights(GridIndex<bulkIdx> eIdx, int scvIdx = 0) const
+    { return bulkSourceWeights_[eIdx][scvIdx]; }
+
+    //! The flux scaling factor for a source with id
+    Scalar fluxScalingFactor(std::size_t id) const
+    { return fluxScalingFactor_[id]; }
 
     // \}
 
 private:
-    //! TODO: How to optimize this?
-    void computeBulkSource(const GlobalPosition& globalPos, const Scalar kernelWidth,
-                           std::size_t id, GridIndex<lowDimIdx> lowDimElementIdx, GridIndex<bulkIdx> coupledBulkElementIdx,
-                           Scalar pointSourceWeight)
+    //! compute the kernel distributed sources and add stencils
+    template<class Line, class CylIntegration>
+    Scalar computeBulkSource(const Line& line, const Scalar radius, const Scalar kernelWidth,
+                             std::size_t id, GridIndex<lowDimIdx> lowDimElementIdx, GridIndex<bulkIdx> coupledBulkElementIdx,
+                             const CylIntegration& cylIntegration, int embeddings)
     {
-        // make sure it is mass conservative
-        // i.e. the point source in the 1d domain needs to have the exact same integral as the distributed
-        // kernel source integral in the 3d domain. Correct the integration formula by balancing the error
-        // by scaling the kernel with the checksum inverse
-        Scalar checkSum = 0.0;
-        std::vector<bool> mask(this->gridView(bulkIdx).size(0), false);
-        for (const auto& element : elements(this->gridView(bulkIdx)))
+        // Monte-carlo integration on the cylinder defined by line and radius
+        static const auto bulkParamGroup = this->problem(bulkIdx).paramGroup();
+        static const auto min = getParamFromGroup<GlobalPosition>(bulkParamGroup, "Grid.LowerLeft");
+        static const auto max = getParamFromGroup<GlobalPosition>(bulkParamGroup, "Grid.UpperRight");
+        static const auto cells = getParamFromGroup<std::array<int, bulkDim>>(bulkParamGroup, "Grid.Cells");
+        const auto cylSamples = cylIntegration.size();
+        const auto& a = line.corner(0);
+        const auto& b = line.corner(1);
+
+        // optionally write debugging / visual output of the integration points
+        static const auto writeIntegrationPointsToFile = getParam<bool>("MixedDimension.WriteIntegrationPointsToFile", false);
+        if (writeIntegrationPointsToFile)
         {
-            Scalar weight = 0.0;
-            const auto geometry = element.geometry();
-            const auto& quad = Dune::QuadratureRules<Scalar, bulkDim>::rule(geometry.type(), 3);
-            for (auto&& qp : quad)
+            std::ofstream ipPointFile("kernel_points.log", std::ios::app);
+            for (int i = 0; i < cylSamples; ++i)
             {
-                const auto qpweight = qp.weight();
-                const auto ie = geometry.integrationElement(qp.position());
-                weight += evalKernel(globalPos, geometry.global(qp.position()), kernelWidth)*qpweight*ie;
-            }
-
-            if (weight > 1e-13)
-            {
-                const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
-                const auto bulkElementIdx = bulkGridGeometry.elementMapper().index(element);
-                bulkSourceIds_[bulkElementIdx].push_back(id);
-                bulkSourceWeights_[bulkElementIdx].push_back(weight*pointSourceWeight);
-                mask[bulkElementIdx] = true;
-
-                // add lowDim dofs that the source is related to to the bulk stencil
-                if (isBox<lowDimIdx>())
-                {
-                    const auto& vertices = this->vertexIndices(lowDimIdx, lowDimElementIdx);
-                    this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
-                                                                           vertices.begin(), vertices.end());
-
-                }
-                else
-                {
-                    this->couplingStencils(bulkIdx)[bulkElementIdx].push_back(lowDimElementIdx);
-                }
-
-                // tpfa
-                extendedSourceStencil_.stencil()[bulkElementIdx].push_back(coupledBulkElementIdx);
-
-                // compute check sum -> should sum up to 1.0 to be mass conservative
-                checkSum += weight;
+                const auto& point = cylIntegration.integrationPoint(i);
+                if (const bool hasIntersection = intersectsPointBoundingBox(point, min, max); hasIntersection)
+                    ipPointFile << point[0] << "," << point[1] << "," << point[2] << '\n';
             }
         }
 
-        for (GridIndex<bulkIdx> eIdx = 0; eIdx < bulkSourceWeights_.size(); ++eIdx)
-            if (mask[eIdx]) bulkSourceWeights_[eIdx].back() /= checkSum;
+        Scalar integral = 0.0;
+        for (int i = 0; i < cylSamples; ++i)
+        {
+            const auto& point = cylIntegration.integrationPoint(i);
+            // TODO: below only works for Cartesian grids with ijk numbering (e.g. level 0 YaspGrid (already fails when refined))
+            // more general is the bounding box tree solution which always works, however it's much slower
+            //const auto bulkIndices = intersectingEntities(point, this->problem(bulkIdx).gridGeometry().boundingBoxTree(), true);
+            if (const bool hasIntersection = intersectsPointBoundingBox(point, min, max); hasIntersection)
+            {
+                const auto bulkElementIdx = intersectingEntityCartesianGrid(point, min, max, cells);
+                assert(bulkElementIdx < this->problem(bulkIdx).gridGeometry().gridView().size(0));
+                const auto localWeight = evalConstKernel_(a, b, point, radius, kernelWidth)*cylIntegration.integrationElement(i)/Scalar(embeddings);
+                integral += localWeight;
+                if (!bulkSourceIds_[bulkElementIdx][0].empty() && id == bulkSourceIds_[bulkElementIdx][0].back())
+                {
+                    bulkSourceWeights_[bulkElementIdx][0].back() += localWeight;
+                }
+                else
+                {
+                    bulkSourceIds_[bulkElementIdx][0].emplace_back(id);
+                    bulkSourceWeights_[bulkElementIdx][0].emplace_back(localWeight);
+                    addBulkSourceStencils_(bulkElementIdx, lowDimElementIdx, coupledBulkElementIdx);
+                }
+            }
+        }
 
-        // balance error of the quadrature rule -> TODO: what to do at boundaries
-        // const auto diff = 1.0 - checkSum;
-        // std::cout << "Integrated kernel with integration error of " << diff << std::endl;
+        // the surface factor (which fraction of the source is inside the domain and needs to be considered)
+        const auto length = (a-b).two_norm()/Scalar(embeddings);
+        return integral/length;
     }
 
-    //! an isotropic cubic kernel with derivatives 0 at r=origin and r=width and domain integral 1
-    inline Scalar evalKernel(const GlobalPosition& origin,
-                             const GlobalPosition& pos,
-                             const Scalar width) const noexcept
+    void prepareDataStructures_()
     {
-        const auto r = (pos-origin).two_norm();
-        const auto r2 = r*r;
-        const auto r3 = r2*r;
+        // clear all internal members like pointsource vectors and stencils
+        // initializes the point source id counter
+        this->clear();
+        bulkSourceIds_.clear();
+        bulkSourceWeights_.clear();
+        extendedSourceStencil_.stencil().clear();
 
-        if (r > width)
+        // precompute the vertex indices for efficiency for the box method
+        this->precomputeVertexIndices(bulkIdx);
+        this->precomputeVertexIndices(lowDimIdx);
+
+        bulkSourceIds_.resize(this->gridView(bulkIdx).size(0));
+        bulkSourceWeights_.resize(this->gridView(bulkIdx).size(0));
+
+        // intersect the bounding box trees
+        this->glueGrids();
+
+        // reserve memory for data
+        this->pointSourceData().reserve(this->glue().size());
+        this->averageDistanceToBulkCell().reserve(this->glue().size());
+        fluxScalingFactor_.reserve(this->glue().size());
+
+        // reserve memory for stencils
+        const auto numBulkElements = this->gridView(bulkIdx).size(0);
+        for (GridIndex<bulkIdx> bulkElementIdx = 0; bulkElementIdx < numBulkElements; ++bulkElementIdx)
+        {
+            this->couplingStencils(bulkIdx)[bulkElementIdx].reserve(10);
+            extendedSourceStencil_.stencil()[bulkElementIdx].reserve(10);
+            bulkSourceIds_[bulkElementIdx][0].reserve(10);
+            bulkSourceWeights_[bulkElementIdx][0].reserve(10);
+        }
+    }
+
+    //! Make the stencils unique
+    void makeUniqueStencil_()
+    {
+        // make extra stencils unique
+        for (auto&& stencil : extendedSourceStencil_.stencil())
+        {
+            std::sort(stencil.second.begin(), stencil.second.end());
+            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+
+            // remove the vertices element (box)
+            if constexpr (isBox<bulkIdx>())
+            {
+                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
+                                     stencil.second.end());
+            }
+            // remove the own element (cell-centered)
+            else
+            {
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return i == stencil.first; }),
+                                     stencil.second.end());
+            }
+        }
+
+        // make stencils unique
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::index_constant<2>{}), [&](const auto domainIdx)
+        {
+            for (auto&& stencil : this->couplingStencils(domainIdx))
+            {
+                std::sort(stencil.second.begin(), stencil.second.end());
+                stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+            }
+        });
+    }
+
+    //! add additional stencil entries for the bulk element
+    void addBulkSourceStencils_(GridIndex<bulkIdx> bulkElementIdx, GridIndex<lowDimIdx> coupledLowDimElementIdx, GridIndex<bulkIdx> coupledBulkElementIdx)
+    {
+        // add the lowdim element to the coupling stencil of this bulk element
+        if constexpr (isBox<lowDimIdx>())
+        {
+            const auto& vertices = this->vertexIndices(lowDimIdx, coupledLowDimElementIdx);
+            this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
+                                                                   vertices.begin(), vertices.end());
+
+        }
+        else
+        {
+            auto& s = this->couplingStencils(bulkIdx)[bulkElementIdx];
+            s.push_back(coupledLowDimElementIdx);
+        }
+
+        // the extended source stencil, every 3d element with a source is coupled to
+        // the element/dofs where the 3d quantities are measured
+        if constexpr (isBox<bulkIdx>())
+        {
+            const auto& vertices = this->vertexIndices(bulkIdx, coupledBulkElementIdx);
+            extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
+                                                                    vertices.begin(), vertices.end());
+        }
+        else
+        {
+            auto& s = extendedSourceStencil_.stencil()[bulkElementIdx];
+            s.push_back(coupledBulkElementIdx);
+        }
+    }
+
+    //! a cylindrical kernel around the segment a->b
+    Scalar evalConstKernel_(const GlobalPosition& a,
+                            const GlobalPosition& b,
+                            const GlobalPosition& point,
+                            const Scalar R,
+                            const Scalar rho) const noexcept
+    {
+        // projection of point onto line a + t*(b-a)
+        const auto ab = b - a;
+        const auto t = (point - a)*ab/ab.two_norm2();
+
+        // return 0 if we are outside cylinder
+        if (t < 0.0 || t > 1.0)
             return 0.0;
 
-        const Scalar w2 = width*width;
-        const Scalar w3 = w2*width;
-        const Scalar k = 15.0/(4*M_PI*w3);
-        const Scalar a = 2.0/w3;
-        const Scalar b = 3.0/w2;
+        // compute distance
+        auto proj = a; proj.axpy(t, ab);
+        const auto r = (proj - point).two_norm();
 
-        return k*(a*r3 - b*r2 + 1.0);
+        if (r > rho)
+            return 0.0;
+
+        return 1.0/(M_PI*rho*rho);
+    }
+
+    /*!
+     * \brief Get the kernel width factor from the spatial params (if possible)
+     */
+    template<class SpatialParams>
+    auto kernelWidthFactor_(const SpatialParams& spatialParams, unsigned int eIdx)
+    -> std::enable_if_t<hasKernelWidthFactor<SpatialParams, unsigned int>(), Scalar>
+    { return spatialParams.kernelWidthFactor(eIdx); }
+
+    /*!
+     * \brief Get the kernel width factor (constant) from the input file (if possible)
+     */
+    template<class SpatialParams>
+    auto kernelWidthFactor_(const SpatialParams& spatialParams, unsigned int eIdx)
+    -> std::enable_if_t<!hasKernelWidthFactor<SpatialParams, unsigned int>(), Scalar>
+    {
+        static const Scalar kernelWidthFactor = getParam<Scalar>("MixedDimension.KernelWidthFactor");
+        return kernelWidthFactor;
     }
 
     //! the extended source stencil object for kernel coupling
@@ -458,9 +580,12 @@ private:
     //! vector for the volume fraction of the lowdim domain in the bulk domain cells
     std::vector<Scalar> lowDimVolumeInBulkElement_;
     //! kernel sources to integrate for each bulk element
-    std::vector<std::vector<std::size_t>> bulkSourceIds_;
+    std::vector<std::array<std::vector<std::size_t>, isBox<bulkIdx>() ? 1<<bulkDim : 1>> bulkSourceIds_;
     //! the integral of the kernel for each point source / integration point, i.e. weight for the source
-    std::vector<std::vector<Scalar>> bulkSourceWeights_;
+    std::vector<std::array<std::vector<Scalar>, isBox<bulkIdx>() ? 1<<bulkDim : 1>> bulkSourceWeights_;
+
+    //! the flux scaling factor for the respective source id
+    std::vector<Scalar> fluxScalingFactor_;
 };
 
 } // end namespace Dumux
