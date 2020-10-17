@@ -174,7 +174,7 @@ public:
                 // get points on the cylinder surface at the integration point
                 ////////////////////////////////////////////////////////////////
 
-                static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments", 25);
+                static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = lowDimProblem.spatialParams().radius(lowDimElementIdx);
                 const auto normal = lowDimGeometry.corner(1)-lowDimGeometry.corner(0);
                 const auto integrationElement = lowDimGeometry.integrationElement(qp.position())*2*M_PI*radius/Scalar(numIp);
