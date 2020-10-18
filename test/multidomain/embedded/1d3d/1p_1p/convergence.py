@@ -137,3 +137,23 @@ print("p1d")
 print_table(table2)
 print("q")
 print_table(table3)
+
+#############################################
+# verify mean rates against reference
+#############################################
+# the reference rates from the paper
+reference = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average":[1.3483, 1.3545, 1.8449],
+             "test_md_embedded_1d3d_1p1p_tpfatpfa_surface":[1.4693, 1.7800, 2.2715],
+             "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel":[2.0583, 2.0927, 2.5822]}
+
+for exec, result in res.items():
+    samples = len(result)
+    ofs = method[exec]
+    rate3d = float(table1[len(h)][ofs+1])
+    rate1d = float(table2[len(h)][ofs+1])
+    rateq = float(table3[len(h)][ofs+1])
+    error_to_reference = np.linalg.norm(np.array(reference[exec])-np.array([rate3d, rate1d, rateq]), ord=2)
+    if error_to_reference > 0.1:
+        print("\nWrong convergence rates for case {}".format(exec))
+        print("Expected {}, obtained {}".format(reference[exec], [rate3d, rate1d, rateq]))
+        sys.exit(1)
