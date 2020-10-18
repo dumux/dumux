@@ -25,13 +25,11 @@
 
 #include <config.h>
 
-#include <ctime>
 #include <iostream>
 #include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -39,9 +37,9 @@
 #include <dumux/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/discretization/method.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_foam.hh>
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -178,9 +176,6 @@ int main(int argc, char** argv)
     lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
     lowDimVtkWriter.write(0.0);
 
-    // an output file for the L2-norm
-    std::ofstream outFile_;
-
     // compute hmax of both domains
     double hMaxBulk = 0.0;
     for (const auto& element : elements(bulkGridView))
@@ -238,7 +233,7 @@ int main(int argc, char** argv)
 
     // output the source terms
     bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
-    lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
+    auto sourceNorm = lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
 
     // write vtk output
     bulkVtkWriter.write(1.0);
@@ -253,14 +248,16 @@ int main(int argc, char** argv)
 
     // ouput result to terminal
     std::cout << "-----------------------------------------------------\n";
-    std::cout << " L2_1d: " << norm1D << " hmax_1d: " << hMaxLowDim << '\n'
-              << " L2_3d: " << norm3D << " hmax_3d: " << hMaxBulk << '\n';
+    std::cout << " L2_p1d: " << norm1D << " hmax_1d: " << hMaxLowDim << '\n'
+              << " L2_p3d: " << norm3D << " hmax_3d: " << hMaxBulk << '\n'
+              << " L2_q  : " << sourceNorm << " hmax_3d: " << hMaxBulk << '\n';
     std::cout << "-----------------------------------------------------" << std::endl;
 
     // ... and file.
-    outFile_.open("1p_1p_norm.log", std::ios::app);
-    outFile_ << hMaxBulk << " " << hMaxLowDim << " " << norm3D << " " << norm1D << '\n';
-    outFile_.close();
+    {
+        std::ofstream outFile(getParam<std::string>("Problem.OutputFilename"));
+        outFile << hMaxBulk << " " << hMaxLowDim << " " << norm3D << " " << norm1D << " " << sourceNorm << '\n';
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

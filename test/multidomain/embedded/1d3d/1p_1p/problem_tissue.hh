@@ -119,6 +119,7 @@ class TissueProblem : public PorousMediumFlowProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
@@ -184,7 +185,10 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllDirichlet();
+        if (globalPos[2] > this->gridGeometry().bBoxMax()[2] - eps_  || globalPos[2] < this->gridGeometry().bBoxMin()[2] + eps_)
+            values.setAllNeumann();
+        else
+            values.setAllDirichlet();
         return values;
     }
 
@@ -201,6 +205,49 @@ public:
         values = exactSolution(globalPos);
         return values;
     }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scvf The sub control volume face
+     *
+     * Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     */
+    template<class ElementVolumeVariables, class ElemFluxVarsCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElemFluxVarsCache&,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector flux(0.0);
+        // integrate over the scvf to compute the flux
+        const auto geometry = scvf.geometry();
+        Scalar derivative = 0.0;
+        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension-1>::rule(geometry.type(), 4);
+        for(auto&& qp : quad)
+        {
+            auto globalPos = geometry.global(qp.position());
+            globalPos[2] = 0; // the derivative in z-direction is the exact solution evaluated with z=0
+            derivative += exactSolution(globalPos)*qp.weight()*geometry.integrationElement(qp.position());
+        }
+
+        const auto globalPos = scvf.ipGlobal();
+        if (globalPos[2] > this->gridGeometry().bBoxMax()[2] - eps_ )
+            flux[0] = -derivative/scvf.area();
+        else
+            flux[0] = derivative/scvf.area();
+        return flux;
+    }
+
 
     // \}
 
@@ -343,7 +390,7 @@ public:
     //! The exact solution
     Scalar exactSolution(const GlobalPosition &globalPos) const
     {
-        const auto r = std::sqrt(globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1]);
+        const auto r = std::hypot(globalPos[0], globalPos[1]);
         static const auto R = getParam<Scalar>("SpatialParams.Radius");
 
         if (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)

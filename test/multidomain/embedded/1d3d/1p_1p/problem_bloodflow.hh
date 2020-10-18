@@ -294,9 +294,11 @@ public:
 
     //! Called after every time step
     //! Output the total global exchange term
-    void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
+    Scalar computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
-        PrimaryVariables source(0.0);
+        SolutionVector source(sol.size());
+        SolutionVector sourceExact(sol.size());
+        Scalar volume = 0.0;
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->gridGeometry());
@@ -309,11 +311,21 @@ public:
             {
                 auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
                 pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
-                source += pointSources;
+                source[scv.dofIndex()] += pointSources;
+                auto a = scv.corner(0)[2];
+                auto b = scv.corner(1)[2];
+                if (a > b) std::swap(a, b);
+                sourceExact[scv.dofIndex()] += a*(1.0+0.5*a) - b*(1.0+0.5*b);
+                volume += scv.volume();
             }
         }
+        std::cout << "Global integrated source (1D): " << std::accumulate(source.begin(), source.end(), 0.0) << '\n';
+        std::cout << "Global integrated source exact (1D): " << std::accumulate(sourceExact.begin(), sourceExact.end(), 0.0) << '\n';
 
-        std::cout << "Global integrated source (1D): " << source << '\n';
+        source -= sourceExact;
+        const auto norm = source.two_norm()/sourceExact.two_norm();
+        std::cout << "relative L2 Norm source (1D): " << norm << '\n';
+        return source.two_norm()/volume;
     }
 
     /*!

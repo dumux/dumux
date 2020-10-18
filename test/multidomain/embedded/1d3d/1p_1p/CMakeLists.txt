@@ -79,4 +79,4 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_tpfatpfa_kernel)
 
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "convergence.py")

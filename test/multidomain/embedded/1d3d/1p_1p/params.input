@@ -1,7 +1,9 @@
 [MixedDimension]
-NumCircleSegments = 100
+NumCircleSegments = 256
 IntegrationOrder = 2
 KernelWidthFactor = 1.0
+WriteIntegrationPointsToFile = false
+KernelIntegrationCRL = 0.01
 
 [Vessel.Grid]
 LowerLeft = 0 0 0
@@ -20,9 +22,9 @@ Name = 1d
 Name = 3d
 
 [Problem]
-NormIntegrationOrder = 2
-NormExcludeInnerBulk = true
+NormIntegrationOrder = 1
 EnableGravity = false
+OutputFilename = log.txt
 
 [Vtk]
 OutputName = test_md_embedded1d3d_1p1p
