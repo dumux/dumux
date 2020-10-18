@@ -52,6 +52,10 @@ struct Line : public Utility::Tag<Line> {
 inline constexpr Line line{};
 } // end namespace Embedded1d3dCouplingMode
 
+// forward declaration
+template<class MDTraits, class CouplingMode>
+class Embedded1d3dCouplingManager;
+
 /*!
  * \ingroup EmbeddedCoupling
  * \brief Manages the coupling between bulk elements and lower dimensional elements

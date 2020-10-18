@@ -56,6 +56,10 @@ struct Surface : public Utility::Tag<Surface> {
 inline constexpr Surface surface{};
 } // end namespace Embedded1d3dCouplingMode
 
+// forward declaration
+template<class MDTraits, class CouplingMode>
+class Embedded1d3dCouplingManager;
+
 /*!
  * \ingroup EmbeddedCoupling
  * \brief Manages the coupling between bulk elements and lower dimensional elements

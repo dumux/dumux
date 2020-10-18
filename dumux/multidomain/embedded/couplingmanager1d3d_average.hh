@@ -58,6 +58,10 @@ struct Average : public Utility::Tag<Average> {
 inline constexpr Average average{};
 } // end namespace Embedded1d3dCouplingMode
 
+// forward declaration
+template<class MDTraits, class CouplingMode>
+class Embedded1d3dCouplingManager;
+
 /*!
  * \ingroup EmbeddedCoupling
  * \brief Manages the coupling between bulk elements and lower dimensional elements
