@@ -27,10 +27,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
 
@@ -55,17 +52,16 @@ class TwoPTwoCComparisonSpatialParams
 
     enum {dimWorld=GridView::dimensionworld};
 
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+    using PcKrSwCurve =FluidMatrix::BrooksCoreyDefault<Scalar>;
 
 public:
     //! Export permeability type
     using PermeabilityType = Scalar;
-    //! Export the type used for the material law
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
-
-    TwoPTwoCComparisonSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry) : ParentType(gridGeometry)
+    TwoPTwoCComparisonSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    , finePcKrSwCurve_("SpatialParams.FineMaterial")
+    , coarsePcKrSwCurve_("SpatialParams.CoarseMaterial")
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;
@@ -73,18 +69,6 @@ public:
 
         // the porosity
         porosity_ = 0.3;
-
-         // residual saturations
-        fineMaterialParams_.setSwr(0.2);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.0);
-
-        // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(1e4);
-        coarseMaterialParams_.setPe(1e4);
-        fineMaterialParams_.setLambda(2.0);
-        coarseMaterialParams_.setLambda(2.0);
     }
 
     template<class ElementSolution>
@@ -115,12 +99,11 @@ public:
      * \param globalPos The global position of the sub-control volume.
      * \return The material parameters object
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        else
-            return coarseMaterialParams_;
+            return makeFluidMatrixInteraction(finePcKrSwCurve_);
+        return makeFluidMatrixInteraction(coarsePcKrSwCurve_);
     }
 
     /*!
@@ -149,8 +132,9 @@ private:
     Scalar coarseK_;
     Scalar fineK_;
     Scalar porosity_;
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+
+    const PcKrSwCurve finePcKrSwCurve_;
+    const PcKrSwCurve coarsePcKrSwCurve_;
     static constexpr Scalar eps_ = 1e-6;
 };
 
