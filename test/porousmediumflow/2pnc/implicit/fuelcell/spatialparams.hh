@@ -28,10 +28,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
 /*!
@@ -55,30 +52,19 @@ class FuelCellSpatialParams
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
     FuelCellSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), K_(0)
+    : ParentType(gridGeometry)
+    , K_(0)
+    , pcKrSwCurve_("SpatialParams")
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;
         K_[1][1] = 5e-11;
-
-        // porosities
-        porosity_ = 0.2;
-
-        // residual saturations
-        materialParams_.setSwr(0.12); // air is wetting phase
-        materialParams_.setSnr(0.0); // water is non-wetting
-
-        //parameters for the vanGenuchten law
-        materialParams_.setVgAlpha(6.66e-5); // alpha = 1/pcb
-        materialParams_.setVgn(3.652);
     }
 
     /*!
@@ -95,21 +81,16 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    {
-        if (globalPos[1] < eps_)
-            return porosity_;
-        else
-            return 0.2;
-    }
+    { return 0.2; }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law
-     * which depends on the position.
-     *
-     * \param globalPos The global position
+     * \brief Returns the parameters for the material law at a given location
+     * \param globalPos A global coordinate vector
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialParams_; }
+    auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
+    {
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
+    }
 
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
@@ -124,9 +105,8 @@ public:
 
 private:
     DimWorldMatrix K_;
-    Scalar porosity_;
     static constexpr Scalar eps_ = 1e-6;
-    MaterialLawParams materialParams_;
+    const PcKrSwCurve pcKrSwCurve_;
 };
 
 } // end namespace Dumux
