@@ -40,10 +40,10 @@ RefTemperature          = 299                   # [K] temperature in the air abo
 SolubilityLimit         = 0.26 	                # [-]  solubility limit of NaCl in brine
 referencePorosity       = 0.4                   # [-]  initial porosity
 referencePermeability   = 1e-13                 # [m²]  initial permeability
-VGAlpha                 = 0.00015               # Van Genuchten parameter
-VGn                     = 14.0                  # Van Genuchten parameter
-IrreducibleLiqSat       = 0.25                  # [-] irreducible liquid saturation
-IrreducibleGasSat       = 0.025                 # [-] irreducible gas saturation
+VanGenuchtenAlpha       = 0.00015               # Van Genuchten parameter
+VanGenuchtenN           = 14.0                  # Van Genuchten parameter
+Swr                     = 0.25                  # [-] irreducible liquid saturation
+Snr                     = 0.025                 # [-] irreducible gas saturation
 
 [Vtk]
 AddVelocity             = 1                     # Add extra information

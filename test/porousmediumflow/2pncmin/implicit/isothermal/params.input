@@ -37,10 +37,10 @@ InitPrecipitatedSaltBlock    = 0.05    # [-]  initial precipitated salt in the b
 SolubilityLimit     = 0.26 	       # [-]  solubility limit of salt in brine
 referencePorosity   = 0.11         # [-]  initial porosity
 referencePermeability   = 2.23e-14
-IrreducibleLiqSat   = 0.2          # [-]  irreducible liquid saturation
-IrreducibleGasSat   = 0.001        # [-]  irreducible gas saturation
-Pentry1             = 500          # [Pa]
-BCLambda1           = 2            # [-]
+Swr   = 0.2          # [-]  irreducible liquid saturation
+Snr   = 0.001        # [-]  irreducible gas saturation
+BrooksCoreyPcEntry = 500 # [Pa]
+BrooksCoreyLambda = 2 # [-]
 
 [Vtk]
 AddVelocity         = 1            # Add extra information
