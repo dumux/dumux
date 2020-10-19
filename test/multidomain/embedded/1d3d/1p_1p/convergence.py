@@ -49,7 +49,12 @@ runs = []
 res = {}
 for e in executables:
     for c in cells:
-        runs.append({"Vessel.Grid.Cells":str(c//2), "Tissue.Grid.Cells":str(c)+" "+str(c)+" "+str(c//2), "SpatialParams.Radius":str(radius), "Problem.OutputFilename":e+str(c)+".log", "exec":e});
+        runs.append({"Vessel.Grid.Cells":str(c//2),
+                     "Tissue.Grid.Cells":str(c)+" "+str(c)+" "+str(c//2),
+                     "SpatialParams.Radius":str(radius),
+                     "Problem.OutputFilename":e+str(c)+".log",
+                     "Vtk.EnableVtkOutput":"false",
+                     "exec":e})
         res[e] = {}
 
 for run in runs:

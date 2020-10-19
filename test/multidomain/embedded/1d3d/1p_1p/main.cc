@@ -163,18 +163,24 @@ int main(int argc, char** argv)
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     lowDimGridVariables->init(sol[lowDimIdx]);
 
+    const bool writeVtk = getParam<bool>("Vtk.EnableVtkOutput", true);
+
     // intialize the vtk output module
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);
     bulkProblem->addVtkOutputFields(bulkVtkWriter);
-    bulkVtkWriter.write(0.0);
 
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
     GetPropType<LowDimTypeTag, Properties::IOFields>::initOutputModule(lowDimVtkWriter);
     lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
-    lowDimVtkWriter.write(0.0);
+
+    if (writeVtk)
+    {
+        bulkVtkWriter.write(0.0);
+        lowDimVtkWriter.write(0.0);
+    }
 
     // compute hmax of both domains
     double hMaxBulk = 0.0;
@@ -236,8 +242,11 @@ int main(int argc, char** argv)
     auto sourceNorm = lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
 
     // write vtk output
-    bulkVtkWriter.write(1.0);
-    lowDimVtkWriter.write(1.0);
+    if (writeVtk)
+    {
+        bulkVtkWriter.write(1.0);
+        lowDimVtkWriter.write(1.0);
+    }
 
     // write the L2-norm to file
     static const int order = getParam<int>("Problem.NormIntegrationOrder");
