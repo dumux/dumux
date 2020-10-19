@@ -29,3 +29,9 @@ InjectionTemperature = 305 # [K]
 SolidDensity = 2700
 SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790
+
+[SpatialParams]
+BrooksCoreyPcEntry = 1e4
+BrooksCoreyLambda = 2.0
+Swr = 0.05
+Snr = 0.0
