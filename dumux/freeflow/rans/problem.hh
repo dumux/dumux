@@ -24,6 +24,8 @@
 #ifndef DUMUX_RANS_PROBLEM_HH
 #define DUMUX_RANS_PROBLEM_HH
 
+#include <algorithm>
+
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
@@ -125,6 +127,13 @@ public:
         flowDirectionAxis_.resize(this->gridGeometry().elementMapper().size(), fixedFlowDirectionAxis_);
         wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedWallNormalAxis_);
         kinematicViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+
+        if ( !(hasParamInGroup(this->paramGroup(), "RANS.IsFlatWallBounded")))
+        {
+            std::cout << "The parameter \"Rans.IsFlatWallBounded\" is not specified. \n"
+                    << " -- Based on the grid and the isOnWallAtPos function specified by the user,"
+                    << " this parameter is set to be "<< std::boolalpha << isFlatWallBounded() << "\n";
+        }
 
         std::vector<WallElementInformation> wallElements;
 
@@ -307,8 +316,8 @@ public:
 
     bool isFlatWallBounded() const
     {
-        static const bool isFlatWallBounded = getParamFromGroup<bool>(this->paramGroup(), "RANS.IsFlatWallBounded");
-        return isFlatWallBounded;
+        static const bool hasAlignedWalls = hasAlignedWalls_();
+        return hasAlignedWalls;
     }
 
     /*!
@@ -409,6 +418,35 @@ public:
     bool calledUpdateStaticWallProperties = false;
 
 private:
+
+    bool hasAlignedWalls_() const
+    {
+        if ( hasParamInGroup(this->paramGroup(), "RANS.IsFlatWallBounded"))
+        {
+            static const bool isFlatWallBounded = getParamFromGroup<bool>(this->paramGroup(), "RANS.IsFlatWallBounded");
+            return isFlatWallBounded;
+        }
+
+        std::vector<int> wallFaceAxis;
+        wallFaceAxis.reserve(this->gridGeometry().numBoundaryScvf());
+
+        const auto gridView = this->gridGeometry().gridView();
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(gridView))
+        {
+            fvGeometry.bindElement(element);
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                // only search for walls at a global boundary
+                if (!scvf.boundary() && asImp_().isOnWall(scvf))
+                    wallFaceAxis.push_back(scvf.directionIndex());
+            }
+        }
+
+        // Returns if all wall directions are the same
+        return std::all_of(wallFaceAxis.begin(), wallFaceAxis.end(), [firstDir=wallFaceAxis[0]](auto dir){ return (dir == firstDir);} ) ;
+    }
+
     void calculateCCVelocities_(const SolutionVector& curSol)
     {
         // calculate cell-center-averaged velocities
