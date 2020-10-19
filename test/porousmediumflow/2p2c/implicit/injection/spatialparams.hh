@@ -28,8 +28,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
 
@@ -51,19 +50,18 @@ class InjectionSpatialParams
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     //! Export the type used for the permeability
     using PermeabilityType = Scalar;
-    //! Export the material law type used
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     InjectionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , finePcKrSwCurve_("SpatialParams.FineMaterial")
+    , coarsePcKrSwCurve_("SpatialParams.CoarseMaterial")
     {
         layerBottom_ = 22.5;
 
@@ -74,18 +72,6 @@ public:
         // porosities
         finePorosity_ = 0.3;
         coarsePorosity_ = 0.3;
-
-        // residual saturations
-        fineMaterialParams_.setSwr(0.2);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.0);
-
-        // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(1e4);
-        coarseMaterialParams_.setPe(1e4);
-        fineMaterialParams_.setLambda(2.0);
-        coarseMaterialParams_.setLambda(2.0);
     }
 
     /*!
@@ -119,11 +105,11 @@ public:
      *
      * \param globalPos The global position
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    const auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        return coarseMaterialParams_;
+            return makeFluidMatrixInteraction(finePcKrSwCurve_);
+        return makeFluidMatrixInteraction(coarsePcKrSwCurve_);
     }
 
     /*!
@@ -147,8 +133,8 @@ private:
     Scalar finePorosity_;
     Scalar coarsePorosity_;
 
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    const PcKrSwCurve finePcKrSwCurve_;
+    const PcKrSwCurve coarsePcKrSwCurve_;
 };
 
 } // end namespace Dumux
