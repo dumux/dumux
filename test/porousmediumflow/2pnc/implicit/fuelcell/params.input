@@ -42,3 +42,9 @@ SurfaceIncreasingFactor = 60
 TransportNumberH20 = 0.2327             # [-] account for osmotic H20 transport term from membrane, value Lena Walter
 pO2Inlet = 0.3e5                        # [Pa] partial pressure of oxygen at gas channel inlet
 MaxIterations = 300                     # [-] Maximum number for iterations for solving electrochemical system
+
+[SpatialParams]
+VanGenuchtenN = 3.652
+VanGenuchtenAlpha = 6.66e-5
+Swr = 0.12
+Snr = 0.0
