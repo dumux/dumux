@@ -333,7 +333,6 @@ private:
         // parameters in the mpfa group
         defaultParams["MPFA.Q"] = "0.0";
 
-
         // merge the global default tree but do not overwrite if the parameter already exists
         mergeTree_(params, defaultParams, false);
     }

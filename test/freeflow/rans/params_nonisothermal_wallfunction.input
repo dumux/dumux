@@ -23,6 +23,7 @@ YPlusThreshold = 10. # should be small (10-30) for coarse grids
 TurbulentPrandtlNumber = 0.85
 WallNormalAxis = 1
 IsFlatWallBounded = True
+WriteFlatWallBoundedFields = True
 
 [Assembly]
 NumericDifferenceMethod = 0

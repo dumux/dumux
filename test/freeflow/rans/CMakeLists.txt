@@ -68,7 +68,9 @@ dumux_add_test(NAME test_ff_rans_lauferpipe_komega_nochannel
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans_lauferpipe_komega_nochannel-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_komega_nochannel-00047.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans_lauferpipe_komega params.input
-                        -Problem.Name test_ff_rans_lauferpipe_komega_nochannel")
+                        -Problem.Name test_ff_rans_lauferpipe_komega_nochannel
+                        -RANS.IsFlatWallBounded False
+                        -RANS.WriteFlatWallBoundedFields False")
 
 dumux_add_test(NAME test_ff_rans_lauferpipe_oneeq
               SOURCES main.cc

@@ -40,7 +40,8 @@ struct RANSIOFields
     {
         NavierStokesIOFields::initOutputModule(out);
 
-        static const bool isFlatWallBounded = getParamFromGroup<bool>(out.paramGroup(), "RANS.IsFlatWallBounded");
+        static const bool isFlatWallBounded = getParamFromGroup<bool>(out.paramGroup(), "RANS.IsFlatWallBounded", false);
+        static const bool writeFlatWallBoundedFields = getParamFromGroup<bool>(out.paramGroup(), "RANS.WriteFlatWallBoundedFields", isFlatWallBounded);
 
         static constexpr auto dim = decltype(std::declval<typename OutputModule::VolumeVariables>().ccVelocityVector())::dimension;
 
@@ -54,7 +55,7 @@ struct RANSIOFields
         out.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
         out.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");
         out.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
-        if (isFlatWallBounded)
+        if (writeFlatWallBoundedFields)
         {
             out.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
             out.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
