@@ -27,9 +27,7 @@
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 
@@ -53,35 +51,21 @@ class DissolutionSpatialParams
     using ParentType = FVSpatialParams<GridGeometry, Scalar,
                                        DissolutionSpatialParams<GridGeometry, Scalar>>;
 
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
-    //! Export the material law type used
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     DissolutionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
         referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
-        irreducibleLiqSat_     = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
-        irreducibleGasSat_     = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
-        pEntry1_               = getParam<Scalar>("SpatialParams.Pentry1", 500);
-        bcLambda1_             = getParam<Scalar>("SpatialParams.BCLambda1", 2);
-
-        // residual saturations
-        materialParams_.setSwr(irreducibleLiqSat_);
-        materialParams_.setSnr(irreducibleGasSat_);
-
-        // parameters of Brooks & Corey Law
-        materialParams_.setPe(pEntry1_);
-        materialParams_.setLambda(bcLambda1_);
     }
 
     /*!
@@ -144,9 +128,14 @@ public:
     Scalar theta(const SubControlVolume &scv) const
     { return 10.0; }
 
-    // return the brooks-corey context depending on the position
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialParams_; }
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     * \param globalPos A global coordinate vector
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
+    {
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
+    }
 
     // define which phase is to be considered as the wetting phase
     template<class FluidSystem>
@@ -155,17 +144,12 @@ public:
 
 private:
 
-    MaterialLawParams materialParams_;
-
     PermeabilityKozenyCarman<PermeabilityType> permLaw_;
 
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
     PermeabilityType referencePermeability_ = 0.0;
-    Scalar irreducibleLiqSat_;
-    Scalar irreducibleGasSat_;
-    Scalar pEntry1_;
-    Scalar bcLambda1_;
+    const PcKrSwCurve pcKrSwCurve_;
 };
 
 } // end namespace Dumux
