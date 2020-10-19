@@ -30,6 +30,8 @@
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/method.hh>
 
+#include <dumux/freeflow/slipcondition.hh>
+
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
@@ -87,6 +89,8 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+    using SlipCondition = SlipVelocity<GridGeometry>;
 
 public:
     /*!
@@ -259,38 +263,35 @@ public:
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
      */
+    [[deprecated("This method will be removed after release (3.n). Use porousMediumTerm instead!")]]
     VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        return VelocityVector(0.0);
+    }
+
+    /*!
+     * \brief Returns the slip term at a porous wall (which is 0 by default).
+     */
+    VelocityVector porousMediumTerm(const Element& element, const SubControlVolumeFace& scvf) const
     {
         return VelocityVector(0.0);
     }
 
     //! helper function to evaluate the slip velocity on the boundary when the slipCondition is used
     const Scalar slipVelocity(const Element& element,
-                                       const SubControlVolume& scv,
-                                       const SubControlVolumeFace& ownScvf,
-                                       const SubControlVolumeFace& faceOnPorousBoundary,
-                                       const Scalar velocitySelf, //vel perpendicular to tangential vel
-                                       const Scalar tangentialVelocityGradient) const //dv/dx (=0)
+                              const SubControlVolume& scv,
+                              const SubControlVolumeFace& ownScvf,
+                              const SubControlVolumeFace& faceOnPorousBoundary,
+                              const Scalar velocitySelf, //vel perpendicular to tangential vel
+                              const Scalar tangentialVelocityGradient) const //dv/dx (=0)
     {
-        static const bool newIc = getParamFromGroup<bool>("Problem", "NewIc", false);
-        // du/dy + dv/dx = factor * (u_boundary-uPM)
-        Scalar factor;
-        if (newIc)
-        {
-            factor = -1.0 / asImp_().epsInterface(faceOnPorousBoundary) / asImp_().factorNTangential(faceOnPorousBoundary);
-        }
-        else
-        {
-            factor = asImp_().betaBJ(element, faceOnPorousBoundary); //beta = alpha/sqrt(K)
-        }
-        const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
-
-        // create a unit normal vector oriented in positive coordinate direction
-        GlobalPosition orientation = ownScvf.unitOuterNormal();
-        orientation[ownScvf.directionIndex()] = 1.0;
-        return (tangentialVelocityGradient*distanceNormalToBoundary
-              + asImp_().porousMediumVelocity(element, faceOnPorousBoundary) * orientation * factor * distanceNormalToBoundary
-              + velocitySelf) / (factor*distanceNormalToBoundary + 1.0);
+        return SlipCondition::velocity(asImp_(),
+                                       element,
+                                       scv,
+                                       ownScvf,
+                                       faceOnPorousBoundary,
+                                       velocitySelf,
+                                       tangentialVelocityGradient);
     }
 
 private:
