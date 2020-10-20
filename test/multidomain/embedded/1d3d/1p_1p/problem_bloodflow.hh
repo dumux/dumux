@@ -257,7 +257,7 @@ public:
      * that mass is created, negative ones mean that it vanishes.
      */
     template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
+             bool enable = (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel),
              std::enable_if_t<!enable, int> = 0>
     void pointSource(PointSource& source,
                      const Element &element,
@@ -279,7 +279,7 @@ public:
 
     //! Specialization for kernel method
     template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
+             bool enable = (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel),
              std::enable_if_t<enable, int> = 0>
     void pointSource(PointSource& source,
                      const Element &element,

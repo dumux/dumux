@@ -58,14 +58,14 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::Soil>
 {
     using Traits = MultiDomainTraits<TypeTag, Properties::TTag::Root>;
-    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
+    using type = Embedded1d3dCouplingManager<Traits, Embedded1d3dCouplingMode::Average>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::Root>
 {
     using Traits = MultiDomainTraits<Properties::TTag::Soil, TypeTag>;
-    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
+    using type = Embedded1d3dCouplingManager<Traits, Embedded1d3dCouplingMode::Average>;
 };
 
 template<class TypeTag>

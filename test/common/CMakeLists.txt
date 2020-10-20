@@ -9,3 +9,4 @@ add_subdirectory(typetraits)
 
 dumux_add_test(SOURCES test_partial.cc LABELS unit)
 dumux_add_test(SOURCES test_enumerate.cc LABELS unit)
+dumux_add_test(SOURCES test_tag.cc LABELS unit)

@@ -277,7 +277,7 @@ public:
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
+             bool enable = (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel),
              std::enable_if_t<enable, int> = 0>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
@@ -317,7 +317,7 @@ public:
 
     //! Other methods
     template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
+             bool enable = (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel),
              std::enable_if_t<!enable, int> = 0>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
@@ -364,7 +364,7 @@ public:
     Scalar exactSolution(const GlobalPosition &globalPos) const
     {
         Dune::FieldVector<double, 2> xy({globalPos[0], globalPos[1]});
-        if (CouplingManager::couplingMode == EmbeddedCouplingMode::cylindersources)
+        if (CouplingManager::couplingMode == Embedded1d3dCouplingMode::surface)
         {
             static const auto R = getParam<Scalar>("SpatialParams.Radius");
             if (xy.two_norm() > R)
@@ -373,7 +373,7 @@ public:
                return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(R);
 
         }
-        else if (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel)
+        else if (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
         {
             static const auto rho = getParam<Scalar>("MixedDimension.KernelWidth");
             const auto& r = xy.two_norm();
