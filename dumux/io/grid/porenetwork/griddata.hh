@@ -284,13 +284,13 @@ public:
      * \brief Returns the value of an element parameter
      */
     Scalar getParameter(const Element& element, const std::string& param) const
-    { return (*elementParameters_)[element][parameterIndex(param)]; }
+    { return parameters(element)[parameterIndex(param)]; }
 
     /*!
      * \brief Returns the value of an vertex parameter
      */
     Scalar getParameter(const Vertex& vertex, const std::string& param) const
-    { return (*vertexParameters_)[vertex][parameterIndex(param)]; }
+    { return parameters(vertex)[parameterIndex(param)]; }
 
     /*!
      * \brief Returns the pore label at a given position for a generic grid.
