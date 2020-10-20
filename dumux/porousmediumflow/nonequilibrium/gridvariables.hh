@@ -46,12 +46,14 @@ template<class TypeTag>
 class NonEquilibriumGridVariables
 : public FVGridVariables<GetPropType<TypeTag, Properties::GridGeometry>,
                          GetPropType<TypeTag, Properties::GridVolumeVariables>,
-                         GetPropType<TypeTag, Properties::GridFluxVariablesCache>>
+                         GetPropType<TypeTag, Properties::GridFluxVariablesCache>,
+                         GetPropType<TypeTag, Properties::SolutionVector>>
 {
     using ThisType = NonEquilibriumGridVariables<TypeTag>;
     using ParentType = FVGridVariables<GetPropType<TypeTag, Properties::GridGeometry>,
                                        GetPropType<TypeTag, Properties::GridVolumeVariables>,
-                                       GetPropType<TypeTag, Properties::GridFluxVariablesCache>>;
+                                       GetPropType<TypeTag, Properties::GridFluxVariablesCache>,
+                                       GetPropType<TypeTag, Properties::SolutionVector>>;
 
     using VelocityBackend = PorousMediumFlowVelocity<ThisType, PorousMediumFluxVariables<TypeTag>>;
 
@@ -88,15 +90,15 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             if(isBox && dim == 1)
-                velocity[phaseIdx].resize(this->gridGeometry_->gridView().size(0));
+                velocity[phaseIdx].resize(this->gridGeometry().gridView().size(0));
             else
-                velocity[phaseIdx].resize(this->gridGeometry_->numDofs());
+                velocity[phaseIdx].resize(this->gridGeometry().numDofs());
         }
-        for (const auto& element : elements(this->gridGeometry_->gridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(this->gridGeometry().gridView(), Dune::Partitions::interior))
         {
-            const auto eIdxGlobal = this->gridGeometry_->elementMapper().index(element);
+            const auto eIdxGlobal = this->gridGeometry().elementMapper().index(element);
 
-            auto fvGeometry = localView(*this->gridGeometry_);
+            auto fvGeometry = localView(this->gridGeometry());
             auto elemVolVars = localView(this->curGridVolVars());
             auto elemFluxVarsCache = localView(this->gridFluxVarsCache());
 
