@@ -27,8 +27,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
 /*!
@@ -53,23 +52,16 @@ class InjectionProblemSpatialParams
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
     InjectionProblemSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
     {
         gasWetting_ = getParam<bool>("SpatialParams.GasWetting", false);
-
-        // set Van Genuchten Parameters
-        materialParams_.setSwr(0.1);
-        materialParams_.setSnr(0.0);
-        materialParams_.setVgAlpha(0.0028);
-        materialParams_.setVgn(2.0);
     }
 
     /*!
@@ -104,9 +96,9 @@ public:
      *
      * \param globalPos The global position
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        return materialParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
 
     /*!
@@ -126,7 +118,7 @@ public:
 
 private:
     bool gasWetting_;
-    MaterialLawParams materialParams_;
+    const PcKrSwCurve pcKrSwCurve_;
 };
 
 }
