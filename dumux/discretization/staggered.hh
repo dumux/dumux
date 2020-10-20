@@ -111,8 +111,9 @@ private:
     using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
     using GFVC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
     using GFV = GetPropType<TypeTag, Properties::GridFaceVariables>;
+    using X = GetPropType<TypeTag, Properties::SolutionVector>;
 public:
-    using type = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
+    using type = StaggeredGridVariables<GG, GVV, GFVC, GFV, X>;
 };
 
 //! Use the cell center element boundary types per default

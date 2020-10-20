@@ -24,6 +24,8 @@
 #ifndef DUMUX_STAGGERED_GRID_VARIABLES_HH
 #define DUMUX_STAGGERED_GRID_VARIABLES_HH
 
+#include <type_traits>
+
 #include <dumux/discretization/fvgridvariables.hh>
 
 namespace Dumux {
@@ -93,7 +95,7 @@ public:
 
     //! return the fv grid geometry
     const GridGeometry& gridGeometry() const
-    { return (*gridVariables_->gridGeometry_);    }
+    { return gridVariables_->gridGeometry();    }
 
     // return the actual grid variables
     const ActualGridVariables& gridVariables() const
@@ -189,12 +191,15 @@ public:
  * \tparam GVV the type of the grid volume variables
  * \tparam GFVC the type of the grid flux variables cache
  * \tparam GFV the type of the grid face variables
+ * \tparam X the solution vector type
  */
-template<class GG, class GVV, class GFVC, class GFV>
-class StaggeredGridVariables : public FVGridVariables<GG, GVV, GFVC>
+template<class GG, class GVV, class GFVC, class GFV, class X>
+class StaggeredGridVariables
+: public FVGridVariables< GG, GVV, GFVC, std::decay_t<decltype(std::declval<X>()[GG::cellCenterIdx()])> >
 {
-    using ParentType = FVGridVariables<GG, GVV, GFVC>;
-    using ThisType = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
+    using CellSolutionVector = std::decay_t<decltype(std::declval<X>()[GG::cellCenterIdx()])>;
+    using ParentType = FVGridVariables<GG, GVV, GFVC, CellSolutionVector>;
+    using ThisType = StaggeredGridVariables<GG, GVV, GFVC, GFV, X>;
     friend class StaggeredGridVariablesView<ThisType>;
 
     static constexpr auto cellCenterIdx = GG::cellCenterIdx();
@@ -227,7 +232,7 @@ public:
     void update(const SolutionVector& curSol)
     {
         ParentType::update(curSol[cellCenterIdx]);
-        curGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
+        curGridFaceVariables_.update(this->gridGeometry(), curSol[faceIdx]);
     }
 
     //! initialize all variables (stationary case)
@@ -235,8 +240,8 @@ public:
     void init(const SolutionVector& curSol)
     {
         ParentType::init(curSol[cellCenterIdx]);
-        curGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
-        prevGridFaceVariables_.update(*this->gridGeometry_, curSol[faceIdx]);
+        curGridFaceVariables_.update(this->gridGeometry(), curSol[faceIdx]);
+        prevGridFaceVariables_.update(this->gridGeometry(), curSol[faceIdx]);
     }
 
     //! Sets the current state as the previous for next time step
