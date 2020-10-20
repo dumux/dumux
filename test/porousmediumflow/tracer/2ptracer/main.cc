@@ -206,9 +206,6 @@ int main(int argc, char** argv)
         pOld = p;
         twoPGridVariables->advanceTimeStep();
 
-        // write vtk output
-        twoPVtkWriter.write(timeLoop->time());
-
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
@@ -312,6 +309,7 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         // write vtk output
+        twoPVtkWriter.write(timeLoop->time());
         vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
