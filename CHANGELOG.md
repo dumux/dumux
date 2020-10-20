@@ -22,6 +22,8 @@ as wall topology is not supported for these models with our geometric contraints
 will be checked before the model is run. If either the runtime parameter or the geometry check indicate non-flat walls,
 the model will terminate. To add FlatWallBounded specific output to the vtk output, WriteFlatWallBoundedFields can be set as True.
 - __1d3d coupling__: The kernel coupling manager has been replaced with the one from Koch et al (2020) JCP https://doi.org/10.1016/j.jcp.2020.109370
+- __1d3d coupling__: The average and surface coupling managers has been updated with a slightly more accurate version to compute the stencils and the average operator.
+The results might differ a bit when using coarse grids. However, both version are expected to converge to the same result with grid refinement.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.3:
 
