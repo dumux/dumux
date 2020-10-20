@@ -16,6 +16,11 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
 
 - For the "sequential" models, the property `BoundaryTypes` has been simply renamed to `SequentialBoundaryTypes`
 - __Quadmath__: Dumux::Quad has been removed without deprecation. Use Dune::Float128 instead.
+- Within the RANS group, two additional runtime parameters have been included 'IsFlatWallBounded' and 'WriteFlatWallBoundedFields'.
+For both the K-Epsilon and Zero-eq RANS models the 'IsFlatWallBounded' runtime parameter should be set as True,
+as wall topology is not supported for these models with our geometric contraints. If not set as true, the geometry 
+will be checked before the model is run. If either the runtime parameter or the geometry check indicate non-flat walls, 
+the model will terminate. To add FlatWallBounded specific output to the vtk output, WriteFlatWallBoundedFields can be set as True.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.3:
 
