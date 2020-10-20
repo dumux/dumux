@@ -15,3 +15,9 @@ ResidualReduction = 1e-16
 
 [Newton]
 MaxRelativeShift = 1e-10
+
+[SpatialParams]
+Swr = 0.05
+Snr = 0.0
+VanGenuchtenN = 4.7
+VanGenuchtenAlpha = 0.0037

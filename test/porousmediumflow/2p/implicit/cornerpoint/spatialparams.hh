@@ -29,8 +29,7 @@
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
 
@@ -52,19 +51,18 @@ class TwoPCornerPointTestSpatialParams
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
     TwoPCornerPointTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                                      std::shared_ptr<const Opm::Deck> deck)
     : ParentType(gridGeometry)
     , deck_(deck)
+    , pcCurve_("SpatialParams")
     {
         homogeneous_ = getParam<bool>("Problem.Homogeneous");
 
@@ -115,9 +113,6 @@ public:
             permZ_ = permX_;
         }
 
-        // parameters for the Van Genuchten law
-        materialParams_.setVgAlpha(0.00045);
-        materialParams_.setVgn(7.3);
     }
 
     /*!
@@ -170,11 +165,11 @@ public:
      * \return The material parameters object
      */
     template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    auto fluidMatrixInteraction(const Element& element,
+                                 const SubControlVolume& scv,
+                                 const ElementSolution& elemSol) const
     {
-        return materialParams_;
+        return makeFluidMatrixInteraction(pcCurve_);
     }
 
     /*!
@@ -197,7 +192,7 @@ public:
 
 private:
     std::shared_ptr<const Opm::Deck> deck_; //!< the eclipse deck
-    MaterialLawParams materialParams_;
+    PcKrSwCurve pcCurve_;
     std::vector<Scalar> porosity_;
     std::vector<Scalar> permX_;
     std::vector<Scalar> permZ_;

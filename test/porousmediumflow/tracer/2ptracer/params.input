@@ -10,8 +10,18 @@ Cells = 48 32
 [SpatialParams]
 LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
 LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
-outerK = 1e-09 # [m^2]
-lensK = 1e-12 # [m^2]
+
+[SpatialParams.Lens]
+Swr = 0.18
+VanGenuchtenAlpha = 0.00045
+VanGenuchtenN = 7.3
+Permeability = 1e-12 # [m^2]
+
+[SpatialParams.Outer]
+Swr = 0.05
+VanGenuchtenAlpha = 0.0037
+VanGenuchtenN = 4.7
+Permeability = 1e-09 # [m^2]
 
 [Problem]
 Name = test_2ptracer_lens_tpfa

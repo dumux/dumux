@@ -24,8 +24,7 @@
 #define DUMUX_TEST_TWOP_ROTATIONALSYMMETRY_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux {
 
@@ -38,22 +37,14 @@ class TwoPRotationalSymmetrySpatialParams
 
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 public:
-    using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
     TwoPRotationalSymmetrySpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {
-        // residual saturations
-        materialLawParams_.setSwr(0.0);
-        materialLawParams_.setSnr(0.0);
-
-        // parameters for the material law
-        materialLawParams_.setPe(0.0);
-        materialLawParams_.setLambda(2.0);
-    }
+    ,pcKrSwCurve_("SpatialParams")
+    {}
 
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return 1e-11; }
@@ -61,15 +52,15 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialLawParams_; }
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
+    { return makeFluidMatrixInteraction(pcKrSwCurve_); }
 
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::phase0Idx; }
 
 private:
-    MaterialLawParams materialLawParams_;
+    const PcKrSwCurve pcKrSwCurve_;
 };
 
 } // end namespace Dumux
