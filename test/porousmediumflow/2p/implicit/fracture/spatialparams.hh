@@ -27,9 +27,7 @@
 #define DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 #include <dumux/porousmediumflow/2p/model.hh>
 
@@ -54,27 +52,16 @@ class FractureSpatialParams
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
 public:
     //! export permeability type
     using PermeabilityType = Scalar;
-    //! export the type used for the material law
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     FractureSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {
-        // residual saturations
-        materialParams_.setSwr(0.05);
-        materialParams_.setSnr(0.0);
-
-        // parameters for the Van Genuchten law
-        // alpha and n
-        materialParams_.setVgAlpha(0.0037);
-        materialParams_.setVgn(4.7);
-    }
+    , pcKrSwCurve_("SpatialParams")
+    {}
 
     /*!
      * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
@@ -97,8 +84,8 @@ public:
      *
      * \param globalPos The position at which we evaluate
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialParams_; }
+    auto fluidMatrixInteractionAtPos (const GlobalPosition& globalPos) const
+    { return makeFluidMatrixInteraction(pcKrSwCurve_); }
 
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
@@ -111,7 +98,7 @@ public:
     { return FluidSystem::phase0Idx; }
 
 private:
-    MaterialLawParams materialParams_;
+    PcKrSwCurve pcKrSwCurve_;
 };
 
 } // end namespace Dumux
