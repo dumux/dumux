@@ -136,6 +136,18 @@ decomposition(const V& vec, const std::vector<V>& b, int includeIndex = -1)
         auto costNeg = std::numeric_limits<Scalar>::max();
         auto costNeg2 = std::numeric_limits<Scalar>::max();
 
+        auto positiveInclusion = [&includeIndex](const auto& coeff, int i, int j, int k)
+            {
+                if (includeIndex < 0)
+                    return true;
+                else
+                {
+                    int idx = 1*(j==includeIndex) + 2*(k==includeIndex);
+                    return coeff[idx] > 0;
+                }
+
+            };
+
         for (int i = 0; i < numVectors - 2; ++i)
         {
             for (int j = i+1; j < numVectors - 1; ++j)
@@ -147,16 +159,16 @@ decomposition(const V& vec, const std::vector<V>& b, int includeIndex = -1)
                         continue;
 
                     const auto [valid, coeff] = expressInBasis(vec, b[i], b[j], b[k]);
-                    if (valid && coeff[includeIndex] > 0.0)
+                    if (valid && positiveInclusion(coeff,i,j,k))
                     {
                         using std::signbit;
                         const auto numNeg = std::count_if(coeff.begin(), coeff.end(), [](const auto& c){ return signbit(c); });
                         if (numNeg == 0)
                         {
                             const auto coeffSum = std::accumulate(coeff.begin(), coeff.end(), 0.0);
-                            foundValidPositiveSolution = true;
                             if (coeffSum < cost)
                             {
+                                foundValidPositiveSolution = true;
                                 cost = coeffSum;
                                 bestCoefficients = std::move(coeff);
                                 indices = {i, j, k};
@@ -166,10 +178,10 @@ decomposition(const V& vec, const std::vector<V>& b, int includeIndex = -1)
                         {
                             using std::abs;
                             const auto thisCost = abs(*std::min_element(coeff.begin(), coeff.end()));
-                            foundValidNeg1Solution = true;
 
                             if (thisCost < costNeg)
                             {
+                                foundValidNeg1Solution = true;
                                 costNeg = thisCost;
                                 bestCoefficientsNeg = std::move(coeff);
                                 indicesNeg = {i, j, k};
@@ -181,10 +193,10 @@ decomposition(const V& vec, const std::vector<V>& b, int includeIndex = -1)
                             auto coeffSorted = coeff;
                             std::sort(coeffSorted.begin(), coeffSorted.end());
                             const auto thisCost = coeffSorted[0]*coeffSorted[0] + coeffSorted[1]*coeffSorted[1];
-                            foundValidNeg2Solution = true;
 
                             if (thisCost < costNeg2)
                             {
+                                foundValidNeg2Solution = true;
                                 costNeg2 = thisCost;
                                 bestCoefficientsNeg2 = std::move(coeff);
                                 indicesNeg2 = {i, j, k};
