@@ -45,6 +45,33 @@
 // the problem definitions
 #include "problem.hh"
 
+//! Custom assembler to test assembly with grid variables
+template<class Assembler>
+class GridVarsAssembler : public Assembler
+{
+public:
+    using Assembler::Assembler;
+    using typename Assembler::GridVariables;
+    using typename Assembler::ResidualType;
+
+    using Variables = GridVariables;
+
+    void assembleJacobianAndResidual(const GridVariables& gridVars)
+    {
+        Assembler::assembleJacobianAndResidual(gridVars.dofs());
+    }
+
+    void assembleResidual(const GridVariables& gridVars)
+    {
+        Assembler::assembleResidual(gridVars.dofs());
+    }
+
+    auto residualNorm(const GridVariables& gridVars)
+    {
+        return Assembler::residualNorm(gridVars.dofs());
+    }
+};
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -84,17 +111,15 @@ int main(int argc, char** argv)
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x;
-    problem->applyInitialSolution(x);
-    auto xOld = x;
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    const auto init = [problem] (auto& x) { problem->applyInitialSolution(x); };
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry, init);
+    auto xOld = gridVariables->dofs();
 
     // intialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, gridVariables->dofs(), problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     // Add model specific output fields
@@ -110,7 +135,7 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = GridVarsAssembler<FVAssembler<TypeTag, DiffMethod::numeric>>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
@@ -125,10 +150,10 @@ int main(int argc, char** argv)
     timeLoop->start(); do
     {
         // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop);
+        nonLinearSolver.solve(*gridVariables, *timeLoop);
 
         // make the new solution the old solution
-        xOld = x;
+        xOld = gridVariables->dofs();
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
