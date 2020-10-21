@@ -863,19 +863,7 @@ protected:
                                                       this->assembler().gridVariables(),
                                                       vars);
         else
-        {
-            // TODO: Non-const solution is expected, so here we introduce an additional copy!?
-            auto uCurrentIter = Backend::getDofVector(vars);
-            priVarSwitch_->updateDirichletConstraints(problem, gridGeometry, vars, uCurrentIter);
-
-            // TODO: This is now an overhead. Both the variables and solution have been modified
-            //       above, but the solution inside the variables might not be in sync with
-            //       uCurrentIter. Therefore, we need access to non-const dofs from the variables,
-            //       or modify the privarswitch functions, or have the possibility to update only
-            //       the dofs of a variables object.
-            //       We could also call privarswitch on a copy of variables and then copy back here
-            solutionChanged_(vars, uCurrentIter);
-        }
+            priVarSwitch_->updateDirichletConstraints(problem, gridGeometry, vars, Backend::getDofVector(vars));
     }
 
     /*!
@@ -916,28 +904,19 @@ protected:
         else
         {
             // invoke the primary variable switch
-            auto uCurrentIter = Backend::getDofVector(vars);
-            priVarsSwitchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, vars, problem, gridGeometry);
+            priVarsSwitchedInLastIteration_ = priVarSwitch_->update(Backend::getDofVector(vars), vars, problem, gridGeometry);
 
             if (priVarsSwitchedInLastIteration_)
             {
                 for (const auto& element : elements(gridGeometry.gridView()))
                 {
                     // if the volume variables are cached globally, we need to update those where the primary variables have been switched
-                    priVarSwitch_->updateSwitchedVolVars(problem, element, gridGeometry, vars, uCurrentIter);
+                    priVarSwitch_->updateSwitchedVolVars(problem, element, gridGeometry, vars, Backend::getDofVector(vars));
 
                     // if the flux variables are cached globally, we need to update those where the primary variables have been switched
-                    priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, gridGeometry, vars, uCurrentIter);
+                    priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, gridGeometry, vars, Backend::getDofVector(vars));
                 }
             }
-
-            // TODO: This is now an overhead. Both the variables and solution have been modified
-            //       above, but the solution inside the variables might not be in sync with
-            //       uCurrentIter. Therefore, we need access to non-const dofs from the variables,
-            //       or modify the privarswitch functions, or have the possibility to update only
-            //       the dofs of a variables object.
-            //       We could also call privarswitch on a copy of variables and then copy back here
-            solutionChanged_(vars, uCurrentIter);
         }
     }
 
