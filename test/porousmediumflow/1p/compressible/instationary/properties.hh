@@ -27,17 +27,18 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/discretization/fvgridvariables.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 
 #include "problem.hh"
 #include "spatialparams.hh"
+#include "gridvariables.hh"
 
 namespace Dumux::Properties {
 // create the type tag nodes
@@ -76,6 +77,21 @@ public:
     using type = FluidSystems::OnePLiquid<Scalar, Components::TabulatedComponent<Components::H2O<Scalar>>>;
 };
 
+// use the new experimental grid variables as we test the new experimental gridvars-based-assembly here
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::OnePCompressible>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
+    using GFC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using Base = Dumux::FVGridVariables<GG, GVV, GFC>;
+    using X = GetPropType<TypeTag, Properties::SolutionVector>;
+
+public:
+    using type = Dumux::OnePCompressibleTest::TestGridVariables<GG, Base, X>;
+};
+
 // Disable caching (for testing purposes)
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
@@ -83,6 +99,7 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::OnePCompressible> { static constexpr bool value = false; };
-}
+
+} // end namespace Dumux::Properties
 
 #endif

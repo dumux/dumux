@@ -46,6 +46,7 @@
 #include <dumux/io/grid/gridmanager.hh>
 
 #include "properties.hh"
+#include "assembler.hh"
 
 int main(int argc, char** argv)
 {
@@ -98,8 +99,7 @@ int main(int argc, char** argv)
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry, x);
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
     auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
     // intialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, gridVariables->dofs(), problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
@@ -120,7 +120,8 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using BaseAssembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = Dumux::OnePCompressibleTest::GridVarsAssembler<BaseAssembler>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
@@ -138,11 +139,10 @@ int main(int argc, char** argv)
     timeLoop->start(); do
     {
         // linearize & solve
-        nonLinearSolver.solve(x, *timeLoop);
+        nonLinearSolver.solve(*gridVariables, *timeLoop);
 
         // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
+        xOld = gridVariables->dofs();
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
