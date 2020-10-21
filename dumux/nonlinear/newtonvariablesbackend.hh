@@ -24,29 +24,41 @@
 #ifndef DUMUX_NEWTON_VARIABLES_BACKEND_HH
 #define DUMUX_NEWTON_VARIABLES_BACKEND_HH
 
+#include <array>
+#include <utility>
 #include <type_traits>
+
+#include <dune/common/indices.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/type_traits.hh>
+#include <dune/istl/bvector.hh>
+
+// forward declaration
+namespace Dune {
+
+template<class... Args>
+class MultiTypeBlockVector;
+
+} // end namespace Dune
 
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup Nonlinear
- * \brief Class providing operations with variables needed in the Newton solver
+ * \brief Class providing operations with primary variable vectors
  */
-template<class Variables, class Enable = Variables>
-class NewtonVariablesBackend;
+template<class DofVector, class Enable = void>
+class NewtonDofBackend;
 
 /*!
- * \file
  * \ingroup Nonlinear
- * \brief Class providing Newton operations for scalar/number types
+ * \brief Specialization providing Newton operations for scalar/number types
  */
 template<class Scalar>
-class NewtonVariablesBackend<Scalar, std::enable_if_t<Dune::IsNumber<Scalar>::value, Scalar>>
+class NewtonDofBackend<Scalar, std::enable_if_t<Dune::IsNumber<Scalar>::value, Scalar>>
 {
 public:
-    using Variables = Scalar; //!< the type of the variables object
     using DofVector = Scalar; //!< the type of the dofs parametrizing the variables object
 
     static std::size_t size(const DofVector& d)
@@ -57,29 +69,132 @@ public:
 
     static DofVector makeZeroDofVector(std::size_t size)
     { return 0.0; }
+};
 
-    static Scalar makeDofVectorForSolver(const DofVector& d)
+/*!
+ * \ingroup Nonlinear
+ * \brief Specialization providing Newton operations for block vectors
+ */
+template<class BT>
+class NewtonDofBackend<Dune::BlockVector<BT>>
+{
+
+public:
+    using DofVector = Dune::BlockVector<BT>; //!< the type of the dofs parametrizing the variables object
+
+    static std::size_t size(const DofVector& d)
+    { return d.size(); }
+
+    static DofVector makeDofVector(const DofVector& d)
     { return d; }
 
-    static Scalar makeZeroDofVectorForSolver(std::size_t size)
-    { return 0.0; }
+    static DofVector makeZeroDofVector(std::size_t size)
+    { DofVector d; d.resize(size); return d; }
+};
 
-    static Scalar reconstructDofVectorFromSolver(const Scalar& d)
-    { return d; }
+/*!
+ * \ingroup Nonlinear
+ * \brief Specialization providing Newton operations for multitype block vectors
+ */
+template<class... Blocks>
+class NewtonDofBackend<Dune::MultiTypeBlockVector<Blocks...>>
+{
+    using DV = Dune::MultiTypeBlockVector<Blocks...>;
+    static constexpr auto numBlocks = DV::size();
 
-    static Scalar maxRelativeShift(const DofVector& previous, const DofVector& delta)
+    using VectorSizeInfo = std::array<std::size_t, numBlocks>;
+
+public:
+    using DofVector = DV; //!< the type of the dofs parametrizing the variables object
+
+    static VectorSizeInfo size(const DofVector& d)
     {
-        const auto current = previous - delta;
-        using std::abs; using std::max;
-        auto error = abs(previous - current);
-        error /= max<Scalar>(1.0, abs(previous + current)/2.0);
-        return error;
+        VectorSizeInfo result;
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numBlocks>{}, [&](auto i) {
+            result[i] = d[Dune::index_constant<i>{}].size();
+        });
+        return result;
     }
 
-    // //! operations on variables
-    // static DofVector& getDofVector(Variables& v)
-    // { return v; }
+    static DofVector makeDofVector(const DofVector& d)
+    { return d; }
+
+    static DofVector makeZeroDofVector(const VectorSizeInfo& size)
+    {
+        DofVector result;
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numBlocks>{}, [&](auto i) {
+            result[Dune::index_constant<i>{}].resize(size[i]);
+        });
+        return result;
+    }
 };
+
+namespace Impl {
+
+template<class Vars>
+using SolutionVectorType = typename Vars::SolutionVector;
+
+template<class Vars, bool varsExportSolution>
+class NewtonVariablesBackend;
+
+/*!
+ * \ingroup Nonlinear
+ * \brief Class providing Newton operations for scalar/number types
+ * \note We assume the variables being simply a dof vector if we
+ *       do not find the variables class to export `SolutionVector`.
+ */
+template<class Vars>
+class NewtonVariablesBackend<Vars, false>
+: public NewtonDofBackend<Vars>
+{
+    using ParentType = NewtonDofBackend<Vars>;
+
+public:
+    using Variables = Vars;
+    using typename ParentType::DofVector;
+
+    static void update(Variables& v, const DofVector& dofs)
+    { v = dofs; }
+
+    //! operations on variables
+    static const DofVector& getDofVector(const Variables& v)
+    { return v; }
+};
+
+/*!
+ * \file
+ * \ingroup Nonlinear
+ * \brief Class providing Newton operations for generic variable
+ *        types, possibly containing also secondary variables.
+ */
+template<class Vars>
+class NewtonVariablesBackend<Vars, true>
+: public NewtonDofBackend<typename Vars::SolutionVector>
+{
+public:
+    using DofVector = typename Vars::SolutionVector;
+    using Variables = Vars; //!< the type of the variables object
+
+    static void update(Variables& v, const DofVector& dofs)
+    { v.update(dofs); }
+
+    //! operations on variables
+    static const DofVector& getDofVector(const Variables& v)
+    { return v.dofs(); }
+};
+} // end namespace Impl
+
+/*!
+ * \ingroup Nonlinear
+ * \brief Class providing Newton operations for generic variable classes
+ *        that represent the state of a numerical solution, possibly
+ *        consisting of primary/secondary variables and information on
+ *        the time level.
+ */
+template<class Vars>
+using NewtonVariablesBackend = Impl::NewtonVariablesBackend<Vars, Dune::Std::is_detected_v<Impl::SolutionVectorType, Vars>>;
 
 } // end namespace Dumux
 
