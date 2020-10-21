@@ -32,6 +32,7 @@ add_subdirectory(doc)
 add_subdirectory(dumux)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 add_subdirectory(examples EXCLUDE_FROM_ALL)
+add_subdirectory(application)
 
 # if Python bindings are enabled, include necessary sub directories.
 if(DUNE_ENABLE_PYTHONBINDINGS)
