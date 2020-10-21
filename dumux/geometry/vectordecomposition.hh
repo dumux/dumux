@@ -103,9 +103,15 @@ decomposition(const V& vec, const std::vector<V>& b, int includeIndex = -1)
     std::array<int, dim> indices; indices.fill(0);
 
     {
-        const auto [valid, coeff] = expressInBasis(vec, b[0]);
-        if (valid && coeff[0] > 0.0)
-            return { std::move(indices), std::move(coeff), 1 };
+        for (int i = 0; i < b.size(); ++i)
+        {
+            const auto [valid, coeff] = expressInBasis(vec, b[i]);
+            if (valid && coeff[0] > 0.0)
+            {
+                indices = {i, 0, 0};
+                return { std::move(indices), std::move(coeff), 1 };
+            }
+        }
     }
 
     if constexpr (dim == 3)
@@ -141,7 +147,7 @@ decomposition(const V& vec, const std::vector<V>& b, int includeIndex = -1)
                         continue;
 
                     const auto [valid, coeff] = expressInBasis(vec, b[i], b[j], b[k]);
-                    if (valid)
+                    if (valid && coeff[includeIndex] > 0.0)
                     {
                         using std::signbit;
                         const auto numNeg = std::count_if(coeff.begin(), coeff.end(), [](const auto& c){ return signbit(c); });
@@ -196,7 +202,13 @@ decomposition(const V& vec, const std::vector<V>& b, int includeIndex = -1)
         else if (foundValidNeg2Solution)
             return { std::move(indicesNeg2), std::move(bestCoefficientsNeg2), 3 };
         else
+        {
+            std::cout << "Found no decomposition of vector " << vec << " with\n";
+            for (auto&& bb : b)
+                std::cout << bb << " ;;; ";
+            std::cout << std::endl;
             return { std::move(indices), std::move(bestCoefficients), 0 };
+        }
     }
     else
         DUNE_THROW(Dune::NotImplemented, "Vector decomposition for dim = " << dim);

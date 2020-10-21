@@ -244,9 +244,21 @@ public:
                         } );
 
         auto beta = std::max(0.0, std::min(betaIJ,betaJI));
-        if(beta < 1e-30)
+        if(beta < 1e-30){
+            std::cout << "#####################################" << std::endl;
+            std::cout << "insideScvIdx: "  << scvf.insideScvIdx() << " outsideScvIdx: "  << scvf.outsideScvIdx() << std::endl;
+            std::cout << "betaIJ: " << betaIJ << " betaJI: " << betaJI << std::endl;
+            std::cout << "stencilIJ: " << std::endl;
+            for (auto e: dIJ)
+                std::cout << " index: " << e.index << " coeff: " << e.coefficient;
+            std::cout << std::endl;
+            std::cout << "stencilJI: " << std::endl;
+            for (auto e: dJI)
+                std::cout << " index: " << e.index << " coeff: " << e.coefficient;
+            std::cout << std::endl;
+            std::cout << "#####################################" << std::endl;
             DUNE_THROW(Dune::InvalidStateException, "Beta coefficient must be greater than zero for NLMPFA");
-
+        }
         fluxIJ += (betaIJ - beta)*(sI - sJ);
         fluxJI += (betaJI - beta)*(sJ - sI);
 

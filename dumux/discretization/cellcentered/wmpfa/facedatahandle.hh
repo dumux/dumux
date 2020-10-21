@@ -114,23 +114,26 @@ public:
             std::vector<Scalar> vCoeff(coeff.begin(), coeff.begin()+size);
             std::vector<int> vIndices(indices.begin(), indices.begin()+size);
             WMpfaHelper::eraseZeros(vCoeff, vIndices);
-
-            // std::cout << "neoghbor vector: " << distVectors[scvf.localIndex()] << "\n";
-            //
-            // std::cout << "coeffs: ";
-            // for (auto c : vCoeff)
-            //     std::cout << c << " ";
-            // std::cout << "\n";
-            // std::cout << "vectors: ";
-            // for (auto i : vIndices)
-            //     std::cout << distVectors[i] << " ";
-            // std::cout << "\n";
-            //
-            // auto v = coNormal; v = 0;
-            // for (int i = 0; i < vCoeff.size(); ++i)
-            //     v.axpy(vCoeff[i], distVectors[vIndices[i]]);
-            // std::cout << "cornormal: " << coNormal << ", decomp: " << v << ", norm: " << (coNormal-v).two_norm() << std::endl;
-
+            if (1 == std::count_if(vCoeff.begin(), vCoeff.end(), [](const auto& c){ return std::signbit(c); }) || scvf.insideScvIdx() == 86)
+            {
+                std::cout << "\n\nFound one negative coefficient---------------------------------------\n";
+                std::cout << "neoghbor vector: " << distVectors[scvf.localIndex()] << "\n";
+                std::cout << "insideScvIdx: " << scvf.insideScvIdx() << "\n";
+                std::cout << "outsideScvIdx: " << scvf.outsideScvIdx() << "\n";
+                std::cout << "coeffs: ";
+                for (auto c : vCoeff)
+                    std::cout << c << " ";
+                std::cout << "\n";
+                std::cout << "vectors: ";
+                for (auto i : vIndices)
+                    std::cout << distVectors[i] << " ";
+                std::cout << "\n";
+                auto v = coNormal; v = 0;
+                for (int i = 0; i < vCoeff.size(); ++i)
+                    v.axpy(vCoeff[i], distVectors[vIndices[i]]);
+                std::cout << "cornormal: " << coNormal << ", decomp: " << v << ", norm: " << (coNormal-v).two_norm() << std::endl;
+                std::cout << "-------------------------------------" << std::endl;
+            }
             updateEntries(problem, intOp, vIndices, vCoeff, fvGeometry, scvf);
         }
     }
