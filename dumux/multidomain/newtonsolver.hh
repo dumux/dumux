@@ -50,7 +50,10 @@ template <class Assembler, class LinearSolver, class CouplingManager,
 class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>
 {
     using ParentType = NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>;
-    using SolutionVector = typename Assembler::ResidualType;
+    using typename ParentType::Backend;
+    using typename ParentType::SolutionVector;
+
+    static constexpr bool assemblerExportsVariables = Impl::exportsVariables<Assembler>;
 
     template<std::size_t i>
     using PrimaryVariableSwitch = typename Detail::GetPVSwitchMultiDomain<Assembler, i>::type;
@@ -63,6 +66,7 @@ class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reas
     using PriVarSwitchPtrTuple = typename Assembler::Traits::template Tuple<PrivarSwitchPtr>;
 
 public:
+    using typename ParentType::Variables;
 
     /*!
      * \brief The constructor
@@ -89,10 +93,10 @@ public:
     /*!
      * \brief Indicates the beginning of a Newton iteration.
      */
-    void newtonBeginStep(const SolutionVector& uCurrentIter) override
+    void newtonBeginStep(const Variables& varsCurrentIter) override
     {
-        ParentType::newtonBeginStep(uCurrentIter);
-        couplingManager_->updateSolution(uCurrentIter);
+        ParentType::newtonBeginStep(varsCurrentIter);
+        couplingManager_->updateSolution(Backend::getDofVector(varsCurrentIter));
     }
 
     /*!
@@ -102,14 +106,14 @@ public:
      *
      * \param u The initial solution
      */
-    void newtonBegin(SolutionVector& u) override
+    void newtonBegin(Variables& vars) override
     {
-        ParentType::newtonBegin(u);
+        ParentType::newtonBegin(vars);
 
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            this->initPriVarSwitch_(u, id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
+            this->initPriVarSwitch_(vars, id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
         });
     }
 
@@ -129,19 +133,24 @@ public:
     /*!
      * \brief Indicates that one Newton iteration was finished.
      *
-     * \param uCurrentIter The solution after the current Newton iteration
+     * \param varsCurrentIter The variables after the current Newton iteration
      * \param uLastIter The solution at the beginning of the current Newton iteration
      */
-    void newtonEndStep(SolutionVector &uCurrentIter, const SolutionVector &uLastIter) override
+    void newtonEndStep(Variables& varsCurrentIter, const SolutionVector& uLastIter) override
     {
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            this->invokePriVarSwitch_(uCurrentIter[id], id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
+            auto& uCurrentIter = Backend::getDofVector(varsCurrentIter)[id];
+            if constexpr (!assemblerExportsVariables)
+                this->invokePriVarSwitch_(this->assembler().gridVariables(id),
+                                          uCurrentIter, id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
+            else
+                this->invokePriVarSwitch_(varsCurrentIter[id], uCurrentIter, id, HasPriVarsSwitch<std::decay_t<decltype(id)>::value>{});
         });
 
-        ParentType::newtonEndStep(uCurrentIter, uLastIter);
-        couplingManager_->updateSolution(uCurrentIter);
+        ParentType::newtonEndStep(varsCurrentIter, uLastIter);
+        couplingManager_->updateSolution(Backend::getDofVector(varsCurrentIter));
     }
 
 private:
@@ -150,60 +159,61 @@ private:
      * \brief Reset the privar switch state, noop if there is no priVarSwitch
      */
     template<std::size_t i>
-    void initPriVarSwitch_(SolutionVector&, Dune::index_constant<i> id, std::false_type) {}
+    void initPriVarSwitch_(Variables&, Dune::index_constant<i> id, std::false_type) {}
 
     /*!
      * \brief Switch primary variables if necessary
      */
     template<std::size_t i>
-    void initPriVarSwitch_(SolutionVector& sol, Dune::index_constant<i> id, std::true_type)
+    void initPriVarSwitch_(Variables& vars, Dune::index_constant<i> id, std::true_type)
     {
         using namespace Dune::Hybrid;
         auto& priVarSwitch = *elementAt(priVarSwitches_, id);
+        auto& sol = Backend::getDofVector(vars)[id];
 
-        priVarSwitch.reset(sol[id].size());
+        priVarSwitch.reset(sol.size());
         priVarsSwitchedInLastIteration_[i] = false;
 
         const auto& problem = this->assembler().problem(id);
         const auto& gridGeometry = this->assembler().gridGeometry(id);
-        auto& gridVariables = this->assembler().gridVariables(id);
-        priVarSwitch.updateDirichletConstraints(problem, gridGeometry, gridVariables, sol[id]);
+        if constexpr (!assemblerExportsVariables)
+            priVarSwitch.updateDirichletConstraints(problem, gridGeometry, this->assembler().gridVariables(id), sol);
+        else // This expects usage of MultiDomainGridVariables
+            priVarSwitch.updateDirichletConstraints(problem, gridGeometry, vars[id], sol[id]);
     }
 
     /*!
      * \brief Switch primary variables if necessary, noop if there is no priVarSwitch
      */
-    template<class SubSol, std::size_t i>
-    void invokePriVarSwitch_(SubSol&, Dune::index_constant<i> id, std::false_type) {}
+    template<class SubVars, class SubSol, std::size_t i>
+    void invokePriVarSwitch_(SubVars&, SubSol&, Dune::index_constant<i> id, std::false_type) {}
 
     /*!
      * \brief Switch primary variables if necessary
      */
-    template<class SubSol, std::size_t i>
-    void invokePriVarSwitch_(SubSol& uCurrentIter, Dune::index_constant<i> id, std::true_type)
+    template<class SubVars, class SubSol, std::size_t i>
+    void invokePriVarSwitch_(SubVars& subVars, SubSol& uCurrentIter, Dune::index_constant<i> id, std::true_type)
     {
         // update the variable switch (returns true if the pri vars at at least one dof were switched)
         // for disabled grid variable caching
         const auto& gridGeometry = this->assembler().gridGeometry(id);
         const auto& problem = this->assembler().problem(id);
-        auto& gridVariables = this->assembler().gridVariables(id);
 
         using namespace Dune::Hybrid;
         auto& priVarSwitch = *elementAt(priVarSwitches_, id);
 
         // invoke the primary variable switch
-        priVarsSwitchedInLastIteration_[i] = priVarSwitch.update(uCurrentIter, gridVariables,
-                                                                 problem, gridGeometry);
+        priVarsSwitchedInLastIteration_[i] = priVarSwitch.update(uCurrentIter, subVars, problem, gridGeometry);
 
         if (priVarsSwitchedInLastIteration_[i])
         {
             for (const auto& element : elements(gridGeometry.gridView()))
             {
                 // if the volume variables are cached globally, we need to update those where the primary variables have been switched
-                priVarSwitch.updateSwitchedVolVars(problem, element, gridGeometry, gridVariables, uCurrentIter);
+                priVarSwitch.updateSwitchedVolVars(problem, element, gridGeometry, subVars, uCurrentIter);
 
                 // if the flux variables are cached globally, we need to update those where the primary variables have been switched
-                priVarSwitch.updateSwitchedFluxVarsCache(problem, element, gridGeometry, gridVariables, uCurrentIter);
+                priVarSwitch.updateSwitchedFluxVarsCache(problem, element, gridGeometry, subVars, uCurrentIter);
             }
         }
     }
