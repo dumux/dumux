@@ -155,11 +155,16 @@ public:
     using Variables = Vars;
     using typename ParentType::DofVector;
 
+    //! update to new solution vector
     static void update(Variables& v, const DofVector& dofs)
     { v = dofs; }
 
-    //! operations on variables
+    //! return const reference to dof vector
     static const DofVector& getDofVector(const Variables& v)
+    { return v; }
+
+    //! return reference to dof vector
+    static DofVector& getDofVector(Variables& v)
     { return v; }
 };
 
@@ -177,11 +182,16 @@ public:
     using DofVector = typename Vars::SolutionVector;
     using Variables = Vars; //!< the type of the variables object
 
+    //! update to new solution vector
     static void update(Variables& v, const DofVector& dofs)
     { v.update(dofs); }
 
-    //! operations on variables
+    //! return const reference to dof vector
     static const DofVector& getDofVector(const Variables& v)
+    { return v.dofs(); }
+
+    //! return reference to dof vector
+    static DofVector& getDofVector(Variables& v)
     { return v.dofs(); }
 };
 } // end namespace Impl
