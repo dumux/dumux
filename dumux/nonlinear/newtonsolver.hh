@@ -177,9 +177,12 @@ template <class Assembler, class LinearSolver,
 class NewtonSolver : public PDESolver<Assembler, LinearSolver>
 {
     using ParentType = PDESolver<Assembler, LinearSolver>;
+
+protected:
     using Backend = NewtonVariablesBackend<typename ParentType::Variables>;
     using SolutionVector = typename Backend::DofVector;
 
+private:
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
