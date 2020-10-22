@@ -35,6 +35,19 @@ dumux_add_test(NAME test_1p_incompressible_tpfa_quad
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_quad-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_quad params.input -Problem.Name test_1p_incompressible_tpfa_quad")
 
+# using tpfa, analytical Jacobian and Trilinos solver
+dumux_add_test(NAME test_1p_incompressible_tpfa_trilinos
+              LABELS porousmediumflow 1p
+              SOURCES main.cc
+              CMAKE_GUARD HAVE_TRILINOS
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa NUMDIFFMETHOD=DiffMethod::analytic SOLVERBACKEND=TrilinosSolverBackend
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_trilinos-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_trilinos params.input -Problem.Name test_1p_incompressible_tpfa_trilinos")
+target_link_libraries(test_1p_incompressible_tpfa_trilinos /usr/lib/x86_64-linux-gnu/libmpi_cxx.so)
+
 # using mpfa and analytical Jacobian
 dumux_add_test(NAME test_1p_incompressible_mpfa
               TARGET test_1p_incompressible_mpfa_anadiff
