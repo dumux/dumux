@@ -167,7 +167,10 @@ class MultiStageTimeStepper
 {
     using Scalar = typename PDESolver::Assembler::Scalar;
     using SolutionVector = typename PDESolver::Assembler::ResidualType;
+    using Variables = typename PDESolver::Assembler::Variables;
     using Solutions = MultiStageSolutions<SolutionVector>;
+
+    using StageParams = MultiStageParams<Scalar>;
 
 public:
 
@@ -185,13 +188,16 @@ public:
 
     /*!
      * \brief Advance one time step of the given time loop
-     * \param x The container in which to write the solution of the next time step.
-     *          This is also used as the initial guess.
+     * \param x The solution at the current time level. This is used as an initial
+     *          guess during time integration, and the result is stored in that vector.
+     * \params vars The variables object at the current time level. This is expected
+     *              to correpond to the given solution vector, and after successful
+     *              time integration this holds the state of the new time level.
      * \param t The current time level
      * \param dt The time step size to be used
      * TODO: Add time step control if the pde solver doesn't converge
      */
-    void step(SolutionVector& x, const Scalar t, const Scalar dt)
+    void step(SolutionVector& x, Variables& vars, const Scalar t, const Scalar dt)
     {
         const auto numStages = msMethod_->numStages();
         Solutions solutions(numStages);
@@ -199,8 +205,12 @@ public:
         // The solution of stage zero is oldOld (\f$ x^{n}\f$).
         solutions.createSolution(x);
 
-        // make sure the assembler gets rid of stuff from the last time integration
-        pdeSolver_->assembler().prepareTimeIntegration(numStages);
+        // 0-th stage does not require solve, so we just call prepare and register
+        // This makes sure the assembler is prepared for time integration and the
+        // 0-th stage is registered
+        auto stageParams = std::make_shared<StageParams>(*msMethod_, 0, t, dt);
+        pdeSolver_->assembler().prepareStage(solutions.back(), vars, stageParams);
+        pdeSolver_->assembler().registerStage(solutions.back(), vars);
 
         // For each intermediate stage we solve for the stage solution.
         // In the last stage (stageIdx = numStages), we obtain the solution (\f$ x^{n+1}\f$)
@@ -216,13 +226,16 @@ public:
                 solutions.createSolution(solutions[stageIdx-1]);
 
             // extract parameters for this stage from the time stepping method
-            auto stageParams = std::make_shared<MultiStageParams<Scalar>>(*msMethod_, stageIdx, t, dt);
+            stageParams = std::make_shared<StageParams>(*msMethod_, stageIdx, t, dt);
 
             // prepare the assembler for this stage
-            pdeSolver_->assembler().prepareStage(solutions, stageParams);
+            pdeSolver_->assembler().prepareStage(solutions.back(), vars, stageParams);
 
             // assemble & solve
-            pdeSolver_->solve(solutions.back());
+            pdeSolver_->solve(solutions.back(), vars);
+
+            // register the result of this stage
+            pdeSolver_->assembler().registerStage(solutions.back(), vars);
         }
     }
 
