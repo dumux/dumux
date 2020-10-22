@@ -46,7 +46,9 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/mpfa/scvgradients.hh>
 
-#include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/assembler.hh>
+#include <dumux/assembly/fv/localoperator.hh>
+#include <dumux/porousmediumflow/immiscible/operators.hh>
 
 #include "properties.hh"
 #include "problem.hh"
@@ -118,17 +120,14 @@ int main(int argc, char** argv)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // the solution vector
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
-
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    auto initX = [&] (auto& x) { x.resize(gridGeometry->numDofs()); x = 0.0; };
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry, initX);
 
     // intialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, gridVariables->dofs(), problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
@@ -136,15 +135,23 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // create assembler & linear solver
-    using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+    // TODO: The operators or local operator could be a property, just as is LocalResidual currently
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using ElemVariables = typename GridVariables::LocalView;
+
+    using ImmiscibleOperators = FVImmiscibleOperators<ModelTraits, FluxVariables, ElemVariables>;
+    using LocalOperator = FVLocalOperator<ElemVariables, ImmiscibleOperators>;
+
+    using Assembler = Assembler<LocalOperator, NUMDIFFMETHOD>;
+    auto assembler = std::make_shared<Assembler>(gridGeometry);
 
     using LinearSolver = SSORCGBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // solver the linear problem
     LinearPDESolver solver(assembler, linearSolver);
-    solver.solve(x);
+    solver.solve(*gridVariables);
 
     // output result to vtk
     vtkWriter.write(1.0);
@@ -178,7 +185,7 @@ int main(int argc, char** argv)
             auto elemFluxVarsCache = localView(gridVariables->gridFluxVarsCache());
 
             fvGeometry.bind(element);
-            elemVolVars.bind(element, fvGeometry, x);
+            elemVolVars.bind(element, fvGeometry, gridVariables->dofs());
             elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             velocityOutput.calculateVelocity(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, 0);
@@ -201,7 +208,7 @@ int main(int argc, char** argv)
 
     // For the mpfa test, write out the gradients in the scv centers
     if (getParam<bool>("IO.WriteMpfaVelocities", false))
-        writeMpfaVelocities(*gridGeometry, *gridVariables, x);
+        writeMpfaVelocities(*gridGeometry, *gridVariables, gridVariables->dofs());
 
     if (mpiHelper.rank() == 0)
         Parameters::print();
