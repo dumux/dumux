@@ -49,4 +49,5 @@ timemanager.hh
 valgrind.hh
 variablelengthspline_.hh
 variables.hh
+variablesbackend.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common)
