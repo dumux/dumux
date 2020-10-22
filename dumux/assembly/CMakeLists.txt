@@ -1,4 +1,5 @@
 install(FILES
+assembler.hh
 boxlocalassembler.hh
 boxlocalresidual.hh
 cclocalassembler.hh
@@ -10,6 +11,7 @@ fvlocalassemblerbase.hh
 fvlocalresidual.hh
 initialsolution.hh
 jacobianpattern.hh
+localassembler.hh
 numericepsilon.hh
 partialreassembler.hh
 staggeredfvassembler.hh
