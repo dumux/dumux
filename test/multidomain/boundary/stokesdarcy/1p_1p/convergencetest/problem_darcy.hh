@@ -29,6 +29,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -45,7 +46,9 @@ class DarcySubProblem;
 namespace Properties {
 // Create new type tags
 namespace TTag {
-struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+struct DarcyOneP { using InheritsFrom = std::tuple<OneP>; };
+struct DarcyOnePBox { using InheritsFrom = std::tuple<DarcyOneP, BoxModel>; };
+struct DarcyOnePCC { using InheritsFrom = std::tuple<DarcyOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -171,17 +174,41 @@ public:
         return values;
     }
 
-        /*!
+    /*!
+      * \brief Specifies which kind of boundary condition should be
+      *        used for which equation on a given boundary control volume.
+      *
+      * \param element The element
+      * \param scv The boundary sub control volume
+      */
+    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume &scv) const
+    {
+        BoundaryTypes values;
+
+        values.setAllDirichlet();
+
+        auto fvGeometry = localView(this->gridGeometry());
+        fvGeometry.bindElement(element);
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, element, scvf))
+            {
+                values.setAllCouplingNeumann();
+            }
+        }
+        return values;
+    }
+
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
-     * \param element The element for which the Dirichlet boundary condition is set
-     * \param scvf The boundary subcontrolvolumeface
+     * \param globalPos The position for which the Dirichlet value is set
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        const auto p = analyticalSolution(scvf.center())[pressureIdx];
+        const auto p = analyticalSolution(globalPos)[pressureIdx];
         return PrimaryVariables(p);
     }
 
@@ -205,8 +232,8 @@ public:
     {
         NumEqVector values(0.0);
 
-        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
-            values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf);
+        if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, element, scvf))
+            values[Indices::conti0EqIdx] = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
         return values;
     }
