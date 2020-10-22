@@ -83,7 +83,7 @@ void testFickianContainer()
             }
         }
     }
-};
+}
 
 template<class Container, int numPhases, int numComponents>
 void testMSContainer()
@@ -118,7 +118,7 @@ void testMSContainer()
             }
         }
     }
-};
+}
 
 template<int numComponents, int numPhases>
 using FickDC = Dumux::FickianDiffusionCoefficients<int, numComponents, numPhases>;
