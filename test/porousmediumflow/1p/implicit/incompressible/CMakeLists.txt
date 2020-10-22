@@ -46,7 +46,6 @@ dumux_add_test(NAME test_1p_incompressible_tpfa_trilinos
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_trilinos-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_trilinos params.input -Problem.Name test_1p_incompressible_tpfa_trilinos")
-target_link_libraries(test_1p_incompressible_tpfa_trilinos /usr/lib/x86_64-linux-gnu/libmpi_cxx.so)
 
 # using mpfa and analytical Jacobian
 dumux_add_test(NAME test_1p_incompressible_mpfa
