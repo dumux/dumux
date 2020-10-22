@@ -18,11 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Nonlinear
- * \brief Backends for the Newton for different variable types
+ * \ingroup Common
+ * \brief Backends for operations on different solution vector types
+ *        or more generic variable classes to be used in places where
+ *        several different types/layouts should be supported.
  */
-#ifndef DUMUX_NEWTON_VARIABLES_BACKEND_HH
-#define DUMUX_NEWTON_VARIABLES_BACKEND_HH
+#ifndef DUMUX_COMMON_VARIABLES_BACKEND_HH
+#define DUMUX_COMMON_VARIABLES_BACKEND_HH
 
 #include <array>
 #include <utility>
@@ -45,18 +47,18 @@ class MultiTypeBlockVector;
 namespace Dumux {
 
 /*!
- * \ingroup Nonlinear
+ * \ingroup Common
  * \brief Class providing operations with primary variable vectors
  */
 template<class DofVector, bool isScalar = Dune::IsNumber<DofVector>::value>
-class NewtonDofBackend;
+class DofBackend;
 
 /*!
- * \ingroup Nonlinear
- * \brief Specialization providing Newton operations for scalar/number types
+ * \ingroup Common
+ * \brief Specialization providing operations for scalar/number types
  */
 template<class Scalar>
-class NewtonDofBackend<Scalar, true>
+class DofBackend<Scalar, true>
 {
 public:
     using DofVector = Scalar; //!< the type of the dofs parametrizing the variables object
@@ -69,11 +71,11 @@ public:
 };
 
 /*!
- * \ingroup Nonlinear
- * \brief Specialization providing Newton operations for block vectors
+ * \ingroup Common
+ * \brief Specialization providing operations for block vectors
  */
 template<class BT>
-class NewtonDofBackend<Dune::BlockVector<BT>, false>
+class DofBackend<Dune::BlockVector<BT>, false>
 {
 
 public:
@@ -87,11 +89,11 @@ public:
 };
 
 /*!
- * \ingroup Nonlinear
- * \brief Specialization providing Newton operations for multitype block vectors
+ * \ingroup Common
+ * \brief Specialization providing operations for multitype block vectors
  */
 template<class... Blocks>
-class NewtonDofBackend<Dune::MultiTypeBlockVector<Blocks...>, false>
+class DofBackend<Dune::MultiTypeBlockVector<Blocks...>, false>
 {
     using DV = Dune::MultiTypeBlockVector<Blocks...>;
     static constexpr auto numBlocks = DV::size();
@@ -128,19 +130,19 @@ template<class Vars>
 using SolutionVectorType = typename Vars::SolutionVector;
 
 template<class Vars, bool varsExportSolution>
-class NewtonVariablesBackend;
+class VariablesBackend;
 
 /*!
- * \ingroup Nonlinear
- * \brief Class providing Newton operations for scalar/number types
+ * \ingroup Common
+ * \brief Class providing operations for primary variable vector/scalar types
  * \note We assume the variables being simply a dof vector if we
  *       do not find the variables class to export `SolutionVector`.
  */
 template<class Vars>
-class NewtonVariablesBackend<Vars, false>
-: public NewtonDofBackend<Vars>
+class VariablesBackend<Vars, false>
+: public DofBackend<Vars>
 {
-    using ParentType = NewtonDofBackend<Vars>;
+    using ParentType = DofBackend<Vars>;
 
 public:
     using Variables = Vars;
@@ -161,13 +163,13 @@ public:
 
 /*!
  * \file
- * \ingroup Nonlinear
- * \brief Class providing Newton operations for generic variable
- *        types, possibly containing also secondary variables.
+ * \ingroup Common
+ * \brief Class providing operations for generic variable classes,
+ *        containing primary and possibly also secondary variables.
  */
 template<class Vars>
-class NewtonVariablesBackend<Vars, true>
-: public NewtonDofBackend<typename Vars::SolutionVector>
+class VariablesBackend<Vars, true>
+: public DofBackend<typename Vars::SolutionVector>
 {
 public:
     using DofVector = typename Vars::SolutionVector;
@@ -188,14 +190,14 @@ public:
 } // end namespace Detail
 
 /*!
- * \ingroup Nonlinear
- * \brief Class providing Newton operations for generic variable classes
+ * \ingroup Common
+ * \brief Class providing operations for generic variable classes
  *        that represent the state of a numerical solution, possibly
  *        consisting of primary/secondary variables and information on
  *        the time level.
  */
 template<class Vars>
-using NewtonVariablesBackend = Detail::NewtonVariablesBackend<Vars, Dune::Std::is_detected_v<Detail::SolutionVectorType, Vars>>;
+using VariablesBackend = Detail::VariablesBackend<Vars, Dune::Std::is_detected_v<Detail::SolutionVectorType, Vars>>;
 
 } // end namespace Dumux
 

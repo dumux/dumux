@@ -48,13 +48,14 @@
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/pdesolver.hh>
+#include <dumux/common/variablesbackend.hh>
+
 #include <dumux/io/format.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/assembly/partialreassembler.hh>
 
 #include "newtonconvergencewriter.hh"
-#include "newtonvariablesbackend.hh"
 #include "primaryvariableswitchadapter.hh"
 
 namespace Dumux {
@@ -216,7 +217,7 @@ class NewtonSolver : public PDESolver<Assembler, LinearSolver>
     using ParentType = PDESolver<Assembler, LinearSolver>;
 
 protected:
-    using Backend = NewtonVariablesBackend<typename ParentType::Variables>;
+    using Backend = VariablesBackend<typename ParentType::Variables>;
     using SolutionVector = typename Backend::DofVector;
 
 private:
