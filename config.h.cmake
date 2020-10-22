@@ -58,6 +58,9 @@
 /* Define to 1 if gmsh was found */
 #cmakedefine HAVE_GMSH 1
 
+/* Define to 1 if Trilinos was found */
+#cmakedefine HAVE_TRILINOS 1
+
 /* Define path to gmsh executable */
 #cmakedefine GMSH_EXECUTABLE "@GMSH_EXECUTABLE@"
 
