@@ -42,6 +42,8 @@
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/pdesolver.hh>
+#include <dumux/common/variablesbackend.hh>
+
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
 
@@ -67,6 +69,8 @@ class LinearPDESolver : public PDESolver<Assembler, LinearSolver>
     using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
+    using typename ParentType::Variables;
+
     /*!
      * \brief The Constructor
      */
@@ -86,7 +90,7 @@ public:
     /*!
      * \brief Solve a linear PDE system
      */
-    void solve(SolutionVector& uCurrentIter) override
+    void solve(Variables& vars) override
     {
         Dune::Timer assembleTimer(false);
         Dune::Timer solveTimer(false);
@@ -104,9 +108,9 @@ public:
         // linearize the problem at the current solution
         assembleTimer.start();
         if (reuseMatrix_)
-            this->assembler().assembleResidual(uCurrentIter);
+            this->assembler().assembleResidual(vars);
         else
-            this->assembler().assembleJacobianAndResidual(uCurrentIter);
+            this->assembler().assembleJacobianAndResidual(vars);
         assembleTimer.stop();
 
         ///////////////
@@ -128,7 +132,8 @@ public:
         solveTimer.start();
 
         // set the delta vector to zero before solving the linear system!
-        SolutionVector deltaU(uCurrentIter);
+        using Backend = VariablesBackend<Variables>;
+        auto deltaU = Backend::getDofVector(vars);
         deltaU = 0;
 
         // solve by calling the appropriate implementation depending on whether the linear solver
@@ -150,8 +155,12 @@ public:
 
         // update the current solution and secondary variables
         updateTimer.start();
+
+        // TODO: This currently does one additional copy in case assembly from solution is used
+        auto uCurrentIter = Backend::getDofVector(vars);
         uCurrentIter -= deltaU;
-        this->assembler().updateGridVariables(uCurrentIter);
+        Backend::update(vars, uCurrentIter);
+
         updateTimer.stop();
 
         if (verbose_) {
