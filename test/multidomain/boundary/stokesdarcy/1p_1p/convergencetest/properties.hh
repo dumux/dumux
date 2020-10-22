@@ -45,7 +45,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+struct DarcyOneP { using InheritsFrom = std::tuple<OneP>; };
+struct DarcyOnePBox { using InheritsFrom = std::tuple<DarcyOneP, BoxModel>; };
+struct DarcyOnePCC { using InheritsFrom = std::tuple<DarcyOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -103,12 +105,12 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::FreeFlowOneP> { static cons
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::FreeFlowOneP>
 {
-    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DarcyOneP>;
+    using Traits = StaggeredMultiDomainTraits<TypeTag, TypeTag, Properties::TTag::DARCYTYPETAG>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
 };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyOneP>
+struct CouplingManager<TypeTag, TTag::DARCYTYPETAG>
 {
     using Traits = StaggeredMultiDomainTraits<Properties::TTag::FreeFlowOneP, Properties::TTag::FreeFlowOneP, TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;

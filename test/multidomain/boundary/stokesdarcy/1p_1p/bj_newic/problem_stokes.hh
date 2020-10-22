@@ -244,7 +244,7 @@ public:
     /*!
     * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
     */
-    VelocityVector porousMediumVelocity(const Element& element, const SubControlVolumeFace& scvf) const
+    VelocityVector porousMediumTerm(const Element& element, const SubControlVolumeFace& scvf) const
     {
         return couplingManager().couplingData().porousMediumVelocity(element, scvf);
     }

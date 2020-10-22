@@ -34,6 +34,7 @@ EnableGravity = false
 EnableInertiaTerms = false
 NewIc = true
 TestCase = NewICNonSymmetrized
+SlipCondition = ER
 
 [Stokes.FreeFlow]
 EnableUnsymmetrizedVelocityGradientForIC = true
