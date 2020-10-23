@@ -32,7 +32,10 @@
 
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/numericepsilon.hh>
+
 #include <dumux/discretization/method.hh>
+#include <dumux/timestepping/multistagetimestepper.hh>
+
 
 namespace Dumux {
 
@@ -64,6 +67,9 @@ class BoxLocalAssembler
     static_assert(diffMethod == DiffMethod::numeric, "Analytical assembly not implemented");
     static_assert(numEq == JacobianMatrix::block_type::cols, "Matrix block size doesn't match privars size");
 
+    //! the parameters of a stage in time integration
+    using StageParams = MultiStageParams<Scalar>;
+
 public:
     using ElementResidualVector = typename LocalOperator::ElementResidualVector;
 
@@ -72,12 +78,30 @@ public:
      */
     explicit BoxLocalAssembler(const Element& element,
                                const FVElementGeometry& fvGeometry,
-                               ElementVariables& elemVars)
+                               std::vector<ElementVariables>& elemVars)
     : element_(element)
     , fvGeometry_(fvGeometry)
     , elemVariables_(elemVars)
     , elementIsGhost_(element.partitionType() == Dune::GhostEntity)
-    , isStationary_(true)
+    , stageParams_(nullptr)
+    {
+        assert(elemVars.size() == 1);
+    }
+
+    /*!
+     * \brief Constructor for instationary problems.
+     * \note Using this constructor, we assemble one stage within
+     *       a time integration step using multi-stage methods.
+     */
+    explicit BoxLocalAssembler(const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               std::vector<ElementVariables>& elemVars,
+                               std::shared_ptr<const StageParams> stageParams)
+    : element_(element)
+    , fvGeometry_(fvGeometry)
+    , elemVariables_(elemVars)
+    , elementIsGhost_(element.partitionType() == Dune::GhostEntity)
+    , stageParams_(stageParams)
     {}
 
     /*!
@@ -239,17 +263,29 @@ protected:
      */
     ElementResidualVector evalLocalResidual() const
     {
-        LocalOperator localOperator(element(), fvGeometry(), elemVariables());
+        if (isStationary())
+        {
+            LocalOperator localOperator(element(), fvGeometry(), elemVariables());
+            return elementIsGhost_ ? localOperator.getEmptyResidual()
+                                   : localOperator.evalFluxesAndSources();
+        }
+        else
+        {
+            ElementResidualVector residual(fvGeometry().numScv());
+            residual = 0.0;
 
-        // residual of ghost elements is zero
-        if (elementIsGhost_)
-            return localOperator.getEmptyResidual();
+            for (std::size_t k = 0; k < stageParams_->size(); ++k)
+            {
+                LocalOperator localOperator(element(), fvGeometry(), elemVariables_[k]);
 
-        auto residual = localOperator.evalFluxesAndSources();
-        if (!isStationary_)
-            DUNE_THROW(Dune::NotImplemented, "New assembly for instationary problems");
+                if (!stageParams_->skipTemporal(k))
+                    residual.axpy(stageParams_->temporalWeight(k), localOperator.evalStorage());
+                if (!stageParams_->skipSpatial(k))
+                    residual.axpy(stageParams_->spatialWeight(k), localOperator.evalFluxesAndSources());
+            }
 
-        return residual;
+            return residual;
+        }
     }
 
     /*!
@@ -352,8 +388,11 @@ protected:
     //! Return references to the local views
     const Element& element() const { return element_; }
     const FVElementGeometry& fvGeometry() const { return fvGeometry_; }
-    const ElementVariables& elemVariables() const { return elemVariables_; }
-    ElementVariables& elemVariables() { return elemVariables_; }
+    const ElementVariables& elemVariables() const { return elemVariables_.back(); }
+    ElementVariables& elemVariables() { return elemVariables_.back(); }
+
+    //! Returns if a stationary problem is assembled
+    bool isStationary() const { return !stageParams_; }
 
     //! Return a reference to the underlying problem
     //! TODO: Should grid vars return problem directly!?
@@ -363,9 +402,10 @@ protected:
 private:
     const Element& element_;
     const FVElementGeometry& fvGeometry_;
-    ElementVariables& elemVariables_;
+    std::vector<ElementVariables>& elemVariables_;
+
     bool elementIsGhost_;
-    bool isStationary_;
+    std::shared_ptr<const StageParams> stageParams_;
 };
 
 } // end namespace Dumux

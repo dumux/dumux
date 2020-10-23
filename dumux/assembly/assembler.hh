@@ -36,6 +36,9 @@
 #include <dumux/assembly/partialreassembler.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
 
+#include <dumux/timestepping/multistagetimestepper.hh>
+#include <dumux/timestepping/timelevel.hh>
+
 #include "localassembler.hh"
 #include "jacobianpattern.hh"
 
@@ -70,9 +73,12 @@ template< class LO, DiffMethod diffMethod,
 class Assembler
 {
     using ThisType = Assembler<LO, diffMethod, LST>;
+
     using GG = typename LO::GridVariables::GridGeometry;
+    using GGLocalView = typename GG::LocalView;
     using GridView = typename GG::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVariables = typename LO::GridVariables::LocalView;
 
 public:
     //! export the types used for the linear system
@@ -96,6 +102,9 @@ public:
     //! export type used for solution vectors
     using SolutionVector = typename GridVariables::SolutionVector;
 
+    //! export the type for parameters of a stage in time integration
+    using StageParams = MultiStageParams<Scalar>;
+
     /*!
      * \brief The Constructor from a grid geometry.
      * \param gridGeometry A grid geometry instance
@@ -105,21 +114,24 @@ public:
      *       underlying discretization scheme on a particular grid. The evaluation point,
      *       consisting of a particular solution/variables/parameters may vary, and therefore,
      *       an instance of the grid variables is passed to the assembly functions.
+     * \note This constructor (without time integration method) assumes hhat a stationary problem
+     *       is assembled, and thus, an implicit jacobian pattern is used.
      */
     Assembler(std::shared_ptr<const GridGeometry> gridGeometry)
     : gridGeometry_(gridGeometry)
+    , isImplicit_(true)
     {}
 
     /*!
      * \brief The Constructor from a grid geometry.
      * \param gridGeometry A grid geometry instance
-     * \param isImplicit boolean to indicate whether an implicit or explicit pattern should be used
-     * \todo TODO replace bool with time stepping scheme once available
+     * \param method the time integration method that will be used.
      */
+    template<class TimeIntegrationMethod>
     Assembler(std::shared_ptr<const GridGeometry> gridGeometry,
-              bool isImplicit)
+              const TimeIntegrationMethod& method)
     : gridGeometry_(gridGeometry)
-    , isImplicit_(isImplicit)
+    , isImplicit_(method.implicit())
     {}
 
     /*!
@@ -140,16 +152,14 @@ public:
         // TODO: Remove this assert?
         assert(gridVariables.gridGeometry().numDofs() == gridGeometry().numDofs());
 
-        using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
         assemble_([&](const Element& element)
         {
-            auto fvGeometry = localView(gridGeometry());
-            auto elemVars = localView(gridVariables);
+            auto ggLocalView = localView(gridGeometry());
+            ggLocalView.bind(element);
+            auto elemVars = this->prepareElemVariables_(gridVariables, element, ggLocalView);
 
-            fvGeometry.bind(element);
-            elemVars.bind(element, fvGeometry);
-
-            LocalAssembler localAssembler(element, fvGeometry, elemVars);
+            using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
+            LocalAssembler localAssembler(element, ggLocalView, elemVars);
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, partialReassembler);
         });
 
@@ -170,16 +180,14 @@ public:
         // TODO: Remove this assert?
         assert(gridVariables.gridGeometry().numDofs() == gridGeometry().numDofs());
 
-        using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
         assemble_([&](const Element& element)
         {
-            auto fvGeometry = localView(gridGeometry());
-            auto elemVars = localView(gridVariables);
+            auto ggLocalView = localView(gridGeometry());
+            ggLocalView.bind(element);
+            auto elemVars = this->prepareElemVariables_(gridVariables, element, ggLocalView);
 
-            fvGeometry.bind(element);
-            elemVars.bind(element, fvGeometry);
-
-            LocalAssembler localAssembler(element, fvGeometry, elemVars);
+            using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
+            LocalAssembler localAssembler(element, ggLocalView, elemVars);
             localAssembler.assembleJacobianAndResidual(*jacobian_);
         });
 
@@ -205,16 +213,14 @@ public:
      */
     void assembleResidual(ResidualVector& r, const GridVariables& gridVariables) const
     {
-        using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
         assemble_([&](const Element& element)
         {
-            auto fvGeometry = localView(gridGeometry());
-            auto elemVars = localView(gridVariables);
+            auto ggLocalView = localView(gridGeometry());
+            ggLocalView.bind(element);
+            auto elemVars = this->prepareElemVariables_(gridVariables, element, ggLocalView);
 
-            fvGeometry.bind(element);
-            elemVars.bind(element, fvGeometry);
-
-            LocalAssembler localAssembler(element, fvGeometry, elemVars);
+            using LocalAssembler = Dumux::LocalAssembler<ThisType, diffMethod>;
+            LocalAssembler localAssembler(element, ggLocalView, elemVars);
             localAssembler.assembleResidual(r);
         });
     }
@@ -297,6 +303,46 @@ public:
 
         // export pattern to jacobian
         occupationPattern.exportIdx(*jacobian_);
+    }
+
+    /*!
+     * \brief Prepare for a new stage within a time integration step.
+     *        This caches the given grid variables, which are then used as a
+     *        representation of the previous stage. Moreover, the given grid
+     *        variables are then updated to the time level of the upcoming stage.
+     * \param gridVars the grid variables representing the previous stage
+     * \param params the parameters with the weights to be used in the upcoming stage
+     * \todo TODO: This function does two things, namely caching and then updating.
+     *             Should we split/delegate this, or is the current name descriptive enough?
+     *             When used from outside, one would expect the gridvars to be prepared maybe,
+     *             and that is what's done. Caching might not be expected from the outside but
+     *             it is also not important that that is known from there?
+     */
+    void prepareStage(GridVariables& gridVars,
+                      std::shared_ptr<const StageParams> params)
+    {
+        stageParams_ = params;
+        const auto curStage = params->size() - 1;
+
+        // we keep track of previous stages, they are needed for residual assembly
+        prevStageVariables_.push_back(gridVars);
+
+        // Now we update the time level of the given grid variables
+        const auto t = params->timeAtStage(curStage);
+        const auto prevT = params->timeAtStage(0);
+        const auto dtFraction = params->timeStepFraction(curStage);
+        TimeLevel<Scalar> timeLevel(t, prevT, dtFraction);
+
+        gridVars.updateTime(timeLevel);
+    }
+
+    /*!
+     * \brief Remove traces from stages within a time integration step.
+     */
+    void clearStages()
+    {
+        prevStageVariables_.clear();
+        stageParams_ = nullptr;
     }
 
     //! Resizes the residual
@@ -401,16 +447,50 @@ protected:
     void enforcePeriodicConstraints_(const GridVariables& gridVars, JacobianMatrix& jac, SolutionVector& res)
     { /*TODO: Implement / where to put this? Currently, local assemblers do this*/ }
 
+    //! prepares the local views on the grid variables for the given element
+    //! \todo: TODO: when stageparams.skipSpatial() == true, we don't need to bind flux vars caches!
+    std::vector<ElementVariables> prepareElemVariables_(const GridVariables& gridVars,
+                                                        const Element& element,
+                                                        const GGLocalView& ggLocalView) const
+    {
+        if (!stageParams_)
+        {
+            auto elemVars = localView(gridVars);
+            elemVars.bind(element, ggLocalView);
+            return {elemVars};
+        }
+        else
+        {
+            std::vector<ElementVariables> elemVars;
+            elemVars.reserve(stageParams_->size());
+
+            for (int i = 0; i < stageParams_->size()-1; ++i)
+                elemVars.emplace_back(prevStageVariables_[i]);
+            elemVars.emplace_back(gridVars);
+
+            for (auto& evv : elemVars)
+                evv.bind(element, ggLocalView);
+
+            return elemVars;
+        }
+    }
+
 private:
     //! the grid geometry on which it is assembled
     std::shared_ptr<const GridGeometry> gridGeometry_;
 
     //! states if an implicit of explicit scheme is used (affects jacobian pattern)
-    bool isImplicit_ = true;
+    bool isImplicit_;
 
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<ResidualVector> residual_;
+
+    //! parameters containing information on the current stage of time integration
+     std::shared_ptr<const StageParams> stageParams_ = nullptr;
+
+     //! keep track of the states of previous stages within a time integration step
+     std::vector<GridVariables> prevStageVariables_;
 };
 
 } // namespace Dumux
