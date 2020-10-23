@@ -95,68 +95,6 @@ private:
 };
 
 /*!
- * \brief Solution vectors for the multi-stage time stepping scheme
- */
-template<class SolutionVector>
-class MultiStageSolutions
-{
-public:
-    MultiStageSolutions(std::size_t numStages)
-    {
-        // avoid resizing vectors after construction
-        sols_.reserve(numStages);
-        owned_.reserve(numStages);
-    }
-
-    MultiStageSolutions(const MultiStageSolutions&) = delete;
-    MultiStageSolutions(MultiStageSolutions&&) = delete;
-    MultiStageSolutions& operator=(const MultiStageSolutions&) = delete;
-    MultiStageSolutions& operator=(MultiStageSolutions&&) = delete;
-
-    ~MultiStageSolutions()
-    {
-        // destroy all owned solution resources
-        for (int i = 0; i < sols_.size(); ++i)
-            if (owned_[i])
-                delete sols_[i];
-    }
-
-    //! push an existing solution
-    void pushSolution(SolutionVector& sol)
-    {
-        sols_.push_back(&sol);
-        owned_.push_back(false);
-    }
-
-    //! create an intermediate/temporary solution
-    void createSolution(const SolutionVector& guess)
-    {
-        sols_.push_back(new SolutionVector(guess));
-        owned_.push_back(true);
-    }
-
-    auto size() const
-    { return sols_.size(); }
-
-    SolutionVector& operator[] (std::size_t i)
-    { return *sols_[i]; }
-
-    const SolutionVector& operator[] (std::size_t i) const
-    { return *sols_[i]; }
-
-    SolutionVector& back()
-    { return *sols_.back(); }
-
-    const SolutionVector& back() const
-    { return *sols_.back(); }
-
-private:
-    std::vector<SolutionVector*> sols_;
-    std::vector<bool> owned_;
-};
-
-
-/*!
  * \brief Time stepping with a multi-stage method
  * \note We limit ourselves to "diagonally" implicit multi-stage methods where solving
  *       a stage can only depend on the values of the same stage and stages before
@@ -165,11 +103,8 @@ private:
 template<class PDESolver>
 class MultiStageTimeStepper
 {
-    using Scalar = typename PDESolver::Assembler::Scalar;
-    using SolutionVector = typename PDESolver::Assembler::ResidualType;
     using Variables = typename PDESolver::Assembler::Variables;
-    using Solutions = MultiStageSolutions<SolutionVector>;
-
+    using Scalar = typename Variables::Scalar;
     using StageParams = MultiStageParams<Scalar>;
 
 public:
@@ -188,55 +123,31 @@ public:
 
     /*!
      * \brief Advance one time step of the given time loop
-     * \param x The solution at the current time level. This is used as an initial
-     *          guess during time integration, and the result is stored in that vector.
-     * \params vars The variables object at the current time level. This is expected
-     *              to correpond to the given solution vector, and after successful
-     *              time integration this holds the state of the new time level.
+     * \params vars The variables object at the current time level.
      * \param t The current time level
      * \param dt The time step size to be used
-     * TODO: Add time step control if the pde solver doesn't converge
+     * \note We expect the time level in vars to correspond to the given time `t`
+     * \todo: TODO: Add time step control if the pde solver doesn't converge
      */
-    void step(SolutionVector& x, Variables& vars, const Scalar t, const Scalar dt)
+    void step(Variables& vars, const Scalar t, const Scalar dt)
     {
-        const auto numStages = msMethod_->numStages();
-        Solutions solutions(numStages);
+        // make sure there are no traces of previous stages
+        pdeSolver_->assembler().clearStages();
 
-        // The solution of stage zero is oldOld (\f$ x^{n}\f$).
-        solutions.createSolution(x);
-
-        // 0-th stage does not require solve, so we just call prepare and register
-        // This makes sure the assembler is prepared for time integration and the
-        // 0-th stage is registered
-        auto stageParams = std::make_shared<StageParams>(*msMethod_, 0, t, dt);
-        pdeSolver_->assembler().prepareStage(solutions.back(), vars, stageParams);
-        pdeSolver_->assembler().registerStage(solutions.back(), vars);
-
-        // For each intermediate stage we solve for the stage solution.
-        // In the last stage (stageIdx = numStages), we obtain the solution (\f$ x^{n+1}\f$)
-        // and write it into the provided container
-        for (auto stageIdx = 1UL; stageIdx <= numStages; ++stageIdx)
+        for (auto stageIdx = 1UL; stageIdx <= msMethod_->numStages(); ++stageIdx)
         {
-            if (stageIdx == numStages)
-            {
-                solutions.pushSolution(x);
-                solutions.back() = solutions[stageIdx-1];
-            }
-            else
-                solutions.createSolution(solutions[stageIdx-1]);
-
             // extract parameters for this stage from the time stepping method
-            stageParams = std::make_shared<StageParams>(*msMethod_, stageIdx, t, dt);
+            auto stageParams = std::make_shared<StageParams>(*msMethod_, stageIdx, t, dt);
 
             // prepare the assembler for this stage
-            pdeSolver_->assembler().prepareStage(solutions.back(), vars, stageParams);
+            pdeSolver_->assembler().prepareStage(vars, stageParams);
 
             // assemble & solve
-            pdeSolver_->solve(solutions.back(), vars);
-
-            // register the result of this stage
-            pdeSolver_->assembler().registerStage(solutions.back(), vars);
+            pdeSolver_->solve(vars);
         }
+
+        // clear traces of previously registered stages
+        pdeSolver_->assembler().clearStages();
     }
 
     /*!
