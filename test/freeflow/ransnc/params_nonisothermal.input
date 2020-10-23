@@ -21,6 +21,7 @@ TurbulentSchmidtNumber = 0.7
 TurbulentPrandtlNumber = 0.85
 WallNormalAxis = 1
 IsFlatWallBounded = True
+WriteFlatWallBoundedFields = True
 
 [Assembly]
 NumericDifferenceMethod = 0

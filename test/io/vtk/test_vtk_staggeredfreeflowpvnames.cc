@@ -129,6 +129,8 @@ private:
         using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
         using Scalar = GetPropType<TTag, Properties::Scalar>;
         using Traits = GetPropType<TTag, Properties::ModelTraits>;
+        Scalar eps_ = 1e-6;
+
     public:
         using ParentType::ParentType;
 
@@ -159,8 +161,8 @@ private:
         { return ParentType::updateDynamicWallProperties(u); }
 
         template<class Scvf>
-        bool isOnWall(const Scvf&) const
-        { return true; }
+        bool isOnWall(const Scvf& scvf) const
+        { return (scvf.center()[0] < eps_); }
     };
 
 public:

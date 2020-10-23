@@ -23,6 +23,7 @@ YPlusThreshold = 10. # should be small (10-30) for coarse grids
 
 [RANS]
 WallNormalAxis = 1
+WriteFlatWallBoundedFields = True
 
 [Assembly]
 NumericDifferenceMethod = 0
