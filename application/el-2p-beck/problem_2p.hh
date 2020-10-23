@@ -127,8 +127,8 @@ public:
     }
 
     //! Returns the temperature within the domain in [K].
-    Scalar temperature() const
-    { return 273.15 + 10; } // 10C
+    Scalar temperatureAtPos(const GlobalPosition & globalPos) const
+    { return 295.65+ (/*the top of the domain */1000 - globalPos[dimWorld-1])*0.025;}
 
     //! Evaluates the boundary conditions for a Dirichlet boundary segment.
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
@@ -139,7 +139,7 @@ public:
     {
       PrimaryVariables values;
 
-      values[pressureIdx] = (1.0e5 + (depthCenter_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81);
+      values[pressureIdx] = (5e6 + (/*the top of the domain */1000 - globalPos[dimWorld-1]) * brineDensity_ * gravity_);
       values[saturationNIdx] = 0.0;
       return values;
     }
@@ -193,6 +193,7 @@ private:
     std::string problemName_;
     // Depth at the center of the scenario[m]
     Scalar depthCenter_;
+    Scalar gravity_ = 9.81;
 
     static constexpr Scalar brineDensity_ = 1000;
 };
