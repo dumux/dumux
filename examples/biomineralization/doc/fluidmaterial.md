@@ -402,7 +402,7 @@ and each component's and the phases' main components binary diffusion coefficien
                                        int compIdx)
     {
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
-    };
+    }
 
     // The binary diffusion coefficients of the components and the phases main component
     template <class FluidState>
@@ -440,7 +440,7 @@ and each component's and the phases' main components binary diffusion coefficien
             else //all other components
                 return 0.0;
         }
-    };
+    }
 ```
 
 #### The Fluid Properties
