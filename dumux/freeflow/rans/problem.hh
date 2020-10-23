@@ -126,7 +126,8 @@ public:
         vorticityTensorScalarProduct_.resize(this->gridGeometry().elementMapper().size(), 0.0);
         flowDirectionAxis_.resize(this->gridGeometry().elementMapper().size(), fixedFlowDirectionAxis_);
         wallNormalAxis_.resize(this->gridGeometry().elementMapper().size(), fixedWallNormalAxis_);
-        kinematicViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedViscosity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
+        storedDensity_.resize(this->gridGeometry().elementMapper().size(), 0.0);
 
         if ( !(hasParamInGroup(this->paramGroup(), "RANS.IsFlatWallBounded")))
         {
@@ -254,7 +255,7 @@ public:
         calculateMaxMinVelocities_();
         calculateStressTensor_();
         calculateVorticityTensor_();
-        storeKinematicViscosity_(curSol);
+        storeViscosities_(curSol);
     }
 
     /*!
@@ -412,8 +413,14 @@ public:
     Scalar vorticityTensorScalarProduct(const int elementIdx) const
     { return vorticityTensorScalarProduct_[elementIdx]; }
 
+    Scalar storedViscosity(const int elementIdx) const
+    { return storedViscosity_[elementIdx]; }
+
+    Scalar storedDensity(const int elementIdx) const
+    { return storedDensity_[elementIdx]; }
+
     Scalar kinematicViscosity(const int elementIdx) const
-    { return kinematicViscosity_[elementIdx]; }
+    { return storedViscosity(elementIdx) / storedDensity(elementIdx); }
 
     bool calledUpdateStaticWallProperties = false;
 
@@ -675,7 +682,7 @@ private:
         }
     }
 
-    void storeKinematicViscosity_(const SolutionVector& curSol)
+    void storeViscosities_(const SolutionVector& curSol)
     {
         // calculate or call all secondary variables
         for (const auto& element : elements(this->gridGeometry().gridView()))
@@ -693,7 +700,8 @@ private:
 
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
-                kinematicViscosity_[elementIdx] = volVars.viscosity() / volVars.density();
+                storedDensity_[elementIdx] = volVars.density();
+                storedViscosity_[elementIdx] = volVars.viscosity();
             }
         }
     }
@@ -716,7 +724,8 @@ private:
     std::vector<Scalar> stressTensorScalarProduct_;
     std::vector<Scalar> vorticityTensorScalarProduct_;
 
-    std::vector<Scalar> kinematicViscosity_;
+    std::vector<Scalar> storedDensity_;
+    std::vector<Scalar> storedViscosity_;
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
