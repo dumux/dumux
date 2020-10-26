@@ -35,6 +35,8 @@
 #include <dumux/common/math.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -64,7 +66,6 @@ class FVTransport2P2C
     using Implementation = GetPropType<TypeTag, Properties::TransportModel>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
@@ -598,13 +599,18 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     Scalar pcI = cellDataI.capillaryPressure();
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(elementI));
 
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+
     PhaseVector SmobI(0.);
     using std::max;
     SmobI[wPhaseIdx] = max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(elementI).swr())
+                            - fluidMatrixInteraction.pcSwCurve().effToAbsParams().swr())
                             , 1e-2);
     SmobI[nPhaseIdx] = max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(elementI).snr())
+                                - fluidMatrixInteraction.pcSwCurve().effToAbsParams().snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
@@ -909,11 +915,16 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
             K_I[axis][axis] = minimalBoundaryPermeability;
     }
 
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+
     Scalar SwmobI = max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(elementI).swr())
+                            - fluidMatrixInteraction.pcSwCurve().effToAbsParams().swr())
                             , 1e-2);
     Scalar SnmobI = max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(elementI).snr())
+                                - fluidMatrixInteraction.pcSwCurve().effToAbsParams().snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
@@ -1001,6 +1012,11 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
         potential[wPhaseIdx] *= fabs(K * unitOuterNormal);
         potential[nPhaseIdx] *= fabs(K * unitOuterNormal);
 
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+
         // do upwinding for lambdas
         PhaseVector lambda(0.);
         if (potential[wPhaseIdx] >= 0.)
@@ -1010,9 +1026,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
             if(getPropValue<TypeTag, Properties::BoundaryMobility>()==Indices::satDependent)
                 lambda[wPhaseIdx] = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
             else
-                lambda[wPhaseIdx] = MaterialLaw::krw(
-                        problem().spatialParams().materialLawParams(elementI), BCfluidState.saturation(wPhaseIdx))
-                        / viscosityWBound;
+                lambda[wPhaseIdx] = fluidMatrixInteraction.krw(BCfluidState.saturation(wPhaseIdx)) / viscosityWBound;
             }
         if (potential[nPhaseIdx] >= 0.)
             lambda[nPhaseIdx] = cellDataI.mobility(nPhaseIdx);
@@ -1021,9 +1035,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
             if(getPropValue<TypeTag, Properties::BoundaryMobility>()==Indices::satDependent)
                 lambda[nPhaseIdx] = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
             else
-                lambda[nPhaseIdx] = MaterialLaw::krn(
-                        problem().spatialParams().materialLawParams(elementI), BCfluidState.saturation(wPhaseIdx))
-                        / viscosityNWBound;
+                lambda[nPhaseIdx] = fluidMatrixInteraction.krn(BCfluidState.saturation(wPhaseIdx)) / viscosityNWBound;
             }
         // calculate and standardized velocity
 
@@ -1117,16 +1129,21 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     PrimaryVariables primaryVariablesOnBoundary(0.);
     problem().dirichlet(primaryVariablesOnBoundary, intersection);
 
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), element);
+
     // read boundary type
     typename Indices::BoundaryFormulation bcType;
     problem().boundaryFormulation(bcType, intersection);
     if (bcType == Indices::saturation)
     {
         Scalar satBound = primaryVariablesOnBoundary[contiWEqIdx];
+
         if(getPropValue<TypeTag, Properties::EnableCapillarity>())
         {
-            Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
-                    satBound);
+            Scalar pcBound = fluidMatrixInteraction.pc(satBound);
             switch (pressureType)
             {
             case pw:
@@ -1159,8 +1176,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
 
         if(getPropValue<TypeTag, Properties::EnableCapillarity>())
         {
-            Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
-                    BCfluidState.saturation(wPhaseIdx));
+            Scalar pcBound = fluidMatrixInteraction.pc(BCfluidState.saturation(wPhaseIdx));
             int maxiter = 3;
             //start iteration loop
             for(int iter=0; iter < maxiter; iter++)
@@ -1189,8 +1205,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 //update with better pressures
                 flashSolver.concentrationFlash2p2c(BCfluidState, Z0Bound, pressBound,
                         problem().temperatureAtPos(globalPosFace));
-                pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
-                        BCfluidState.saturation(wPhaseIdx));
+                pcBound = fluidMatrixInteraction.pc(BCfluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation
                 //converge criterion
                 using std::abs;

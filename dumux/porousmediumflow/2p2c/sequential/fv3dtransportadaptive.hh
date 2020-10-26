@@ -33,6 +33,8 @@
 #include "adaptiveproperties.hh"
 #include "fvtransport.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -57,7 +59,6 @@ class FV3dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
@@ -364,13 +365,18 @@ void FV3dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     Scalar pressI = problem().pressureModel().pressure(globalIdxI);
     Scalar pcI = cellDataI.capillaryPressure();
 
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+
     PhaseVector SmobI(0.);
     using std::max;
     SmobI[wPhaseIdx] = max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(elementI).swr())
+                            - fluidMatrixInteraction.pcSwCurve().effToAbsParams().swr())
                             , 1e-2);
     SmobI[nPhaseIdx] = max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(elementI).snr())
+                                - fluidMatrixInteraction.pcSwCurve().effToAbsParams().snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
