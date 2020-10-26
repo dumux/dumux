@@ -28,6 +28,8 @@
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -64,7 +66,6 @@ class FVVelocity2P
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -564,8 +565,14 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
             satNw = cellData.saturation(nPhaseIdx);
         }
 
-        Scalar pressBound = boundValues[pressureIdx];
-        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
+        const Scalar pressBound = boundValues[pressureIdx];
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+        const Scalar pcBound = fluidMatrixInteraction.pc(satW);
 
         // determine phase pressures from primary pressure variable
         Scalar pressWBound = 0;
@@ -582,7 +589,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         }
 
         // get temperature at current position
-        Scalar temperature = problem_.temperature(element);
+        const Scalar temperature = problem_.temperature(element);
 
         Scalar densityWBound = density_[wPhaseIdx];
         Scalar densityNwBound = density_[nPhaseIdx];
@@ -604,9 +611,9 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
             viscosityNwBound = FluidSystem::viscosity(fluidState, nPhaseIdx) / densityNwBound;
         }
 
-        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
+        Scalar lambdaWBound = fluidMatrixInteraction.krw(satW)
                 / viscosityWBound;
-        Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
+        Scalar lambdaNwBound = fluidMatrixInteraction.krn(satW)
                 / viscosityNwBound;
 
         Scalar potentialDiffW = cellData.fluxData().upwindPotential(wPhaseIdx, isIndex);
@@ -657,7 +664,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
                     (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(nPhaseIdx) + densityNwBound) : density_[nPhaseIdx];
         }
 
-        Scalar scalarPerm = permeability.two_norm();
+        const Scalar scalarPerm = permeability.two_norm();
 
         // calculate the gravity term
         Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
