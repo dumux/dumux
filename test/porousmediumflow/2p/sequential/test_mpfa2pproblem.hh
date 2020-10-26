@@ -71,12 +71,6 @@ struct FVAdaptiveTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPEST
 struct MPFAOTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoP, FVTransportTwoP, FvMpfaO2dPressureTwoP>; };
 struct MPFALTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoP, FVTransportTwoP, FvMpfaL2dPressureTwoP>; };
 struct MPFALAdaptiveTwoPTest { using InheritsFrom = std::tuple<MPFATwoPTest, IMPESTwoPAdaptive, FVTransportTwoP, FvMpfaL2dPressureTwoPAdaptive>; };
-// NEW_TYPE_TAG(FVTwoPTest, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
-// NEW_TYPE_TAG(FVAdaptiveTwoPTest, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTest));
-// NEW_TYPE_TAG(MPFAOTwoPTest, INHERITS_FROM(FvMpfaO2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
-// NEW_TYPE_TAG(MPFALTwoPTest, INHERITS_FROM(FvMpfaL2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTest));
-// NEW_TYPE_TAG(MPFALAdaptiveTwoPTest, INHERITS_FROM(FvMpfaL2dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTest));
-
 
 } // end namespace TTag
 
