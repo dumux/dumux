@@ -31,9 +31,6 @@
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
-#include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/plotmateriallaw.hh>
-
 namespace Dumux {
 
 /*!
