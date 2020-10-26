@@ -47,8 +47,6 @@ class McWhorterAnalytic
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
@@ -132,10 +130,10 @@ private:
     void prepareAnalytic()
     {
         const auto& dummyElement = *problem_.gridView().template begin<0>();
-        const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(dummyElement));
+        const auto& fluidMatrixInteraction = problem_->spatialParams().fluidMatrixInteractionAtPos(dummyElement.geometry().center());
 
-        swr_ = materialLawParams.swr();
-        snr_ = materialLawParams.snr();
+        swr_ = fluidMatrixInteraction.effToAbsParams().swr();
+        snr_ = fluidMatrixInteraction.effToAbsParams().snr();
         porosity_ = problem_.spatialParams().porosity(dummyElement);
         permeability_ = problem_.spatialParams().intrinsicPermeability(dummyElement)[0][0];
         PrimaryVariables initVec;
@@ -165,17 +163,15 @@ private:
         // get fractional flow function vector
         for (int i=0; i<pointNum_; i++)
         {
-            fractionalW_[i] = MaterialLaw::krw(materialLawParams, satVec_[i])/viscosityW;
-            fractionalW_[i] /= (fractionalW_[i] + MaterialLaw::krn(materialLawParams, satVec_[i])/viscosityNW);
+            fractionalW_[i] = fluidMatrixInteraction.krw(satVec_[i])/viscosityW;
+            fractionalW_[i] /= (fractionalW_[i] + fluidMatrixInteraction.krn(satVec_[i])/viscosityNW);
         }
 
         // get capillary pressure derivatives
         dpcdsw_=0;
 
         for (int i=0; i<pointNum_; i++)
-        {
-            dpcdsw_[i] = MaterialLaw::dpc_dsw(materialLawParams, satVec_[i]);
-                    }
+            dpcdsw_[i] = fluidMatrixInteraction.dpc_dsw(satVec_[i]);
 //         std::cout<<"dpcdsw = "<<dpcdsw_<<std::endl;
 
         // set initial fW
@@ -200,8 +196,7 @@ private:
 
         // diffusivity function
         for (int i=0; i<pointNum_; i++)
-        {d_[i] = fractionalW_[i]*(-dpcdsw_[i])*(MaterialLaw::krn(materialLawParams, satVec_[i])/viscosityNW)*permeability_;
-         }
+            d_[i] = fractionalW_[i]*(-dpcdsw_[i])*(fluidMatrixInteraction.krn(satVec_[i])/viscosityNW)*permeability_;
 
         // std::cout<<"fractionalW_ = "<<fractionalW_<<std::endl;
         // std::cout<<"permeability_ = "<<permeability_<<std::endl;
