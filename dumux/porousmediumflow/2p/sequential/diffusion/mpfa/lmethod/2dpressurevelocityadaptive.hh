@@ -27,6 +27,8 @@
 #include "2dpressureadaptive.hh"
 #include "2dvelocityadaptive.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -63,7 +65,6 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfa
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
@@ -589,8 +590,14 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
             satW = cellData.saturation(wPhaseIdx);
         }
 
-        Scalar pressBound = boundValues[pressureIdx];
-        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
+        const Scalar pressBound = boundValues[pressureIdx];
+
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+        const Scalar pcBound = fluidMatrixInteraction.pc(satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressWBound = 0;
@@ -606,10 +613,8 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
             pressNwBound = pressBound;
         }
 
-        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
-                / viscosity_[wPhaseIdx];
-        Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
-                / viscosity_[nPhaseIdx];
+        const Scalar lambdaWBound = fluidMatrixInteraction.krw(satW) / viscosity_[wPhaseIdx];
+        const Scalar lambdaNwBound = fluidMatrixInteraction.krn(satW) / viscosity_[nPhaseIdx];
 
         Scalar potentialDiffW = cellData.fluxData().upwindPotential(wPhaseIdx, isIndex);
         Scalar potentialDiffNw = cellData.fluxData().upwindPotential(nPhaseIdx, isIndex);
