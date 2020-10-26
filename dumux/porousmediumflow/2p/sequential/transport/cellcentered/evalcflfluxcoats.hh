@@ -28,6 +28,8 @@
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include "evalcflflux.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPModel
@@ -44,7 +46,6 @@ private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -357,7 +358,12 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
     Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
     Scalar lambdaNwI = cellDataI.mobility(nPhaseIdx);
 
-    Scalar dpc_dsI = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(element), satI);
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+    const Scalar dpc_dsI = fluidMatrixInteraction.dpc_dsw(satI);
 
     const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
 
@@ -407,7 +413,12 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             Scalar lambdaWJ = cellDataI.mobility(wPhaseIdx);
             Scalar lambdaNwJ = cellDataI.mobility(nPhaseIdx);
 
-            Scalar dpc_dsJ = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(neighbor), satJ);
+            // old material law interface is deprecated: Replace this by
+            // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(neighbor.geometry().center());
+            // after the release of 3.3, when the deprecated interface is no longer supported
+            const auto fluidMatrixInteractionNeighbor = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), neighbor);
+
+            const Scalar dpc_dsJ = fluidMatrixInteractionNeighbor.dpc_dsw(satJ);
 
             // compute vectorized permeabilities
             DimVector permeability(0);
@@ -448,8 +459,8 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                 ds += epsDerivative_;
             }
 
-            Scalar dLambdaWDs = MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), abs(satPlus)) / viscosityW;
-            dLambdaWDs -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), abs(satMinus)) / viscosityW;
+            Scalar dLambdaWDs = fluidMatrixInteractionNeighbor.krw(abs(satPlus)) / viscosityW;
+            dLambdaWDs -= fluidMatrixInteractionNeighbor.krw(abs(satMinus)) / viscosityW;
             dLambdaWDs /= (ds);
 
             if (upwindNwI)
@@ -471,8 +482,8 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                 ds += epsDerivative_;
             }
 
-            Scalar dLambdaNwDs = MaterialLaw::krn(problem_.spatialParams().materialLawParams(neighbor), satPlus) / viscosityNw;
-            dLambdaNwDs -= MaterialLaw::krn(problem_.spatialParams().materialLawParams(neighbor), satMinus) / viscosityNw;
+            Scalar dLambdaNwDs = fluidMatrixInteractionNeighbor.krn(satPlus) / viscosityNw;
+            dLambdaNwDs -= fluidMatrixInteractionNeighbor.krn(satMinus) / viscosityNw;
             dLambdaNwDs /= (ds);
 
             Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWJ);
@@ -559,13 +570,13 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                     case pw:
                     {
                         potWBound = bcValues[eqIdxPress] + density_[wPhaseIdx] * gdeltaZ;
-                        potNwBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satWBound)
+                        potNwBound = bcValues[eqIdxPress] + fluidMatrixInteraction.pc(satWBound)
                                                           + density_[nPhaseIdx] * gdeltaZ;
                         break;
                     }
                     case pn:
                     {
-                        potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),satWBound)
+                        potWBound = bcValues[eqIdxPress] - fluidMatrixInteraction.pc(satWBound)
                                                          + density_[wPhaseIdx] * gdeltaZ;
                         potNwBound = bcValues[eqIdxPress] + density_[nPhaseIdx] * gdeltaZ;
                         break;
@@ -602,12 +613,12 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
 
                 if (hasPotWBound && !hasPotNwBound)
                 {
-                    potNwBound = potWBound + MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),satWBound)
+                    potNwBound = potWBound + fluidMatrixInteraction.pc(satWBound)
                                            + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
                 }
                 else if (!hasPotWBound && hasPotNwBound)
                 {
-                   potWBound = potNwBound - MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),satWBound)
+                   potWBound = potNwBound - fluidMatrixInteraction.pc(satWBound)
                                           + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
                 }
             }
@@ -651,7 +662,7 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                 return;
             }
 
-            Scalar dpc_dsBound = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(element), satWBound);
+            const Scalar dpc_dsBound = fluidMatrixInteraction.dpc_dsw(satWBound);
 
             Scalar lambdaWBound = 0;
             Scalar lambdaNwBound = 0;
@@ -666,8 +677,8 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             Scalar viscosityWBound = FluidSystem::viscosity(fluidState, wPhaseIdx);
             Scalar viscosityNwBound =
                 FluidSystem::viscosity(fluidState, nPhaseIdx);
-            lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satWBound) / viscosityWBound;
-            lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satWBound) / viscosityNwBound;
+            lambdaWBound = fluidMatrixInteraction.krw(satWBound) / viscosityWBound;
+            lambdaNwBound = fluidMatrixInteraction.krn(satWBound) / viscosityNwBound;
 
             Scalar satUpw = 0;
             using std::max;
@@ -690,8 +701,8 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                 ds += epsDerivative_;
             }
 
-            Scalar dLambdaWDs = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satPlus) / viscosityW;
-            dLambdaWDs -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satMinus) / viscosityW;
+            Scalar dLambdaWDs = fluidMatrixInteraction.krw(satPlus) / viscosityW;
+            dLambdaWDs -= fluidMatrixInteraction.krw(satMinus) / viscosityW;
             dLambdaWDs /= (ds);
 
             if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
@@ -713,8 +724,8 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                 ds += epsDerivative_;
             }
 
-            Scalar dLambdaNwDs = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satPlus) / viscosityNw;
-            dLambdaNwDs -= MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satMinus) / viscosityNw;
+            Scalar dLambdaNwDs = fluidMatrixInteraction.krn(satPlus) / viscosityNw;
+            dLambdaNwDs -= fluidMatrixInteraction.krn(satMinus) / viscosityNw;
             dLambdaNwDs /= (ds);
 
             Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWBound);
