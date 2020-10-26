@@ -26,8 +26,6 @@
 #ifndef DUMUX_SALINIZATION_SPATIAL_PARAMETERS_HH
 #define DUMUX_SALINIZATION_SPATIAL_PARAMETERS_HH
 
-#include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/plotmateriallaw.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
@@ -68,8 +66,6 @@ public:
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
         referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
-
-        plotFluidMatrixInteractions_ = getParam<bool>("Output.PlotFluidMatrixInteractions");
     }
 
     /*!
@@ -156,9 +152,6 @@ private:
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
     PermeabilityType referencePermeability_ = 0.0;
-
-
-    bool plotFluidMatrixInteractions_;
 };
 
 } // end namespace Dumux
