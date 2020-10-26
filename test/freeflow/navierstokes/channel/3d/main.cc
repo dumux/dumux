@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     using Grid = GetPropType<TypeTag, Properties::Grid>;
     Dumux::GridManager<Grid> gridManager;
 
-#if HAVE_DUNE_SUBGRID
+#if HAVE_DUNE_SUBGRID && GRID_DIM == 3
     const bool isStaircaseGeometry = getParam<bool>("Problem.IsStaircaseGeometry", false);
 
     auto selector = [&](const auto& element)
