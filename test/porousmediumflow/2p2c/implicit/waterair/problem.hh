@@ -266,9 +266,8 @@ public:
             values[contiN2EqIdx] = useMoles ? -1e-3/FluidSystem::molarMass(N2Idx) : -1e-3; // kg/(m^2*s) or mole/(m^2*s)
 
             const auto initialValues = initial_(globalPos);
-            const auto& mParams = this->spatialParams().materialLawParamsAtPos(globalPos);
-            using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-            const auto pn = initialValues[pressureIdx] + MaterialLaw::endPointPc(mParams);
+            const auto& fluidMatrixInteraction = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
+            const auto pn = initialValues[pressureIdx] + fluidMatrixInteraction.endPointPc();
             const auto t = initialValues[temperatureIdx];
 
             // note: energy equation is always formulated in terms of mass specific quantities, not per mole
