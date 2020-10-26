@@ -23,10 +23,7 @@
 #define TEST_3D2P_SPATIALPARAMETERS_HH
 
 #include <dumux/material/spatialparams/sequentialfv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux
 {
@@ -48,18 +45,6 @@ struct Test3d2pSpatialParams {};
 // Set the spatial parameters
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::Test3d2pSpatialParams> { using type = Test3d2pSpatialParams<TypeTag>; };
-
-// Set the material law
-template<class TypeTag>
-struct MaterialLaw<TypeTag, TTag::Test3d2pSpatialParams>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using RawMaterialLaw = RegularizedBrooksCorey<Scalar>;
-//    using RawMaterialLaw = LinearMaterial<Scalar>;
-public:
-    using type = EffToAbsLaw<RawMaterialLaw>;
-};
 }
 
 /*!
@@ -85,9 +70,9 @@ class Test3d2pSpatialParams: public SequentialFVSpatialParams<TypeTag>
     using LocalPosition = Dune::FieldVector<CoordScalar, dim>;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
+
 public:
-    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     void update (Scalar saturationW, const Element& element)
     {
@@ -108,38 +93,29 @@ public:
     }
 
 
-    // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const Element &element) const
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     *
+     * \param globalPos The global coordinates for the given location
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-            return materialLawParams_;
+        return makeFluidMatrixInteraction(*pcKrSwCurve_);
     }
 
 
     Test3d2pSpatialParams(const Problem& problem)
     : ParentType(problem), constPermeability_(0)
     {
-
-
-
-//        // parameters for the Brooks-Corey Law
+        // parameters for the Brooks-Corey Law
 #if PROBLEM == 1
-        // residual saturations
-        materialLawParams_.setSwr(0.);
-        materialLawParams_.setSnr(0.);
-
-        // entry pressures
-        materialLawParams_.setPe(5000);
+        typename PcKrSwCurve::BasicParams params(5000/*pe*/, 2/*lambda*/);
+        typename PcKrSwCurve::EffToAbsParams effToAbsParams(0.0/*swr*/, 0.0/*snr*/);
 #else
-        // residual saturations
-        materialLawParams_.setSwr(0.2);
-        materialLawParams_.setSnr(0.2);
-
-        // entry pressures
-        materialLawParams_.setPe(0);
+        typename PcKrSwCurve::BasicParams params(0/*pe*/, 2/*lambda*/);
+        typename PcKrSwCurve::EffToAbsParams effToAbsParams(0.2/*swr*/, 0.2/*snr*/);
 #endif
-
-        // Brooks-Corey shape parameters
-        materialLawParams_.setLambda(2);
+        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>(params, effToAbsParams);
 
 #if PROBLEM == 1
         for(int i = 0; i < dim; i++)
@@ -155,8 +131,8 @@ public:
     }
 
 private:
-    MaterialLawParams materialLawParams_;
     FieldMatrix constPermeability_;
+    std::unique_ptr<const PcKrSwCurve> pcKrSwCurve_;
 
 };
 
