@@ -34,6 +34,8 @@
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -78,9 +80,6 @@ template<class TypeTag> class FVPressureCompositional
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    ///@cond false
-    using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-    ///@endcond
 
     using CellData = GetPropType<TypeTag, Properties::CellData>;
     enum
@@ -547,6 +546,11 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         FluidState& fluidState = cellData.manipulateFluidState();
         CompositionalFlash<Scalar, FluidSystem> flashSolver;
 
+        // old material law interface is deprecated: Replace this by
+        // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
         // initial conditions
         PhaseVector pressure(0.);
         Scalar sat_0=0.;
@@ -579,8 +583,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 Scalar pc=0.;
                 if(getPropValue<TypeTag, Properties::EnableCapillarity>())
                 {
-                    pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),
-                                    sat_0);
+                    pc = fluidMatrixInteraction.pc(sat_0);
                 }
                 else
                     pc = 0.;
@@ -640,16 +643,14 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         Scalar oldPc = pc;
                         //update with better pressures
                         flashSolver.concentrationFlash2p2c(fluidState, Z0, pressure, problem_.temperatureAtPos(globalPos));
-                        pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),
-                                            fluidState.saturation(wPhaseIdx));
+                        pc = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
                         // TODO: get right criterion, do output for evaluation
                         //converge criterion
                         using std::abs;
                         if (abs(oldPc - pc) < 10.0)
                             iter = maxiter;
 
-                        pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element),
-                                fluidState.saturation(wPhaseIdx));
+                        pc = fluidMatrixInteraction.pc(fluidState.saturation(wPhaseIdx));
                     }
                 }
                 else  // capillary pressure neglected
@@ -667,11 +668,9 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         problem_.transportModel().totalConcentration(nCompIdx,eIdxGlobal) = cellData.massConcentration(nCompIdx);
 
         // initialize mobilities
-        cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem_.spatialParams().materialLawParams(element),
-                                                         fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(wPhaseIdx, fluidMatrixInteraction.krw(fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(wPhaseIdx));
-        cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem_.spatialParams().materialLawParams(element),
-                                                         fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(nPhaseIdx, fluidMatrixInteraction.krn(fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(nPhaseIdx));
 
         // calculate perimeter used as weighting factor
