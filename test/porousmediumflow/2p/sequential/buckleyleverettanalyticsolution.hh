@@ -24,9 +24,6 @@
 #define DUMUX_BUCKLEYLEVERETT_ANALYTICAL_HH
 
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
 
 namespace Dumux
 {
@@ -35,33 +32,6 @@ namespace Dumux
  * @brief IMplicit Pressure Explicit Saturation (IMPES) scheme for the solution of
  * the Buckley-Leverett problem
  */
-
-template<typename Scalar, typename Law>
-struct CheckMaterialLaw
-{
-    static bool isLinear()
-    {
-        return false;
-    }
-};
-
-template<typename Scalar>
-struct CheckMaterialLaw<Scalar, LinearMaterial<Scalar> >
-{
-    static bool isLinear()
-    {
-        return true;
-    }
-};
-
-template<typename Scalar>
-struct CheckMaterialLaw<Scalar, EffToAbsLaw< LinearMaterial<Scalar> > >
-{
-    static bool isLinear()
-    {
-        return true;
-    }
-};
 
 /**
  * \file
@@ -74,8 +44,6 @@ template<class TypeTag> class BuckleyLeverettAnalytic
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
@@ -119,10 +87,10 @@ private:
     void prepareAnalytic()
     {
         const auto& dummyElement = *problem_.gridView().template begin<0>();
-        const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(dummyElement));
+        const auto& fluidMatrixInteraction = problem_->spatialParams().fluidMatrixInteractionAtPos(dummyElement.geometry().center());
 
-        swr_ = materialLawParams.swr();
-        snr_ = materialLawParams.snr();
+        swr_ = fluidMatrixInteraction.effToAbsParams().swr();
+        snr_ = fluidMatrixInteraction.effToAbsParams().snr();
         Scalar porosity = problem_.spatialParams().porosity(dummyElement);
 
         FluidState fluidState;
@@ -132,8 +100,7 @@ private:
         Scalar viscosityW = FluidSystem::viscosity(fluidState, wPhaseIdx);
         Scalar viscosityNW = FluidSystem::viscosity(fluidState, nPhaseIdx);
 
-
-        if (CheckMaterialLaw<Scalar, MaterialLaw>::isLinear() && viscosityW == viscosityNW)
+        if constexpr (SpatialParams::pcSwCurveIsLinear() && viscosityW == viscosityNW)
         {
             std::pair<Scalar, Scalar> entry;
             entry.first = 1 - snr_;
@@ -145,32 +112,32 @@ private:
         else
         {
         Scalar sw0 = swr_;
-        Scalar fw0 = MaterialLaw::krw(materialLawParams, sw0)/viscosityW;
-        fw0 /= (fw0 + MaterialLaw::krn(materialLawParams, sw0)/viscosityNW);
+        Scalar fw0 = fluidMatrixInteraction.krw(sw0)/viscosityW;
+        fw0 /= (fw0 + fluidMatrixInteraction.krn(sw0)/viscosityNW);
         Scalar sw1 = sw0 + deltaS_;
-        Scalar fw1 = MaterialLaw::krw(materialLawParams, sw1)/viscosityW;
-        fw1 /= (fw1 + MaterialLaw::krn(materialLawParams, sw1)/viscosityNW);
+        Scalar fw1 = fluidMatrixInteraction.krw(sw1)/viscosityW;
+        fw1 /= (fw1 + fluidMatrixInteraction.krn(sw1)/viscosityNW);
         Scalar tangentSlopeOld = (fw1 - fw0)/(sw1 - sw0);
         sw1 += deltaS_;
-        fw1 = MaterialLaw::krw(materialLawParams, sw1)/viscosityW;
-        fw1 /= (fw1 + MaterialLaw::krn(materialLawParams, sw1)/viscosityNW);
+        fw1 = fluidMatrixInteraction.krw(sw1)/viscosityW;
+        fw1 /= (fw1 + fluidMatrixInteraction.krn(sw1)/viscosityNW);
         Scalar tangentSlopeNew = (fw1 - fw0)/(sw1 - sw0);
 
         while (tangentSlopeNew >= tangentSlopeOld && sw1 < (1.0 - snr_))
         {
             tangentSlopeOld = tangentSlopeNew;
             sw1 += deltaS_;
-            fw1 = MaterialLaw::krw(materialLawParams, sw1)/viscosityW;
-            fw1 /= (fw1 + MaterialLaw::krn(materialLawParams, sw1)/viscosityNW);
+            fw1 = fluidMatrixInteraction.krw(sw1)/viscosityW;
+            fw1 /= (fw1 + fluidMatrixInteraction.krn(sw1)/viscosityNW);
             tangentSlopeNew = (fw1 - fw0)/(sw1 - sw0);
         }
 
         sw0 = sw1 - deltaS_;
-        fw0 = MaterialLaw::krw(materialLawParams, sw0)/viscosityW;
-                fw0 /= (fw0 + MaterialLaw::krn(materialLawParams, sw0)/viscosityNW);
+        fw0 = fluidMatrixInteraction.krw(sw0)/viscosityW;
+                fw0 /= (fw0 + fluidMatrixInteraction.krn(sw0)/viscosityNW);
         Scalar sw2 = sw1 + deltaS_;
-        Scalar fw2 = MaterialLaw::krw(materialLawParams, sw2)/viscosityW;
-        fw2 /= (fw2 + MaterialLaw::krn(materialLawParams, sw2)/viscosityNW);
+        Scalar fw2 = fluidMatrixInteraction.krw(sw2)/viscosityW;
+        fw2 /= (fw2 + fluidMatrixInteraction.krn(sw2)/viscosityNW);
         while (sw1 <= (1.0 - snr_))
         {
             std::pair<Scalar, Scalar> entry;
@@ -188,8 +155,8 @@ private:
             fw1 = fw2;
 
             sw2 += deltaS_;
-            fw2 = MaterialLaw::krw(materialLawParams, sw2)/viscosityW;
-            fw2 /= (fw2 + MaterialLaw::krn(materialLawParams, sw2)/viscosityNW);
+            fw2 = fluidMatrixInteraction.krw(sw2)/viscosityW;
+            fw2 /= (fw2 + fluidMatrixInteraction.krn(sw2)/viscosityNW);
         }
         }
 

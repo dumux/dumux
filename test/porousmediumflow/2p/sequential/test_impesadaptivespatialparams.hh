@@ -26,9 +26,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 
 namespace Dumux
 {
@@ -48,16 +46,6 @@ struct TestIMPESAdaptiveSpatialParams {};
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TestIMPESAdaptiveSpatialParams> { using type = TestIMPESAdaptiveSpatialParams<TypeTag>; };
 
-// Set the material law
-template<class TypeTag>
-struct MaterialLaw<TypeTag, TTag::TestIMPESAdaptiveSpatialParams>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using RawMaterialLaw = RegularizedBrooksCorey<Scalar>;
-public:
-    using type = EffToAbsLaw<RawMaterialLaw>;
-};
 }
 
 /*!
@@ -80,10 +68,9 @@ class TestIMPESAdaptiveSpatialParams: public SequentialFVSpatialParams<TypeTag>
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-public:
-    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
+public:
 
     Scalar intrinsicPermeability (const Element& element) const
     {
@@ -95,36 +82,23 @@ public:
         return 0.2;
     }
 
-
-    // return the parameter object for the Brooks-Corey material law which depends on the position
-//    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    const MaterialLawParams& materialLawParams(const Element& element) const
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     *
+     * \param globalPos The global coordinates for the given location
+     */
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-            return materialLawParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
 
 
     TestIMPESAdaptiveSpatialParams(const Problem& problem)
-    : ParentType(problem)
-    {
-        // residual saturations
-        materialLawParams_.setSwr(0.2);
-        materialLawParams_.setSnr(0.2);
-
-//        // parameters for the Brooks-Corey Law
-//        // entry pressures
-        materialLawParams_.setPe(0);
-//        // Brooks-Corey shape parameters
-        materialLawParams_.setLambda(2);
-
-        // parameters for the linear
-        // entry pressures function
-//        materialLawParams_.setEntryPc(0);
-//        materialLawParams_.setMaxPc(0);
-    }
+    : ParentType(problem), pcKrSwCurve_("SpatialParams")
+    {}
 
 private:
-    MaterialLawParams materialLawParams_;
+    const PcKrSwCurve pcKrSwCurve_;
 };
 
 } // end namespace
