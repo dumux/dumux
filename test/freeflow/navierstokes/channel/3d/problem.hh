@@ -31,7 +31,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
 
-#if HAVE_DUNE_SUBGRID
+#if HAVE_DUNE_SUBGRID && GRID_DIM == 3
 #include <dune/subgrid/subgrid.hh>
 #endif
 
@@ -71,7 +71,7 @@ struct Grid<TypeTag, TTag::ThreeDChannelTest>
 
     using HostGrid = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, dim> >;
 
-#if HAVE_DUNE_SUBGRID
+#if HAVE_DUNE_SUBGRID && GRID_DIM == 3
     using type = Dune::SubGrid<HostGrid::dimension, HostGrid>;
 #else
     using type = HostGrid;
