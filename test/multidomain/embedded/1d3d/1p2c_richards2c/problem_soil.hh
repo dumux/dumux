@@ -158,8 +158,7 @@ public:
 
         // for initial conditions
         const Scalar sw = getParam<Scalar>("Problem.InitTopSaturation", 0.3); // start with 30% saturation on top
-        using MaterialLaw = typename GetPropType<TypeTag, Properties::SpatialParams>::MaterialLaw;
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(gridGeometry->bBoxMax()), sw);
+        pcTop_ = this->spatialParams().fluidMatrixInteractionAtPos(gridGeometry->bBoxMax()).pc(sw);
     }
 
     /*!
