@@ -34,8 +34,8 @@
 #include <dune/geometry/affinegeometry.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/geometry/geometryintersection.hh>
-#include <dumux/common/geometry/intersectingentities.hh>
+#include <dumux/geometry/geometryintersection.hh>
+#include <dumux/geometry/intersectingentities.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/slipcondition.hh>

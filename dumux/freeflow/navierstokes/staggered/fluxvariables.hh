@@ -343,7 +343,7 @@ public:
                 // It is not clear how to evaluate the BJ condition here.
                 // For symmetry reasons, our own scvf should then have the same Neumann flux as the lateral face.
                 // TODO: We should clarify if this is the correct approach.
-                if (currentScvfBoundaryTypes->isSlipCondition(Indices::velocity(lateralScvf.directionIndex()))
+                if (currentScvfBoundaryTypes->isSlipCondition(Indices::velocity(lateralFace.directionIndex()))
                     && lateralFaceBoundaryTypes
                     && lateralFaceBoundaryTypes->isNeumann(Indices::velocity(scvf.directionIndex())))
                 {

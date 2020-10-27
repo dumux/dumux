@@ -96,15 +96,17 @@ public:
         using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
         static const SlipCondition condition_ = slipCondition();
 
+        // create a unit normal vector oriented in positive coordinate direction
+        auto orientation = ownScvf.unitOuterNormal();
+        orientation[ownScvf.directionIndex()] = 1.0;
+
         Scalar factor(0.0);
         if (condition_ == SlipCondition::ER)
             factor = -1.0 / problem.epsInterface(faceOnPorousBoundary) / problem.factorNTangential(faceOnPorousBoundary);
         else
-            factor = problem.betaBJ(element, faceOnPorousBoundary); //beta = alpha/sqrt(K)
+            factor = problem.betaBJ(element, faceOnPorousBoundary, orientation); //beta = alpha/sqrt(K)
 
         const Scalar distanceNormalToBoundary = (faceOnPorousBoundary.center() - scv.center()).two_norm();
-        auto orientation = ownScvf.unitOuterNormal();
-        orientation[ownScvf.directionIndex()] = 1.0;
         const auto porousMediumTerm = (condition_ == SlipCondition::BJS) ? VelocityVector(0.0)
                                                                          : problem.porousMediumTerm(element, faceOnPorousBoundary);
         return (tangentialVelocityGradient*distanceNormalToBoundary

@@ -53,7 +53,7 @@ public:
         ParentType::resetEq(eqIdx);
 
         boundaryInfo_[eqIdx].isSymmetry = false;
-        boundaryInfo_[eqIdx].isBeaversJoseph = false;
+        boundaryInfo_[eqIdx].isSlipCondition = false;
         boundaryInfo_[eqIdx].isOutflow = false;
     }
 
@@ -97,10 +97,20 @@ public:
      * \brief Set a boundary condition for a single equation to
      *        Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
      */
+    [[deprecated("This method will be removed after release (3.4). Use setSlipCondition instead!")]]
     void setBeaversJoseph(const int eqIdx)
     {
+        setSlipCondition(eqIdx);
+    }
+
+    /*!
+     * \brief Set a boundary condition for a single equation to
+     *        slip condition, e.g. Beavers-Joseph(-Saffmann) (special case of Dirichlet b.c.).
+     */
+    void setSlipCondition(unsigned eqIdx)
+    {
         resetEq(eqIdx);
-        boundaryInfo_[eqIdx].isBeaversJoseph = true;
+        boundaryInfo_[eqIdx].isSlipCondition = true;
     }
 
     /*!
@@ -109,17 +119,37 @@ public:
      *
      * \param eqIdx The index of the equation
      */
+    [[deprecated("This method will be removed after release (3.4). Use isSlipCondition instead!")]]
     bool isBeaversJoseph(const int eqIdx) const
-    { return boundaryInfo_[eqIdx].isBeaversJoseph; }
+    { return isSlipCondition(eqIdx); }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        slip boundary condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isSlipCondition(const int eqIdx) const
+    { return boundaryInfo_[eqIdx].isSlipCondition; }
 
     /*!
      * \brief Returns true if some equation is used to specify a
      *        Beavers-Joseph(-Saffman) boundary condition.
      */
+    [[deprecated("This method will be removed after release (3.4). Use hasSlipCondition instead!")]]
     bool hasBeaversJoseph() const
     {
+        return hasSlipCondition();
+    }
+
+    /*!
+     * \brief Returns true if some equation is used to specify a
+     *        slip boundary condition.
+     */
+    bool hasSlipCondition() const
+    {
         for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isBeaversJoseph)
+            if (boundaryInfo_[i].isSlipCondition)
                 return true;
         return false;
     }
@@ -157,7 +187,7 @@ protected:
     {
         bool isSymmetry : 1;
         bool isOutflow : 1;
-        bool isBeaversJoseph : 1;
+        bool isSlipCondition : 1;
     };
 
     std::array<NavierStokesBoundaryInfo, numEq> boundaryInfo_;

@@ -368,11 +368,7 @@ private:
 
 } // end namespace Dumux
 
-<<<<<<< HEAD
-#endif
-=======
 #include  <dumux/multidomain/boundary/stokesdarcy/cellcentered/tpfa/couplingdata.hh>
 #include  <dumux/multidomain/boundary/stokesdarcy/box/couplingdata.hh>
 
 #endif // DUMUX_STOKES_DARCY_COUPLINGDATA_HH
->>>>>>> 030db292f... [md][stokesdarcy] Allow for different discretization methods

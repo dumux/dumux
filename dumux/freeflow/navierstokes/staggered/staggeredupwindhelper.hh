@@ -440,10 +440,9 @@ private:
         const bool useZeroGradient = lateralFaceBoundaryTypes && (lateralFaceBoundaryTypes->isSymmetry() || lateralFaceBoundaryTypes->isDirichlet(Indices::pressureIdx));
         if (useZeroGradient)
             return faceVars.velocitySelf();
-
-        const bool lateralFaceHasBJS = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isBeaversJoseph(Indices::velocity(scvf.directionIndex()));
-        if (lateralFaceHasBJS)
-            return VelocityGradients::beaversJosephVelocityAtLateralScvf(elemVolVars_.gridVolVars().problem(), element, fvGeometry_, scvf, faceVars,
+        const bool lateralFaceHasSlipCondition = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isSlipCondition(Indices::velocity(scvf.directionIndex()));
+        if (lateralFaceHasSlipCondition)
+            return VelocityGradients::slipVelocityAtLateralScvf(elemVolVars_.gridVolVars().problem(), element, fvGeometry_, scvf, faceVars,
                                                                          currentScvfBoundaryTypes, lateralFaceBoundaryTypes, localSubFaceIdx);
 
         const bool lateralFaceHasDirichletVelocity = lateralFaceBoundaryTypes && lateralFaceBoundaryTypes->isDirichlet(Indices::velocity(scvf.directionIndex()));

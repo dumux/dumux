@@ -27,11 +27,12 @@
 
 #include <dune/geometry/quadraturerules.hh>
 
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
-#include <dumux/multidomain/couplingmanager.hh> //TODO: Why is this the right coupling manager, not the one in this folder?
+#include <dumux/multidomain/couplingmanager.hh>
 
 #include <dumux/freeflow/navierstokes/staggered/velocitygradients.hh>
-#include <dumux/discretization/staggered/freeflow/boundarytypes.hh>
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <optional>
 
 namespace Dumux {
@@ -62,8 +63,8 @@ class StokesDarcyCouplingDataBoxBase : public StokesDarcyCouplingDataImplementat
     static constexpr auto freeFlowIdx = CouplingManager::freeFlowIdx;
     static constexpr auto porousMediumIdx = CouplingManager::porousMediumIdx;
 
-    using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;
-    template<std::size_t id> using BoundaryTypes = GetPropType<SubDomainTypeTag<id>, Properties::BoundaryTypes>;
+    using VelocityVector = typename Element<freeFlowIdx>::Geometry::GlobalCoordinate;;
+    template<std::size_t id> using BoundaryTypes = typename ProblemTraits<Problem<id>>::BoundaryTypes;
     using StokesVelocityGradients = StaggeredVelocityGradients<Scalar, GridGeometry<freeFlowIdx>, BoundaryTypes<freeFlowIdx>, Indices<freeFlowIdx>>;
 
     using AdvectionType = GetPropType<SubDomainTypeTag<porousMediumIdx>, Properties::AdvectionType>;
