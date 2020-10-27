@@ -256,9 +256,7 @@ public:
      * the absolute rate mass generated or annihilated in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel),
-             std::enable_if_t<!enable, int> = 0>
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
@@ -272,58 +270,11 @@ public:
         // calculate the source
         const Scalar radius = this->couplingManager().radius(source.id());
         const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-        const Scalar sourceValue = beta*(pressure3D - pressure1D);//*bulkVolVars.density();
+        Scalar sourceValue = beta*(pressure3D - pressure1D);
+        if constexpr(CouplingManager::couplingMode == EmbeddedCouplingMode::kernel)
+            sourceValue *= this->couplingManager().fluxScalingFactor(source.id());
 
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
-    }
-
-    //! Specialization for kernel method
-    template<class ElementVolumeVariables,
-             bool enable = (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel),
-             std::enable_if_t<enable, int> = 0>
-    void pointSource(PointSource& source,
-                     const Element &element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const SubControlVolume &scv) const
-    {
-        static const Scalar kernelWidth = getParam<Scalar>("MixedDimension.KernelWidth");
-        static const Scalar kernelFactor = std::log(kernelWidth)-9.0/10.0;
-
-        // compute source at every integration point
-        const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
-        const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
-
-        // calculate the source
-        const Scalar radius = this->couplingManager().radius(source.id());
-        const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-        const Scalar sourceValue = beta*(pressure3D / kernelFactor * std::log(radius) - pressure1D);//*bulkVolVars.density();
-
-        source = sourceValue*source.quadratureWeight()*source.integrationElement();
-    }
-
-    //! Evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
-    //! We only need to evaluate the part of the residual that will be influence by the low dim DOF
-    template<class MatrixBlock, class VolumeVariables>
-    void addSourceDerivatives(MatrixBlock& block,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curElemVolVars,
-                              const SubControlVolume& scv) const
-    {
-        const auto eIdx = this->gridGeometry().elementMapper().index(element);
-
-        auto key = std::make_pair(eIdx, 0);
-        if (this->pointSourceMap().count(key))
-        {
-            // call the solDependent function. Herein the user might fill/add values to the point sources
-            // we make a copy of the local point sources here
-            auto pointSources = this->pointSourceMap().at(key);
-
-            // add the point source values to the local residual (negative sign is convention for source term)
-            for (const auto& source : pointSources)
-                block[0][0] -= this->couplingManager().pointSourceDerivative(source, Dune::index_constant<1>{}, Dune::index_constant<1>{});
-        }
     }
 
     /*!
@@ -343,9 +294,11 @@ public:
 
     //! Called after every time step
     //! Output the total global exchange term
-    void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
+    Scalar computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
-        PrimaryVariables source(0.0);
+        SolutionVector source(sol.size());
+        SolutionVector sourceExact(sol.size());
+        Scalar volume = 0.0;
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->gridGeometry());
@@ -358,11 +311,21 @@ public:
             {
                 auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
                 pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
-                source += pointSources;
+                source[scv.dofIndex()] += pointSources;
+                auto a = scv.corner(0)[2];
+                auto b = scv.corner(1)[2];
+                if (a > b) std::swap(a, b);
+                sourceExact[scv.dofIndex()] += a*(1.0+0.5*a) - b*(1.0+0.5*b);
+                volume += scv.volume();
             }
         }
+        std::cout << "Global integrated source (1D): " << std::accumulate(source.begin(), source.end(), 0.0) << '\n';
+        std::cout << "Global integrated source exact (1D): " << std::accumulate(sourceExact.begin(), sourceExact.end(), 0.0) << '\n';
 
-        std::cout << "Global integrated source (1D): " << source << '\n';
+        source -= sourceExact;
+        const auto norm = source.two_norm()/sourceExact.two_norm();
+        std::cout << "relative L2 Norm source (1D): " << norm << '\n';
+        return source.two_norm()/volume;
     }
 
     /*!
