@@ -38,6 +38,7 @@
 #include <dumux/common/geometry/intersectingentities.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/freeflow/slipcondition.hh>
 
 namespace Dumux {
 
@@ -129,19 +130,19 @@ public:
                     stokesFaceToDarcyStencils[stokesScvf.dofIndex()].push_back(scv.dofIndex());
                 }
 
-                const std::size_t numSubFaces = stokesScvf.pairData().size();
-
-                // Account for all sub faces. This is needed when a slip condition is set.
-                for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+                if(!(slipCondition() == SlipCondition::BJS))
                 {
-                    const auto eIdx = stokesScvf.insideScvIdx();
-                    // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this lateral face.
-                    const auto& lateralStokesScvf = stokesFvGeometry.scvf(eIdx, stokesScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-                    for (auto&& scv : scvs(darcyFvGeometry))
+                    const std::size_t numSubFaces = stokesScvf.pairData().size();
+                    // Account for all interior sub-faces which include data from a boundary with slip condition
+                    for (int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+                    {
+                        const auto eIdx = stokesScvf.insideScvIdx();
+                        const auto& lateralStokesScvf = stokesFvGeometry.scvf(eIdx, stokesScvf.pairData(localSubFaceIdx).localLateralFaceIdx);
                         if(lateralStokesScvf.dofIndex() != stokesScvf.dofIndex() && !lateralStokesScvf.boundary())
-                            stokesFaceToDarcyStencils[lateralStokesScvf.dofIndex()].push_back(scv.dofIndex());
+                            for (auto&& scv : scvs(darcyFvGeometry))
+                                stokesFaceToDarcyStencils[lateralStokesScvf.dofIndex()].push_back(scv.dofIndex());
+                    }
                 }
-
             }
         }
     }
