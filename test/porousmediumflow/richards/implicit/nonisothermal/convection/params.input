@@ -20,3 +20,9 @@ EnableChop = false  # chop for better convergence
 SolidDensity = 2700
 SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790
+
+[SpatialParams]
+Swr = 0.05
+Snr = 0.0
+VanGenuchtenAlpha = 0.0037
+VanGenuchtenN = 4.7
