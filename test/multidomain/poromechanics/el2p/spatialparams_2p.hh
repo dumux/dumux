@@ -28,8 +28,7 @@
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/material/spatialparams/gstatrandomfield.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
@@ -52,10 +51,9 @@ class TwoPSpatialParams : public FVSpatialParams<GridGeometry, Scalar,
     using ThisType = TwoPSpatialParams<GridGeometry, Scalar, CouplingManager>;
     using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
 
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
+
 public:
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
@@ -67,18 +65,16 @@ public:
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {
         // given Van Genuchten m
-        Scalar m = 0.457;
+        const Scalar m = 0.457;
         // Brooks Corey lambda
         using std::pow;
-        Scalar brooksCoreyLambda = m / (1 - m) * (1 - pow(0.5, 1/m));
+        const Scalar brooksCoreyLambda = m / (1 - m) * (1 - pow(0.5, 1/m));
 
-        // residual saturations
-        myMaterialParams_.setSwr(0.3);
-        myMaterialParams_.setSnr(0.05);
+        auto baseParams = PcKrSwCurve::makeBasicParams("SpatialParams");
+        baseParams.setLambda(brooksCoreyLambda);
+        const auto effToAbsParams = PcKrSwCurve::makeEffToAbsParams("SpatialParams");
 
-        // parameters for the Brooks Corey law
-        myMaterialParams_.setPe(1.99e4);
-        myMaterialParams_.setLambda(brooksCoreyLambda);
+        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>(baseParams, effToAbsParams);
     }
 
     //! Returns the porosity for a sub-control volume.
@@ -106,24 +102,15 @@ public:
          return permLaw.evaluatePermeability(initPermeability_, initPorosity_, porosity(element, scv, elemSol));
      }
 
-    /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law.
-     *
-     * In this test, we use element-wise distributed material parameters.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
-     */
-    template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
-    {
-        // do not use different parameters in the test with inverted wettability
-        return myMaterialParams_;
-    }
+     /*!
+      * \brief Returns the parameters for the material law at a given location
+      *
+      * \param globalPos The global coordinates for the given location
+      */
+     auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
+     {
+         return makeFluidMatrixInteraction(*pcKrSwCurve_);
+     }
 
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
@@ -145,8 +132,7 @@ private:
     std::shared_ptr<const CouplingManager> couplingManagerPtr_;
     Scalar initPermeability_;
     Scalar initPorosity_;
-
-    MaterialLawParams myMaterialParams_;
+    std::unique_ptr<const PcKrSwCurve> pcKrSwCurve_;
 };
 
 } // end namespace Dumux
