@@ -61,8 +61,8 @@ public:
                   const Element& element,
                   const Scv& scv,
                   const ElemSol& elemSol,
-                  typename ElemSol::PrimaryVariables::value_type Sn)
-    { return Sn; }
+                  typename ElemSol::PrimaryVariables::value_type sn)
+    { return sn; }
 };
 
 //! Specialization for the box scheme with the interface solver enabled
@@ -85,23 +85,25 @@ public:
                   const Element& element,
                   const Scv& scv,
                   const ElemSol& elemSol,
-                  typename ElemSol::PrimaryVariables::value_type Sn)
+                  typename ElemSol::PrimaryVariables::value_type sn)
     {
         // if this dof doesn't lie on a material interface, simply return Sn
-        if (!spatialParams.materialInterfaceParams().isOnMaterialInterface(scv))
-            return Sn;
+        const auto& materialInterfaces = spatialParams.materialInterfaces();
+        if (!materialInterfaces.isOnMaterialInterface(scv))
+            return sn;
 
-        using MaterialLaw = typename SpatialParams::MaterialLaw;
         // compute capillary pressure using material parameters associated with the dof
-        const auto& ifMaterialParams = spatialParams.materialInterfaceParams().getDofParams(scv);
-        const auto pc = MaterialLaw::pc(ifMaterialParams, /*Sw=*/1.0 - Sn);
+        const auto& interfacePcSw = materialInterfaces.pcSwAtDof(scv);
+        const auto pc = interfacePcSw.pc(/*ww=*/1.0 - sn);
 
         // reconstruct by inverting the pc-sw curve
-        const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
-        const auto pcMin = MaterialLaw::endPointPc(materialLawParams);
+        const auto& pcSw = spatialParams.fluidMatrixInteraction(element, scv, elemSol).pcSwCurve();
+        const auto pcMin = pcSw.endPointPc();
 
-        if (pc < pcMin && pcMin > 0.0) return 0.0;
-        else return 1.0 - MaterialLaw::sw(materialLawParams, pc);
+        if (pc < pcMin && pcMin > 0.0)
+            return 0.0;
+        else
+            return 1.0 - pcSw.sw(pc);
     }
 };
 
