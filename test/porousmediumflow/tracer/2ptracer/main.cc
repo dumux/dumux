@@ -107,8 +107,8 @@ int main(int argc, char** argv)
     auto pOld = p;
 
     // maybe update the interface parameters
-    if (ENABLEINTERFACESOLVER)
-        twoPProblem->spatialParams().updateMaterialInterfaceParams(p);
+    if constexpr (ENABLEINTERFACESOLVER)
+        twoPProblem->spatialParams().updateMaterialInterfaces(p);
 
     // the grid variables
     using TwoPGridVariables = GetPropType<TwoPTypeTag, Properties::GridVariables>;
