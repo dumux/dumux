@@ -178,7 +178,6 @@ public:
                     lateralFaceBoundaryTypes.emplace(this->couplingManager().problem(freeFlowIdx).boundaryTypes(element, lateralScvf));
                 }
 
-
                 // Get velocity gradients
                 const Scalar velocityGrad_ji = StokesVelocityGradients::velocityGradJI(
                     this->couplingManager().problem(freeFlowIdx), element, fvGeometry, scvf , stokesElemFaceVars[scvf],
