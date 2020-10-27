@@ -88,8 +88,8 @@ public:
      * \note This will give you nice error messages if a mandatory parameter is missing
      */
     explicit TwoPMaterialLaw(const std::string& paramGroup)
-    : basicParams_(BaseLaw::template makeParams<Scalar>(paramGroup))
-    , effToAbsParams_(EffToAbs::template makeParams<Scalar>(paramGroup))
+    : basicParams_(makeBasicParams(paramGroup))
+    , effToAbsParams_(makeEffToAbsParams(paramGroup))
     {
         if constexpr (isRegularized())
             regularization_.init(this, paramGroup);
@@ -261,9 +261,33 @@ public:
                && regularization_ == o.regularization_;
     }
 
+    /*!
+     * \brief Create the base law's parameters using
+     *        input file parameters
+     */
+    static BasicParams makeBasicParams(const std::string& paramGroup)
+    {
+        return BaseLaw::template makeParams<Scalar>(paramGroup);
+    }
+
+    /*!
+     * \brief Return the base law's parameters
+     */
     const BasicParams& basicParams() const
     { return basicParams_; }
 
+    /*!
+     * \brief Create the parameters of the EffToAbs policy using
+     *        input file parameters
+     */
+    static EffToAbsParams makeEffToAbsParams(const std::string& paramGroup)
+    {
+        return EffToAbs::template makeParams<Scalar>(paramGroup);
+    }
+
+    /*!
+     * \brief Return the parameters of the EffToAbs policy
+     */
     const EffToAbsParams& effToAbsParams() const
     { return effToAbsParams_; }
 
