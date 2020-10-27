@@ -287,10 +287,16 @@ public:
 
         for (const auto& s : sources)
         {
+            // compute in which elements the point source falls
+            const auto entities = intersectingEntities(s.position(), boundingBoxTree);
+
+            // continue with next point source if no intersection with the grid are found
+            if (entities.empty())
+                continue;
+
             // make local copy of point source for the map
             auto source = s;
-            // compute in which elements the point source falls
-            const auto entities = intersectingEntities(source.position(), boundingBoxTree);
+
             // split the source values equally among all concerned entities
             source.setEmbeddings(entities.size()*source.embeddings());
             // loop over all concernes elements
