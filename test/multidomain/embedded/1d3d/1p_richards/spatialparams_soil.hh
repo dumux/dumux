@@ -27,8 +27,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
 
@@ -47,26 +46,16 @@ class SoilSpatialParams
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
+
 public:
     // export permeability type
     using PermeabilityType = Scalar;
-    // export material law type
-    using MaterialLaw = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
-    // export material law params
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     SoilSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurve_("Soil.SpatialParams")
     {
-        // residual saturations
-        materialParams_.setSwr(0.05);
-        materialParams_.setSnr(0.0);
-
-        // parameters for the Van Genuchten law
-        // alpha and n
-        materialParams_.setVgAlpha(2.956e-4);
-        materialParams_.setVgn(1.5);
-
         // perm and poro
         permeability_ = getParam<Scalar>("Soil.SpatialParams.Permeability");
         porosity_ = getParam<Scalar>("Soil.SpatialParams.Porosity");
@@ -105,16 +94,15 @@ public:
     /*!
      * \brief Returns the parameters for the material law at a given location
      *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
-     *
-     * \param globalPos A global coordinate vector
+     * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
-    { return materialParams_; }
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
+    {
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
+    }
 
 private:
-    MaterialLawParams materialParams_;
+    const PcKrSwCurve pcKrSwCurve_;
     Scalar permeability_;
     Scalar porosity_;
 };
