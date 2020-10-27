@@ -26,9 +26,7 @@
 #define DUMUX_CONSERVATION_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 
 namespace Dumux {
 
@@ -51,26 +49,19 @@ class ConservationSpatialParams
     using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
     ConservationSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-        : ParentType(gridGeometry)
+    : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         porosity_ = getParam<Scalar>("SpatialParams.Porosity");
         alphaBJ_ = getParam<Scalar>("SpatialParams.AlphaBJ");
-
-        // residual saturations
-        params_.setSwr(getParam<Scalar>("SpatialParams.Swr"));
-        params_.setSnr(getParam<Scalar>("SpatialParams.Snr"));
-        // parameters for the vanGenuchten law
-        params_.setVgAlpha(getParam<Scalar>("SpatialParams.VgAlpha"));
-        params_.setVgn(getParam<Scalar>("SpatialParams.VgN"));
     }
 
     /*!
@@ -97,20 +88,14 @@ public:
     { return alphaBJ_; }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law.
+     * \brief Returns the parameters for the material law at a given location
      *
-     * In this test, we use element-wise distributed material parameters.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
+     * \param globalPos The global coordinates for the given location
      */
-    template<class ElementSolutionVector>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
-    { return params_; }
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
+    {
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
+    }
 
     /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
@@ -126,7 +111,7 @@ private:
     Scalar permeability_;
     Scalar porosity_;
     Scalar alphaBJ_;
-    MaterialLawParams params_;
+    const PcKrSwCurve pcKrSwCurve_;
     static constexpr Scalar eps_ = 1.0e-7;
 };
 
