@@ -12,9 +12,10 @@ Name = chemicalnonequilibrium
 EnableGravity = false
 
 [SpatialParams]
-WettingNonwettingAreaA1 = -1.603e-01
-WettingNonwettingAreaA2 = 1.429e-05
-WettingNonwettingAreaA3 = 1.915e-01
+WettingNonwettingArea.PcMax = 0 # will be overwritten internally
+WettingNonwettingArea.A1 = -1.603e-01
+WettingNonwettingArea.A2 = 1.429e-05
+WettingNonwettingArea.A3 = 1.915e-01
 MeanPoreSize = 5e-4
 MassTransferFactor = 0.5
 BrooksCoreyPcEntry = 1e4
