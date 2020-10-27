@@ -21,6 +21,10 @@ Name = twop # name passed to the output routines
 [SpatialParams]
 Permeability = 1e-14 # [m^2]
 InitialPorosity = 0.2 # [-]
+Swr = 0.3
+Snr = 0.05
+BrooksCoreyPcEntry = 1.99e4
+BrooksCoreyLambda = 0 # will be overwritten internally
 
 [LinearSolver]
 ResidualReduction = 1e-20
