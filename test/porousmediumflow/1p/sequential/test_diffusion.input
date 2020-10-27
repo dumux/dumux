@@ -13,3 +13,7 @@ LiquidKinematicViscosity = 1.0
 
 [LinearSolver.Preconditioner]
 Iterations = 2
+
+[SpatialParams]
+LinearPcEntry = 0
+LinearPcMax = 0
