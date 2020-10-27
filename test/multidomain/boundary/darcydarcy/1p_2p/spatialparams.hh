@@ -27,7 +27,6 @@
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux {
 
@@ -50,20 +49,15 @@ class TestSpatialParams
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-public:
-    using MaterialLaw = EffToAbsLaw<VanGenuchten<Scalar>>;
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenNoReg<Scalar>;
 
+public:
     using PermeabilityType = Scalar;
 
     TestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {
-        materialParams_.setSwr(0.05);
-        materialParams_.setSnr(0.0);
-        materialParams_.setVgAlpha(0.0037);
-        materialParams_.setVgn(4.7);
-    }
+    , pcKrSwCurve_("SpatialParams")
+    {}
 
     /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
@@ -85,14 +79,13 @@ public:
     }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law.
+     * \brief Returns the parameters for the material law at a given location
      *
-     * In this test, we use element-wise distributed material parameters.
-     * \return the material parameters object
+     * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        return materialParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
 
     /*!
@@ -108,7 +101,7 @@ public:
     }
 
 private:
-    MaterialLawParams materialParams_;
+    const PcKrSwCurve pcKrSwCurve_;
 };
 
 } // end namespace Dumux
