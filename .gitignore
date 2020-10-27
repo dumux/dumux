@@ -30,6 +30,9 @@ Testing
 *.pyc
 __pycache__
 
+# macOS
+.DS_Store
+
 # always consider files containing source code regardless of their name
 !*.cc
 !*.hh
