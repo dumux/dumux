@@ -44,6 +44,8 @@
 #include <dune/common/dynvector.hh>
 #include <dune/common/dynmatrix.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -98,7 +100,6 @@ class MimeticTwoPLocalStiffnessAdaptive: public LocalStiffness<TypeTag, 1>
     using CellData = GetPropType<TypeTag, Properties::CellData>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
 
     using IntersectionMapper = Dumux::IntersectionMapper<GridView>;
 
@@ -701,10 +702,13 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
                 PrimaryVariables boundValues(0.0);
                 problem_.dirichlet(boundValues, intersection);
 
-                Scalar krw = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element),
-                        boundValues[saturationIdx]);
-                Scalar krn = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element),
-                        boundValues[saturationIdx]);
+                // old material law interface is deprecated: Replace this by
+                // const auto& fluidMatrixInteraction = spatialParams.fluidMatrixInteractionAtPos(element.geometry().center());
+                // after the release of 3.3, when the deprecated interface is no longer supported
+                const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem_.spatialParams(), element);
+
+                const Scalar krw = fluidMatrixInteraction.krw(boundValues[saturationIdx]);
+                const Scalar krn = fluidMatrixInteraction.krn(boundValues[saturationIdx]);
 
                 switch (pressureType)
                 {

@@ -31,6 +31,8 @@
 #include <dumux/parallel/vectorcommdatahandle.hh>
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 /*!
  * \ingroup SequentialTwoPTwoCModel
@@ -75,7 +77,6 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = GetPropType<TypeTag, Properties::SequentialBoundaryTypes>;
@@ -700,23 +701,23 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
                         Scalar lambdaBound = 0.;
                         switch (getPropValue<TypeTag, Properties::BoundaryMobility>())
                         {
-                        case Indices::satDependent:
+                            case Indices::satDependent:
                             {
-                                lambdaBound = BCfluidState.saturation(phaseIdx)
-                                    / viscosityBound;
-                            break;
+                                lambdaBound = BCfluidState.saturation(phaseIdx) / viscosityBound;
+                                break;
                             }
-                        case Indices::permDependent:
+                            case Indices::permDependent:
                             {
-                            if (phaseIdx == wPhaseIdx)
-                                lambdaBound = MaterialLaw::krw(
-                                    problem().spatialParams().materialLawParams(elementI), BCfluidState.saturation(wPhaseIdx))
-                                    / viscosityBound;
-                            else
-                                lambdaBound = MaterialLaw::krn(
-                                    problem().spatialParams().materialLawParams(elementI), BCfluidState.saturation(wPhaseIdx))
-                                    / viscosityBound;
-                            break;
+                                // old material law interface is deprecated: Replace this by
+                                // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+                                // after the release of 3.3, when the deprecated interface is no longer supported
+                                const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+
+                                if (phaseIdx == wPhaseIdx)
+                                    lambdaBound = fluidMatrixInteraction.krw(BCfluidState.saturation(wPhaseIdx)) / viscosityBound;
+                                else
+                                    lambdaBound = fluidMatrixInteraction.krn(BCfluidState.saturation(wPhaseIdx)) / viscosityBound;
+                                break;
                             }
                         }
                         Scalar rhoMean = 0.5 * (cellDataI.density(phaseIdx) + densityBound);
@@ -931,14 +932,18 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     // acess the simple fluid state and prepare for manipulation
     auto& pseudoFluidState = cellData.manipulateSimpleFluidState();
 
+    // old material law interface is deprecated: Replace this by
+    // const auto& fluidMatrixInteraction = problem().spatialParams.fluidMatrixInteractionAtPos(elementI.geometry().center());
+    // after the release of 3.3, when the deprecated interface is no longer supported
+    const auto fluidMatrixInteraction = Deprecated::makePcKrSw(Scalar{}, problem().spatialParams(), elementI);
+
     // prepare phase pressure for fluid state
     // both phase pressures are necessary for the case 1p domain is assigned for
     // the next 2p subdomain
     PhaseVector pressure(0.);
     Scalar pc = 0;
     if(getPropValue<TypeTag, Properties::EnableCapillarity>())
-        pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
-            ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign sw = 1 if wPhase present, else 0
+        pc = fluidMatrixInteraction.pc(((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign sw = 1 if wPhase present, else 0
     if(pressureType == wPhaseIdx)
     {
         pressure[wPhaseIdx] = this->pressure(eIdxGlobal);
@@ -970,15 +975,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     if(presentPhaseIdx == wPhaseIdx)
     {
         cellData.setMobility(wPhaseIdx,
-            MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI), pseudoFluidState.saturation(wPhaseIdx))
-                / cellData.viscosity(wPhaseIdx));
+            fluidMatrixInteraction.krw(pseudoFluidState.saturation(wPhaseIdx)) / cellData.viscosity(wPhaseIdx));
         cellData.setMobility(nPhaseIdx, 0.);
     }
     else
     {
         cellData.setMobility(nPhaseIdx,
-            MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI), pseudoFluidState.saturation(wPhaseIdx))
-                / cellData.viscosity(nPhaseIdx));
+            fluidMatrixInteraction.krn(pseudoFluidState.saturation(wPhaseIdx)) / cellData.viscosity(nPhaseIdx));
         cellData.setMobility(wPhaseIdx, 0.);
     }
 

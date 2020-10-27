@@ -108,14 +108,14 @@ public:
         factorMassTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorMassTransfer");
 
         // PM parameters for Brooks-Corey
-        typename FluidMatrixInteraction::BasicParams paramsPM(BCPd_, BClambda_);
-        typename FluidMatrixInteraction::EffToAbsParams effToAbsParamsPM(Swr_, Snr_);
-        pcKrSwCurvePM_ = std::make_unique<FluidMatrixInteraction>(paramsPM, effToAbsParamsPM);
+        typename PcKrSwCurve::BasicParams paramsPM(BCPd_, BClambda_);
+        typename PcKrSwCurve::EffToAbsParams effToAbsParamsPM(Swr_, Snr_);
+        pcKrSwCurvePM_ = std::make_unique<PcKrSwCurve>(paramsPM, effToAbsParamsPM);
 
         // FF parameters for Brooks-Corey
-        typename FluidMatrixInteraction::BasicParams paramsFF(0/*dummy pe*/, 42/*dummy lambda*/);
-        typename FluidMatrixInteraction::EffToAbsParams effToAbsParamsFF(0.0/*swr*/, 0.0/*snr*/);
-        pcKrSwCurveFF_ = std::make_unique<FluidMatrixInteraction>(paramsFF, effToAbsParamsFF);
+        typename PcKrSwCurve::BasicParams paramsFF(0/*dummy pe*/, 42/*dummy lambda*/);
+        typename PcKrSwCurve::EffToAbsParams effToAbsParamsFF(0.0/*swr*/, 0.0/*snr*/);
+        pcKrSwCurveFF_ = std::make_unique<PcKrSwCurve>(paramsFF, effToAbsParamsFF);
 
         // determine maximum capillary pressure for wetting-nonwetting surface
         /* Of course physically there is no such thing as a maximum capillary pressure.
