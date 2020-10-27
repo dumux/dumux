@@ -27,7 +27,6 @@
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
@@ -51,36 +50,19 @@ class RichardsWellTracerSpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using EffectiveLaw = VanGenuchten<Scalar>;
+    using PcKrSwCurve = FluidMatrix::VanGenuchtenNoReg<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
     RichardsWellTracerSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-        : ParentType(gridGeometry)
+    : ParentType(gridGeometry)
+    , lensPcKrSwCurve_("SpatialParams.Lens")
+    , outerPcKrSwCurve_("SpatialParams.OuterDomain")
     {
-
         lensLowerLeft_ = getParam<GlobalPosition>("Problem.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("Problem.LensUpperRight");
-
-        // residual saturations
-        lensMaterialParams_.setSwr(0.18);
-        lensMaterialParams_.setSnr(0.0);
-        outerMaterialParams_.setSwr(0.05);
-        outerMaterialParams_.setSnr(0.0);
-
-        // parameters for the Van Genuchten law
-        // alpha and n
-        lensMaterialParams_.setVgAlpha(0.00045);
-        lensMaterialParams_.setVgn(7.3);
-        outerMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgn(4.7);
-
-        lensMaterialParams_.setVgn(7.3);
-        outerMaterialParams_.setVgAlpha(0.0037);
 
         lensK_ = 1e-14;
         outerK_ = 5e-12;
@@ -113,13 +95,14 @@ public:
     /*!
      * \brief Returns the parameters for the material law at a given location
      *
-     * \param globalPos A global coordinate vector
+     * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         if (isInLens_(globalPos))
-            return lensMaterialParams_;
-        return outerMaterialParams_;
+            return makeFluidMatrixInteraction(lensPcKrSwCurve_);
+        else
+            return makeFluidMatrixInteraction(outerPcKrSwCurve_);
     }
 
 private:
@@ -139,8 +122,9 @@ private:
 
     Scalar lensK_;
     Scalar outerK_;
-    MaterialLawParams lensMaterialParams_;
-    MaterialLawParams outerMaterialParams_;
+
+    const PcKrSwCurve lensPcKrSwCurve_;
+    const PcKrSwCurve outerPcKrSwCurve_;
 };
 
 } // end namespace Dumux
