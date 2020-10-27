@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
-#include <optional>
+#include <memory>
 
 #include <dune/common/fvector.hh>
 
@@ -92,13 +92,14 @@ public:
     CCSubControlVolume(GeometryParamType geometry,
                        GridIndexType elementIndex)
     : ParentType()
-    , geometry_(std::move(geometry))
-    , center_(geometry_.value().center())
+    , geometry_(std::make_unique<Geometry>(std::move(geometry)))
+    , center_(geometry_->center())
     , elementIndex_(elementIndex)
     {}
 
     //! The copy constrcutor
-    CCSubControlVolume(const CCSubControlVolume& other) = default;
+    CCSubControlVolume(const CCSubControlVolume& other)
+    { deepCopy_(other); }
 
     //! The move constrcutor
     CCSubControlVolume(CCSubControlVolume&& other) = default;
@@ -106,26 +107,12 @@ public:
     //! The copy assignment operator
     CCSubControlVolume& operator=(const CCSubControlVolume& other)
     {
-        // We want to use the default copy/move assignment.
-        // But since geometry is not copy assignable :( we
-        // have to construct it again
-        geometry_.emplace(other.geometry_.value());
-        center_ = other.center_;
-        elementIndex_ = other.elementIndex_;
+        deepCopy_(other);
         return *this;
     }
 
     //! The move assignment operator
-    CCSubControlVolume& operator=(CCSubControlVolume&& other) noexcept
-    {
-        // We want to use the default copy/move assignment.
-        // But since geometry is not copy assignable :( we
-        // have to construct it again
-        geometry_.emplace(std::move(other.geometry_.value()));
-        center_ = std::move(other.center_);
-        elementIndex_ = std::move(other.elementIndex_);
-        return *this;
-    }
+    CCSubControlVolume& operator=(CCSubControlVolume&& other) = default;
 
     //! The center of the sub control volume
     const GlobalPosition& center() const
@@ -143,8 +130,7 @@ public:
     // e.g. for integration
     const Geometry& geometry() const
     {
-        assert((geometry_));
-        return geometry_.value();
+        return *geometry_;
     }
 
     //! The index of the dof this scv is embedded in (the global index of this scv)
@@ -186,8 +172,18 @@ public:
     }
 
 private:
-    // Work around the fact that geometry is not default constructible
-    std::optional<Geometry> geometry_;
+    void deepCopy_(const CCSubControlVolume& other)
+    {
+        if (other.geometry_)
+            geometry_ = std::make_unique<Geometry>(other.geometry());
+        else
+            geometry_.reset();
+        center_ = other.center_;
+        elementIndex_ = other.elementIndex_;
+    }
+
+    // Work around the fact that geometry is not default-constructible and not copy-assignable
+    std::unique_ptr<Geometry> geometry_;
     GlobalPosition center_;
     GridIndexType elementIndex_;
 };
