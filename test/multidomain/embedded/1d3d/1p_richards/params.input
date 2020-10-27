@@ -24,6 +24,9 @@ OutputName = test_md_embedded1d3d_1p_richards
 [Soil]
 SpatialParams.Permeability = 2.57e-12 # [m^2]
 SpatialParams.Porosity = 0.3 # [-]
+SpatialParams.Swr = 0.05
+SpatialParams.VanGenuchtenAlpha = 2.956e-4
+SpatialParams.VanGenuchtenN = 1.5
 Problem.Name = 3d
 
 [Root]
