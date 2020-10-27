@@ -39,8 +39,8 @@ Permeability = 2.65e-10
 AlphaBJ = 1.0
 Swr = 0.005
 Snr = 0.01
-VgAlpha = 6.371e-4
-VgN = 6.9
+VanGenuchtenAlpha = 6.371e-4
+VanGenuchtenN = 6.9
 
 [Problem]
 Name = test_stokes1p2cnidarcy2p2cnihorizontal
