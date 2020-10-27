@@ -55,7 +55,7 @@ dumux_add_test(NAME test_2p_incompressible_box_analytic
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_analytic-00007.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box params.input -Problem.Name test_2p_incompressible_box_analytic -Newton.EnablePartialReassembly false")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_analytic params.input -Problem.Name test_2p_incompressible_box_analytic -Newton.EnablePartialReassembly false")
 
 # using box with interface solver
 dumux_add_test(NAME test_2p_incompressible_box_ifsolver
