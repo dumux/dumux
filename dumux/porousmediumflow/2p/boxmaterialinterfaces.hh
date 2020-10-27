@@ -22,8 +22,8 @@
  * \copydoc Dumux::BoxMaterialInterfaceParams
  */
 
-#ifndef DUMUX_2P_BOX_MATERIAL_INTERFACE_PARAMS_HH
-#define DUMUX_2P_BOX_MATERIAL_INTERFACE_PARAMS_HH
+#ifndef DUMUX_2P_BOX_MATERIAL_INTERFACES_HH
+#define DUMUX_2P_BOX_MATERIAL_INTERFACES_HH
 
 #include <dune/common/exceptions.hh>
 
@@ -42,11 +42,19 @@ namespace Dumux {
  * of freedom. On the basis of these parameters, the saturations in the
  * remaining sub-control volumes connected to the vertex can be reconstructed.
  */
-template<class SpatialParams>
-class BoxMaterialInterfaceParams
+template<class GridGeometry, class PcKrSw>
+class BoxMaterialInterfaces
 {
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+
 public:
-    using MaterialLawParams = typename SpatialParams::MaterialLaw::Params;
+    template<class SpatialParams, class SolutionVector>
+    BoxMaterialInterfaces(const GridGeometry& gridGeometry,
+                          const SpatialParams& spatialParams,
+                          const SolutionVector& x)
+    {
+        update(gridGeometry, spatialParams, x);
+    }
 
     /*!
      * \brief Updates the scv -> dofparameter map
@@ -55,30 +63,18 @@ public:
      * \param spatialParams Class encapsulating the spatial parameters
      * \param x The current state of the solution vector
      */
-    template<class GridGeometry, class SolutionVector>
+    template<class SpatialParams, class SolutionVector>
     void update(const GridGeometry& gridGeometry,
                 const SpatialParams& spatialParams,
                 const SolutionVector& x)
     {
-        using MaterialLaw = typename SpatialParams::MaterialLaw;
-
-        // Make sure the spatial params return a const ref and no copy!
-        using Elem = typename GridGeometry::GridView::template Codim<0>::Entity;
-        using ElemSol = decltype( elementSolution(Elem(), x, gridGeometry) );
-        using Scv = typename GridGeometry::SubControlVolume;
-        using ReturnType = decltype(spatialParams.materialLawParams(Elem(), Scv(), ElemSol()));
-        static_assert(std::is_lvalue_reference<ReturnType>::value,
-                      "In order to use the box-interface solver please provide access "
-                      "to the material law parameters via returning (const) references");
-
         // make sure this is only called for geometries of the box method!
         if (GridGeometry::discMethod != DiscretizationMethod::box)
             DUNE_THROW(Dune::InvalidStateException, "Determination of the interface material parameters with "
                                                     "this class only makes sense when using the box method!");
 
-        isUpdated_ = true;
         isOnMaterialInterface_.resize(gridGeometry.numDofs(), false);
-        dofParams_.resize(gridGeometry.numDofs(), nullptr);
+        pcSwAtDof_.resize(gridGeometry.numDofs(), nullptr);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             const auto elemSol = elementSolution(element, x, gridGeometry);
@@ -87,40 +83,43 @@ public:
             fvGeometry.bind(element);
             for (const auto& scv : scvs(fvGeometry))
             {
-                const auto& params = spatialParams.materialLawParams(element, scv, elemSol);
+                const auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, scv, elemSol);
+                const auto& pcKrSw = fluidMatrixInteraction.pcSwCurve();
+
+                // assert current preconditions on requiring the spatial params to store the pckrSw curve
+                static_assert(std::is_lvalue_reference<typename std::decay_t<decltype(fluidMatrixInteraction)>::PcKrSwType>::value,
+                              "In order to use the box-interface solver please provide access "
+                              "to the material law parameters via returning (const) references");
 
                 // if no parameters had been set, set them now
-                if (dofParams_[scv.dofIndex()] == nullptr)
-                    dofParams_[scv.dofIndex()] = &params;
+                if (!pcSwAtDof_[scv.dofIndex()])
+                    pcSwAtDof_[scv.dofIndex()] = &pcKrSw;
 
                 // otherwise only use the current ones if endPointPc (e.g. Brooks-Corey entry pressure) is lower
-                else if (MaterialLaw::endPointPc( params ) < MaterialLaw::endPointPc( *(dofParams_[scv.dofIndex()]) ))
+                else if (pcKrSw.endPointPc() < pcSwAtDof_[scv.dofIndex()]->endPointPc())
                 {
-                    dofParams_[scv.dofIndex()] = &params;
+                    pcSwAtDof_[scv.dofIndex()] = &pcKrSw;
                     isOnMaterialInterface_[scv.dofIndex()] = true;
                 }
 
                 // keep track of material interfaces in any case
-                else if ( !(params == *(dofParams_[scv.dofIndex()])) )
+                else if ( !(pcKrSw == *(pcSwAtDof_[scv.dofIndex()])) )
                     isOnMaterialInterface_[scv.dofIndex()] = true;
             }
         }
     }
 
     //! Returns if this scv is connected to a material interface
-    template<class Scv>
-    bool isOnMaterialInterface(const Scv& scv) const
-    { assert(isUpdated_); return isOnMaterialInterface_[scv.dofIndex()]; }
+    bool isOnMaterialInterface(const SubControlVolume& scv) const
+    { return isOnMaterialInterface_[scv.dofIndex()]; }
 
     //! Returns the material parameters associated with the dof
-    template<class Scv>
-    const MaterialLawParams& getDofParams(const Scv& scv) const
-    { assert(isUpdated_); return *(dofParams_[scv.dofIndex()]); }
+    const PcKrSw& pcSwAtDof(const SubControlVolume& scv) const
+    { return *(pcSwAtDof_[scv.dofIndex()]); }
 
 private:
-    bool isUpdated_{false};
     std::vector<bool> isOnMaterialInterface_;
-    std::vector<const MaterialLawParams*> dofParams_;
+    std::vector<const PcKrSw*> pcSwAtDof_;
 };
 
 } // end namespace Dumux
