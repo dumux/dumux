@@ -144,9 +144,8 @@ public:
         pumpRate_ = getParam<Scalar>("Problem.PumpRate"); // in kg/s
 
         // for initial conditions
-        const Scalar sw = 0.4; // start with 80% saturation on top
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->gridGeometry().bBoxMax()), sw);
+        const Scalar sw = 0.4; // start with 40% saturation on top
+        pcTop_ = this->spatialParams().fluidMatrixInteractionAtPos(this->gridGeometry().bBoxMax()).pc(sw);
 
         // for post time step mass balance
         accumulatedSource_ = 0.0;
