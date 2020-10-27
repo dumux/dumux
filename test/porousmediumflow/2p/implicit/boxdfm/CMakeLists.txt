@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES "params.input" "grids")
 
 # quadrilaterals alu grid
 dumux_add_test(NAME test_2p_boxdfm_quads_alu
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p boxdfm
               SOURCES main.cc
               CMAKE_GUARD dune-alugrid_FOUND
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -16,7 +16,7 @@ dumux_add_test(NAME test_2p_boxdfm_quads_alu
 
 # quadrilaterals ug grid
 dumux_add_test(NAME test_2p_boxdfm_quads_ug
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p boxdfm
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -30,7 +30,7 @@ dumux_add_test(NAME test_2p_boxdfm_quads_ug
 
 # triangles alu
 dumux_add_test(NAME test_2p_boxdfm_trias_alu
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p boxdfm
               TIMEOUT 1500
              SOURCES main.cc
              CMAKE_GUARD dune-foamgrid_FOUND
@@ -45,7 +45,7 @@ dumux_add_test(NAME test_2p_boxdfm_trias_alu
 
 # triangles ug
 dumux_add_test(NAME test_2p_boxdfm_trias_ug
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p boxdfm
               TIMEOUT 1500
              SOURCES main.cc
              CMAKE_GUARD dune-uggrid_FOUND
@@ -60,7 +60,7 @@ dumux_add_test(NAME test_2p_boxdfm_trias_ug
 
 # tetrahedra alu
 dumux_add_test(NAME test_2p_boxdfm_tets_alu
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p boxdfm
               SOURCES main.cc
               CMAKE_GUARD dune-foamgrid_FOUND
               CMAKE_GUARD dune-alugrid_FOUND
@@ -74,7 +74,7 @@ dumux_add_test(NAME test_2p_boxdfm_tets_alu
 
 # tetrahedra ug
 dumux_add_test(NAME test_2p_boxdfm_tets_ug
-              LABELS porousmediumflow 2p
+              LABELS porousmediumflow 2p boxdfm
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
               CMAKE_GUARD dune-foamgrid_FOUND
