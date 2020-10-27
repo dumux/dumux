@@ -36,6 +36,7 @@
 #include <dumux/porousmediumflow/2pncmin/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
+#include <dumux/io/gnuplotinterface.hh>
 
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/granite.hh>
