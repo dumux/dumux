@@ -74,11 +74,7 @@ public:
         characteristicLength_ = getParam<Scalar>("SpatialParams.MeanPoreSize");
         factorMassTransfer_ = getParam<Scalar>("SpatialParams.MassTransferFactor");
 
-        using WettingNonwettingInterfacialAreaParams = typename WettingNonwettingInterfacialArea::BasicParams;
-        WettingNonwettingInterfacialAreaParams anwParams;
-        anwParams.setA1(getParam<Scalar>("SpatialParams.WettingNonWettingAreaA1"));
-        anwParams.setA2(getParam<Scalar>("SpatialParams.WettingNonWettingAreaA2"));
-        anwParams.setA3(getParam<Scalar>("SpatialParams.WettingNonWettingAreaA3"));
+        auto anwParams = WettingNonwettingInterfacialArea::makeBasicParams("SpatialParams.WettingNonWettingArea");
 
         // determine maximum capillary pressure for wetting-nonwetting surface
         anwParams.setPcMax(pcKrSwCurve_.pc(/*sw = */0.0));
