@@ -189,7 +189,7 @@ public:
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
-    Scalar nonWettingReferencePressure() const
+    Scalar nonwettingReferencePressure() const
     { return 1.0e5; }
 
 
@@ -331,7 +331,7 @@ public:
 
         PrimaryVariables priVars(0.0);
         //! Hydrostatic pressure profile
-        priVars[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
+        priVars[pressureIdx] = (nonwettingReferencePressure() - pcTop_)
                                 -9.81*1000*(globalPos[dimWorld-1] - gg.bBoxMax()[dimWorld-1]);
         priVars[transportCompIdx] = xTracer;
         return priVars;

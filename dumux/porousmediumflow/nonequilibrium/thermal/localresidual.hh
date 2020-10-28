@@ -325,12 +325,12 @@ public:
         const Scalar Ts = volVars.temperatureSolid();
 
         const  Scalar lambdaWetting = volVars.fluidThermalConductivity(phase0Idx);
-        const  Scalar lambdaNonWetting = volVars.fluidThermalConductivity(phase1Idx);
+        const  Scalar lambdaNonwetting = volVars.fluidThermalConductivity(phase1Idx);
         const  Scalar lambdaSolid = volVars.solidThermalConductivity();
 
-        const Scalar lambdaWN = harmonicMean(lambdaWetting, lambdaNonWetting);
+        const Scalar lambdaWN = harmonicMean(lambdaWetting, lambdaNonwetting);
         const Scalar lambdaWS = harmonicMean(lambdaWetting, lambdaSolid);
-        const Scalar lambdaNS = harmonicMean(lambdaNonWetting, lambdaSolid);
+        const Scalar lambdaNS = harmonicMean(lambdaNonwetting, lambdaSolid);
 
         const Scalar characteristicLength = volVars.characteristicLength()  ;
         const Scalar factorEnergyTransfer = volVars.factorEnergyTransfer()  ;
@@ -339,22 +339,22 @@ public:
         const Scalar nusseltWS = volVars.nusseltNumber(phase0Idx);
         const Scalar nusseltNS = volVars.nusseltNumber(phase1Idx);
 
-        const Scalar wettingToNonWettingEnergyExchange = factorEnergyTransfer * (Tw - Tn) / characteristicLength * awn * lambdaWN * nusseltWN  ;
+        const Scalar wettingToNonwettingEnergyExchange = factorEnergyTransfer * (Tw - Tn) / characteristicLength * awn * lambdaWN * nusseltWN  ;
         const Scalar wettingToSolidEnergyExchange = factorEnergyTransfer * (Tw - Ts) / characteristicLength * aws * lambdaWS * nusseltWS  ;
-        const Scalar nonWettingToSolidEnergyExchange = factorEnergyTransfer * (Tn - Ts) / characteristicLength * ans * lambdaNS * nusseltNS  ;
+        const Scalar nonwettingToSolidEnergyExchange = factorEnergyTransfer * (Tn - Ts) / characteristicLength * ans * lambdaNS * nusseltNS  ;
 
         for(int phaseIdx = 0; phaseIdx < numEnergyEqFluid+numEnergyEqSolid; ++phaseIdx)
         {
             switch (phaseIdx)
             {
             case phase0Idx:
-                source[energyEq0Idx + phaseIdx] += ( - wettingToNonWettingEnergyExchange - wettingToSolidEnergyExchange);
+                source[energyEq0Idx + phaseIdx] += ( - wettingToNonwettingEnergyExchange - wettingToSolidEnergyExchange);
                 break;
             case phase1Idx:
-                source[energyEq0Idx + phaseIdx] += (+ wettingToNonWettingEnergyExchange - nonWettingToSolidEnergyExchange);
+                source[energyEq0Idx + phaseIdx] += (+ wettingToNonwettingEnergyExchange - nonwettingToSolidEnergyExchange);
                 break;
             case sPhaseIdx:
-                source[energyEq0Idx + phaseIdx] += (+ wettingToSolidEnergyExchange + nonWettingToSolidEnergyExchange);
+                source[energyEq0Idx + phaseIdx] += (+ wettingToSolidEnergyExchange + nonwettingToSolidEnergyExchange);
                 break;
             default:
                 DUNE_THROW(Dune::NotImplemented,

@@ -100,7 +100,7 @@ public:
         // precompute the minimum capillary pressure (entry pressure)
         // needed to make sure we don't compute unphysical capillary pressures and thus saturations
         minPc_ = MaterialLaw::endPointPc(materialParams);
-        pn_ = problem.nonWettingReferencePressure();
+        pn_ = problem.nonwettingReferencePressure();
         //porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numFluidComponents());
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
@@ -162,7 +162,7 @@ public:
         using std::max;
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const Scalar pc = max(MaterialLaw::endPointPc(materialParams),
-                              problem.nonWettingReferencePressure() - fluidState.pressure(0));
+                              problem.nonwettingReferencePressure() - fluidState.pressure(0));
         const Scalar sw = MaterialLaw::sw(materialParams, pc);
         fluidState.setSaturation(0, sw);
 

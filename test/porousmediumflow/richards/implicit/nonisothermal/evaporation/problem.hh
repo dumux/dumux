@@ -242,7 +242,7 @@ public:
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
-    Scalar nonWettingReferencePressure() const
+    Scalar nonwettingReferencePressure() const
     { return 1e5; };
 
     /*!

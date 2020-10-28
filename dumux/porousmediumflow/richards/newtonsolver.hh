@@ -90,7 +90,7 @@ private:
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
                     using std::max;
-                    const Scalar pn = max(this->assembler().problem().nonWettingReferencePressure(), pw + pcMin);
+                    const Scalar pn = max(this->assembler().problem().nonwettingReferencePressure(), pw + pcMin);
                     const Scalar pcOld = pn - pw;
                     const Scalar SwOld = max(0.0, MaterialLaw::sw(materialLawParams, pcOld));
 

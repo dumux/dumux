@@ -216,7 +216,7 @@ public:
      *
      * This problem assumes a constant reference pressure of 1 bar.
      */
-    Scalar nonWettingReferencePressure() const
+    Scalar nonwettingReferencePressure() const
     { return 1.0e5; };
 
     // \}
@@ -327,7 +327,7 @@ private:
 
         PrimaryVariables values(0.0);
         //! Hydrostatic pressure profile
-        values[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
+        values[pressureIdx] = (nonwettingReferencePressure() - pcTop_)
                                - 9.81*1000*(globalPos[dimWorld-1] - this->gridGeometry().bBoxMax()[dimWorld-1]);
         values[compIdx] = xTracer;
         return values;

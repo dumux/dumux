@@ -141,14 +141,14 @@ public:
             const Scalar pc = MaterialLaw::pc(materialParams, 0.0);
 
             // set the wetting pressure
-            fluidState_.setPressure(FluidSystem::liquidPhaseIdx, problem.nonWettingReferencePressure() - pc);
-            fluidState_.setPressure(FluidSystem::gasPhaseIdx, problem.nonWettingReferencePressure());
+            fluidState_.setPressure(FluidSystem::liquidPhaseIdx, problem.nonwettingReferencePressure() - pc);
+            fluidState_.setPressure(FluidSystem::gasPhaseIdx, problem.nonwettingReferencePressure());
 
             // set molar densities
             if (enableWaterDiffusionInAir())
             {
                 molarDensity_[FluidSystem::liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(FluidSystem::liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
+                molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
             }
 
             // density and viscosity
@@ -176,10 +176,10 @@ public:
             if (enableWaterDiffusionInAir())
             {
                 molarDensity_[FluidSystem::liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(FluidSystem::liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
+                molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
                 moleFraction_[FluidSystem::liquidPhaseIdx] = 1.0;
 
-                moleFraction_[FluidSystem::gasPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonWettingReferencePressure();
+                moleFraction_[FluidSystem::gasPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonwettingReferencePressure();
 
                 const auto averageMolarMassGasPhase = (moleFraction_[FluidSystem::gasPhaseIdx]*FluidSystem::molarMass(FluidSystem::liquidPhaseIdx)) +
                 ((1-moleFraction_[FluidSystem::gasPhaseIdx])*FluidSystem::molarMass(FluidSystem::gasPhaseIdx));
@@ -201,7 +201,7 @@ public:
             if (enableWaterDiffusionInAir())
             {
                 molarDensity_[FluidSystem::liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(FluidSystem::liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
+                molarDensity_[FluidSystem::gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
                 moleFraction_[FluidSystem::liquidPhaseIdx] = 1.0;
                 moleFraction_[FluidSystem::gasPhaseIdx] = 0.0;
                 massFraction_[FluidSystem::liquidPhaseIdx] = 1.0;
@@ -254,14 +254,14 @@ public:
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         Scalar minPc = MaterialLaw::pc(materialParams, 1.0);
         fluidState.setPressure(FluidSystem::liquidPhaseIdx, priVars[Indices::pressureIdx]);
-        fluidState.setPressure(FluidSystem::gasPhaseIdx, max(problem.nonWettingReferencePressure(), fluidState.pressure(FluidSystem::liquidPhaseIdx) + minPc));
+        fluidState.setPressure(FluidSystem::gasPhaseIdx, max(problem.nonwettingReferencePressure(), fluidState.pressure(FluidSystem::liquidPhaseIdx) + minPc));
 
         // compute the capillary pressure to compute the saturation
         // make sure that we the capillary pressure is not smaller than the minimum pc
         // this would possibly return unphysical values from regularized material laws
         using std::max;
         const Scalar pc = max(MaterialLaw::endPointPc(materialParams),
-                              problem.nonWettingReferencePressure() - fluidState.pressure(FluidSystem::liquidPhaseIdx));
+                              problem.nonwettingReferencePressure() - fluidState.pressure(FluidSystem::liquidPhaseIdx));
         const Scalar sw = MaterialLaw::sw(materialParams, pc);
         fluidState.setSaturation(FluidSystem::liquidPhaseIdx, sw);
         fluidState.setSaturation(FluidSystem::gasPhaseIdx, 1.0-sw);
