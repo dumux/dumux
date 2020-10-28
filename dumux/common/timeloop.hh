@@ -349,23 +349,26 @@ public:
     {
         if (verbose_)
         {
-            std::ostream tmp(std::cout.rdbuf());
-            tmp << std::fixed << std::scientific;
-            tmp.precision(2);
+            std::ostream osPercent(std::cout.rdbuf());
+            osPercent << std::fixed;
+            osPercent.precision(0);
 
-            std::ostream tmp1(std::cout.rdbuf());
-            tmp1 << std::fixed;
-            tmp1.precision(6);
+            std::ostream osTime(std::cout.rdbuf());
+            osTime << std::fixed << std::scientific;
+            osTime.precision(2);
+
+            std::ostream osTimeTotal(std::cout.rdbuf());
+            osTimeTotal << std::fixed << std::scientific;
+            osTimeTotal.precision(5);
 
             const auto cpuTime = wallClockTime();
             const auto percent = std::round( time_ / endTime_ * 100 );
-            tmp << "["  << percent << "%] ";
-                   tmp <<"Time step " << timeStepIdx_ << " done in "
-                      << timeStepWallClockTime_ << " seconds. "
-                      << "Wall clock time: " << cpuTime;
-            tmp1     << ", time: " << time_;
-            tmp << ", time step size: " << std::setprecision( 8 ) << previousTimeStepSize_
-                      << std::endl;
+            osPercent   << "["  << percent << "%] ";
+            osTime      <<"Time step " << timeStepIdx_ << " done in "
+                        << timeStepWallClockTime_ << " seconds. "
+                        << "Wall clock time: " << cpuTime;
+            osTimeTotal << ", time: " << time_;
+            osTime      << ", time step size: " << previousTimeStepSize_<< std::endl;
         }
     }
 

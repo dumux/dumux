@@ -86,7 +86,7 @@ public:
         writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridGeometry.gridView(), dm, coordPrecision);
         sequenceWriter_ = std::make_unique<Dune::VTKSequenceWriter<GridView>>(writer_, name);
     }
-    
+
     virtual ~VtkOutputModuleBase() = default;
 
     //! the parameter group for getting parameter from the parameter tree
@@ -183,7 +183,11 @@ public:
         timer.stop();
         if (verbose_)
         {
-            std::cout << "Writing output for problem \"" << name_ << "\". Took " << timer.elapsed() << " seconds." << std::endl;
+            std::ostream osTime(std::cout.rdbuf());
+            osTime << std::fixed << std::scientific;
+            osTime.precision(2);
+
+            osTime << "Writing output for problem \"" << name_ << "\". Took " << timer.elapsed() << " seconds." << std::endl;
         }
     }
 

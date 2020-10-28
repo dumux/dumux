@@ -985,13 +985,13 @@ private:
             if (verbosity_ >= 1) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
 
-                std::ostream tmp(std::cout.rdbuf());
-                tmp << std::fixed << std::scientific;
-                tmp.precision(2);
+                std::ostream osTime(std::cout.rdbuf());
+                osTime << std::fixed << std::scientific;
+                osTime.precision(2);
 
-                std::ostream tmp1(std::cout.rdbuf());
-                tmp1 << std::fixed;
-                tmp1.precision(2);
+                std::ostream osPercentage(std::cout.rdbuf());
+                osPercentage << std::fixed;
+                osPercentage.precision(2);
 //                 tmp << assembleTimer.elapsed() << std::endl;
 
 //                 std::cout << "Assemble/solve/update time: "
@@ -999,12 +999,12 @@ private:
 //                           <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
 //                           <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
 //                           << "\n";
-                tmp << "Assemble/solve/update time: " <<  assembleTimer.elapsed() << "(";
-                tmp1 << 100*assembleTimer.elapsed()/elapsedTot << "%)/";
-                tmp <<  solveTimer.elapsed() << "(";
-                tmp1 << 100*solveTimer.elapsed()/elapsedTot << "%)/";
-                tmp <<  updateTimer.elapsed() << "(";
-                tmp1 << 100*updateTimer.elapsed()/elapsedTot << "%)" << "\n";
+                osTime << "Assemble/solve/update time: " <<  assembleTimer.elapsed() << "(";
+                osPercentage << 100*assembleTimer.elapsed()/elapsedTot << "%)/";
+                osTime <<  solveTimer.elapsed() << "(";
+                osPercentage << 100*solveTimer.elapsed()/elapsedTot << "%)/";
+                osTime <<  updateTimer.elapsed() << "(";
+                osPercentage << 100*updateTimer.elapsed()/elapsedTot << "%)" << "\n";
             }
             return true;
 
