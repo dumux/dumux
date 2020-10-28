@@ -92,7 +92,7 @@ public:
      * \f$\mathrm{
         a_{wn} = a_1 * (S_{wr}-S_w) .* (1-S_w) + a_2 * (S_{wr}-S_w) * (1-S_w) * \exp( a_3 * p_c) ;
      }\f$
-     * \param  sw Effective saturation of the wetting phase
+     * \param  swe Effective saturation of the wetting phase
      * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      * \param  params parameter container for the coefficients of the surface
      */
@@ -110,7 +110,7 @@ public:
     /*! \brief the derivative of specific interfacial area function w.r.t. capillary pressure
      *
      * \param  params parameter container for the coefficients of the surface
-     * \param  Sw Effective saturation of the wetting phase
+     * \param  swe Effective saturation of the wetting phase
      * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     template<class Scalar>
@@ -126,7 +126,7 @@ public:
     /*! \brief the derivative of specific interfacial area function w.r.t. saturation
      *
      * \param  params parameter container for the coefficients of the surface
-     * \param  Sw Effective saturation of the wetting phase
+     * \param  swe Effective saturation of the wetting phase
      * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     template<class Scalar>
