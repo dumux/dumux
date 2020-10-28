@@ -50,8 +50,14 @@ static constexpr bool isNonIsothermal()
 
 struct NavierStokesUpwindTerms
 {
+    static auto transportFlux(const int compIdx)
+    { return [compIdx](const auto& volVars) { return volVars.concentration(compIdx)
+                                                * (volVars.phasefield(1) + 1e-8)
+                                                    ; }; }
+
+    // TODO: add phasefield to mass flux
     static auto totalMassFlux()
-    { return [](const auto& volVars) { return volVars.density(); }; }
+    { return [](const auto& volVars) { return (volVars.phasefield(1) + 1e-8) * volVars.density(); }; }
 
     static auto comoponentMoleFlux(const int compIdx)
     { return [compIdx](const auto& volVars) { return volVars.molarDensity()*volVars.moleFraction(compIdx); }; }
@@ -116,6 +122,8 @@ public:
         {
             auto upwindTerm = NavierStokesUpwindTerms::totalMassFlux();
             flux[Traits::Indices::conti0EqIdx] = upwind(upwindTerm);
+            auto upwindTermU = NavierStokesUpwindTerms::transportFlux(1);
+            flux[Traits::Indices::uTransportEqIdx] = upwind(upwindTermU);
         }
 
         // TODO 1pnc
@@ -163,12 +171,12 @@ public:
             }
         }();
 
-        auto upwindFuntion = [&](const auto& upwindTerm)
+        auto upwindFunction = [&](const auto& upwindTerm)
         {
             return advectiveScalarUpwindFlux(insideVolVars, outsideVolVars, scvf, volumeFlux, upwindWeight, upwindTerm);
         };
 
-        addModelSpecificFlux<ModelTraits>(flux, upwindFuntion);
+        addModelSpecificFlux<ModelTraits>(flux, upwindFunction);
 
         return flux;
     }
@@ -210,12 +218,12 @@ public:
         }
 
 
-        auto upwindFuntion = [&](const auto& upwindTerm)
+        auto upwindFunction = [&](const auto& upwindTerm)
         {
             return advectiveScalarUpwindFlux(insideVolVars, insideVolVars, scvf, volumeFlux, 1.0 /*upwindWeight*/, upwindTerm);
         };
 
-        addModelSpecificFlux<ModelTraits>(flux, upwindFuntion);
+        addModelSpecificFlux<ModelTraits>(flux, upwindFunction);
 
         return flux;
     }
@@ -281,15 +289,22 @@ public:
             }
 
             // viscous terms
-            const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf);
+            const static Scalar delta = getParam<Scalar>("Phasefield.delta");
+            const Scalar mu = problem.effectiveViscosity(element, fvGeometry, scvf)
+                * (problem.phasefield(element, fvGeometry, scvf) + delta)
+                ;
 
             // lateral face normal to boundary (integration point touches boundary)
             if (scv.boundary())
-                flux[scvf.directionIndex()] -= mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)
+                flux[scvf.directionIndex()] -= mu *
+                    StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars,
+                            problem)
                                                * scvf.directionSign();
             // lateral face coinciding with boundary
             else if (scvf.boundary())
-                flux[scv.directionIndex()] -= mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars)
+                flux[scv.directionIndex()] -= mu *
+                    StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars,
+                            problem)
                                               * scvf.directionSign();
 
             // advective terms
@@ -298,7 +313,11 @@ public:
                 const auto transportingVelocity = [&]()
                 {
                     const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                    const auto innerTransportingVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+                    const auto innerTransportingVelocity =
+                        elemVolVars[orthogonalScvf.insideScvIdx()].velocity()
+                        * (problem.phasefield(element,
+                            fvGeometry.scv(orthogonalScvf.insideScvIdx())) + 1e-8)
+                        ;
 
                     if (scvf.boundary())
                     {
@@ -318,7 +337,11 @@ public:
                             // average the transporting velocity by weighting with the scv volumes
                             const auto insideVolume = fvGeometry.scv(orthogonalScvf.insideScvIdx()).volume();
                             const auto outsideVolume = fvGeometry.scv(orthogonalScvf.outsideScvIdx()).volume();
-                            const auto outerTransportingVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+                            const auto outerTransportingVelocity =
+                                elemVolVars[orthogonalScvf.outsideScvIdx()].velocity()
+                                    * (problem.phasefield(element,
+                                        fvGeometry.scv(orthogonalScvf.outsideScvIdx())) + 1e-8)
+                                    ;
                             return (insideVolume*innerTransportingVelocity + outsideVolume*outerTransportingVelocity) / (insideVolume + outsideVolume);
                         }
                     }
@@ -327,8 +350,12 @@ public:
                 // lateral face normal to boundary (integration point touches boundary)
                 if (scv.boundary())
                 {
-                    const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-                    const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
+                    const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity()
+                        * (problem.phasefield(element, fvGeometry.scv(scvf.insideScvIdx())) + 1e-8)
+                        ;
+                    const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity()
+                        * (problem.phasefield(element, fvGeometry.scv(scvf.outsideScvIdx())) + 1e-8)
+                        ;
                     const auto rho = problem.getInsideAndOutsideDensity(element, fvGeometry, scvf);
 
                     const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
@@ -348,7 +375,9 @@ public:
                 else if (scvf.boundary())
                 {
                     const auto insideDensity = problem.density(element, fvGeometry.scv(scvf.insideScvIdx()));
-                    const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
+                    const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity()
+                        * (problem.phasefield(element, fvGeometry.scv(scvf.insideScvIdx())) + 1e-8)
+                        ;
                     flux[scv.directionIndex()] += innerVelocity * transportingVelocity * insideDensity * scvf.directionSign();
                 }
             }

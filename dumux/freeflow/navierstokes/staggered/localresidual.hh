@@ -31,6 +31,7 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dumux/freeflow/nonisothermal/localresidual.hh>
+#include <dumux/freeflow/navierstokes/phasefield/localresidual.hh>
 
 namespace Dumux {
 
@@ -92,6 +93,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
 public:
     using EnergyLocalResidual = FreeFlowEnergyLocalResidual<GridGeometry, FluxVariables, ModelTraits::enableEnergyBalance(), (ModelTraits::numFluidComponents() > 1)>;
+    using PhasefieldLocalResidual = NavierStokesPhasefieldLocalResidual<GridGeometry, FluxVariables, ModelTraits::enableEnergyBalance(), (ModelTraits::numFluidComponents() > 1)>;
 
     // account for the offset of the cell center privars within the PrimaryVariables container
     static constexpr auto cellCenterOffset = ModelTraits::numEq() - CellCenterPrimaryVariables::dimension;
@@ -114,6 +116,7 @@ public:
                                                                    elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
         EnergyLocalResidual::heatFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+        // TODO: Add phasefield flux?
 
         return flux;
     }
@@ -130,6 +133,7 @@ public:
 
         // get the values from the problem
         const auto sourceValues = problem.source(element, fvGeometry, elemVolVars, elemFaceVars, scv);
+        // TODO: include phasefield sources
 
         // copy the respective cell center related values to the result
         for (int i = 0; i < result.size(); ++i)
@@ -148,6 +152,8 @@ public:
         storage[Indices::conti0EqIdx - ModelTraits::dim()] = volVars.density();
 
         EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
+        // TODO: include phasefield storage
+        //PhasefieldLocalResidual::fluidPhaseStorage(storage, volVars);
 
         return storage;
     }

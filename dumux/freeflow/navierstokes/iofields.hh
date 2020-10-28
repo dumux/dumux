@@ -92,6 +92,8 @@ public:
     {
         out.addVolumeVariable([](const auto& v){ return v.pressure(); }, IOName::pressure());
         out.addVolumeVariable([](const auto& v){ return v.density(); }, IOName::density());
+        out.addVolumeVariable([](const auto& v){ return v.phasefield(1); }, "phi");
+        out.addVolumeVariable([](const auto& v){ return v.concentration(1); }, "u");
 
         // add discretization-specific fields
         additionalOutput_(out, isStaggered<OutputModule>());

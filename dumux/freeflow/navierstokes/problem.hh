@@ -254,6 +254,48 @@ public:
     { return 0.0; }
 
     /*!
+     * \brief Returns the phasefield at a given sub control volume face.
+     * \note  Overload this if a fixed phasefield shall be prescribed.
+     */
+    Scalar phasefield(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const SubControlVolumeFace& scvf) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().phasefieldAtPos(scvf.ipGlobal());
+        else
+            return couplingManager_->phasefield(element, fvGeometry, scvf);
+    }
+
+    /*!
+     * \brief Returns the phasefield at a given sub control volume.
+     * \note  Overload this if a fixed phasefield shall be prescribed.
+     */
+    Scalar phasefield(const Element& element,
+                   const SubControlVolume& scv,
+                   const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().phasefieldAtPos(scv.dofPosition());
+        else
+            return couplingManager_->phasefield(element, scv, isPreviousTimeStep);
+    }
+
+    //auto getInsideAndOutsidePhasefield(const Element& element,
+    //                                const FVElementGeometry& fvGeometry,
+    //                                const SubControlVolumeFace& scvf,
+    //                                const bool isPreviousTimeStep = false) const
+    //{
+    //    if constexpr (std::is_empty_v<CouplingManager>)
+    //    {
+    //        const auto phi = asImp_().phasefieldAtPos(scvf.ipGlobal());
+    //        return std::make_pair(phi, phi);
+    //    }
+    //    else
+    //        return couplingManager_->getInsideAndOutsidePhasefield(element, fvGeometry, scvf, isPreviousTimeStep);
+    //}
+
+    /*!
      * \brief Returns the density at a given sub control volume face.
      * \note  Overload this if a fixed density shall be prescribed.
      */

@@ -96,6 +96,7 @@ private:
 public:
 
     static constexpr auto pressureIdx = VolumeVariables<freeFlowMassIdx>::Indices::pressureIdx;
+    static constexpr auto phi1Idx = VolumeVariables<freeFlowMassIdx>::Indices::phiIdx;
 
     /*!
      * \brief Methods to be accessed by main
@@ -204,6 +205,76 @@ public:
      * \name member functions concerning the coupling stencils
      */
     // \{
+
+    /*!
+     * \brief Returns an approximation of the phasefield at the cell of a given sub control volume face.
+     */
+    //Scalar cellPhasefield(const Element<freeFlowMomentumIdx>& element,
+    //                  const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+    //                  const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    //{
+    //    const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx);
+    //    return this->curSol()[freeFlowMassIdx][fvGeometry.elementIdx()][phi1Idx];
+    //}
+
+    /*!
+     * \brief Returns the phasefield at a given sub control volume face.
+     */
+    Scalar phasefield(const Element<freeFlowMomentumIdx>& element,
+                      const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+                      const SubControlVolumeFace<freeFlowMomentumIdx>& scvf) const
+    {
+        //const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+        //const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideMassPhasefield =
+            this->curSol()[freeFlowMassIdx][scvf.insideScvIdx()][phi1Idx];
+        const auto& outsideMassPhasefield =
+            this->curSol()[freeFlowMassIdx][scvf.outsideScvIdx()][phi1Idx];
+        return 0.5*(insideMassPhasefield + outsideMassPhasefield);
+    }
+
+    /*!
+     * \brief Returns the phasefield at a given sub control volume.
+     */
+    Scalar phasefield(const Element<freeFlowMomentumIdx>& element,
+                   const SubControlVolume<freeFlowMomentumIdx>& scv,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !isTransient_));
+        bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, scv.elementIndex());
+        const auto& massScv = (*scvs(momentumCouplingContext_[0].fvGeometry).begin());
+        return considerPreviousTimeStep ? momentumCouplingContext_[0].prevElemVolVars[massScv].phasefield(1)
+                                        : momentumCouplingContext_[0].curElemVolVars[massScv].phasefield(1);
+    }
+
+    /*!
+     * \brief Returns the phasefield inside and outside a given sub control volume face.
+     */
+    //auto getInsideAndOutsidePhasefield(const Element<freeFlowMomentumIdx>& element,
+    //                                const FVElementGeometry<freeFlowMomentumIdx>& fvGeometry,
+    //                                const SubControlVolumeFace<freeFlowMomentumIdx>& scvf,
+    //                                const bool considerPreviousTimeStep = false) const
+    //{
+    //    assert(!(considerPreviousTimeStep && !isTransient_));
+    //    bindCouplingContext(Dune::index_constant<freeFlowMomentumIdx>(), element, fvGeometry.elementIndex());
+    //    const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+    //    const auto& insideMassScv = momentumCouplingContext_[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+    //    auto result = [&](const auto& elemVolVars)
+    //    {
+    //        if (scvf.boundary())
+    //            return std::make_pair(elemVolVars[insideMassScv].phasefield(1), elemVolVars[insideMassScv].phasefield(1));
+    //        else
+    //        {
+    //            const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+    //            const auto& outsideMassScv = momentumCouplingContext_[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+    //            return std::make_pair(elemVolVars[insideMassScv].phasefield(1), elemVolVars[outsideMassScv].phasefield(1));
+    //        }
+    //    };
+
+    //    return considerPreviousTimeStep ? result(momentumCouplingContext_[0].prevElemVolVars)
+    //                                    : result(momentumCouplingContext_[0].curElemVolVars);
+    //}
 
     /*!
      * \brief Returns the pressure at a given sub control volume face.

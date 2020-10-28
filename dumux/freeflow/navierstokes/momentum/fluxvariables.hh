@@ -118,7 +118,7 @@ public:
     { return *elemBcTypesPtr_; }
 
     /*!
-     * \brief Returns the diffusive momentum flux due to viscous forces
+     * \brief Returns the advective momentum flux
      */
     NumEqVector advectiveMomentumFlux() const
     {
@@ -172,12 +172,13 @@ public:
         if (scvf.boundary())
             return result;
 
-        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(fvGeometry, scvf, elemVolVars) * scvf.directionSign();
+        const Scalar velocityGrad_ii = VelocityGradients::velocityGradII(fvGeometry, scvf, elemVolVars, this->problem()) * scvf.directionSign();
 
         static const bool enableUnsymmetrizedVelocityGradient
         = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
         const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
 
+        // TODO: add factor (phi + delta), with constant approximation for all fluxes of this dof
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
         result -= factor * mu * velocityGrad_ii * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
 
@@ -189,7 +190,7 @@ public:
             {
                 const auto frontalScvf  = *(scvfs(fvGeometry, scv).begin());
                 assert(frontalScvf.isFrontal() && !frontalScvf.boundary());
-                divergence += VelocityGradients::velocityGradII(fvGeometry, frontalScvf, elemVolVars);
+                divergence += VelocityGradients::velocityGradII(fvGeometry, frontalScvf, elemVolVars, this->problem());
             }
             // std::cout << "divergence at " << scvf.center() << " is " << divergence << std::endl;
             // std::cout << std::setprecision(15) << "old term " << factor * mu * velocityGrad_ii * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor() << ", div term " << 2.0/3.0 * mu * divergence * scvf.directionSign() * scvf.area() * elemVolVars[scvf.insideScvIdx()].extrusionFactor() << std::endl;
@@ -245,14 +246,15 @@ public:
             //     currentScvfBoundaryTypes->isDirichlet(Indices::velocity(staggeredScvf.directionIndex())) ||
             //     currentScvfBoundaryTypes->isBeaversJoseph(Indices::velocity(staggeredScvf.directionIndex())))
             // {
-                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
+                const Scalar velocityGrad_ji = VelocityGradients::velocityGradJI(fvGeometry, scvf,
+                        elemVolVars, this->problem());
                 // Account for the orientation of the staggered normal face's outer normal vector.
                 result -= mu * velocityGrad_ji * scvf.directionSign();
             // }
         }
 
         // Consider the shear stress caused by the gradient of the velocities parallel to our face of interest.
-        const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
+        const Scalar velocityGrad_ij = VelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars, this->problem());
         result -= mu * velocityGrad_ij * scvf.directionSign();
 
         // Account for the area of the staggered lateral face.

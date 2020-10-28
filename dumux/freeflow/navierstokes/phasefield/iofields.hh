@@ -18,26 +18,43 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesIndices
+ * \ingroup FreeflowNIModel
+ * \copydoc Dumux::FreeflowNonIsothermalIOFields
  */
-#ifndef DUMUX_NAVIERSTOKES_MASS_1P_INDICES_HH
-#define DUMUX_NAVIERSTOKES_MASS_1P_INDICES_HH
+#ifndef DUMUX_NAVIERSTOKES_PHASEFIELD_IO_FIELDS_HH
+#define DUMUX_NAVIERSTOKES_PHASEFIELD_IO_FIELDS_HH
+
+
+#include <dumux/io/name.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesModel
- * \brief The common indices for the isothermal Navier-Stokes mass conservation model.
+ * \ingroup FreeflowNIModel
+ * \brief Adds I/O fields specific to non-isothermal free-flow models
  */
-struct NavierStokesMassOnePIndices
+template<class IsothermalIOFields, bool turbulenceModel = false>
+struct NavierStokesPhasefieldIOFields
 {
-    static constexpr int conti0EqIdx = 0; //!< Index of the first (total for pure-fluid systems) mass balance equation
-    static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure
-    static constexpr int phasefieldEqIdx = 1;
-    static constexpr int phiIdx = phasefieldEqIdx;
-    static constexpr int uTransportEqIdx = 2;
-    static constexpr int uIdx = uTransportEqIdx;
+
+    //! Add the non-isothermal specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
+    {
+        IsothermalIOFields::initOutputModule(out);
+
+        out.addVolumeVariable([](const auto& v){ return v.phi(); }, "phi()";
+    }
+
+    //! return the names of the primary variables
+    template<class ModelTraits, class FluidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < ModelTraits::numEq() - 1)
+            return IsothermalIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
+        else
+            return "phi";
+    }
 };
 
 } // end namespace Dumux

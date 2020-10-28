@@ -207,6 +207,8 @@ public:
 #if NONISOTHERMAL
                 values.setDirichlet(Indices::temperatureIdx);
 #endif
+                values.setDirichlet(Indices::phiIdx);
+                values.setDirichlet(Indices::uIdx);
             }
         }
 
@@ -238,6 +240,11 @@ public:
             if (time() >= 200.0)
                 values[Indices::temperatureIdx] = 293.15;
 #endif
+            const static Scalar xi = getParam<Scalar>("Phasefield.xi");
+            const static Scalar rad = getParam<Scalar>("Phasefield.DirichletRadius");
+            const Scalar s = (globalPos[1]-0.5)*(globalPos[1]-0.5)-rad*rad;
+            values[Indices::phiIdx] = 1.0/(1.0 + std::exp(9*s/xi));
+            values[Indices::uIdx] = 1.0;
          }
 
          return values;
@@ -340,6 +347,11 @@ public:
 #if NONISOTHERMAL
             values[Indices::temperatureIdx] = 283.15;
 #endif
+            const static Scalar xi = getParam<Scalar>("Phasefield.xi");
+            const static Scalar rad = getParam<Scalar>("Phasefield.StartingRadius");
+            const Scalar s = (globalPos[1]-0.5)*(globalPos[1]-0.5)-rad*rad;
+            values[Indices::phiIdx] = 1.0/(1.0 + std::exp(9*s/xi));
+            values[Indices::uIdx] = getParam<Scalar>("Phasefield.InitialConcentration");
         }
 
 

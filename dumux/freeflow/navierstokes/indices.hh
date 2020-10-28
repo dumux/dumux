@@ -41,6 +41,10 @@ struct NavierStokesIndices
 
     static constexpr int conti0EqIdx = dimension; //!< Index of the total mass balance equation
     static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure in a solution vector
+    static constexpr int phasefieldEqIdx = dimension+1;
+    static constexpr int uTransportEqIdx = dimension+2;
+    static constexpr int phiIdx = phasefieldEqIdx;
+    static constexpr int uIdx = uTransportEqIdx;
 
     static constexpr auto dim = dimension;
 

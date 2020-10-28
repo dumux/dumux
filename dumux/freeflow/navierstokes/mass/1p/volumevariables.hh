@@ -75,6 +75,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
         completeFluidState(elemSol, problem, element,scv, fluidState_);
+        priVars_ = elemSol[scv.localDofIndex()];
     }
 
     /*!
@@ -121,6 +122,20 @@ public:
     }
 
      /*!
+     * \brief Returns the phasefield variable \f$\mathrm{[\phi]}\f$ of a given index within
+     *        the control volume.
+     */
+    Scalar phasefield(int index) const
+    { return priVars_[Indices::phiIdx+index-1]; }
+
+     /*!
+     * \brief Returns the concentration \f$\mathrm{[u]}\f$ of a given species within
+     *        the control volume.
+     */
+    Scalar concentration(int speciesIdx) const
+    { return priVars_[Indices::uIdx +speciesIdx-1]; }
+
+     /*!
      * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      */
@@ -158,6 +173,7 @@ public:
     { return fluidState_.temperature(); }
 
 protected:
+    PrimaryVariables priVars_;
     FluidState fluidState_;
 };
 

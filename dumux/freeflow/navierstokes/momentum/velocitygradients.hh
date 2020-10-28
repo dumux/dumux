@@ -27,6 +27,7 @@
 #include <optional>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
 
 // forward declare
 namespace Dune {
@@ -71,15 +72,28 @@ public:
      *                                               O position at which gradient is evaluated (integration point)
      * \endverbatim
      */
-    template<class FVElementGeometry, class ElemVolVars>
+    template<class FVElementGeometry, class ElemVolVars, class Problem>
     static auto velocityGradII(const FVElementGeometry fvGeometry,
                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                               const ElemVolVars& elemVolVars)
+                               const ElemVolVars& elemVolVars,
+                               const Problem& problem)
     {
         assert(scvf.isFrontal());
         // The velocities of the dof at interest and the one of the opposite scvf.
-        const auto velocitySelf = elemVolVars[scvf.insideScvIdx()].velocity();
-        const auto velocityOpposite = elemVolVars[scvf.outsideScvIdx()].velocity();
+        //const auto& gridGeometry = fvGeometry.gridGeometry();
+        //const auto elemSelf = fvGeometry.gridGeometry().element(scvf.insideScvIdx());
+        const auto scvSelf = fvGeometry.scv(scvf.insideScvIdx());
+        const auto phasefieldSelf = 1.0
+            //* problem.phasefield(fvGeometry.gridGeometry().element(scvf.insideScvIdx()),
+            ///*fvGeometry,*/ fvGeometry.scv(scvf.insideScvIdx())) + 1e-8
+            ;
+        const auto phasefieldOpposite = 1.0
+            //* problem.phasefield(fvGeometry.gridGeometry().element(scvf.outsideScvIdx()),
+            ///*fvGeometry,*/ fvGeometry.scv(scvf.outsideScvIdx())) + 1e-8
+            ;
+        const auto velocitySelf = elemVolVars[scvf.insideScvIdx()].velocity() *phasefieldSelf;
+        const auto velocityOpposite = elemVolVars[scvf.outsideScvIdx()].velocity()
+            *phasefieldOpposite;
         const auto distance = (fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() - fvGeometry.scv(scvf.insideScvIdx()).dofPosition()).two_norm();
 
         return (velocityOpposite - velocitySelf) / distance * scvf.directionSign();
@@ -106,14 +120,24 @@ public:
      *
      * \endverbatim
      */
-    template<class FVElementGeometry, class ElemVolVars>
+    template<class FVElementGeometry, class ElemVolVars, class Problem>
     static auto velocityGradIJ(const FVElementGeometry fvGeometry,
                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                               const ElemVolVars& elemVolVars)
+                               const ElemVolVars& elemVolVars,
+                               const Problem& problem)
     {
         assert(scvf.isLateral());
-        const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-        const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity();
+        //const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto phasefieldInner = 1.0
+            //* problem.phasefield(fvGeometry.gridGeometry().element(scvf.insideScvIdx()),
+            ///*fvGeometry,*/ fvGeometry.scv(scvf.insideScvIdx())) + 1e-8
+            ;
+        const auto phasefieldOuter = 1.0
+            //* problem.phasefield(fvGeometry.gridGeometry().element(scvf.outsideScvIdx()),
+            ///*fvGeometry,*/ fvGeometry.scv(scvf.outsideScvIdx())) + 1e-8
+            ;
+        const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity() *phasefieldInner;
+        const auto outerVelocity = elemVolVars[scvf.outsideScvIdx()].velocity() *phasefieldOuter;
         const auto distance = getDistanceIJ_(fvGeometry, scvf);
         return (outerVelocity - innerVelocity) / distance * scvf.directionSign();
     }
@@ -147,15 +171,27 @@ public:
      *
      * \endverbatim
      */
-    template<class FVElementGeometry, class ElemVolVars>
+    template<class FVElementGeometry, class ElemVolVars, class Problem>
     static auto velocityGradJI(const FVElementGeometry fvGeometry,
                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                               const ElemVolVars& elemVolVars)
+                               const ElemVolVars& elemVolVars,
+                               const Problem& problem)
     {
         assert(scvf.isLateral());
         const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-        const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
-        const auto outerVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+        //const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto phasefieldInner = 1.0
+            //* problem.phasefield(fvGeometry.gridGeometry().element(orthogonalScvf.insideScvIdx()),
+            ///*fvGeometry,*/ fvGeometry.scv(orthogonalScvf.insideScvIdx())) + 1e-8
+            ;
+        const auto phasefieldOuter = 1.0
+            //* problem.phasefield(fvGeometry.gridGeometry().element(orthogonalScvf.outsideScvIdx()),
+            ///*fvGeometry,*/ fvGeometry.scv(orthogonalScvf.outsideScvIdx())) + 1e-8
+            ;
+        const auto innerVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity()
+            *phasefieldInner;
+        const auto outerVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity()
+            *phasefieldOuter;
         const auto distance = getDistanceJI_(fvGeometry, scvf, orthogonalScvf);
         return (outerVelocity - innerVelocity) / distance * orthogonalScvf.directionSign();
     }

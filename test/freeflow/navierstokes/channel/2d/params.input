@@ -7,7 +7,7 @@ UpperRight = 10 1
 Cells = 100 50
 
 [Problem]
-Name = test_channel_stokes # name passed to the output routines
+Name = test_channel_stokes_coupled # name passed to the output routines
 InletVelocity = 1
 EnableGravity = false
 EnableInertiaTerms = false
@@ -42,3 +42,16 @@ NumericDifference.BaseEpsilon =  1e-3
 
 [FreeFlow]
 EnableDilatationTerm = false
+
+[Phasefield]
+xi = 0.4
+delta = 1e-8
+sigma = 3.75e-3
+DiffCoeff = 0.2
+InitialConcentration = 1.0
+StartingRadius = 0.4
+DirichletRadius = 0.4
+K = 1
+n = 10
+Reaction = 0.0
+AdvectiveTransport = 0.0

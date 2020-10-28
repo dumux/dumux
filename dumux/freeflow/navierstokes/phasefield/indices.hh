@@ -18,28 +18,29 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesIndices
+ * \ingroup FreeflowNIModel
+ * \copydoc Dumux::FreeflowNonIsothermalIndices
  */
-#ifndef DUMUX_NAVIERSTOKES_MASS_1P_INDICES_HH
-#define DUMUX_NAVIERSTOKES_MASS_1P_INDICES_HH
+#ifndef DUMUX_NAVIER_STOKES_PHASEFIELD_INDICES_HH
+#define DUMUX_NAVIER_STOKES_PHASEFIELD_INDICES_HH
 
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesModel
- * \brief The common indices for the isothermal Navier-Stokes mass conservation model.
+ * \ingroup FreeflowNIModel
+ * \brief Indices for the non-isothermal Navier-Stokes model.
+ *
+ * \tparam IsothermalIndices The isothermal indices class
+ * \tparam numEq the number of equations of the non-isothermal model
  */
-struct NavierStokesMassOnePIndices
+template <class IsothermalIndices, int numEq>
+class NavierStokesPhasefieldIndices: public IsothermalIndices
 {
-    static constexpr int conti0EqIdx = 0; //!< Index of the first (total for pure-fluid systems) mass balance equation
-    static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure
-    static constexpr int phasefieldEqIdx = 1;
-    static constexpr int phiIdx = phasefieldEqIdx;
-    static constexpr int uTransportEqIdx = 2;
-    static constexpr int uIdx = uTransportEqIdx;
+public:
+    static constexpr int phasefieldEqIdx = numEq - 1;
+    static constexpr int phiIdx = numEq - 1;
 };
 
 } // end namespace Dumux
 
-#endif
+#endif // DUMUX_NAVIER_STOKES_PHASEFIELD_INDICES_HH

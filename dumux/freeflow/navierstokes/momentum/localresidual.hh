@@ -85,7 +85,7 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculate the storage term of the equation
      *
      * \param problem The problem to solve
      * \param scv The sub-control volume over which we integrate the storage term
@@ -99,7 +99,11 @@ public:
                                const bool isPreviousStorage = false) const
     {
         const auto& element = problem.gridGeometry().element(scv.elementIndex());
-        return problem.density(element, scv, isPreviousStorage) * volVars.velocity();
+        // TODO: factor (phi1 + delta), inside derivative
+        const static Scalar delta = getParam<Scalar>("Phasefield.delta");
+        return problem.density(element, scv, isPreviousStorage) * volVars.velocity()
+                * (problem.phasefield(element,scv)+delta)
+                ;
     }
 
     /*!
@@ -121,8 +125,14 @@ public:
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolume& scv) const
     {
+        // TODO: add g * q term here or in parent source?
         NumEqVector source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
         source += problem.gravity()[scv.directionIndex()] * problem.density(element, scv);
+        const static Scalar K = getParam<Scalar>("Phasefield.K");
+        const static Scalar xi = getParam<Scalar>("Phasefield.xi");
+        const static Scalar n = getParam<Scalar>("Phasefield.n");
+        source += -K/xi * (1-problem.phasefield(element, scv))*n /
+            (problem.phasefield(element, scv) + n) * elemVolVars[scv].velocity();
 
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.
@@ -167,10 +177,19 @@ public:
     {
         FluxVariables fluxVars(problem, element, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, elemBcTypes);
 
+        // TODO: modify with internal/external factors
         NumEqVector flux(0.0);
-        flux += fluxVars.advectiveMomentumFlux();
-        flux += fluxVars.diffusiveMomentumFlux();
-        flux += fluxVars.pressureContribution();
+        static const Scalar delta = getParam<Scalar>("Phasefield.delta");
+        flux += fluxVars.advectiveMomentumFlux()
+            * (problem.phasefield(element, fvGeometry, scvf)+delta)
+            ;
+        // Scale viscosity and velocity instead
+        flux += fluxVars.diffusiveMomentumFlux()
+            * (problem.phasefield(element, fvGeometry, scvf)+delta);
+            ;
+        flux += fluxVars.pressureContribution()
+            * (problem.phasefield(element, fvGeometry, scvf)+delta)
+            ;
         return flux;
     }
 
