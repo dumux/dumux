@@ -211,7 +211,7 @@ public:
     { return 273.15 + 10; }; // -> 10°C
 
     /*!
-     * \brief Returns the reference pressure [Pa] of the non-wetting
+     * \brief Returns the reference pressure [Pa] of the nonwetting
      *        fluid phase within a finite volume
      *
      * This problem assumes a constant reference pressure of 1 bar.

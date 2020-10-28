@@ -226,7 +226,7 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase
+     * \brief The relative permeability for the nonwetting phase
      *        of the medium implied by van Genuchten's
      *        parameterization.
      *
@@ -238,7 +238,7 @@ public:
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
-     * \note See e.g. Dury, Fischer, Schulin (1999) for application of Mualem model to non-wetting rel. perm.
+     * \note See e.g. Dury, Fischer, Schulin (1999) for application of Mualem model to nonwetting rel. perm.
      */
     static Scalar krn(const Params &params, Scalar swe)
     {
@@ -252,7 +252,7 @@ public:
 
     /*!
      * \brief The derivative of the relative permeability for the
-     *        non-wetting phase in regard to the wetting saturation of
+     *        nonwetting phase in regard to the wetting saturation of
      *        the medium as implied by the van Genuchten
      *        parameterization.
      *

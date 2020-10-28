@@ -145,7 +145,7 @@ public:
         aWettingNonwettingSurfaceParams_.setA2(aWettingNonwettingA2_);
         aWettingNonwettingSurfaceParams_.setA3(aWettingNonwettingA3_);
 
-        // non-wetting-solid
+        // nonwetting-solid
         aNonwettingSolidSurfaceParams_.setA1(aNonwettingSolidA1_);
         aNonwettingSolidSurfaceParams_.setA2(aNonwettingSolidA2_);
         aNonwettingSolidSurfaceParams_.setA3(aNonwettingSolidA3_);
@@ -216,7 +216,7 @@ public:
     }
 
     /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between wetting and non-Wetting phase.
+     *        parametrization of the surface between wetting and nonwetting phase.
      *
      * The position is determined based on the coordinate of
      * the vertex belonging to the considered sub-control volume.
@@ -239,7 +239,7 @@ public:
     }
 
     /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between non-Wetting and solid phase.
+     *        parametrization of the surface between nonwetting and solid phase.
      *
      *        The position is determined based on the coordinate of
      *        the vertex belonging to the considered sub-control volume.

@@ -63,7 +63,7 @@ public:
     {
         assert(values.size() == 2);
         const int nPhaseIdx = 1 - wPhaseIdx;
-        // non-wetting phase gets the capillary pressure added
+        // nonwetting phase gets the capillary pressure added
         values[nPhaseIdx] = 0;
         // wetting phase does not get anything added
         values[wPhaseIdx] = - MaterialLaw::pc(params, state.saturation(wPhaseIdx));

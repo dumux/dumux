@@ -342,8 +342,8 @@ public:
      * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      *
-     * For the non-wetting phase (i.e. the gas phase), we assume
-     * infinite mobility, which implies that the non-wetting phase
+     * For the nonwetting phase (i.e. the gas phase), we assume
+     * infinite mobility, which implies that the nonwetting phase
      * pressure is equal to the finite volume's reference pressure
      * defined by the problem.
      *
@@ -371,7 +371,7 @@ public:
      *        the control volume.
      *
      * \param phaseIdx The index of the fluid phase
-     * \note The non-wetting phase is infinitely mobile
+     * \note The nonwetting phase is infinitely mobile
      */
     Scalar viscosity(const int phaseIdx = FluidSystem::liquidPhaseIdx) const
     { return phaseIdx == FluidSystem::liquidPhaseIdx ? fluidState_.viscosity(FluidSystem::liquidPhaseIdx) : 0.0; }
@@ -390,7 +390,7 @@ public:
      *        control volume.
      *
      * The capillary pressure is defined as the difference in
-     * pressures of the non-wetting and the wetting phase, i.e.
+     * pressures of the nonwetting and the wetting phase, i.e.
      * \f[ p_c = p_n - p_w \f]
      *
      * \note Capillary pressures are always larger than the entry pressure
@@ -406,8 +406,8 @@ public:
      * \brief Returns the pressureHead \f$\mathrm{[cm]}\f$ of a given phase within
      *        the control volume.
      *
-     * For the non-wetting phase (i.e. the gas phase), we assume
-     * infinite mobility, which implies that the non-wetting phase
+     * For the nonwetting phase (i.e. the gas phase), we assume
+     * infinite mobility, which implies that the nonwetting phase
      * pressure is equal to the finite volume's reference pressure
      * defined by the problem.
      *

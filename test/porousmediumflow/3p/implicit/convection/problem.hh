@@ -317,7 +317,7 @@ public:
         PrimaryVariables values;
         values[pressureIdx] = pressureLow_; // initial condition for the pressure
         values[swIdx] = 1.0;  // initial condition for the wetting phase saturation
-        values[snIdx] = 1e-10;  // initial condition for the non-wetting phase saturation
+        values[snIdx] = 1e-10;  // initial condition for the nonwetting phase saturation
         values[temperatureIdx] = temperatureLow_;
         return values;
     }

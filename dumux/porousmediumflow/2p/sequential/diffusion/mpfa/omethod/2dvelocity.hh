@@ -230,7 +230,7 @@ public:
             }
 
             writer.attachCellData(velocityWetting, "wetting-velocity", dim);
-            writer.attachCellData(velocityNonwetting, "non-wetting-velocity", dim);
+            writer.attachCellData(velocityNonwetting, "nonwetting-velocity", dim);
         }
 
         return;

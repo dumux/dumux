@@ -208,7 +208,7 @@ public:
     }
 
     /*!
-     * \brief Adds source derivatives for wetting and non-wetting phase.
+     * \brief Adds source derivatives for wetting and nonwetting phase.
      *
      * \param partialDerivatives The partial derivatives
      * \param problem The problem
@@ -229,9 +229,9 @@ public:
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 
     /*!
-     * \brief Adds flux derivatives for wetting and non-wetting phase for cell-centered FVM using TPFA
+     * \brief Adds flux derivatives for wetting and nonwetting phase for cell-centered FVM using TPFA
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param derivativeMatrices The partial derivatives
@@ -404,9 +404,9 @@ public:
     }
 
     /*!
-     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and non-wetting phase
+     * \brief Adds cell-centered Dirichlet flux derivatives for wetting and nonwetting phase
      *
-     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * Compute derivatives for the wetting and the nonwetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
      *
      * \param derivativeMatrices The matrices containing the derivatives
@@ -470,7 +470,7 @@ public:
     }
 
     /*!
-     * \brief Adds Robin flux derivatives for wetting and non-wetting phase
+     * \brief Adds Robin flux derivatives for wetting and nonwetting phase
      *
      * \param derivativeMatrices The matrices containing the derivatives
      * \param problem The problem

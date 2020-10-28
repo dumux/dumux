@@ -46,7 +46,7 @@ namespace FluidSystems {
  *
  * The fluid phases are completely specified by means of their
  * constituting components.
- * The wetting and the non-wetting phase can be defined individually
+ * The wetting and the nonwetting phase can be defined individually
  * via FluidSystem::OnePLiquid<Scalar, Component>. The gas phase can be defined via
  * FluidSystems::OnePGas<Scalar, Component>
  * These phases consist of one pure component.
@@ -79,7 +79,7 @@ public:
 
     //! Index of the wetting phase
     static constexpr int wPhaseIdx = 0;
-    //! Index of the non-wetting phase
+    //! Index of the nonwetting phase
     static constexpr int nPhaseIdx = 1;
     //! Index of the gas phase
     static constexpr int gPhaseIdx = 2;
@@ -193,7 +193,7 @@ public:
 
     //! Index of the wetting phase's component
     static constexpr int wCompIdx = 0;
-    //! Index of the non-wetting phase's component
+    //! Index of the nonwetting phase's component
     static constexpr int nCompIdx = 1;
     //! Index of the gas phase's component
     static constexpr int gCompIdx = 2; // TODO: correct??
@@ -328,7 +328,7 @@ public:
 
         if (NonwettingFluid::Component::isTabulated)
         {
-            std::cout << "Initializing tables for the non-wetting fluid properties ("
+            std::cout << "Initializing tables for the nonwetting fluid properties ("
                       << nTemp*nPress
                       << " entries).\n";
 

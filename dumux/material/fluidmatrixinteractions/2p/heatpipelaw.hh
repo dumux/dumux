@@ -133,7 +133,7 @@ public:
     }
 
     /*!
-     * \brief The relative permeability for the non-wetting phase.
+     * \brief The relative permeability for the nonwetting phase.
      *
      * \param params Array of parameters
      * \param Sw The mobile saturation of the wetting phase.

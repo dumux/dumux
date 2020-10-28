@@ -137,7 +137,7 @@ public:
     }
 
     /*!\brief Returns a reference to the container object for the
-     *        parametrization of the surface between wetting and non-Wetting phase.
+     *        parametrization of the surface between wetting and nonwetting phase.
      *
      * The position is determined based on the coordinate of
      * the vertex belonging to the considered sub-control volume.

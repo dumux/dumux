@@ -64,7 +64,7 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 ### Immediate interface changes not allowing/requiring a deprecation period
 
 - Remove `Grid.HeapSize` as dune-ugrid removed the according feature as well.
-- __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the non-wetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
+- __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the nonwetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
 - __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
 - __Brooks-Corey__: Corrected Brooks-Corey implementation of `dkrn/dSw` and added the derivatives for the regularized version
 - __AMGBackend__: The internal structure of the AMGBackend and the ParallelISTLHelper has been overhauled, as only used by the AMG, we did not make the changes backwards-compatible
@@ -1345,7 +1345,7 @@ Differences Between DuMu<sup>x</sup> 2.2 and DuMu<sup>x</sup> 2.3
     test/decoupled/2p. They work in parallel only if the AMGBackend is used
     as linear solver. No dynamic loadbalancing can be done yet.
 
-  - The MPNC model can use either the most wetting or the most non-wetting phase
+  - The MPNC model can use either the most wetting or the most nonwetting phase
     pressure as primary variable. This is controlled via the property
     "PressureFormulation."
 

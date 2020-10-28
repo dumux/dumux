@@ -70,7 +70,7 @@ public:
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
         // We set the parameters for the material law (here Van-Genuchten Law).
-        // First we set the residual saturations for the wetting phase and the non-wetting phase.
+        // First we set the residual saturations for the wetting phase and the nonwetting phase.
         // lensMaterialParams_ define the material parameters for the lens while
         // outerMaterialParams_ define material params for the rest of the domain.
         lensMaterialParams_.setSwr(0.18);

@@ -118,7 +118,7 @@ public:
 
     /*!
      * \brief Set the threshold saturation below which the relative
-     *        permeability of the non-wetting phase gets regularized.
+     *        permeability of the nonwetting phase gets regularized.
      */
     void setKrnLowSw(Scalar krnLowSw)
     {
@@ -127,7 +127,7 @@ public:
 
     /*!
      * \brief Threshold saturation below which the relative
-     *        permeability of the non-wetting phase gets regularized.
+     *        permeability of the nonwetting phase gets regularized.
      */
     Scalar krnLowSw() const
     {

@@ -501,7 +501,7 @@ public:
             const auto density = fluidState.density(phaseIdx);
             const auto kinematicViscosity = dynamicViscosity/density;
 
-            // diffusion coefficient of non-wetting component in wetting phase
+            // diffusion coefficient of nonwetting component in wetting phase
             using FluidSystem = typename Traits::FluidSystem;
             const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
                                                                            paramCache,
@@ -543,7 +543,7 @@ public:
         const auto pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
 
         // when we only consider chemical non-equilibrium there is only mass transfer between
-        // the fluid phases, so in 2p only interfacial area between wetting and non-wetting
+        // the fluid phases, so in 2p only interfacial area between wetting and nonwetting
         using AwnSurface = typename Problem::SpatialParams::AwnSurface;
         interfacialArea_ = AwnSurface::interfacialArea(awnSurfaceParams, materialParams, Sw, pc);
     }
@@ -680,7 +680,7 @@ public:
             const auto heatCapacity = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
             const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
 
-            // diffusion coefficient of non-wetting component in wetting phase
+            // diffusion coefficient of nonwetting component in wetting phase
             const auto porosity = this->porosity();
             const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
                                                                            paramCache,

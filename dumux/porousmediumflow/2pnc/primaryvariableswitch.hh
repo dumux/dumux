@@ -102,7 +102,7 @@ protected:
                 else // mass-fraction formulation
                     priVars[switchIdx] = volVars.massFraction(phase1Idx, comp0Idx);
 
-                // switch all secondary components to mole fraction in non-wetting phase
+                // switch all secondary components to mole fraction in nonwetting phase
                 if(useMoles) // mole-fraction formulation
                     for (int compIdx = numMajorComponents; compIdx < numComponents; ++compIdx)
                         priVars[compIdx] = volVars.moleFraction(phase1Idx, compIdx);

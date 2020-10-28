@@ -45,7 +45,7 @@ namespace Dumux {
  * This could be a wetting (w) phase pressure leading to
  * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_w + f_n \text{grad}\, p_c
  *     + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * a non-wetting (n) phase pressure yielding
+ * a nonwetting (n) phase pressure yielding
  * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c
  *     + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
  * or a global pressure leading to
@@ -420,7 +420,7 @@ public:
             }
 
             writer.attachCellData(*velocityWetting, "wetting-velocity", dim);
-            writer.attachCellData(*velocityNonwetting, "non-wetting-velocity", dim);
+            writer.attachCellData(*velocityNonwetting, "nonwetting-velocity", dim);
             }
     }
 
