@@ -1126,7 +1126,7 @@ private:
 };
 
 
-template<class Vector, class LinearOperatorTuple>
+template<class Vector, class Matrix, class LinearOperatorTuple>
 class TupleLinearOperator: public Dune::LinearOperator<Vector, Vector> {
 public:
     //! The type of the domain of the operator.
@@ -1136,8 +1136,8 @@ public:
     //! The field type of the operator.
     typedef typename Vector::field_type field_type;
 
-    TupleLinearOperator (const LinearOperatorTuple& lops)
-    : lops_(lops)
+    TupleLinearOperator (const LinearOperatorTuple& lops, const Matrix& m)
+    : lops_(lops), m_(m)
     {}
 
     /*! \brief apply operator to x:  \f$ y = A(x) \f$
@@ -1150,6 +1150,12 @@ public:
         forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
         {
             std::get<i>(lops_)->apply(x[i], y[i]);
+
+            forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto j)
+            {
+                if (i != j)
+                    m_[i][j].umv(x[j], y[i]);
+            });
         });
     }
 
@@ -1160,6 +1166,12 @@ public:
         forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
         {
             std::get<i>(lops_)->applyscaleadd(alpha, x[i], y[i]);
+
+            forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto j)
+            {
+                if (i != j)
+                    m_[i][j].usmv(alpha, x[j], y[i]);
+            });
         });
     }
 
@@ -1171,6 +1183,7 @@ public:
 
 private:
     const LinearOperatorTuple& lops_;
+    const Matrix& m_;
 };
 
 
@@ -1417,7 +1430,7 @@ private:
 
         TuplePreconditioner<Vector, decltype(preconditioners)> prec(preconditioners);
 
-        TupleLinearOperator<Vector, decltype(linearOperators)> op(linearOperators);
+        TupleLinearOperator<Vector, Matrix, decltype(linearOperators)> op(linearOperators, m);
 
         TupleScalarProduct<Vector, decltype(scalarProducts)> sp(scalarProducts);
 
