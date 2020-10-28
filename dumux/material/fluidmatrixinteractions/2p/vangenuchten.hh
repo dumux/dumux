@@ -523,6 +523,7 @@ public:
      *        parameterization.
      *
      * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
      */

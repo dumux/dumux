@@ -36,7 +36,7 @@ namespace Dumux::FluidMatrix {
  * \ingroup Fluidmatrixinteractions
  * \brief Pc- and Kr-sw curves based on monotone splines through given data points
  * \tparam S the type for scalar numbers
- * \tpraram approximatePcSwInverse if this is set true, the
+ * \tparam approximatePcSwInverse if this is set true, the
  *          spline approximates sw(pc) and evaluating pc(sw) needs spline inversion.
  *          if this is false, the spline approximates pc(sw) and evaluating
  *          sw(pc) needs spline inversion. Spline inversion is rather expensive

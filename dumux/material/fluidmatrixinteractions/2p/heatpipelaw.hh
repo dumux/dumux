@@ -273,7 +273,6 @@ public:
     /*!
      * \brief The capillary pressure-saturation curve.
      *
-     }\f$
      * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
      */
     template<class Scalar>
@@ -305,7 +304,6 @@ public:
     /*!
      * \brief The partial derivative of the capillary
      *        pressure w.r.t. the effective saturation.
-
      *
      * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
      */
