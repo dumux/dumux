@@ -71,6 +71,7 @@ An additional new option is `Vtk.CoordPrecision` which changes the precision of 
 - __Van Genuchten__: Corrected VanGenuchten-Mualem exponent in the non-wetting saturation formula (`1/3` instead of `1/2` (or `l`, see above))
 - __Van Genuchten__: Corrected VanGenuchten-Mualem implementation of `dkrn/dSw`
 - __Brooks-Corey__: Corrected Brooks-Corey implementation of `dkrn/dSw` and added the derivatives for the regularized version
+- __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
 - __Box interface solver__: The box interface solver immediately requires the new material law interface without deprecation period. Use the new class `BoxMaterialInterfaces` and update your spatial params to use the new fluidmatrixinteraction interface to be able to use the box interface solver in version 3.3.
 - __AMGBackend__: The internal structure of the AMGBackend and the ParallelISTLHelper has been overhauled, as only used by the AMG, we did not make the changes backwards-compatible
 - The global default parameters for linear solvers have been removed and moved to the class `LinearSolver`.
