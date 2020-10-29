@@ -29,9 +29,9 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
+
+#include <dumux/material/fluidmatrixinteractions/3p/parkervangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/napladsorption.hh>
 
 namespace Dumux {
 
@@ -54,15 +54,17 @@ class KuevetteSpatialParams
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
-    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
+    using ThreePhasePcKrSw = FluidMatrix::ParkerVanGenuchten3PDefault<Scalar>;
+    using AdsorptionModel = FluidMatrix::ThreePNAPLAdsorption<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
     KuevetteSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurveFine_("SpatialParams.Fine")
+    , pcKrSwCurveCoarse_("SpatialParams.Coarse")
+    , adsorption_("SpatialParams")
     {
         // intrinsic permeabilities
         fineK_ = 6.28e-12;
@@ -71,29 +73,6 @@ public:
         // porosities
         finePorosity_ = 0.42;
         coarsePorosity_ = 0.42;
-
-        // residual saturations
-        fineMaterialParams_.setSwr(0.12);
-        fineMaterialParams_.setSnr(0.07);
-        fineMaterialParams_.setSgr(0.01);
-        coarseMaterialParams_.setSwr(0.12);
-        coarseMaterialParams_.setSnr(0.07);
-        coarseMaterialParams_.setSgr(0.01);
-
-        // parameters for the 3phase van Genuchten law
-        fineMaterialParams_.setVgAlpha(0.0005);
-        coarseMaterialParams_.setVgAlpha(0.005);
-        fineMaterialParams_.setVgn(4.0);
-        coarseMaterialParams_.setVgn(4.0);
-
-        coarseMaterialParams_.setKrRegardsSnr(true);
-        fineMaterialParams_.setKrRegardsSnr(true);
-
-        // parameters for adsorption
-        coarseMaterialParams_.setKdNAPL(0.);
-        coarseMaterialParams_.setRhoBulk(1500.);
-        fineMaterialParams_.setKdNAPL(0.);
-        fineMaterialParams_.setRhoBulk(1500.);
     }
 
     /*!
@@ -129,25 +108,17 @@ public:
             return coarsePorosity_;
     }
 
-
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
+     * \param globalPos The global coordinates for the given location
      */
-    template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
+            return makeFluidMatrixInteraction(pcKrSwCurveFine_, adsorption_);
         else
-            return coarseMaterialParams_;
+            return makeFluidMatrixInteraction(pcKrSwCurveCoarse_, adsorption_);
     }
 
 private:
@@ -167,8 +138,9 @@ private:
     Scalar finePorosity_;
     Scalar coarsePorosity_;
 
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    const ThreePhasePcKrSw pcKrSwCurveFine_;
+    const ThreePhasePcKrSw pcKrSwCurveCoarse_;
+    const AdsorptionModel adsorption_;
 
 };
 
