@@ -577,70 +577,69 @@ public:
     template<class S>
     struct Params
     {
+        /*!
+         * \brief Set the threshold saturation below which the capillary pressure is regularized.
+         *
+         * Most problems are very sensitive to this value (e.g. making it smaller might
+         * result in very high capillary pressures)
+         */
+        void setPcLowSwe(Scalar pcLowSwe)
+        { pcLowSwe_ = pcLowSwe; }
 
-    /*!
-     * \brief Set the threshold saturation below which the capillary pressure is regularized.
-     *
-     * Most problems are very sensitive to this value (e.g. making it smaller might
-     * result in very high capillary pressures)
-     */
-    void setPcLowSwe(Scalar pcLowSwe)
-    { pcLowSwe_ = pcLowSwe; }
+        /*!
+         * \brief Threshold saturation below which the capillary pressure is regularized.
+         */
+        Scalar pcLowSwe() const
+        { return pcLowSwe_; }
 
-    /*!
-     * \brief Threshold saturation below which the capillary pressure is regularized.
-     */
-    Scalar pcLowSwe() const
-    { return pcLowSwe_; }
+        /*!
+         * \brief Set the threshold saturation above which the capillary pressure is regularized.
+         */
+        void setPcHighSwe(Scalar pcHighSwe)
+        { pcHighSwe_ = pcHighSwe; }
 
-    /*!
-     * \brief Set the threshold saturation above which the capillary pressure is regularized.
-     */
-    void setPcHighSwe(Scalar pcHighSwe)
-    { pcHighSwe_ = pcHighSwe; }
+        /*!
+         * \brief Threshold saturation above which the capillary pressure is regularized.
+         *
+         * Most problems are very sensitive to this value (e.g. making it smaller might
+         * result in negative capillary pressures).
+         */
+        Scalar pcHighSwe() const
+        { return pcHighSwe_; }
 
-    /*!
-     * \brief Threshold saturation above which the capillary pressure is regularized.
-     *
-     * Most problems are very sensitive to this value (e.g. making it smaller might
-     * result in negative capillary pressures).
-     */
-    Scalar pcHighSwe() const
-    { return pcHighSwe_; }
+        /*!
+         * \brief Set the threshold saturation below which the relative
+         *        permeability of the non-wetting phase gets regularized.
+         */
+        void setKrnLowSwe(Scalar krnLowSwe)
+        { krnLowSwe_ = krnLowSwe; }
 
-    /*!
-     * \brief Set the threshold saturation below which the relative
-     *        permeability of the non-wetting phase gets regularized.
-     */
-    void setKrnLowSwe(Scalar krnLowSwe)
-    { krnLowSwe_ = krnLowSwe; }
+        /*!
+         * \brief Threshold saturation below which the relative
+         *        permeability of the non-wetting phase gets regularized.
+         */
+        Scalar krnLowSwe() const
+        { return krnLowSwe_; }
 
-    /*!
-     * \brief Threshold saturation below which the relative
-     *        permeability of the non-wetting phase gets regularized.
-     */
-    Scalar krnLowSwe() const
-    { return krnLowSwe_; }
+        /*!
+         * \brief Set the threshold saturation above which the relative
+         *        permeability of the wetting phase gets regularized.
+         */
+        void setKrwHighSwe(Scalar krwHighSwe)
+        { krwHighSwe_ = krwHighSwe; }
 
-    /*!
-     * \brief Set the threshold saturation above which the relative
-     *        permeability of the wetting phase gets regularized.
-     */
-    void setKrwHighSwe(Scalar krwHighSwe)
-    { krwHighSwe_ = krwHighSwe; }
-
-    /*!
-     * \brief Threshold saturation above which the relative
-     *        permeability of the wetting phase gets regularized.
-     */
-    Scalar krwHighSwe() const
-    { return krwHighSwe_; }
+        /*!
+         * \brief Threshold saturation above which the relative
+         *        permeability of the wetting phase gets regularized.
+         */
+        Scalar krwHighSwe() const
+        { return krwHighSwe_; }
 
 private:
-    S pcLowSwe_ = 0.01;
-    S pcHighSwe_ = 0.99;
-    S krnLowSwe_ = 0.1;
-    S krwHighSwe_ = 0.9;
+        S pcLowSwe_ = 0.01;
+        S pcHighSwe_ = 0.99;
+        S krnLowSwe_ = 0.1;
+        S krwHighSwe_ = 0.9;
     };
 
     //! Initialize the spline
