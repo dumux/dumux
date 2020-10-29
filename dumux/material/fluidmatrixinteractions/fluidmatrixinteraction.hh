@@ -143,6 +143,45 @@ MultiPhasePcKrSw(T&&) -> MultiPhasePcKrSw<T>;
 
 /*!
  * \ingroup Fluidmatrixinteractions
+ * \brief Wrapper type for 3p interface laws providing pc-S and kr-S rules.
+ */
+template<class T>
+struct ThreePhasePcKrSw
+{
+    using Scalar = typename std::decay_t<T>::Scalar;
+    using value_type = const T;
+
+    using PcKrSwType = const T;
+
+    ThreePhasePcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
+
+    Scalar pcgw(const Scalar sw, const Scalar sn) const { return impl_.pcgw(sw, sn); }
+    Scalar pcnw(const Scalar sw, const Scalar sn) const { return impl_.pcnw(sw, sn); }
+    Scalar pcgn(const Scalar sw, const Scalar sn) const { return impl_.pcgn(sw, sn); }
+    Scalar pcAlpha(const Scalar sw, const Scalar sn) const { return impl_.pcAlpha(sw, sn); }
+
+    Scalar krw(const Scalar sw, const Scalar sn) const { return impl_.krw(sw, sn); }
+    Scalar krn(const Scalar sw, const Scalar sn) const { return impl_.krn(sw, sn); }
+    Scalar krg(const Scalar sw, const Scalar sn) const { return impl_.krn(sw, sn); }
+    Scalar kr(const int phaseIdx, const Scalar sw, const Scalar sn) const { return impl_.kr(phaseIdx, sw, sn); }
+
+    const T& pcSwCurve() const { return impl_; }
+    const T& krSwCurve()  const { return impl_; }
+private:
+    const T impl_;
+};
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Deduction guide for the ThreePhasePcKrSw class.
+ *        Makes sure that ThreePhasePcKrSw stores a copy of T if
+ *        the constructor is called with a temporary object.
+ */
+template<typename T>
+ThreePhasePcKrSw(T&&) -> ThreePhasePcKrSw<T>;
+
+/*!
+ * \ingroup Fluidmatrixinteractions
  * \brief Wrapper type for laws providing rules for the wetting-nonwetting interfacial area.
  */
 template<class T>
