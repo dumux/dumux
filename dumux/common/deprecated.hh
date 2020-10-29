@@ -120,7 +120,7 @@ public:
         return SpatialParams::MaterialLaw::sw(params, pc);
     }
 
-      Scalar dsw_dpc(const Scalar pc) const
+    Scalar dsw_dpc(const Scalar pc) const
     {
         const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
         return SpatialParams::MaterialLaw::dsw_dpc(params, pc);
@@ -151,8 +151,84 @@ private:
     const ElemSol& elemSol_;
 };
 
+template<class ScalarT, class SpatialParams, class Element, class Scv, class ElemSol>
+class PcKrSwThreePHelper : public FluidMatrix::Adapter<PcKrSwThreePHelper<ScalarT, SpatialParams, Element, Scv, ElemSol>, FluidMatrix::ThreePhasePcKrSw>
+{
+public:
+    using Scalar = ScalarT;
+
+    // pass scalar so template arguments can all be deduced
+    PcKrSwThreePHelper(const Scalar& scalar,
+                       const SpatialParams& sp,
+                       const Element& element,
+                       const Scv& scv,
+                       const ElemSol& elemSol)
+    : spatialParams_(sp), element_(element), scv_(scv), elemSol_(elemSol)
+    {}
+
+    Scalar pcgw(const Scalar sw, const Scalar /*dummySn*/) const
+    {
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
+        return SpatialParams::MaterialLaw::pcgw(params, sw);
+    }
+
+    Scalar pcnw(const Scalar sw, const Scalar /*dummySn*/) const
+    {
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
+        return SpatialParams::MaterialLaw::pcnw(params, sw);
+    }
+
+    Scalar pcgn(const Scalar sw, const Scalar sn) const
+    {
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
+        return SpatialParams::MaterialLaw::pcgn(params, sw + sn);
+    }
+
+    Scalar pcAlpha(const Scalar /*dummySw*/, const Scalar sn) const
+    {
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
+        return SpatialParams::MaterialLaw::pcAlpha(params, sn);
+    }
+
+    Scalar krw(const Scalar sw, const Scalar sn) const
+    {
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
+        return SpatialParams::MaterialLaw::krw(params, sw, sn);
+    }
+
+    Scalar krn(const Scalar sw, const Scalar sn) const
+    {
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
+        return SpatialParams::MaterialLaw::krw(params, sw, sn);
+    }
+
+    Scalar krg(const Scalar sw, const Scalar sn) const
+    {
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
+        return SpatialParams::MaterialLaw::krg(params, sw, sn);
+    }
+
+    Scalar kr(const int phaseIdx, const Scalar sw, const Scalar sn) const
+    {
+        const auto& params = spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_);
+        return SpatialParams::MaterialLaw::kr(params, phaseIdx, sw, sn, 1 - sw - sn);
+    }
+
+    const auto& basicParams() const
+    { return spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_); }
+
+    const auto& effToAbsParams() const
+    { return spatialParams_.materialLawParamsDeprecated(element_, scv_, elemSol_); }
+
+private:
+    const SpatialParams& spatialParams_;
+    const Element& element_;
+    const Scv& scv_;
+    const ElemSol& elemSol_;
+};
+
 // for implicit models
-template<class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
+template<int numPhases = 2, class Scalar, class SpatialParams, class Element, class Scv, class ElemSol>
 auto makePcKrSw(const Scalar& scalar,
                 const SpatialParams& sp,
                 const Element& element,
@@ -167,7 +243,12 @@ auto makePcKrSw(const Scalar& scalar,
     else if constexpr (hasNewAtPos)
         return sp.fluidMatrixInteractionAtPos(scv.center());
     else
-        return makeFluidMatrixInteraction(PcKrSwHelper(scalar, sp, element, scv, elemSol));
+    {
+        if constexpr (numPhases == 2)
+            return makeFluidMatrixInteraction(PcKrSwHelper(scalar, sp, element, scv, elemSol));
+        else
+            return makeFluidMatrixInteraction(PcKrSwThreePHelper(scalar, sp, element, scv, elemSol));
+    }
 }
 
 // for sequential models
