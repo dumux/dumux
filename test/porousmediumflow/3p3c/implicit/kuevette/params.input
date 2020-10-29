@@ -22,3 +22,13 @@ SolidDensity = 2650
 SolidThermalConductivity = 2.8
 SolidHeatCapacity = 850
 
+[SpatialParams]
+Swr = 0.12
+Snr = 0.07
+Sgr = 0.01
+ParkerVanGenuchtenN = 4
+ParkerVanGenuchtenRegardSnrForKrn = true
+Fine.ParkerVanGenuchtenAlpha = 0.0005
+Coarse.ParkerVanGenuchtenAlpha = 0.005
+ThreePNAPLAdsorptionRhoBulk = 1500
+ThreePNAPLAdsorptionKdNAPL = 0
