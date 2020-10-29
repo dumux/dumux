@@ -105,14 +105,13 @@ public:
     }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law.
+     * \brief  Returns the fluid-matrix interaction law.
      *
      * In this test, we use element-wise distributed material parameters.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
      */
     template<class ElementSolution>
     auto fluidMatrixInteraction(const Element& element,
