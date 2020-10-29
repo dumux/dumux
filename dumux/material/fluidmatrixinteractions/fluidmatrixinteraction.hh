@@ -249,6 +249,32 @@ private:
 template<typename T>
 NonwettingSolidInterfacialAreaPcSw(T&&) -> NonwettingSolidInterfacialAreaPcSw<T>;
 
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Wrapper type for adsorption laws.
+ */
+template<class T>
+class Adsorption
+{
+public:
+    using value_type = T;
+
+    Adsorption(T&& impl) : impl_(std::forward<T>(impl)) {}
+    const T& adsorptionModel() const { return impl_; }
+private:
+    const T impl_;
+};
+
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Deduction guide for the Adsorption class.
+ *        Makes sure that Adsorption stores a copy of T if
+ *        the constructor is called with a temporary object.
+ */
+template<typename T>
+Adsorption(T&&) -> Adsorption<T>;
+
 }  // end namespace Dumux::FluidMatrix
 
 #endif
