@@ -29,6 +29,7 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/smoothedlinearlaw.hh>
+#include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 
 namespace Dumux {
 
@@ -53,6 +54,7 @@ class ObstacleSpatialParams
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using PcKrSwCurve = FluidMatrix::SmoothedLinearLaw<Scalar>;
+    using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
 
 public:
     //! Export the type used for the permeability
@@ -91,7 +93,7 @@ public:
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        return makeFluidMatrixInteraction(pcKrSwCurve_);
+        return makeFluidMatrixInteraction(MPAdapter(pcKrSwCurve_));
     }
 
     /*!
