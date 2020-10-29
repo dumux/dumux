@@ -31,27 +31,27 @@
  *
  * The turbulent kinetic energy balance is:
  * \f[
- *    \frac{\partial \left( k \right)}{\partial t}
- *    + \nabla \cdot \left( \textbf{v} k \right)
- *    - \nabla \cdot \left( \left( \nu + \frac{\nu_\text{t}}{\sigma_\text{k}} \right) \nabla k \right)
- *    - 2 \nu_\text{t} \textbf{S} \cdot \textbf{S}
- *    + \varepsilon
+ *    \frac{\partial \left( \varrho k \right)}{\partial t}
+ *    + \nabla \cdot \left( \textbf{v} \varhho k \right)
+ *    - \nabla \cdot \left( \left( \mu + \frac{\mu_\text{t}}{\sigma_\text{k}} \right) \nabla k \right)
+ *    - 2 \mu_\text{t} \textbf{S} \cdot \textbf{S}
+ *    + \varrho \varepsilon
  *    = 0
  * \f].
  *
  * The dissipation balance is:
  * \f[
- *   \frac{\partial \left( \varepsilon \right)}{\partial t}
- *   + \nabla \cdot \left( \textbf{v} \varepsilon \right)
- *   - \nabla \cdot \left( \left( \nu + \frac{\nu_\text{t}}{\sigma_{\varepsilon}} \right) \nabla \varepsilon \right)
- *   - C_{1\varepsilon} \frac{\varepsilon}{k} 2 \nu_\text{t} \textbf{S} \cdot \textbf{S}
- *   + C_{2\varepsilon} \frac{\varepsilon^2}{k}
+ *   \frac{\partial \left( \varrho \varepsilon \right)}{\partial t}
+ *   + \nabla \cdot \left( \textbf{v} \varrho \varepsilon \right)
+ *   - \nabla \cdot \left( \left( \mu + \frac{\mu_\text{t}}{\sigma_{\varepsilon}} \right) \nabla \varepsilon \right)
+ *   - C_{1\varepsilon} \frac{\varepsilon}{k} 2 \mu_\text{t} \textbf{S} \cdot \textbf{S}
+ *   + C_{2\varepsilon} \varrho \frac{\varepsilon^2}{k}
  *   = 0
  * \f].
  *
- * The kinematic eddy viscosity \f$ \nu_\text{t} \f$ is:
+ * The dynamic eddy viscosity \f$ \mu_\text{t} \f$ is:
  * \f[
- * \nu_\text{t} = C_\mu \frac{k^2}{\tilde{\varepsilon}}
+ * \mu_\text{t} = \varrho C_\mu \frac{k^2}{\tilde{\varepsilon}}
  * \f].
  *
  * Finally, the model is closed with the following constants:

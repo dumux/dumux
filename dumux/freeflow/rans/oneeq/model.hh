@@ -36,12 +36,12 @@
  * term which account for the transition or trip, is dropped from the original equations,
  * such that the balance equation simplifies to:
  * \f[
- *   \frac{\partial \tilde{\nu}}{\partial t}
- *   + \nabla \cdot \left( \tilde{\nu} \textbf{v} \right)
- *   - c_\text{b1} \tilde{S} \tilde{\nu}
- *   - \frac{1}{\sigma_{\tilde{\nu}}} \nabla \cdot \left( \left[ \nu + \tilde{\nu} \right] \nabla \tilde{\nu} \right)
- *   - \frac{c_\text{b2}}{\sigma_{\tilde{\nu}}} \left| \nabla \tilde{\nu} \right|^2
- *   + c_\text{w1} f_\text{w} \frac{\tilde{\nu}^2}{y^2}
+ *   \frac{\partial \tilde{\nu}\varrho}{\partial t}
+ *   + \nabla \cdot \left( \tilde{\nu} \varrho \textbf{v} \right)
+ *   - c_\text{b1} \tilde{S} \tilde{\nu} \varrho
+ *   - \frac{1}{\sigma_{\tilde{\nu}}} \nabla \cdot \left( \left[ \mu + \tilde{\nu} \varrho \right] \nabla \tilde{\nu} \right)
+ *   - \frac{c_\text{b2}}{\sigma_{\tilde{\nu}}} \varrho \left| \nabla \tilde{\nu} \right|^2
+ *   + c_\text{w1} f_\text{w} \varrho \frac{\tilde{\nu}^2}{y^2}
  *   = 0
  * \f]
  *
