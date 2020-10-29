@@ -29,6 +29,8 @@
 #include <dune/common/exceptions.hh>
 #include "efftoabslawparams.hh"
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 namespace Dumux {
 
 /*!

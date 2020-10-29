@@ -28,6 +28,8 @@
 #ifndef PARKERVANGEN_PARAMS_3P_HH
 #define PARKERVANGEN_PARAMS_3P_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include <dune/common/fvector.hh>
 #include <iostream>
 
