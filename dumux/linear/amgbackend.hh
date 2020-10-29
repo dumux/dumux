@@ -60,8 +60,6 @@ public:
     {
         if (isParallel_)
             DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
-
-        reset();
     }
 
     /*!
@@ -76,11 +74,13 @@ public:
                        const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
 #if HAVE_MPI
-    , phelper_(std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper))
     , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
 #endif
     {
-        reset();
+#if HAVE_MPI
+        if (isParallel_)
+            phelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+#endif
     }
 
     /*!
@@ -98,14 +98,7 @@ public:
 #else
         solveSequential_(A, x, b);
 #endif
-        firstCall_ = false;
         return result_.converged;
-    }
-
-    //! reset the linear solver
-    void reset()
-    {
-        firstCall_ = true;
     }
 
     /*!
@@ -160,9 +153,6 @@ private:
         using Comm = typename ParallelTraits::Comm;
         using LinearOperator = typename ParallelTraits::LinearOperator;
         using ScalarProduct = typename ParallelTraits::ScalarProduct;
-
-        if (firstCall_)
-            phelper_->initGhostsAndOwners();
 
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> linearOperator;
@@ -224,7 +214,6 @@ private:
 #endif
     Dune::InverseOperatorResult result_;
     bool isParallel_ = false;
-    bool firstCall_;
 };
 
 } // end namespace Dumux

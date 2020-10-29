@@ -32,6 +32,7 @@
 #include <dune/grid/common/partitionset.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 
 namespace Dumux {
 
@@ -79,42 +80,6 @@ class ParallelISTLHelper
     private:
         const DofMapper& mapper_;
     };
-
-    /*!
-     * \brief GatherScatter implementation that makes a right hand side in the box model consistent.
-     */
-    template<class V>
-    class ConsistencyBoxGatherScatter
-        : public BaseGatherScatter,
-          public Dune::CommDataHandleIF<ConsistencyBoxGatherScatter<V>,typename V::block_type>
-    {
-    public:
-        using DataType = typename V::block_type;
-        using BaseGatherScatter::contains;
-        using BaseGatherScatter::fixedSize;
-        using BaseGatherScatter::size;
-
-        ConsistencyBoxGatherScatter(V& container, const DofMapper& mapper)
-        : BaseGatherScatter(mapper), container_(container)
-        {}
-
-        template<class MessageBuffer, class EntityType>
-        void gather(MessageBuffer& buff, const EntityType& e) const
-        {
-            buff.write(container_[this->index(e)]);
-        }
-
-        template<class MessageBuffer, class EntityType>
-        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
-        {
-            typename V::block_type block;
-            buff.read(block);
-            container_[this->index(e)] += block;
-        }
-    private:
-        V& container_;
-    };
-
 
     /*!
      * \brief Writes ghostMarker_ to each data item (of the container) that is gathered or scattered
@@ -312,48 +277,13 @@ class ParallelISTLHelper
 public:
 
     ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper)
-        : gridView_(gridView), mapper_(mapper), initialized_(false)
-    {}
-
-    // \brief Initializes the markers for ghosts and owners with the correct size and values.
-    //
-    void initGhostsAndOwners()
+    : gridView_(gridView), mapper_(mapper)
     {
-        const auto rank = gridView_.comm().rank();
-        isOwned_.resize(mapper_.size(), rank);
-        // find out about ghosts
-        GhostGatherScatter ggs(isOwned_, mapper_);
-
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(ggs, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
-
-        isGhost_ = isOwned_;
-
-        // partition interior/border
-        InteriorBorderGatherScatter dh(isOwned_, mapper_);
-
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(dh, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
-
-        // convert vector into mask vector
-        for (auto& v : isOwned_)
-            v = (v == rank) ? 1 : 0;
-
-        initialized_ = true;
+        initGhostsAndOwners_();
     }
 
     bool isGhost(std::size_t i) const
     { return isGhost_[i] == ghostMarker_; }
-
-    // \brief Make a vector of the box model consistent.
-    template<class B, class A>
-    void makeNonOverlappingConsistent(Dune::BlockVector<B,A>& v)
-    {
-        ConsistencyBoxGatherScatter<Dune::BlockVector<B,A> > gs(v, mapper_);
-        if (gridView_.comm().size() > 1)
-            gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface,
-                                  Dune::ForwardCommunication);
-    }
 
     /*!
      * \brief Creates a parallel index set
@@ -362,16 +292,8 @@ public:
      * communicators.
      */
     template<class Comm>
-    void createParallelIndexSet(Comm& comm)
+    void createParallelIndexSet(Comm& comm) const
     {
-        if (!initialized_)
-        {
-            // This is the first time this function is called.
-            // Therefore we need to initialize the marker vectors for ghosts and
-            // owned dofs
-            initGhostsAndOwners();
-        }
-
         if (gridView_.comm().size() <= 1)
         {
             comm.remoteIndices().template rebuild<false>();
@@ -433,6 +355,29 @@ public:
     { return gridView_; }
 
 private:
+    void initGhostsAndOwners_()
+    {
+        const auto rank = gridView_.comm().rank();
+        isOwned_.assign(mapper_.size(), rank);
+        // find out about ghosts
+        GhostGatherScatter ggs(isOwned_, mapper_);
+
+        if (gridView_.comm().size() > 1)
+            gridView_.communicate(ggs, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+
+        isGhost_ = isOwned_;
+
+        // partition interior/border
+        InteriorBorderGatherScatter dh(isOwned_, mapper_);
+
+        if (gridView_.comm().size() > 1)
+            gridView_.communicate(dh, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+
+        // convert vector into mask vector
+        for (auto& v : isOwned_)
+            v = (v == rank) ? 1 : 0;
+    }
+
     template<class Comm, class GlobalIndices>
     void resizeIndexSet_(Comm& comm, const GlobalIndices& globalIndices) const
     {
@@ -469,9 +414,31 @@ private:
     const DofMapper& mapper_; //!< the dof mapper
     std::vector<std::size_t> isOwned_; //!< vector to identify unique decomposition
     std::vector<std::size_t> isGhost_; //!< vector to identify ghost dofs
-    bool initialized_; //!< whether isGhost and owner arrays are initialized
 
 }; // class ParallelISTLHelper
+
+template<class GridView, class DofMapper, int dofCodim>
+class ParallelVectorHelper
+{
+public:
+    ParallelVectorHelper(const GridView& gridView, const DofMapper& mapper)
+    : gridView_(gridView), mapper_(mapper)
+    {}
+
+    // \brief Make a vector of the box model consistent.
+    template<class Block, class Alloc>
+    void makeNonOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
+    {
+        VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
+        if (gridView_.comm().size() > 1)
+            gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface,
+                                  Dune::ForwardCommunication);
+    }
+
+private:
+    const GridView gridView_; //!< the grid view
+    const DofMapper& mapper_; //!< the dof mapper
+};
 
 /*!
  * \ingroup Linear
@@ -773,18 +740,14 @@ private:
     std::map<IdType, int> idToIndex_;
     std::map<int, IdType> indexToID_;
 
-}; // class EntityExchanger
+};
 
 /*!
  * \brief Prepare linear algebra variables for parallel solvers
  */
 template<class LinearSolverTraits, class ParallelTraits,
          class Matrix, class Vector, class ParallelHelper>
-void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
-                                  std::shared_ptr<typename ParallelTraits::Comm>& comm,
-                                  std::shared_ptr<typename ParallelTraits::LinearOperator>& fop,
-                                  std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
-                                  ParallelHelper& pHelper)
+void prepareLinearAlgebraParallel(Matrix& A, Vector& b, ParallelHelper& pHelper)
 {
     if constexpr (ParallelTraits::isNonOverlapping)
     {
@@ -797,24 +760,30 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
         matrixHelper.extendMatrix(A, [&pHelper](auto idx){ return pHelper.isGhost(idx); });
         matrixHelper.sumEntries(A);
 
-        pHelper.makeNonOverlappingConsistent(b);
+        ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(pHelper.gridView(), pHelper.dofMapper());
+        vectorHelper.makeNonOverlappingConsistent(b);
+    }
+}
 
-        // create commicator, operator, scalar product
-        const auto category = Dune::SolverCategory::nonoverlapping;
-        comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
-        pHelper.createParallelIndexSet(*comm);
-        fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
-        sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
-    }
-    else
-    {
-        // create commicator, operator, scalar product
-        const auto category = Dune::SolverCategory::overlapping;
-        comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
-        pHelper.createParallelIndexSet(*comm);
-        fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
-        sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
-    }
+/*!
+ * \brief Prepare linear algebra variables for parallel solvers
+ */
+template<class LinearSolverTraits, class ParallelTraits,
+         class Matrix, class Vector, class ParallelHelper>
+void prepareLinearAlgebraParallel(Matrix& A, Vector& b,
+                                  std::shared_ptr<typename ParallelTraits::Comm>& comm,
+                                  std::shared_ptr<typename ParallelTraits::LinearOperator>& fop,
+                                  std::shared_ptr<typename ParallelTraits::ScalarProduct>& sp,
+                                  ParallelHelper& pHelper)
+{
+    prepareLinearAlgebraParallel<LinearSolverTraits, ParallelTraits>(A, b, pHelper);
+    const auto category = ParallelTraits::isNonOverlapping ?
+        Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
+
+    comm = std::make_shared<typename ParallelTraits::Comm>(pHelper.gridView().comm(), category);
+    pHelper.createParallelIndexSet(*comm);
+    fop = std::make_shared<typename ParallelTraits::LinearOperator>(A, *comm);
+    sp = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
 }
 
 } // end namespace Dumux
