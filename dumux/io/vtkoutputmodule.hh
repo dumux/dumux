@@ -43,6 +43,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/io/format.hh>
 #include <dumux/discretization/method.hh>
 
 #include "vtkfunction.hh"
@@ -86,7 +87,7 @@ public:
         writer_ = std::make_shared<Dune::VTKWriter<GridView>>(gridGeometry.gridView(), dm, coordPrecision);
         sequenceWriter_ = std::make_unique<Dune::VTKSequenceWriter<GridView>>(writer_, name);
     }
-    
+
     virtual ~VtkOutputModuleBase() = default;
 
     //! the parameter group for getting parameter from the parameter tree
@@ -182,9 +183,7 @@ public:
         //! output
         timer.stop();
         if (verbose_)
-        {
-            std::cout << "Writing output for problem \"" << name_ << "\". Took " << timer.elapsed() << " seconds." << std::endl;
-        }
+            std::cout << Fmt::format("Writing output for problem \"{}\". Took {:.4g} seconds.\n", name_, timer.elapsed());
     }
 
 protected:
