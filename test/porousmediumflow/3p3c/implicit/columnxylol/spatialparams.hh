@@ -26,9 +26,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/parkervangenuchten.hh>
 
 namespace Dumux {
 
@@ -50,15 +48,16 @@ class ColumnSpatialParams
                                        ColumnSpatialParams<GridGeometry, Scalar>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
-    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
+
+    using ThreePhasePcKrSw = FluidMatrix::ParkerVanGenuchten3PDefault<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
     ColumnSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurveFine_("SpatialParams.Fine")
+    , pcKrSwCurveCoarse_("SpatialParams.Coarse")
     {
         // intrinsic permeabilities
         fineK_ = 1.4e-11;
@@ -70,29 +69,6 @@ public:
         // specific heat capacities
         fineHeatCap_ = getParam<Scalar>("Component.SolidHeatCapacityFine", 850.0);
         coarseHeatCap_ = getParam<Scalar>("Component.SolidHeatCapacityCoarse", 84000.0);
-
-        // residual saturations
-        fineMaterialParams_.setSwr(0.12);
-        fineMaterialParams_.setSnr(0.10);
-        fineMaterialParams_.setSgr(0.01);
-        coarseMaterialParams_.setSwr(0.12);
-        coarseMaterialParams_.setSnr(0.10);
-        coarseMaterialParams_.setSgr(0.01);
-
-        // parameters for the 3phase van Genuchten law
-        fineMaterialParams_.setVgAlpha(0.0005);
-        coarseMaterialParams_.setVgAlpha(0.5);
-        fineMaterialParams_.setVgn(4.0);
-        coarseMaterialParams_.setVgn(4.0);
-
-        coarseMaterialParams_.setKrRegardsSnr(true);
-        fineMaterialParams_.setKrRegardsSnr(true);
-
-        // parameters for adsorption
-        coarseMaterialParams_.setKdNAPL(0.);
-        coarseMaterialParams_.setRhoBulk(1500.);
-        fineMaterialParams_.setKdNAPL(0.);
-        fineMaterialParams_.setRhoBulk(1500.);
     }
 
     /*!
@@ -116,32 +92,31 @@ public:
     }
 
     /*! \brief Defines the porosity in [-].
-   *
-   * \param globalPos The global position where we evaluate
-   */
+    *
+    * \param globalPos The global position where we evaluate
+    */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return porosity_;
     }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
+     * \brief Returns the fluid-matrix interaction law.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
      */
-    template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+     template<class ElementSolution>
+     auto fluidMatrixInteraction(const Element& element,
+                                 const SubControlVolume& scv,
+                                 const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
+            return makeFluidMatrixInteraction(pcKrSwCurveFine_);
         else
-            return coarseMaterialParams_;
+            return makeFluidMatrixInteraction(pcKrSwCurveCoarse_);
     }
 
     /*!
@@ -180,8 +155,8 @@ private:
     Scalar fineHeatCap_;
     Scalar coarseHeatCap_;
 
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    const ThreePhasePcKrSw pcKrSwCurveFine_;
+    const ThreePhasePcKrSw pcKrSwCurveCoarse_;
 
     static constexpr Scalar eps_ = 1e-6;
 };
