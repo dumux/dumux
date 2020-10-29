@@ -29,6 +29,7 @@
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/common/exceptions.hh>
+#include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 
 namespace Dumux {
 
@@ -117,15 +118,15 @@ public:
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
      * \param globalMolarities
-     * \param matParams The material law object
+     * \param material The material law object
      *
      * The phase's fugacities must already be set.
      */
     template <class MaterialLaw, class FluidState>
-    void solve(FluidState &fluidState,
-               ParameterCache &paramCache,
-               const typename MaterialLaw::Params &matParams,
-               const ComponentVector &globalMolarities)
+    void solve(FluidState& fluidState,
+               ParameterCache& paramCache,
+               const MaterialLaw& material,
+               const ComponentVector& globalMolarities)
     {
         /////////////////////////
         // Check if all fluid phases are incompressible
@@ -164,12 +165,12 @@ public:
         // right hand side
         Vector b;
 
-        completeFluidState_<MaterialLaw>(fluidState, paramCache, matParams);
+        completeFluidState_(fluidState, paramCache, material);
 
         const int nMax = 50; // <- maximum number of newton iterations
         for (int nIdx = 0; nIdx < nMax; ++nIdx) {
             // calculate Jacobian matrix and right hand side
-            linearize_<MaterialLaw>(J, b, fluidState, paramCache, matParams, globalMolarities);
+            linearize_(J, b, fluidState, paramCache, material, globalMolarities);
 
             // Solve J*x = b
             deltaX = 0;
@@ -207,7 +208,7 @@ public:
             */
 
             // update the fluid quantities.
-            Scalar relError = update_<MaterialLaw>(fluidState, paramCache, matParams, deltaX);
+            Scalar relError = update_(fluidState, paramCache, material, deltaX);
 
             if (relError < 1e-9)
                 return;
@@ -263,7 +264,7 @@ protected:
                     Vector &b,
                     FluidState &fluidState,
                     ParameterCache &paramCache,
-                    const typename MaterialLaw::Params &matParams,
+                    const MaterialLaw& material,
                     const ComponentVector &globalMolarities)
     {
         FluidState origFluidState(fluidState);
@@ -287,7 +288,7 @@ protected:
             // deviate the mole fraction of the i-th component
             Scalar x_i = getQuantity_(fluidState, pvIdx);
             const Scalar eps = 1e-10/quantityWeight_(fluidState, pvIdx);
-            setQuantity_<MaterialLaw>(fluidState, paramCache, matParams, pvIdx, x_i + eps);
+            setQuantity_<MaterialLaw>(fluidState, paramCache, material, pvIdx, x_i + eps);
 
             // compute derivative of the defect
             calculateDefect_(tmp, origFluidState, fluidState, globalMolarities);
@@ -325,7 +326,7 @@ protected:
     template <class MaterialLaw, class FluidState>
     Scalar update_(FluidState &fluidState,
                    ParameterCache &paramCache,
-                   const typename MaterialLaw::Params &matParams,
+                   const MaterialLaw& material,
                    const Vector &deltaX)
     {
         Scalar relError = 0;
@@ -351,7 +352,7 @@ protected:
             setQuantityRaw_(fluidState, pvIdx, tmp - delta);
         }
 
-        completeFluidState_<MaterialLaw>(fluidState, paramCache, matParams);
+        completeFluidState_<MaterialLaw>(fluidState, paramCache, material);
 
         return relError;
     }
@@ -359,7 +360,7 @@ protected:
     template <class MaterialLaw, class FluidState>
     void completeFluidState_(FluidState &fluidState,
                              ParameterCache &paramCache,
-                             const typename MaterialLaw::Params &matParams)
+                             const MaterialLaw& material)
     {
         // calculate the saturation of the last phase as a function of
         // the other saturations
@@ -384,8 +385,7 @@ protected:
         // update the pressures using the material law (saturations
         // and first pressure are already set because it is implicitly
         // solved for.)
-        ComponentVector pc;
-        MaterialLaw::capillaryPressures(pc, matParams, fluidState, wettingPhaseIdx_);
+        const auto pc = material.capillaryPressures(fluidState, wettingPhaseIdx_);
         for (int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx)
             fluidState.setPressure(phaseIdx,
                                    fluidState.pressure(0)
@@ -432,7 +432,7 @@ protected:
     template <class MaterialLaw, class FluidState>
     void setQuantity_(FluidState &fs,
                       ParameterCache &paramCache,
-                      const typename MaterialLaw::Params &matParams,
+                      const MaterialLaw& material,
                       int pvIdx,
                       Scalar value)
     {
@@ -470,8 +470,7 @@ protected:
 
             // update all fluid pressures using the capillary pressure
             // law
-            ComponentVector pc;
-            MaterialLaw::capillaryPressures(pc, matParams, fs, wettingPhaseIdx_);
+            const auto pc = material.capillaryPressures(fs, wettingPhaseIdx_);
             for (int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx)
                 fs.setPressure(phaseIdx,
                                fs.pressure(0)
