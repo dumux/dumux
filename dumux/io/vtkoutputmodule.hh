@@ -184,8 +184,7 @@ public:
         if (verbose_)
         {
             std::ostream osTime(std::cout.rdbuf());
-            osTime << std::fixed << std::scientific;
-            osTime.precision(2);
+            osTime << std::fixed << std::scientific << std::setprecision(2);
 
             osTime << "Writing output for problem \"" << name_ << "\". Took " << timer.elapsed() << " seconds." << std::endl;
         }

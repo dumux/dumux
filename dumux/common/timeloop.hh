@@ -350,21 +350,18 @@ public:
         if (verbose_)
         {
             std::ostream osPercent(std::cout.rdbuf());
-            osPercent << std::fixed;
-            osPercent.precision(0);
+            osPercent << std::fixed << std::setprecision(0);
 
             std::ostream osTime(std::cout.rdbuf());
-            osTime << std::fixed << std::scientific;
-            osTime.precision(2);
+            osTime << std::fixed << std::scientific  << std::setprecision(2);
 
             std::ostream osTimeTotal(std::cout.rdbuf());
-            osTimeTotal << std::fixed << std::scientific;
-            osTimeTotal.precision(5);
+            osTimeTotal << std::fixed << std::scientific << std::setprecision(5);
 
             const auto cpuTime = wallClockTime();
             const auto percent = std::round( time_ / endTime_ * 100 );
             osPercent   << "["  << percent << "%] ";
-            osTime      <<"Time step " << timeStepIdx_ << " done in "
+            osTime      << "Time step " << timeStepIdx_ << " done in "
                         << timeStepWallClockTime_ << " seconds. "
                         << "Wall clock time: " << cpuTime;
             osTimeTotal << ", time: " << time_;

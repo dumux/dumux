@@ -986,19 +986,11 @@ private:
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
 
                 std::ostream osTime(std::cout.rdbuf());
-                osTime << std::fixed << std::scientific;
-                osTime.precision(2);
+                osTime << std::fixed << std::scientific << std::setprecision(2);
 
                 std::ostream osPercentage(std::cout.rdbuf());
-                osPercentage << std::fixed;
-                osPercentage.precision(2);
-//                 tmp << assembleTimer.elapsed() << std::endl;
+                osPercentage << std::fixed << std::setprecision(2);
 
-//                 std::cout << "Assemble/solve/update time: "
-//                           <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-//                           <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-//                           <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-//                           << "\n";
                 osTime << "Assemble/solve/update time: " <<  assembleTimer.elapsed() << "(";
                 osPercentage << 100*assembleTimer.elapsed()/elapsedTot << "%)/";
                 osTime <<  solveTimer.elapsed() << "(";
