@@ -28,11 +28,7 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 
-#include <dumux/porousmediumflow/3pwateroil/indices.hh>
-
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/parkervangenuchten.hh>
 
 namespace Dumux {
 
@@ -57,15 +53,15 @@ class SagdSpatialParams
     using ParentType = FVSpatialParams<GridGeometry, Scalar,
                                        SagdSpatialParams<GridGeometry, Scalar>>;
 
-    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
+    using ThreePhasePcKrSw = FluidMatrix::ParkerVanGenuchten3PDefault<Scalar>;
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
     SagdSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry), eps_(1e-6)
+    : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
+    , eps_(1e-6)
     {
         layerBottom_ = 35.0;
 
@@ -76,23 +72,6 @@ public:
         // porosities
         finePorosity_ = 0.10;
         coarsePorosity_ = 0.1;
-
-        // residual saturations
-        fineMaterialParams_.setSwr(0.1);
-        fineMaterialParams_.setSnr(0.09);   //Residual of NAPL if there is no water
-        fineMaterialParams_.setSgr(0.01);
-        coarseMaterialParams_.setSwr(0.1);
-        coarseMaterialParams_.setSnr(0.09);
-        coarseMaterialParams_.setSgr(0.01);
-
-        // parameters for the 3phase van Genuchten law
-        fineMaterialParams_.setVgn(4.0);
-        coarseMaterialParams_.setVgn(4.0);
-        fineMaterialParams_.setVgAlpha(1.);
-        coarseMaterialParams_.setVgAlpha(1.);
-
-        coarseMaterialParams_.setKrRegardsSnr(false);
-        fineMaterialParams_.setKrRegardsSnr(false);
     }
 
     /*!
@@ -136,41 +115,19 @@ public:
     }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return The material parameters object
+     * \param globalPos The global coordinates for the given location
      */
-    template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        return materialLawParamsAtPos(scv.dofPosition());
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
-
-    /*!
-     * \brief Returns the parameter object for the capillary-pressure/
-     *        saturation material law
-     *
-     * \param globalPos The global position
-     */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    {
-        if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        else
-            return coarseMaterialParams_;
-    }
-
 
 private:
-    bool isFineMaterial_(const GlobalPosition &pos) const
-    {
-        return pos[dimWorld-1] > layerBottom_ - eps_;
-    };
+
+    bool isFineMaterial_(const GlobalPosition& pos) const
+    { return pos[dimWorld-1] > layerBottom_ - eps_; }
 
     Scalar layerBottom_;
 
@@ -180,8 +137,7 @@ private:
     Scalar finePorosity_;
     Scalar coarsePorosity_;
 
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    const ThreePhasePcKrSw pcKrSwCurve_;
 
     Scalar eps_;
 };
