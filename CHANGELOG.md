@@ -17,6 +17,7 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
   The function are documented on [cppreference](https://en.cppreference.com/w/cpp/utility/format).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
+- __Flash/Constraintsolver__: The flashes depending on material laws are immediately required to use new-style material laws (fluidMatrixInteraction interface in spatialparams)
 
 - For the "sequential" models, the property `BoundaryTypes` has been simply renamed to `SequentialBoundaryTypes`
 - __Quadmath__: Dumux::Quad has been removed without deprecation. Use Dune::Float128 instead.
