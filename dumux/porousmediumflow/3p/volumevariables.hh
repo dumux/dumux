@@ -31,6 +31,8 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -89,21 +91,21 @@ public:
                 const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-
-        // capillary pressure parameters
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
+        const auto sw = fluidState_.saturation(wPhaseIdx);
+        const auto sn = fluidState_.saturation(nPhaseIdx);
 
          // mobilities
         for (int phaseIdx = 0; phaseIdx < ParentType::numFluidPhases(); ++phaseIdx)
         {
-            mobility_[phaseIdx] = MaterialLaw::kr(materialParams, phaseIdx,
-                                 fluidState_.saturation(wPhaseIdx),
-                                 fluidState_.saturation(nPhaseIdx),
-                                 fluidState_.saturation(gPhaseIdx))
-                                 / fluidState_.viscosity(phaseIdx);
+            mobility_[phaseIdx] = fluidMatrixInteraction.kr(phaseIdx, sw, sn)
+                                  / fluidState_.viscosity(phaseIdx);
         }
 
         // porosity
@@ -136,8 +138,12 @@ public:
     {
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = elemSol[scv.localDofIndex()];
+
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
 
         const Scalar sw = priVars[swIdx];
         const Scalar sn = priVars[snIdx];
@@ -151,12 +157,11 @@ public:
         const Scalar pg = priVars[pressureIdx];
 
         // calculate capillary pressures
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const Scalar pcgw = MaterialLaw::pcgw(materialParams, sw);
-        const Scalar pcnw = MaterialLaw::pcnw(materialParams, sw);
-        const Scalar pcgn = MaterialLaw::pcgn(materialParams, sw + sn);
+        const Scalar pcgw = fluidMatrixInteraction.pcgw(sw, sn);
+        const Scalar pcnw = fluidMatrixInteraction.pcnw(sw, sn);
+        const Scalar pcgn = fluidMatrixInteraction.pcgn(sw, sn);
 
-        const Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, sn);
+        const Scalar pcAlpha = fluidMatrixInteraction.pcAlpha(sw, sn);
         const Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
 
         const Scalar pn = pg- pcAlpha * pcgn - (1.0 - pcAlpha)*(pcgw - pcNW1);
