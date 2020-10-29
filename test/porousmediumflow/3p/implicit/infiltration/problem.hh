@@ -291,35 +291,36 @@ private:
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-        Scalar y = globalPos[1];
-        Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        const Scalar x = globalPos[0];
         Scalar sw, swr=0.12, sgr=0.03;
 
-        if(y > (-1.E-3*x+5) - eps_)
+        if (y > (-1e-3*x + 5) - eps_)
         {
-            Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
+            Scalar pc = 9.81 * 1000.0 * (y - (-5e-4*x + 5));
             if (pc < 0.0) pc = 0.0;
 
             sw = invertPcgw_(pc,
-                             this->spatialParams().materialLawParamsAtPos(globalPos));
+                             this->spatialParams().fluidMatrixInteractionAtPos(globalPos));
             if (sw < swr) sw = swr;
             if (sw > 1.-sgr) sw = 1.-sgr;
 
             values[pressureIdx] = 1e5 ;
             values[swIdx] = sw;
             values[snIdx] = 0.;
-        }else {
-            values[pressureIdx] = 1e5 + 9.81 * 1000.0 * ((-5E-4*x+5) - y);
+        }
+        else
+        {
+            values[pressureIdx] = 1e5 + 9.81 * 1000.0 * ((-5e-4*x + 5) - y);
             values[swIdx] = 1.-sgr;
             values[snIdx] = 0.;
         }
     }
 
     // small solver inverting the pc curve
-    template<class MaterialLawParams>
-    static Scalar invertPcgw_(Scalar pcIn, const MaterialLawParams &pcParams)
+    template<class FMInteraction>
+    static Scalar invertPcgw_(Scalar pcIn, const FMInteraction& fluidMatrixInteraction)
     {
-        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         Scalar lower,upper;
         int k;
         int maxIt = 50;
@@ -329,7 +330,7 @@ private:
         for (k=1; k<=25; k++)
         {
             sw = 0.5*(upper+lower);
-            pcgw = MaterialLaw::pcgw(pcParams, sw);
+            pcgw = fluidMatrixInteraction.pcgw(sw, 0.0);
             Scalar delta = pcgw-pcIn;
             if (delta<0.) delta*=-1.;
             if (delta<bisLimit)
