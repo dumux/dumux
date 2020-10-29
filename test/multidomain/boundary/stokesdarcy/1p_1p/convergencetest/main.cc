@@ -196,9 +196,9 @@ int main(int argc, char** argv)
     auto couplingManager = std::make_shared<CouplingManager>(freeFlowGridGeometry, darcyGridGeometry);
 
     // the indices
-    constexpr auto freeFlowCellCenterIdx = CouplingManager::stokesCellCenterIdx;
-    constexpr auto freeFlowFaceIdx = CouplingManager::stokesFaceIdx;
-    constexpr auto darcyIdx = CouplingManager::darcyIdx;
+    constexpr auto freeFlowCellCenterIdx = CouplingManager::freeFlowCellCenterIdx;
+    constexpr auto freeFlowFaceIdx = CouplingManager::freeFlowFaceIdx;
+    constexpr auto porousMediumIdx = CouplingManager::porousMediumIdx;
 
     // the problem (initial and boundary conditions)
     const auto testCaseName = getParam<std::string>("Problem.TestCase");
@@ -226,7 +226,7 @@ int main(int argc, char** argv)
     Traits::SolutionVector sol;
     sol[freeFlowCellCenterIdx].resize(freeFlowGridGeometry->numCellCenterDofs());
     sol[freeFlowFaceIdx].resize(freeFlowGridGeometry->numFaceDofs());
-    sol[darcyIdx].resize(darcyGridGeometry->numDofs());
+    sol[porousMediumIdx].resize(darcyGridGeometry->numDofs());
 
     // get a solution vector storing references to the two FreeFlow solution vectors
     auto freeFlowSol = partial(sol, freeFlowFaceIdx, freeFlowCellCenterIdx);
@@ -239,7 +239,7 @@ int main(int argc, char** argv)
     freeFlowGridVariables->init(freeFlowSol);
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyGridGeometry);
-    darcyGridVariables->init(sol[darcyIdx]);
+    darcyGridVariables->init(sol[porousMediumIdx]);
 
     // intialize the vtk output module
     using Scalar = typename Traits::Scalar;
@@ -253,7 +253,7 @@ int main(int argc, char** argv)
 
     freeFlowVtkWriter.write(0.0);
 
-    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx],  darcyProblem->name());
+    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[porousMediumIdx],  darcyProblem->name());
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
@@ -288,8 +288,8 @@ int main(int argc, char** argv)
     freeFlowVtkWriter.write(1.0);
     darcyVtkWriter.write(1.0);
 
-    printFreeFlowL2Error(freeFlowProblem, freeFlowSol);
-    printDarcyL2Error(*darcyProblem, sol[darcyIdx]);
+    printFreeFlowL2Error(*freeFlowProblem, freeFlowSol);
+    printDarcyL2Error(*darcyProblem, sol[porousMediumIdx]);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

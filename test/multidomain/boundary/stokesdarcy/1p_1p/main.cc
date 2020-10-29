@@ -94,9 +94,9 @@ int main(int argc, char** argv)
     auto couplingManager = std::make_shared<CouplingManager>(stokesFvGridGeometry, darcyFvGridGeometry);
 
     // the indices
-    constexpr auto stokesCellCenterIdx = CouplingManager::freeFlowCellCenterIdx;
-    constexpr auto stokesFaceIdx = CouplingManager::freeFlowFaceIdx;
-    constexpr auto darcyIdx = CouplingManager::porousMediumIdx;
+    constexpr auto freeFlowCellCenterIdx = CouplingManager::freeFlowCellCenterIdx;
+    constexpr auto freeFlowFaceIdx = CouplingManager::freeFlowFaceIdx;
+    constexpr auto porousMediumIdx = CouplingManager::porousMediumIdx;
 
     // the problem (initial and boundary conditions)
     using StokesProblem = GetPropType<StokesTypeTag, Properties::Problem>;
@@ -106,12 +106,12 @@ int main(int argc, char** argv)
 
     // the solution vector
     Traits::SolutionVector sol;
-    sol[stokesCellCenterIdx].resize(stokesFvGridGeometry->numCellCenterDofs());
-    sol[stokesFaceIdx].resize(stokesFvGridGeometry->numFaceDofs());
-    sol[darcyIdx].resize(darcyFvGridGeometry->numDofs());
+    sol[freeFlowCellCenterIdx].resize(stokesFvGridGeometry->numCellCenterDofs());
+    sol[freeFlowFaceIdx].resize(stokesFvGridGeometry->numFaceDofs());
+    sol[porousMediumIdx].resize(darcyFvGridGeometry->numDofs());
 
     // get a solution vector storing references to the two Stokes solution vectors
-    auto stokesSol = partial(sol, stokesFaceIdx, stokesCellCenterIdx);
+    auto stokesSol = partial(sol, freeFlowFaceIdx, freeFlowCellCenterIdx);
 
     couplingManager->init(stokesProblem, darcyProblem, sol);
 
@@ -121,14 +121,14 @@ int main(int argc, char** argv)
     stokesGridVariables->init(stokesSol);
     using DarcyGridVariables = GetPropType<DarcyTypeTag, Properties::GridVariables>;
     auto darcyGridVariables = std::make_shared<DarcyGridVariables>(darcyProblem, darcyFvGridGeometry);
-    darcyGridVariables->init(sol[darcyIdx]);
+    darcyGridVariables->init(sol[porousMediumIdx]);
 
     // intialize the vtk output module
     StaggeredVtkOutputModule<StokesGridVariables, decltype(stokesSol)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesProblem->name());
     GetPropType<StokesTypeTag, Properties::IOFields>::initOutputModule(stokesVtkWriter);
     stokesVtkWriter.write(0.0);
 
-    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx],  darcyProblem->name());
+    VtkOutputModule<DarcyGridVariables, GetPropType<DarcyTypeTag, Properties::SolutionVector>> darcyVtkWriter(*darcyGridVariables, sol[porousMediumIdx],  darcyProblem->name());
     using DarcyVelocityOutput = GetPropType<DarcyTypeTag, Properties::VelocityOutput>;
     darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);

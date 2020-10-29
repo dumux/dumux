@@ -123,7 +123,7 @@ public:
         if(onLowerBoundary_(scvf.center()))
             values.setAllDirichlet();
 
-        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+        if(couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, scvf))
             values.setAllCouplingNeumann();
 
         return values;
@@ -164,7 +164,7 @@ public:
     {
         NumEqVector values(0.0);
 
-        if(couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
+        if(couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, scvf))
             values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf);
 
         return values;
