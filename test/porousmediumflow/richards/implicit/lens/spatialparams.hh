@@ -89,9 +89,6 @@ public:
     /*!
      * \brief Returns the parameters for the material law for the sub-control volume
      *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
-     *
      * \param element The current finite element
      * \param scv The sub-control volume
      * \param elemSol The current element solution
@@ -107,9 +104,6 @@ public:
 
     /*!
      * \brief Returns the parameters for the material law at a given location
-     *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
      *
      * \param globalPos The global coordinates for the given location
      */
