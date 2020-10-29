@@ -129,7 +129,7 @@ void printDarcyL2Error(const Problem& problem, const SolutionVector& x)
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto dofIdx = scv.dofIndex();
-            const Scalar delta = x[dofIdx] - problem.analyticalSolution(scv.center())[2/*pressureIdx*/];
+            const Scalar delta = x[dofIdx] - problem.analyticalSolution(scv.dofPosition())[2/*pressureIdx*/];
             l2error += scv.volume()*(delta*delta);
         }
     }
@@ -212,6 +212,10 @@ int main(int argc, char** argv)
             return TestCase::Rybak;
         else if (testCaseName == "Schneider")
             return TestCase::Schneider;
+        else if (testCaseName == "BJSymmetrized")
+            return TestCase::BJSymmetrized;
+        else if (testCaseName == "NewICNonSymmetrized")
+            return TestCase::NewICNonSymmetrized;
         else
             DUNE_THROW(Dune::InvalidStateException, testCaseName + " is not a valid test case");
     }();

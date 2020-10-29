@@ -119,6 +119,10 @@ public:
                 return rhsRybak_(globalPos);
             case TestCase::Schneider:
                 return rhsSchneiderEtAl_(globalPos);
+            case TestCase::BJSymmetrized:
+                return rhsBJSymmetrized_(globalPos);
+            case TestCase::NewICNonSymmetrized:
+                return rhsNewICNonSymmetrized_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -212,6 +216,15 @@ public:
     }
 
     /*!
+    * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
+    */
+    auto porousMediumTerm(const Element& element, const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().couplingData().porousMediumVelocity(element, scvf);
+    }
+
+
+    /*!
      * \brief Returns the intrinsic permeability of required as input parameter
               for the Beavers-Joseph-Saffman boundary condition
      */
@@ -227,6 +240,42 @@ public:
     Scalar alphaBJ(const SubControlVolumeFace& scvf) const
     {
         return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().beaversJosephCoeffAtPos(scvf.center());
+    }
+
+    /*!
+     * \brief Returns the scale separation parameter epsilon required as input parameter for the
+              new coupling conditions
+     */
+    Scalar epsInterface(const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().epsInterfaceAtPos(scvf.center());
+    }
+
+    /*!
+     * \brief Returns the boundary layer constant N_1_bl required as input parameter for the
+              new coupling condition for the tangential component
+     */
+    Scalar factorNTangential(const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().factorNTangentialAtPos(scvf.center());
+    }
+
+    /*!
+     * \brief Returns the boundary layer constant N_s_bl required as input parameter for the
+              new coupling condition for the tangential component
+     */
+    Scalar factorNMomentum(const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().factorNMomentumAtPos(scvf.center());
+    }
+
+    /*!
+     * \brief Returns the boundary layer matrix M_bl required as input parameter for the
+              new coupling condition for the tangential component
+     */
+    auto matrixNTangential(const SubControlVolumeFace& scvf) const
+    {
+        return couplingManager().problem(CouplingManager::porousMediumIdx).spatialParams().matrixNTangentialAtPos(scvf.center());
     }
 
     /*!
@@ -247,6 +296,10 @@ public:
                 return analyticalSolutionRybak_(globalPos);
             case TestCase::Schneider:
                 return analyticalSolutionSchneiderEtAl_(globalPos);
+            case TestCase::BJSymmetrized:
+                return analyticalSolutionBJSymmetrized_(globalPos);
+            case TestCase::NewICNonSymmetrized:
+                return analyticalSolutionNewICNonSymmetrized_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -358,6 +411,55 @@ private:
         source[Indices::momentumXBalanceIdx] = -2*omega*y*y*sinOmegaX*cosOmegaX
                                                -2*y*sinOmegaX + omega*cosOmegaX;
         source[Indices::momentumYBalanceIdx] = -omega*y*y*cosOmegaX - omega*omega*y*sinOmegaX;
+        return source;
+    }
+
+    // exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
+    PrimaryVariables analyticalSolutionBJSymmetrized_(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables sol(0.0);
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+
+        using std::sin; using std::cos;
+        sol[Indices::velocityXIdx] = (y-1.0)*(y-1.0) + x*(y-1.0) - x - 7.0 + 2.0*x*x + 2.0*y*y;
+        sol[Indices::velocityYIdx] = (x-1.0)*x - 0.5*(y-1.0)*(y-1.0) - 3.0*y - 3.0 -4.0*y*(x-1.0);
+        sol[Indices::pressureIdx] = -8.0*x + 1.0*y + 7.0 + x*x;
+        return sol;
+    }
+
+    // exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
+    NumEqVector rhsBJSymmetrized_(const GlobalPosition& globalPos) const
+    {
+        const Scalar x = globalPos[0];
+        NumEqVector source(0.0);
+        using std::sin; using std::cos;
+        source[Indices::momentumXBalanceIdx] = 2.0*x - 18.0;
+        source[Indices::momentumYBalanceIdx] = 0.0;
+        return source;
+    }
+
+    // exact solution for new IC with non-symmetrized stress tensor (by Elissa Eggenweiler)
+    PrimaryVariables analyticalSolutionNewICNonSymmetrized_(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables sol(0.0);
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+
+        using std::exp; using std::sin; using std::cos;
+        sol[Indices::velocityXIdx] = (y-1.0)*(y-1.0) + x*(y-1.0) + 3.0*x + 1.5;
+        sol[Indices::velocityYIdx] = 0.5*x*(x-1.0) - 0.5*(y-1.0)*(y-1.0) - 3.0*y + 2.0;
+        sol[Indices::pressureIdx] = 2.0*x + y - 4.0;
+        return sol;
+    }
+
+    // exact solution for new IC with non-symmetrized stress tensor (by Elissa Eggenweiler)
+    NumEqVector rhsNewICNonSymmetrized_(const GlobalPosition& globalPos) const
+    {
+        using std::exp; using std::sin; using std::cos;
+        NumEqVector source(0.0);
+        source[Indices::momentumXBalanceIdx] = -2.0;
+        source[Indices::momentumYBalanceIdx] = 1.0;
         return source;
     }
 

@@ -29,9 +29,9 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/common/numeqvector.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -46,6 +46,39 @@ namespace Dumux {
 template <class TypeTag>
 class DarcySubProblem;
 
+namespace Properties {
+// Create new type tags
+namespace TTag {
+struct DarcyOneP { using InheritsFrom = std::tuple<OneP>; };
+struct DarcyOnePBox { using InheritsFrom = std::tuple<DarcyOneP, BoxModel>; };
+struct DarcyOnePCC { using InheritsFrom = std::tuple<DarcyOneP, CCTpfaModel>; };
+} // end namespace TTag
+
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyOneP> { using type = Dumux::DarcySubProblem<TypeTag>; };
+
+// the fluid system
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::DarcyOneP>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
+};
+
+// Set the grid type
+template<class TypeTag>
+struct Grid<TypeTag, TTag::DarcyOneP> { using type = Dune::YaspGrid<2>; };
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::DarcyOneP>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = ConvergenceTestSpatialParams<GridGeometry, Scalar>;
+};
+} // end namespace Properties
+
 /*!
  * \ingroup BoundaryTests
  * \brief The Darcy sub-problem of coupled Stokes-Darcy convergence test
@@ -57,7 +90,7 @@ class DarcySubProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using NumEqVector = GetPropType<TypeTag, Properties::NumEqVector>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
@@ -134,17 +167,48 @@ public:
         return values;
     }
 
-        /*!
+    /*!
+      * \brief Specifies which kind of boundary condition should be
+      *        used for which equation on a given boundary control volume.
+      *
+      * \param element The element
+      * \param scv The boundary sub control volume
+      */
+    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume &scv) const
+    {
+        BoundaryTypes values;
+
+        values.setAllDirichlet();
+
+        //corners will not be handled as coupled
+        if(onLeftBoundary_(scv.dofPosition()) || onRightBoundary_(scv.dofPosition()))
+        {
+            values.setAllDirichlet();
+            return values;
+        }
+
+        auto fvGeometry = localView(this->gridGeometry());
+        fvGeometry.bindElement(element);
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if (couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, element, scvf))
+            {
+                values.setAllCouplingNeumann();
+            }
+        }
+        return values;
+    }
+
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
-     * \param element The element for which the Dirichlet boundary condition is set
-     * \param scvf The boundary subcontrolvolumeface
+     * \param globalPos The position for which the Dirichlet value is set
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        const auto p = analyticalSolution(scvf.center())[pressureIdx];
+        const auto p = analyticalSolution(globalPos)[pressureIdx];
         return PrimaryVariables(p);
     }
 
@@ -198,6 +262,10 @@ public:
                 return rhsRybak_(globalPos);
             case TestCase::Schneider:
                 return rhsSchneiderEtAl_(globalPos);
+            case TestCase::BJSymmetrized:
+                return rhsBJSymmetrized_(globalPos);
+            case TestCase::NewICNonSymmetrized:
+                return rhsNewICNonSymmetrized_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -235,6 +303,10 @@ public:
                 return analyticalSolutionRybak_(globalPos);
             case TestCase::Schneider:
                 return analyticalSolutionSchneiderEtAl_(globalPos);
+            case TestCase::BJSymmetrized:
+                return analyticalSolutionBJSymmetrized_(globalPos);
+            case TestCase::NewICNonSymmetrized:
+                return analyticalSolutionNewICNonSymmetrized_(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -356,6 +428,54 @@ private:
                                              *sin(omega*x);
         return NumEqVector(result);
     }
+
+    // exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
+    Dune::FieldVector<Scalar, 3> analyticalSolutionBJSymmetrized_(const GlobalPosition& globalPos) const
+    {
+        Dune::FieldVector<Scalar, 3> sol(0.0);
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+
+        using std::exp; using std::sin; using std::cos;
+        sol[velocityXIdx] = 2.0*x*x + 2.0*x*y - 6.0*x - 2.0*y*y + 3.0*y - 5.0;
+        sol[velocityYIdx] = 1.0*x*x + 4.0*x*y - 9.0*x - 1.0*y*y - 1.0;
+        sol[pressureIdx] = -x*(x-1.0)*(y-1.0) + 1.0/3.0*(y-1.0)*(y-1.0)*(y-1.0) + 4.0 + 2.0*y + x*x;
+        return sol;
+    }
+
+    // exact solution for BJ-IC with symmetrized stress tensor (by Elissa Eggenweiler)
+    NumEqVector rhsBJSymmetrized_(const GlobalPosition& globalPos) const
+    {
+        const Scalar x = globalPos[0];
+        using std::sin;
+        return NumEqVector(8.0*x - 6.0);
+    }
+
+
+    // exact solution for new IC with non-symmetrized stress tensor (by Elissa Eggenweiler)
+    Dune::FieldVector<Scalar, 3> analyticalSolutionNewICNonSymmetrized_(const GlobalPosition& globalPos) const
+    {
+        Dune::FieldVector<Scalar, 3> sol(0.0);
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+
+        using std::exp; using std::sin; using std::cos;
+        sol[velocityXIdx] = x*(y-1.0) + (x-1.0)*(y-1.0) - 3.0;
+        sol[velocityYIdx] = x*(x-1.0) - (y-1.0)*(y-1.0) - 2.0;
+        sol[pressureIdx] = x*(1.0-x)*(y-1.0) + 1.0/3.0*(y-1.0)*(y-1.0)*(y-1.0) + 3.0*x + 2.0*y + 1.0;
+        return sol;
+    }
+
+    // exact solution for new IC with non-symmetrized stress tensor (by Elissa Eggenweiler)
+    NumEqVector rhsNewICNonSymmetrized_(const GlobalPosition& globalPos) const
+    {
+        return NumEqVector(0.0);
+    }
+
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;  }
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;  }
 
     static constexpr Scalar eps_ = 1e-7;
     std::shared_ptr<CouplingManager> couplingManager_;
