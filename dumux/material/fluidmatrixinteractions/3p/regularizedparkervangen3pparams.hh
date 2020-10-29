@@ -25,6 +25,8 @@
 #ifndef DUMUX_REGULARIZED_PARKERVANGEN_3P_PARAMS_HH
 #define DUMUX_REGULARIZED_PARKERVANGEN_3P_PARAMS_HH
 
+#warning "This header is deprecated. Removal after 3.3. Use new material laws."
+
 #include "parkervangen3pparams.hh"
 
 namespace Dumux {
