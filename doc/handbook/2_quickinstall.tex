@@ -11,22 +11,22 @@ e.g. GCC 4.9 or newer and Clang 3.8 or newer}), e.g. GCC 7 or newer and Clang 5 
 \end{itemize}
 
 \section{Obtaining code and configuring all modules with a script}
-To easily install Dumux, we've provided a shell-script \texttt{installdumux.sh} that facilitates
+To easily install Dumux, we've provided a python-script \texttt{installdumux.py} that facilitates
 setting up a {\Dune}/{\Dumux} directory tree and configures all modules with CMake.
 First, you will have to download this script. To do this, first navigate to the directory where you
 want to install \Dumux and \Dune (a single root folder \texttt{DUMUX} will be produced, so you do
 not need to provide one). Then use \texttt{wget} to download the script with the following command:
 \begin{lstlisting}[style=Bash]
-$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.2/bin/installdumux.sh
+$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.3/bin/installdumux.py
 \end{lstlisting}
 
 After the download is complete, execute the script. This can be done with
 \begin{lstlisting}[style=Bash]
-$ sh installdumux.sh
+$ python installdumux.py
 \end{lstlisting}
 
 This script will download each of the \Dune-modules that \Dumux depends on at their 2.7 release,
-as well as \Dumux's 3.2 release. After these individual modules are downloaded, \Dune and \Dumux
+as well as \Dumux's 3.3 release. After these individual modules are downloaded, \Dune and \Dumux
 are automatically configured using the command-line script \texttt{dunecontrol}, located in
 \texttt{dune-common/bin/dunecontrol}, optimized using configure options defined in the \texttt{cmake.opts}
 file located in \texttt{dumux/cmake.opts}. The commands beneath the \texttt{\# run dunecontrol} in
@@ -63,7 +63,7 @@ These commands are compiled into \texttt{test\_dumux.sh}, which you can download
 from the same directory from which you ran \texttt{installDumux.sh}.
 
 \begin{lstlisting}[style=Bash]
-$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.2/bin/util/test_dumux.sh
+$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/releases/3.3/bin/util/test_dumux.sh
 $ wget sh test_dumux.sh
 \end{lstlisting}
 
