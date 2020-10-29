@@ -31,6 +31,7 @@
 
 #include <dumux/material/spatialparams/fvnonequilibrium.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
+#include <dumux/material/fluidmatrixinteractions/mp/mpadapter.hh>
 #include <dumux/material/fluidmatrixinteractions/1pia/fluidsolidinterfacialareashiwang.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
@@ -56,6 +57,7 @@ class CombustionSpatialParams
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using PcKrSwCurve = FluidMatrix::HeatPipeLaw<Scalar>;
+    using MPAdapter = Dumux::FluidMatrix::MPAdapter<PcKrSwCurve, 2>;
 
 public:
     //! Export the type used for the permeability
@@ -192,7 +194,7 @@ public:
      */
     auto fluidMatrixInteractionAtPos(const GlobalPosition &globalPos) const
     {
-        return makeFluidMatrixInteraction(*pcKrSwCurve_);
+        return makeFluidMatrixInteraction(MPAdapter(*pcKrSwCurve_));
     }
 
 private:

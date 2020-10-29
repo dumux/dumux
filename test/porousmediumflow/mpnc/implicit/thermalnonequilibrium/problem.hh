@@ -449,12 +449,11 @@ private:
         //////////////////////////////////////
         priVars[energyEq0Idx] = thisTemperature;
         priVars[energyEqSolidIdx] = thisTemperature;
-        std::array<Scalar, numPhases> capPress;
 
         //obtain pc according to saturation
         const int wettingPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        using MPAdapter = FluidMatrix::MPAdapter<numPhases>;
-        MPAdapter::capillaryPressures(capPress, this->spatialParams().fluidMatrixInteractionAtPos(globalPos), fluidState, wettingPhaseIdx);
+        const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
+        const auto capPress = fm.capillaryPressures(fluidState, wettingPhaseIdx);
 
         Scalar p[numPhases];
 
