@@ -27,9 +27,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/parkervangenuchten.hh>
 
 namespace Dumux {
 
@@ -49,36 +47,20 @@ class ThreePNISpatialParams
     using ParentType = FVSpatialParams<GridGeometry, Scalar,
                                        ThreePNISpatialParams<GridGeometry, Scalar>>;
 
-    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
-
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using ThreePhasePcKrSw = FluidMatrix::ParkerVanGenuchten3PDefault<Scalar>;
 
 public:
     //! Export permeability type
     using PermeabilityType = Scalar;
 
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
-
     ThreePNISpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
-
-        // residual saturations
-        materialParams_.setSwr(0.12);
-        materialParams_.setSnr(0.10);
-        materialParams_.setSgr(0.01);
-
-        // parameters for the 3phase van Genuchten law
-        materialParams_.setVgAlpha(0.5);
-        materialParams_.setVgn(4.0);
-        materialParams_.setKrRegardsSnr(true);
-
-        // parameters for adsorption
-        materialParams_.setKdNAPL(0.);
-        materialParams_.setRhoBulk(1500.);
     }
 
     /*!
@@ -102,18 +84,18 @@ public:
     }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
-     * \param globalPos The global position
+     * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        return materialParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
 
 private:
 
-    MaterialLawParams materialParams_;
+    const ThreePhasePcKrSw pcKrSwCurve_;
     Scalar permeability_;
     Scalar porosity_;
 };
