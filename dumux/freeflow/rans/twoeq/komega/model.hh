@@ -30,33 +30,33 @@
  *
  * Turbulent Kinetic Energy balance:
  * \f[
- * \frac{\partial \left( k \right)}{\partial t}
- * + \nabla \cdot \left( \mathbf{v} k \right)
- * - \nabla \cdot \left[ \left( \nu +  \sigma_\textrm{k} \nu_\textrm{t} \right) \nabla k \right]
+ * \frac{\partial \left( \varrho k \right)}{\partial t}
+ * + \nabla \cdot \left( \mathbf{v} \varrho k \right)
+ * - \nabla \cdot \left[ \left( \mu +  \sigma_\textrm{k} \mu_\textrm{t} \right) \nabla k \right]
  * - P
- * + \beta_k^{*} k \omega
+ * + \beta_k^{*} k \varrho \omega
  * = 0
  * \f]
- * with \f$ P = 2 \nu_\textrm{t} \mathbf{S} \cdot \mathbf{S} \f$
+ * with \f$ P = 2 \mu_\textrm{t} \mathbf{S} \cdot \mathbf{S} \f$
  * and \f$ S_{ij} = \frac{1}{2} \left[ \frac{\partial}{\partial x_i} v_j + \frac{\partial}{\partial x_j} v_i \right] \f$
  * based on \f$ a_{ij} \cdot b_{ij} = \sum_{i,j} a_{ij} b_{ij} \f$.
  *
  * Dissipation balance:
  * \f[
- * \frac{\partial \left( \omega \right)}{\partial t}
- * + \nabla \cdot \left( \mathbf{v} \omega \right)
- * - \nabla \cdot \left[ \left( \nu + \sigma_{\omega} \nu_\textrm{t} \right) \nabla \omega \right]
+ * \frac{\partial \left( \varrho \omega \right)}{\partial t}
+ * + \nabla \cdot \left( \mathbf{v} \varrho \omega \right)
+ * - \nabla \cdot \left[ \left( \mu + \sigma_{\omega} \mu_\textrm{t} \right) \nabla \omega \right]
  * - \alpha \frac{\omega}{k} P
  * + \beta_{\omega} \omega^2
- * - \frac{\sigma_d}{\omega} \nabla k \nabla \omega
+ * - \varrho \frac{\sigma_d}{\omega} \nabla k \nabla \omega
  * = 0
  * \f]
  *
- * The kinematic eddy viscosity \f$ \nu_\textrm{t} \f$ is calculated as follows:
- * \f[ \nu_\textrm{t} = \frac{k}{\tilde{\omega}} \f]
+ * The dynamic eddy viscosity \f$ \mu_\textrm{t} \f$ is calculated as follows:
+ * \f[ \mu_\textrm{t} = \varrho \frac{k}{\tilde{\omega}} \f]
  *
  * With a limited dissipation:
- * \f[ \tilde{\omega} = \textrm{max} \left\{ \omega, 0.875 \sqrt{\frac{P}{\nu_\textrm{t} \beta_\textrm{k}}} \right\} \f]
+ * \f[ \tilde{\omega} = \textrm{max} \left\{ \omega, 0.875 \sqrt{\frac{P}{\mu_\textrm{t} \beta_\textrm{k}}} \right\} \f]
  *
  * And a cross-diffusion coefficient \f$ \sigma_\textrm{d} \f$
  * \f[
