@@ -331,11 +331,8 @@ private:
 
         // calculate the capillary pressure
         const auto fluidMatrixInteraction = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
-        PhaseVector pc;
-        using MPAdapter = FluidMatrix::MPAdapter<numPhases>;
-
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        MPAdapter::capillaryPressures(pc, fluidMatrixInteraction, fs, wPhaseIdx);
+        const auto pc = fluidMatrixInteraction.capillaryPressures(fs, wPhaseIdx);
         fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)
                        + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
