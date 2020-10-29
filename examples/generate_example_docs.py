@@ -3,6 +3,10 @@
 import os
 import json
 import argparse
+import sys
+
+if sys.version_info[0] < 3:
+    sys.exit("Python 3 or a more recent version is required.")
 
 from convert_code_to_doc import *
 
