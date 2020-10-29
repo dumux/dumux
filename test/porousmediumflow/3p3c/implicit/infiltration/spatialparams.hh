@@ -28,10 +28,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
-#include <dumux/io/plotmateriallaw3p.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/parkervangenuchten.hh>
 
 namespace Dumux {
 
@@ -51,17 +48,16 @@ class InfiltrationThreePThreeCSpatialParams
     using ParentType = FVSpatialParams<GridGeometry, Scalar,
                                        InfiltrationThreePThreeCSpatialParams<GridGeometry, Scalar>>;
 
-    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
-
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
+    using ThreePhasePcKrSw = FluidMatrix::ParkerVanGenuchten3PDefault<Scalar>;
+
 public:
-   using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-   using MaterialLawParams = typename MaterialLaw::Params;
    using PermeabilityType = Scalar;
 
     InfiltrationThreePThreeCSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSwCurve_("SpatialParams")
     {
         // intrinsic permeabilities
         fineK_ = 1.e-11;
@@ -69,20 +65,6 @@ public:
 
         // porosities
         porosity_ = 0.40;
-
-        // residual saturations
-        materialParams_.setSwr(0.12);
-        materialParams_.setSnr(0.07);
-        materialParams_.setSgr(0.03);
-
-        // parameters for the 3phase van Genuchten law
-        materialParams_.setVgAlpha(0.0005);
-        materialParams_.setVgn(4.);
-        materialParams_.setKrRegardsSnr(false);
-
-        // parameters for adsorption
-        materialParams_.setKdNAPL(0.);
-        materialParams_.setRhoBulk(1500.);
     }
 
     /*!
@@ -115,15 +97,14 @@ public:
         return porosity_;
     }
 
-
     /*!
-     * \brief Returns the parameter object for the material law which depends on the position
+     * \brief Returns the fluid-matrix interaction law at a given location
      *
-     * \param globalPos The position for which the material law should be evaluated
+     * \param globalPos The global coordinates for the given location
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        return materialParams_;
+        return makeFluidMatrixInteraction(pcKrSwCurve_);
     }
 
 private:
@@ -138,7 +119,7 @@ private:
 
     Scalar porosity_;
 
-    MaterialLawParams materialParams_;
+    const ThreePhasePcKrSw pcKrSwCurve_;
 };
 
 } // end namespace Dumux
