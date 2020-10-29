@@ -142,7 +142,7 @@ public:
         NumEqVector values(0.0);
 
         if (couplingManager().isCoupledEntity(couplingManager().porousMediumIdx, scvf))
-            values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf, DiffusionCoefficientAveragingType::harmonic);
+            values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf, DiffusionCoefficientAveragingType::harmonic);
 
         return values;
     }

@@ -197,9 +197,9 @@ public:
         if (couplingManager().isCoupledEntity(CouplingManager::porousMediumIdx, scvf))
         {
 #if !NONISOTHERMAL
-            values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
+            values = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf, diffCoeffAvgType_);
 #else
-            const auto massFlux = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, scvf, diffCoeffAvgType_);
+            const auto massFlux = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf, diffCoeffAvgType_);
 
             for(int i = 0; i< massFlux.size(); ++i)
                 values[i] = massFlux[i];
