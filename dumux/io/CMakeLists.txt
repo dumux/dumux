@@ -1,4 +1,5 @@
 add_subdirectory(grid)
+add_subdirectory(format)
 add_subdirectory(vtk)
 add_subdirectory(xml)
 
