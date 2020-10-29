@@ -30,6 +30,7 @@
 #include <dune/grid/common/gridenums.hh>
 #include <dune/istl/multitypeblockvector.hh>
 
+#include <dumux/io/format.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
@@ -486,11 +487,10 @@ public:
         if (comm.size() > 1)
             greenElems_ = comm.sum(greenElems_);
 
-        auto reassembledElems = totalElems_ - greenElems_;
-        auto width = std::to_string(totalElems_).size();
-        outStream << ", reassembled " << std::setw(width)
-            << reassembledElems << " (" << std::setw(3)
-            << 100*reassembledElems/totalElems_ << "%) elements";
+        const auto reassembledElems = totalElems_ - greenElems_;
+        const auto width = Fmt::formatted_size("{}", totalElems_);
+        outStream << Fmt::format(", reassembled {:{}} ({:3}%) elements",
+                                 reassembledElems, width, 100*reassembledElems/totalElems_);
     }
 
     EntityColor elementColor(size_t idx) const
