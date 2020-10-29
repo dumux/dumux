@@ -381,12 +381,10 @@ private:
             equilibriumFluidState.setTemperature(phaseIdx, TInitial_ );
         }
 
-        std::vector<Scalar> capPress(numPhases);
         // obtain pc according to saturation
-        using MPAdapter = FluidMatrix::MPAdapter<numPhases>;
-
         const int wPhaseIdx = this->spatialParams().template wettingPhaseAtPos<FluidSystem>(globalPos);
-        MPAdapter::capillaryPressures(capPress, this->spatialParams().fluidMatrixInteractionAtPos(globalPos), equilibriumFluidState, wPhaseIdx);
+        const auto& fm = this->spatialParams().fluidMatrixInteractionAtPos(globalPos);
+        const auto capPress = fm.capillaryPressures(equilibriumFluidState, wPhaseIdx);
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){
