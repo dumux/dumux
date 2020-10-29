@@ -37,11 +37,25 @@
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
+#include <dumux/common/optionalscalar.hh>
 #include <dumux/common/exceptions.hh>
 
 #include "primaryvariableswitch.hh"
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
+
+namespace Detail {
+// helper struct and function detecting if the fluid matrix interaction features a adsorptionModel() function
+template <class FluidMatrixInteraction>
+using AdsorptionModelDetector = decltype(std::declval<FluidMatrixInteraction>().adsorptionModel());
+
+template<class FluidMatrixInteraction>
+static constexpr bool hasAdsorptionModel()
+{ return Dune::Std::is_detected<AdsorptionModelDetector, FluidMatrixInteraction>::value; }
+
+}
 
 /*!
  * \ingroup ThreePWaterOilModel
@@ -123,11 +137,7 @@ public:
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
-        // capillary pressure parameters
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-
-        if(!onlyGasPhaseCanDisappear())
+        if constexpr (!onlyGasPhaseCanDisappear())
         {
             /* first the saturations */
             if (phasePresence == threePhases)
@@ -172,34 +182,29 @@ public:
             fluidState_.setSaturation(gPhaseIdx, sg_);
             fluidState_.setSaturation(nPhaseIdx, sn_);
 
+            // old material law interface is deprecated: Replace this by
+            // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+            // after the release of 3.3, when the deprecated interface is no longer supported
+            const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
+            // calculate capillary pressures
+            const Scalar pcgw = fluidMatrixInteraction.pcgw(sw_, sn_);
+            const Scalar pcnw = fluidMatrixInteraction.pcnw(sw_, sn_);
+            const Scalar pcgn = fluidMatrixInteraction.pcgn(sw_, sn_);
+
+            const Scalar pcAlpha = fluidMatrixInteraction.pcAlpha(sw_, sn_);
+            const Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
+
             /* now the pressures */
             if (phasePresence == threePhases || phasePresence == gnPhaseOnly || phasePresence == gPhaseOnly || phasePresence == wgPhaseOnly)
             {
                  pg_ = priVars[pressureIdx];
-
-                 // calculate capillary pressures
-                 Scalar pcgw = MaterialLaw::pcgw(materialParams, sw_);
-                 Scalar pcnw = MaterialLaw::pcnw(materialParams, sw_);
-                 Scalar pcgn = MaterialLaw::pcgn(materialParams, sw_ + sn_);
-
-                 Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, sn_);
-                 Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
-
                  pn_ = pg_- pcAlpha * pcgn - (1.-pcAlpha)*(pcgw - pcNW1);
                  pw_ = pn_ - pcAlpha * pcnw - (1.-pcAlpha)*pcNW1;
             }
             else if (phasePresence == wPhaseOnly || phasePresence == wnPhaseOnly)
             {
                  pw_ = priVars[pressureIdx];
-
-                 // calculate capillary pressures
-                 Scalar pcgw = MaterialLaw::pcgw(materialParams, sw_);
-                 Scalar pcnw = MaterialLaw::pcnw(materialParams, sw_);
-                 Scalar pcgn = MaterialLaw::pcgn(materialParams, sw_ + sn_);
-
-                 Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, sn_);
-                 Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
-
                  pn_ = pw_ + pcAlpha * pcnw + (1.-pcAlpha)*pcNW1;
                  pg_ = pn_ + pcAlpha * pcgn + (1.-pcAlpha)*(pcgw - pcNW1);
             }
@@ -504,6 +509,7 @@ public:
             else
                 assert(false); // unhandled phase state
         } // end of if(!UseSimpleModel), i.e. the more complex version with six phase states
+
         else // use the simpler model with only two phase states
         {
             /* first the saturations */
@@ -525,34 +531,29 @@ public:
             fluidState_.setSaturation(gPhaseIdx, sg_);
             fluidState_.setSaturation(nPhaseIdx, sn_);
 
+            // old material law interface is deprecated: Replace this by
+            // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+            // after the release of 3.3, when the deprecated interface is no longer supported
+            const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
+            // calculate capillary pressures
+            const Scalar pcgw = fluidMatrixInteraction.pcgw(sw_, sn_);
+            const Scalar pcnw = fluidMatrixInteraction.pcnw(sw_, sn_);
+            const Scalar pcgn = fluidMatrixInteraction.pcgn(sw_, sn_);
+
+            const Scalar pcAlpha = fluidMatrixInteraction.pcAlpha(sw_, sn_);
+            const Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
+
             /* now the pressures */
             if (phasePresence == threePhases)
             {
                  pg_ = priVars[pressureIdx];
-
-                 // calculate capillary pressures
-                 Scalar pcgw = MaterialLaw::pcgw(materialParams, sw_);
-                 Scalar pcnw = MaterialLaw::pcnw(materialParams, sw_);
-                 Scalar pcgn = MaterialLaw::pcgn(materialParams, sw_ + sn_);
-
-                 Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, sn_);
-                 Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
-
                  pn_ = pg_- pcAlpha * pcgn - (1.-pcAlpha)*(pcgw - pcNW1);
                  pw_ = pn_ - pcAlpha * pcnw - (1.-pcAlpha)*pcNW1;
             }
             else if (phasePresence == wnPhaseOnly)
             {
                  pw_ = priVars[pressureIdx];
-
-                 // calculate capillary pressures
-                 Scalar pcgw = MaterialLaw::pcgw(materialParams, sw_);
-                 Scalar pcnw = MaterialLaw::pcnw(materialParams, sw_);
-                 Scalar pcgn = MaterialLaw::pcgn(materialParams, sw_ + sn_);
-
-                 Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, sn_);
-                 Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
-
                  pn_ = pw_ + pcAlpha * pcnw + (1.-pcAlpha)*pcNW1;
                  pg_ = pn_ + pcAlpha * pcgn + (1.-pcAlpha)*(pcgw - pcNW1);
             }
@@ -723,25 +724,30 @@ public:
                 fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-            }
+        }
 
-        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx) {
+        // old material law interface is deprecated: Replace this by
+        // const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+        // after the release of 3.3, when the deprecated interface is no longer supported
+        const auto fluidMatrixInteraction = Deprecated::makePcKrSw<3>(Scalar{}, problem.spatialParams(), element, scv, elemSol);
+
+        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx)
+        {
             // Mobilities
             const Scalar mu =
                 FluidSystem::viscosity(fluidState_,
                                        phaseIdx);
             fluidState_.setViscosity(phaseIdx,mu);
 
-            Scalar kr;
-            kr = MaterialLaw::kr(materialParams, phaseIdx,
+            const Scalar kr = fluidMatrixInteraction.kr(phaseIdx,
                                  fluidState_.saturation(wPhaseIdx),
-                                 fluidState_.saturation(nPhaseIdx),
-                                 fluidState_.saturation(gPhaseIdx));
+                                 fluidState_.saturation(nPhaseIdx));
             mobility_[phaseIdx] = kr / mu;
         }
 
-        // material dependent parameters for NAPL adsorption
-        bulkDensTimesAdsorpCoeff_ = MaterialLaw::bulkDensTimesAdsorpCoeff(materialParams);
+        // material dependent parameters for NAPL adsorption (only if law is provided)
+        if constexpr (Detail::hasAdsorptionModel<std::decay_t<decltype(fluidMatrixInteraction)>>())
+            bulkDensTimesAdsorpCoeff_ = fluidMatrixInteraction.adsorptionModel().bulkDensTimesAdsorpCoeff();
 
         // porosity
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
@@ -902,10 +908,15 @@ public:
     { return effectiveDiffCoeff_(phaseIdx, compIIdx, compJIdx); }
 
     /*!
-     * \brief Returns the adsorption information
+     * \brief Returns the adsorption information.
      */
     Scalar bulkDensTimesAdsorpCoeff() const
-    { return bulkDensTimesAdsorpCoeff_; }
+    {
+        if (bulkDensTimesAdsorpCoeff_)
+            return bulkDensTimesAdsorpCoeff_.value();
+        else
+            DUNE_THROW(Dune::NotImplemented, "Your spatialParams do not provide an adsorption model");
+    }
 
      /*!
      * \brief Returns the total internal energy of a phase in the
@@ -937,7 +948,7 @@ private:
 
     Scalar permeability_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPs];  //!< Effective mobility within the control volume
-    Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
+    OptionalScalar<Scalar> bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
 
     //!< Binary diffusion coefficients of the 3 components in the phases
     DiffusionCoefficients effectiveDiffCoeff_;
