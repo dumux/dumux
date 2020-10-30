@@ -15,6 +15,7 @@ Differences Between DuMu<sup>x</sup> 3.3 and DuMu<sup>x</sup> 3.2
   In order to use this, include `<dumux/io/format.hh>`. `format`, `format_to`, `format_to_n`, `formatted_size` are available in the `Dumux::Fmt` namespace.
   The string formatting is documented [here](https://en.cppreference.com/w/cpp/utility/format/formatter#Standard_format_specification) and follows the Python string formatting rules.
   The function are documented on [cppreference](https://en.cppreference.com/w/cpp/utility/format).
+- The RANS models now include variable densities. Compositional or nonisothermal rans models could produce slightly different, more accurate, results.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
