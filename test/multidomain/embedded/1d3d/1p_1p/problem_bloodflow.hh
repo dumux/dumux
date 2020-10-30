@@ -271,7 +271,7 @@ public:
         const Scalar radius = this->couplingManager().radius(source.id());
         const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
         Scalar sourceValue = beta*(pressure3D - pressure1D);
-        if constexpr(CouplingManager::couplingMode == EmbeddedCouplingMode::kernel)
+        if constexpr(CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
             sourceValue *= this->couplingManager().fluxScalingFactor(source.id());
 
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
