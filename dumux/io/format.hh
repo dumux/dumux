@@ -20,6 +20,12 @@
  * \file
  * \ingroup InputOutput
  * \brief Formatting based on the fmt-library which implements std::format of C++20
+ *
+ * For documentation of the functions, see https://en.cppreference.com/w/cpp/utility/format
+ * For a documentation of formatting styles,
+ * see https://en.cppreference.com/w/cpp/utility/format/formatter#Standard_format_specification
+ *
+ * Once std::format / C++20 is available, we can use the standard library here.
  */
 #ifndef DUMUX_IO_FORMAT_HH
 #define DUMUX_IO_FORMAT_HH
@@ -27,6 +33,7 @@
 #include <dumux/io/format/fmt/format.h>
 #include <dumux/io/format/fmt/ranges.h>
 
+//! Formatting tools in the style of std::format (C++20)
 namespace Dumux::Fmt {
 
 using fmt::format;
