@@ -32,12 +32,8 @@
 // [[details]] includes
 // We include the basic spatial parameters for finite volumes file from which we will inherit
 #include <dumux/material/spatialparams/fv.hh>
-// We include the files for the two-phase laws: the linear material law
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-// We include the files for the two-phase laws: the regularized Brooks-Corey pc-Sw and relative permeability laws
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-// We include the files for the two-phase laws: the scaling from effective to absolute saturations
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+// We include the files for the two-phase laws: the Brooks-Corey pc-Sw and relative permeability laws
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 // We include the laws for changing porosity due to precipitation
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 // We include the laws for changing permeability based on porosity change according to Kozeny-Carman
@@ -61,34 +57,25 @@ class ICPSpatialParams
     using ThisType =  ICPSpatialParams<GridGeometry, Scalar>;
     using ParentType = FVSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using PcKrSwCurve = FluidMatrix::BrooksCoreyDefault<Scalar>;
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    using MaterialLawParams = typename MaterialLaw::Params;
     // [[/codeblock]]
     // #### Using porosity and permeability laws to return the updated values
     // Due due calcium carbonate precipitation the porosity and the permeability change with time. At first, the initial values for the porosity and permeability are defined. Moreover, the functions that return the updated values, based on the chosen laws are defined.
     // [[codeblock]]
     ICPSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
+    , pcKrSw_("SpatialParams") // initialize from input file
     {
         // We read reference values for porosity and permeability from the input
         referencePorosity_     = getParam<Scalar>("SpatialParams.ReferencePorosity", 0.4);
         referencePermeability_ = getParam<Scalar>("SpatialParams.ReferencePermeability", 2.e-10);
-
-        // Setting residual saturations
-        materialParams_.setSwr(0.2);
-        materialParams_.setSnr(0.05);
-
-        // Setting parameters for the Brooks-Corey law
-        materialParams_.setPe(1e4);
-        materialParams_.setLambda(2.0);
     }
 
     // We return the reference or initial porosity.
@@ -119,9 +106,9 @@ public:
         return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
     }
     // [[/codeblock]]
-    // Return the brooks-corey context depending on the position
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    { return materialParams_; }
+    // Return the fluid matrix interactions (here only Brooks-Corey curves)
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
+    { return makeFluidMatrixInteraction(pcKrSw_); }
 
     // Define the wetting phase
     template<class FluidSystem>
@@ -133,7 +120,7 @@ public:
     // [[codeblock]]
 private:
 
-    MaterialLawParams materialParams_;
+    const PcKrSwCurve pcKrSw_;
     // Setting porosity precipitation as the porosity law
     PorosityPrecipitation<Scalar, /*numFluidComponents*/9, /*activeComponents*/2> poroLaw_;
     // Setting the Kozeny-Carman porosity-permeability relation as the permeability law
