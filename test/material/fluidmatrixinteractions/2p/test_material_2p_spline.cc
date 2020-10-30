@@ -82,9 +82,9 @@ void runTest(const std::string& name, const Function& f,
         auto pcTest = swTest;
 
         Dune::Timer timer;
-        double res = 0.0;
+        auto resOrig = swTest;
         for (int i = 0; i < testSamples; ++i)
-            res += f(swTest[i], orig);
+            resOrig[i] = f(swTest[i], orig);
         timer.stop();
 
         const auto vgTime = timer.elapsed();
@@ -92,15 +92,20 @@ void runTest(const std::string& name, const Function& f,
 
         timer.reset();
         timer.start();
-        res = 0.0;
+        auto resSpline = swTest;
         for (int i = 0; i < testSamples; ++i)
-            res += f(swTest[i], spline);
+            resSpline[i] = f(swTest[i], spline);
         timer.stop();
 
         const auto vgSplineTime = timer.elapsed();
         std::cout << "Spline law computed " << testSamples << " samples in " << vgSplineTime << " seconds." << std::endl;
 
         std::cout << "Speed-up factor ca. " << (vgTime/vgSplineTime) << "x (only in spline region)" << std::endl;
+
+        auto error = resOrig;
+        for (int i = 0; i < error.size(); ++i)
+            error[i] = std::abs(error[i]-resSpline[i]);
+        std::cout << "Maximum error: " << *std::max_element(error.begin(), error.end()) << std::endl;
     }
 }
 
