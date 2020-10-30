@@ -101,7 +101,7 @@ public:
      a_{wn} = a_{00} + a_{10}S_{w} + a_{20}S_{w}^2 + a_{11} S_{w} p_{c} +  a_{01} p_{c} + a_{02}p_{c}^2
      \f$]
      * \param  params parameter container for the coefficients of the surface
-     * \param  Sw Effective saturation of the wetting phase
+     * \param  swe Effective saturation of the wetting phase
      * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     template<class Scalar>
@@ -121,7 +121,7 @@ public:
      * \brief the derivative of specific interfacial area function w.r.t. capillary pressure
      *
      * \param  params parameter container for the coefficients of the surface
-     * \param  Sw Effective saturation of the wetting phase
+     * \param  swe Effective saturation of the wetting phase
      * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     template<class Scalar>
@@ -134,7 +134,7 @@ public:
      * \brief the derivative of specific interfacial area function w.r.t. saturation
      *
      * \param  params parameter container for the coefficients of the surface
-     * \param  Sw Effective saturation of the wetting phase
+     * \param  swe Effective saturation of the wetting phase
      * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     template<class Scalar>

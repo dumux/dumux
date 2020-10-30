@@ -53,7 +53,7 @@ public:
      * \param element The finite element the scv is embedded in
      * \param scv The sub-control volume for which the saturation is computed
      * \param elemSol The solution at all dofs inside this element
-     * \param Sn The non-wetting phase saturation at the global dof
+     * \param sn The non-wetting phase saturation at the global dof
      */
     template<class SpatialParams, class Element, class Scv, class ElemSol>
     static typename ElemSol::PrimaryVariables::value_type
@@ -77,7 +77,7 @@ public:
      * \param element The finite element the scv is embedded in
      * \param scv The sub-control volume for which the saturation is computed
      * \param elemSol The solution at all dofs inside this element
-     * \param Sn The non-wetting phase saturation at the global dof
+     * \param sn The non-wetting phase saturation at the global dof
      */
     template<class SpatialParams, class Element, class Scv, class ElemSol>
     static typename ElemSol::PrimaryVariables::value_type
