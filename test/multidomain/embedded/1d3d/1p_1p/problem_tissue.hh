@@ -334,7 +334,7 @@ public:
     {
         NumEqVector source(0.0);
 
-        if constexpr(CouplingManager::couplingMode == EmbeddedCouplingMode::kernel)
+        if constexpr(CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
         {
             const auto eIdx = this->gridGeometry().elementMapper().index(element);
             const auto& sourceIds = this->couplingManager().bulkSourceIds(eIdx, scv.indexInElement());
