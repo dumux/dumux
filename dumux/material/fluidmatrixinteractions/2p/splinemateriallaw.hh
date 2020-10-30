@@ -28,7 +28,8 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/monotonecubicspline.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabsdefaultpolicy.hh>
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/materiallaw.hh>
 
 namespace Dumux::FluidMatrix {
 
@@ -45,6 +46,7 @@ namespace Dumux::FluidMatrix {
 template<class TwoPMaterialLaw, bool approximatePcSwInverse = false>
 class SplineTwoPMaterialLaw
 : public TwoPMaterialLaw
+, public Adapter<SplineTwoPMaterialLaw<TwoPMaterialLaw, approximatePcSwInverse>, PcKrSw>
 {
 public:
     using Scalar = typename TwoPMaterialLaw::Scalar;
@@ -52,6 +54,12 @@ public:
     using BasicParams = typename TwoPMaterialLaw::BasicParams;
     using EffToAbsParams = typename TwoPMaterialLaw::BasicParams;
     using RegularizationParams = typename TwoPMaterialLaw::RegularizationParams;
+
+    /*!
+     * \brief Return the number of fluid phases
+     */
+    static constexpr int numFluidPhases()
+    { return 2; }
 
     /*!
      * \brief We are always regularized in the sense that we replace
