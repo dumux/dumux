@@ -28,6 +28,8 @@
 #include <iostream>
 #include <ctime>
 
+#include <dumux/io/format.hh>
+
 namespace Dumux {
 
 /*!
@@ -37,7 +39,7 @@ namespace Dumux {
 class DumuxMessage
 {
     //! The current number of messages. Please adjust if you add one.
-    static const int nMessages_ = 11;
+    static const int nMessages_ = 12;
 
 public:
 
@@ -165,6 +167,14 @@ public:
                     std::cout << "Chuck Norris has successfully compiled DuMuX." << std::endl;
                 else
                     std::cout << "Chuck Norris has compiled DuMuX even two times in a row!" << std::endl;
+            break;
+            case 12:
+                if (firstCall)
+                    std::cout << Fmt::format("  ┌{0:─^{2}}┐\n"
+                                             "  │{1: ^{2}}│\n"
+                                             "  └{0:─^{2}}┘\n", "", Fmt::format("DuMuX {} \u2661", DUMUX_VERSION), 20);
+                else
+                    std::cout << "\n" << std::endl;
             break;
 
             // Note: If you add a case, you have to increase the number of messages (nMessages_ variable).
